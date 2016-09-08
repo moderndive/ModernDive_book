@@ -1,0 +1,549 @@
+# (PART) Inference {-} 
+
+# Inference Basics {#infer-basics}
+
+```{r setup_infer, include=FALSE}
+chap <- 6
+lc <- 0
+rq <- 0
+# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
+# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
+knitr::opts_chunk$set(tidy = FALSE, fig.align = "center", out.width='\\textwidth')
+```
+
+In this chapter we will introduce new concepts that will serve as the basis for the remainder of the text:  **sampling**, **bootstrapping** and **resampling**.  We will see that the tools that you learned in the Data Exploration part of this book (tidy data, data manipulation, and data visualization) will also play an important role here.  As mentioned before, the concepts all build into a culmination allowing you to create better stories with data.
+
+We begin with some helpful definitions that will help us better understand why statistical inference exists and why it is needed.  We will then progress with a famous example from statistics lore and then introduce the second of our main data sets (in addition to the `nycflights13` data you've been working with) about movie ratings from IMDB.com.  We will see how we can use samples from this data set to infer more general conclusions about all of the movies (in the population).
+
+## Random sampling
+
+Whenever you hear the phrases "random sampling" or just "sampling" (with regards to statistics), you should think about tasting soup.  This likely sounds a little bonkers.  Let's dig in to why tasting soup is such an excellent analogy to random sampling.
+
+### Tasting soup
+
+```{r soupimg, echo=FALSE, fig.cap="A bowl of Indian chicken and vegetable soup"}
+knitr::include_graphics("images/soup.jpg")
+```
+
+Imagine that you have invited a group of friends over to try a new recipe for soup that you've never made before.  As in the image above downloaded from [here](http://readthespirit.wpengine.netdna-cdn.com/feed-the-spirit/wp-content/uploads/sites/19/2015/02/Chicken-soup-Indian-by-Fifth-Floor-Kitchen.jpg), you'd like to make a bowl of Indian chicken soup with lots of different kinds of vegetables included.
+
+You've carefully followed along with the recipe but you are concerned that you don't have a lot of experience making Indian-style foods.  It is coming near the end of the prescribed time to cook given in the recipe.  You begin to wonder:
+
+- "Did I add too much curry spice?"
+- "Are the carrots cooked enough?"  
+- "Does this actually taste good?"
+
+How can we answer these questions?  Does it matter where we take a bite of soup from?  Is there anything we should do to the soup before we taste?  Is one taste enough?
+
+***
+```{block lc6-0a, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Explain in your own words how tasting soup relates to the concepts of sampling covered here.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Describe a different scenario (not food or drink related) that is analogous to sampling concepts covered here.
+
+***
+
+### Common terms
+
+The process of sampling brings with it many common terms that we define now.  As you read over these definitions, think about how they each apply to the tasting soup example above.
+
+***
+
+**Definition: population**
+
+The *population* is the (usually) large pool of observational units that we are interested in.
+
+**Definition: sample**
+
+A *sample* is a smaller collection of observational units that is selected from the population.
+
+**Definition: sampling**
+
+*Sampling* refers to the process of selecting observations from a population.  There are both random and non-random ways this can be done.
+
+**Definition: representative sample**
+
+A sample is said be a *representative sample* if the characteristics of observational units selected are a good approximation of the characteristics from the original population.
+
+**Definition: bias**
+
+*Bias* corresponds to a favoring of one group in a population over another group.
+
+**Definition: generalizability**
+
+*Generalizability* refers to the largest group in which it makes sense to make inferences about from the sample collected.  This is directly related to how the sample was selected.
+
+**Definition: parameter**
+
+A *parameter* is a calculation based on one or more variables measured in the population.  Parameters are almost always denoted symbolically using Greek letters such as $\mu$, $\pi$, $\sigma$, $\rho$, and $\beta$.
+
+**Definition: statistic**
+
+A *statistic* is a calculated based on one or more variables measured in the sample.  Parameters are usually denoted by lower case Arabic letters with other symbols added sometimes.  These include $\bar{x}$, $\hat{p}$, $s$, $p$, and $b$. 
+
+***
+
+Let's explore these terms for our tasting soup example:
+
+
+*Population* - the entire container of soup that we have cooked.
+
+*Sample* - any smaller portion of soup collected that isn't the whole container of soup.  We could say that each spoonful of soup represents one sample.
+
+*Sampling* - the process of selecting spoonfuls from the container of soup
+
+*Representative sample* - A sample we select will only be representative if it tastes like what the soup tastes like in general.  If we only select a carrot in our spoonful, we might not have a representative sample.
+
+*Bias* - As we noted with the carrot selection example above, we may select a sample that is not representative.  If you watch chefs cook or if you frequently cook, you'll be sure to stir the soup before you taste it.
+
+*Generalizability* - If we stir our soup before we taste a spoonful (and if we make sure we don't just pick our favorite item in the soup), results from our sample can be generalized (by and large) to the larger pot of soup.  When we say "Yum! This is good!" after a couple spoonfuls, we can be pretty confident that each bowl of soup for our friends will taste good too.
+
+*Parameter* - An example here is could be the proportion of curry entered into the entire pot of soup.  A measurement of how salty the pot of soup is on average is also a parameter.  How crunchy, on average, the carrots are in the pot of soup is one more example.
+
+*Statistic* - To convert a parameter to a statistic, you need only to think about the same measurement on a spoonful:
+
+- The proportion of curry to non-curry in a spoonful of soup
+- How salty the spoonful of soup is that we collected as our sample
+- How crunchy the carrots are in our spoonful of soup
+
+***
+```{block lc6-0b, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why isn't our population all bowls of soup?  All bowls of Indian chicken soup?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Describe a way in which we could select a sample of flights from `nycflights13` that is not representative.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** If we treat all of the flights in `nycflights13` as the population, give examples of three _parameters_ we could calculate.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** If we treat all of the flights in `nycflights13` as the population, give examples of three _statistics_ we could calculate.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What biases might we see if we only select flights to Boston when we are interested in looking at mean flight delays from NYC?
+
+***
+
+## Simulation
+
+What follows is taken from a book entitled _The Lady Tasting Tea_ [@salsburg2001]:
+
+> It was a summer afternoon in Cambridge, England, in the late
+1920s. A group of university dons, their wives, and some guests
+were sitting around an outdoor table for afternoon tea. One of
+the women was insisting that tea tasted different depending upon
+whether the tea was poured into the milk or whether the milk was
+poured into the tea. The scientific minds among the men scoffed
+at this as sheer nonsense. What could be the difference? They
+could not conceive of any difference in the chemistry of the mixtures
+that could exist. A thin, short man, with thick glasses and a
+Vandyke beard beginning to turn gray, pounced on the problem.
+"Let us test the proposition," he said excitedly. He began to outline
+an experiment in which the lady who insisted there was a difference
+would be presented with a sequence of cups of
+tea, in some of which the milk had been
+poured into the tea and in others of which
+the tea had been poured into the milk...
+
+> So it was that sunny summer afternoon in Cambridge.
+The lady might or might not have been correct about the tea infusion.
+The fun would be in finding a way to determine if she was
+right, and, under the direction of the man with the Vandyke beard,
+they began to discuss how they might make that determination.
+
+> Enthusiastically, many of them joined with him in setting up
+the experiment. Within a few minutes, they were pouring different
+patterns of infusion in a place where the lady could not see which
+cup was which. Then, with an air of finality, the man with the
+Vandyke beard presented her with her first cup. She sipped for a
+minute and declared that it was one where the milk had been
+poured into the tea. He noted her response without comment and
+presented her with the second cup...
+
+> The man with
+the Vandyke beard was Ronald Aylmer Fisher, who was in his late
+thirties at the time. He would later be knighted Sir Ronald Fisher.
+In 1935, he wrote a book entitled _The Design of Experiments_, and
+he described the experiment of the lady tasting tea in the second
+chapter of that book. In his book, Fisher discusses the lady and her
+belief as a hypothetical problem. He considers the various ways in
+which an experiment might be designed to determine if she could
+tell the difference. The problem in designing the experiment is
+that, if she is given a single cup of tea, she has a 50 percent chance
+of guessing correctly which infusion was used, even if she cannot
+tell the difference. If she is given two cups of tea, she still might
+guess correctly. In fact, if she knew that the two cups of tea were
+each made with a different infusion, one guess could be completely
+right (or completely wrong).
+
+> Similarly, even if she could tell the difference, there is some
+chance that she might have made a mistake, that one of the cups
+was not mixed as well or that the infusion was made when the tea
+was not hot enough. She might be presented with a series of ten
+cups and correctly identify only nine of them, even if she could tell
+the difference.
+
+> In his book, Fisher discusses the various possible outcomes of
+such an experiment. He describes how to decide how many cups
+should be presented and in what order and how much to tell the
+lady about the order of presentations. He works out the probabilities
+of different outcomes, depending upon whether the lady is or
+is not correct. Nowhere in this discussion does he indicate that
+such an experiment was ever run. Nor does he describe the outcome
+of an actual experiment.
+
+It's amazing that there is no actual evidence that such an event actually took place.  This problem is a great introduction into inference though and we can proceed by testing to see how likely it is for a person to guess correctly, say, 9 out of 10 times assuming that that person is just guessing.  In other words, is the person just lucky or do we have reason to suspect that they can actually detect whether milk was put in first or not?
+
+We need to think about this problem from the standpoint of hypothesis testing.  First, we'll need to identify some important parts of a hypothesis test before we proceed with the analysis.
+
+***
+```{block lc6-1, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What does "by chance" mean in this context?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What is our observed statistic?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What is this statistic trying to estimate?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How could we test to see whether the person is just guessing or if they have some special talent of identifying milk before tea or vice-versa?
+
+***
+
+<!--
+- Q: What does "by chance" mean in this context?
+    A:  We are assuming that the person is just guessing.  This corresponds to them being equally likely to guess whether or not milk was entered first, i.e., the probability of ``success" is 0.5.
+- Q:  What is our observed statistic?
+    A:  It isn't ever given just how many times out of 10 trials the supposed lady guessed correctly.  We assumed above that the person got 9 out of 10 correct.  This corresponds to our sample statistic of $\hat{p} = 0.9$.
+- Q:  What is the statistic trying to estimate?
+  A:  The statistic provides one guess as to a value of the parameter.  We denote this parameter by the Greek letter $\pi$ and here it corresponds to the long-run probability that the person will correctly guess whether milk or tea was added first, if the experiment was repeated many times.
+- Q:  How do we test to see whether the person is just guessing or if they have some special talent of identifying milk before tea or vice versa?
+    A:  Let's begin with an experiment.  I will flip a coin 10 times.  Your job is to try to predict the sequence of my 10 flips.  Write down 10 H's and T's corresponding to your predictions.  We will compare your guesses with my actual flips and then we will note how many correct guesses each of you have. 
+
+-->
+
+Let's begin with an experiment.  I will flip a coin 10 times.  Your job is to try to predict the sequence of my 10 flips.  Write down 10 H's and T's corresponding to your predictions.  We could compare your guesses with my actual flips and then we will note how many correct guesses you have. 
+
+You may be asking yourself how this models a way to test whether the person was just guessing or not.  All we are trying to do is see how likely it is to have 9 matches out of 10 if the person was truly guessing.  When we say "truly guessing" we are assuming that we have a 50/50 chance of guessing correctly.  This can be modeled using a coin flip and then seeing whether we guessed correctly for each of the coin flips.  If we guessed correctly, we can think of that as a "success."
+
+We often don't have time to do the physical flipping over and over again and we'd like to be able to do more than just 20 different simulations or so.  Luckily, we can use R to simulate this process many times.  The `mosaic` package includes a function called `rflip()`, which can be used to flip one coin.  Well, not exactly.  It uses pseudo-random number generation to "flip" a virtual coin.  In order for us all to get the same results here, we can set the seed of the pseudo-random number generator.  Let's see an example of this:  (Remember to load the `mosaic` package!)
+
+```{r message=FALSE}
+library(mosaic)
+set.seed(2016)
+do(1) * rflip(1)
+```
+
+This shows us the proportion of "successes" in one flip of a coin.  The `do` function in the `mosaic` package will be useful and you can begin to understand what it does with another example.
+
+```{r}
+do(13) * rflip(10)
+```
+
+We've now done a simulation of what actually happened when you flipped a coin ten times.  We have 13 different simulations of flipping a coin 10 times.  Note here that `heads` now corresponds to the number of correct guesses and `tails` corresponds to the number of incorrect guesses.  (This can be tricky to understand at first since we've done a switch on what the meaning of "heads" and ``tails" are.)
+
+If you look at the output above for our simulation of 13 student guesses, we can begin to get a sense for what an "expected" sample proportion of successes may be.  Around five out of 10 seems to be the most likely value.  What does this say about our assumed $\hat{p}$ of 9/10?  To better answer this question, we can simulate 10,000 student guesses and then look at the distribution of the simulated sample proportion of successes, also known as the **null distribution**.
+
+```{r}
+library(dplyr)
+library(tibble)
+simGuesses <- do(10000) * rflip(10)
+simGuesses <- as_tibble(simGuesses)
+simGuesses %>% 
+  group_by(heads) %>%
+  summarize(count = n())
+```
+
+**Note:** Here `as_tibble` converts data frames to tibbles. This is also why the `library(tibble)` command is needed. The conversion to `tibble` format is mostly done for allowing for nice printing of large data sets when we mention the name of a data frame object in a chunk by itself.  (The data sets in `nycflights13` come as tibbles by default.)  You can read more about tibbles in Chapter 10 of Hadley and Garrett's book [@rds2016].
+
+We can see here that we have created a count of how many of each of the 10,000 sets of 10 flips resulted in 0, 1, 2, ..., up to 10 heads.  Note the use of the `group_by` and `summarize` functions from Chapter \@ref(manip) here.
+
+In addition, we can plot the distribution of these simulated `heads` using the ideas from Chapter \@ref(viz).  `heads` is a quantitative variable.  Think about which type of plot is most appropriate here before reading further.
+
+We already have an idea as to an appropriate plot by the data summarization that we did in the chunk above.  We'd like to see how many heads occurred in the 10,000 sets of 10 flips.  In other words, we'd like to see how frequently 9 or more heads occurred in the 10 flips:
+
+```{r fig.cap="Barplot of number of heads in simulation - needs tweaking"}
+library(ggplot2)
+simGuesses %>% ggplot(aes(x = heads)) +
+  geom_bar()
+```
+
+This horizontal axis labels are a little confusing here.  What does 2.5 or 7.5 heads mean?  In `simGuesses`, `heads` is a `numerical` variable.  Thus, `ggplot` is expecting the values to be on a continuous scale.  We can switch the scale to be discrete by invoking the `factor` function:
+
+```{r fig.cap="Barplot of number of heads in simulation"}
+library(ggplot2)
+simGuesses %>% ggplot(aes(x = factor(heads))) +
+  geom_bar()
+```
+
+You'll frequently need to make this conversion to `factor` when making a barplot with quantitative variables.  Remember from "Getting Used to R, RStudio, and R Markdown" [@usedtor2016], that a `factor` variable is useful when there is a natural ordering to the variable.  Our `heads` variable has a natural ordering:  0, 1, 2, ..., 10.
+
+### The p-value
+
+---
+
+**Definition: $p$-value**:
+
+The \textbf{p-value} is the probability of observing a sample statistic as extreme or more extreme than what was observed, assuming that the null hypothesis of a by chance operation is true.
+
+---
+
+This definition may be a little intimidating the first time you read it, but it's important to come back to this "The Lady Tasting Tea" problem whenever you encounter $p$-values as you begin to learn about the concept.  Here the $p$-value corresponds to how many times in our **null distribution** of `heads` 9 or more heads occurred.
+
+We can use another neat feature of R to calculate the $p$-value for this problem.  Note that "more extreme" in this case corresponds to looking at values of 9 or greater since our alternative hypothesis invokes a right-tail test corresponding to a "greater than" hypothesis of $H_a: \pi > 0.5$.  In other words, we are looking to see how likely it is for the lady to pick 9 or more correct instead of 9 or less correct.  We'd like to go in the right direction.
+
+```{r}
+pvalue_tea <- simGuesses %>%
+  filter(heads >= 9) %>%
+  nrow() / nrow(simGuesses)
+```
+
+Let's walk through each step of this calculation:
+
+1. First, `pvalue_tea` will be the name of our calculated $p$-value and the assignment operator `<-` directs us to this naming.
+
+2. We are working with the `simGuesses` data frame here so that comes immediately before the pipe operator.  
+
+3. We would like to only focus on the rows in our `simGuesses` data frame that have `heads` values of 9 or 10.  This represents simulated statistics "as extreme or more extreme" than what we observed (9 correct guesses out of 10).  Let's get a glimpse of what we have up to this point:
+
+    
+    ```{r}
+    simGuesses %>% tbl_df() %>%
+      filter(heads >= 9)    
+    ```
+
+4. Now that we have changed the focus to only those rows that have number of heads out of 10 flips corresponding to 9 or more, we count how many of those there are.  The function `nrow` gives how many entries are in this filtered data frame and lastly we calculate the proportion that are at least as extreme as our observed value of 9 by dividing by the number of total simulations (`r format(nrow(simGuesses), big.mark = ",")`).
+
+
+We can see that the observed statistic of 9 correct guesses is not a likely outcome assuming the null hypothesis is true.  Only around 1% of the outcomes in our 10,000 simulations fall at or above 9 successes.  We have evidence supporting the conclusion that the person is actually better than just guessing at random at determining whether milk has been added first or not.  To better visualize this we can also make use of pink shading on the histogram corresponding to the $p$-value:
+
+```{r fig.cap="Barplot of heads with p-value highlighted"}
+library(ggplot2)
+simGuesses %>% 
+  ggplot(aes(x = factor(heads), fill = (heads >= 9))) +
+  geom_bar() +
+  labs(x = "heads")
+```
+
+This helps us better see just how few of the values of `heads` are at our observed value or more extreme.
+
+We'll see in Chapters \@ref(hypo) and \@ref(ci) that this idea of a $p$-value can be extended to the more traditional methods using normal and $t$ distributions in the traditional way that introductory statistics has been presented.  These traditional methods were used because statisticians haven't always been able to do 10,000 simulations on the computer within seconds.  We'll elaborate on this more in these later chapters.
+
+***
+```{block lc6-2, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is meant by "pseudo-random number generation?"
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How can simulation be used to help us address the question of whether or not an observed result is statistically significant?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** In Chapter \@ref(viz), we noted that barplots should be used when creating a plot of categorical variables.  Why are we using barplots to make a plot of a numerical variable `heads` in this chapter?
+
+***
+
+## Bootstrapping
+
+Just as we did in the previous section when making hypotheses about a population proportion with which we would like to test which one is more plausible, we can also use simulation to infer conclusions about a population quantitative statistic such as the mean.  In this case, we will focus on constructing confidence intervals to produce plausible values for a population mean.  (We can do a similar analysis for a population median or other summary measure as well.)
+
+Traditionally, the way to construct confidence intervals for a mean is to assume a normal distribution for the population or to invoke the Central Limit Theorem and get, what often appears to be magic, results.  These methods are often not intuitive, especially for those that lack a strong mathematical background.  They also come with their fair share of assumptions and often turn Statistics, a field that is full of tons of useful applications to many different fields and disciplines, into a robotic procedural-based topic.  It doesn't have to be that way!
+
+In this section, we will introduce the concept of **bootstrapping**.  It will be a useful tool that will allow us to estimate the variability of our statistic from sample to sample.  One neat feature of bootstrapping is that it enables us to approximate the sampling distribution and estimate the distribution's standard deviation using ONLY the information in the one selected (original) sample.  
+
+It sounds just as plagued with the magical type qualities of traditional theory-based inference on initial glance but we will see that it provides an intuitive and useful way to make inferences, especially when the samples are of medium to large size.  
+
+<!--We will begin by investigating an example on the selling prices of used Ford Mustang cars taken from the textbook {\it Statistics:  UnLOCKing the Power of Data} by Lock, Lock, Lock, Lock, and Lock.  (That isn't me hitting Copy+Paste too many times.  Patti and Robin Lock both work in the Mathematics Department at St. Lawrence University and they have three children that are statisticians.  They are often referred to as the Lock5.)
+-->
+
+To introduce the concept of bootstrapping, we now introduce the `movies` data set in the `ggplot2movies` data frame.  We will load this data frame into R in much the same way as we loaded `flights` and `weather` from the `nycflights13` package:
+
+```{r}
+library(ggplot2movies)
+data(movies, package = "ggplot2movies")
+```
+
+Let's also glance at this data frame using the `View` function and look at the help documentation for `movies`:
+
+```{r eval=FALSE}
+View(movies)
+?movies
+```
+
+We will explore many other features of this data set in the chapters to come, but here we will be focusing on the `rating` variable corresponding to the average IMDB user rating.
+
+You may notice that this data set is quite large:  `r format(nrow(movies), big.mark = ",")` movies have data collected about them here.  This will correspond to our population of ALL movies.  Remember from Chapter \@ref(infer-basics) that our population is rarely known.  We use this data set as our population here to show you the power of bootstrapping in estimating population parameters.  We'll see how **confidence intervals** built using the bootstrap distribution do at including our population parameter of interest.  Here we can actually calculate these values since our population is known, but remember that in general this isn't the case.
+
+Let's take a look at what the distribution of our population `ratings` looks like.  We'll see that we will use the distribution of our sample(s) as an estimate of this population histogram.
+
+```{r fig.cap="Population ratings histogram"}
+movies %>% ggplot(aes(x = rating)) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+
+***
+```{block lc7-3, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why was a histogram chosen as the plot to make for the `rating` variable above?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why does the shape of the `rating` histogram tell us about how IMDB users rate movies?  What stands out about the plot?
+
+***
+
+It's important to think about what our goal is here.  We would like to produce a confidence interval for the population mean `rating`.  We will have to pretend for a moment that we don't have all `r format(nrow(movies), big.mark = ",")` movies.  Let's say that we only have a random sample of 50 movies from this data set instead.  In order to get a random sample, we can use the `sample_n` function from `dplyr`:
+
+```{r}
+set.seed(2016)
+movies_sample <- movies %>%
+  sample_n(50)
+```
+
+The `sample_n` function has filtered the data frame `movies` "at random" to choose only 50 rows from the larger `movies` data frame.  We store information on these 50 movies in the `movies_sample` data frame.
+
+Let's now explore what the `rating` variable looks like for these 50 movies:
+
+```{r fig.cap="Sample ratings histogram"}
+movies_sample %>% ggplot(aes(x = rating)) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+Remember that we can think of this histogram as an estimate of our population distribution histogram that we saw above.  We are interested in the population mean rating and trying to find a range of plausible values for that value.  A good start in guessing the population mean is to use the mean of our sample `rating` from the `movies_sample` data:
+
+```{r}
+(movies_sample_mean <- movies_sample %>% summarize(mean = mean(rating)))
+```
+
+Note the use of the `( )` at the beginning and the end of this creation of the `movies_sample_mean` object.  If you'd like to print out your newly created object, you can enclose it in the parentheses as we have here.
+
+This value of `r movies_sample_mean` is just one guess at the population mean. The idea behind _bootstrapping_ is to sample **with replacement** from the original sample to create new **resamples** of the same size as our original sample.
+
+Returning to our example, let's investigate what one such resample of the `movies_sample` data set accomplishes.  We can create one resample/bootstrap sample by using the `resample` function in the `mosaic` package.  
+
+```{r}
+library(mosaic)
+library(tibble)
+boot1 <- resample(movies_sample, orig.ids = TRUE) %>%
+  select(orig.id, everything()) %>%
+  arrange(orig.id)
+```
+
+Take a look at this resample/bootstrap:
+
+```{r eval=FALSE}
+View(boot1)
+```
+
+
+The important thing to note here is the original row numbers from the `movies_sample` data frame in the far left column called `orig.ids`.  Since we are sampling with replacement, there is a strong likelihood that some of the 50 observational units are going to be selected again.
+
+You may be asking yourself what does this mean and how to this lead us to creating a distribution for the sample mean.  Recall that the original sample mean of our data was calculated using the `summarize` function above.
+
+***
+
+```{block lc6-3, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What happens if we change the seed to our pseudo-random generation?  Try it above when we used `sample_n` to describe the resulting `movies_sample`.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why is sampling at random important from the `movies` data frame?  Why don't we just pick `Action` movies and do bootstrapping with this `Action` movies subset?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What was the purpose of assuming we didn't have access to the full `movies` data set here?
+
+***
+
+Before we had a calculated mean in our original sample of `r movies_sample_mean`.  Let's calculate the mean of `ratings` in our
+bootstrapped sample:
+
+```{r}
+(movies_boot1_mean <- boot1 %>% summarize(mean = mean(rating)))
+```
+
+More than likely the calculated bootstrap sample mean is different than the original sample mean.  This is what I meant earlier when I said that the sample means have some variability.  What we are trying to do is replicate many different samples being taken from a larger population.  Our best guess at what the population looks like is multiple copies of the sample we collected.  We then can sample from that larger "created" population by generating bootstrap samples.  
+
+Similar to what we did in the previous section, we can repeat this process using the `do` function followed by an asterisk.  Let's look at 10 different bootstrap means for `ratings` from `movies_sample`.  Note the use of the `resample` function here.
+
+```{r}
+do(10) * summarize(resample(movies_sample), mean = mean(rating))
+```
+
+You should see some variability begin to tease its way out here.  Many of the simulated means will be close to our original sample mean but many will stray pretty far away.  This occurs because outliers may have been selected a couple of times in the resampling or small values were selected more than larger.  There are myriad reasons why this might be the case.
+
+So what's the next step now?  Just as we repeated the repetitions thousands of times with the "Lady Tasting Tea" example, we can do a similar thing here.
+
+```{r cache=TRUE, fig.cap="Bootstrapped means histogram"}
+trials <- do(10000) * summarize(resample(movies_sample), 
+                                mean = mean(rating))
+trials %>% ggplot(aes(x = mean)) +
+  geom_histogram(bins = 30, color = "white")
+```
+
+The shape of this resulting distribution may look familiar to you.  It resembles the well-known normal (bell-shaped) curve.  We will see in Chapters \@ref(hypo) and \@ref(ci) when we might expect a normal curve to come through as we have here and when we shouldn't.  There will be specific assumptions that need to be checked and we will see that the normal distribution doesn't always approximate this bootstrapped distribution well.  In those case, we should NOT rely on traditional methods.
+
+At this point, we can easily calculate a confidence interval.  In fact, we have a couple different options.  We will first use the percentiles of the distribution we just created to isolate the middle 95% of values.  This will correspond to our 95% confidence interval for the population mean `rating`, denoted by $\mu$.
+
+```{r}
+(ciq_mean_rating <- confint(trials, level = 0.95, method = "quantile"))
+```
+
+It's always important at this point to interpret the results of this confidence interval calculation.  In this context, we can say something like the following:
+
+> Based on the sample data and bootstrapping techniques, we can be 95% confident that the true mean rating of ALL IMDB ratings is between `r ciq_mean_rating$lower` and `r ciq_mean_rating$upper`.
+
+This statement may seem a little confusing to you.  Remember that we are pretending like we don't know what the mean IMDB rating for ALL movies is.  Our population here is all of the movies listed in the `movies` data frame from `ggplot2movies`.  So does our bootstrapped confidence interval here contain the actual mean value?
+
+```{r}
+summarize(movies, mean = mean(rating))
+```
+
+We see here that the population mean does fall in our range of plausible values generated from the bootstrapped samples.
+
+We can also get an idea of how the theory-based inference techniques would have approximated this confidence interval by using the formula $$\bar{x} \pm (2 * SE),$$ where $\bar{x}$ is our original sample mean and $SE$ stands for **standard error** and corresponds to the standard deviation of the bootstrap distribution.  The value of 2 here corresponds to it being a 95% confidence interval.  This formula assumes that the bootstrap distribution is symmetric.  This is often the case with bootstrap distributions, especially those in which the original distribution of the sample is not highly skewed.
+
+To compute this type of confidence interval, we only need to make a slight modification to the `confint` function seen above.  (The expression after the $\pm$ sign is known as the **margin of error**.)
+
+```{r warning=FALSE, message=FALSE}
+(cise_mean_rating <- confint(trials, level = 0.95, method = "stderr"))
+```
+
+> Based on the sample data and bootstrapping techniques, we can be 95% confident that the true mean rating of ALL IMDB ratings is between `r cise_mean_rating$lower` and `r cise_mean_rating$upper`.
+
+
+***
+
+```{block lc7-4, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Reproduce the bootstrapping above using a sample of size 50 instead of 25.  What changes do you see?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Reproduce the bootstrapping above using a sample of size 5 instead of 25.  What changes do you see?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How does the sample size affect the analysis?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why must bootstrap samples be the same size as the original sample?
+
+***
+
+### Review of Bootstrapping
+
+We can summarize the process to generate a bootstrap distribution here in a series of steps that clearly identify the terminology we will use [@lock2012].
+
+- Generate `bootstrap samples` by sampling with replacement from the original sample, using the same sample size.
+- Compute the statistic of interest, called a `bootstrap statistic`, for each of the bootstrap samples.
+- Collect the statistics for many bootstrap samples to create a `bootstrap distribution`.
+
+Visually, we can represent this process in the following diagram.
+
+```{r bootstrapimg, echo=FALSE, fig.cap="Bootstrapping diagram from Lock5 textbook"}
+knitr::include_graphics("images/bootstrap.png")
+```
+
+## What's to come?
+
+This chapter has served as an introduction into inferential techniques that will be discussed in greater detail in Chapter \@ref(hypo) for hypothesis testing and in Chapter \@ref(ci) for confidence intervals. In these chapters, we will see how we can use a related concept of **resampling** when working with the distributions of two groups. All of these concepts will be further reinforced in Chapter \@ref(regress) as well.
