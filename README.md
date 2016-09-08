@@ -1,6 +1,6 @@
 # moderndiver-book
 
-This repo stores both the generating files and the resulting knitted bookdown files in the `docs` folder.  Below are many items to be addressed in the future to improve on the book.
+This repo stores both the generating files and the resulting knitted bookdown files in the `docs` folder.  This website is available at <http://ismayc.github.io/moderndiver-book>. Below are many items to be addressed in the future to improve on the book.
 
 ## To-do
 
