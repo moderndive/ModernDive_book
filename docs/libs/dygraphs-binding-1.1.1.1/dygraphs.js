@@ -205,7 +205,7 @@ HTMLWidgets.widget({
         
         // add shiny input for date window
         if (HTMLWidgets.shinyMode)
-          this.addDateWindowShinyInput(el.id);
+          this.addDateWindowShinyInput(el.id, x);
         
         // set annotations
         if (x.annotations != null) {
@@ -616,23 +616,23 @@ HTMLWidgets.widget({
         };
       },
       
-      addDateWindowShinyInput: function(id) {
+      addDateWindowShinyInput: function(id, x) {
           
         // check for an existing drawCallback
-        var prevDrawCallback = dygraph.getOption("drawCallback");
+        var prevDrawCallback = x.attrs["drawCallback"];
         
         // install the callback
-        dygraph.updateOptions({
-          drawCallback: function(me, initial) {
-            // call existing
-            if (prevDrawCallback)
-              prevDrawCallback(me, initial);
-            // fire input change
-            var range = dygraph.xAxisRange();
-            var dateWindow = [new Date(range[0]), new Date(range[1])];
-            Shiny.onInputChange(id + "_date_window", dateWindow); 
-          }
-        });
+        x.attrs.drawCallback = function(me, initial) {
+          
+          // call existing
+          if (prevDrawCallback)
+            prevDrawCallback(me, initial);
+            
+          // fire input change
+          var range = dygraph.xAxisRange();
+          var dateWindow = [new Date(range[0]), new Date(range[1])];
+          Shiny.onInputChange(id + "_date_window", dateWindow); 
+        };
       },
       
       // Add dashed line support to canvas rendering context
