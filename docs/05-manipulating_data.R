@@ -1,9 +1,4 @@
 ## ----setup_manip, include=FALSE------------------------------------------
-chap <- 5
-lc <- 0
-rq <- 0
-# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
-# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
 knitr::opts_chunk$set(tidy = FALSE, fig.align = "center", out.width = '\\textwidth')
 
 ## ----selectfig, echo=FALSE, fig.cap="Select diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
@@ -52,9 +47,6 @@ flights_time <- rename(flights_time,
                        arrival_time = arr_time)
 names(flights_time)
 
-## ----lc5-1, type='learncheck', engine="block"----------------------------
-**_Learning check_**
-
 ## ----filter, echo=FALSE, fig.cap="Filter diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
 knitr::include_graphics("images/filter.png")
 
@@ -87,9 +79,6 @@ count(not_summer_flights, month)
 ## ------------------------------------------------------------------------
 not_summer2 <- filter(flights, month <= 5 | month >= 9)
 count(not_summer2, month)
-
-## ----lc5-2, type='learncheck', engine="block"----------------------------
-**_Learning check_**
 
 ## ----sum1, echo=FALSE, fig.cap="Summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
 knitr::include_graphics("images/summarize1.png")
@@ -130,9 +119,6 @@ by_origin <- summarize(grouped_flights,
                        count = n())
 by_origin
 
-## ----lc5-3, type='learncheck', engine="block"----------------------------
-**_Learning check_**
-
 ## ----select, echo=FALSE, fig.cap="Mutate diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
 knitr::include_graphics("images/mutate.png")
 
@@ -165,9 +151,6 @@ flights_plus2 <- mutate(flights,
   gain_per_hour = gain / hours
 )
 
-## ----lc5-4, type='learncheck', engine="block"----------------------------
-**_Learning check_**
-
 ## ------------------------------------------------------------------------
 by_dest <- group_by(flights, dest)
 freq_dest <- summarize(by_dest, num_flights = n())
@@ -184,9 +167,6 @@ top_n(freq_dest, n = 10, wt = num_flights)
 
 ## ------------------------------------------------------------------------
 arrange(top_n(freq_dest, n = 10, wt = num_flights), desc(num_flights))
-
-## ----lc5-5, type='learncheck', engine="block"----------------------------
-**_Learning check_**
 
 ## ----eval=FALSE----------------------------------------------------------
 ## arrange(top_n(freq_dest, n = 10, wt = num_flights), desc(num_flights))
@@ -210,9 +190,6 @@ ten_freq_dests <- flights %>%
   top_n(n = 10) %>%
   arrange(desc(num_flights))
 
-## ----lc5-6, type='learncheck', engine="block"----------------------------
-**_Learning check_**
-
 ## ----eval=FALSE----------------------------------------------------------
 ## View(airports)
 
@@ -231,7 +208,4 @@ named_freq_dests
 
 ## ----ijdiagram, echo=FALSE, fig.cap="Diagram of inner join from R for Data Science"----
 knitr::include_graphics("images/join-inner.png")
-
-## ----lc5-7, type='learncheck', engine="block"----------------------------
-**_Learning check_**
 
