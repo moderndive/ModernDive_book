@@ -1,10 +1,6 @@
-## ----setup_manip, include=FALSE------------------------------------------
-knitr::opts_chunk$set(tidy = FALSE, fig.align = "center", out.width = '\\textwidth')
-
-## ----selectfig, echo=FALSE, fig.cap="Select diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/select.png")
-
 ## ------------------------------------------------------------------------
+if(!require(nycflights13))
+  install.packages("nycflights13", repos = "http://cran.rstudio.org")
 library(nycflights13)
 data(flights)
 dim(flights)
@@ -14,7 +10,7 @@ ncol(flights)
 if(!require(dplyr))
   install.packages("dplyr", repos = "http://cran.rstudio.org")
 library(dplyr)
-flights <- select(.data = flights, -year)
+flights <- select(flights, -year)
 names(flights)
 
 ## ------------------------------------------------------------------------
@@ -47,9 +43,6 @@ flights_time <- rename(flights_time,
                        arrival_time = arr_time)
 names(flights_time)
 
-## ----filter, echo=FALSE, fig.cap="Filter diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/filter.png")
-
 ## ------------------------------------------------------------------------
 portland_flights <- filter(flights, dest == "PDX")
 portland_flights
@@ -80,12 +73,6 @@ count(not_summer_flights, month)
 not_summer2 <- filter(flights, month <= 5 | month >= 9)
 count(not_summer2, month)
 
-## ----sum1, echo=FALSE, fig.cap="Summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/summarize1.png")
-
-## ----sum2, echo=FALSE, fig.cap="Another summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/summary.png")
-
 ## ------------------------------------------------------------------------
 summarize(weather,
           mean = mean(temp),
@@ -102,9 +89,6 @@ summary_temp
 summary_temp$mean
 summary_temp$std_dev
 
-## ----groupsummarize, echo=FALSE,fig.cap="Group by and summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/group_summary.png")
-
 ## ------------------------------------------------------------------------
 grouped_weather <- group_by(weather, month)
 summary_tempXmonth <- summarize(grouped_weather,
@@ -118,9 +102,6 @@ grouped_flights <- group_by(flights, origin)
 by_origin <- summarize(grouped_flights,
                        count = n())
 by_origin
-
-## ----select, echo=FALSE, fig.cap="Mutate diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/mutate.png")
 
 ## ------------------------------------------------------------------------
 flights_plus <- mutate(flights,
@@ -193,9 +174,6 @@ ten_freq_dests <- flights %>%
 ## ----eval=FALSE----------------------------------------------------------
 ## View(airports)
 
-## ----reldiagram, echo=FALSE, fig.cap="Data relationships in nycflights13 from R for Data Science"----
-knitr::include_graphics("images/relational-nycflights.png")
-
 ## ------------------------------------------------------------------------
 airports_small <- airports %>%
   select(faa, name)
@@ -205,7 +183,3 @@ named_freq_dests <- ten_freq_dests %>%
   inner_join(airports_small, by = c("dest" = "faa")) %>%
   rename(airport_name = name)
 named_freq_dests
-
-## ----ijdiagram, echo=FALSE, fig.cap="Diagram of inner join from R for Data Science"----
-knitr::include_graphics("images/join-inner.png")
-

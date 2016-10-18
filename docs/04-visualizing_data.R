@@ -1,6 +1,3 @@
-## ----setup_viz, include=FALSE--------------------------------------------
-knitr::opts_chunk$set(tidy = FALSE, fig.align = "center", out.width='\\textwidth')
-
 ## ----warning=FALSE, message=FALSE, results="hide"------------------------
 if(!require("nycflights13"))
   install.packages("nycflights13", repos = "http://cran.rstudio.org")
@@ -77,10 +74,11 @@ flights_table <- count(x = flights, vars = carrier)
 flights_table
 
 ## ----carrierpie, echo=FALSE, fig.cap="The dreaded pie chart", fig.height=5----
+## You don't need to know this code.  Pie charts aren't friendly in R either!
 ggplot(flights, aes(x = factor(1), fill = carrier)) +
   geom_bar(width = 1) +
   coord_polar(theta = "y") +
-  theme(axis.title.x = element_blank(), 
+  theme(axis.title.x = element_blank(),
     axis.title.y = element_blank(),
     axis.ticks = element_blank(),
     axis.text.y = element_blank(),
@@ -88,9 +86,6 @@ ggplot(flights, aes(x = factor(1), fill = carrier)) +
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank()) +
   guides(fill = guide_legend(keywidth = 0.8, keyheight = 0.8))
-
-## ----echo=FALSE, fig.align='center', fig.cap="The only good pie chart", out.height=if(knitr:::is_latex_output()) '2.5in'----
-knitr::include_graphics("images/Pie-I-have-Eaten.jpg")
 
 ## ----message=FALSE-------------------------------------------------------
 library(dplyr)
@@ -114,23 +109,23 @@ alaska_cap <- "Arrival Delays vs Departure Delays for Alaska Airlines flights fr
 
 ## ----noalpha, warning=FALSE, fig.cap=alaska_cap, fig.height=4------------
 alaska_flights <- filter(flights, carrier == "AS")
-ggplot(alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
+ggplot(alaska_flights, aes(x = dep_delay, y = arr_delay)) +
   geom_point()
 
 ## ----warning=FALSE, fig.cap="Jittered delay scatterplot", fig.height=4----
-ggplot(alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
+ggplot(alaska_flights, aes(x = dep_delay, y = arr_delay)) +
   geom_jitter(width = 30, height = 30)
 
 ## ----alpha, warning=FALSE, fig.cap=paste(alaska_cap, "- alpha=0.2", fig.height=1)----
-ggplot(alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
+ggplot(alaska_flights, aes(x = dep_delay, y = arr_delay)) +
   geom_point(alpha = 0.2)
 
 ## ----jitteralpha, warning=FALSE, fig.cap=paste(alaska_cap, "- jitter and alpha added", fig.height=1)----
-ggplot(alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
+ggplot(alaska_flights, aes(x = dep_delay, y = arr_delay)) +
   geom_jitter(width = 30, height = 30, alpha = 0.3)
 
 ## ----warning=FALSE, fig.cap="Hard to read scatterplot", cache=TRUE-------
-ggplot(flights, aes(x = time_hour, y = arr_delay)) + 
+ggplot(flights, aes(x = time_hour, y = arr_delay)) +
   geom_point()
 
 ## ------------------------------------------------------------------------
@@ -144,7 +139,3 @@ flights_summarized
 ## ----lineflights, fig.cap="Line-graph of median arrival delay for flights leaving NYC in 2013 versus day of the year", fig.height=3.1----
 ggplot(data = flights_summarized, aes(x = date, y = median_arr_delay)) +
   geom_line()
-
-## ----include=FALSE-------------------------------------------------------
-knitr::purl("04-visualizing_data.Rmd")
-
