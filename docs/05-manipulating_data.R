@@ -141,24 +141,6 @@ freq_dest %>% arrange(desc(num_flights))
 freq_dest %>% top_n(n = 10, wt = num_flights)
 
 ## ------------------------------------------------------------------------
-arrange(top_n(freq_dest, n = 10, wt = num_flights), desc(num_flights))
-
-## ----eval=FALSE----------------------------------------------------------
-## arrange(top_n(freq_dest, n = 10, wt = num_flights), desc(num_flights))
-
-## ------------------------------------------------------------------------
-arrange(
-  top_n(freq_dest, 
-        n = 10,
-        wt = num_flights), 
-  desc(num_flights))
-
-## ------------------------------------------------------------------------
-freq_dest %>%
-  top_n(n = 10, wt = num_flights) %>%
-  arrange(desc(num_flights))
-
-## ------------------------------------------------------------------------
 ten_freq_dests <- flights %>%
   group_by(dest) %>%
   summarize(num_flights = n()) %>%
