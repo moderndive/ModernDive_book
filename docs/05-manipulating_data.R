@@ -1,4 +1,6 @@
 ## ------------------------------------------------------------------------
+if(!require(nycflights13))
+  install.packages("nycflights13", repos = "http://cran.rstudio.org")
 library(nycflights13)
 data(flights)
 dim(flights)
@@ -67,8 +69,13 @@ not_summer_flights
 not_summer_flights %>% count(month)
 
 ## ------------------------------------------------------------------------
+<<<<<<< HEAD
 not_summer2 <- flights %>% filter(month <= 5 | month >= 9)
 not_summer2 %>% count(month)
+=======
+not_summer2 <- filter(flights, month <= 5 | month >= 9)
+count(not_summer2, month)
+>>>>>>> 4ab23aa9ddd89413ce4a5aec177faec9ef4a0378
 
 ## ------------------------------------------------------------------------
 weather %>% summarize(mean = mean(temp),
