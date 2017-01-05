@@ -1,0 +1,533 @@
+# Data Manipulation via `dplyr` {#manip}
+
+<!--
+- Make sure to refer back to plots in the viz chapter and how the
+  material here relates to answering those questions
+-->
+
+```{r setup_manip, include=FALSE}
+chap <- 5
+lc <- 0
+rq <- 0
+# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
+# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
+knitr::opts_chunk$set(tidy = FALSE, out.width='\\textwidth')#, fig.align = "center")
+```
+
+
+Let's briefly recap where we have been so far and where we are headed.  In Chapter \@ref(tidy), we discussed what it means for data to be tidy.  We saw that this refers to observational units corresponding to rows and variables being stored in columns.  The entries in the data frame correspond to different combinations of observational units and variables.  In the `flights` data frame, we saw that each row corresponded to a different flight leaving New York City.  (In other words, the observational unit of that tidy data frame is a flight.)  The variables are listed as columns and for `flights` they include both quantitative variables like `dep_delay` and `distance` but also categorical variables like `carrier` and `origin`.  An entry in the table corresponds to a particular flight on a given day and a particular value of a given variable representing that flight.
+
+We saw in Chapter \@ref(viz) that organizing data in this tidy way makes it easy for us to produce graphics.  We can simply specify what variable/column we would like on one axis, what variable we'd like on the other axis, and what type of plot we'd like to make.  We can also do things such as changing the color by another variable or change the size of our points by a fourth variable given this tidy data set.
+
+In Chapter \@ref(viz), we also introduced some ways to summarize and manipulate data to suit your needs.  This chapter focuses more on the details of this by giving a variety of examples using the five main verbs in the `dplyr` package [@R-dplyr].  There are more advanced operations that can be done than these and you'll see some examples of this near the end of the chapter.  
+
+As we saw with the RStudio cheatsheet on [data visualization](https://www.rstudio.com/wp-content/uploads/2015/12/ggplot2-cheatsheet-2.0.pdf), RStudio has also created a cheatsheet for data manipulation entitled "Data Wrangling with dplyr and tidyr" available [here](https://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf).  We will focus only on the `dplyr` functions in this book, but you are encouraged to also explore `tidyr` if you are presented with data that is not in the tidy format that we have specified as the preferred option for our purposes.
+
+## Five Main Verbs - The FMV
+
+If you scan over the Data Wrangling cheatsheet, you may be initially overwhelmed by the amount of functions available.  You'll see the use of all of these as you work more and more with data frames in R.  The `d` in `dplyr` stands for data frames so the functions here work when you are working with objects of the data frame type.
+
+It's most important for you to focus on the five most commonly used functions that help us manipulate and summarize data.  A description of these verbs follows with each subsection devoted to seeing an example of that verb in play (or a combination of a few verbs):
+
+- `select`: Choose variables/columns by their names
+- `filter`: Pick rows based on conditions about their values
+- `summarize`: Create summary measures of variables (or groups of observations on variables using `group_by`)
+- `mutate`: Make a new variable in the data frame
+- `arrange`: Sort the rows based on one or more variables
+
+Just as we had the 5NG (The Five Named Graphs in Chapter \@ref(viz) using `ggplot2`), we have the FMV here (The Five Main Verbs in `dplyr`):
+
+### Select variables using `select` {#select}
+
+```{r selectfig, echo=FALSE, fig.cap="Select diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
+knitr::include_graphics("images/select.png")
+```
+
+We've seen that the `flights` data frame in the `nycflights13` package contains many different variables (19 in fact).  You can identify this by running the `dim` function or the `ncol` function:
+
+```{r}
+library(nycflights13)
+data(flights)
+dim(flights)
+ncol(flights)
+```
+
+One of these variables is `year`.  If you remember the original description of the `flights` data frame (or by running `?flights`), you'll remember that this data correspond to flights in 2013 departing New York City.  The `year` variable isn't really a variable here in that it doesn't vary... `flights` actually comes from a larger data set that covers many years.  We may want to remove the `year` variable from our data set since it won't be helpful for analysis in this case.  To do so easily, we use the `select` variable:
+
+```{r}
+if(!require(dplyr))
+  install.packages("dplyr", repos = "http://cran.rstudio.org")
+library(dplyr)
+flights <- select(.data = flights, -year)
+names(flights)
+```
+
+Here we have specified that the first argument to `select` is the `.data` argument.  (Remember that you can get an idea for what arguments a function requires by using the `?` operator.  In this case `?select` will show you information about the `select` function in the `dplyr` package.)  We will likely avoid specifying this going forward since the `.data` argument is implied to be the first argument in many cases.  The `names` function gives a listing of all the columns in a data frame.  We see that `year` has been removed.  This was done using a `-` in front of the name of the column we'd like to remove.
+
+We could also select specific columns (instead of deselecting columns) by listing them out:
+
+```{r}
+flight_dep_times <- select(flights, month, day, dep_time, sched_dep_time)
+flight_dep_times
+```
+
+Or we could specify a ranges of columns:
+
+```{r}
+flight_arr_times <- select(flights, month:day, arr_time:sched_arr_time)
+flight_arr_times
+```
+
+The `select` function can also be used to reorder columns in combination with the `everything` helper function.  Let's suppose we'd like the `hour`, `minute`, and `time_hour` variables, which appear at the end of the `flights` data set, to actually appear immediately after the `day` variable:
+
+```{r}
+flights_reorder <- select(flights, month:day, hour:time_hour, everything())
+names(flights_reorder)
+```
+
+Lastly, the helper functions `starts_with`, `ends_with`, and `contains` can be used to choose column names that match those conditions:
+
+```{r}
+flights_begin_a <- select(flights, starts_with("a"))
+flights_begin_a
+```
+
+```{r}
+flights_delays <- select(flights, ends_with("delay"))
+flights_delays
+```
+
+```{r}
+flights_time <- select(flights, contains("time"))
+flights_time
+```
+
+Another useful function is `rename`, which as you may suspect renames one column to another name.  Suppose we wanted `dep_time` and `arr_time` to be `departure_time` and `arrival_time` instead in the `flights_time` data frame:
+
+```{r}
+flights_time <- rename(flights_time,
+                       departure_time = dep_time,
+                       arrival_time = arr_time)
+names(flights_time)
+```
+
+It's easy to forget if the new name comes before or after the equals sign.  I usually remember this as "New Before, Old After" or NBOA.
+
+You'll receive an error if you try to do it the other way:
+
+```
+Error: Unknown variables: departure_time, arrival_time.
+```
+
+***
+
+```{block lc5-1, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are some ways to select all three of the `dest`, `air_time`, and `distance` variables from `flights`?  Give the code showing how to do this in at least three different ways.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How could one use `starts_with`, `ends_with`, and `contains` to select columns from the `flights` data frame?  Provide three different examples in total: one for `starts_with`, one for `ends_with`, and one for `contains`.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why might we want to use the `select` function on a data frame?
+
+***
+
+### Filter observations using `filter` {#filter}
+
+```{r filter, echo=FALSE, fig.cap="Filter diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
+knitr::include_graphics("images/filter.png")
+```
+
+All of the FMVs follow the same syntax with the first argument to the function/verb being the name of the data frame and then the other arguments specifying which criteria you'd like the verb to work with.
+
+The `filter` function here works much like the "Filter" option in Microsoft Excel.  It allows you to specify criteria about values of a variable in your data set and then chooses only those rows that match that criteria.  We begin by focusing only on flights from New York City to Portland, Oregon.  The `dest` code (or airport code) for Portland, Oregon is `"PDX"`:
+
+```{r}
+portland_flights <- filter(flights, dest == "PDX")
+portland_flights
+```
+
+Note the second equals sign here.  You are almost guaranteed to make the mistake at least once of only including one equals sign.  Let's see what happens when we make this error:
+
+```{r eval=FALSE}
+portland_flights <- filter(flights, dest = "PDX")
+```
+
+```
+Error: filter() takes unnamed arguments. Do you need `==`?
+```
+
+We see that there were `r nrow(portland_flights)` flights from New York City to Portland in 2013.  Let's combine this with what we saw in the previous subsection to ensure that Portland flights were selected:
+
+```{r}
+reordered_flights <- select(flights, dest, everything())
+pdx_flights <- filter(reordered_flights, dest == "PDX")
+pdx_flights
+```
+
+We see that Portland flights were selected here.  You could also run `View(pdx_flights)` to glance at the data in spreadsheet form.
+
+You can combine multiple criteria together using operators that make comparisons:
+
+- `|` corresponds to "or"
+- `&` corresponds to "and"
+
+We can often skip the use of `&` and just separate our conditions with a comma.  You'll see this in the example below.
+
+In addition, you can use other mathematical checks (similar to `==`):
+
+- `>` corresponds to "greater than"
+- `<` corresponds to "less than"
+- `>=` corresponds to "greater than or equal to"
+- `<=` corresponds to "less than or equal to"
+- `!=` corresponds to "not equal to"
+
+To see many of these in action, let's select all flights that left JFK airport heading to Burlington, Vermont (`"BTV"`) or Seattle, Washington (`"SEA"`) in the months of October, November, or December:
+
+```{r}
+btv_sea_flights_fall <- filter(flights,
+                               origin == "JFK", 
+                               (dest == "BTV") | (dest == "SEA"),
+                               month >= 10)
+```
+
+Another example uses the `!` to pick rows that **DON'T** match a condition.  Here we are referring to excluding the Northern Hemisphere summer months of June, July, and August.
+
+```{r}
+not_summer_flights <- filter(flights,
+                             !between(month, 6, 8))
+not_summer_flights
+```
+
+To check that we are correct here we can use the `count` function in the `dplyr` package on the `month` variable in our `not_summer_flights` data frame to ensure June, July, and August are not selected:
+
+```{r}
+count(not_summer_flights, month)
+```
+
+The function `between` is a shortcut.  We could also have written the following to get the same result:
+
+```{r}
+not_summer2 <- filter(flights, month <= 5 | month >= 9)
+count(not_summer2, month)
+```
+
+
+```{block lc5-2, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What's another way using `!` we could filter only the rows that are not summer months (June, July, or August) in the `flights` data frame?
+
+***
+
+### Summarize variables using `summarize`
+
+```{r sum1, echo=FALSE, fig.cap="Summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
+knitr::include_graphics("images/summarize1.png")
+```
+
+```{r sum2, echo=FALSE, fig.cap="Another summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
+knitr::include_graphics("images/summary.png")
+```
+
+We saw in Subsection \@ref(contsum) a way to calculate the standard deviation and mean of the temperature variable `temp` in the `weather` data frame of `nycflights`.  We can do so in one step using the `summarize` function in `dplyr`:
+
+```{r}
+summarize(weather,
+          mean = mean(temp),
+          std_dev = sd(temp))
+```
+
+What happened here?  The mean and the standard deviation temperatures are missing?  Remember that by default the `mean` and `sd` functions do not ignore missing values.  We need to specify `TRUE` for the `na.rm` parameter:
+
+```{r}
+summary_temp <- summarize(weather,
+          mean = mean(temp, na.rm = TRUE),
+          std_dev = sd(temp, na.rm = TRUE)
+          )
+summary_temp
+```
+
+We've created a small data frame here called `summary_temp` that includes both the `mean` and the `std_dev` of the `temp` variable in `weather`.  If we'd like to access either of these values directly we can use the `$` to specify a column in a data frame:
+
+```{r}
+summary_temp$mean
+summary_temp$std_dev
+```
+
+It's often more useful to summarize a variable based on the groupings of another variable.  Let's say we were interested in the mean and standard deviation of temperatures for each month.  We believe that you will be amazed at just how simple this is:
+
+```{r groupsummarize, echo=FALSE,fig.cap="Group by and summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
+knitr::include_graphics("images/group_summary.png")
+```
+
+```{r}
+grouped_weather <- group_by(weather, month)
+summary_tempXmonth <- summarize(grouped_weather,
+          mean = mean(temp, na.rm = TRUE),
+          std_dev = sd(temp, na.rm = TRUE)
+          )
+summary_tempXmonth
+```
+
+By simply grouping the `weather` data set by `month` first and then passing this new data frame into `summarize` we get a resulting data frame that shows the mean and standard deviation temperature for each month in New York City.
+
+Another useful function is the `n` function which gives a count of how many entries appeared in the groupings.  Suppose we'd like to get a sense for how many flights departed each of the three airports in New York City:
+
+```{r}
+grouped_flights <- group_by(flights, origin)
+by_origin <- summarize(grouped_flights,
+                       count = n())
+by_origin
+```
+
+We see that Newark (`"EWR"`) had the most flights departing in 2013 followed by `"JFK"` and lastly by LaGuardia (`"LGA"`).
+
+
+```{block lc5-3, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Recall from Chapter \@ref(viz) when we looked at plots of temperatures by months in NYC. What does the standard deviation column in the `summary_tempXmonth` data frame tell us about temperatures in New York City throughout the year?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What code would be required to get the mean and standard deviation temperature for each day in 2013 for NYC?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How could we identify how many flights left each of the three airports in each of the months of 2013?
+
+***
+
+### Create new variables/change old variables using `mutate`
+
+```{r select, echo=FALSE, fig.cap="Mutate diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
+knitr::include_graphics("images/mutate.png")
+```
+
+When looking at the `flights` data set, there are some clear additional variables that could be calculated based on the values of variables already in the data set.  Passengers are often frustrated when their flights departs late, but change their mood a bit if pilots can make up some time during the flight to get them to their destination close to when they expected to land.  This is commonly referred to as "gain" and we will create this variable using the `mutate` function:
+
+```{r}
+flights_plus <- mutate(flights,
+         gain = arr_delay - dep_delay)
+```
+
+We can now look at summary measures of this `gain` variable and even plot it in the form of a histogram:
+
+```{r}
+gain_summary <- summarize(flights_plus,
+          min = min(gain, na.rm = TRUE),
+          q1 = quantile(gain, 0.25, na.rm = TRUE),
+          median = quantile(gain, 0.5, na.rm = TRUE),
+          q3 = quantile(gain, 0.75, na.rm = TRUE),
+          max = max(gain, na.rm = TRUE),
+          mean = mean(gain, na.rm = TRUE),
+          sd = sd(gain, na.rm = TRUE),
+          missing = sum(is.na(gain))
+)
+gain_summary
+```
+
+We've recreated the `summary` function we saw in Chapter \@ref(viz) here using the `summarize` function in `dplyr`.
+
+```{r message=FALSE, warning=FALSE, fig.cap="Histogram of gain variable"}
+library(ggplot2)
+ggplot(flights_plus, aes(x = gain)) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+We can also create multiple columns at once and even refer to columns that were just created in a new column.  Hadley produces one such example in Chapter 5 of "R for Data Science" [@rds2016]:
+
+```{r}
+flights_plus2 <- mutate(flights,
+  gain = arr_delay - dep_delay,
+  hours = air_time / 60,
+  gain_per_hour = gain / hours
+)
+```
+
+***
+
+```{block lc5-4, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What do positive values of the `gain` variable in `flights_plus` correspond to?  What about negative values?  And what about a zero value?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Could we create the `dep_delay` and `arr_delay` columns by simply subtracting `dep_time` from `sched_dep_time` and similarly for arrivals?  Try the code out and explain any differences between the result and what actually appears in `flights`.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What can we say about the distribution of `gain`?  Describe it in a few sentences using the plot and the `gain_summary` data frame values.
+
+***
+
+### Reorder the data frame using `arrange` {#arrange}
+
+As you may have thought about with the data frames we've worked with so far in the book, one of the most common things you'd like to do is sort the data frames by a specific column.  Have you ever been asked to calculate a median by hand?  This requires you to put the data in order from smallest to highest in value.  The `dplyr` package has a function called `arrange` that we will use to sort/reorder our data according to the values of the specified variable.  This is most frequently used after we have used the `group_by` and `summarize` functions as we will see.
+
+Let's suppose we were interested in determining the most frequent destination airports from New York City in 2013:
+
+```{r}
+by_dest <- group_by(flights, dest)
+freq_dest <- summarize(by_dest, num_flights = n())
+freq_dest
+```
+
+You'll see that by default the values of `dest` are displayed in alphabetical order here.  Remember to use `View()` in the R Console to look at all the values of `freq_dest` in spreadsheet format.  We are interested in finding those airports that appear most:
+
+```{r}
+arrange(freq_dest, num_flights)
+```
+
+This is actually giving us the opposite of what we are looking for.  It tells us the least frequent destination airports first.  To switch the ordering to be descending instead of ascending we use the `desc` function:
+
+```{r}
+arrange(freq_dest, desc(num_flights))
+```
+
+We can also use the `top_n` function which automatically tells us the most frequent `num_flights`.  We specify the top 10 airports here:
+
+```{r}
+top_n(freq_dest, n = 10, wt = num_flights)
+```
+
+We'll still need to arrange this by `num_flights` though:
+
+```{r}
+arrange(top_n(freq_dest, n = 10, wt = num_flights), desc(num_flights))
+```
+
+**Note:** Remember that I didn't pull the `n` and `wt` arguments out of thin air.  They can be found by using the `?` function on `top_n`.
+
+```{block lc5-5, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Create a new data frame that shows the top 5 airports with the largest arrival delays from NYC in 2013.
+
+***
+
+## The pipe `%>%`
+
+Just as the `+` sign was used to add layers to a plot created using `ggplot` we will use the pipe operator (`%>%`) to chain together `dplyr` functions.  We'll see that we can even chain together `dplyr` functions and plotting code.  (Both `ggplot2` and `dplyr` were created by Hadley after all.)
+
+You may have been a little confused by the last chunk we created above:
+
+```{r eval=FALSE}
+arrange(top_n(freq_dest, n = 10, wt = num_flights), desc(num_flights))
+```
+
+If we don't create temporary variables like we did before with `by_dest`, `grouped_flights`, etc., we start to get into the issue of trying to match parentheses.  We could separate this code a bit to help with this:
+
+```{r}
+arrange(
+  top_n(freq_dest, 
+        n = 10,
+        wt = num_flights), 
+  desc(num_flights))
+```
+
+Even this make it difficult to understand what is exactly happening though.  `desc(num_flights)` is an argument to `arrange` and this isn't easy to see immediately.  The best way to fix this problem is the use of the chaining operator called the pipe (`%>%`):
+
+```{r}
+freq_dest %>%
+  top_n(n = 10, wt = num_flights) %>%
+  arrange(desc(num_flights))
+```
+
+Recall from Chapter \@ref(viz) that we read the pipe operator as "and then".  So here we take the `freq_dest` data frame **AND THEN** we determine the top 10 values of `num_flights` **AND THEN** we arrange these top 10 flights according to descending numbers of flights (from highest to lowest).  
+
+We can go one stop further and tie together the `group_by` and `summarize` functions we used to find the most frequent flights:
+
+```{r}
+ten_freq_dests <- flights %>%
+  group_by(dest) %>%
+  summarize(num_flights = n()) %>%
+  top_n(n = 10) %>%
+  arrange(desc(num_flights))
+```
+
+
+```{block lc5-6, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Recreate each of the chunks of code above Subsection 5.1.5 in this chapter using the `%>%` operator.  Note that sometimes you can combine multiple subsequent chunks of code together.  Do so whenever possible.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What benefits can you see to using the pipe instead of the other way of doing things as you saw throughout this chapter?  Give specific examples.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  Write out exactly how the `ten_freq_dests` data set was created using the "and then" verbiage.
+
+***
+The piping syntax will be our major focus throughout the rest of this book and you'll find that you'll quickly be addicted to the chaining with some practice. If you'd like to see more examples on using `dplyr`, the FMV (in addition to some other `dplyr` verbs), and `%>%` with the `nycflights13` data set, you can check out Chapter 5 of Hadley and Garrett's book [@rds2016].
+
+## Joining/merging data frames
+
+Something you may have thought to yourself as you looked at the most freqent destinations of flights from NYC in 2013 is 
+
+- "What cities are these airports in?" 
+- "Is `"ORD"` Orlando?"
+- "Where is `"FLL"`?
+
+The `nycflights13` data package contains multiple data frames.  Instead of having to manually look up different values of airport names corresponding to airport codes like `ORD`, we can have R automatically do this "looking up" for us.  To do so, we'll need to tell R how to match one data frame to another data frame.  Let's first check out the `airports` data frame inside of R:
+
+```{r eval=FALSE}
+View(airports)
+```
+
+The first column `faa` corresponds to the airport codes that we saw in `dest` in our `flights` and subsequent `ten_freq_dests` data sets.  Hadley and Garrett [@rds2016] created the following diagram to help us understand how the different data sets are linked:
+
+```{r reldiagram, echo=FALSE, fig.cap="Data relationships in nycflights13 from R for Data Science"}
+knitr::include_graphics("images/relational-nycflights.png")
+```
+
+We see from `View(airports)` that `airports` contains a lot of other information about `r nrow(airports)`.  We are only really interested here in the `faa` and `name` columns.  Let's use the `select` function to only use those variables:
+
+```{r}
+airports_small <- airports %>%
+  select(faa, name)
+```
+
+So if we identify the names of the airports we can use the `inner_join` function to bring two different data frames together.  Note that we will also rename the subsequent column `name` as `airport_name`:
+
+```{r}
+named_freq_dests <- ten_freq_dests %>%
+  inner_join(airports_small, by = c("dest" = "faa")) %>%
+  rename(airport_name = name)
+named_freq_dests
+```
+
+In case you didn't know, `"ORD"` is the airport code of Chicago O'Hare airport and `"FLL"` is the main airport in Fort Lauderdale, Florida, which we can now see in our `named_freq_dests` data frame.
+
+A visual representation of the `inner_join` is given below [@rds2016]:
+
+```{r ijdiagram, echo=FALSE, fig.cap="Diagram of inner join from R for Data Science"}
+knitr::include_graphics("images/join-inner.png")
+```
+
+There are more complex joins available, but the `inner_join` will solve nearly all of the problems you'll face in our experience.
+
+***
+
+```{block lc5-7, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What happens when you try to `inner_join` the `ten_freq_dests` data frame with `airports` instead of `airports_small`?  How might one use this result to answer further questions about the top 10 destinations?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What surprises you about the top 10 destinations from NYC in 2013?
+
+***
+
+## Script of R code
+
+```{r include=FALSE, eval=FALSE}
+knitr::purl("05-manip.Rmd", "docs/05-manip.R")
+```
+
+An R script file of all R code used in this chapter is available [here](http://ismayc.github.io/moderndiver-book/05-manip.R).
+
+
+## What's to come?
+
+This concludes the **Data Exploration** unit of this book.  You should be pretty proficient in both plotting variables (or multiple variables together) in various data sets and manipulating data as we've done in this chapter.  You are encouraged to step back through the code in earlier chapters and make changes as you see fit based on your updated knowledge.  
+
+In Chapter \@ref(infer-basics), we'll begin to build the pieces needed to understand how this unit of **Data Exploration** can tie into statistical inference in the **Inference** part of the book.  Remember that the focus throughout is on data visualization and we'll see that next when we discuss sampling, resampling, and bootstrapping.  These ideas will lead us into hypothesis testing and confidence intervals.

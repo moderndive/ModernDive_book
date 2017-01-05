@@ -14,6 +14,206 @@ knitr::opts_chunk$set(tidy = FALSE, out.width='\\textwidth')#, fig.align = "cent
 
 A *confidence interval* gives a range of plausible values for a parameter.  It depends on a specified _confidence level_ with higher confidence levels corresponding to wider confidence intervals and lower confidence levels corresponding to narrower confidence intervals.  Common confidence levels include 90%, 95%, and 99%.
 
+
+## Bootstrapping
+
+Just as we did in the previous section when making hypotheses about a population proportion with which we would like to test which one is more plausible, we can also use simulation to infer conclusions about a population quantitative statistic such as the mean.  In this case, we will focus on constructing confidence intervals to produce plausible values for a population mean.  (We can do a similar analysis for a population median or other summary measure as well.)
+
+Traditionally, the way to construct confidence intervals for a mean is to assume a normal distribution for the population or to invoke the Central Limit Theorem and get, what often appears to be magic, results.  These methods are often not intuitive, especially for those that lack a strong mathematical background.  They also come with their fair share of assumptions and often turn Statistics, a field that is full of tons of useful applications to many different fields and disciplines, into a robotic procedural-based topic.  It doesn't have to be that way!
+
+In this section, we will introduce the concept of **bootstrapping**.  It will be a useful tool that will allow us to estimate the variability of our statistic from sample to sample.  One neat feature of bootstrapping is that it enables us to approximate the sampling distribution and estimate the distribution's standard deviation using ONLY the information in the one selected (original) sample.  
+
+It sounds just as plagued with the magical type qualities of traditional theory-based inference on initial glance but we will see that it provides an intuitive and useful way to make inferences, especially when the samples are of medium to large size.  
+
+<!--We will begin by investigating an example on the selling prices of used Ford Mustang cars taken from the textbook {\it Statistics:  UnLOCKing the Power of Data} by Lock, Lock, Lock, Lock, and Lock.  (That isn't me hitting Copy+Paste too many times.  Patti and Robin Lock both work in the Mathematics Department at St. Lawrence University and they have three children that are statisticians.  They are often referred to as the Lock5.)
+-->
+
+To introduce the concept of bootstrapping, we now introduce the `movies` data set in the `ggplot2movies` data frame.  We will load this data frame into R in much the same way as we loaded `flights` and `weather` from the `nycflights13` package.  (Remember that to load the package using `library` you need to first make sure you have installed the package using the `install.packages` function.)
+
+```{r}
+library(ggplot2movies)
+data(movies, package = "ggplot2movies")
+```
+
+Let's also glance at this data frame using the `View` function and look at the help documentation for `movies`:
+
+```{r eval=FALSE}
+View(movies)
+?movies
+```
+
+We will explore many other features of this data set in the chapters to come, but here we will be focusing on the `rating` variable corresponding to the average IMDB user rating.
+
+You may notice that this data set is quite large:  `r format(nrow(movies), big.mark = ",")` movies have data collected about them here.  This will correspond to our population of ALL movies.  Remember from Chapter \@ref(infer-basics) that our population is rarely known.  We use this data set as our population here to show you the power of bootstrapping in estimating population parameters.  We'll see how **confidence intervals** built using the bootstrap distribution do at including our population parameter of interest.  Here we can actually calculate these values since our population is known, but remember that in general this isn't the case.
+
+Let's take a look at what the distribution of our population `ratings` looks like.  We'll see that we will use the distribution of our sample(s) as an estimate of this population histogram.
+
+```{r fig.cap="Population ratings histogram"}
+movies %>% ggplot(aes(x = rating)) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+
+***
+```{block lc7-3, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why was a histogram chosen as the plot to make for the `rating` variable above?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why does the shape of the `rating` histogram tell us about how IMDB users rate movies?  What stands out about the plot?
+
+***
+
+It's important to think about what our goal is here.  We would like to produce a confidence interval for the population mean `rating`.  We will have to pretend for a moment that we don't have all `r format(nrow(movies), big.mark = ",")` movies.  Let's say that we only have a random sample of 50 movies from this data set instead.  In order to get a random sample, we can use the `sample_n` function from `dplyr`:
+
+```{r}
+set.seed(2016)
+movies_sample <- movies %>%
+  sample_n(50)
+```
+
+The `sample_n` function has filtered the data frame `movies` "at random" to choose only 50 rows from the larger `movies` data frame.  We store information on these 50 movies in the `movies_sample` data frame.
+
+Let's now explore what the `rating` variable looks like for these 50 movies:
+
+```{r fig.cap="Sample ratings histogram"}
+movies_sample %>% ggplot(aes(x = rating)) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+Remember that we can think of this histogram as an estimate of our population distribution histogram that we saw above.  We are interested in the population mean rating and trying to find a range of plausible values for that value.  A good start in guessing the population mean is to use the mean of our sample `rating` from the `movies_sample` data:
+
+```{r}
+(movies_sample_mean <- movies_sample %>% summarize(mean = mean(rating)))
+```
+
+Note the use of the `( )` at the beginning and the end of this creation of the `movies_sample_mean` object.  If you'd like to print out your newly created object, you can enclose it in the parentheses as we have here.
+
+This value of `r movies_sample_mean` is just one guess at the population mean. The idea behind _bootstrapping_ is to sample **with replacement** from the original sample to create new **resamples** of the same size as our original sample.
+
+Returning to our example, let's investigate what one such resample of the `movies_sample` data set accomplishes.  We can create one resample/bootstrap sample by using the `resample` function in the `mosaic` package.  
+
+```{r}
+library(mosaic)
+library(tibble)
+boot1 <- resample(movies_sample, orig.ids = TRUE) %>%
+  select(orig.id, everything()) %>%
+  arrange(orig.id)
+```
+
+Take a look at this resample/bootstrap:
+
+```{r eval=FALSE}
+View(boot1)
+```
+
+
+The important thing to note here is the original row numbers from the `movies_sample` data frame in the far left column called `orig.ids`.  Since we are sampling with replacement, there is a strong likelihood that some of the 50 observational units are going to be selected again.
+
+You may be asking yourself what does this mean and how to this lead us to creating a distribution for the sample mean.  Recall that the original sample mean of our data was calculated using the `summarize` function above.
+
+***
+
+```{block lc6-3, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What happens if we change the seed to our pseudo-random generation?  Try it above when we used `sample_n` to describe the resulting `movies_sample`.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why is sampling at random important from the `movies` data frame?  Why don't we just pick `Action` movies and do bootstrapping with this `Action` movies subset?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What was the purpose of assuming we didn't have access to the full `movies` data set here?
+
+***
+
+Before we had a calculated mean in our original sample of `r movies_sample_mean`.  Let's calculate the mean of `ratings` in our
+bootstrapped sample:
+
+```{r}
+(movies_boot1_mean <- boot1 %>% summarize(mean = mean(rating)))
+```
+
+More than likely the calculated bootstrap sample mean is different than the original sample mean.  This is what I meant earlier when I said that the sample means have some variability.  What we are trying to do is replicate many different samples being taken from a larger population.  Our best guess at what the population looks like is multiple copies of the sample we collected.  We then can sample from that larger "created" population by generating bootstrap samples.  
+
+Similar to what we did in the previous section, we can repeat this process using the `do` function followed by an asterisk.  Let's look at 10 different bootstrap means for `ratings` from `movies_sample`.  Note the use of the `resample` function here.
+
+```{r}
+do(10) * summarize(resample(movies_sample), mean = mean(rating))
+```
+
+You should see some variability begin to tease its way out here.  Many of the simulated means will be close to our original sample mean but many will stray pretty far away.  This occurs because outliers may have been selected a couple of times in the resampling or small values were selected more than larger.  There are myriad reasons why this might be the case.
+
+So what's the next step now?  Just as we repeated the repetitions thousands of times with the "Lady Tasting Tea" example, we can do a similar thing here.
+
+```{r cache=TRUE, fig.cap="Bootstrapped means histogram"}
+trials <- do(10000) * summarize(resample(movies_sample), 
+                                mean = mean(rating))
+trials %>% ggplot(aes(x = mean)) +
+  geom_histogram(bins = 30, color = "white")
+```
+
+The shape of this resulting distribution may look familiar to you.  It resembles the well-known normal (bell-shaped) curve.  We will see in Chapters \@ref(hypo) and \@ref(ci) when we might expect a normal curve to come through as we have here and when we shouldn't.  There will be specific assumptions that need to be checked and we will see that the normal distribution doesn't always approximate this bootstrapped distribution well.  In those case, we should NOT rely on traditional methods.
+
+At this point, we can easily calculate a confidence interval.  In fact, we have a couple different options.  We will first use the percentiles of the distribution we just created to isolate the middle 95% of values.  This will correspond to our 95% confidence interval for the population mean `rating`, denoted by $\mu$.
+
+```{r}
+(ciq_mean_rating <- confint(trials, level = 0.95, method = "quantile"))
+```
+
+It's always important at this point to interpret the results of this confidence interval calculation.  In this context, we can say something like the following:
+
+> Based on the sample data and bootstrapping techniques, we can be 95% confident that the true mean rating of ALL IMDB ratings is between `r ciq_mean_rating$lower` and `r ciq_mean_rating$upper`.
+
+This statement may seem a little confusing to you.  Remember that we are pretending like we don't know what the mean IMDB rating for ALL movies is.  Our population here is all of the movies listed in the `movies` data frame from `ggplot2movies`.  So does our bootstrapped confidence interval here contain the actual mean value?
+
+```{r}
+summarize(movies, mean = mean(rating))
+```
+
+We see here that the population mean does fall in our range of plausible values generated from the bootstrapped samples.
+
+We can also get an idea of how the theory-based inference techniques would have approximated this confidence interval by using the formula $$\bar{x} \pm (2 * SE),$$ where $\bar{x}$ is our original sample mean and $SE$ stands for **standard error** and corresponds to the standard deviation of the bootstrap distribution.  The value of 2 here corresponds to it being a 95% confidence interval.  This formula assumes that the bootstrap distribution is symmetric.  This is often the case with bootstrap distributions, especially those in which the original distribution of the sample is not highly skewed.
+
+To compute this type of confidence interval, we only need to make a slight modification to the `confint` function seen above.  (The expression after the $\pm$ sign is known as the **margin of error**.)
+
+```{r warning=FALSE, message=FALSE}
+(cise_mean_rating <- confint(trials, level = 0.95, method = "stderr"))
+```
+
+> Based on the sample data and bootstrapping techniques, we can be 95% confident that the true mean rating of ALL IMDB ratings is between `r cise_mean_rating$lower` and `r cise_mean_rating$upper`.
+
+
+***
+
+```{block lc7-4, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Reproduce the bootstrapping above using a sample of size 50 instead of 25.  What changes do you see?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Reproduce the bootstrapping above using a sample of size 5 instead of 25.  What changes do you see?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How does the sample size affect the analysis?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why must bootstrap samples be the same size as the original sample?
+
+***
+
+### Review of Bootstrapping
+
+We can summarize the process to generate a bootstrap distribution here in a series of steps that clearly identify the terminology we will use [@lock2012].
+
+- Generate `bootstrap samples` by sampling with replacement from the original sample, using the same sample size.
+- Compute the statistic of interest, called a `bootstrap statistic`, for each of the bootstrap samples.
+- Collect the statistics for many bootstrap samples to create a `bootstrap distribution`.
+
+Visually, we can represent this process in the following diagram.
+
+```{r bootstrapimg, echo=FALSE, fig.cap="Bootstrapping diagram from Lock5 textbook"}
+knitr::include_graphics("images/bootstrap.png")
+```
+
 ## Relation to hypothesis testing
 
 Recall that we found a statistically significant difference in the sample mean of romance movie ratings compared to the sample mean of action movie ratings.  We concluded Chapter \@ref(hypo) by attempted to understand just how much greater we could expect the _population_ mean romance movie rating to be as compared to the _population_ mean action movie rating.  In order to do so, we will calculate a confidence interval for the difference $\mu_r - \mu_a$.  We'll then go back to our population parameter values and see if our confidence interval contains our parameter value.
