@@ -36,6 +36,51 @@ library(knitr)
 library(nycflights13)
 ```
 
+## When Inference Is Not Needed
+
+Before we delve into the two techniques of inference (hypothesis testing and confidence intervals), it's good to remember that there are cases where you need not perform a rigorous statistical inference.  An important and time-saving skill is to **ALWAYS** do exploratory data analysis using `dplyr` and `ggplot2` before thinking about running a hypothesis test.  Let's look at such an example selecting a sample of flights traveling to Boston and to San Francisco from New York City in the `flights` data frame in the `nycflights13` package.  (We will remove flights with missing data first using `na.omit` and then sample 100 flights going to each of the two airports.)
+
+```{r}
+library(nycflights13)
+data(flights)
+bos_sfo <- flights %>% na.omit() %>% 
+  filter(dest %in% c("BOS", "SFO")) %>% 
+  group_by(dest) %>% 
+  sample_n(100)
+```
+
+Suppose we were interested in seeing if the `air_time` to SFO in San Francisco was statistically greater than the `air_time` to BOS in Boston.  As suggested, let's begin with some exploratory data analysis to get a sense for how the two variables of `air_time` and `dest` relate for these two destination airports:
+
+```{r}
+library(dplyr)
+bos_sfo %>% group_by(dest) %>% 
+  summarize(mean_time = mean(air_time),
+            sd_time = sd(air_time))
+```
+
+Looking at these results, we can clearly see that SFO `air_time` is much larger than BOS `air_time`.  The standard deviation is also extremely informative here.
+
+***
+```{block lc6-2b, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Could we make the same type of immediate conclusion that SFO had a statistically greater `air_time` if, say, its corresponding standard deviation was 200 minutes?  What about 100 minutes?  Explain.
+
+***
+
+To further understand just how different the `air_time` variable is for BOS and SFO, let's look at a boxplot:
+
+```{r}
+library(ggplot2)
+ggplot(data = bos_sfo, mapping = aes(x = dest, y = air_time)) +
+  geom_boxplot()
+```
+
+Since there is no overlap at all, we can conclude that the `air_time` for San Francisco flights is statistically greater (at any level of significance) than the `air_time` for Boston flights.  This is a clear example of not needing to do anything more than some simple descriptive statistics to get an appropriate inferential conclusion.  This is one reason why you should **ALWAYS** investigate the sample data first using `dplyr` and `ggplot2` via exploratory data analysis. 
+  
+As you get more and more practice with hypothesis testing, you'll be better able to determine in many cases whether or not the results will be statistically significant.  There are circumstances where it is difficult to tell, but you should always try to make a guess FIRST about significance after you have completed your data exploration and before you actually begin the inferential techniques.  
+
 ## Basics of Hypothesis Testing
 
 In a hypothesis test, we will use data from a sample to help us decide between two competing _hypotheses_ about a population.  We make these hypotheses more concrete by specifying them in terms of at least one _population parameter_ of interest.  We refer to the competing claims about the population as the **null hypothesis**, denoted by $H_0$, and the **alternative (or research) hypothesis**, denoted by $H_a$.  The roles of these two hypotheses are NOT interchangeable.  
@@ -166,7 +211,7 @@ When results as extreme as the observed sample statistic are unlikely to occur b
 ***
 
 
-## Revisiting the Lady Tasting Tea example
+## EXAMPLE: Revisiting the Lady Tasting Tea
 
 Recall the "There is Only One Test" diagram from earlier:
 
@@ -178,7 +223,7 @@ We will now walk-through how each of the steps to the diagram apply to determini
 
 ### Data
 
-Let's assume as we did in Chapter \@ref(infer-basics), that the lady is correct in determining whether milk was added first in 9 out of 10 trials.  Our data, therefore, may look something like
+Let's assume as we did in Chapter \@ref(infer-basics), that the lady is correct in determining whether milk was added first or not in 9 out of 10 trials.  Our data, therefore, may look something like
 
 ```{r echo=FALSE}
 choice <- c(rep("Correct", 3), "Incorrect", rep("Correct", 6))
@@ -272,7 +317,7 @@ Let's walk through each step of this calculation:
 
     
     ```{r}
-    simGuesses %>% filter(heads >= 9)    
+    kable(simGuesses %>% filter(heads >= 9))    
     ```
 
 4. Now that we have changed the focus to only those rows that have number of heads out of 10 flips corresponding to 9 or more, we count how many of those there are.  The function `nrow` gives how many entries are in this filtered data frame and lastly we calculate the proportion that are at least as extreme as our observed value of 9 by dividing by the number of total simulations (`r format(nrow(simGuesses), big.mark = ",")`).
@@ -304,52 +349,377 @@ We'll see in Chapters \@ref(hypo) and \@ref(ci) that this idea of a $p$-value ca
 
 ***
 
-## When Inference Is Not Needed
+## EXAMPLE: Comparing two means
 
-An important and time-saving skill is to **ALWAYS** do exploratory data analysis using `dplyr` and `ggplot2` before thinking about running a hypothesis test.  Let's look at such an example selecting a sample of flights traveling to Boston and to San Francisco from New York City in the `flights` data frame in the `nycflights13` package.  (We will remove flights with missing data first using `na.omit` and then sample 100 flights going to each of the two airports.)
+### Randomization
 
-```{r}
-library(nycflights13)
-data(flights)
-bos_sfo <- flights %>% na.omit() %>% 
-  filter(dest %in% c("BOS", "SFO")) %>% 
-  group_by(dest) %>% 
-  sample_n(100)
-```
+We will now focus on building hypotheses looking at the difference between two population means in an example.  We will denote population means using the Greek symbol $\mu$ (pronounced "mu").  Thus, we will be looking to see if one group "out-performs" another group.  This is quite possibly the most common type of statistical inference and serves as a basis for many other types of analyses when comparing two groups. 
 
-Suppose we were interested in seeing if the `air_time` to SFO in San Francisco was statistically greater than the `air_time` to BOS in Boston.  As suggested, let's begin with some exploratory data analysis to get a sense for how the two variables of `air_time` and `dest` relate for these two destination airports:
+Our null hypothesis will be of the form $H_0: \mu_1 = \mu_2$, which can also be written as $H_0: \mu_1 - \mu_2 = 0$.  Our alternative hypothesis will be of the form $H_0: \mu_1 \star \mu_2$ (or $H_a:  \mu_1 - \mu_2 \, \star \, 0$) where $\star$ = $<$, $\ne$, or $>$  depending on the context of the problem.  You needn't focus on these new symbols too much at this point.  It will just be a shortcut way for us to describe our hypotheses.
 
-```{r}
+As we saw in Chapter \@ref(infer-basics), simulation and bootstrapping are valuable tools when conducting inferences based on one population variable.  We will see that the process of **randomization**, which is a resampling procedure similar to bootstrapping in some ways, will be valuable in conducting tests comparing quantitative values from two groups.
+
+
+### Comparing Action and Romance Movies
+
+The `movies` data set in the `ggplot2movies` package contains information on a large number of movies that have been rated by users of IMDB.com.  We are interested in the question here of whether `Action` movies are rated higher on IMDB than `Romance` movies.  We will first need to do a little bit of data manipulation using the ideas from Chapter \@ref(manip) to get the data in the form that we would like:
+
+```{r message=FALSE, warning=FALSE}
 library(dplyr)
-bos_sfo %>% group_by(dest) %>% 
-  summarize(mean_time = mean(air_time),
-            sd_time = sd(air_time))
+library(ggplot2movies)
+(movies_trimmed <- movies %>% select(title, year, rating, Action, Romance))
 ```
 
-Looking at these results, we can clearly see that SFO `air_time` is much larger than BOS `air_time`.  The standard deviation is also extremely informative here.
+Note that `Action` and `Romance` are binary variables here.  To remove any overlap of movies (and potential confusion) that are both `Action` and `Romance`, we will remove them from our _population_:
 
+```{r}
+movies_trimmed <- movies_trimmed %>%
+  filter(!(Action == 1 & Romance == 1))
+```
+
+We will now create a new variable called `genre` that specifies whether a movie in our `movies_trimmed` data frame is an `"Action"` movie, a `"Romance"` movie, or `"Neither"`.  We aren't really interested in the `"Neither"` category here so we will exclude those rows as well.  Lastly, the `Action` and `Romance` columns are not needed anymore since they are encoded in the `genre` column.
+
+```{r}
+movies_trimmed <- movies_trimmed %>%
+  mutate(genre = ifelse(Action == 1, "Action",
+                        ifelse(Romance == 1, "Romance",
+                               "Neither"))) %>%
+  filter(genre != "Neither") %>%
+  select(-Action, -Romance)
+```
+  
+We are left with `r nrow(movies_trimmed)` movies in our _population_ data set that focuses on only `"Action"` and `"Romance"` movies.  
+    
 ***
-```{block lc6-2b, type='learncheck'}
+```{block lc7-2, type='learncheck'}
 **_Learning check_**
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Could we make the same type of immediate conclusion that SFO had a statistically greater `air_time` if, say, its corresponding standard deviation was 200 minutes?  What about 100 minutes?  Explain.
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why are the different genre variables stored as binary variables (1s and 0s) instead of just listing the `genre` as a column of values like "Action", "Comedy", etc.?
 
-***
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What complications could come above with us excluding action romance movies?  Should we question the results of our hypothesis test?  Explain.
 
-To further understand just how different the `air_time` variable is for BOS and SFO, let's look at a boxplot:
+***    
 
-```{r}
+Let's now visualize the distributions of `rating` across both levels of `genre`.  Think about what type(s) of plot is/are appropriate here before you proceed:
+
+```{r fig.cap="Rating vs genre in the population"}
 library(ggplot2)
-ggplot(data = bos_sfo, mapping = aes(x = dest, y = air_time)) +
+movies_trimmed %>% ggplot(aes(x = genre, y = rating)) +
   geom_boxplot()
 ```
 
-Since there is no overlap at all, we can conclude that the `air_time` for San Francisco flights is statistically greater (at any level of significance) than the `air_time` for Boston flights.  This is a clear example of not needing to do anything more than some simple descriptive statistics to get an appropriate inferential conclusion.  This is one reason why you should **ALWAYS** investigate the sample data first using `dplyr` and `ggplot2` via exploratory data analysis. 
+We can see that the middle 50% of ratings for `"Action"` movies is more spread out than that of `"Romance"` movies in the population.  `"Romance"` has outliers at both the top and bottoms of the scale though.  We are initially interested in comparing the mean `rating` across these two groups so a faceted histogram may also be useful:
+
+```{r warning=FALSE, fig.cap="Faceted histogram of genre vs rating"}
+movies_trimmed %>% ggplot(mapping = aes(x = rating)) +
+  geom_histogram(binwidth = 1, color = "white", fill = "dodgerblue") +
+  facet_grid(genre ~ .)
+```
+
+**Important note:** Remember that we hardly ever have access to the population values as we do here.  This example and the `nycflights13` data set were used to create a common flow from chapter to chapter.  In nearly all circumstances, we'll be needing to use only a sample of the population to try to infer conclusions about the unknown population parameter values.  These examples do show a nice relationship between statistics (where data is usually small and more focused on experimental settings) and data science (where data is frequently large and collected without experimental conditions). 
+
+### Sampling $\rightarrow$ Randomization
+    
+We can use hypothesis testing to investigate ways to determine, for example, whether a **treatment** has an effect over a **control** and other ways to statistically analyze if one group performs better than, worse than, or different than another.  We will also use confidence intervals to determine the size of the effect if it exists. You'll see more on this in Chapter \@ref(ci).
+
+We are interested here in seeing how we can use a random sample of action movies and a random sample of romance movies from `movies` to determine if a statistical difference exists in the mean ratings of each group.
+
+***
+```{block lc7-3a, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Define the relevant parameters here in terms of the populations of movies.
+
+***  
+
+### Data
+
+Let's select a random sample of 34 action movies and a random sample of 34 romance movies.  (The number 34 was chosen somewhat arbitrarily here.)
+
+```{r}
+library(dplyr)
+library(mosaic)
+set.seed(2016)
+movies_genre_sample <- movies_trimmed %>% 
+  group_by(genre) %>%
+  sample_n(34)
+```
+
+We can now observe the distributions of our two sample ratings for both groups.  Remember that these plots should
+be rough approximations of our population distributions of movie ratings for `"Action"` and `"Romance"` in our population of all movies in the `movies` data frame.
+
+```{r fig.cap="Genre vs rating for our sample"}
+movies_genre_sample %>% ggplot(aes(x = genre, y = rating)) +
+  geom_boxplot()
+```
+
+```{r warning=FALSE, fig.cap="Genre vs rating for our sample as faceted histogram"}
+movies_genre_sample %>% ggplot(mapping = aes(x = rating)) +
+  geom_histogram(binwidth = 1, color = "white", fill = "dodgerblue") +
+  facet_grid(genre ~ .)
+```
+
+***
+```{block lc7-3b1, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What single value could we change to improve the approximation using the sample distribution on the population distribution?
+
+***
+
+Do we have reason to believe, based on the sample distributions of `rating` over the two groups of `genre`, that there is a significant difference between the mean `rating` for action movies compared to romance movies?  It's hard to say just based on the plots.  The boxplot does show that the median sample rating is higher for romance movies, but the histogram isn't as clear.  The two groups have somewhat differently shaped distributions but they are both over similar values of `rating`.  It's often useful to calculate the mean and standard deviation as well, conditioned on the two levels.
+
+```{r}
+summary_ratings <- movies_genre_sample %>% 
+  group_by(genre) %>%
+  summarize(mean = mean(rating),
+            std_dev = sd(rating),
+            n = n())
+summary_ratings
+```
+
+***
+```{block lc7-3b2, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why did we not specify `na.rm = TRUE` here as we did in Chapter \@ref(manip)?
+
+***
+
+We see that the sample mean rating for romance movies, $\bar{x}_{r}$, is greater than the similar measure for action movies, $\bar{x}_a$.  But is it statistically significantly greater (thus, leading us to conclude that the means are statistically different)?  The standard deviation can provide some insight here but with these standard deviations being so similar it's still hard to say for sure.
+
+***
+```{block lc7-3b3, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why might the standard deviation provide some insight about the means being statistically different or not?
+
+***
+
+### Model of $H_0$
+
+The hypotheses we specified can also be written in another form to better give us an idea of what we will be simulating to create our null distribution.
+
+- $H_0: \mu_r - \mu_a = 0$
+- $H_a: \mu_r - \mu_a \ne 0$
   
-As you get more and more practice with hypothesis testing, you'll be better able to determine in many cases whether or not the results will be statistically significant.  There are circumstances where it is difficult to tell, but you should always try to make a guess FIRST about significance after you have completed your data exploration and before you actually begin the inferential techniques.  
+### Test Statistic $\delta$  
   
-## Script of R code
+We are, therefore, interested in seeing whether the difference in the sample means, $\bar{x}_r - \bar{x}_a$, is statistically different than 0. R has a built-in command that can calculate the difference in these two sample means.
+
+### Observed effect $\delta^*$
+
+```{r}
+mean_ratings <- movies_genre_sample %>% group_by(genre) %>%
+  summarize(mean = mean(rating))
+obs_diff <- diff(mean_ratings$mean)
+```
+
+We see here that the `diff` function calculates $\bar{x}_r - \bar{x}_a = `r mean_ratings$mean[2]` - `r mean_ratings$mean[1]` = `r obs_diff`$.  We will now proceed similarly to how we conducted the hypothesis test above for the Lady Tasting Tea using simulation.  Our goal is figure out a random process with which to simulate the null hypothesis being true.  Earlier in this chapter, we used flipping of a fair coin as the random process we were simulating with the null hypothesis being true ($H_0: \tau = 5$).
+
+### Simulated Data
+
+**Tactile simulation**
+
+Here, with us assuming the two population means are equal ($H_0: \mu_r - \mu_a = 0$), we can look at this from a tactile point of view by using index cards.  There are $n_r = 34$ data elements corresponding to romance movies and $n_a = 34$ for action movies.  We can write the 34 ratings from our sample for romance movies on one set of 34 index cards and the 34 ratings for action movies on another set of 34 index cards.  (Note that the sample sizes need not be the same.)
+
+The next step is to put the two stacks of index cards together, creating a new set of 68 cards.  If we assume that the two population means are equal, we are saying that there is no association between ratings and genre (romance vs action).  We can use the index cards to create two **new** stacks for romance and action movies.  First, we must shuffle all the cards thoroughly.  After doing so, in this case with equal values of sample sizes, we split the deck in half.  (You should be thinking about how this process is similar to what was done with **bootstrapping** in Chapter \@ref(infer-basics).)
+
+We then calculate the new sample mean rating of the romance deck, and also the new sample mean rating of the action deck.  This creates one simulation of the samples that were collected originally.  We next want to calculate a statistic from these two samples.  Instead of actually doing the calculation using index cards, we can use R as we have before to simulate this process.
+
+***
+```{block lc7-3b4, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How would the tactile shuffling of index cards change if we had different samples of say 20 action movies and 60 romance movies?  Describe each step that would change.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why are we taking the difference in the means of the cards in the new shuffled decks?
+
+***
+
+```{r message=FALSE, warning=FALSE}
+library(mosaic)
+shuffled_ratings <- movies_trimmed %>%
+     mutate(rating = shuffle(rating)) %>% 
+     group_by(genre) %>%
+     summarize(mean = mean(rating))
+diff(shuffled_ratings$mean)
+```
+
+### Distribution of $\delta$ under $H_0$
+
+The only new command here is `shuffle` from the `mosaic` package, which does what we would expect it to do.  It simulates a shuffling of the ratings between the two levels of `genre` just as we could have done with index cards.  We can now proceed in a similar way to what we have done previously with the Lady Tasting Tea example by repeating this process many times to create a _null distribution_ of simulated differences in sample means.
+
+```{r cache=TRUE}
+set.seed(2016)
+many_shuffles <- do(10000) * 
+  (movies_trimmed %>%
+     mutate(rating = shuffle(rating)) %>% 
+     group_by(genre) %>%
+     summarize(mean = mean(rating))
+   )
+```
+
+It is a good idea here to `View` the `many_shuffles` data frame via `View(many_shuffles)`.  We need to figure out a way to subtract the first value of `mean` from the second value of `mean` for each of the 10,000 simulations.  This is a little tricky but the `group_by` function comes to our rescue here:
+
+```{r}
+rand_distn <- many_shuffles %>%
+  group_by(.index) %>%
+  summarize(diffmean = diff(mean))
+```
+
+We can now plot the distribution of these simulated differences in means:
+
+```{r fig.cap="Simulated differences in means histogram"}
+rand_distn %>% ggplot(aes(x = diffmean)) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+### The p-value
+
+Remember that we are interested in seeing where our observed sample mean difference of `r diff(mean_ratings$mean)` falls on this null/randomization distribution.  We are interested in simply a difference here so "more extreme" corresponds to values in both tails on the distribution.  Let's shade our null distribution to show a visual representation of our $p$-value:
+
+```{r fig.cap="Shaded histogram to show p-value"}
+rand_distn %>% ggplot(aes(x = diffmean, fill = (abs(diffmean) >= obs_diff))) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+You may initially think there is an error here, but remember that the observed difference in means was `r obs_diff`.  It falls far outside the range of simulated differences.  We can add a vertical line to represent both it and its negative (since this is a two-tailed test) instead:
+
+```{r fig.cap="Histogram with vertical lines corresponding to observed statistic"}
+rand_distn %>% ggplot(aes(x = diffmean)) +
+  geom_histogram(color = "white", bins = 100) +
+  geom_vline(xintercept = obs_diff, color = "red") +
+  geom_vline(xintercept = -obs_diff, color = "red")
+```
+
+Based on this plot, we have evidence supporting the conclusion that the mean rating for romance movies is different from that of action movies.  (It doesn't really matter what significance level was chosen in this case.  Think about why.)  The next important idea is to better understand just how much higher of a mean rating can we expect the romance movies to have compared to that of action movies.  This can be addressed by creating a 95% confidence interval as we will explore in Chapter \@ref(ci).
+  
+***
+
+```{block lc7-3b, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Conduct the same analysis comparing action movies versus romantic movies using the median rating instead of the mean rating?  Make sure to use the `%>%` as much as possible.  What was different and what was the same? 
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What conclusions can you make from viewing the faceted histogram looking at `rating` versus `genre` that you couldn't see when looking at the boxplot?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Describe in a paragraph how we used Allen Downey's diagram to conclude if a statistical difference existed between mean movie ratings for action and romance movies.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why are we relatively confident that the distributions of the sample ratings will be good approximations of the population distributions of ratings for the two genres?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Using the definition of "$p$-value", write in words what the $p$-value represents for the hypothesis test above comparing the mean rating of romance to action movies.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is the value of the $p$-value for the hypothesis test comparing the mean rating of romance to action movies?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Do the results of the hypothesis test match up with the original plots we made looking at the population of movies?  Why or why not?
+
+***  
+
+### Summary
+
+To review, these are the steps one would take whenever you'd like to do a hypothesis test comparing
+values from the distributions of two groups:
+
+- Simulate many samples using a random process that matches the way
+the original data were collected and that _assumes the null hypothesis is
+true_. 
+
+- Collect the values of a sample statistic for each sample created using this random process to build
+a _randomization distribution_.
+
+- Assess the significance of the _original_ sample by determining where
+its sample statistic lies in the randomization distribution.
+
+- If the proportion of values as extreme or more extreme than the observed statistic in the randomization
+distribution is smaller than the pre-determined significance level $\alpha$, we reject $H_0$.  Otherwise,
+we fail to reject $H_0$.  (If no significance level is given, one can assume $\alpha = 0.05$.)
+
+## Building theory-based methods using computation {#theory-hypo}
+
+As a point of reference, we will now discuss the traditional theory-based way to conduct the hypothesis test for determining if there is a statistically significant difference in the sample mean rating of Action movies versus Romance movies.  This method and ones like it work very well when the assumptions are met in order to run the test.  They are based on probability models and distributions such as the normal and $t$-distributions.  
+
+These traditional methods have been used for many decades back to the time when researchers didn't have access to computers that could run 10,000 simulations in under a minute.  They had to base their methods on probability theory instead.  Many fields and researchers continue to use these methods and that is the biggest reason for their inclusion here.  It's important to remember that a $t$-test or a $z$-test is really just an approximation of what you have seen in this chapter already using simulation and randomization.  The focus here is on understanding how the shape of the $t$-curve comes about without digging big into the mathematical underpinnings.
+
+### EXAMPLE:  $t$-test for two independent samples
+
+What is commonly done in statistics is the process of normalization.  What this entails is calculating the mean and standard deviation of a variable.  Then you subtract the mean from each value of your variable and divide by the standard deviation.  The most common normalization is known as the $z$-score.  The formula for a $z$-score is $$Z = \frac{x - \mu}{\sigma}$$, where $x$ represent the value of a variable, $\mu$ represents the mean of the variable, and $\sigma$ represents the standard deviation of the variable.  $z$-scores are normally distributed with mean 0 and standard deviation 1.
+
+Recall, that we hardly ever know the mean and standard deviation of the population of interest.  This is almost always the case when considering the means of two independent groups.  To help account for us not knowing the population parameter values, we can use the sample statistics instead but this comes with a bit of a price.
+
+Another form of normalization occurs when we need to use the sample standard deviations as estimates for the unknown population standard deviations.  This normalization is often called the $t$-score.  For the two independent samples case we have for comparing action movies to romance movies, the formula is $$T =\dfrac{ (\bar{x}_1 - \bar{x}_2) - (\mu_1 - \mu_2)}{ \sqrt{\dfrac{s_1^2}{n_1} + \dfrac{s_2^2}{n_2}}  }$$
+  
+There is a lot to try to unpack here.  
+
+- $\bar{x}_1$ is the sample mean response of the first group
+- $\bar{x}_2$ is the sample mean response of the second group
+- $\mu_1$ is the population mean response of the first group
+- $\mu_2$ is the population mean response of the second group
+- $s_1$ is the sample standard deviation of the response of the first group
+- $s_2$ is the sample standard deviation of the response of the second group
+- $n_1$ is the sample size of the first group
+- $n_2$ is the sample size of the second group
+  
+Assuming that the null hypothesis is true ($H_0: \mu_1 - \mu_2 = 0$), $T$ is said to be distributed following a $t$ distribution with degrees of freedom equal to the smaller value of $n_1 - 1$ and $n_2 - 1$.  The "degrees of freedom" can be thought of measuring how different the $t$ distribution will be as compared to a normal distribution.  Small sample sizes lead to small degrees of freedom and, thus, $t$ distributions that have more values in the tails of their distributions.  Large sample sizes lead to large degrees of freedom and, thus, $t$ distributions that closely align with the standard normal, bell-shaped curve. 
+  
+So, assuming $H_0$ is true, our formula simplifies a bit:
+
+$$T =\dfrac{ \bar{x}_1 - \bar{x}_2}{ \sqrt{\dfrac{s_1^2}{n_1} + \dfrac{s_2^2}{n_2}}  }$$
+  
+We have already built an approximation for what we think the distribution of $\delta = \bar{x}_1 - \bar{x}_2$ using randomization above.  Recall what this distribution looks like:
+
+```{r fig.cap="Simulated differences in means histogram"}
+rand_distn %>% ggplot(aes(x = diffmean)) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+If we'd like to have a guess as to what the distribution of $T$ might look like instead, we need only to divide every value in `rand_distn` by $\sqrt{\dfrac{s_1^2}{n_1} + \dfrac{s_2^2}{n_2}}$.  As we did before, we will assign Romance to be group 1 and Action to be group 2.  (This was done since Romance comes second alphabetically and the reason why we have a number mismatch below with 1 and 2.) Remember that we've already calculated these values:
+
+```{r}
+kable(summary_ratings)
+```
+
+We will create some shortcuts here so you can see the value being calculated for the denominator of $T$.
+
+```{r}
+s1 <- summary_ratings$std_dev[2]
+s2 <- summary_ratings$std_dev[1]
+n1 <- summary_ratings$n[2]
+n2 <- summary_ratings$n[1]
+```
+
+Here, we have $s_1 = `r s1`$, 
+$s_2 = `r s2`$,
+$n_1 = `r n1`$, and
+$n_2 = `r n2`$.
+
+We can calculate the denominator via
+
+```{r}
+denom_T <- sqrt( (s1^2 / n1) + (s2^2) / n2)
+```
+
+Now if we divide all of the values of `diffmean` in `rand_distn` by `denom_T` we can have a simulated distribution of $T$ test statistics instead:
+
+```{r, fig.cap="Simulated T statistics histogram"}
+rand_distn <- rand_distn %>% 
+  mutate(t_stat = diffmean / denom_T)
+rand_distn %>% ggplot(aes(x = t_stat)) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+We see that the shape of this distribution is the same as that of `diffmean`.  The scale has changed though with `t_stat` having less spread than `diffmean`.
+
+A traditional $t$-test doesn't look at this simulated distribution, but instead it looks at the $t$-curve with degrees of freedom equal to 33 (the minimum of $n_1 = 34 - 1 = 33$ and $n_2 = 34 - 1 = 33$).  We now overlay what this $t$-curve looks like on top of the histogram showing the simulated $T$ statistics.
+
+
 
 ```{r include=FALSE, eval=FALSE}
 knitr::purl("07-hypo.Rmd", "docs/07-hypo.R")
