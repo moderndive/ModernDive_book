@@ -282,7 +282,7 @@ Recall that we've already created the distribution of 10,000 such coin flips in 
 
 ```{r}
 library(ggplot2)
-simGuesses %>% ggplot(aes(x = factor(heads))) +
+ggplot(data = simGuesses, aes(x = factor(heads))) +
   geom_bar()
 ```
 
@@ -326,8 +326,7 @@ We can see that the observed statistic of 9 correct guesses is not a likely outc
 
 ```{r fig.cap="Barplot of heads with p-value highlighted"}
 library(ggplot2)
-simGuesses %>% 
-  ggplot(aes(x = factor(heads), fill = (heads >= 9))) +
+  ggplot(data = simGuesses, aes(x = factor(heads), fill = (heads >= 9))) +
   geom_bar() +
   labs(x = "heads")
 ```
@@ -405,14 +404,14 @@ Let's now visualize the distributions of `rating` across both levels of `genre`.
 
 ```{r fig.cap="Rating vs genre in the population"}
 library(ggplot2)
-movies_trimmed %>% ggplot(aes(x = genre, y = rating)) +
+ggplot(data = movies_trimmed, aes(x = genre, y = rating)) +
   geom_boxplot()
 ```
 
 We can see that the middle 50% of ratings for `"Action"` movies is more spread out than that of `"Romance"` movies in the population.  `"Romance"` has outliers at both the top and bottoms of the scale though.  We are initially interested in comparing the mean `rating` across these two groups so a faceted histogram may also be useful:
 
 ```{r warning=FALSE, fig.cap="Faceted histogram of genre vs rating"}
-movies_trimmed %>% ggplot(mapping = aes(x = rating)) +
+ggplot(data = movies_trimmed, mapping = aes(x = rating)) +
   geom_histogram(binwidth = 1, color = "white", fill = "dodgerblue") +
   facet_grid(genre ~ .)
 ```
@@ -451,12 +450,12 @@ We can now observe the distributions of our two sample ratings for both groups. 
 be rough approximations of our population distributions of movie ratings for `"Action"` and `"Romance"` in our population of all movies in the `movies` data frame.
 
 ```{r fig.cap="Genre vs rating for our sample"}
-movies_genre_sample %>% ggplot(aes(x = genre, y = rating)) +
+ ggplot(data = movies_genre_sample, aes(x = genre, y = rating)) +
   geom_boxplot()
 ```
 
 ```{r warning=FALSE, fig.cap="Genre vs rating for our sample as faceted histogram"}
-movies_genre_sample %>% ggplot(mapping = aes(x = rating)) +
+ggplot(data = movies_genre_sample, mapping = aes(x = rating)) +
   geom_histogram(binwidth = 1, color = "white", fill = "dodgerblue") +
   facet_grid(genre ~ .)
 ```
@@ -546,7 +545,7 @@ We then calculate the new sample mean rating of the romance deck, and also the n
 ```{r message=FALSE, warning=FALSE}
 library(mosaic)
 shuffled_ratings <- movies_trimmed %>%
-     mutate(rating = shuffle(rating)) %>% 
+     mutate(genre = shuffle(genre)) %>% 
      group_by(genre) %>%
      summarize(mean = mean(rating))
 diff(shuffled_ratings$mean)
@@ -577,7 +576,7 @@ rand_distn <- many_shuffles %>%
 We can now plot the distribution of these simulated differences in means:
 
 ```{r fig.cap="Simulated differences in means histogram"}
-rand_distn %>% ggplot(aes(x = diffmean)) +
+ggplot(data = rand_distn, aes(x = diffmean)) +
   geom_histogram(color = "white", bins = 20)
 ```
 
@@ -586,14 +585,14 @@ rand_distn %>% ggplot(aes(x = diffmean)) +
 Remember that we are interested in seeing where our observed sample mean difference of `r diff(mean_ratings$mean)` falls on this null/randomization distribution.  We are interested in simply a difference here so "more extreme" corresponds to values in both tails on the distribution.  Let's shade our null distribution to show a visual representation of our $p$-value:
 
 ```{r fig.cap="Shaded histogram to show p-value"}
-rand_distn %>% ggplot(aes(x = diffmean, fill = (abs(diffmean) >= obs_diff))) +
+ggplot(data = rand_distn, aes(x = diffmean, fill = (abs(diffmean) >= obs_diff))) +
   geom_histogram(color = "white", bins = 20)
 ```
 
 You may initially think there is an error here, but remember that the observed difference in means was `r obs_diff`.  It falls far outside the range of simulated differences.  We can add a vertical line to represent both it and its negative (since this is a two-tailed test) instead:
 
 ```{r fig.cap="Histogram with vertical lines corresponding to observed statistic"}
-rand_distn %>% ggplot(aes(x = diffmean)) +
+ggplot(data = rand_distn, aes(x = diffmean)) +
   geom_histogram(color = "white", bins = 100) +
   geom_vline(xintercept = obs_diff, color = "red") +
   geom_vline(xintercept = -obs_diff, color = "red")
@@ -650,11 +649,15 @@ These traditional methods have been used for many decades back to the time when 
 
 ### EXAMPLE:  $t$-test for two independent samples
 
-What is commonly done in statistics is the process of normalization.  What this entails is calculating the mean and standard deviation of a variable.  Then you subtract the mean from each value of your variable and divide by the standard deviation.  The most common normalization is known as the $z$-score.  The formula for a $z$-score is $$Z = \frac{x - \mu}{\sigma}$$, where $x$ represent the value of a variable, $\mu$ represents the mean of the variable, and $\sigma$ represents the standard deviation of the variable.  $z$-scores are normally distributed with mean 0 and standard deviation 1.
+What is commonly done in statistics is the process of normalization.  What this entails is calculating the mean and standard deviation of a variable.  Then you subtract the mean from each value of your variable and divide by the standard deviation.  The most common normalization is known as the $z$-score.  The formula for a $z$-score is $$Z = \frac{x - \mu}{\sigma}$$, where $x$ represent the value of a variable, $\mu$ represents the mean of the variable, and $\sigma$ represents the standard deviation of the variable.  $z$-scores are normally distributed with mean 0 and standard deviation 1.  They have the common, bell-shaped pattern.
 
-Recall, that we hardly ever know the mean and standard deviation of the population of interest.  This is almost always the case when considering the means of two independent groups.  To help account for us not knowing the population parameter values, we can use the sample statistics instead but this comes with a bit of a price.
+```{r echo=FALSE}
+ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm)
+```
 
-Another form of normalization occurs when we need to use the sample standard deviations as estimates for the unknown population standard deviations.  This normalization is often called the $t$-score.  For the two independent samples case we have for comparing action movies to romance movies, the formula is $$T =\dfrac{ (\bar{x}_1 - \bar{x}_2) - (\mu_1 - \mu_2)}{ \sqrt{\dfrac{s_1^2}{n_1} + \dfrac{s_2^2}{n_2}}  }$$
+Recall, that we hardly ever know the mean and standard deviation of the population of interest.  This is almost always the case when considering the means of two independent groups.  To help account for us not knowing the population parameter values, we can use the sample statistics instead, but this comes with a bit of a price in terms of complexity.
+
+Another form of normalization occurs when we need to use the sample standard deviations as estimates for the unknown population standard deviations.  This normalization is often called the $t$-score.  For the two independent samples case like what we have for comparing action movies to romance movies, the formula is $$T =\dfrac{ (\bar{x}_1 - \bar{x}_2) - (\mu_1 - \mu_2)}{ \sqrt{\dfrac{s_1^2}{n_1} + \dfrac{s_2^2}{n_2}}  }$$
   
 There is a lot to try to unpack here.  
 
@@ -673,10 +676,10 @@ So, assuming $H_0$ is true, our formula simplifies a bit:
 
 $$T =\dfrac{ \bar{x}_1 - \bar{x}_2}{ \sqrt{\dfrac{s_1^2}{n_1} + \dfrac{s_2^2}{n_2}}  }$$
   
-We have already built an approximation for what we think the distribution of $\delta = \bar{x}_1 - \bar{x}_2$ using randomization above.  Recall what this distribution looks like:
+We have already built an approximation for what we think the distribution of $\delta = \bar{x}_1 - \bar{x}_2$ looks like using randomization above.  Recall this distribution:
 
 ```{r fig.cap="Simulated differences in means histogram"}
-rand_distn %>% ggplot(aes(x = diffmean)) +
+ggplot(data = rand_distn, aes(x = diffmean)) +
   geom_histogram(color = "white", bins = 20)
 ```
 
@@ -703,7 +706,7 @@ $n_2 = `r n2`$.
 We can calculate the denominator via
 
 ```{r}
-denom_T <- sqrt( (s1^2 / n1) + (s2^2) / n2)
+denom_T <- sqrt( (s1^2 / n1) + (s2^2 / n2) )
 ```
 
 Now if we divide all of the values of `diffmean` in `rand_distn` by `denom_T` we can have a simulated distribution of $T$ test statistics instead:
@@ -711,7 +714,7 @@ Now if we divide all of the values of `diffmean` in `rand_distn` by `denom_T` we
 ```{r, fig.cap="Simulated T statistics histogram"}
 rand_distn <- rand_distn %>% 
   mutate(t_stat = diffmean / denom_T)
-rand_distn %>% ggplot(aes(x = t_stat)) +
+ggplot(data = rand_distn, aes(x = t_stat)) +
   geom_histogram(color = "white", bins = 20)
 ```
 
@@ -719,6 +722,39 @@ We see that the shape of this distribution is the same as that of `diffmean`.  T
 
 A traditional $t$-test doesn't look at this simulated distribution, but instead it looks at the $t$-curve with degrees of freedom equal to 33 (the minimum of $n_1 = 34 - 1 = 33$ and $n_2 = 34 - 1 = 33$).  We now overlay what this $t$-curve looks like on top of the histogram showing the simulated $T$ statistics.
 
+```{r}
+ggplot(data = rand_distn, mapping = aes(x = t_stat)) +
+  geom_histogram(aes(y = ..density..), color = "white", binwidth = 0.1) +
+  stat_function(fun = dt,
+    args = list(df = min(n1 - 1, n2 - 1)), 
+    color = "royalblue", size = 2)
+```
+
+We can see that the curve does a good job of approximating the randomization distribution here. (More on when to expect for this to be the case when we discuss conditions for the $t$-test in a bit.) To calculate the $p$-value in this case, we need to figure out how much of the total area under the $t$-curve is at our observed $T$-statistic or more, plus also adding the area under the curve at the negative value of the observed $T$-statistic or below.  (Remember this is a two-tailed test so we are looking for a difference--values in the tails of either direction.)  Just as we converted all of the simulated values to $T$-statistics, we must also do so for our observed effect $\delta^*$:
+
+```{r}
+(t_obs <- obs_diff / denom_T)
+```
+
+So graphically we are interested in finding the percentage of values that are at or above `r t_obs` or at or below `r -t_obs`.
+
+```{r}
+ggplot(data = rand_distn, mapping = aes(x = t_stat)) +
+  stat_function(fun = dt,
+    args = list(df = min(n1 - 1, n2 - 1)), 
+    color = "royalblue", size = 2) +
+  geom_vline(xintercept = t_obs, color = "red") +
+  geom_vline(xintercept = -t_obs, color = "red")
+```
+
+At this point, you should make a guess as to what a reasonable value may be for the $p$-value.  Let's say the $p$-value is 0.01 or so.  To actually perform this calculation by hand, you'd need to do some calculus.  Let's have R do it for us instead using the `pt` function.
+
+```{r}
+pt(t_obs, df = min(n1 - 1, n2 - 1), lower.tail = FALSE) +
+  pt(-t_obs, df = min(n1 - 1, n2 - 1), lower.tail = TRUE)
+```
+
+### Conditions for $t$-test
 
 
 ```{r include=FALSE, eval=FALSE}
