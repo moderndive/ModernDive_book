@@ -1,0 +1,366 @@
+# Hypothesis Testing {#hypo}  
+    
+```{r setup_hypo, include=FALSE}
+chap <- 7
+lc <- 0
+rq <- 0
+# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
+# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
+knitr::opts_chunk$set(tidy = FALSE, out.width='\\textwidth')#, fig.align = "center")
+```
+    
+
+<!--
++ Idea of histogram of sample being a visual approximation to population distribution.
+    + Shiny
++ Standard errors and sampling distribution via randomization
+    + Developing traditional inference from randomization
+    + two-sample permutation test -> null distribution  
+    + Showing what happens when assumptions/conditions aren’t met
+    + Then show normal/t-test and show how it fits on top of sampling distribution
+    + Shiny Google Forms
+-->
+
+We saw some of the main concepts of hypothesis testing introduced in Chapter \@ref(infer-basics).  We will expand further on these ideas here and also provide a framework for understanding hypothesis tests in general.  Instead of presenting you with lots of different formulas and scenarios, we hope to build a way to think about all hypothesis tests.  You can then adapt to different scenarios as needed down the road when you encounter different statistical situations.
+
+The same can be said for confidence intervals.  There is one general framework that applies to all confidence intervals and we will elaborate on this further in Chapter \@ref(ci).  The specifics may change slightly for each variation, but the important idea is to understand the general framework so that you can apply it to more specific problems.  We believe that this approach is much better in the long-term than teaching you specific tests and confidence intervals rigorously.  You can find full worked out examples for five common hypothesis tests and their corresponding confidence intervals in Appendix \@ref(appendixB).  We recommend that you carefully review these examples as they also cover how the general frameworks apply to traditional normal-based methodologies like the $t$-test and normal-theory confidence intervals.  You'll see there that these methods are just approximations for the general frameworks, but require conditions to be met for their results to be valid.  The general frameworks using randomization, simulation, and bootstrapping do not hold the same sorts of restrictions and further advance computational thinking, which is one big reason for their emphasis here.
+
+## Needed packages
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(okcupiddata)
+library(mosaic)
+library(knitr)
+library(nycflights13)
+```
+
+## Basics of Hypothesis Testing
+
+In a hypothesis test, we will use data from a sample to help us decide between two competing _hypotheses_ about a population.  We make these hypotheses more concrete by specifying them in terms of at least one _population parameter_ of interest.  We refer to the competing claims about the population as the **null hypothesis**, denoted by $H_0$, and the **alternative (or research) hypothesis**, denoted by $H_a$.  The roles of these two hypotheses are NOT interchangeable.  
+
+- The claim for which we seek significant evidence is assigned to the alternative hypothesis.  The alternative is usually what the experimenter or researcher wants to establish or find evidence for.
+- Usually, the null hypothesis is a claim that there really is "no effect" or "no difference."  In many cases, the null hypothesis represents the status quo or that nothing interesting is happening.  
+- We assess the strength of evidence by assuming the null hypothesis is true and determining how unlikely it would be to see sample results/statistics as extreme (or more extreme) as those in the original sample.
+
+Hypothesis testing brings about many weird and incorrect notions in the scientific community and society at large.  One reason for this is that statistics has traditionally been thought of as this magic box of algorithms and procedures to get to results and this has been readily apparent if you do a Google search of "flowchart statistics hypothesis tests".  There are so many different complex ways to determine which test is appropriate.  
+
+You'll see that we don't need to rely on these complicated series of assumptions and procedures to conduct a hypothesis test any longer.  These methods were introduced in a time when computers weren't powerful.  Your cellphone (in 2016) has more power than the computers that sent NASA astronauts to the moon after all.  We'll see that ALL hypothesis tests can be broken down into the following framework given by Allen Downey [here](http://allendowney.blogspot.com/2016/06/there-is-still-only-one-test.html):
+
+```{r htdowney, echo=FALSE, fig.cap="Hypothesis Testing Framework"}
+knitr::include_graphics("images/ht.png")
+```
+
+Before we hop into this framework, we will provide another way to think about hypothesis testing that may be useful.
+
+## Criminal trial analogy {#trial}
+
+We can think of hypothesis testing in the same context as a criminal trial in the United States.  A criminal trial in the United States is a familiar situation in which a choice between two contradictory claims must be made. 
+
+1. The accuser of the crime must be judged either guilty or not guilty.  
+
+2. Under the U.S. system of justice, the individual on trial is initially presumed not guilty.  
+
+3. Only STRONG EVIDENCE to the contrary causes the not guilty claim to be rejected in favor of a guilty verdict. 
+
+4. The phrase "beyond a reasonable doubt" is often used to set the cutoff value for when enough evidence has been given to convict.
+
+Theoretically, we should never say "The person is innocent." but instead "There is not sufficient evidence to show that the person is guilty."
+
+Now let's compare that to how we look at a hypothesis test.
+
+1. The decision about the population parameter(s) must be judged to follow one of two hypotheses.
+	
+2. We initially assume that $H_0$ is true.
+	
+3. The null hypothesis $H_0$ will be rejected (in favor of $H_a$) only if the sample evidence strongly suggests that $H_0$ is false.  If the sample does not provide such evidence, $H_0$ will not be rejected.
+
+4.  The analogy to "beyond a reasonable doubt" in hypothesis testing is what is known as the **significance level**.  This will be set before conducting the hypothesis test and is denoted as $\alpha$.  Common values for $\alpha$ are 0.1, 0.01, and 0.05.
+
+### Two possible conclusions
+
+Therefore, we have two possible conclusions with hypothesis testing:
+
+ - Reject $H_0$                
+ - Fail to reject $H_0$
+	
+Gut instinct says that "Fail to reject $H_0$" should say "Accept $H_0$" but this technically is not correct.  Accepting $H_0$ is the same as saying that a person is innocent.  We cannot show that a person is innocent; we can only say that there was not enough substantial evidence to find the person guilty.
+
+When you run a hypothesis test, you are the jury of the trial.  You decide whether there is enough evidence to convince yourself that $H_a$ is true ("the person is guilty") or that there was not enough evidence to convince yourself $H_a$ is true ("the person is not guilty").  You must convince yourself (using statistical arguments) which hypothesis is the correct one given the sample information.
+
+**Important note:** Therefore, DO NOT WRITE "Accept $H_0$" any time you conduct a hypothesis test.  Instead write "Fail to reject $H_0$."
+
+## Types of Errors in Hypothesis Testing
+
+Unfortunately, just as a jury or a judge can make an incorrect decision in regards to a criminal trial by reaching the wrong verdict, there is some chance we will reach the wrong conclusion via a hypothesis test about a population parameter.  As with criminal trials, this comes from the fact that we don't have complete information, but rather a sample from which to try to infer about a population.
+
+The possible erroneous conclusions in a criminal trial are
+
+- an innocent person is convicted (found guilty) or
+- a guilty person is set free (found not guilty).
+
+The possible errors in a hypothesis test are
+- rejecting $H_0$ when in fact $H_0$ is true (Type I Error)
+- failing to reject $H_0$ when in fact $H_0$ is false (Type II Error)
+
+The risk of error is the price researchers pay for basing an inference about a population on a sample.  With any reasonable sample-based procedure, there is some chance that a Type I error will be made and some chance that a Type II error will occur.
+
+To help understand the concepts of Type I error and Type II error, observe the following table:
+
+```{r, echo=FALSE}
+knitr::include_graphics("images/errors.png")
+```
+
+If we are using sample data to make inferences about a parameter, we run the risk of making a mistake.  Obviously, we want to minimize our chance of error; we want a small probability of drawing an incorrect conclusion.
+
+- The probability of a Type I Error occurring is denoted by $\alpha$ and is called the **significance level** of a hypothesis test
+- The probability of a Type II Error is denoted by $\beta$.
+
+Formally, we can define $\alpha$ and $\beta$ in regards to the table above, but for hypothesis tests instead of a criminal trial.
+
+- $\alpha$ corresponds to the probability of rejecting $H_0$ when, in fact, $H_0$ is true.
+- $\beta$ corresponds to the probability of failing to reject $H_0$ when, in fact, $H_0$ is false.
+
+Ideally, we want $\alpha = 0$ and $\beta = 0$, meaning that the chance of making an error does not exist.  When we have to use incomplete information (sample data), it is not possible to have both $\alpha = 0$ and $\beta = 0$.  We will always have the possibility of at least one error existing when we use sample data.
+
+Usually, what is done is that $\alpha$ is set before the hypothesis test is conducted and then the evidence is judged against that significance level.  Common values for $\alpha$ are 0.05, 0.01, and 0.10.  If $\alpha = 0.05$, we are using a testing procedure that, used over and over with different samples, rejects a TRUE null hypothesis five percent of the time.
+
+So if we can set $\alpha$ to be whatever we want, why choose 0.05 instead of 0.01 or even better 0.0000000000000001?  Well, a small $\alpha$ means the test procedure requires the evidence against $H_0$ to be **very strong** before we can reject $H_0$.  This means we will almost never reject $H_0$ if $\alpha$ is very small.  If we almost never reject $H_0$, the probability of a Type II Error -- failing to reject $H_0$ when we should -- will *increase*!  Thus, as $\alpha$ decreases, $\beta$ increases and as $\alpha$ increases, $\beta$ decreases.  We, therefore, need to strike a balance in $\alpha$ and $\beta$ and the common values of 0.05, 0.01, and 0.10 usually lead to a nice balance.
+
+***
+```{block lc7-0, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  Reproduce the table above, but for a hypothesis test, instead of the one provided for a criminal trial.
+
+***
+
+## Basic Logic of Hypothesis Testing
+
+- Take a random sample (or samples) from a population (or two populations)
+- If the sample data are consistent with the null hypothesis, do not reject the null hypothesis.
+- If the sample data are inconsistent with the null hypothesis (in the direction of the alternative hypothesis), reject the null hypothesis and conclude that there is evidence the alternative hypothesis is true (based on the particular sample collected).
+
+## Statistical Significance
+
+The idea that sample results are more extreme than we would reasonably expect to see by random chance if the null hypothesis were true is the fundamental idea behind statistical hypothesis tests.  If data as extreme would be very unlikely if the null hypothesis were true, we say the data are **statistically significant**.  Statistically significant data provide convincing evidence against the null hypothesis in favor of the alternative, and allow us to generalize our sample results to the claim about the population.
+
+*** 
+
+**Definition: Statistical Significance**
+
+When results as extreme as the observed sample statistic are unlikely to occur by random chance alone (assuming the null hypothesis is true), we say the sample results/statistics are *statistically significant*.  If our sample is statistically significant, we have convincing evidence against $H_0$ and in favor of $H_a$.
+
+***
+```{block lc7-1, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What is wrong about saying "The defendant is innocent." based on the US system of criminal trials?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What is the purpose of hypothesis testing?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What are some flaws with hypothesis testing?  How could we alleviate them?
+
+***
+
+
+## Revisiting the Lady Tasting Tea example
+
+Recall the "There is Only One Test" diagram from earlier:
+
+```{r htdowney2, echo=FALSE, fig.cap="Hypothesis Testing Framework"}
+knitr::include_graphics("images/ht.png")
+```
+
+We will now walk-through how each of the steps to the diagram apply to determining whether the lady tasting tea was actually better than chance at determining whether or not milk was added first.  We will see that the process of creating a null distribution is a statistical way to quantifying surprise.
+
+### Data
+
+Let's assume as we did in Chapter \@ref(infer-basics), that the lady is correct in determining whether milk was added first in 9 out of 10 trials.  Our data, therefore, may look something like
+
+```{r echo=FALSE}
+choice <- c(rep("Correct", 3), "Incorrect", rep("Correct", 6))
+kable(choice)
+```
+
+### Test Statistic $\delta$
+
+We are interested in the number of `Correct` out of our 10 trials.  We can denote this number of successes using the symbol $t$, where $t$ corresponds to total.  This is our test statistic $\delta$ in this case.
+
+### Observed effect $\delta^*$
+
+The actual observed value of the test statistic from our observed sample is $\hat{t}_{obs} = 9$.  Thus, $\delta^* = 9$.
+
+### Model of $H_0$
+
+Our null hypothesis is that the lady is only as good as chance at guessing correctly.  Hypotheses always correspond to parameters and are denoted with Greek letters.  Thus, symbolically, we have $H_0: \tau = 5$.  Since we are assuming chance and we have 10 flips with 0.5 probability of success of each flip, we have $\tau = 10 \times 0.5 = 5$.
+
+### Simulated Data
+
+We now want to use this null hypothesis to simulate the test statistic assuming that the null hypothesis is true.  Therefore, we want to figure out a way to simulate in 10 trials, getting either the choice Correct or Incorrect, assuming that the probability of success (getting it Correct) in any given trial is 0.5.
+
+**Tactile simulation**
+
+When you are presented with a hypothesis testing problem, frequently the most challenging portion is setting up how to simulate the data assuming the null hypothesis is true.  To facilitate with this, setting up a tactile, hands on experiment can help.
+
+In this case, flipping a fair coin is a great way to simulate this process.  To simulate 10 trials, we could flip the fair coin and record Heads as Correct and Tails as Incorrect.  
+
+Some simulated data using this coin flipping procedure may look like the following.  Note that this data frame is not tidy, but is a convenient way to look at the results of the simulation in this wide format.  The numbers on the fair left correspond to the number of the trial.
+
+```{r echo=FALSE}
+set.seed(2017)
+sim1 <- resample(x = c("Correct", "Incorrect"), size = 10, prob = c(0.5, 0.5))
+sim2 <- resample(x = c("Correct", "Incorrect"), size = 10, prob = c(0.5, 0.5))
+sim3 <- resample(x = c("Correct", "Incorrect"), size = 10, prob = c(0.5, 0.5))
+sims <- data.frame(sample1 = sim1, sample2 = sim2, sample3 = sim3)
+kable(sims, row.names = TRUE)
+```
+
+We then use the formula for the **Test Statistic** to determine the simulated test statistic for each of these simulated samples.  So in this case we have
+
+```{r echo=FALSE}
+t1 <- sum(sim1 == "Correct")
+t2 <- sum(sim2 == "Correct")
+t3 <- sum(sim3 == "Correct")
+```
+
+$t_1 = `r t1`$, $t_2 = `r t2`$, $t_3 = `r t3`$
+
+### Distribution of $\delta$ under $H_0$
+
+We could continue this process say 10,000 times by flipping a coin in sets of 10 for 10,000 repetitions and counting and taking note of how many heads out of 10 we have for each set.  It's at this point that you realize that a computer can do this procedure much faster
+and more efficient than the tactile experiment with a coin.
+
+Recall that we've already created the distribution of 10,000 such coin flips in Chapter \@ref(infer-basics) and we've stored these values in the `heads` variable in the `simGuesses` data frame:
+
+```{r}
+library(ggplot2)
+simGuesses %>% ggplot(aes(x = factor(heads))) +
+  geom_bar()
+```
+
+
+### The p-value
+
+---
+
+**Definition: $p$-value**:
+
+The **p-value** is the probability of observing a sample statistic as extreme or more extreme than what was observed, assuming that the null hypothesis of a by chance operation is true.
+
+---
+
+This definition may be a little intimidating the first time you read it, but it's important to come back to this "The Lady Tasting Tea" problem whenever you encounter $p$-values as you begin to learn about the concept.  Here the $p$-value corresponds to how many times in our **null distribution** of `heads` 9 or more heads occurred.
+
+We can use another neat feature of R to calculate the $p$-value for this problem.  Note that "more extreme" in this case corresponds to looking at values of 9 or greater since our alternative hypothesis invokes a right-tail test corresponding to a "greater than" hypothesis of $H_a: \pi > 0.5$.  In other words, we are looking to see how likely it is for the lady to pick 9 or more correct instead of 9 or less correct.  We'd like to go in the right direction.
+
+```{r}
+pvalue_tea <- simGuesses %>%
+  filter(heads >= 9) %>%
+  nrow() / nrow(simGuesses)
+```
+
+Let's walk through each step of this calculation:
+
+1. First, `pvalue_tea` will be the name of our calculated $p$-value and the assignment operator `<-` directs us to this naming.
+
+2. We are working with the `simGuesses` data frame here so that comes immediately before the pipe operator.  
+
+3. We would like to only focus on the rows in our `simGuesses` data frame that have `heads` values of 9 or 10.  This represents simulated statistics "as extreme or more extreme" than what we observed (9 correct guesses out of 10).  Let's get a glimpse of what we have up to this point:
+
+    
+    ```{r}
+    simGuesses %>% filter(heads >= 9)    
+    ```
+
+4. Now that we have changed the focus to only those rows that have number of heads out of 10 flips corresponding to 9 or more, we count how many of those there are.  The function `nrow` gives how many entries are in this filtered data frame and lastly we calculate the proportion that are at least as extreme as our observed value of 9 by dividing by the number of total simulations (`r format(nrow(simGuesses), big.mark = ",")`).
+
+We can see that the observed statistic of 9 correct guesses is not a likely outcome assuming the null hypothesis is true.  Only around 1% of the outcomes in our 10,000 simulations fall at or above 9 successes.  We have evidence supporting the conclusion that the person is actually better than just guessing at random at determining whether milk has been added first or not.  To better visualize this we can also make use of pink shading on the histogram corresponding to the $p$-value:
+
+```{r fig.cap="Barplot of heads with p-value highlighted"}
+library(ggplot2)
+simGuesses %>% 
+  ggplot(aes(x = factor(heads), fill = (heads >= 9))) +
+  geom_bar() +
+  labs(x = "heads")
+```
+
+This helps us better see just how few of the values of `heads` are at our observed value or more extreme.
+
+We'll see in Chapters \@ref(hypo) and \@ref(ci) that this idea of a $p$-value can be extended to the more traditional methods using normal and $t$ distributions in the traditional way that introductory statistics has been presented.  These traditional methods were used because statisticians haven't always been able to do 10,000 simulations on the computer within seconds.  We'll elaborate on this more in these later chapters.
+
+***
+```{block lc6-2, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is meant by "pseudo-random number generation?"
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How can simulation be used to help us address the question of whether or not an observed result is statistically significant?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** In Chapter \@ref(viz), we noted that barplots should be used when creating a plot of categorical variables.  Why are we using barplots to make a plot of a numerical variable `heads` in this chapter?
+
+***
+
+## When Inference Is Not Needed
+
+An important and time-saving skill is to **ALWAYS** do exploratory data analysis using `dplyr` and `ggplot2` before thinking about running a hypothesis test.  Let's look at such an example selecting a sample of flights traveling to Boston and to San Francisco from New York City in the `flights` data frame in the `nycflights13` package.  (We will remove flights with missing data first using `na.omit` and then sample 100 flights going to each of the two airports.)
+
+```{r}
+library(nycflights13)
+data(flights)
+bos_sfo <- flights %>% na.omit() %>% 
+  filter(dest %in% c("BOS", "SFO")) %>% 
+  group_by(dest) %>% 
+  sample_n(100)
+```
+
+Suppose we were interested in seeing if the `air_time` to SFO in San Francisco was statistically greater than the `air_time` to BOS in Boston.  As suggested, let's begin with some exploratory data analysis to get a sense for how the two variables of `air_time` and `dest` relate for these two destination airports:
+
+```{r}
+library(dplyr)
+bos_sfo %>% group_by(dest) %>% 
+  summarize(mean_time = mean(air_time),
+            sd_time = sd(air_time))
+```
+
+Looking at these results, we can clearly see that SFO `air_time` is much larger than BOS `air_time`.  The standard deviation is also extremely informative here.
+
+***
+```{block lc6-2b, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Could we make the same type of immediate conclusion that SFO had a statistically greater `air_time` if, say, its corresponding standard deviation was 200 minutes?  What about 100 minutes?  Explain.
+
+***
+
+To further understand just how different the `air_time` variable is for BOS and SFO, let's look at a boxplot:
+
+```{r}
+library(ggplot2)
+ggplot(data = bos_sfo, mapping = aes(x = dest, y = air_time)) +
+  geom_boxplot()
+```
+
+Since there is no overlap at all, we can conclude that the `air_time` for San Francisco flights is statistically greater (at any level of significance) than the `air_time` for Boston flights.  This is a clear example of not needing to do anything more than some simple descriptive statistics to get an appropriate inferential conclusion.  This is one reason why you should **ALWAYS** investigate the sample data first using `dplyr` and `ggplot2` via exploratory data analysis. 
+  
+As you get more and more practice with hypothesis testing, you'll be better able to determine in many cases whether or not the results will be statistically significant.  There are circumstances where it is difficult to tell, but you should always try to make a guess FIRST about significance after you have completed your data exploration and before you actually begin the inferential techniques.  
+  
+## Script of R code
+
+```{r include=FALSE, eval=FALSE}
+knitr::purl("07-hypo.Rmd", "docs/07-hypo.R")
+```
+
+An R script file of all R code used in this chapter is available [here](http://ismayc.github.io/moderndiver-book/07-hypo.R).
+
+    
+## What's to come?
+
+This chapter examined the basics of hypothesis testing with terminology and also an example of how to apply the "There is Only One Test" diagram to the Lady Tasting Tea example presented in Chapter \@ref(infer-basics).  We'll see in Chapter \@ref(ci) how we can provide a range of possible values for an unknown population parameter instead of just running a Yes/No decision from a hypothesis test.
+ 
+We will see in Chapter \@ref(regress) many of the same ideas we have seen with hypothesis testing and confidence intervals in the last two chapters.  Regression is frequently associated both correctly and incorrectly with statistics and data analysis, so you'll need to make sure you understand when it is appropriate and when it is not.
