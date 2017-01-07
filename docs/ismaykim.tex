@@ -250,7 +250,7 @@ there.
 \textbf{Book was last updated:}
 
 \begin{verbatim}
-## [1] "By Chester on Friday, January 06, 2017 18:07:22 EST"
+## [1] "By Chester on Friday, January 06, 2017 23:47:49 EST"
 \end{verbatim}
 
 \section*{Colophon}\label{colophon}
@@ -7171,21 +7171,696 @@ sure you understand when it is appropriate and when it is not.
 \chapter{\texorpdfstring{Regression via
 \texttt{broom}}{Regression via broom}}\label{regression-via-broom}
 
+One of the most commonly used statistical procedures is
+\emph{regression}. Regression, in its simplest form, focuses on trying
+to predict values of one numerical variable based on the values of
+another numerical variable using a straight line fit to data. We saw in
+Chapters \ref{hypo} and \ref{ci} an example of analyses using a
+categorical predictor (movie genre--action or romance) and a numerical
+response (movie rating). In this chapter, we will focus on going back to
+the \texttt{flights} data frame in the \texttt{nycflights13} package to
+look at the relationship between departure delay and arrival delay. We
+will also discuss the concept of \emph{correlation} and how it is
+frequently incorrectly implied to also lead to \emph{causation}. This
+chapter also introduces the \texttt{broom} package, which is a useful
+tool in summarizing the results of model fits in tidy format. You will
+see examples of the \texttt{tidy}, \texttt{glance}, and \texttt{augment}
+functions with linear regression.
+
+\section{Needed packages}\label{needed-packages-3}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(mosaic)}
+\KeywordTok{library}\NormalTok{(dplyr)}
+\KeywordTok{library}\NormalTok{(ggplot2)}
+\KeywordTok{library}\NormalTok{(knitr)}
+\KeywordTok{library}\NormalTok{(broom)}
+\KeywordTok{library}\NormalTok{(nycflights13)}
+\end{Highlighting}
+\end{Shaded}
+
+\section{EXAMPLE: Alaskan Airlines
+delays}\label{example-alaskan-airlines-delays}
+
+We'll next explore the relationship/association of departure delays and
+arrival delays for a sample of 100 flights departing from New York City
+in 2013 with Alaskan Airlines.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(nycflights13)}
+\KeywordTok{data}\NormalTok{(flights)}
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{2017}\NormalTok{)}
+
+\CommentTok{# Load Alaska data, deleting rows that have missing departure delay}
+\CommentTok{# or arrival delay data}
+\NormalTok{alaska_flights <-}\StringTok{ }\NormalTok{flights %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{filter}\NormalTok{(carrier ==}\StringTok{ "AS"}\NormalTok{) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{filter}\NormalTok{(!}\KeywordTok{is.na}\NormalTok{(dep_delay) &}\StringTok{ }\NormalTok{!}\KeywordTok{is.na}\NormalTok{(arr_delay)) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{resample}\NormalTok{(}\DataTypeTok{size =} \DecValTok{50}\NormalTok{, }\DataTypeTok{replace =} \OtherTok{FALSE}\NormalTok{)}
+
+\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data =} \NormalTok{alaska_flights, }
+       \DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{dep_delay, }\DataTypeTok{y =} \NormalTok{arr_delay)) +}\StringTok{ }
+\StringTok{   }\KeywordTok{geom_point}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=\textwidth]{ismaykim_files/figure-latex/regplot1-1} 
+
+}
+
+\caption[Departure and Arrival Flight Delays for a sample of 50 Alaskan flights from NYC]{Departure and Arrival Flight Delays for a sample of 50 Alaskan flights from NYC}\label{fig:regplot1}
+\end{figure}
+
 \begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
 
 \begin{learncheck}
 \textbf{\emph{Learning check}}
 \end{learncheck}
 
-\textbf{(LC9.1)}
+\textbf{(LC9.1)} Does there appear to be a linear relationship with
+arrival delay and departure delay? In other words, could you fit a line
+to the data and have explain how \texttt{arr\_delay} increases as
+\texttt{dep\_delay} increases?
+
+\textbf{(LC9.2)} Is there only one possible line that fits the data
+``well''? How could you decide on which one is best if there are
+multiple options?
 
 \begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\section{Correlation}\label{correlation}
+
+One way to measure the linearity between two numerical variables is by
+using correlation. In fact, the \textbf{correlation coefficient} is
+defined as just that.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\textbf{Definition: Correlation Coefficient}
+
+The \emph{correlation coefficient} measures the strength of linear
+association between two variables.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\textbf{Properties of the correlation coefficient}:
+
+It is always between -1 and 1, inclusive, where
+
+\begin{itemize}
+\tightlist
+\item
+  -1 indicates perfect negative relationship
+\item
+  0 indicates no relationship
+\item
+  +1 indicates perfect positive relationship
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{learncheck}
+\textbf{\emph{Learning check}}
+\end{learncheck}
+
+\textbf{(LC9.3)} Make a guess as to the value of the correlation
+cofficient between \texttt{arr\_delay} and \texttt{dep\_delay} in the
+\texttt{alaska\_flights} data frame.
+
+\textbf{(LC9.4)} Do you think that the correlation coefficient between
+\texttt{arr\_delay} and \texttt{dep\_delay} is the same as the
+correlation coefficient between \texttt{dep\_delay} and
+\texttt{arr\_delay}? Explain.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+We can look at a variety of different data sets and their corresponding
+correlation coefficients in the following plot.
+
+\begin{figure}
+
+{\centering \includegraphics[width=\textwidth]{ismaykim_files/figure-latex/corr-coefs-1} 
+
+}
+
+\caption[Different Correlation Coefficients]{Different Correlation Coefficients}\label{fig:corr-coefs}
+\end{figure}
+
+We can calculate the correlation coefficient for our example of flight
+delays via
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{alaska_flights %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{correl =} \KeywordTok{cor}\NormalTok{(dep_delay, arr_delay))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 1 × 1
+##      correl
+##       <dbl>
+## 1 0.7907993
+\end{verbatim}
+
+The sample correlation coefficient is denoted by \(r\). In this case,
+\(r = 0.7907993\).
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{learncheck}
+\textbf{\emph{Learning check}}
+\end{learncheck}
+
+\textbf{(LC9.5)} Would you quantify the value of \texttt{correl}
+calculated above as being
+
+\begin{itemize}
+\tightlist
+\item
+  strongly positively linear,
+\item
+  weakly positively linear,
+\item
+  not linear,
+\item
+  weakly negatively linear, or
+\item
+  strongly positively linear?
+\end{itemize}
+
+Discuss your choice.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+If you'd like a little more practice in determining the linear
+relationship between two variables by quantifying a correlation
+coefficient, you should check out the
+\href{http://guessthecorrelation.com/}{Guess the Correlation} game
+online.
+
+\subsection{Correlation does not imply
+causation}\label{correlation-does-not-imply-causation}
+
+Just because arrival delays are related to departure delays in a
+somewhat linear fashion, we can't say with certaintly that arrival
+delays are caused \textbf{entirely} by departure delays. Certainly it
+appears that as one increases, the other tends to increase, but that
+might not always be the case.
+
+Causation is a tricky problem and frequently takes carefully designed
+experiments. These experiments remove confounding variables and only
+focus on the behavior of one variable in the presence of the levels of
+the other variable.
+
+Be careful as you read studies to make sure that the writers aren't
+falling into this fallacy of correlation implying causation. If you spot
+one, you may want to send them a link to
+\href{http://www.tylervigen.com/spurious-correlations}{Spurious
+Correlations}.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{learncheck}
+\textbf{\emph{Learning check}}
+\end{learncheck}
+
+\textbf{(LC9.6)} What are some other confounding variables besides
+departure delay that could attribute to an increase in arrival delays?
+Remember that a variable is something that has to \textbf{vary}!
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\section{Linear regression}\label{linear-regression}
+
+So we see above that there is a strong positive association between
+these delay variables. Let's say that we are waiting for our flight to
+leave New York City on Alaskan and we are told that our flight is going
+to be delayed 25 minutes. What could we predict for our arrival delay
+based on the plot in Figure \ref{fig:regplot1}?
+
+It may be hard to pick a particular value here, especially after just
+going on confidence intervals in Chapter \ref{ci}. One way to do this
+would be to fit a line that fits the data best and then use the
+predicted \texttt{arr\_delay} value from that line for
+\texttt{dep\_delay\ =\ 25} as our prediction. But what is meant by
+``fits the data best''?
+
+The least squares/best fitting/linear regression line has been fit to
+the data below.
+
+\begin{figure}
+
+{\centering \includegraphics[width=\textwidth]{ismaykim_files/figure-latex/with-reg-1} 
+
+}
+
+\caption[Regression line fit on delays]{Regression line fit on delays}\label{fig:with-reg}
+\end{figure}
+
+Here \texttt{lm} corresponds to ``linear model'' and we'll see it's use
+again in a bit when we find the values that define this line.
+
+\subsection{Understanding linear regression
+basics}\label{understanding-linear-regression-basics}
+
+Let's choose an arbitrary point on the graph and label it the color
+blue.
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-138-1} \end{center}
+
+Now consider this point's \emph{deviation} from the regression line.
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-139-1} \end{center}
+
+Do this for another point.
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-140-1} \end{center}
+
+And for another point.
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-141-1} \end{center}
+
+We could repeat this process for each of the points in our sample. The
+pattern that emerges here is that the regression line minimizes the sum
+of the squared arrow lengths (i.e., the least squares) for all of the
+points.
+
+As you look at these points you might think that a different line could
+fit the data better based on this criteria. That isn't the case though
+and it can be shown via calculus (omitted here) that this line minimizes
+the sum of the squared residuals for these 50 points.
+
+\subsection{The equation of the line}\label{the-equation-of-the-line}
+
+We can use R and the \texttt{lm} function to retrieve the equation of
+the line of best fit here in red. A simple linear regression such as
+this will produce two coeffients: one for the \emph{\(y\)-intercept} and
+one for the \emph{slope}. We can use the \texttt{tidy} function in the
+\texttt{broom} package to extract these coefficients from the model fit.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{delay_fit <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(}\DataTypeTok{formula =} \NormalTok{arr_delay ~}\StringTok{ }\NormalTok{dep_delay, }\DataTypeTok{data =} \NormalTok{alaska_flights)}
+\KeywordTok{tidy}\NormalTok{(delay_fit) %>%}\StringTok{ }\KeywordTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{tabular}{l|r|r|r|r}
+\hline
+term & estimate & std.error & statistic & p.value\\
+\hline
+(Intercept) & -14.155017 & 2.8094813 & -5.038302 & 0.0000071\\
+\hline
+dep\_delay & 1.217666 & 0.1360336 & 8.951212 & 0.0000000\\
+\hline
+\end{tabular}
+
+In general, the equation of the line of best fit for a sample is
+\[\hat{y} = b_0 + b_1 x\]. Thus, our equation is
+\(\hat{y} = -14.1550165 + 1.2176658 \, x\). It is usually preferred to
+actually write the names of the variables instead of \(x\) and \(y\):
+\[\widehat{arr\_delay} = -14.1550165 + 1.2176658 \, dep\_delay\].
+
+We can also extract the coefficients by using the \texttt{coef}
+function:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{coef}\NormalTok{(delay_fit)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## (Intercept)   dep_delay 
+##  -14.155016    1.217666
+\end{verbatim}
+
+\subsection{Interpretting the slope}\label{interpretting-the-slope}
+
+After you have determined your line of best fit, it is good practice to
+interpret the results to see if they make sense. Slope is defined as
+rise over run or the change in \(y\) for every one unit increase in
+\(x\). For our specific example, we can say that for every one
+\textbf{minute} increase in the departure delay of Alaskan Airlines
+flights from NYC, we can expect the corresponding arrival delay to be
+1.22 minutes more.
+
+This estimate does make some practical sense. It would be strange if
+arrival delays went down as departure delays increased. We also expect
+that the longer a flight is delayed on departure, the more likely the
+longer a flight is delayed on arrival. Remember that we are also using
+data here to make a guess as to how the population of all Alaskan
+flights might behave with regards to departure delays and arrival
+delays, so just as with other sampling procedures there is also
+variability in the sample estimates for the regression line.
+
+\subsection{Predicting values}\label{predicting-values}
+
+Getting back to our hypothetical flight that has been delayed 25
+minutes, we can use the \texttt{augment} function in the \texttt{broom}
+package to get the fitted arrival delay value:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{delay_fit %>%}\StringTok{ }\KeywordTok{augment}\NormalTok{(}\DataTypeTok{newdata =} \KeywordTok{data_frame}\NormalTok{(}\DataTypeTok{dep_delay =} \DecValTok{25}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   dep_delay  .fitted  .se.fit
+## 1        25 16.28663 3.967287
+\end{verbatim}
+
+Note the use of the \texttt{data\_frame} function here, which must be
+used since \texttt{newdata} is expected a data frame as its argument. We
+must also specify that we are plugging in 25 for the value of
+\texttt{dep\_delay} here. We can see that the line predicted an arrival
+delay of 16.29 minutes based on our 25 minute departure delay. This also
+does make some sense since flights that aren't delayed greatly from the
+beginning to tend to make up time in the air to compensate.
+
+\textbf{Important note}: The correlation coefficient and the slope of
+the regression line are not the same thing. They will always share the
+same sign (positive correlation coefficients correspond to positive
+slope coefficients and the same holds true for negative values), but you
+can't make any more conclusions about them than that.
+
+For example, say we have 3 groups of points:
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-144-1} \end{center}
+
+Their regression lines have different slopes, but \(r = 1\) for all 3.
+In other words, all three groups of points have a perfect (positive)
+linear relationship.
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-145-1} \end{center}
+
+\section{Inference for regression}\label{inference-for-regression}
+
+The population least squares line is defined by the formula
+\(y = \beta_0 + \beta_1 x + \epsilon\). Here \(\epsilon\) corresponds to
+the error term. It corresponds to the part of the response variable
+\(y\) that remains unexplained after considering the predictor variable
+\(x\). Often it is standard practice to assume that this error term
+follows a normal distribution. We will focus on checking whether that
+assumption is valid in Subsection \ref{resid}.
+
+In the population least squares line
+\(y = \beta_0 + \beta_1 x + \epsilon\), we can see that if
+\(\beta_1 = 0\) there is no relationship between \(x\) and \(y\). If
+\(\beta_1 = 0\), \(y = \beta_0 + \epsilon\). Therefore, \(y\) does not
+depend on \(x\) at all in the equation. A hypothesis test is frequently
+conducted to check whether a relationship exists between two numerical
+variables \(x\) and \(y\).
+
+We can also use the concept of shuffling to determine standard error and
+conduct a hypothesis test for a population slope. Let's go back to our
+example on Alaskan flights that represent a sample of all Alaskan
+flights departing NYC in 2013. Let's test to see if we have evidence
+that a \emph{positive} relationship exists between the departure delay
+and arrival delay for Alaskan flights. We will set up this hypothesis
+testing process as we have each before via the ``There is Only One
+Test'' diagram in Figure \ref{fig:htdowney}.
+
+\subsection{Data}\label{data-2}
+
+Our data is stored in \texttt{alaska\_flights} and we are focused on the
+50 measurements of \texttt{dep\_delay} and \texttt{arr\_delay} there.
+
+\subsection{\texorpdfstring{Test Statistic
+\(\delta\)}{Test Statistic \textbackslash{}delta}}\label{test-statistic-delta-2}
+
+Our test statistic here is the sample slope coefficient that we denote
+with \(b_1\).
+
+\subsection{\texorpdfstring{Observed effect
+\(\delta^*\)}{Observed effect \textbackslash{}delta\^{}*}}\label{observed-effect-delta-2}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{(b1_obs <-}\StringTok{ }\KeywordTok{tidy}\NormalTok{(delay_fit)$estimate[}\DecValTok{2}\NormalTok{])}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1.217666
+\end{verbatim}
+
+The calculated slope value from our observed sample is
+\(b_1 = 1.2176658\).
+
+\subsection{\texorpdfstring{Model of
+\(H_0\)}{Model of H\_0}}\label{model-of-h_0-2}
+
+We are looking to see if a positive relationship exists so
+\(H_A: \beta_1 > 0\). Our null hypothesis is always in terms of equality
+so we have \(\beta_1 = 0\).
+
+\subsection{Simulated Data}\label{simulated-data-2}
+
+Now to simulate the null hypothesis being true and recreating how our
+sample was created, we need to think about what it means for \(\beta_1\)
+to be zero.
+
+If \(\beta_1 = 0\), we said above that there is no relationship between
+the departure delay and arrival delay. If there is no relationship, then
+any one of the arrival delay values could have just as likely occurred
+with any of the other departure delay values instead of the one that it
+actually did fall with. We, therefore, have another example of shuffling
+in our simulating data.
+
+\textbf{Tactile simulation}
+
+We could use a deck of 100 note cards to create a tactile simulation of
+this shuffling process. We would write the 50 different values of
+departure delays on each of the 50 cards, one per card. We would then do
+the same thing for the 50 arrival delays putting them on one per card.
+
+Next, we would lay out each of the 50 departure delay cards and we would
+shuffle the arrival delay deck. Then, after shuffling the deck well, we
+would disperse the cards one per each one of the departure delay cards.
+We would then enter these new values in for arrival delay and compute a
+sample slope based on this shuffling. We could repeat this process many
+times, keeping track of our sample slope after each shuffle.
+
+\subsection{\texorpdfstring{Distribution of \(\delta\) under
+\(H_0\)}{Distribution of \textbackslash{}delta under H\_0}}\label{distribution-of-delta-under-h_0-2}
+
+We can build our randomization distribution in much the same way we did
+before using the \texttt{do} and \texttt{shuffle} functions. Here we
+will take advantage of the \texttt{coef} function we saw earlier to
+extract the slope and intercept coefficients. (Our focus will be on the
+slope here though.)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{rand_distn <-}\StringTok{ }\NormalTok{mosaic::}\KeywordTok{do}\NormalTok{(}\DecValTok{10000}\NormalTok{) *}
+\StringTok{  }\NormalTok{(}\KeywordTok{lm}\NormalTok{(}\DataTypeTok{formula =} \KeywordTok{shuffle}\NormalTok{(arr_delay) ~}\StringTok{ }\NormalTok{dep_delay, }\DataTypeTok{data =} \NormalTok{alaska_flights) %>%}
+\StringTok{     }\KeywordTok{coef}\NormalTok{())}
+\KeywordTok{names}\NormalTok{(rand_distn)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Intercept" "dep_delay"
+\end{verbatim}
+
+We see that the names of our columns are \texttt{Intercept} and
+\texttt{dep\_delay}. We want to look at \texttt{dep\_delay} since that
+corresponds to the slope coefficients.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data =} \NormalTok{rand_distn, }\DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{dep_delay)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{color =} \StringTok{"white"}\NormalTok{, }\DataTypeTok{bins =} \DecValTok{20}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-147-1} \end{center}
+
+\subsection{The p-value}\label{the-p-value-2}
+
+Recall that we want to see where our observed sample slope
+\(\delta^* = 1.2176658\) falls on this distribution and then count all
+of the values to the right of it corresponding to \(H_A: \beta_0 > 0\).
+To get a sense for where our values falls, we can shade all values at
+least as big as \(\delta^*\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data =} \NormalTok{rand_distn, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{dep_delay, }\DataTypeTok{fill =} \NormalTok{(dep_delay >=}\StringTok{ }\NormalTok{b1_obs))) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{color =} \StringTok{"white"}\NormalTok{, }\DataTypeTok{bins =} \DecValTok{20}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+
+{\centering \includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-148-1} 
+
+}
+
+\caption[Shaded histogram to show p-value]{Shaded histogram to show p-value}\label{fig:unnamed-chunk-148}
+\end{figure}
+
+Since 1.2176658 falls far to the right of this plot, we can say that we
+have a \(p\)-value of 0. We, thus, have evidence to reject the null
+hypothesis in support of there being a positive association between the
+departure delay and arrival delay of all Alaskan flights from NYC in
+2013.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{learncheck}
+\textbf{\emph{Learning check}}
+\end{learncheck}
+
+\textbf{(LC9.7)} Repeat the inference above but this time for the
+correlation coefficient instead of the slope.
+
+\textbf{(LC9.8)} Use bootstrapping with points to determine a range of
+possible values for the population slope comparing departure delays to
+arrival delays for Alaskan flights in 2013 from NYC.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\section{Residual analysis}\label{resid}
+
+The following diagram will help you to keep track of what is meant by a
+residual.
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-149-1} \end{center}
+
+Here, \(y_i\) is an observed value of the \texttt{arr\_delay} variable.
+\(i\) ranges from 1 to 50. \(\hat{y}_i\) is the fitted value--the
+\texttt{arr\_delay} value that is being pointed to on the red line. The
+residual is \[\hat{\epsilon}_i = y_i - \hat{y}_i\]. \textbf{Note the
+order here!} You start at the non-pointy end of the arrow (\(y_i\)) and
+then subtract away what comes at the point (\(\hat{y_i}\)).
+
+\section{Conditions for regression}\label{conditions-for-regression}
+
+In order for regression to be valid, we have three conditions to check:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Equal variances across explanatory variable (Check residual plot for
+  fan-shaped patterns.)
+\item
+  Independent observations, errors, and predictor variables (Check
+  residual plot for no time series-like patterns.)
+\item
+  Nearly normal residuals (Check quantile-quantile plot of standardized
+  residuals.)
+\end{enumerate}
+
+As you can see from the things to check after the conditions
+\emph{residuals} will play a large role in determining whether the
+conditions are met. \emph{Residuals} are estimates for the error term
+\(\epsilon\) we discussed earlier, and this is a big reason why they
+play an important role in validating regression assumptions.
+
+\textbf{Residual plot}
+
+To construct a residual plot we will analyze data from the
+\texttt{augment} function in \texttt{broom}. Specifically, we are
+interested in the \texttt{.fitted} and \texttt{.resid} variables there:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fits <-}\StringTok{ }\KeywordTok{augment}\NormalTok{(delay_fit)}
+\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data =} \NormalTok{fits, }\DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{.fitted, }\DataTypeTok{y =} \NormalTok{.resid)) +}
+\StringTok{  }\KeywordTok{geom_point}\NormalTok{() +}
+\StringTok{  }\KeywordTok{geom_abline}\NormalTok{(}\DataTypeTok{intercept =} \DecValTok{0}\NormalTok{, }\DataTypeTok{slope =} \DecValTok{0}\NormalTok{, }\DataTypeTok{color =} \StringTok{"blue"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/resid-plot-1} \end{center}
+
+\textbf{Quantile-quantile plot}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data =} \NormalTok{fits, }\DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{sample =} \NormalTok{.resid)) +}
+\StringTok{  }\KeywordTok{stat_qq}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/qqplot1-1} \end{center}
+
+\textbf{Checking conditions}:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  We are looking to see if the points are scattered about the blue line
+  at 0 relatively evenly as we look from left to right. We have some
+  reason for concern here as the large lump of values on the left are
+  much more dispersed than those on the right.
+\item
+  The second condition is invalidated if there is a trigonometric
+  pattern of up and down throughout the residual plot. That is not the
+  case here.
+\item
+  We look at the \emph{quantile-quantile plot} (Q-Q plot for sure) for
+  the third condition. We are looking to see if the residuals fall on a
+  straight line with what we would expect if they were normally
+  distributed. We see some curvature here as well. We should begin to
+  wonder if regression was valid here with both condition 1 and
+  condition 3 in question.
+\end{enumerate}
+
+We have reason to doubt whether a linear regression is valid here.
+Unfortunately, all too frequently regressions are run without checking
+these assumptions carefully. While small deviations in the assumptions
+can be OK, larger violations can completely invalidate the results and
+make any inferences improbable and questionable.
+
+\section{Script of R code}\label{script-of-r-code-4}
+
+An R script file of all R code used in this chapter is available
+\href{http://ismayc.github.io/moderndiver-book/09-regress.R}{here}.
 
 \section{What's to come?}\label{whats-to-come-6}
 
 \part{Conclusion}\label{part-conclusion}
 
 \chapter{Effective Data Storytelling}\label{effective-data-storytelling}
+
+As we've progressed throughout this book, you've seen how to work with
+data in a variety of ways. You've learned effective strategies for
+plotting data by understanding which types of plots work best for which
+combinations of variable types. You've summarized data in table form and
+calculated summary statistics for a variety of different variables.
+Further, you've seen the value of inference as a process to come to
+conclusions about a population by using a random sample. Lastly, you've
+explored how to use linear regression and the importance of checking the
+conditions required to make it a valid procedure. Throughout you've
+learned many computational techniques and focused on reproducible
+research in writing R code and keeping track of your work in R Markdown.
+All of these steps go into making a great story using data.
+
+As the textbook comes to a close, we thought it best that you explore
+what stellar work is being produced by data journalists throughout the
+world that specialize in effective data storytelling. We recommend you
+read this article by Walt Hickey entitled
+\href{http://fivethirtyeight.com/features/the-dollar-and-cents-case-against-hollywoods-exclusion-of-women/}{The
+Dollar-And-Cents Case Against Hollywood's Exclusion of Women}. As you
+read over it, think carefully about how Walt is using his data, his
+graphics, and his analyses to paint the picture for the reader of what
+the story is he wants to tell. In the spirit of reproducibility, the
+members of 538 have also shared the data that they used to create this
+story and some R code
+\href{https://github.com/fivethirtyeight/data/tree/master/bechdel}{here}.
+Great data stories don't mislead the reader, but rather engulf them in
+understanding the importance that data plays in our lives through the
+captivation of storytelling.
 
 \section{Concluding Remarks}\label{conclusion}
 
@@ -7276,6 +7951,2009 @@ quantitative variables.
 
 \chapter{Inference Examples}\label{appendixB}
 
+This appendix is designed to provide you with example of the five basic
+hypothesis tests and their corresponding confidence intervals.
+Traditional theory-based methods as well as computational-based methods
+are presented.
+
+\section{Needed packages}\label{needed-packages-4}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(dplyr)}
+\KeywordTok{library}\NormalTok{(ggplot2)}
+\KeywordTok{library}\NormalTok{(mosaic)}
+\KeywordTok{library}\NormalTok{(knitr)}
+\KeywordTok{library}\NormalTok{(readr)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\section{One Mean}\label{one-mean}
+
+\subsection{Problem Statement}\label{problem-statement}
+
+The National Survey of Family Growth conducted by the Centers for
+Disease Control gathers information on family life, marriage and
+divorce, pregnancy, infertility, use of contraception, and men's and
+women's health. One of the variables collected on this survey is the age
+at first marriage. 5,534 randomly sampled US women between 2006 and 2010
+completed the survey. The women sampled here had been married at least
+once. Do we have evidence that the mean age of first marriage for all US
+women from 2006 to 2010 is greater than 23 years? \citep[Tweaked a bit
+from][ {[}Chapter 4{]}]{isrs2014}
+
+\subsection{Competing Hypotheses}\label{competing-hypotheses}
+
+\subsubsection{In words}\label{in-words}
+
+\begin{itemize}
+\item
+  Null hypothesis: The mean age of first marriage for all US women from
+  2006 to 2010 is equal to 23 years.
+\item
+  Alternative hypothesis: The mean age of first marriage for all US
+  women from 2006 to 2010 is greater than 23 years.
+\end{itemize}
+
+\subsubsection{In symbols (with
+annotations)}\label{in-symbols-with-annotations}
+
+\begin{itemize}
+\tightlist
+\item
+  \(H_0: \mu = \mu_{0}\), where \(\mu\) represents the mean age of first
+  marriage for all US women from 2006 to 2010 and \(\mu_0\) is 23.
+\item
+  \(H_A: \mu > 23\)
+\end{itemize}
+
+\subsubsection{\texorpdfstring{Set
+\(\alpha\)}{Set \textbackslash{}alpha}}\label{set-alpha}
+
+It's important to set the significance level before starting the testing
+using the data. Let's set the significance level at 5\% here.
+
+\subsection{Exploring the sample data}\label{exploring-the-sample-data}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{download.file}\NormalTok{(}\StringTok{"http://ismayc.github.io/teaching/sample_problems/ageAtMar.csv"}\NormalTok{, }
+  \DataTypeTok{destfile =} \StringTok{"data/ageAtMar.csv"}\NormalTok{,}
+  \DataTypeTok{method =} \StringTok{"curl"}\NormalTok{)}
+\NormalTok{ageAtMar <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{"data/ageAtMar.csv"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Parsed with column specification:
+## cols(
+##   age = col_integer()
+## )
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{age_summ <-}\StringTok{ }\NormalTok{ageAtMar %>%}
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{sample_size =} \KeywordTok{n}\NormalTok{(),}
+    \DataTypeTok{mean =} \KeywordTok{mean}\NormalTok{(age),}
+    \DataTypeTok{sd =} \KeywordTok{sd}\NormalTok{(age),}
+    \DataTypeTok{minimum =} \KeywordTok{min}\NormalTok{(age),}
+    \DataTypeTok{lower_quartile =} \KeywordTok{quantile}\NormalTok{(age, }\FloatTok{0.25}\NormalTok{),}
+    \DataTypeTok{median =} \KeywordTok{median}\NormalTok{(age),}
+    \DataTypeTok{upper_quartile =} \KeywordTok{quantile}\NormalTok{(age, }\FloatTok{0.75}\NormalTok{),}
+    \DataTypeTok{max =} \KeywordTok{max}\NormalTok{(age))}
+\KeywordTok{kable}\NormalTok{(age_summ)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{tabular}{r|r|r|r|r|r|r|r}
+\hline
+sample\_size & mean & sd & minimum & lower\_quartile & median & upper\_quartile & max\\
+\hline
+5534 & 23.44019 & 4.721365 & 10 & 20 & 23 & 26 & 43\\
+\hline
+\end{tabular}
+
+The histogram below also shows the distribution of \texttt{age}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ageAtMar %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{age)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{binwidth =} \DecValTok{3}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/hist1b-1} \end{center}
+
+\subsubsection{Guess about statistical
+significance}\label{guess-about-statistical-significance}
+
+We are looking to see if the observed sample mean of 23.4401879 is
+statistically greater than \(\mu_0 = 23\). They seem to be quite close,
+but we have a large sample size here. Let's guess that the large sample
+size will lead us to reject this practically small difference.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Non-traditional methods}\label{non-traditional-methods}
+
+\subsubsection{Bootstrapping for Hypothesis
+Test}\label{bootstrapping-for-hypothesis-test}
+
+In order to look to see if the observed sample mean of 23.4401879 is
+statistically greater than \(\mu_0 = 23\), we need to account for the
+sample size. We also need to determine a process that replicates how the
+original sample of size 5534 was selected.
+
+We can use the idea of \emph{bootstrapping} to simulate the population
+from which the sample came and then generate samples from that simulated
+population to account for sampling variability. Recall how bootstrapping
+would apply in this context:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Sample with replacement from our original sample of 5534 women and
+  repeat this process 10,000 times,
+\item
+  calculate the mean for each of the 10,000 bootstrap samples created in
+  Step 1.,
+\item
+  combine all of these bootstrap statistics calculated in Step 2 into a
+  \texttt{boot\_distn} object, and
+\item
+  shift the center of this distribution over to the null value of 23.
+  (This is needed since it will be centered at 23.4401879 via the
+  process of bootstrapping.)
+\end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{2016}\NormalTok{)}
+\NormalTok{mu0 <-}\StringTok{ }\DecValTok{23}
+\NormalTok{shift <-}\StringTok{ }\NormalTok{mu0 -}\StringTok{ }\NormalTok{age_summ$mean}
+\NormalTok{null_distn <-}\StringTok{ }\KeywordTok{do}\NormalTok{(}\DecValTok{10000}\NormalTok{) *}\StringTok{ }
+\StringTok{  }\KeywordTok{resample}\NormalTok{(ageAtMar, }\DataTypeTok{replace =} \OtherTok{TRUE}\NormalTok{) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{age =} \NormalTok{age +}\StringTok{ }\NormalTok{shift) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{mean_age =} \KeywordTok{mean}\NormalTok{(age))}
+\NormalTok{null_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{mean_age)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/sim1-1} \end{center}
+
+We can next use this distribution to observe our \(p\)-value. Recall
+this is a right-tailed test so we will be looking for values that are
+greater than or equal to 23.4401879 for our \(p\)-value.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{obs_mean <-}\StringTok{ }\NormalTok{age_summ$mean}
+\NormalTok{null_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{mean_age)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{) +}
+\StringTok{  }\KeywordTok{geom_vline}\NormalTok{(}\DataTypeTok{color =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{xintercept =} \NormalTok{obs_mean)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-153-1} \end{center}
+
+\paragraph{\texorpdfstring{Calculate
+\(p\)-value}{Calculate p-value}}\label{calculate-p-value}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pvalue <-}\StringTok{ }\NormalTok{null_distn %>%}
+\StringTok{  }\KeywordTok{filter}\NormalTok{( mean_age >=}\StringTok{ }\NormalTok{obs_mean ) %>%}
+\StringTok{  }\KeywordTok{nrow}\NormalTok{() /}\StringTok{ }\KeywordTok{nrow}\NormalTok{(null_distn)}
+\NormalTok{pvalue}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0
+\end{verbatim}
+
+So our \(p\)-value is 0 and we reject the null hypothesis at the 5\%
+level. You can also see this from the histogram above that we are far
+into the tail of the null distribution.
+
+\subsubsection{Bootstrapping for Confidence
+Interval}\label{bootstrapping-for-confidence-interval}
+
+We can also create a confidence interval for the unknown population
+parameter \(\mu\) using our sample data using \emph{bootstrapping}. Note
+that we don't need to shift this distribution since we want the center
+of our confidence interval to be our point estimate
+\(\bar{x}_{obs} = 23.4401879\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn <-}\StringTok{ }\KeywordTok{do}\NormalTok{(}\DecValTok{10000}\NormalTok{) *}\StringTok{ }
+\StringTok{  }\KeywordTok{resample}\NormalTok{(ageAtMar, }\DataTypeTok{replace =} \OtherTok{TRUE}\NormalTok{) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{mean_age =} \KeywordTok{mean}\NormalTok{(age))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{mean_age)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-155-1} \end{center}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn %>%}\StringTok{ }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{lower =} \KeywordTok{quantile}\NormalTok{(mean_age, }\DataTypeTok{probs =} \FloatTok{0.025}\NormalTok{),}
+    \DataTypeTok{upper =} \KeywordTok{quantile}\NormalTok{(mean_age, }\DataTypeTok{probs =} \FloatTok{0.975}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      lower    upper
+## 1 23.31821 23.56361
+\end{verbatim}
+
+We see that 23 is not contained in this confidence interval as a
+plausible value of \(\mu\) (the unknown population mean) and the entire
+interval is larger than 23. This matches with our hypothesis test
+results of rejecting the null hypothesis in favor of the alternative
+(\(\mu > 23\)).
+
+\textbf{Interpretation}: We are 95\% confident the true mean age of
+first marriage for all US women from 2006 to 2010 is between and .
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Traditional methods}\label{traditional-methods}
+
+\subsubsection{Check conditions}\label{check-conditions}
+
+Remember that in order to use the shortcut (formula-based, theoretical)
+approach, we need to check that some conditions are met.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \emph{Independent observations}: The observations are collected
+  independently.
+
+  The cases are selected independently through random sampling so this
+  condition is met.
+\item
+  \emph{Approximately normal}: The distribution of the response variable
+  should be normal or the sample size should be at least 30.
+
+  The histogram for the sample above does show some skew.
+\end{enumerate}
+
+The Q-Q plot below also shows some skew.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data =} \NormalTok{ageAtMar, }\DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{sample =} \NormalTok{age)) +}
+\StringTok{  }\KeywordTok{stat_qq}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+The sample size here is quite large though (\(n = 5534\)) so both
+conditions are met.
+
+\subsubsection{Test statistic}\label{test-statistic}
+
+The test statistic is a random variable based on the sample data. Here,
+we want to look at a way to estimate the population mean \(\mu\). A good
+guess is the sample mean \(\bar{X}\). Recall that this sample mean is
+actually a random variable that will vary as different samples are
+(theoretically, would be) collected. We are looking to see how likely is
+it for us to have observed a sample mean of
+\(\bar{x}_{obs} = 23.4401879\) or larger assuming that the population
+mean is 23 (assuming the null hypothesis is true). If the conditions are
+met and assuming \(H_0\) is true, we can ``standardize'' this original
+test statistic of \(\bar{X}\) into a \(T\) statistic that follows a
+\(t\) distribution with degrees of freedom equal to \(df = n - 1\):
+
+\[ T =\dfrac{ \bar{X} - \mu_0}{ S / \sqrt{n} } \sim t (df = n - 1) \]
+
+where \(S\) represents the standard deviation of the sample and \(n\) is
+the sample size.
+
+\paragraph{Observed test statistic}\label{observed-test-statistic}
+
+While one could compute this observed test statistic by ``hand'', the
+focus here is on the set-up of the problem and in understanding which
+formula for the test statistic applies. We can use the \texttt{t.test}
+function to perform this analysis for us.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{t.test}\NormalTok{(}\DataTypeTok{x =} \NormalTok{ageAtMar$age, }
+       \DataTypeTok{alternative =} \StringTok{"greater"}\NormalTok{,}
+       \DataTypeTok{mu =} \DecValTok{23}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  One Sample t-test
+## 
+## data:  ageAtMar$age
+## t = 6.9357, df = 5533, p-value = 0.000000000002252
+## alternative hypothesis: true mean is greater than 23
+## 95 percent confidence interval:
+##  23.33578      Inf
+## sample estimates:
+## mean of x 
+##  23.44019
+\end{verbatim}
+
+We see here that the \(t_{obs}\) value is around 6.94. Recall that for
+large sample sizes the \(t\) distribution is essentially the standard
+normal distribution and this is why the statistic is reported as
+\texttt{Z}.
+
+\subsubsection{\texorpdfstring{Compute
+\(p\)-value}{Compute p-value}}\label{compute-p-value}
+
+The \(p\)-value---the probability of observing an \(t_{obs}\) value of
+6.94 or more in our null distribution of a \(t\) with 5433 degrees of
+freedom---is essentially 0. This can also be calculated in R directly:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pt}\NormalTok{(}\FloatTok{6.936}\NormalTok{, }\DataTypeTok{df =} \KeywordTok{nrow}\NormalTok{(ageAtMar) -}\StringTok{ }\DecValTok{1}\NormalTok{, }\DataTypeTok{lower.tail =} \OtherTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.000000000002247382
+\end{verbatim}
+
+We can also use the \(N(0, 1)\) distribution here:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pnorm}\NormalTok{(}\FloatTok{6.936}\NormalTok{, }\DataTypeTok{lower.tail =} \OtherTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.000000000002016788
+\end{verbatim}
+
+\subsubsection{State conclusion}\label{state-conclusion}
+
+We, therefore, have sufficient evidence to reject the null hypothesis.
+Our initial guess that our observed sample mean was statistically
+greater than the hypothesized mean has supporting evidence here. Based
+on this sample, we have evidence that the mean age of first marriage for
+all US women from 2006 to 2010 is greater than 23 years.
+
+\subsubsection{Confidence interval}\label{confidence-interval}
+
+The confidence interval reported above with \texttt{t.test} is known as
+a one-sided confidence interval and gives the lowest value one could
+expect \(\mu\) to be with 95\% confidence. We usually want a range of
+values so we can use \texttt{alternative\ =\ "two.sided"} to get the
+similar values compared to the bootstrapping process:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{t.test}\NormalTok{(}\DataTypeTok{x =} \NormalTok{ageAtMar$age, }
+       \DataTypeTok{alternative =} \StringTok{"two.sided"}\NormalTok{,}
+       \DataTypeTok{mu =} \DecValTok{23}\NormalTok{)$conf}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 23.31577 23.56461
+## attr(,"conf.level")
+## [1] 0.95
+\end{verbatim}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Comparing results}\label{comparing-results}
+
+Observing the bootstrap distribution that were created, it makes quite a
+bit of sense that the results are so similar for traditional and
+non-traditional methods in terms of the \(p\)-value and the confidence
+interval since these distributions look very similar to normal
+distributions. The conditions also being met (the large sample size was
+the driver here) leads us to better guess that using any of the methods
+whether they are traditional (formula-based) or non-traditional
+(computational-based) will lead to similar results.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\section{One Proportion}\label{one-proportion}
+
+\subsection{Problem Statement}\label{problem-statement-1}
+
+The CEO of a large electric utility claims that 80 percent of his
+1,000,000 customers are satisfied with the service they receive. To test
+this claim, the local newspaper surveyed 100 customers, using simple
+random sampling. 73 were satisfied and the remaining were unsatisfied.
+Based on these findings from the sample, can we reject the CEO's
+hypothesis that 80\% of the customers are satisfied? {[}Tweaked a bit
+from
+\url{http://stattrek.com/hypothesis-test/proportion.aspx?Tutorial=AP}{]}
+
+\subsection{Competing Hypotheses}\label{competing-hypotheses-1}
+
+\subsubsection{In words}\label{in-words-1}
+
+\begin{itemize}
+\item
+  Null hypothesis: The proportion of all customers of the large electric
+  utility satisfied with service they receive is equal 0.80.
+\item
+  Alternative hypothesis: The proportion of all customers of the large
+  electric utility satisfied with service they receive is different from
+  0.80.
+\end{itemize}
+
+\subsubsection{In symbols (with
+annotations)}\label{in-symbols-with-annotations-1}
+
+\begin{itemize}
+\tightlist
+\item
+  \(H_0: \pi = p_{0}\), where \(\pi\) represents the proportion of all
+  customers of the large electric utility satisfied with service they
+  receive and \(p_0\) is 0.8.
+\item
+  \(H_A: \pi \ne 0.8\)
+\end{itemize}
+
+\subsubsection{\texorpdfstring{Set
+\(\alpha\)}{Set \textbackslash{}alpha}}\label{set-alpha-1}
+
+It's important to set the significance level before starting the testing
+using the data. Let's set the significance level at 5\% here.
+
+\subsection{Exploring the sample
+data}\label{exploring-the-sample-data-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{elec <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{rep}\NormalTok{(}\StringTok{"satisfied"}\NormalTok{, }\DecValTok{73}\NormalTok{), }\KeywordTok{rep}\NormalTok{(}\StringTok{"unsatisfied"}\NormalTok{, }\DecValTok{27}\NormalTok{)) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{as_data_frame}\NormalTok{() %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{rename}\NormalTok{(}\StringTok{"satisfy"} \NormalTok{=}\StringTok{ }\NormalTok{value)}
+\end{Highlighting}
+\end{Shaded}
+
+The bar graph below also shows the distribution of \texttt{satisfy}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data =} \NormalTok{elec, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{satisfy)) +}\StringTok{ }\KeywordTok{geom_bar}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/bar-1} \end{center}
+
+\subsubsection{Guess about statistical
+significance}\label{guess-about-statistical-significance-1}
+
+We are looking to see if the sample proportion of 0.73 is statistically
+different from \(p_0 = 0.8\) based on this sample. They seem to be quite
+close, and our sample size is not huge here (\(n = 100\)). Let's guess
+that we do not have evidence to reject the null hypothesis.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Non-traditional methods}\label{non-traditional-methods-1}
+
+\subsubsection{Simulation for Hypothesis
+Test}\label{simulation-for-hypothesis-test}
+
+In order to look to see if 0.73 is statistically different from 0.8, we
+need to account for the sample size. We also need to determine a process
+that replicates how the original sample of size 100 was selected. We can
+use the idea of an unfair coin to \emph{simulate} this process. We will
+simulate flipping an unfair coin (with probability of success 0.8
+matching the null hypothesis) 100 times. Then we will keep track of how
+many heads come up in those 100 flips. Our simulated statistic matches
+with how we calculated the original statistic \(\hat{p}\): the number of
+heads (satisfied) out of our total sample of 100. We then repeat this
+process many times (say 10,000) to create the null distribution looking
+at the simulated proportions of successes:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{2016}\NormalTok{)}
+\NormalTok{null_distn <-}\StringTok{ }\KeywordTok{do}\NormalTok{(}\DecValTok{10000}\NormalTok{) *}\StringTok{ }\KeywordTok{rflip}\NormalTok{(}\DecValTok{100}\NormalTok{, }\DataTypeTok{prob =} \FloatTok{0.8}\NormalTok{)}
+\NormalTok{null_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{prop)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/sim2-1} \end{center}
+
+We can next use this distribution to observe our \(p\)-value. Recall
+this is a two-tailed test so we will be looking for values that are 0.8
+- 0.73 = 0.07 away from 0.8 in BOTH directions for our \(p\)-value:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{p_hat <-}\StringTok{ }\DecValTok{73}\NormalTok{/}\DecValTok{100}
+\NormalTok{dist <-}\StringTok{ }\FloatTok{0.8} \NormalTok{-}\StringTok{ }\NormalTok{p_hat}
+\NormalTok{null_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{prop)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{) +}
+\StringTok{  }\KeywordTok{geom_vline}\NormalTok{(}\DataTypeTok{color =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{xintercept =} \FloatTok{0.8} \NormalTok{+}\StringTok{ }\NormalTok{dist) +}
+\StringTok{  }\KeywordTok{geom_vline}\NormalTok{(}\DataTypeTok{color =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{xintercept =} \NormalTok{p_hat)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-157-1} \end{center}
+
+\paragraph{\texorpdfstring{Calculate
+\(p\)-value}{Calculate p-value}}\label{calculate-p-value-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pvalue <-}\StringTok{ }\NormalTok{null_distn %>%}
+\StringTok{  }\KeywordTok{filter}\NormalTok{( (prop >=}\StringTok{ }\FloatTok{0.8} \NormalTok{+}\StringTok{ }\NormalTok{dist) |}\StringTok{ }\NormalTok{(prop <=}\StringTok{ }\NormalTok{p_hat) ) %>%}
+\StringTok{  }\KeywordTok{nrow}\NormalTok{() /}\StringTok{ }\KeywordTok{nrow}\NormalTok{(null_distn)}
+\NormalTok{pvalue}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.081
+\end{verbatim}
+
+So our \(p\)-value is 0.081 and we fail to reject the null hypothesis at
+the 5\% level.
+
+\subsubsection{Bootstrapping for Confidence
+Interval}\label{bootstrapping-for-confidence-interval-1}
+
+We can also create a confidence interval for the unknown population
+parameter \(\pi\) using our sample data. To do so, we use
+\emph{bootstrapping}, which involves
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  sampling with replacement from our original sample of 100 survey
+  respondents and repeating this process 10,000 times,
+\item
+  calculating the proportion of successes for each of the 10,000
+  bootstrap samples created in Step 1.,
+\item
+  combining all of these bootstrap statistics calculated in Step 2 into
+  a \texttt{boot\_distn} object,
+\item
+  identifying the 2.5\textsuperscript{th} and 97.5\textsuperscript{th}
+  percentiles of this distribution (corresponding to the 5\%
+  significance level chosen) to find a 95\% confidence interval for
+  \(\pi\), and
+\item
+  interpret this confidence interval in the context of the problem.
+\end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn <-}\StringTok{ }\KeywordTok{do}\NormalTok{(}\DecValTok{10000}\NormalTok{) *}\StringTok{ }
+\StringTok{  }\NormalTok{elec %>%}\StringTok{ }\KeywordTok{resample}\NormalTok{(}\DataTypeTok{size =} \DecValTok{100}\NormalTok{, }\DataTypeTok{replace =} \OtherTok{TRUE}\NormalTok{) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{success_rate =} \KeywordTok{mean}\NormalTok{(satisfy ==}\StringTok{ "satisfied"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+Just as we use the \texttt{mean} function for calculating the mean over
+a numerical variable, we can also use it to compute the proportion of
+successes for a categorical variable where we specify what we are
+calling a ``success'' after the \texttt{==}. (Think about the formula
+for calculating a mean and how R handles logical statements such as
+\texttt{satisfy\ ==\ "satisfied"} for why this must be true.)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{success_rate)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-159-1} \end{center}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn %>%}\StringTok{ }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{lower =} \KeywordTok{quantile}\NormalTok{(success_rate, }\DataTypeTok{probs =} \FloatTok{0.025}\NormalTok{),}
+    \DataTypeTok{upper =} \KeywordTok{quantile}\NormalTok{(success_rate, }\DataTypeTok{probs =} \FloatTok{0.975}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   lower upper
+## 1  0.64  0.81
+\end{verbatim}
+
+We see that 0.80 is contained in this confidence interval as a plausible
+value of \(\pi\) (the unknown population proportion). This matches with
+our hypothesis test results of failing to reject the null hypothesis.
+
+\textbf{Interpretation}: We are 95\% confident the true proportion of
+customers who are satisfied with the service they receive is between and
+.
+
+\textbf{Note}: You could also use the null distribution with a shift to
+have its center at \(\hat{p} = 0.73\) instead of at \(p_0 = 0.8\) and
+calculate its percentiles. The confidence interval produced via this
+method should be comparable to the one done using bootstrapping above.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Traditional methods}\label{traditional-methods-1}
+
+\subsubsection{Check conditions}\label{check-conditions-1}
+
+Remember that in order to use the shortcut (formula-based, theoretical)
+approach, we need to check that some conditions are met.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \emph{Independent observations}: The observations are collected
+  independently.
+
+  The cases are selected independently through random sampling so this
+  condition is met.
+\item
+  \emph{Approximately normal}: The number of expected successes and
+  expected failures is at least 10.
+
+  This condition is met since 73 and 27 are both greater than 10.
+\end{enumerate}
+
+\subsubsection{Test statistic}\label{test-statistic-1}
+
+The test statistic is a random variable based on the sample data. Here,
+we want to look at a way to estimate the population proportion \(\pi\).
+A good guess is the sample proportion \(\hat{P}\). Recall that this
+sample proportion is actually a random variable that will vary as
+different samples are (theoretically, would be) collected. We are
+looking to see how likely is it for us to have observed a sample
+proportion of \(\hat{p}_{obs} = 0.73\) or larger assuming that the
+population proportion is 0.80 (assuming the null hypothesis is true). If
+the conditions are met and assuming \(H_0\) is true, we can standardize
+this original test statistic of \(\hat{P}\) into a \(Z\) statistic that
+follows a \(N(0, 1)\) distribution.
+
+\[ Z =\dfrac{ \hat{P} - p_0}{\sqrt{\dfrac{p_0(1 - p_0)}{n} }} \sim N(0, 1) \]
+
+\paragraph{Observed test statistic}\label{observed-test-statistic-1}
+
+While one could compute this observed test statistic by ``hand'' by
+plugging the observed values into the formula, the focus here is on the
+set-up of the problem and in understanding which formula for the test
+statistic applies. The calculation has been done in R below for
+completeness though:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{p_hat <-}\StringTok{ }\FloatTok{0.73}
+\NormalTok{p0 <-}\StringTok{ }\FloatTok{0.8}
+\NormalTok{n <-}\StringTok{ }\DecValTok{100}
+\NormalTok{(z_obs <-}\StringTok{ }\NormalTok{(p_hat -}\StringTok{ }\NormalTok{p0) /}\StringTok{ }\KeywordTok{sqrt}\NormalTok{( (p0 *}\StringTok{ }\NormalTok{(}\DecValTok{1} \NormalTok{-}\StringTok{ }\NormalTok{p0)) /}\StringTok{ }\NormalTok{n))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] -1.75
+\end{verbatim}
+
+We see here that the \(z_{obs}\) value is around -1.75. Our observed
+sample proportion of 0.73 is 1.75 standard errors below the hypothesized
+parameter value of 0.8.
+
+\subsubsection{\texorpdfstring{Compute
+\(p\)-value}{Compute p-value}}\label{compute-p-value-1}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DecValTok{2} \NormalTok{*}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(z_obs)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.08011831
+\end{verbatim}
+
+The \(p\)-value---the probability of observing an \(z_{obs}\) value of
+-1.75 or more extreme (in both directions) in our null distribution---is
+around 8\%.
+
+Note that we could also do this test directly using the
+\texttt{prop.test} function.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{stats::}\KeywordTok{prop.test}\NormalTok{(}\DataTypeTok{x =} \KeywordTok{table}\NormalTok{(elec$satisfy),}
+       \DataTypeTok{n =} \KeywordTok{length}\NormalTok{(elec$satisfy),}
+       \DataTypeTok{alternative =} \StringTok{"two.sided"}\NormalTok{,}
+       \DataTypeTok{p =} \FloatTok{0.8}\NormalTok{,}
+       \DataTypeTok{correct =} \OtherTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  1-sample proportions test without continuity correction
+## 
+## data:  table(elec$satisfy), null probability 0.8
+## X-squared = 3.0625, df = 1, p-value = 0.08012
+## alternative hypothesis: true p is not equal to 0.8
+## 95 percent confidence interval:
+##  0.6356788 0.8073042
+## sample estimates:
+##    p 
+## 0.73
+\end{verbatim}
+
+\texttt{prop.test} does a \(\chi^2\) test here but this matches up
+exactly with what we would expect:
+\(x^2_{obs} = 3.06 = (-1.75)^2 = (z_{obs})^2\) and the \(p\)-values are
+the same because we are focusing on a two-tailed test.
+
+Note that the 95 percent confidence interval given above matches well
+with the one calculated using bootstrapping.
+
+\subsubsection{State conclusion}\label{state-conclusion-1}
+
+We, therefore, do not have sufficient evidence to reject the null
+hypothesis. Our initial guess that our observed sample proportion was
+not statistically greater than the hypothesized proportion has not been
+invalidated. Based on this sample, we have do not evidence that the
+proportion of all customers of the large electric utility satisfied with
+service they receive is different from 0.80, at the 5\% level.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Comparing results}\label{comparing-results-1}
+
+Observing the bootstrap distribution and the null distribution that were
+created, it makes quite a bit of sense that the results are so similar
+for traditional and non-traditional methods in terms of the \(p\)-value
+and the confidence interval since these distributions look very similar
+to normal distributions. The conditions also being met leads us to
+better guess that using any of the methods whether they are traditional
+(formula-based) or non-traditional (computational-based) will lead to
+similar results.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\section{Two Proportions}\label{two-proportions}
+
+\subsection{Problem Statement}\label{problem-statement-2}
+
+A 2010 survey asked 827 randomly sampled registered voters in California
+``Do you support? Or do you oppose? Drilling for oil and natural gas off
+the Coast of California? Or do you not know enough to say?'' Conduct a
+hypothesis test to determine if the data provide strong evidence that
+the proportion of college graduates who do not have an opinion on this
+issue is different than that of non-college graduates. \citep[Tweaked a
+bit from][ {[}Chapter 6{]}]{isrs2014}
+
+\subsection{Competing Hypotheses}\label{competing-hypotheses-2}
+
+\subsubsection{In words}\label{in-words-2}
+
+\begin{itemize}
+\item
+  Null hypothesis: There is no association between having an opinion on
+  drilling and having a college degree for all registered California
+  voters in 2010.
+\item
+  Alternative hypothesis: There is an association between having an
+  opinion on drilling and having a college degree for all registered
+  California voters in 2010.
+\end{itemize}
+
+\subsubsection{Another way in words}\label{another-way-in-words}
+
+\begin{itemize}
+\item
+  Null hypothesis: The probability that a Californian voter in 2010
+  having no opinion on drilling and is a college graduate is the
+  \textbf{same} as that of a non-college graduate.
+\item
+  Alternative hypothesis: These parameter probabilities are different.
+\end{itemize}
+
+\subsubsection{In symbols (with
+annotations)}\label{in-symbols-with-annotations-2}
+
+\begin{itemize}
+\tightlist
+\item
+  \(H_0: \pi_{college} = \pi_{no\_college}\) or
+  \(H_0: \pi_{college} - \pi_{no\_college} = 0\), where \(\pi\)
+  represents the probability of not having an opinion on drilling.
+\item
+  \(H_A: \pi_{college} - \pi_{no\_college} \ne 0\)
+\end{itemize}
+
+\subsubsection{\texorpdfstring{Set
+\(\alpha\)}{Set \textbackslash{}alpha}}\label{set-alpha-2}
+
+It's important to set the significance level before starting the testing
+using the data. Let's set the significance level at 5\% here.
+
+\subsection{Exploring the sample
+data}\label{exploring-the-sample-data-2}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{download.file}\NormalTok{(}\StringTok{"http://ismayc.github.io/teaching/sample_problems/offshore.csv"}\NormalTok{, }\DataTypeTok{destfile =} \StringTok{"data/offshore.csv"}\NormalTok{, }\DataTypeTok{method =} \StringTok{"curl"}\NormalTok{)}
+\NormalTok{offshore <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{"data/offshore.csv"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{table}\NormalTok{(offshore$college_grad, offshore$response)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      
+##       no opinion opinion
+##   no         131     258
+##   yes        104     334
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{(off_summ <-}\StringTok{ }\NormalTok{offshore %>%}\StringTok{ }\KeywordTok{group_by}\NormalTok{(college_grad) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{prop_no_opinion =} \KeywordTok{mean}\NormalTok{(response ==}\StringTok{ "no opinion"}\NormalTok{),}
+    \DataTypeTok{sample_size =} \KeywordTok{n}\NormalTok{())}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 2 × 3
+##   college_grad prop_no_opinion sample_size
+##          <chr>           <dbl>       <int>
+## 1           no       0.3367609         389
+## 2          yes       0.2374429         438
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{offshore %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{college_grad, }\DataTypeTok{fill =} \NormalTok{response)) +}
+\StringTok{  }\KeywordTok{geom_bar}\NormalTok{(}\DataTypeTok{position =} \StringTok{"fill"}\NormalTok{) +}
+\StringTok{  }\KeywordTok{coord_flip}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/stacked_bar-1} \end{center}
+
+\subsubsection{Guess about statistical
+significance}\label{guess-about-statistical-significance-2}
+
+We are looking to see if a difference exists in the heights of the bars
+corresponding to \texttt{no\ opinion} for the plot. Based solely on the
+plot, we have little reason to believe that a difference exists since
+the bars seem to be about the same height, BUT\ldots{}it's important to
+use statistics to see if that difference is actually statistically
+significant!
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Non-traditional methods}\label{non-traditional-methods-2}
+
+\subsubsection{Collecting summary info}\label{collecting-summary-info}
+
+Next we will assign some key values to variable names in R:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{phat_nograd <-}\StringTok{ }\NormalTok{off_summ$prop_no_opinion[}\DecValTok{1}\NormalTok{]}
+\NormalTok{phat_grad <-}\StringTok{ }\NormalTok{off_summ$prop_no_opinion[}\DecValTok{2}\NormalTok{]}
+\NormalTok{obs_diff <-}\StringTok{ }\NormalTok{phat_grad -}\StringTok{ }\NormalTok{phat_nograd}
+\NormalTok{n_nograd <-}\StringTok{ }\NormalTok{off_summ$sample_size[}\DecValTok{1}\NormalTok{]}
+\NormalTok{n_grad <-}\StringTok{ }\NormalTok{off_summ$sample_size[}\DecValTok{2}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{Randomization for Hypothesis
+Test}\label{randomization-for-hypothesis-test}
+
+In order to look to see if the observed sample proportion of no opinion
+for college graduates of 0.3367609 is statistically different than that
+for graduates of 0.2374429, we need to account for the sample sizes.
+Note that this is the same as looking to see if
+\(\hat{p}_{grad} - \hat{p}_{nograd}\) is statistically different than 0.
+We also need to determine a process that replicates how the original
+group sizes of 389 and 438 were selected.
+
+We can use the idea of \emph{randomization testing} (also known as
+\emph{permutation testing}) to simulate the population from which the
+sample came (with two groups of different sizes) and then generate
+samples using \emph{shuffling} from that simulated population to account
+for sampling variability.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{2016}\NormalTok{)}
+\NormalTok{many_shuffles <-}\StringTok{ }\KeywordTok{do}\NormalTok{(}\DecValTok{10000}\NormalTok{) *}\StringTok{ }
+\StringTok{  }\NormalTok{(offshore %>%}
+\StringTok{     }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{response =} \KeywordTok{shuffle}\NormalTok{(response)) %>%}\StringTok{ }
+\StringTok{     }\KeywordTok{group_by}\NormalTok{(college_grad) %>%}
+\StringTok{     }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{prop_no_opinion =} \KeywordTok{mean}\NormalTok{(response ==}\StringTok{ "no opinion"}\NormalTok{))}
+   \NormalTok{)}
+\NormalTok{null_distn <-}\StringTok{ }\NormalTok{many_shuffles %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(.index) %>%}
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{diffprop =} \KeywordTok{diff}\NormalTok{(prop_no_opinion))}
+\NormalTok{null_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{diffprop)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{25}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/sim3-1} \end{center}
+
+We can next use this distribution to observe our \(p\)-value. Recall
+this is a two-tailed test so we will be looking for values that are
+greater than or equal to -0.099318 or less than or equal to 0.099318 for
+our \(p\)-value.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{null_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{diffprop)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{20}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{) +}
+\StringTok{  }\KeywordTok{geom_vline}\NormalTok{(}\DataTypeTok{color =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{xintercept =} \NormalTok{obs_diff) +}
+\StringTok{  }\KeywordTok{geom_vline}\NormalTok{(}\DataTypeTok{color =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{xintercept =} \NormalTok{-obs_diff)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-162-1} \end{center}
+
+\paragraph{\texorpdfstring{Calculate
+\(p\)-value}{Calculate p-value}}\label{calculate-p-value-2}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pvalue <-}\StringTok{ }\NormalTok{null_distn %>%}
+\StringTok{  }\KeywordTok{filter}\NormalTok{( (diffprop <=}\StringTok{ }\NormalTok{obs_diff) |}\StringTok{ }\NormalTok{(diffprop >=}\StringTok{ }\NormalTok{-obs_diff) ) %>%}
+\StringTok{  }\KeywordTok{nrow}\NormalTok{() /}\StringTok{ }\KeywordTok{nrow}\NormalTok{(null_distn)}
+\NormalTok{pvalue}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.0025
+\end{verbatim}
+
+So our \(p\)-value is 0.0025 and we reject the null hypothesis at the
+5\% level. You can also see this from the histogram above that we are
+far into the tails of the null distribution.
+
+\subsubsection{Bootstrapping for Confidence
+Interval}\label{bootstrapping-for-confidence-interval-2}
+
+We can also create a confidence interval for the unknown population
+parameter \(\pi_{college} - \pi_{no\_college}\) using our sample data
+with \emph{bootstrapping}. Here we will bootstrap each of the groups
+with replacement instead of shuffling. This is done using the
+\texttt{groups} argument in the \texttt{resample} function to fix the
+size of each group to be the same as the original group sizes of 389 for
+non-college graduates and 438 for college graduates.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_props <-}\StringTok{ }\KeywordTok{do}\NormalTok{(}\DecValTok{10000}\NormalTok{) *}
+\StringTok{  }\NormalTok{offshore %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{resample}\NormalTok{(}\DataTypeTok{replace =} \OtherTok{TRUE}\NormalTok{, }\DataTypeTok{groups =} \NormalTok{college_grad) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(college_grad) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{prop_no_opinion =} \KeywordTok{mean}\NormalTok{(response ==}\StringTok{ "no opinion"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+Next, we calculate the difference in sample proportions for each of the
+10,000 replications:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn <-}\StringTok{ }\NormalTok{boot_props %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(.index) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{diffprop =} \KeywordTok{diff}\NormalTok{(prop_no_opinion))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{diffprop)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-165-1} \end{center}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{(ci_boot <-}\StringTok{ }\NormalTok{boot_distn %>%}\StringTok{ }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{lower =} \KeywordTok{quantile}\NormalTok{(diffprop, }\DataTypeTok{probs =} \FloatTok{0.025}\NormalTok{),}
+    \DataTypeTok{upper =} \KeywordTok{quantile}\NormalTok{(diffprop, }\DataTypeTok{probs =} \FloatTok{0.975}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 1 × 2
+##        lower       upper
+##        <dbl>       <dbl>
+## 1 -0.1595767 -0.03791979
+\end{verbatim}
+
+We see that 0 is not contained in this confidence interval as a
+plausible value of \(\pi_{college} - \pi_{no\_college}\) (the unknown
+population parameter). This matches with our hypothesis test results of
+rejecting the null hypothesis. Since zero is not a plausible value of
+the population parameter, we have evidence that the proportion of
+college graduates in California with no opinion on drilling is different
+than that of non-college graduates.
+
+\textbf{Interpretation}: We are 95\% confident the true proportion of
+non-college graduates with no opinion on offshore drilling in California
+is between 0.16 dollars smaller to 0.04 dollars smaller than for college
+graduates.
+
+\textbf{Note}: You could also use the null distribution based on
+randomization with a shift to have its center at
+\(\hat{p}_{college} - \hat{p}_{no\_college} = \$-0.1\) instead of at 0
+and calculate its percentiles. The confidence interval produced via this
+method should be comparable to the one done using bootstrapping above.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Traditional methods}\label{traditional-methods-2}
+
+\subsection{Check conditions}\label{check-conditions-2}
+
+Remember that in order to use the short-cut (formula-based, theoretical)
+approach, we need to check that some conditions are met.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \emph{Independent observations}: Each case that was selected must be
+  independent of all the other cases selected.
+
+  This condition is met since cases were selected at random to observe.
+\item
+  \emph{Sample size}: The number of pooled successes and pooled failures
+  must be at least 10 for each group.
+
+  We need to first figure out the pooled success rate:
+  \[\hat{p}_{obs} = \dfrac{131 + 104}{827} = 0.28.\] We now determine
+  expected (pooled) success and failure counts:
+
+  \(0.28 \cdot (131 + 258) = 108.92\),
+  \(0.72 \cdot (131 + 258) = 280.08\)
+
+  \(0.28 \cdot (104 + 334) = 122.64\),
+  \(0.72 \cdot (104 + 334) = 315.36\)
+\item
+  \emph{Independent selection of samples}: The cases are not paired in
+  any meaningful way.
+
+  We have no reason to suspect that a college graduate selected would
+  have any relationship to a non-college graduate selected.
+\end{enumerate}
+
+\subsection{Test statistic}\label{test-statistic-2}
+
+The test statistic is a random variable based on the sample data. Here,
+we are interested in seeing if our observed difference in sample
+proportions corresponding to no opinion on drilling
+(\(\hat{p}_{college, obs} - \hat{p}_{no\_college, obs}\) = 0.0326481) is
+statistically different than 0. Assuming that conditions are met and the
+null hypothesis is true, we can use the standard normal distribution to
+standardize the difference in sample proportions
+(\(\hat{P}_{college} - \hat{P}_{no\_college}\)) using the standard error
+of \(\hat{P}_{college} - \hat{P}_{no\_college}\) and the pooled
+estimate:
+
+\[ Z =\dfrac{ (\hat{P}_1 - \hat{P}_2) - 0}{\sqrt{\dfrac{\hat{P}(1 - \hat{P})}{n_1} + \dfrac{\hat{P}(1 - \hat{P})}{n_2} }} \sim N(0, 1) \]
+where
+\(\hat{P} = \dfrac{\text{total number of successes} }{ \text{total number of cases}}.\)
+
+\subsubsection{Observed test statistic}\label{observed-test-statistic-2}
+
+While one could compute this observed test statistic by ``hand'', the
+focus here is on the set-up of the problem and in understanding which
+formula for the test statistic applies. We can use the
+\texttt{prop.test} function to perform this analysis for us.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{stats::}\KeywordTok{prop.test}\NormalTok{(}\DataTypeTok{x =} \KeywordTok{table}\NormalTok{(offshore$college_grad, offshore$response),}
+       \DataTypeTok{n =} \KeywordTok{nrow}\NormalTok{(offshore),}
+       \DataTypeTok{alternative =} \StringTok{"two.sided"}\NormalTok{,}
+       \DataTypeTok{correct =} \OtherTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  2-sample test for equality of proportions without continuity
+##  correction
+## 
+## data:  table(offshore$college_grad, offshore$response)
+## X-squared = 9.9907, df = 1, p-value = 0.001573
+## alternative hypothesis: two.sided
+## 95 percent confidence interval:
+##  0.03772522 0.16091078
+## sample estimates:
+##    prop 1    prop 2 
+## 0.3367609 0.2374429
+\end{verbatim}
+
+\texttt{prop.test} does a \(\chi^2\) test here but this matches up
+exactly with what we would expect from the test statistic above since
+\(Z^2 = \chi^2\) so \(\sqrt{9.99} = 3.16 = z_{obs}\): The \(p\)-values
+are the same because we are focusing on a two-tailed test. The observed
+difference in sample proportions is 3.16 standard deviations larger than
+0.
+
+The \(p\)-value---the probability of observing a \(Z\) value of 3.16 or
+more extreme in our null distribution---is 0.0016. This can also be
+calculated in R directly:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DecValTok{2} \NormalTok{*}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(}\FloatTok{3.16}\NormalTok{, }\DataTypeTok{lower.tail =} \OtherTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.001577691
+\end{verbatim}
+
+The 95\% confidence interval is also stated above in the
+\texttt{prop.test} results.
+
+\subsection{State conclusion}\label{state-conclusion-2}
+
+We, therefore, have sufficient evidence to reject the null hypothesis.
+Our initial guess that a statistically significant difference did not
+exist in the proportions of no opinion on offshore drilling between
+college educated and non-college educated Californians was not
+validated. We do have evidence to suggest that there is a dependency
+between college graduation and position on offshore drilling for
+Californians.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Comparing results}\label{comparing-results-2}
+
+Observing the bootstrap distribution and the null distribution that were
+created, it makes quite a bit of sense that the results are so similar
+for traditional and non-traditional methods in terms of the \(p\)-value
+and the confidence interval since these distributions look very similar
+to normal distributions. The conditions were not met since the number of
+pairs was small, but the sample data was not highly skewed. Using any of
+the methods whether they are traditional (formula-based) or
+non-traditional (computational-based) lead to similar results.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\section{Two Means (Independent
+Samples)}\label{two-means-independent-samples}
+
+\subsection{Problem Statement}\label{problem-statement-3}
+
+Average income varies from one region of the country to another, and it
+often reflects both lifestyles and regional living expenses. Suppose a
+new graduate is considering a job in two locations, Cleveland, OH and
+Sacramento, CA, and he wants to see whether the average income in one of
+these cities is higher than the other. He would like to conduct a
+hypothesis test based on two randomly selected samples from the 2000
+Census. \citep[Tweaked a bit from][ {[}Chapter 5{]}]{isrs2014}
+
+\subsection{Competing Hypotheses}\label{competing-hypotheses-3}
+
+\subsubsection{In words}\label{in-words-3}
+
+\begin{itemize}
+\item
+  Null hypothesis: There is no association between income and location
+  (Cleveland, OH and Sacramento, CA).
+\item
+  Alternative hypothesis: There is an association between income and
+  location (Cleveland, OH and Sacramento, CA).
+\end{itemize}
+
+\subsubsection{Another way in words}\label{another-way-in-words-1}
+
+\begin{itemize}
+\item
+  Null hypothesis: The mean income is the \textbf{same} for both cities.
+\item
+  Alternative hypothesis: The mean income is different for the two
+  cities.
+\end{itemize}
+
+\subsubsection{In symbols (with
+annotations)}\label{in-symbols-with-annotations-3}
+
+\begin{itemize}
+\tightlist
+\item
+  \(H_0: \mu_{sac} = \mu_{cle}\) or \(H_0: \mu_{sac} - \mu_{cle} = 0\),
+  where \(\mu\) represents the average income.
+\item
+  \(H_A: \mu_{sac} - \mu_{cle} \ne 0\)
+\end{itemize}
+
+\subsubsection{\texorpdfstring{Set
+\(\alpha\)}{Set \textbackslash{}alpha}}\label{set-alpha-3}
+
+It's important to set the significance level before starting the testing
+using the data. Let's set the significance level at 5\% here.
+
+\subsection{Exploring the sample
+data}\label{exploring-the-sample-data-3}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{inc_summ <-}\StringTok{ }\NormalTok{cleSac %>%}\StringTok{ }\KeywordTok{group_by}\NormalTok{(metro_area) %>%}
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{sample_size =} \KeywordTok{n}\NormalTok{(),}
+    \DataTypeTok{mean =} \KeywordTok{mean}\NormalTok{(income),}
+    \DataTypeTok{sd =} \KeywordTok{sd}\NormalTok{(income),}
+    \DataTypeTok{minimum =} \KeywordTok{min}\NormalTok{(income),}
+    \DataTypeTok{lower_quartile =} \KeywordTok{quantile}\NormalTok{(income, }\FloatTok{0.25}\NormalTok{),}
+    \DataTypeTok{median =} \KeywordTok{median}\NormalTok{(income),}
+    \DataTypeTok{upper_quartile =} \KeywordTok{quantile}\NormalTok{(income, }\FloatTok{0.75}\NormalTok{),}
+    \DataTypeTok{max =} \KeywordTok{max}\NormalTok{(income))}
+\KeywordTok{kable}\NormalTok{(inc_summ)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{tabular}{l|r|r|r|r|r|r|r|r}
+\hline
+metro\_area & sample\_size & mean & sd & minimum & lower\_quartile & median & upper\_quartile & max\\
+\hline
+Cleveland\_ OH & 212 & 27467.07 & 27680.68 & 0 & 8475 & 21000 & 35275 & 152400\\
+\hline
+Sacramento\_ CA & 175 & 32427.54 & 35773.63 & 0 & 8050 & 20000 & 49350 & 206900\\
+\hline
+\end{tabular}
+
+The boxplot below also shows the mean for each group highlighted by the
+red dots.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{cleSac %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{metro_area, }\DataTypeTok{y =} \NormalTok{income)) +}
+\StringTok{  }\KeywordTok{geom_boxplot}\NormalTok{() +}
+\StringTok{  }\KeywordTok{stat_summary}\NormalTok{(}\DataTypeTok{fun.y =} \StringTok{"mean"}\NormalTok{, }\DataTypeTok{geom =} \StringTok{"point"}\NormalTok{, }\DataTypeTok{color =} \StringTok{"red"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/boxplot-1} \end{center}
+
+\subsubsection{Guess about statistical
+significance}\label{guess-about-statistical-significance-3}
+
+We are looking to see if a difference exists in the mean income of the
+two levels of the explanatory variable. Based solely on the boxplot, we
+have reason to believe that no difference exists. The distributions of
+income seem similar and the means fall in roughly the same place.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Non-traditional methods}\label{non-traditional-methods-3}
+
+\subsubsection{Collecting summary info}\label{collecting-summary-info-1}
+
+Next we will assign some key values to variable names in R:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{xbar_cle <-}\StringTok{ }\NormalTok{inc_summ$mean[}\DecValTok{1}\NormalTok{]}
+\NormalTok{xbar_sac <-}\StringTok{ }\NormalTok{inc_summ$mean[}\DecValTok{2}\NormalTok{]}
+\NormalTok{obs_diff <-}\StringTok{ }\NormalTok{xbar_sac -}\StringTok{ }\NormalTok{xbar_cle}
+\NormalTok{n_cle <-}\StringTok{ }\NormalTok{inc_summ$sample_size[}\DecValTok{1}\NormalTok{]}
+\NormalTok{n_sac <-}\StringTok{ }\NormalTok{inc_summ$sample_size[}\DecValTok{2}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{Randomization for Hypothesis
+Test}\label{randomization-for-hypothesis-test-1}
+
+In order to look to see if the observed sample mean for Sacramento of
+27467.0660377 is statistically different than that for Cleveland of
+32427.5428571, we need to account for the sample sizes. Note that this
+is the same as looking to see if \(\bar{x}_{sac} - \bar{x}_{cle}\) is
+statistically different than 0. We also need to determine a process that
+replicates how the original group sizes of 212 and 175 were selected.
+
+We can use the idea of \emph{randomization testing} (also known as
+\emph{permutation testing}) to simulate the population from which the
+sample came (with two groups of different sizes) and then generate
+samples using \emph{shuffling} from that simulated population to account
+for sampling variability.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{2016}\NormalTok{)}
+\NormalTok{many_shuffles <-}\StringTok{ }\KeywordTok{do}\NormalTok{(}\DecValTok{10000}\NormalTok{) *}\StringTok{ }
+\StringTok{  }\NormalTok{(cleSac %>%}
+\StringTok{     }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{income =} \KeywordTok{shuffle}\NormalTok{(income)) %>%}\StringTok{ }
+\StringTok{     }\KeywordTok{group_by}\NormalTok{(metro_area) %>%}
+\StringTok{     }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{mean_inc =} \KeywordTok{mean}\NormalTok{(income))}
+   \NormalTok{)}
+\NormalTok{null_distn <-}\StringTok{ }\NormalTok{many_shuffles %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(.index) %>%}
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{diffmean =} \KeywordTok{diff}\NormalTok{(mean_inc))}
+\NormalTok{null_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{diffmean)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/sim4-1} \end{center}
+
+We can next use this distribution to observe our \(p\)-value. Recall
+this is a two-tailed test so we will be looking for values that are
+greater than or equal to 4960.4768194 or less than or equal to
+-4960.4768194 for our \(p\)-value.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{null_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{diffmean)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{) +}
+\StringTok{  }\KeywordTok{geom_vline}\NormalTok{(}\DataTypeTok{color =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{xintercept =} \NormalTok{obs_diff) +}
+\StringTok{  }\KeywordTok{geom_vline}\NormalTok{(}\DataTypeTok{color =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{xintercept =} \NormalTok{-obs_diff)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-167-1} \end{center}
+
+\paragraph{\texorpdfstring{Calculate
+\(p\)-value}{Calculate p-value}}\label{calculate-p-value-3}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pvalue <-}\StringTok{ }\NormalTok{null_distn %>%}
+\StringTok{  }\KeywordTok{filter}\NormalTok{( (diffmean >=}\StringTok{ }\NormalTok{obs_diff) |}\StringTok{ }\NormalTok{(diffmean <=}\StringTok{ }\NormalTok{-obs_diff) ) %>%}
+\StringTok{  }\KeywordTok{nrow}\NormalTok{() /}\StringTok{ }\KeywordTok{nrow}\NormalTok{(null_distn)}
+\NormalTok{pvalue}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.1225
+\end{verbatim}
+
+So our \(p\)-value is 0.1225 and we fail to reject the null hypothesis
+at the 5\% level. You can also see this from the histogram above that we
+are not very far into the tail of the null distribution.
+
+\subsubsection{Bootstrapping for Confidence
+Interval}\label{bootstrapping-for-confidence-interval-3}
+
+We can also create a confidence interval for the unknown population
+parameter \(\mu_{sac} - \mu_{cle}\) using our sample data with
+\emph{bootstrapping}. Here we will bootstrap each of the groups with
+replacement instead of shuffling. This is done using the \texttt{groups}
+argument in the \texttt{resample} function to fix the size of each group
+to be the same as the original group sizes of 175 for Sacramento and 212
+for Cleveland.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_means <-}\StringTok{ }\KeywordTok{do}\NormalTok{(}\DecValTok{10000}\NormalTok{) *}
+\StringTok{  }\NormalTok{cleSac %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{resample}\NormalTok{(}\DataTypeTok{replace =} \OtherTok{TRUE}\NormalTok{, }\DataTypeTok{groups =} \NormalTok{metro_area) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(metro_area) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{mean_inc =} \KeywordTok{mean}\NormalTok{(income))}
+\end{Highlighting}
+\end{Shaded}
+
+Next, we calculate the difference in sample means for each of the 10,000
+replications:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn <-}\StringTok{ }\NormalTok{boot_means %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(.index) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{diffmean =} \KeywordTok{diff}\NormalTok{(mean_inc))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{diffmean)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-170-1} \end{center}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{(ci_boot <-}\StringTok{ }\NormalTok{boot_distn %>%}\StringTok{ }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{lower =} \KeywordTok{quantile}\NormalTok{(diffmean, }\DataTypeTok{probs =} \FloatTok{0.025}\NormalTok{),}
+    \DataTypeTok{upper =} \KeywordTok{quantile}\NormalTok{(diffmean, }\DataTypeTok{probs =} \FloatTok{0.975}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 1 × 2
+##      lower    upper
+##      <dbl>    <dbl>
+## 1 -1512.59 11458.85
+\end{verbatim}
+
+We see that 0 is contained in this confidence interval as a plausible
+value of \(\mu_{sac} - \mu_{cle}\) (the unknown population parameter).
+This matches with our hypothesis test results of failing to reject the
+null hypothesis. Since zero is a plausible value of the population
+parameter, we do not have evidence that Sacramento incomes are different
+than Cleveland incomes.
+
+\textbf{Interpretation}: We are 95\% confident the true mean yearly
+income for those living in Sacramento is between 1512.59 dollars smaller
+to 11458.85 dollars higher than for Cleveland.
+
+\textbf{Note}: You could also use the null distribution based on
+randomization with a shift to have its center at
+\(\bar{x}_{sac} - \bar{x}_{cle} = \$4960.48\) instead of at 0 and
+calculate its percentiles. The confidence interval produced via this
+method should be comparable to the one done using bootstrapping above.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Traditional methods}\label{traditional-methods-3}
+
+\paragraph{Check conditions}\label{check-conditions-3}
+
+Remember that in order to use the short-cut (formula-based, theoretical)
+approach, we need to check that some conditions are met.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \emph{Independent observations}: The observations are independent in
+  both groups.
+
+  This \texttt{metro\_area} variable is met since the cases are randomly
+  selected from each city.
+\item
+  \emph{Approximately normal}: The distribution of the response for each
+  group should be normal or the sample sizes should be at least 30.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{cleSac %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{income)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{color =} \StringTok{"white"}\NormalTok{, }\DataTypeTok{binwidth =} \DecValTok{20000}\NormalTok{) +}
+\StringTok{  }\KeywordTok{facet_wrap}\NormalTok{(~}\StringTok{ }\NormalTok{metro_area)}
+\end{Highlighting}
+\end{Shaded}
+
+  \begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/hist-1} \end{center}
+
+  We have some reason to doubt the normality assumption here since both
+  the histograms show deviation from a normal model fitting the data
+  well for each group. The sample sizes for each group are greater than
+  100 though so the assumptions should still apply.
+\item
+  \emph{Independent samples}: The samples should be collected without
+  any natural pairing.
+
+  There is no mention of there being a relationship between those
+  selected in Cleveland and in Sacramento.
+\end{enumerate}
+
+\subsection{Test statistic}\label{test-statistic-3}
+
+The test statistic is a random variable based on the sample data. Here,
+we are interested in seeing if our observed difference in sample means
+(\(\bar{x}_{sac, obs} - \bar{x}_{cle, obs}\) = 4960.4768194) is
+statistically different than 0. Assuming that conditions are met and the
+null hypothesis is true, we can use the \(t\) distribution to
+standardize the difference in sample means
+(\(\bar{X}_{sac} - \bar{X}_{cle}\)) using the approximate standard error
+of \(\bar{X}_{sac} - \bar{X}_{cle}\) (invoking \(S_{sac}\) and
+\(S_{cle}\) as estimates of unknown \(\sigma_{sac}\) and
+\(\sigma_{cle}\)).
+
+\[ T =\dfrac{ (\bar{X}_1 - \bar{X}_2) - 0}{ \sqrt{\dfrac{S_1^2}{n_1} + \dfrac{S_2^2}{n_2}}  } \sim t (df = min(n_1 - 1, n_2 - 1)) \]
+where 1 = Sacramento and 2 = Cleveland with \(S_1^2\) and \(S_2^2\) the
+sample variance of the incomes of both cities, respectively, and
+\(n_1 = 175\) for Sacramento and \(n_2 = 212\) for Cleveland.
+
+\subsubsection{Observed test statistic}\label{observed-test-statistic-3}
+
+Note that we could also do (ALMOST) this test directly using the
+\texttt{t.test} function. The \texttt{x} and \texttt{y} arguments are
+expected to both be numeric vectors here so we'll need to appropriately
+filter our data sets.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{cleveland <-}\StringTok{ }\NormalTok{cleSac %>%}\StringTok{ }\KeywordTok{filter}\NormalTok{(metro_area ==}\StringTok{ "Cleveland_ OH"}\NormalTok{)}
+\NormalTok{sacramento <-}\StringTok{ }\NormalTok{cleSac %>%}\StringTok{ }\KeywordTok{filter}\NormalTok{(metro_area !=}\StringTok{ "Cleveland_ OH"}\NormalTok{)}
+\KeywordTok{t.test}\NormalTok{(}\DataTypeTok{y =} \NormalTok{cleveland$income, }\DataTypeTok{x =} \NormalTok{sacramento$income,}
+       \DataTypeTok{alternative =} \StringTok{"two.sided"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Welch Two Sample t-test
+## 
+## data:  sacramento$income and cleveland$income
+## t = 1.5006, df = 323.36, p-value = 0.1344
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -1542.758 11463.712
+## sample estimates:
+## mean of x mean of y 
+##  32427.54  27467.07
+\end{verbatim}
+
+Note that the degrees of freedom reported above are different than what
+we used above in specifying the \textbf{Test Statistic}. The degrees of
+freedom used here is also known as the Satterthwaite approximation and
+involves a quite complicated formula. For most problems, the must
+simpler smaller of sample sizes minus one will suffice.
+
+While one could compute this observed test statistic by ``hand'', the
+focus here is on the set-up of the problem and in understanding which
+formula for the test statistic applies.
+
+We see here that the observed test statistic value is around -1.5 with
+\(df = min(212 - 1, 175 - 1) = 174\). Recall that for large degrees of
+freedom, the \(t\) distribution is roughly equal to the standard normal
+curve so our difference in \texttt{df} for the Satterthwaite and ``min''
+variations doesn't really matter.
+
+\subsection{\texorpdfstring{Compute
+\(p\)-value}{Compute p-value}}\label{compute-p-value-2}
+
+The \(p\)-value---the probability of observing an \(t_{174}\) value of
+-1.501 or more extreme (in both directions) in our null
+distribution---is 0.13. This can also be calculated in R directly:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DecValTok{2} \NormalTok{*}\StringTok{ }\KeywordTok{pt}\NormalTok{(-}\FloatTok{1.501}\NormalTok{, }\DataTypeTok{df =} \KeywordTok{min}\NormalTok{(}\DecValTok{212} \NormalTok{-}\StringTok{ }\DecValTok{1}\NormalTok{, }\DecValTok{175} \NormalTok{-}\StringTok{ }\DecValTok{1}\NormalTok{), }\DataTypeTok{lower.tail =} \OtherTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.135168
+\end{verbatim}
+
+We can also approximate by using the standard normal curve:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DecValTok{2} \NormalTok{*}\StringTok{ }\KeywordTok{pnorm}\NormalTok{(-}\FloatTok{1.501}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.1333556
+\end{verbatim}
+
+Note that the 95 percent confidence interval given above matches well
+with the one calculated using bootstrapping.
+
+\subsection{State conclusion}\label{state-conclusion-3}
+
+We, therefore, do not have sufficient evidence to reject the null
+hypothesis. Our initial guess that a statistically significant
+difference not existing in the means was backed by this statistical
+analysis. We do not have evidence to suggest that the true mean income
+differs between Cleveland, OH and Sacramento, CA based on this data.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Comparing results}\label{comparing-results-3}
+
+Observing the bootstrap distribution and the null distribution that were
+created, it makes quite a bit of sense that the results are so similar
+for traditional and non-traditional methods in terms of the \(p\)-value
+and the confidence interval since these distributions look very similar
+to normal distributions. The conditions also being met leads us to
+better guess that using any of the methods whether they are traditional
+(formula-based) or non-traditional (computational-based) will lead to
+similar results.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\section{Two Means (Paired Samples)}\label{two-means-paired-samples}
+
+\subsubsection{Problem Statement}\label{problem-statement-4}
+
+Trace metals in drinking water affect the flavor and an unusually high
+concentration can pose a health hazard. Ten pairs of data were taken
+measuring zinc concentration in bottom water and surface water at 10
+randomly selected locations on a stretch of river. Do the data suggest
+that the true average concentration in the surface water is smaller than
+that of bottom water? (Note that units are not given.) {[}Tweaked a bit
+from \url{https://onlinecourses.science.psu.edu/stat500/node/51}{]}
+
+\subsection{Competing Hypotheses}\label{competing-hypotheses-4}
+
+\subsubsection{In words}\label{in-words-4}
+
+\begin{itemize}
+\item
+  Null hypothesis: The mean concentration in the bottom water is the
+  same as that of the surface water at different paired locations.
+\item
+  Alternative hypothesis: The mean concentration in the surface water is
+  smaller than that of the bottom water at different paired locations.
+\end{itemize}
+
+\subsubsection{In symbols (with
+annotations)}\label{in-symbols-with-annotations-4}
+
+\begin{itemize}
+\tightlist
+\item
+  \(H_0: \mu_{diff} = 0\), where \(\mu_{diff}\) represents the mean
+  difference in concentration for surface water minus bottom water.
+\item
+  \(H_A: \mu_{diff} < 0\)
+\end{itemize}
+
+\subsubsection{\texorpdfstring{Set
+\(\alpha\)}{Set \textbackslash{}alpha}}\label{set-alpha-4}
+
+It's important to set the significance level before starting the testing
+using the data. Let's set the significance level at 5\% here.
+
+\subsection{Exploring the sample
+data}\label{exploring-the-sample-data-4}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{download.file}\NormalTok{(}\StringTok{"http://ismayc.github.io/teaching/sample_problems/zinc_tidy.csv"}\NormalTok{,}
+              \DataTypeTok{destfile =} \StringTok{"data/zinc_tidy.csv"}\NormalTok{,}
+              \DataTypeTok{method =} \StringTok{"curl"}\NormalTok{)}
+\NormalTok{zinc_tidy <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{"data/zinc_tidy.csv"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+We want to look at the differences in \texttt{surface\ -\ bottom} for
+each location:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{zinc_diff <-}\StringTok{ }\NormalTok{zinc_tidy %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(loc_id) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{pair_diff =} \KeywordTok{diff}\NormalTok{(concentration))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{zinc_summ <-}\StringTok{ }\NormalTok{zinc_diff %>%}
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{sample_size =} \KeywordTok{n}\NormalTok{(),}
+    \DataTypeTok{mean =} \KeywordTok{mean}\NormalTok{(pair_diff),}
+    \DataTypeTok{sd =} \KeywordTok{sd}\NormalTok{(pair_diff),}
+    \DataTypeTok{minimum =} \KeywordTok{min}\NormalTok{(pair_diff),}
+    \DataTypeTok{lower_quartile =} \KeywordTok{quantile}\NormalTok{(pair_diff, }\FloatTok{0.25}\NormalTok{),}
+    \DataTypeTok{median =} \KeywordTok{median}\NormalTok{(pair_diff),}
+    \DataTypeTok{upper_quartile =} \KeywordTok{quantile}\NormalTok{(pair_diff, }\FloatTok{0.75}\NormalTok{),}
+    \DataTypeTok{max =} \KeywordTok{max}\NormalTok{(pair_diff))}
+\KeywordTok{kable}\NormalTok{(zinc_summ)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{tabular}{r|r|r|r|r|r|r|r}
+\hline
+sample\_size & mean & sd & minimum & lower\_quartile & median & upper\_quartile & max\\
+\hline
+10 & -0.0804 & 0.0522732 & -0.177 & -0.11 & -0.084 & -0.0355 & -0.015\\
+\hline
+\end{tabular}
+
+The histogram below also shows the distribution of \texttt{pair\_diff}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{zinc_diff %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{pair_diff)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{binwidth =} \FloatTok{0.04}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/hist1a-1} \end{center}
+
+\subsubsection{Guess about statistical
+significance}\label{guess-about-statistical-significance-4}
+
+We are looking to see if the sample paired mean difference of -0.0804 is
+statistically less than 0. They seem to be quite close, but we have a
+small number of pairs here. Let's guess that we will fail to reject the
+null hypothesis.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Non-traditional methods}\label{non-traditional-methods-4}
+
+\subsubsection{Collecting summary info}\label{collecting-summary-info-2}
+
+Next we will assign some key values to variable names in R:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{obs_diff <-}\StringTok{ }\NormalTok{zinc_summ$mean}
+\NormalTok{n_pairs <-}\StringTok{ }\NormalTok{zinc_summ$sample_size}
+\end{Highlighting}
+\end{Shaded}
+
+\subsubsection{Randomization for Hypothesis
+Test}\label{randomization-for-hypothesis-test-2}
+
+In order to look to see if the observed sample mean difference
+\(\bar{x}_{diff} = -0.0804\) is statistically less than 0, we need to
+account for the number of pairs. We also need to determine a process
+that replicates how the paired data was selected in a way similar to how
+we calculated our original difference in sample means.
+
+We can use the idea of \emph{randomization testing} (also known as
+\emph{permutation testing}) to simulate the population from which the
+sample came and then generate samples using \emph{shuffling} from that
+simulated population to account for sampling variability. In this case,
+we will shuffle along each paired location. So values that were on the
+bottom of location 1 may now be switched to be on the surface or vice
+versa.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(mosaic)}
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{2016}\NormalTok{)}
+\NormalTok{many_shuffles <-}\StringTok{ }\KeywordTok{do}\NormalTok{(}\DecValTok{10000}\NormalTok{) *}\StringTok{ }
+\StringTok{  }\NormalTok{(zinc_tidy %>%}
+\StringTok{     }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{concentration =} \KeywordTok{shuffle}\NormalTok{(concentration, }\DataTypeTok{groups =} \NormalTok{loc_id)) %>%}\StringTok{ }
+\StringTok{     }\KeywordTok{group_by}\NormalTok{(loc_id) %>%}\StringTok{ }
+\StringTok{     }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{pair_diff =} \KeywordTok{diff}\NormalTok{(concentration))}
+   \NormalTok{)}
+\NormalTok{null_distn <-}\StringTok{ }\NormalTok{many_shuffles %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{group_by}\NormalTok{(.index) %>%}
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{mean_diff =} \KeywordTok{mean}\NormalTok{(pair_diff))}
+\NormalTok{null_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{mean_diff)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/sim5-1} \end{center}
+
+We can next use this distribution to observe our \(p\)-value. Recall
+this is a left-tailed test so we will be looking for values that are
+less than or equal to -0.0804 for our \(p\)-value.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{null_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{mean_diff)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{) +}
+\StringTok{  }\KeywordTok{geom_vline}\NormalTok{(}\DataTypeTok{color =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{xintercept =} \NormalTok{obs_diff)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-173-1} \end{center}
+
+\paragraph{\texorpdfstring{Calculate
+\(p\)-value}{Calculate p-value}}\label{calculate-p-value-4}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{pvalue <-}\StringTok{ }\NormalTok{null_distn %>%}
+\StringTok{  }\KeywordTok{filter}\NormalTok{(mean_diff <=}\StringTok{ }\NormalTok{obs_diff) %>%}
+\StringTok{  }\KeywordTok{nrow}\NormalTok{() /}\StringTok{ }\KeywordTok{nrow}\NormalTok{(null_distn)}
+\NormalTok{pvalue}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.0009
+\end{verbatim}
+
+So our \(p\)-value is essentially 0.0009 and we reject the null
+hypothesis at the 5\% level. You can also see this from the histogram
+above that we are far into the left tail of the null distribution.
+
+\subsubsection{Bootstrapping for Confidence
+Interval}\label{bootstrapping-for-confidence-interval-4}
+
+We can also create a confidence interval for the unknown population
+parameter \(\mu_{diff}\) using our sample data (the calculated
+differences) with \emph{bootstrapping}. This is similar to the
+bootstrapping done in a one sample mean case, except now our data is
+differences instead of raw numerical data.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn <-}\StringTok{ }\KeywordTok{do}\NormalTok{(}\DecValTok{10000}\NormalTok{) *}\StringTok{ }
+\StringTok{  }\KeywordTok{resample}\NormalTok{(zinc_diff, }\DataTypeTok{replace =} \OtherTok{TRUE}\NormalTok{) %>%}\StringTok{ }
+\StringTok{  }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{mean_diff =} \KeywordTok{mean}\NormalTok{(pair_diff))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{boot_distn %>%}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =} \NormalTok{mean_diff)) +}
+\StringTok{  }\KeywordTok{geom_histogram}\NormalTok{(}\DataTypeTok{bins =} \DecValTok{30}\NormalTok{, }\DataTypeTok{color =} \StringTok{"white"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-175-1} \end{center}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{(ci_boot <-}\StringTok{ }\NormalTok{boot_distn %>%}\StringTok{ }\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{lower =} \KeywordTok{quantile}\NormalTok{(mean_diff, }\DataTypeTok{probs =} \FloatTok{0.025}\NormalTok{),}
+    \DataTypeTok{upper =} \KeywordTok{quantile}\NormalTok{(mean_diff, }\DataTypeTok{probs =} \FloatTok{0.975}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##     lower      upper
+## 1 -0.1114 -0.0504975
+\end{verbatim}
+
+We see that 0 is not contained in this confidence interval as a
+plausible value of \(\mu_{diff}\) (the unknown population parameter).
+This matches with our hypothesis test results of rejecting the null
+hypothesis. Since zero is not a plausible value of the population
+parameter and since the entire confidence interval falls below zero, we
+have evidence that surface zinc concentration levels are lower, on
+average, than bottom level zinc concentrations.
+
+\textbf{Interpretation}: We are 95\% confident the true mean zinc
+concentration on the surface is between 0.11 units smaller to 0.05 units
+smaller than on the bottom.
+
+\textbf{Note}: You could also use the null distribution based on
+randomization with a shift to have its center at
+\(\bar{x}_{diff} = -0.08\) instead of at 0 and calculate its
+percentiles. The confidence interval produced via this method should be
+comparable to the one done using bootstrapping above.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Traditional methods}\label{traditional-methods-4}
+
+\subsubsection{Check conditions}\label{check-conditions-4}
+
+Remember that in order to use the shortcut (formula-based, theoretical)
+approach, we need to check that some conditions are met.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \emph{Independent observations}: The observations among pairs are
+  independent.
+\end{enumerate}
+
+The locations are selected independently through random sampling so this
+condition is met.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\item
+  \emph{Approximately normal}: The distribution of population of
+  differences is normal or the number of pairs is at least 30.
+
+  The histogram above does show some skew so we have reason to doubt the
+  population being normal based on this sample. We also only have 10
+  pairs which is fewer than the 30 needed. A theory-based test may not
+  be valid here.
+\end{enumerate}
+
+\subsubsection{Test statistic}\label{test-statistic-4}
+
+The test statistic is a random variable based on the sample data. Here,
+we want to look at a way to estimate the population mean difference
+\(\mu_{diff}\). A good guess is the sample mean difference
+\(\bar{X}_{diff}\). Recall that this sample mean is actually a random
+variable that will vary as different samples are (theoretically, would
+be) collected. We are looking to see how likely is it for us to have
+observed a sample mean of \(\bar{x}_{diff, obs} = 0.0804\) or larger
+assuming that the population mean difference is 0 (assuming the null
+hypothesis is true). If the conditions are met and assuming \(H_0\) is
+true, we can ``standardize'' this original test statistic of
+\(\bar{X}_{diff}\) into a \(T\) statistic that follows a \(t\)
+distribution with degrees of freedom equal to \(df = n - 1\):
+
+\[ T =\dfrac{ \bar{X}_{diff} - 0}{ S_{diff} / \sqrt{n} } \sim t (df = n - 1) \]
+
+where \(S\) represents the standard deviation of the sample differences
+and \(n\) is the number of pairs.
+
+\paragraph{Observed test statistic}\label{observed-test-statistic-4}
+
+While one could compute this observed test statistic by ``hand'', the
+focus here is on the set-up of the problem and in understanding which
+formula for the test statistic applies. We can use the \texttt{t.test}
+function on the differences to perform this analysis for us.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{stats::}\KeywordTok{t.test}\NormalTok{(}\DataTypeTok{x =} \NormalTok{zinc_diff$pair_diff, }
+       \DataTypeTok{alternative =} \StringTok{"less"}\NormalTok{,}
+       \DataTypeTok{mu =} \DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  One Sample t-test
+## 
+## data:  zinc_diff$pair_diff
+## t = -4.8638, df = 9, p-value = 0.0004456
+## alternative hypothesis: true mean is less than 0
+## 95 percent confidence interval:
+##        -Inf -0.0500982
+## sample estimates:
+## mean of x 
+##   -0.0804
+\end{verbatim}
+
+We see here that the \(t_{obs}\) value is around -5.
+
+\subsubsection{\texorpdfstring{Compute
+\(p\)-value}{Compute p-value}}\label{compute-p-value-3}
+
+The \(p\)-value---the probability of observing a \(t_{obs}\) value of -5
+or less in our null distribution of a \(t\) with 9 degrees of
+freedom---is 0.0004. This can also be calculated in R directly:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pt}\NormalTok{(-}\DecValTok{5}\NormalTok{, }\DataTypeTok{df =} \KeywordTok{nrow}\NormalTok{(zinc_diff) -}\StringTok{ }\DecValTok{1}\NormalTok{, }\DataTypeTok{lower.tail =} \OtherTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.000369484
+\end{verbatim}
+
+\subsubsection{State conclusion}\label{state-conclusion-4}
+
+We, therefore, have sufficient evidence to reject the null hypothesis.
+Our initial guess that our observed sample mean difference was not
+statistically less than the hypothesized mean of 0 has been invalidated
+here. Based on this sample, we have evidence that the mean concentration
+in the bottom water is greater than that of the surface water at
+different paired locations.
+
+\begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\subsection{Comparing results}\label{comparing-results-4}
+
+Observing the bootstrap distribution and the null distribution that were
+created, it makes quite a bit of sense that the results are so similar
+for traditional and non-traditional methods in terms of the \(p\)-value
+and the confidence interval since these distributions look very similar
+to normal distributions. The conditions were not met since the number of
+pairs was small, but the sample data was not highly skewed. Using any of
+the methods whether they are traditional (formula-based) or
+non-traditional (computational-based) lead to similar results.
+
 \chapter{Reach for the Starts}\label{appendixC}
 
 \section{Sorted barplots}\label{sorted-barplots}
@@ -7334,11 +10012,11 @@ We can use the sorted table giving the number of flights defined as
 
 \begin{figure}
 
-{\centering \includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-140-1} 
+{\centering \includegraphics[width=\textwidth]{ismaykim_files/figure-latex/unnamed-chunk-181-1} 
 
 }
 
-\caption[Number of flights departing NYC in 2013 by airline - Descending numbers]{Number of flights departing NYC in 2013 by airline - Descending numbers}\label{fig:unnamed-chunk-140}
+\caption[Number of flights departing NYC in 2013 by airline - Descending numbers]{Number of flights departing NYC in 2013 by airline - Descending numbers}\label{fig:unnamed-chunk-181}
 \end{figure}
 
 The last addition here specifies the values of the horizontal \texttt{x}
@@ -7364,7 +10042,7 @@ work with:
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=1\linewidth]{ismaykim_files/figure-latex/unnamed-chunk-142-1} \end{center}
+\begin{center}\includegraphics[width=1\linewidth]{ismaykim_files/figure-latex/unnamed-chunk-183-1} \end{center}
 
 The syntax here is a little different than what we have covered so far.
 The \texttt{dygraph} function is expecting for the dates to be given as
