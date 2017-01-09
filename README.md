@@ -1,7 +1,7 @@
 # ModernDive
 
 Welcome to the development version of the book **ModernDive: An Introduction to
-Statistical and Data Sciences**, available at <http://www.moderndive.com/>. This
+Statistical and Data Sciences** available at <http://www.moderndive.com/>. This
 book is generated via the
 [bookdown](https://www.rstudio.com/resources/webinars/introducing-bookdown/)
 package from RStudio. For information on using bookdown, see
@@ -12,7 +12,7 @@ package from RStudio. For information on using bookdown, see
 
 This repository contains :
 
-* The source code for the current development version of the book.
+* The source code for the development version of the book.
 * The development version of the book in the `docs-devel` folder.
 * The current version of the book on <http://www.moderndive.com/> in the `docs` folder. To access the source code for the current version of the book, click on the "release" tab above. 
 
