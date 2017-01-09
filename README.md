@@ -13,7 +13,6 @@ package from RStudio. For information on using bookdown, see
 This repository contains :
 
 * Development version of book
-    + Book output in `docs-devel` folder.
     + Source code here.
 * Current/live version of the book on <http://www.moderndive.com/>
     + Book output in `docs` folder.
