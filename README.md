@@ -12,9 +12,12 @@ package from RStudio. For information on using bookdown, see
 
 This repository contains :
 
-* The source code for the development version of the book.
-* The development version of the book in the `docs-devel` folder.
-* The current version of the book on <http://www.moderndive.com/> in the `docs` folder. To access the source code for the current version of the book, click on the "release" tab above. 
+* Development version of book
+    + Book output in `docs-devel` folder.
+    + Source code here.
+* Current/live version of the book on <http://www.moderndive.com/>
+    + Book output in `docs` folder.
+    + Source code is available by clicking on the "release" tab above. 
 
 
 ## A Work in Progress

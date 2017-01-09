@@ -1,5 +1,10 @@
-## 2016-09-09
+# ModernDive 0.1.0.9000
 
-- Changed tufte template for title page (`tufte-handout.tex`)
-- No paragraph indent and a new line between paragraphs in pdf_book to match
-with gitbook (`tufte-common.def`)
+* 
+
+
+# ModernDive 0.1.0
+
+* Basic chapter structure in place
+* First pass at II Inference section (Chapters 6-9) complete
+* First revisions of I Data Exploration (Chapters 3-5) nearly complete
