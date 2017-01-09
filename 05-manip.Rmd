@@ -74,7 +74,7 @@ The `d` in `dplyr` stands for data frames, so the functions here work when you a
 Just as we had the 5NG (The Five Named Graphs in Chapter \@ref(viz) using `ggplot2`) for data visualization, we also have the 5MV here (The Five Main Verbs in `dplyr`) for data manipulation. All of the 5MVs follow the same syntax with the argument before the pipe `%>%` being the name of the data frame and then the name of the verb with other arguments specifying which criteria you'd like the verb to work with in parantheses.
 
 
-### Filter observations using `filter` {#filter}
+### 5MV#1: Filter observations using filter {#filter}
 
 ```{r filter, echo=FALSE, fig.cap="Filter diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
 knitr::include_graphics("images/filter.png")
@@ -137,9 +137,11 @@ not_BTV_SEA <- flights %>%
 View(not_BTV_SEA)
 ```
 
+As a final note we point out that `filter()` should often be the first verb you'll apply to your data. This cleans your data set to only those rows you care about, or put differently, it narrows down the scope to just the observational units your care about. 
+
 ***
 
-```{block lc5-2, type='learncheck'}
+```{block lc-filter, type='learncheck'}
 **_Learning check_**
 ```
 
@@ -149,7 +151,7 @@ View(not_BTV_SEA)
 
 
 
-### Summarize variables using `summarize`
+### 5MV#2: Summarize variables using summarize
 
 ```{r sum1, echo=FALSE, fig.cap="Summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
 knitr::include_graphics("images/summarize1.png")
@@ -167,16 +169,21 @@ summary_temp <- weather %>%
 summary_temp
 ```
 
-We've created a small data frame here called `summary_temp` that includes both the `mean` and the `std_dev` of the `temp` variable in `weather`.  By why are the mean and standard deviation missing i.e. `NA`? Remember that by default the `mean` and `sd` functions do not ignore missing values.  We need to specify the argument `na.rm=TRUE` (`rm` is short for "remove"):
+We've created a small data frame here called `summary_temp` that includes both the `mean` and the `std_dev` of the `temp` variable in `weather`.  Notice as shown in Figures \@ref(fig:sum1) and \@ref(fig:sum2), the data frame `weather` went from many rows to a single row of just the summary values in the data frame `summary_temp`.  But why are the mean and standard deviation missing i.e. `NA`? Remember that by default the `mean` and `sd` functions do not ignore missing values.  We need to specify the argument `na.rm=TRUE` (`rm` is short for "remove"):
 
 ```{r}
 summary_temp <- weather %>% 
-  summarize(mean = mean(temp, na.rm = TRUE),
-            std_dev = sd(temp, na.rm = TRUE))
+  summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
 summary_temp
 ```
 
-Notice as shown in Figures \@ref(fig:sum1) and \@ref(fig:sum2), the data fram went from many rows to a single row of just the summary values. 
+If we'd like to access either of these values directly we can use the `$` to specify a column in a data frame. For example:
+
+```{r}
+summary_temp$mean
+```
+
+You'll often encounter issues with missing values `NA`. In fact, an entire branch of the field of statistics deals with missing data. However, it is not good practice to include a `na.rm = TRUE` in you summary commands by default; you should attempt to run them without this argument. The idea being you should at the very least be alerted to the presence of missing values and consider what the impact on the analysis might be if you ignore these values. In other words, `na.rm=TRUE` should only be used when necessary.
 
 <!--
 Note that 
@@ -185,39 +192,55 @@ Note that
 does not work
 -->
 
-If we'd like to access either of these values directly we can use the `$` to specify a column in a data frame:
-
-```{r}
-summary_temp$mean
-summary_temp$std_dev
-```
-
-However, it's often more useful to summarize a variable based on the groupings of another variable.  Let's say we were interested in the mean and standard deviation of temperatures for each month.  We believe that you will be amazed at just how simple this is:
-
-```{r groupsummarize, echo=FALSE, fig.cap="Group by and summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
-knitr::include_graphics("images/group_summary.png")
-```
-
-Run the following code:
-
-```{r}
-summary_monthly_temp <- weather %>% 
-  group_by(month) %>% 
-  summarize(mean = mean(temp, na.rm = TRUE),
-            std_dev = sd(temp, na.rm = TRUE))
-summary_monthly_temp
-```
-
-Note that this code is identical to the previous code that created `summary_temp`, but there is an extra `group_by(month)` spliced in between. By simply grouping the `weather` data set by `month` first and then passing this new data frame into `summarize` we get a resulting data frame that shows the mean and standard deviation temperature for each month in New York City.
-
 What other summary functions can we use inside the `summarize()` verb? Any function in R that takes a vector of values and returns just one. Here are just a few:
 
 * `min()` and `max()`: the minimum and maximum values respectively
 * `IQR()`: Interquartile range
 * `sum()`: the sum
-* `n()`: a count of how many entries appeared in the groupings. 
+* `n()`: a count of the number of rows/observations in each group. This particular summary function will make more sense in the `group_by` chapter.
 
-Note there is a subtle but important difference between `sum()` and `n()`. While `sum()` simply adds up a large set of numbers, the latter counts the number of times different values occurs. For example, suppose we'd like to get a sense for how many flights departed each of the three airports in New York City:
+
+***
+
+```{block lc-summarize, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Say a doctor is studying the effect of smoking on lung cancer of a large number of patients who have records measured at five year intervals. He notices that a large number of patients have missing data points because the patient has died, so he chooses to ignore these patients in his analysis. What is wrong with this doctor's approach?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Modify the above `summarize` function to be use the `n()` summary function: `summarize(count=n())`. What does the returned value correspond to?
+
+***
+
+
+
+### 5MV#3: Group rows using group_by
+
+```{r groupsummarize, echo=FALSE, fig.cap="Group by and summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
+knitr::include_graphics("images/group_summary.png")
+```
+
+However, it's often more useful to summarize a variable based on the groupings of another variable.  Let's say similarly to the previous section, we are interested in the mean and standard deviation of temperatures but *grouped by month*. This concept can equivalently be articulated as: we want the mean and standard deviation of temperatures
+
+1. split by month.
+1. sliced by month.
+1. aggregated by month.
+1. collapsed over month.
+
+We believe that you will be amazed at just how simple this is. Run the following code:
+
+```{r}
+summary_monthly_temp <- weather %>% 
+  group_by(month) %>% 
+  summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
+summary_monthly_temp
+```
+
+This code is identical to the previous code that created `summary_temp`, but there is an extra `group_by(month)` spliced in between. By simply grouping the `weather` data set by `month` first and then passing this new data frame into `summarize` we get a resulting data frame that shows the mean and standard deviation temperature for each month in New York City. Since each row in `summary_monthly_temp` represents a summary of different rows in `weather`, the observational units have changed.
+
+It is important to note that `group_by` doesn't actually change the data frame. It simply sets *meta-data* (data about the data), specifically the group structure of the data. It is only after we apply the `summarize` function that the data frame actually changes. If we would like to remove this group structure meta-data, we can pipe a resulting data frame into the `ungroup()` function.
+
+We now revisit the `n()` counting summary function we introduced in the previous section. For example, suppose we'd like to get a sense for how many flights departed each of the three airports in New York City:
 
 ```{r}
 by_origin <- flights %>% 
@@ -226,25 +249,38 @@ by_origin <- flights %>%
 by_origin
 ```
 
-We see that Newark (`"EWR"`) had the most flights departing in 2013 followed by `"JFK"` and lastly by LaGuardia (`"LGA"`).
+We see that Newark (`"EWR"`) had the most flights departing in 2013 followed by `"JFK"` and lastly by LaGuardia (`"LGA"`). Note there is a subtle but important difference between `sum()` and `n()`. While `sum()` simply adds up a large set of numbers, the latter counts the number of times each of many different values occur. 
+
+You are not limited to grouping by one variable! Say you wanted to know the number of flights leaving each of the three New York City airports *for each month*, we can also group by a second variable `month`: `group_by(origin, month)`. Run the following in the console:
+
+```{r}
+by_monthly_origin <- flights %>% 
+  group_by(origin, month) %>% 
+  summarize(count = n())
+View(by_monthly_origin)
+```
 
 ***
 
-```{block lc5-3, type='learncheck'}
+```{block lc-groupby, type='learncheck'}
 **_Learning check_**
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Recall from Chapter \@ref(viz) when we looked at plots of temperatures by months in NYC. What does the standard deviation column in the `summary_tempXmonth` data frame tell us about temperatures in New York City throughout the year?
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Recall from Chapter \@ref(viz) when we looked at plots of temperatures by months in NYC. What does the standard deviation column in the `summary_monthly_temp` data frame tell us about temperatures in New York City throughout the year?
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What code would be required to get the mean and standard deviation temperature for each day in 2013 for NYC?
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How could we identify how many flights left each of the three airports in each of the months of 2013?
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Recreate `by_monthly_origin`, but instead of grouping via `group_by(origin, month)`, group variables in a different order `group_by(month, origin)`. What differs in the resulting data set?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How could we identify how many flights left each of the three airports for each *carrier*?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How does the `filter` operation differ from a `group_by` followed by a `summarize`?
 
 ***
 
 
 
-### Create new variables/change old variables using `mutate`
+### 5MV#4: Create new variables/change old variables using mutate
 
 ```{r select, echo=FALSE, fig.cap="Mutate diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
 knitr::include_graphics("images/mutate.png")
@@ -256,11 +292,6 @@ When looking at the `flights` data set, there are some clear additional variable
 flights <- flights %>% 
   mutate(gain = arr_delay - dep_delay)
 ```
-
-
-
-
-
 
 We can now look at summary measures of this `gain` variable and even plot it in the form of a histogram:
 
@@ -299,7 +330,7 @@ flights_plus <- flights %>%
 
 ***
 
-```{block lc5-4, type='learncheck'}
+```{block lc-mutate, type='learncheck'}
 **_Learning check_**
 ```
 
@@ -311,20 +342,22 @@ flights_plus <- flights %>%
 
 ***
 
-### Reorder the data frame using `arrange` {#arrange}
 
-As you may have thought about with the data frames we've worked with so far in the book, one of the most common things you'd like to do is sort the data frames by a specific column.  Have you ever been asked to calculate a median by hand?  This requires you to put the data in order from smallest to highest in value.  The `dplyr` package has a function called `arrange` that we will use to sort/reorder our data according to the values of the specified variable.  This is most frequently used after we have used the `group_by` and `summarize` functions as we will see.
+
+### 5MV#5: Reorder the data frame using arrange {#arrange}
+
+As you may have thought about with the data frames we've worked with so far in the book, one of the most common things you'd like to do is sort the data frames by a specific variable in a column.  Have you ever been asked to calculate a median by hand?  This requires you to put the data in order from smallest to highest in value.  The `dplyr` package has a function called `arrange` that we will use to sort/reorder our data according to the values of the specified variable.  This is often used after we have used the `group_by` and `summarize` functions as we will see.
 
 Let's suppose we were interested in determining the most frequent destination airports from New York City in 2013:
 
-```{r}
+```{r, eval}
 freq_dest <- flights %>% 
   group_by(dest) %>% 
   summarize(num_flights = n())
 freq_dest
 ```
 
-You'll see that by default the values of `dest` are displayed in alphabetical order here.  Remember to use `View()` in the R Console to look at all the values of `freq_dest` in spreadsheet format.  We are interested in finding those airports that appear most:
+You'll see that by default the values of `dest` are displayed in alphabetical order here.  We are interested in finding those airports that appear most:
 
 ```{r}
 freq_dest %>% 
@@ -340,7 +373,11 @@ freq_dest %>%
 
 
 
-### Joining/merging data frames
+
+
+<!--Chapter on joins-->
+
+## Joining/merging data frames
 
 Something you may have thought to yourself as you looked at the most freqent destinations of flights from NYC in 2013 is 
 
@@ -390,7 +427,7 @@ There are more complex joins available, but the `inner_join` will solve nearly a
 
 ***
 
-```{block lc5-7, type='learncheck'}
+```{block lc-join, type='learncheck'}
 **_Learning check_**
 ```
 
@@ -408,7 +445,7 @@ There are more complex joins available, but the `inner_join` will solve nearly a
 
 ## Other verbs
 
-### Select variables using `select` {#select}
+### Select variables using select {#select}
 
 ```{r selectfig, echo=FALSE, fig.cap="Select diagram from Data Wrangling with dplyr and tidyr cheatsheet"}
 knitr::include_graphics("images/select.png")
@@ -476,7 +513,7 @@ flights_time <- flights %>%
 flights_time
 ```
 
-### Rename variables using `rename` {#rename}
+### Rename variables using rename {#rename}
 
 Another useful function is `rename`, which as you may suspect renames one column to another name.  Suppose we wanted `dep_time` and `arr_time` to be `departure_time` and `arrival_time` instead in the `flights_time` data frame:
 
@@ -495,21 +532,8 @@ You'll receive an error if you try to do it the other way:
 Error: Unknown variables: departure_time, arrival_time.
 ```
 
-***
 
-```{block lc5-1, type='learncheck'}
-**_Learning check_**
-```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are some ways to select all three of the `dest`, `air_time`, and `distance` variables from `flights`?  Give the code showing how to do this in at least three different ways.
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How could one use `starts_with`, `ends_with`, and `contains` to select columns from the `flights` data frame?  Provide three different examples in total: one for `starts_with`, one for `ends_with`, and one for `contains`.
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why might we want to use the `select` function on a data frame?
-
-***
-
-### Find the top number of values using `top_n`
+### Find the top number of values using top_n
 
 We can also use the `top_n` function which automatically tells us the most frequent `num_flights`.  We specify the top 10 airports here:
 
@@ -541,9 +565,15 @@ ten_freq_dests <- flights %>%
 
 ***
 
-```{block lc5-5, type='learncheck'}
+```{block lc-other-verbs, type='learncheck'}
 **_Learning check_**
 ```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are some ways to select all three of the `dest`, `air_time`, and `distance` variables from `flights`?  Give the code showing how to do this in at least three different ways.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How could one use `starts_with`, `ends_with`, and `contains` to select columns from the `flights` data frame?  Provide three different examples in total: one for `starts_with`, one for `ends_with`, and one for `contains`.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why might we want to use the `select` function on a data frame?
 
 **`paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Create a new data frame that shows the top 5 airports with the largest arrival delays from NYC in 2013.
 
