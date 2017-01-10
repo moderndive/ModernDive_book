@@ -26,6 +26,8 @@ We saw in Chapter \@ref(viz) that organizing data in this tidy way makes it easy
 
 Furthermore, in Chapter \@ref(viz), we hinted at some ways to summarize and manipulate data to suit your needs.  This chapter expands on this by giving a variety of examples using what we call the *Five Main Verbs* in the `dplyr` package [@R-dplyr].  There are more advanced operations than just these and you'll see some examples of this near the end of the chapter.  
 
+While at various points we specifcally make mention to use the `View()` command to inspect a particular data frame, feel free to do so whenever. In fact, you should get into the habit of doing this for *any* data frame you work with.
+
 
 ## Needed packages {-}
 
@@ -253,7 +255,7 @@ We see that Newark (`"EWR"`) had the most flights departing in 2013 followed by 
 
 You are not limited to grouping by one variable! Say you wanted to know the number of flights leaving each of the three New York City airports *for each month*, we can also group by a second variable `month`: `group_by(origin, month)`. Run the following in the console:
 
-```{r}
+```{r, eval=FALSE}
 by_monthly_origin <- flights %>% 
   group_by(origin, month) %>% 
   summarize(count = n())
@@ -293,7 +295,9 @@ flights <- flights %>%
   mutate(gain = arr_delay - dep_delay)
 ```
 
-We can now look at summary measures of this `gain` variable and even plot it in the form of a histogram:
+Why did we overwright `flights` instead of assigning the resulting data frame to a new object, like `flights_with_gain`? As a rough rule of thumb, as long as you are not losing information that you might need later, its acceptable practice to overwrite data frames. However, if you overwrite existing variables and/or change the observational units, recovering the original information might prove difficult. It this case, it might make sense to create a new data object.
+
+Let's look at summary measures of this `gain` variable and even plot it in the form of a histogram:
 
 ```{r}
 gain_summary <- flights %>% 
@@ -320,7 +324,7 @@ ggplot(data = flights, mapping = aes(x = gain)) +
 We can also create multiple columns at once and even refer to columns that were just created in a new column.  Hadley produces one such example in Chapter 5 of "R for Data Science" [@rds2016]:
 
 ```{r}
-flights_plus <- flights %>% 
+flights <- flights %>% 
   mutate(
     gain = arr_delay - dep_delay,
     hours = air_time / 60,
@@ -334,7 +338,7 @@ flights_plus <- flights %>%
 **_Learning check_**
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What do positive values of the `gain` variable in `flights_plus` correspond to?  What about negative values?  And what about a zero value?
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What do positive values of the `gain` variable in `flights` correspond to?  What about negative values?  And what about a zero value?
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Could we create the `dep_delay` and `arr_delay` columns by simply subtracting `dep_time` from `sched_dep_time` and similarly for arrivals?  Try the code out and explain any differences between the result and what actually appears in `flights`.
 
@@ -377,45 +381,35 @@ freq_dest %>%
 
 <!--Chapter on joins-->
 
-## Joining/merging data frames
+## Joining data frames
 
-Something you may have thought to yourself as you looked at the most freqent destinations of flights from NYC in 2013 is 
-
-- "What cities are these airports in?" 
-- "Is `"ORD"` Orlando?"
-- "Where is `"FLL"`?
-
-The `nycflights13` data package contains multiple data frames.  Instead of having to manually look up different values of airport names corresponding to airport codes like `ORD`, we can have R automatically do this "looking up" for us.  To do so, we'll need to tell R how to match one data frame to another data frame.  Let's first check out the `airports` data frame inside of R:
+Another common task is joining/merging two different data sets. For example, in the `flights` data, the varible `carrier` lists the carrier code for the different flights. While `"UA"` and `"AA"` might be somewhat easy to guess for some (United and American Airlines), what are "VX", "HA", and "B6"? This information is provided in a separate data frame `airlines`.
 
 ```{r eval=FALSE}
-View(airports)
+View(airlines)
 ```
 
-The first column `faa` corresponds to the airport codes that we saw in `dest` in our `flights` and subsequent `ten_freq_dests` data sets.  Hadley and Garrett [@rds2016] created the following diagram to help us understand how the different data sets are linked:
+We see that in `airports`, `carrier` is the carrier code while `name` is the full name of the airline. Using this table, we can see that "VX", "HA", and "B6" correspond to Virgin America, Hawaiian Airlines, and JetBlue respectively. However, will we have to continually look up the carrier's name for each flight in the `airlines` data set?  No! Instead of having to manually do this, we can have R automatically do this "looking up" for us.  
+
+Note that the values in the variable `carrier` in `flights` match the values in the variable `carrier` in `airlines`. In this case, we can use the variable `carrier` as a *key variable* to join/merge/match the two data frames by. Hadley and Garrett [@rds2016] created the following diagram to help us understand how the different data sets are linked:
 
 ```{r reldiagram, echo=FALSE, fig.cap="Data relationships in nycflights13 from R for Data Science"}
 knitr::include_graphics("images/relational-nycflights.png")
 ```
 
-We see from `View(airports)` that `airports` contains a lot of other information about `r nrow(airports)`.  We are only really interested here in the `faa` and `name` columns.  Let's use the `select` function to only use those variables:
 
-```{r}
-airports_small <- airports %>% select(faa, name)
+### Joining by Key Variables
+
+In both `flights` and `airlines`, the key variable we want to join/merge/match the two data frames with have the same name in both data sets: `carriers`. We make use of the `inner_join()` function to join by the variable `carrier`.
+
+```{r eval=FALSE}
+flights_joined <- flights %>% 
+  inner_join(airlines, by="carrier")
+View(flights)
+View(flights_joined)
 ```
 
-So if we identify the names of the airports we can use the `inner_join` function to bring two different data frames together.  Note that we will also rename the subsequent column `name` as `airport_name`:
-
-```{r}
-named_freq_dests <- flights %>%
-  group_by(dest) %>%
-  summarize(num_flights = n()) %>%
-  arrange(desc(num_flights)) %>%
-  inner_join(airports_small, by = c("dest" = "faa")) %>%
-  rename(airport_name = name)
-named_freq_dests
-```
-
-In case you didn't know, `"ORD"` is the airport code of Chicago O'Hare airport and `"FLL"` is the main airport in Fort Lauderdale, Florida, which we can now see in our `named_freq_dests` data frame.
+We observed that the `flights` and `flights_joined` are identical except that `flights_joined` has an additional variable `name` whose values were drawed from `airlines`. 
 
 A visual representation of the `inner_join` is given below [@rds2016]:
 
@@ -425,13 +419,57 @@ knitr::include_graphics("images/join-inner.png")
 
 There are more complex joins available, but the `inner_join` will solve nearly all of the problems you'll face in our experience.
 
+
+
+### Joining by Key Variables with Different Names
+
+Say instead, you are interested in all the destinations of flights from NYC in 2013 and ask yourself:
+
+- "What cities are these airports in?" 
+- "Is `"ORD"` Orlando?"
+- "Where is `"FLL"`?
+
+The `airports` data frame contains airport codes:
+
+```{r eval=FALSE}
+View(airports)
+```
+
+However, looking at both the `airports` and `flights` and the visual representation of the relations between the data frames in Figure \@ref(fig:ijdiagram), we see that in:
+
+* `airports` the airport code is in the variable `faa`
+* `flights` the airport code is in the variable `origin`
+
+So to join these two data sets, our `inner_join` operation involves a `by` argument that accounts for the different names:
+
+```{r, eval=FALSE}
+flights %>% 
+  inner_join(flights, by = c("dest" = "faa"))
+```
+
+Let's construct the sequence of commands that computes the number of flights from NYC to each destination but also includes information about each destination airport:
+
+```{r, eval=FALSE}
+named_dests <- flights %>%
+  group_by(dest) %>%
+  summarize(num_flights = n()) %>%
+  arrange(desc(num_flights)) %>%
+  inner_join(airports, by = c("dest" = "faa")) %>%
+  rename(airport_name = name)
+View(named_dests)
+```
+
+In case you didn't know, `"ORD"` is the airport code of Chicago O'Hare airport and `"FLL"` is the main airport in Fort Lauderdale, Florida, which we can now see in our `named_freq_dests` data frame.
+
+
+
 ***
 
 ```{block lc-join, type='learncheck'}
 **_Learning check_**
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What happens when you try to `inner_join` the `ten_freq_dests` data frame with `airports` instead of `airports_small`?  How might one use this result to answer further questions about the top 10 destinations?
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Looking at Figure \@ref(fig:reldiagram), when joining `flights` and `weather`, or in order words match the hourly weather values with each flight, why do we need to join by all of `year`, `month`, `day`, `hour`, and `origin`, and not just `hour`?
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What surprises you about the top 10 destinations from NYC in 2013?
 
@@ -443,7 +481,7 @@ There are more complex joins available, but the `inner_join` will solve nearly a
 
 <!--Subsection on Other Verbs -->
 
-## Other verbs
+## Optional: Other verbs
 
 ### Select variables using select {#select}
 
@@ -451,35 +489,30 @@ There are more complex joins available, but the `inner_join` will solve nearly a
 knitr::include_graphics("images/select.png")
 ```
 
-We've seen that the `flights` data frame in the `nycflights13` package contains many different variables (19 in fact).  You can identify this by running the `dim` function or the `ncol` function:
+We've seen that the `flights` data frame in the `nycflights13` package contains many different variables. The `names` function gives a listing of all the columns in a data frame; in our case you would run `names(flights)`. You can also identify these variables by running the `glimpse` function:
 
-```{r}
-data(flights)
-dim(flights)
-ncol(flights)
+```{r, eval=FALSE}
+glimpse(flights)
 ```
 
-One of these variables is `year`.  If you remember the original description of the `flights` data frame (or by running `?flights`), you'll remember that this data correspond to flights in 2013 departing New York City.  The `year` variable isn't really a variable here in that it doesn't vary... `flights` actually comes from a larger data set that covers many years.  We may want to remove the `year` variable from our data set since it won't be helpful for analysis in this case.  To do so easily, we use the `select` variable:
+However, say you only want to consider two of these variables, say `carrier` and `flight`. You can `select` these:
 
-```{r}
-flights_small <- flights %>% 
+```{r, eval=FALSE}
+flights %>% 
+  select(carrier, flight)
+```
+
+Another one of these variables is `year`. If you remember the original description of the `flights` data frame (or by running `?flights`), you'll remember that this data correspond to flights in 2013 departing New York City.  The `year` variable isn't really a variable here in that it doesn't vary... `flights` actually comes from a larger data set that covers many years.  We may want to remove the `year` variable from our data set since it won't be helpful for analysis in this case. We can deselect `year` by using the `-` sign:
+
+```{r, eval=FALSE}
+flights_no_year <- flights %>% 
   select(-year)
-names(flights_small)
-```
-
-The `names` function gives a listing of all the columns in a data frame.  We see that `year` has been removed.  This was done using a `-` in front of the name of the column we'd like to remove.
-
-We could also select specific columns (instead of deselecting columns) by listing them out:
-
-```{r}
-flight_dep_times <- flights %>% 
-  select(month, day, dep_time, sched_dep_time)
-flight_dep_times
+names(flights_no_year)
 ```
 
 Or we could specify a ranges of columns:
 
-```{r}
+```{r, eval=FALSE}
 flight_arr_times <- flights %>% 
   select(month:day, arr_time:sched_arr_time)
 flight_arr_times
@@ -487,46 +520,47 @@ flight_arr_times
 
 The `select` function can also be used to reorder columns in combination with the `everything` helper function.  Let's suppose we'd like the `hour`, `minute`, and `time_hour` variables, which appear at the end of the `flights` data set, to actually appear immediately after the `day` variable:
 
-```{r}
+```{r, eval=FALSE}
 flights_reorder <- flights %>% 
   select(month:day, hour:time_hour, everything())
 names(flights_reorder)
 ```
 
-Lastly, the helper functions `starts_with`, `ends_with`, and `contains` can be used to choose column names that match those conditions:
+in this case `everything()` picks up all remaining variables. Lastly, the helper functions `starts_with`, `ends_with`, and `contains` can be used to choose column names that match those conditions:
 
-```{r}
+```{r, eval=FALSE}
 flights_begin_a <- flights %>% 
   select(starts_with("a"))
 flights_begin_a
 ```
 
-```{r}
+```{r, eval=FALSE}
 flights_delays <- flights %>% 
   select(ends_with("delay"))
 flights_delays
 ```
 
-```{r}
+```{r, eval=FALSE}
 flights_time <- flights %>% 
   select(contains("time"))
 flights_time
 ```
 
+
+
 ### Rename variables using rename {#rename}
 
 Another useful function is `rename`, which as you may suspect renames one column to another name.  Suppose we wanted `dep_time` and `arr_time` to be `departure_time` and `arrival_time` instead in the `flights_time` data frame:
 
-```{r}
-flights_time <- flights_time %>% 
+```{r, eval=FALSE}
+flights_time_new <- flights %>% 
+  select(contains("time")) %>% 
   rename(departure_time = dep_time,
          arrival_time = arr_time)
 names(flights_time)
 ```
 
-It's easy to forget if the new name comes before or after the equals sign.  I usually remember this as "New Before, Old After" or NBOA.
-
-You'll receive an error if you try to do it the other way:
+It's easy to forget if the new name comes before or after the equals sign.  I usually remember this as "New Before, Old After" or NBOA. You'll receive an error if you try to do it the other way:
 
 ```
 Error: Unknown variables: departure_time, arrival_time.
@@ -537,15 +571,15 @@ Error: Unknown variables: departure_time, arrival_time.
 
 We can also use the `top_n` function which automatically tells us the most frequent `num_flights`.  We specify the top 10 airports here:
 
-```{r}
-freq_dest %>% 
+```{r, eval=FALSE}
+named_dests %>% 
   top_n(n = 10, wt = num_flights)
 ```
 
 We'll still need to arrange this by `num_flights` though:
 
-```{r}
-freq_dest %>% 
+```{r, eval=FALSE}
+named_dests  %>% 
   top_n(n = 10, wt = num_flights) %>% 
   arrange(desc(num_flights))
 ```
@@ -554,13 +588,15 @@ freq_dest %>%
 
 We can go one stop further and tie together the group_by and summarize functions we used to find the most frequent flights:
 
-```{r}
+```{r, eval=FALSE}
 ten_freq_dests <- flights %>%
   group_by(dest) %>%
   summarize(num_flights = n()) %>%
   top_n(n = 10) %>%
   arrange(desc(num_flights))
+View(ten_freq_dests)
 ```
+
 
 
 ***
