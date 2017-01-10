@@ -1,11 +1,11 @@
 # ModernDive 0.1.0.9000
 
-* Fixed the problems of chapter cross-references not working by removing the backticks
+* Fixed the problems of chapter cross-references not working by removing the backticks in chapter names
     + Issue created on `bookdown` [here](https://github.com/rstudio/bookdown/issues/294)
-* Looked for typos throughout Chapters 1, 2, 4, 6+ of the book
+* Looked for typos throughout all chapters EXCEPT Chapter 3
 * Added [Inference Coggle diagram](https://coggle.it/diagram/Vxlydu1akQFeqo6-) to Appendix B
 * Followed the same format of having a Conclusion section at the end of each chapter
-* Fixed $T$ distribution plot in Chapter 7
+* Fixed $T$ distribution plot with histogram in Chapter 7
     + May be weird issue with `cache = TRUE` that incorrectly plotted values on 1/10^th^ the correct scale
     + Will need to keep an eye on it going forward
 
