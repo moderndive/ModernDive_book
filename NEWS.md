@@ -1,5 +1,9 @@
 # ModernDive 0.1.1.9000
 
+* Converted last updated in index.Rmd to inline instead of R chunk
+* Fixed edit link to point to moderndive-book GitHub repo instead of moderndive-source repo
+* Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/ismayc/moderndiver-book/issues/2)
+
 # ModernDive 0.1.1
 
 * Fixed the problems of chapter cross-references not working by removing the backticks in chapter names
