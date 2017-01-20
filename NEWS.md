@@ -14,6 +14,7 @@
 * Fixed $T$ distribution plot with histogram in Chapter 7
     + May be weird issue with `cache = TRUE` that incorrectly plotted values on 1/10^th^ the correct scale
     + Will need to keep an eye on it going forward
+* Fixed typo on Reach for the Stars chapter name
 
 
 # ModernDive 0.1.0
