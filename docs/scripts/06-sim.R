@@ -54,14 +54,6 @@ profiles_sample2 %>% summarize(mean(height))
 ## ----mean3---------------------------------------------------------------
 profiles_sample3 %>% summarize(mean(height))
 
-## ----shiny, echo=FALSE, out.width="100%", fig.cap=ifelse(knitr:::is_html_output(), "Sampling distribution app at http://ismay.shinyapps.io/okcupidheights/.", "Sampling distribution app"), screenshot.opts=list(delay=20), dev='png', cache=TRUE----
-library(knitr)
-if(knitr:::is_html_output()){
-  include_app("http://ismay.shinyapps.io/okcupidheights/", height = "1300px")
-} else{
-  include_graphics("images/shinyapp.png")
-}
-
 ## ----do-first, cache=TRUE------------------------------------------------
 sample_means <- do(10000) *
   (profiles_subset %>% resample(size = 100, replace = FALSE) %>% 

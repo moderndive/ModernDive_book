@@ -7,6 +7,7 @@
 * Fixed broken links to script files at the end of Chapters 4-9
 * Added `purl=FALSE` to chunks that do not contain useful code to the reader
 * Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/ismayc/moderndiver-book/issues/2)
+    * Reverted to using screenshot with link instead
 
 # ModernDive 0.1.1
 
