@@ -2,6 +2,7 @@
 
 * Converted last updated in index.Rmd to inline instead of R chunk
 * Fixed edit link to point to moderndive-book GitHub repo instead of moderndive-source repo
+* Fixed broken links to script files at the end of Chapters 4-9
 * Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/ismayc/moderndiver-book/issues/2)
 
 # ModernDive 0.1.1
