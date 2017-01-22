@@ -1,24 +1,8 @@
-## ----setup_manip, include=FALSE------------------------------------------
-chap <- 5
-lc <- 0
-rq <- 0
-# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
-# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
-knitr::opts_chunk$set(
-  tidy = FALSE, 
-  out.width = '\\textwidth', 
-  fig.height = 4,
-  warning = FALSE
-  )
-
 ## ---- message=FALSE------------------------------------------------------
 library(dplyr)
 library(ggplot2)
 library(nycflights13)
 library(knitr)
-
-## ----filter, echo=FALSE, fig.cap="Filter diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/filter.png")
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## portland_flights <- flights %>%
@@ -39,15 +23,6 @@ knitr::include_graphics("images/filter.png")
 ##   filter(!(dest == "BTV" | dest == "SEA"))
 ## View(not_BTV_SEA)
 
-## ----lc-filter, type='learncheck', engine="block"------------------------
-**_Learning check_**
-
-## ----sum1, echo=FALSE, fig.cap="Summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/summarize1.png")
-
-## ----sum2, echo=FALSE, fig.cap="Another summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/summary.png")
-
 ## ------------------------------------------------------------------------
 summary_temp <- weather %>% 
   summarize(mean = mean(temp), std_dev = sd(temp))
@@ -61,21 +36,16 @@ summary_temp
 ## ------------------------------------------------------------------------
 summary_temp$mean
 
-## ----lc-summarize, type='learncheck', engine="block"---------------------
-**_Learning check_**
-
 ## ----eval=FALSE----------------------------------------------------------
 ## summary_temp <- weather %>%
 ##   summarize(mean = mean(temp, na.rm = TRUE)) %>%
 ##   summarize(std_dev = sd(temp, na.rm = TRUE))
 
-## ----groupsummarize, echo=FALSE, fig.cap="Group by and summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/group_summary.png")
-
 ## ------------------------------------------------------------------------
 summary_monthly_temp <- weather %>% 
   group_by(month) %>% 
-  summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
+  summarize(mean = mean(temp, na.rm = TRUE), 
+            std_dev = sd(temp, na.rm = TRUE))
 summary_monthly_temp
 
 ## ------------------------------------------------------------------------
@@ -92,9 +62,6 @@ by_origin
 
 ## ----lc-groupby, type='learncheck', engine="block"-----------------------
 **_Learning check_**
-
-## ----select, echo=FALSE, fig.cap="Mutate diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/mutate.png")
 
 ## ------------------------------------------------------------------------
 flights <- flights %>% 
@@ -126,9 +93,6 @@ flights <- flights %>%
     gain_per_hour = gain / hours
   )
 
-## ----lc-mutate, type='learncheck', engine="block"------------------------
-**_Learning check_**
-
 ## ---- eval---------------------------------------------------------------
 freq_dest <- flights %>% 
   group_by(dest) %>% 
@@ -136,27 +100,19 @@ freq_dest <- flights %>%
 freq_dest
 
 ## ------------------------------------------------------------------------
-freq_dest %>% 
-  arrange(num_flights)
+freq_dest %>% arrange(num_flights)
 
 ## ------------------------------------------------------------------------
-freq_dest %>% 
-  arrange(desc(num_flights))
+freq_dest %>% arrange(desc(num_flights))
 
 ## ----eval=FALSE----------------------------------------------------------
 ## View(airlines)
-
-## ----reldiagram, echo=FALSE, fig.cap="Data relationships in nycflights13 from R for Data Science"----
-knitr::include_graphics("images/relational-nycflights.png")
 
 ## ----eval=FALSE----------------------------------------------------------
 ## flights_joined <- flights %>%
 ##   inner_join(airlines, by="carrier")
 ## View(flights)
 ## View(flights_joined)
-
-## ----ijdiagram, echo=FALSE, fig.cap="Diagram of inner join from R for Data Science"----
-knitr::include_graphics("images/join-inner.png")
 
 ## ----eval=FALSE----------------------------------------------------------
 ## View(airports)
@@ -173,12 +129,6 @@ knitr::include_graphics("images/join-inner.png")
 ##   inner_join(airports, by = c("dest" = "faa")) %>%
 ##   rename(airport_name = name)
 ## View(named_dests)
-
-## ----lc-join, type='learncheck', engine="block"--------------------------
-**_Learning check_**
-
-## ----selectfig, echo=FALSE, fig.cap="Select diagram from Data Wrangling with dplyr and tidyr cheatsheet"----
-knitr::include_graphics("images/select.png")
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## glimpse(flights)
@@ -240,10 +190,4 @@ knitr::include_graphics("images/select.png")
 ##   top_n(n = 10) %>%
 ##   arrange(desc(num_flights))
 ## View(ten_freq_dests)
-
-## ----lc-other-verbs, type='learncheck', engine="block"-------------------
-**_Learning check_**
-
-## ----include=FALSE, eval=FALSE-------------------------------------------
-## knitr::purl("05-manip.Rmd", "docs/scripts/05-manip.R")
 

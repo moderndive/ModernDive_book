@@ -1,26 +1,9 @@
-## ----setup_infer, include=FALSE------------------------------------------
-chap <- 6
-lc <- 0
-rq <- 0
-# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
-# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
-knitr::opts_chunk$set(tidy = FALSE, out.width='\\textwidth')#, fig.align = "center")
-
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
 library(okcupiddata)
 library(mosaic)
 library(knitr)
-
-## ----soupimg, echo=FALSE, fig.cap="A bowl of Indian chicken and vegetable soup"----
-knitr::include_graphics("images/soup.jpg")
-
-## ----lc6-0a, type='learncheck', engine="block"---------------------------
-**_Learning check_**
-
-## ----lc6-0b, type='learncheck', engine="block"---------------------------
-**_Learning check_**
 
 ## ----loadprofiles--------------------------------------------------------
 library(okcupiddata)
@@ -30,9 +13,6 @@ data(profiles)
 library(ggplot2)
 ggplot(data = profiles, mapping = aes(x = height)) +
   geom_histogram(bins = 20, color = "white")
-
-## ----lc6-0c, type='learncheck', engine="block"---------------------------
-**_Learning check_**
 
 ## ----filter-profiles-----------------------------------------------------
 library(dplyr)
@@ -45,15 +25,13 @@ ggplot(data = profiles_subset, mapping = aes(x = height)) +
 ## ----sample-profiles-----------------------------------------------------
 library(mosaic)
 set.seed(2017)
-profiles_sample1 <- profiles_subset %>% resample(size = 100, replace = FALSE)
+profiles_sample1 <- profiles_subset %>% 
+  resample(size = 100, replace = FALSE)
 
 ## ----plot-sample1--------------------------------------------------------
 ggplot(data = profiles_sample1, mapping = aes(x = height)) +
   geom_histogram(bins = 20, color = "white", fill = "red") +
   coord_cartesian(xlim = c(55, 85))
-
-## ----lc6-0d, type='learncheck', engine="block"---------------------------
-**_Learning check_**
 
 ## ----sample-profiles2----------------------------------------------------
 profiles_sample2 <- profiles_subset %>% resample(size = 100, replace = FALSE)
@@ -91,12 +69,6 @@ sample_means <- do(10000) *
 ggplot(data = sample_means, mapping = aes(x = mean_height)) +
   geom_histogram(color = "white", bins = 20)
 
-## ----lc6-0e, type='learncheck', engine="block"---------------------------
-**_Learning check_**
-
-## ----lc6-1, type='learncheck', engine="block"----------------------------
-**_Learning check_**
-
 ## ----message=FALSE-------------------------------------------------------
 library(mosaic)
 set.seed(2017)
@@ -121,10 +93,4 @@ simGuesses %>% ggplot(aes(x = heads)) +
 library(ggplot2)
 simGuesses %>% ggplot(aes(x = factor(heads))) +
   geom_bar()
-
-## ----lc-mosaic, type='learncheck', engine="block"------------------------
-**_Learning check_**
-
-## ----include=FALSE, eval=FALSE-------------------------------------------
-## knitr::purl("06-sim.Rmd", "docs/scripts/06-sim.R")
 

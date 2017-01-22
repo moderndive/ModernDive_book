@@ -1,12 +1,3 @@
-## ----setup_reg, include=FALSE--------------------------------------------
-chap <- 9
-lc <- 0
-rq <- 0
-# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
-# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
-knitr::opts_chunk$set(tidy = FALSE, out.width = '\\textwidth')
-options(scipen = 99, digits = 4)
-
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(mosaic)
 library(dplyr)
@@ -29,12 +20,6 @@ alaska_flights <- flights %>%
 
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
    geom_point()
-
-## ----lc9-1, type='learncheck', engine="block"----------------------------
-**_Learning check_**
-
-## ----lc9-2, type='learncheck', engine="block"----------------------------
-**_Learning check_**
 
 ## ----corr-coefs, echo=FALSE, fig.cap="Different Correlation Coefficients"----
 library(mvtnorm) 
@@ -69,12 +54,6 @@ ggplot(data = values, mapping = aes(V1, V2)) +
 ## ---- warning=FALSE, echo=TRUE-------------------------------------------
 alaska_flights %>% 
   summarize(correl = cor(dep_delay, arr_delay))
-
-## ----lc9-3, type='learncheck', engine="block"----------------------------
-**_Learning check_**
-
-## ----lc9-4, type='learncheck', engine="block"----------------------------
-**_Learning check_**
 
 ## ----with-reg, echo=FALSE, fig.cap="Regression line fit on delays"-------
 ggplot(data = alaska_flights, 
@@ -171,9 +150,6 @@ ggplot(data = rand_distn, mapping = aes(x = dep_delay)) +
 ggplot(data = rand_distn, aes(x = dep_delay, fill = (dep_delay >= b1_obs))) +
   geom_histogram(color = "white", bins = 20)
 
-## ----lc9-5, type='learncheck', engine="block"----------------------------
-**_Learning check_**
-
 ## ----echo=FALSE----------------------------------------------------------
 ggplot(data = alaska_flights, 
        mapping = aes(x = dep_delay, y = arr_delay)) + 
@@ -192,7 +168,4 @@ ggplot(data = fits, mapping = aes(x = .fitted, y = .resid)) +
 ## ----qqplot1-------------------------------------------------------------
 ggplot(data = fits, mapping = aes(sample = .resid)) +
   stat_qq()
-
-## ----include=FALSE, eval=FALSE-------------------------------------------
-## knitr::purl("09-regress.Rmd", "docs/scripts/09-regress.R")
 
