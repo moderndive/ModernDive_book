@@ -1,5 +1,6 @@
 # ModernDive 0.1.3.9000
 
+
 # ModernDive 0.1.3
 
 * Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/ismayc/moderndiver-book/issues/2)
@@ -7,6 +8,7 @@
 * Updated link to `dplyr` [cheatsheet](https://github.com/rstudio/cheatsheets/raw/master/source/pdfs/data-transformation-cheatsheet.pdf) and `ggplot2` [cheatsheet](https://www.rstudio.com/wp-content/uploads/2016/11/ggplot2-cheatsheet-2.1.pdf)
 * Began adding DataCamp chapters as Review Questions to the end of Chapters 3 and 4 (More to come)
 * Updated link to MailChimp
+* Fixed language in LC3.5
 
 # ModernDive 0.1.2
 
