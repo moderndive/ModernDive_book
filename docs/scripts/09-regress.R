@@ -137,17 +137,17 @@ ggplot(example, aes(x = x, y = y, col = slope)) +
 (b1_obs <- tidy(delay_fit)$estimate[2])
 
 ## ----many_shuffles_reg---------------------------------------------------
-rand_distn <- mosaic::do(10000) *
+rand_slope_distn <- mosaic::do(5000) *
   (lm(formula = shuffle(arr_delay) ~ dep_delay, data = alaska_flights) %>%
      coef())
-names(rand_distn)
+names(rand_slope_distn)
 
 ## ------------------------------------------------------------------------
-ggplot(data = rand_distn, mapping = aes(x = dep_delay)) +
+ggplot(data = rand_slope_distn, mapping = aes(x = dep_delay)) +
   geom_histogram(color = "white", bins = 20)
 
 ## ----fig.cap="Shaded histogram to show p-value"--------------------------
-ggplot(data = rand_distn, aes(x = dep_delay, fill = (dep_delay >= b1_obs))) +
+ggplot(data = rand_slope_distn, aes(x = dep_delay, fill = (dep_delay >= b1_obs))) +
   geom_histogram(color = "white", bins = 20)
 
 ## ----echo=FALSE----------------------------------------------------------

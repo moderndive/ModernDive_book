@@ -110,7 +110,7 @@ freq_dest %>% arrange(desc(num_flights))
 
 ## ----eval=FALSE----------------------------------------------------------
 ## flights_joined <- flights %>%
-##   inner_join(airlines, by="carrier")
+##   inner_join(airlines, by = "carrier")
 ## View(flights)
 ## View(flights_joined)
 

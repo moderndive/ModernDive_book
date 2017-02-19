@@ -78,11 +78,11 @@ simGuesses %>%
 
 ## ----fig.cap="Histogram of number of heads in simulation - needs tweaking"----
 library(ggplot2)
-simGuesses %>% ggplot(aes(x = heads)) +
+ggplot(data = simGuesses, mapping = aes(x = heads)) +
   geom_histogram(binwidth = 1, color = "white")
 
 ## ----fig.cap="Barplot of number of heads in simulation"------------------
 library(ggplot2)
-simGuesses %>% ggplot(aes(x = factor(heads))) +
+ggplot(data = simGuesses, mapping = aes(x = factor(heads))) +
   geom_bar()
 
