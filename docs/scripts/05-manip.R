@@ -26,12 +26,12 @@ library(knitr)
 ## ------------------------------------------------------------------------
 summary_temp <- weather %>% 
   summarize(mean = mean(temp), std_dev = sd(temp))
-summary_temp
+kable(summary_temp)
 
 ## ------------------------------------------------------------------------
 summary_temp <- weather %>% 
   summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
-summary_temp
+kable(summary_temp)
 
 ## ------------------------------------------------------------------------
 summary_temp$mean
@@ -46,19 +46,19 @@ summary_monthly_temp <- weather %>%
   group_by(month) %>% 
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))
-summary_monthly_temp
+kable(summary_monthly_temp)
 
 ## ------------------------------------------------------------------------
 by_origin <- flights %>% 
   group_by(origin) %>% 
   summarize(count = n())
-by_origin
+kable(by_origin)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## by_monthly_origin <- flights %>%
 ##   group_by(origin, month) %>%
 ##   summarize(count = n())
-## View(by_monthly_origin)
+## kable(by_monthly_origin)
 
 ## ----lc-groupby, type='learncheck', engine="block"-----------------------
 **_Learning check_**
@@ -79,7 +79,7 @@ gain_summary <- flights %>%
     sd = sd(gain, na.rm = TRUE),
     missing = sum(is.na(gain))
   )
-gain_summary
+kable(gain_summary)
 
 ## ----message=FALSE, fig.cap="Histogram of gain variable"-----------------
 ggplot(data = flights, mapping = aes(x = gain)) +
