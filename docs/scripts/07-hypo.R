@@ -54,7 +54,7 @@ pvalue_tea <- simGuesses %>%
 
 ## ----fig.cap="Barplot of heads with p-value highlighted"-----------------
 library(ggplot2)
-  ggplot(data = simGuesses, aes(x = factor(heads), fill = (heads >= 9))) +
+ggplot(data = simGuesses, aes(x = factor(heads), fill = (heads >= 9))) +
   geom_bar() +
   labs(x = "heads")
 

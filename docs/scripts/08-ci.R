@@ -70,7 +70,8 @@ ggplot(data = rand_distn, mapping = aes(x = diffmean)) +
 (upper <- obs_diff + (2 * std_err))
 
 ## ------------------------------------------------------------------------
+library(dplyr)
 df1 <- data_frame(samp1 = rexp(50))
 df2 <- data_frame(samp2 = rnorm(100))
-df3 <- data_frame(samp3 = rbeta(20,5,5))
+df3 <- data_frame(samp3 = rbeta(20, 5, 5))
 

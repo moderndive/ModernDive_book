@@ -4,7 +4,7 @@ Welcome to the development version of the book **ModernDive: An Introduction to
 Statistical and Data Sciences** available at <http://www.moderndive.com/>. This
 book is generated via the
 [bookdown](https://www.rstudio.com/resources/webinars/introducing-bookdown/)
-package from RStudio. For information on using bookdown, see
+package from RStudio. For information on using `bookdown`, see
 <https://bookdown.org/>.
 
 
