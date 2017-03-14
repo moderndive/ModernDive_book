@@ -1,6 +1,7 @@
 # ModernDive 0.1.3.9000
 * Add license to Preamble
 * Added ggplot2 Review DataCamp link
+* Fix typos
 
 # ModernDive 0.1.3
 
