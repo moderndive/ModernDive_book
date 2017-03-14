@@ -54,11 +54,16 @@ by_origin <- flights %>%
   summarize(count = n())
 kable(by_origin)
 
-## ---- eval=FALSE---------------------------------------------------------
-## by_monthly_origin <- flights %>%
-##   group_by(origin, month) %>%
-##   summarize(count = n())
-## kable(by_monthly_origin)
+## ------------------------------------------------------------------------
+by_monthly_origin <- flights %>% 
+  group_by(origin, month) %>% 
+  summarize(count = n())
+kable(by_monthly_origin)
+
+## ------------------------------------------------------------------------
+by_monthly_origin2 <- flights %>% 
+  count(origin, month)
+kable(by_monthly_origin2)
 
 ## ----lc-groupby, type='learncheck', engine="block"-----------------------
 **_Learning check_**
