@@ -62,7 +62,7 @@ kable(by_monthly_origin)
 
 ## ------------------------------------------------------------------------
 by_monthly_origin2 <- flights %>% 
-  count(origin, month)
+  dplyr::count(origin, month)
 kable(by_monthly_origin2)
 
 ## ----lc-groupby, type='learncheck', engine="block"-----------------------
