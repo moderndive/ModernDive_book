@@ -28,6 +28,7 @@ library(ggplot2)
 library(mosaic)
 library(knitr)
 library(nycflights13)
+library(ggplot2movies)
 ```
 
 ## When Inference Is Not Needed
@@ -427,8 +428,11 @@ library(mosaic)
 set.seed(2016)
 movies_genre_sample <- movies_trimmed %>% 
   group_by(genre) %>%
-  sample_n(34)
+  sample_n(34) %>% 
+  ungroup()
 ```
+
+**Note** the addition of the `ungroup()` function here.  This will be useful shortly in allowing us to shuffle the values of `rating` across `genre`.  Our analysis does not work without this `ungroup()` function since the data stays grouped by the levels of `genre` without it.
 
 We can now observe the distributions of our two sample ratings for both groups.  Remember that these plots
 should be rough approximations of our population distributions of movie ratings for `"Action"` and `"Romance"`
@@ -499,7 +503,8 @@ We are, therefore, interested in seeing whether the difference in the sample mea
 ### Observed effect $\delta^*$
 
 ```{r}
-mean_ratings <- movies_genre_sample %>% group_by(genre) %>%
+mean_ratings <- movies_genre_sample %>% 
+  group_by(genre) %>%
   summarize(mean = mean(rating))
 obs_diff <- diff(mean_ratings$mean)
 ```
@@ -518,7 +523,8 @@ We then calculate the new sample mean rating of the romance deck, and also the n
 
 ```{r message=FALSE, warning=FALSE}
 library(mosaic)
-shuffled_ratings <- movies_trimmed %>%
+shuffled_ratings <- #movies_trimmed %>%
+  movies_genre_sample %>% 
      mutate(rating = shuffle(rating)) %>% 
      group_by(genre) %>%
      summarize(mean = mean(rating))
@@ -543,7 +549,8 @@ The only new command here is `shuffle` from the `mosaic` package, which does wha
 ```{r cache=TRUE}
 set.seed(2016)
 many_shuffles <- do(5000) * 
-  (movies_trimmed %>%
+#  (movies_trimmed %>%
+  (movies_genre_sample %>% 
      mutate(rating = shuffle(rating)) %>% 
      group_by(genre) %>%
      summarize(mean = mean(rating))
@@ -556,6 +563,7 @@ It is a good idea here to `View` the `many_shuffles` data frame via `View(many_s
 rand_distn <- many_shuffles %>%
   group_by(.index) %>%
   summarize(diffmean = diff(mean))
+head(rand_distn, 10)
 ```
 
 We can now plot the distribution of these simulated differences in means:
@@ -574,7 +582,7 @@ ggplot(data = rand_distn, aes(x = diffmean, fill = (abs(diffmean) >= obs_diff)))
   geom_histogram(color = "white", bins = 20)
 ```
 
-You may initially think there is an error here, but remember that the observed difference in means was `r obs_diff`.  It falls far outside the range of simulated differences.  We can add a vertical line to represent both it and its negative (since this is a two-tailed test) instead:
+Remember that the observed difference in means was `r obs_diff`.  We have shaded green all values at or above that value and also shaded green those values at or below its negative value (since this is a two-tailed test).  We can add a vertical line to represent both the observed difference and its negative instead.  To better estimate how large the $p$-value will be, we also increase the number of bins to 100 here from 20:
 
 ```{r fig.cap="Histogram with vertical lines corresponding to observed statistic"}
 ggplot(data = rand_distn, aes(x = diffmean)) +
@@ -583,7 +591,16 @@ ggplot(data = rand_distn, aes(x = diffmean)) +
   geom_vline(xintercept = -obs_diff, color = "red")
 ```
 
-Based on this plot, we have no values as extreme or more extreme than our observed effect in both directions so we have evidence supporting the conclusion that the mean rating for romance movies is different from that of action movies.  (It doesn't really matter what significance level was chosen in this case.  Think about why.)  The next important idea is to better understand just how much higher of a mean rating can we expect the romance movies to have compared to that of action movies.  This can be addressed by creating a 95% confidence interval as we will explore in Chapter \@ref(ci).
+At this point, it is important to take a guess as to what the $p$-value may be.  We can see that there are only a few shuffled differences as extreme or more extreme than our observed effect (in both directions).  Maybe we guess that this $p$-value is somewhere around 2%, or maybe 3%, but certainly not 30% or more.  **You'll find yourself getting very strange results if you've messed up the signs in your calculation of the $p$-value so you should always check first that you have a range of reasonable values after looking at the histogram for the $p$-value. Lastly, we calculate the $p$-value directly using `dplyr`:
+
+```{r}
+(pvalue_movies <- rand_distn %>%
+  filter(abs(diffmean) >= obs_diff) %>%
+  nrow() / nrow(rand_distn))
+```
+
+
+We have around `r pvalue_movies * 100`% of values as extreme or more extreme than our observed effect in both directions. Assuming we are using a 5% significance level for $\alpha$, we have evidence supporting the conclusion that the mean rating for romance movies is different from that of action movies.  The next important idea is to better understand just how much higher of a mean rating can we expect the romance movies to have compared to that of action movies.  This can be addressed by creating a 95% confidence interval as we will explore in Chapter \@ref(ci).
   
 ***
 
@@ -698,7 +715,7 @@ Now if we divide all of the values of `diffmean` in `rand_distn` by `denom_T` we
 
 ```{r, fig.cap="Simulated T statistics histogram"}
 rand_distn <- rand_distn %>% 
-  mutate(t_stat = diffmean / denom_T * 10)
+  mutate(t_stat = diffmean / denom_T)
 ggplot(data = rand_distn, aes(x = t_stat)) +
   geom_histogram(color = "white", bins = 20)
 ```
