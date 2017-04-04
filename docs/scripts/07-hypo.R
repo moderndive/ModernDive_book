@@ -4,6 +4,7 @@ library(ggplot2)
 library(mosaic)
 library(knitr)
 library(nycflights13)
+library(ggplot2movies)
 
 ## ------------------------------------------------------------------------
 library(nycflights13)
@@ -91,7 +92,8 @@ library(mosaic)
 set.seed(2016)
 movies_genre_sample <- movies_trimmed %>% 
   group_by(genre) %>%
-  sample_n(34)
+  sample_n(34) %>% 
+  ungroup()
 
 ## ----fig.cap="Genre vs rating for our sample"----------------------------
 ggplot(data = movies_genre_sample, aes(x = genre, y = rating)) +
@@ -111,13 +113,15 @@ summary_ratings <- movies_genre_sample %>%
 summary_ratings %>% kable()
 
 ## ------------------------------------------------------------------------
-mean_ratings <- movies_genre_sample %>% group_by(genre) %>%
+mean_ratings <- movies_genre_sample %>% 
+  group_by(genre) %>%
   summarize(mean = mean(rating))
 obs_diff <- diff(mean_ratings$mean)
 
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(mosaic)
-shuffled_ratings <- movies_trimmed %>%
+shuffled_ratings <- #movies_trimmed %>%
+  movies_genre_sample %>% 
      mutate(rating = shuffle(rating)) %>% 
      group_by(genre) %>%
      summarize(mean = mean(rating))
@@ -126,7 +130,8 @@ diff(shuffled_ratings$mean)
 ## ----cache=TRUE----------------------------------------------------------
 set.seed(2016)
 many_shuffles <- do(5000) * 
-  (movies_trimmed %>%
+#  (movies_trimmed %>%
+  (movies_genre_sample %>% 
      mutate(rating = shuffle(rating)) %>% 
      group_by(genre) %>%
      summarize(mean = mean(rating))
@@ -136,6 +141,7 @@ many_shuffles <- do(5000) *
 rand_distn <- many_shuffles %>%
   group_by(.index) %>%
   summarize(diffmean = diff(mean))
+head(rand_distn, 10)
 
 ## ----fig.cap="Simulated differences in means histogram"------------------
 ggplot(data = rand_distn, aes(x = diffmean)) +
@@ -150,6 +156,11 @@ ggplot(data = rand_distn, aes(x = diffmean)) +
   geom_histogram(color = "white", bins = 100) +
   geom_vline(xintercept = obs_diff, color = "red") +
   geom_vline(xintercept = -obs_diff, color = "red")
+
+## ------------------------------------------------------------------------
+(pvalue_movies <- rand_distn %>%
+  filter(abs(diffmean) >= obs_diff) %>%
+  nrow() / nrow(rand_distn))
 
 ## ----echo=FALSE----------------------------------------------------------
 ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm)
@@ -172,7 +183,7 @@ n2 <- summary_ratings$n[1]
 
 ## ---- fig.cap="Simulated T statistics histogram"-------------------------
 rand_distn <- rand_distn %>% 
-  mutate(t_stat = diffmean / denom_T * 10)
+  mutate(t_stat = diffmean / denom_T)
 ggplot(data = rand_distn, aes(x = t_stat)) +
   geom_histogram(color = "white", bins = 20)
 
