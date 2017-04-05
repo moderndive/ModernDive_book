@@ -2,6 +2,8 @@
 * Add license to Preamble
 * Added ggplot2 Review DataCamp link
 * Fix typos
+* Fixed $T$ distribution plot with histogram in Chapter 7
+  * Based on [issue](https://github.com/ismayc/moderndiver-book/issues/3) that identified the use of the wrong data set for resampling
 
 # ModernDive 0.1.3
 
