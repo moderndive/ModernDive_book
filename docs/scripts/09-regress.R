@@ -55,7 +55,7 @@ ggplot(data = values, mapping = aes(V1, V2)) +
 alaska_flights %>% 
   summarize(correl = cor(dep_delay, arr_delay))
 
-## ----with-reg, echo=FALSE, fig.cap="Regression line fit on delays"-------
+## ----with-reg, fig.cap="Regression line fit on delays"-------------------
 ggplot(data = alaska_flights, 
        mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point() +

@@ -7,7 +7,7 @@ library(knitr)
 ## ---- eval=FALSE---------------------------------------------------------
 ## portland_flights <- flights %>%
 ##   filter(dest == "PDX")
-## View(pdx_flights)
+## View(portland_flights)
 
 ## ----eval=FALSE----------------------------------------------------------
 ## portland_flights <- flights %>%
