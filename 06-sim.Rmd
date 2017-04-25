@@ -263,7 +263,7 @@ We see a clear difference here in looking at the mean of `height` in `profiles_s
 
 We also see that even random samples produce means that aren't exactly the same.  This sampling variability can be shown via what is called a *sampling distribution*.  This is defined as the behavior of a statistic under repeated sampling. To build this sampling distribution for this example, we've created an interactive app using the `shiny` R package below that is available at <http://ismay.shinyapps.io/okcupidheights/>.  You can specify the sample size you'd like to work with (100 is chosen by default) and then generate a random sample.  You then can see the mean of this generated sample plotted in the bottom visualization.  Repeating this process many times, you can start to see the shape of the sampling distribution take form.  A screenshot of the app is below, but you are encouraged to go to <http://ismay.shinyapps.io/okcupidheights/> and test it out on your own.
 
-```{r shiny, echo=FALSE, out.width="100%", fig.cap=ifelse(knitr:::is_html_output(), "Sampling distribution app at http://ismay.shinyapps.io/okcupidheights/.", "Sampling distribution app"), screenshot.opts=list(delay=20), dev='png', cache=TRUE, purl=FALSE}
+```{r shiny, echo=FALSE, out.width="100%", fig.cap=ifelse(knitr:::is_html_output(), "Sampling distribution app at http://ismay.shinyapps.io/okcupidheights/.", "Sampling distribution app"), screenshot.opts=list(delay=20), dev='png', purl=FALSE}
 library(knitr)
 #if(knitr:::is_html_output()){
 #  include_app("http://ismay.shinyapps.io/okcupidheights/", height = "1300px")
@@ -276,13 +276,29 @@ library(knitr)
 
 We have looked at two random samples above, but using `mosaic` we can repeat this process over and over again with the `do` function.  Below, we repeat this sampling process 5000 times.  We can then plot the different values of the sample means to get a sense for what a reasonable range of values for the population parameter mean `height` is in the `profiles_subset` data frame.
 
-```{r do-first, cache=TRUE}
+```{r do-first, include=FALSE}
+if(!file.exists("rds/sample_means.rds")){
+  sample_means <- do(5000) *
+    (profiles_subset %>% resample(size = 100, replace = FALSE) %>% 
+    summarize(mean_height = mean(height)))
+  saveRDS(object = sample_means, "rds/sample_means.rds")
+} else {
+  sample_means <- readRDS("rds/sample_means.rds")
+}
+```
+
+
+```{r do-first-read, eval=FALSE}
 sample_means <- do(5000) *
-  (profiles_subset %>% resample(size = 100, replace = FALSE) %>% 
-  summarize(mean_height = mean(height)))
+    (profiles_subset %>% resample(size = 100, replace = FALSE) %>% 
+    summarize(mean_height = mean(height)))
+```
+
+```{r do-plot}
 ggplot(data = sample_means, mapping = aes(x = mean_height)) +
   geom_histogram(color = "white", bins = 20)
 ```
+
 
 Note how the range of sample mean height values is much more narrow than the original range of `height` in the `profiles_subset` data frame.  We also see a characteristic shape to this distribution of `mean_height`:  the normal curve.  This idea is commonly associated with statistics and you hopefully have a good sense of how this distribution comes about.  As before, if you aren't quite sure of this yet, go back and explore the shiny app above a bit more.  We see that many values for the sample mean appear near the center of the distribution and a few values appear out in the tails providing the bell-shaped distribution linked with the normal distribution.  You'll see more examples of this in the chapters to come and in Appendix \@ref(appendixB).
 
@@ -408,9 +424,24 @@ We've now done a simulation of what actually happened when you flipped a coin te
 
 If you look at the output above for our simulation of 13 student guesses, we can begin to get a sense for what an "expected" sample proportion of successes may be.  Around five out of 10 seems to be the most likely value.  What does this say about what we actually observed with a success rate of 9/10?  To better answer this question, we can simulate 5000 student guesses and then look at the distribution of the simulated sample proportion of successes, also known as the **null distribution**.
 
-```{r}
+```{r include=FALSE}
+library(dplyr)
+
+if(!file.exists("rds/simGuesses.rds")){
+  simGuesses <- do(5000) * rflip(10)
+  saveRDS(object = simGuesses, "rds/simGuesses.rds")
+} else {
+  simGuesses <- readRDS("rds/simGuesses.rds")
+}
+```
+
+```{r eval=FALSE}
 library(dplyr)
 simGuesses <- do(5000) * rflip(10)
+```
+
+
+```{r}
 simGuesses %>% 
   group_by(heads) %>%
   summarize(count = n())

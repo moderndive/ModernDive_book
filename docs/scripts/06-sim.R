@@ -54,10 +54,22 @@ profiles_sample2 %>% summarize(mean(height))
 ## ----mean3---------------------------------------------------------------
 profiles_sample3 %>% summarize(mean(height))
 
-## ----do-first, cache=TRUE------------------------------------------------
-sample_means <- do(5000) *
-  (profiles_subset %>% resample(size = 100, replace = FALSE) %>% 
-  summarize(mean_height = mean(height)))
+## ----do-first, include=FALSE---------------------------------------------
+if(!file.exists("rds/sample_means.rds")){
+  sample_means <- do(5000) *
+    (profiles_subset %>% resample(size = 100, replace = FALSE) %>% 
+    summarize(mean_height = mean(height)))
+  saveRDS(object = sample_means, "rds/sample_means.rds")
+} else {
+  sample_means <- readRDS("rds/sample_means.rds")
+}
+
+## ----do-first-read, eval=FALSE-------------------------------------------
+## sample_means <- do(5000) *
+##     (profiles_subset %>% resample(size = 100, replace = FALSE) %>%
+##     summarize(mean_height = mean(height)))
+
+## ----do-plot-------------------------------------------------------------
 ggplot(data = sample_means, mapping = aes(x = mean_height)) +
   geom_histogram(color = "white", bins = 20)
 
@@ -69,9 +81,21 @@ do(1) * rflip(1)
 ## ------------------------------------------------------------------------
 do(13) * rflip(10)
 
-## ------------------------------------------------------------------------
+## ----include=FALSE-------------------------------------------------------
 library(dplyr)
-simGuesses <- do(5000) * rflip(10)
+
+if(!file.exists("rds/simGuesses.rds")){
+  simGuesses <- do(5000) * rflip(10)
+  saveRDS(object = simGuesses, "rds/simGuesses.rds")
+} else {
+  simGuesses <- readRDS("rds/simGuesses.rds")
+}
+
+## ----eval=FALSE----------------------------------------------------------
+## library(dplyr)
+## simGuesses <- do(5000) * rflip(10)
+
+## ------------------------------------------------------------------------
 simGuesses %>% 
   group_by(heads) %>%
   summarize(count = n())

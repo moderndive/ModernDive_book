@@ -127,15 +127,28 @@ shuffled_ratings <- #movies_trimmed %>%
      summarize(mean = mean(rating))
 diff(shuffled_ratings$mean)
 
-## ----cache=TRUE----------------------------------------------------------
+## ----include=FALSE-------------------------------------------------------
 set.seed(2016)
-many_shuffles <- do(5000) * 
-#  (movies_trimmed %>%
-  (movies_genre_sample %>% 
-     mutate(rating = shuffle(rating)) %>% 
-     group_by(genre) %>%
-     summarize(mean = mean(rating))
-   )
+if(!file.exists("rds/many_shuffles.rds")){
+  many_shuffles <- do(5000) * 
+    (movies_genre_sample %>% 
+      mutate(rating = shuffle(rating)) %>% 
+      group_by(genre) %>%
+      summarize(mean = mean(rating))
+    )
+   saveRDS(object = many_shuffles, "rds/many_shuffles.rds")
+} else {
+   many_shuffles <- readRDS("rds/many_shuffles.rds")
+}
+
+## ----eval=FALSE----------------------------------------------------------
+## set.seed(2016)
+## many_shuffles <- do(5000) *
+##   (movies_genre_sample %>%
+##      mutate(rating = shuffle(rating)) %>%
+##      group_by(genre) %>%
+##      summarize(mean = mean(rating))
+##    )
 
 ## ------------------------------------------------------------------------
 rand_distn <- many_shuffles %>%
