@@ -12,9 +12,19 @@ knitr::opts_chunk$set(
   fig.height = 4,
   warning = FALSE
   )
+# This bit of code is a bug fix on asis blocks, which we use to show/not show LC solutions, which are written like markdown text. In theory, it shouldn't be necessary for knitr versions <=1.11.6, but I've found I still need to for everything to knit properly in asis blocks. More info here:
+# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
+library(knitr)
+knit_engines$set(asis = function(options) {
+  if (options$echo && options$eval) knit_child(text = options$code)
+})
+
+# This controls which LC solutions to show. Options for solutions_shown: "ALL" (to show all solutions), or subsets of c('4-3', '4-4', '4-5','4-6','4-7','4-8'), including the null vector c('') to show no solutions.
+solutions_shown <- "ALL"
+show_solutions <- function(section){return(solutions_shown == "ALL" | section %in% solutions_shown)}
 ```
 
-In Chapter \@ref(tidy), we discussed the importance of datasets being **tidy**.  You will see in examples here why having a tidy dataset helps us immensely when plotting our data.  In plotting our data, we will be able to gain valuable insights from our data that we couldn't initially see from just looking at the raw data.  We will focus on using Hadley Wickham's `ggplot2` package in doing so, which was developed to work specifically on datasets that are **tidy**.  It provides an easy way to customize your plots and is based on data visualization theory given in _The Grammar of Graphics_ [@wilkinson2005].
+In Chapter \@ref(tidy), we discussed the importance of datasets being **tidy**.  You will see in examples here of why having a tidy dataset helps us immensely when plotting our data.  By plotting our data, we will be able to gain valuable insights from our data that we couldn't initially see from just looking at the raw data in spreadsheet form.  We will focus on using Hadley Wickham's `ggplot2` package in doing so, which was developed to work specifically on datasets that are **tidy**.  It provides an easy way to customize your plots and is based on data visualization theory given in _The Grammar of Graphics_ [@wilkinson2005].
 
 At the most basic level, graphics/plots/charts provide a nice way for us to get a sense for how quantitative variables compare in terms of their center and their spread.  The most important thing to know about graphics is that they should be created to make it obvious for your audience to see the findings you want to get across.  This requires a balance of not including too much in your plots, but also including enough so that relationships and interesting findings can be easily seen.  As we will see, plots/graphics also help us to identify patterns and outliers in our data.  We will see that a common extension of these ideas is to compare the **distribution** of one quantitative variable (i.e., what the spread of a variable looks like or how the variable is *distributed* in terms of its values) as we go across the levels of a different categorical variable.
 
@@ -33,7 +43,7 @@ library(dplyr)
 
 ## The Grammar of Graphics {#grammarofgraphics}
 
-We begin with a discussion of a theoretical framework for data visualization known as the "The Grammar of Graphics," which serves as the basis for the `ggplot2` package.  Much like the way we construct sentences in any language using a linguistic grammar (nouns, verbs, subjects, objects, etc.), the theoretical framework given by Leland Wilkinson [@wilkinson2005] allows us to specify the components of a statistical graphic. 
+We begin with a discussion of a theoretical framework for data visualization known as the "The Grammar of Graphics," which serves as the basis for the `ggplot2` package.  Much like how we construct sentences in any language by using a linguistic grammar (nouns, verbs, subjects, objects, etc.), the theoretical framework given by Leland Wilkinson [@wilkinson2005] allows us to specify the components of a statistical graphic. 
 
 ### Components of Grammar
 
@@ -50,7 +60,7 @@ Specifically, we can break a graphic into the following three essential componen
 
 ### Napolean's March on Moscow
 
-In 1812, Napoleon led a French invasion of Russia, marching on Moscow. It was one of the biggest military disasters due in large part to the Russian winter. In 1869, a French civil engineer named Charles Joseph Minard published arguably one of the greatest statistical visualizations of all-time, which summarized this march:
+In 1812, Napoleon led a French invasion of Russia, marching on Moscow. It was one of the biggest military disasters in history, due in large part to the Russian winter. In 1869, a French civil engineer named Charles Joseph Minard published arguably one of the greatest statistical visualizations of all-time, which summarized this march:
 
 ```{r minard, echo=FALSE, fig.cap="Minard's Visualization of Napolean's March", purl=FALSE}
 knitr::include_graphics("images/Minard.png")
@@ -94,9 +104,9 @@ There are other components of the Grammar of Graphics we can control:
 - `coord`inate system for x/y values: typically `cartesian`, but can also be `polar` or `map`
 - `position` adjustments
 
-In this text, we will only focus on the first two: `facet`ing (introduced in Section \@ref(facets)) and `stat`istical transformations (in a limited sense, when consider Barplots in Section \@ref(geombar)); the other components are left to a more advanced text. This is not a problem when producing a plot as each of these components have default settings.
+In this text, we will only focus on the first two: `facet`ing (introduced in Section \@ref(facets)) and `stat`istical transformations (in a limited sense, when we consider Barplots in Section \@ref(geombar)); the other components are left to a more advanced text. This is not a problem when producing a plot as each of these components have default settings.
 
-There are other extra attributes that can be tweaked as well including the plot title, axes labels, and over-arching themes for the plot. In general, the Grammar of Graphics allows for customization but also a consistent framework that allows the user to easily tweak their creations as needed in order to convey a message about their data.
+There are other extra attributes that can be tweaked as well including the plot title, axes labels, and over-arching themes for the plot. In general, the Grammar of Graphics allows for customization, but also a consistent framework that allows the user to easily tweak their creations as needed in order to convey a message about their data.
 
 
 ### The ggplot2 Package
@@ -139,7 +149,7 @@ For our purposes, we will be limiting consideration to five different types of g
 1. histograms
 1. barplots
 
-With this repertoire of plots, you can visualize a wide array of data variables thrown at you.  We will discuss some variations of these, but with the 5NG in your toolbox you can do big things!  Something we will also stress here is that certain plots only work for categorical/logical variables and others only for quantitative variables.  You'll want to quiz yourself often as we go along on which plot makes sense a given a particular problem set-up.
+With this repertoire of plots, you can visualize a wide array of data variables thrown at you.  We will discuss some variations of these, but with the 5NG in your toolbox you can do big things!  Something we will also stress here is that certain plots only work for categorical/logical variables, while others only work for quantitative variables.  You'll want to quiz yourself often as we go along on which plot makes sense a given a particular problem set-up.
 
 
 <!--Subsection on scatter plots-->
@@ -169,6 +179,12 @@ This code snippet makes use of functions in the `dplyr` package for data manipul
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  Take a look at both the `flights` and `all_alaska_flights` data frames by running `View(flights)` and `View(all_alaska_flights)` in the console. In what respect do these data frames differ?
 
+```{asis lc-all_alaska_flights-solutions, include=show_solutions('4-3')}
+Fill in LC solution here:
+**Learning Check Solutions**  
+`flights` contains all flight data, while `all_alaska_flights` contains only data from Alaskan carrier "AS". We can see that flights has `r nrow(flights)` rows while `all_alaska_flights` has only `r nrow(all_alaska_flights)`
+
+```
 ***
 
 
@@ -182,7 +198,7 @@ ggplot(data = all_alaska_flights, aes(x = dep_delay, y = arr_delay)) +
   geom_point()
 ```
 
-You are encouraged to enter **Return** on your keyboard after entering the `+`.  As we add more and more elements, it will be nice to keep them indented as you see below.  Note that this will not work if you begin the line with the `+`.
+You are encouraged to hit **Return** on your keyboard after entering the `+`.  As we add more and more elements, it will be nice to keep them indented as you see below so that your code is more readable.  Note that the `+` sign comes at the end of lines, and not at the beginning.
 
 Let's break down this keeping in mind our discussion in Section \@ref(grammarofgraphics):
 
@@ -212,6 +228,20 @@ In Figure \@ref(fig:noalpha) we see that a positive relationship exists between 
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Create a new scatter-plot using different variables in the `all_alaska_flights` data frame by modifying the example above.
 
+```{asis lc-scatter-plots-solutions, include=show_solutions('4-3')}
+**Learning Check Solutions**  
+**4.2**: What are some practical reasons why `dep_delay` and `arr_delay` have a positive relationship? *The later a plane departs, typically the later it will arrive.*  
+**4.3** An example in the `weather` dataset is `visibility`, which measure visibility in miles. As visibility increases, we would expect departure delays to decrease. 
+
+**4.4**: What does (0, 0) correspond to from the point of view of a passenger on an Alaskan flight?  Why do you believe there is a cluster of points near (0, 0)? *The point (0,0) means no delay in departure and arrival. From the passenger's point of view, this means the flight was on time. It seems most flights are at least close to being on time.*  
+
+**4.6**: Create a similar plot, but one showing the relationship between departure time and departure delay. What hypotheses do you have about the patterns you see? *We now put `dep_time` as the `x`-aesthetic and `dep_delay` as the `y`-aesthetic*  
+```
+
+``` {r, include=show_solutions('4-3'), echo=show_solutions('4-3')}
+ggplot(data=all_alaska_flights, aes(x = dep_time, y = dep_delay)) +
+  geom_point()
+```
 ***
 
 
@@ -222,7 +252,7 @@ The large mass of points near (0, 0) can cause some confusion.  This is the resu
 1. By adjusting the transparency of the points via the `alpha` argument
 1. By jittering the points via `geom_jitter()`
 
-The first way of relieving over-plotting is by changing the `alpha` argument to `geom_point()` which controls the transparency of the points.  By default, this value is set to `1`.  We can change this value to a smaller fraction (greater than 0) to change the transparency of the points in the plot:
+The first way of relieving over-plotting is by changing the `alpha` argument in `geom_point()` which controls the transparency of the points.  By default, this value is set to `1`.  We can change this value to a smaller fraction (any number between 0 and 1) to change the transparency of the points in the plot:
 
 ```{r alpha, fig.cap="Delay scatterplot with alpha=0.2"}
 ggplot(data = all_alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
@@ -231,7 +261,7 @@ ggplot(data = all_alaska_flights, aes(x = dep_delay, y = arr_delay)) +
 
 Note how this function call is identical to the one in Section \@ref(scatterplots), but with `geom_point()` replaced with `alpha = 0.2` added. 
 
-The second way of relieving over-plotting is to **jitter** the points a bit.  In other words, we are going to add just a bit of random noise to the points to better see them and remove some of the over-plotting.  You can think of "jittering" as shaking the points a bit on the plot. Instead of using `geom_point`, we use `geom_jitter` to perform this shaking and specify around how much jitter to add with the `width` and `height` arguments.  This corresponds to how hard you'd like to shake the plot in units corresponding to those for both the horizontal and vertical variables (in this case minutes).
+The second way of relieving over-plotting is to **jitter** the points a bit.  In other words, we are going to add just a bit of random noise to the points to better see them and remove some of the over-plotting.  You can think of "jittering" as shaking the points around a bit on the plot. Instead of using `geom_point`, we use `geom_jitter` to perform this shaking. To specify how much jitter to add, we adjust the `width` and `height` arguments.  This corresponds to how hard you'd like to shake the plot in units corresponding to those for both the horizontal and vertical variables (in this case minutes).
 
 ```{r jitter, fig.cap="Jittered delay scatterplot"}
 ggplot(data = all_alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
@@ -250,6 +280,13 @@ Note how this function call is identical to the one in Section \@ref(geompoint),
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** After viewing the Figure \@ref(fig:alpha) above, give a range of arrival times and departure times that occur most frequently?  How has that region changed compared to when you observed the same plot without the `alpha = 0.2` set in Figure \@ref(fig:noalpha)?
 
+```{asis lc-overplotting-solutions, include=show_solutions('4-3')}
+**Learning Check Solutions**  
+**4.7**: Why is setting the `alpha` argument value useful with scatter-plots? What further information does it give you that a regular scatter-plot cannot? *It thins out the points so we address over-plotting. But more importantly it hints at the (statistical) **density** and **distribution** of the points: where are the points concentrated, where do they occur. We will see more about densities and distributions in Chapter 6 when we switch gears to statistical topics.*
+  
+**4.8**: After viewing the Figure \@ref(fig:alpha) above, give a range of arrival times and departure times that occur most frequently?  How has that region changed compared to when you observed the same plot without the `alpha = 0.2` set in Figure \@ref(fig:noalpha)? *The lower plot suggests that most Alaska flights from NYC depart between 12 minutes early and on time and arrive between 50 minutes early and on time.*  
+
+```
 ***
 
 <!--
@@ -260,7 +297,7 @@ Maybe include a shading of the points by another variable example here for multi
 
 ### Summary
 
-Scatter-plots display the relationship between two continuous variables and may be the most used plot today as they can provide an immediate way to see the trend in one variable versus another.  If you try to create a scatter-plot where either one of the two variables is not quantitative however, you will get strange results.  Be careful!
+Scatter-plots display the relationship between two continuous variables and may be the most used plot today because they can provide an immediate way to see the trend in one variable versus another.  However, if you try to create a scatter-plot where either one of the two variables is not quantitative, you will get strange results.  Be careful!
 
 With medium to large datasets, you may need to play with either `geom_jitter` or the `alpha` argument in order to get a good feel for relationships in your data.  This tweaking is often a fun part of data visualization since you'll have the chance to see different relationships come about as you make subtle changes to your plots.
 
@@ -270,7 +307,7 @@ With medium to large datasets, you may need to play with either `geom_jitter` or
 
 The next of the 5NG is a line-graph.  They are most frequently used when the x-axis represents time and the y-axis represents some other numerical variable; such plots are known as **time series**.  Time represents a variable that is connected together by each day following the previous day.  In other words, time has a natural ordering.  Line-graphs should be avoided when there is not a clear sequential ordering to the explanatory variable, i.e. the x-variable or the *predictor* variable.
 
-Our focus turns to the `temp` variable in this `weather` dataset. By
+Our focus now turns to the `temp` variable in this `weather` dataset. By
 
 * Looking over the `weather` dataset by typing `View(weather)` in the console. 
 * Running `?weather` to bring up the help file.
@@ -295,6 +332,11 @@ This is similar to the previous use of the `filter` command in Section \@ref(sca
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  The weather data is recorded hourly. Why does the `time_hour` variable correctly identify the hour of the measurement whereas the `hour` variable does not?
 
+```{asis lc-early_january_weather-solutions, include=show_solutions('4-4')}
+**Learning Check Solutions**  
+**LC4.9**: Take a look at both the `weather` and `early_january_weather` data frames by running `View(weather)` and `View(early_january_weather)` in the console. In what respect do these data frames differ? *The rows of `early_january_weather` are a subset of `weather`.*  
+**LC4.10**: The `weather` data is recorded hourly. Why does the `time_hour` variable correctly identify the hour of the measurement whereas the `hour` variable does not? *Because to uniquely identify an hour, we need the `year`/`month`/`day`/`hour` sequence, whereas there are only 24 possible `hour`'s. Note that in the case of `weather`, there is a timezone bug: the `time_hour` variable is off by 5 hours from the `year`/`month`/`day`/`hour` sequence, since the Eastern Time Zone is 5 hours off UTC.*  
+```
 ***
 
 ### Line-graphs via geom_line {#geomline}
@@ -328,6 +370,18 @@ Much as with the `ggplot()` call in Section \@ref(geompoint), we specify the com
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Plot a time series of a variable other than `temp` for Newark Airport in the first 15 days of January 2013.
 
+```{asis lc-line-graph-solutions, include=show_solutions('4-4')}
+**Learning Check Solutions**  
+**LC4.11**: Why should line-graphs be avoided when there is not a clear ordering of the horizontal axis? *Because lines suggest connectedness and ordering.*  
+**LC4.12**: Why are line-graphs frequently used when time is the explanatory variable? *Because time is sequential: subsequent observations are closely related to each other.*  
+**LC4.13**: Plot a time series of a variable other than `temp` for Newark Airport in the first 15 days of January 2013. *Humidity is a good one to look at, since this very closely related to the cycles of a day.*  
+```
+
+```{r, include=show_solutions('4-4'), echo=show_solutions('4-4')}
+ggplot(data = early_january_weather, aes(x = time_hour, y = humid)) +
+  geom_line()
+```
+
 ***
 
 ### Summary
@@ -338,7 +392,7 @@ Line-graphs, just like scatter-plots, display the relationship between two conti
 
 ## 5NG#3: Histograms {#histograms}
 
-Let's consider the `temp` variable in the `weather` data frame once again, but now unlike with the line-graphs in Section \@ref(linegraphs), let's say we don't care about the relationship of temperature to time, but rather you care about the **(statistical) distribution** of temperatures. We could just produce points where each of the different values appear on something similar to a number line:
+Let's consider the `temp` variable in the `weather` data frame once again, but now unlike with the line-graphs in Section \@ref(linegraphs), let's say we don't care about the relationship of temperature to time, but rather we care about the **(statistical) distribution** of temperatures. We could just produce points where each of the different values appear on something similar to a number line:
 
 ```{r echo=FALSE, fig.height=0.8, fig.cap="Strip Plot of Hourly Temperature Recordings from NYC in 2013"}
 ggplot(data = weather, mapping = aes(x = temp, y = factor("A"))) +
@@ -406,12 +460,43 @@ ggplot(data = weather, mapping = aes(x = temp)) +
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Is this data spread out greatly from the center or is it close?  Why?
 
+
+```{asis lc-histogram-solutions, include=show_solutions('4-5')}
+**Learning Check Solutions**  
+**LC 4.14: What does changing the number of bins from 30 to 60 tell us about the distribution of temperatures?** The distribution doesn't change much. But by refining the bid width, we see that the temperature data has a high degree of accuracy. What do I mean by accuracy? Looking at the `temp` variabile by `View(weather)`, we see that the precision of each temperature recording is 2 decimal places.
+
+**LC 4.15: Would you classify the distribution of temperatures as symmetric or skewed?** It is rather symmetric, i.e. there are no __long tails__ on only one side of the distribution
+
+**LC 4.16: What would you guess is the "center" value in this distribution?  Whydid you make that choice?** The center is around 55&deg;F. By running the `summary()` command, we see that the mean and median are very similar. In fact, when the distribution is symmetric the mean equals the median.
+
+**4.17: Is this data spread out greatly from the center or is it close? Why?**
+
+This can only be answered relatively speaking! Let's pick things to be relative to Seattle, WA temperatures:
+
+![alt text](http://dssni5kiwicxb.cloudfront.net/climate/Washington/Seattle%20Sea-Tac%20Airport/temp.png)
+
+While, it appears that Seattle weather has a similar center of 55&deg;F, its
+temperatures are almost entirely between 35&deg;F and 75&deg;F for a range of
+about 40&deg;F. Seattle temperatures are much less spread out than New York i.e.
+much more consistent over the year. New York on the other hand has much colder
+days in the winter and much hotter days in the summer. Expressed differently,
+the middle 50% of values, as delineated by the interquartile range is 30&deg;F:
+```
+
+```{r, echo=show_solutions('4-5'), include=show_solutions('4-5'), message=FALSE, warning=FALSE}
+IQR(weather$temp, na.rm=TRUE)
+```
+
+```{r, echo=show_solutions('4-5'), include=show_solutions('4-5'), message=FALSE, warning=FALSE}
+summary(weather$temp)
+```
+
 ***
 
 
 ### Summary
 
-Histograms, unlike scatter-plots and line-graphs, presents information on only a single continuous variable. In particular they are visualizations of the (statistical) distribution of values. 
+Histograms, unlike scatter-plots and line-graphs, present information on only a single continuous variable. In particular they are visualizations of the (statistical) distribution of values. 
 
 
 
@@ -419,7 +504,7 @@ Histograms, unlike scatter-plots and line-graphs, presents information on only a
 
 Before continuing the 5NG, we briefly introduce a new concept called **faceting**.  Faceting is used when we'd like to create small multiples of the same plot over a different categorical variable.  By default, all of the small multiples will have the same vertical axis. 
 
-For example, suppose we were interested in looking at how the temperature histograms we saw in Section \@ref(histograms) varied by month.  This is what is meant by "the distribution of a variable over another variable": `temp` is one variable and `month` is the other variable. In order to look at histograms of `temp` for each month, we add a layer `facet_wrap(~month)`.  You can also specify how many rows you'd like the small multiple plots to be in using `nrow` inside of `facet_wrap`.
+For example, suppose we were interested in looking at how the temperature histograms we saw in Section \@ref(histograms) varied by month.  This is what is meant by "the distribution of a variable over another variable": `temp` is one variable and `month` is the other variable. In order to look at histograms of `temp` for each month, we add a layer `facet_wrap(~month)`.  You can also specify how many rows you'd like the small multiple plots to be in using `nrow` or how many columns using `ncol` inside of `facet_wrap`.
 
 ```{r facethistogram, fig.cap="Faceted histogram"}
 ggplot(data = weather, aes(x = temp)) +
@@ -443,6 +528,25 @@ As we might expect, the temperature tends to increase as summer approaches and t
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Does the `temp` variable in the `weather` data set have a lot of variability?  Why do you say that?
 
+```{asis lc-facet-solutions, include=show_solutions('4-6')}
+**Learning Check Solutions**  
+**LC 4.18: What other things do you notice about the faceted plot above? How does afaceted plot help us see relationships between two variables?** 
+* Certain months have much more consistent weather (August in particular), while others have crazy variability like January and October, representing changes in the seasons.
+* The two variables we are see the relationship of are `temp` and `month`.
+    
+**LC 4.19: What do the numbers 1-12 correspond to in the plot above? What about 25, 50, 75, 100?**
+* While month is technically a number between 1-12, we're viewing it as a categorical variable here. Specifically an **ordinal categorical** variable since there is a ordering to the categories
+* 25, 50, 75, 100 are temperatures
+
+**4.20: For which types of datasets would these types of faceted plots not work well in comparing relationships between variables? Give an example describing the variability of the variables and other important characteristics?**
+Having histograms split by day would not be great:
+* We'd have 365 facets to look at. Way to many.
+* We don't really care about day-to-day fluctuation in weather so much, but maybe more week-to-week variation. We'd like to focus on seasonal trends.
+
+**4.21: Does the `temp` variable in the `weather` data set have a lot of variability? Why do you say that?**
+Again, like in LC 4.17, this is a relative question. I would say yes, because in New York City, you have 4 clear seasons with different weather. Whereas in Seattle WA and Portland OR, you have two seasons: summer and rain!
+
+```
 ***
 
 <!--Subsection on boxplots -->
@@ -484,6 +588,70 @@ We have introduced a new function called `factor()` here.  One of the things thi
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Boxplots provide a simple way to identify outliers.  Why may outliers be easier to identify when looking at a boxplot instead of a faceted histogram?
 
+```{asis lc-boxplot-solutions, include=show_solutions('4-7')}
+**Learning Check Solutions**  
+**LC 4.22: What does the dot at the bottom of the plot for May correspond to? Explain what might have occurred in May to produce this point.**
+It appears to be an outlier. Let's revisit the use of the `filter` command to hone in on it. We want all data points where the `month` is 5 and `temp<25`
+
+```
+
+```{r, echo=show_solutions('4-7'), eval=FALSE}
+weather %>% 
+  filter(month==5 & temp < 25)
+```
+
+```{r, include=show_solutions('4-7'), echo=FALSE}
+weather %>% 
+  filter(month==5 & temp < 25) %>% 
+  kable()
+```
+
+```{asis, include=show_solutions('4-7')}
+There appears to be only one hour and only at JFK that recorded 13.1 F (-10.5 C) in the month of May. This is probably a data entry mistake!
+Why wasn't the weather at least similar at EWR (Newark) and LGA (La Guardia)?
+
+
+**4.23: Which months have the highest variability in temperature? What reasons do you think this is?**
+We are now interested in the **spread** of the data. One measure some of you may have seen previously is the standard deviation. But in this plot we can read off the Interquartile Range (IQR):
+
+* The distance from the 1st to the 3rd quartiles i.e. the length of the boxes
+* You can also think of this as the spread of the **middle 50%** of the data
+
+Just from eyeballing it, it seems
+
+* November has the biggest IQR, i.e. the widest box, so has the most variation in temperature
+* August has the smallest IQR, i.e. the narrowest box, so is the most consistent temperature-wise
+
+Here's how we compute the exact IQR values for each month (we'll see this more in depth Chapter 5 of the text):
+
+1. `group` the observations by `month` then
+1. for each `group`, i.e. `month`, `summarise` it by applying the summary statistic function `IQR()`, while making sure to skip over missing data via `na.rm=TRUE` then
+1. `arrange` the table in `desc`ending order of `IQR`
+```
+
+```{r, echo=show_solutions('4-7'), eval=FALSE}
+weather %>% 
+  group_by(month) %>% 
+  summarise(IQR = IQR(temp, na.rm=TRUE)) %>% 
+  arrange(desc(IQR))
+```
+
+```{r, echo=FALSE, include=show_solutions('4-7')}
+weather %>% 
+  group_by(month) %>% 
+  summarise(IQR = IQR(temp, na.rm=TRUE)) %>% 
+  arrange(desc(IQR)) %>% 
+  kable()
+```
+
+```{asis, include=show_solutions('4-7')}
+**LC 4.24: We looked at the distribution of a continuous variable over a categorical variable here with this boxplot. Why can’t we look at the distribution of one continuous variable over the distribution of another continuous variable? Say, temperature across pressure, for example?**
+Because we need a way to group many continuous observations together, say by grouping by month. For pressure, we have near unique values for pressure, i.e. no groups, so we can't make boxplots.
+
+
+**LC 4.25: Boxplots provide a simple way to identify outliers. Why may outliers be easier to identify when looking at a boxplot instead of a faceted histogram?**
+In a histogram, the bin corresponding to where an outlier lies may not by high enough for us to see. In a boxplot, they are explicitly labelled separately. 
+```
 ***
 
 ### Summary
@@ -537,6 +705,14 @@ knitr::kable(flights_table)
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What was the seventh highest airline in terms of departed flights from NYC in 2013? How could we better present the table to get this answer quickly.
 
+
+```{asis lc-barplot-solutions, include=show_solutions('4-8')}
+**Learning Check Solutions**
+* **LC 4.26: Why are histograms inappropriate for visualizing categorical variables?** Histograms are for continuous variables i.e. the horizontal part of each histogram bar represents an interval, whereas for a categorical variable each bar represents only one level of the categorical variable.
+* **LC 4.27: What is the difference between histograms and barplots?** See above.
+* **4.28: How many Envoy Air flights departed NYC in 2013?** Envoy Air is carrier code `MQ` and thus 26397 flights departed NYC in 2013.
+* **LC 4.29: What was the seventh highest airline in terms of departed flights from NYC in 2013? How could we better present the table to get this answer quickly.** What a pain! We'll see in Chapter 5 on Data Wrangling that applying `arrange(desc(n))` will sort this table in descending order of `n`!
+```
 ***
 
 ### Must avoid pie charts!
@@ -582,6 +758,12 @@ knitr::include_graphics("images/Pie-I-have-Eaten.jpg")
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is your opinion as to why pie charts continue to be used?
 
+```{asis lc-pie-charts-solutions, include=show_solutions('4-8')}
+**Learning Check Solutions**
+* **LC 4.30: Why should pie charts be avoided and replaced by barplots?** In my **opinion**, comparisons using horizontal lines are easier than comparing angles and areas of circles.
+* **LC 4.31: What is your opinion as to why pie charts continue to be used?** Legacy?
+```
+
 ***
 
 ### Using barplots to compare two variables
@@ -597,7 +779,7 @@ flights_namedports <- flights %>%
 
 After running `View(flights_namedports)`, we see that `name` now corresponds to the name of the airport as referenced by the `origin` variable.  We will now plot `carrier` as the horizontal variable.  When we specify `geom_bar`, it will specify `count` as being the vertical variable.  A new addition here is `fill = name`.  Look over what was produced from the plot to get an idea of what this argument gives.
 
-Note that `fill` is an `aes`thetic just like `x` is an `aes`thetic.  We need to make the `name` variable to this `aes`thetic.  Any time you use a variable like this, you need to make sure it is wrapped inside the `aes` function.  **This is a common error!**  Make note of this now so you don't fall into this problem later.
+Note that `fill` is an `aes`thetic just like `x` is an `aes`thetic.  We need to map the `name` variable to this `aes`thetic.  Any time you use a variable like this, you need to make sure it is wrapped inside the `aes` function.  **This is a common error!**  Make note of this now so you don't fall into this problem later.
 
 ```{r, fig.cap="Stacked barplot comparing the number of flights by carrier and airport", fig.height=3.5}
 ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
@@ -616,6 +798,11 @@ This plot is what is known as a **stacked barplot**.  While simple to make, it o
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What can you say, if anything, about the relationship between airline and airport in NYC in 2013 in regards to the number of departing flights?
 
+```{asis lc-barplot-two-var-solutions, include=show_solutions('4-8')}
+**Learning Check Solutions**
+* **LC 4.32 What kinds of questions are not easily answered by looking at the above figure?** Because the red, green, and blue bars don't all start at 0 (only red does), it makes comparing counts hard.
+* **LC 4.33 What can you say, if anything, about the relationship between airline and airport in NYC in 2013 in regards to the number of departing flights?** The different airlines prefer different airports. For example, United is mostly a Newark carrier and JetBlue is a JFK carrier. If airlines didn't prefer airports, each color would be roughly one third of each bar.}
+```
 ***
 
 Another variation on the **stacked barplot** is the **side-by-side barplot**.
@@ -634,7 +821,12 @@ ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why might the side-by-side barplot be preferable to a stacked barplot in this case?
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are the disadvantages of using a side-by-side barplot, in general?
+```{asis lc-barplot-stacked-solutions, include=show_solutions('4-9')}
+**Learning Check Solutions**
+* **LC 4.34 Why might the side-by-side barplot be preferable to a stacked barplot in this case?** We can easily compare the different aiports for a given carrier using a single comparison line i.e. things are lined up
+* **LC 4.35 What are the disadvantages of using a side-by-side barplot, in general?** It is hard to get totals for each airline.
 
+```
 ***
 
 Lastly, an often preferred type of barplot is the **faceted barplot**.  We already saw this concept of faceting and small multiples in Section \@ref(facets).  This gives us a nicer way to compare the distributions across both `carrier` and airport/`name`.
@@ -658,12 +850,16 @@ Note how the `facet_grid` function arguments are written here.  We are wanting t
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why is the faceted barplot preferred to the side-by-side and stacked barplots in this case?
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What information about the different carriers at different airports is more easily seen in the faceted barplot?
-
+```{asis lc-barplot-facet-solutions, include=show_solutions('4-8')}
+**Learning Check Solutions**  
+* **LC 4.36 Why is the faceted barplot preferred to the side-by-side and stacked barplots in this case?** Not that different than using side-by-side; depends on how you want to organize your presentation.
+* **LC 4.37 What information about the different carriers at different airports is more easily seen in the faceted barplot?** Now we can also compare the different carriers **within** a particular airport easily too. For example, we can read off who the top carrier for each airport is easily using a single horizontal line.
+```
 ***
 
 ### Summary
 
-Barplots are the preferred way of displaying categorical variables.  They are easy-to-understand and to make comparisons across groups of a categorical variable.  When dealing with more than one categorical variable, faceted barplots are frequently preferred over side-by-side or stacked barplots.  Stacked barplots are sometimes nice to look at, but it is quite difficult to compare across the levels since the sizes of the bars are all of different sizes.  Side-by-side barplots can provide an improvement on this, but the issue about comparing across groups still must be dealt with.
+Barplots are the preferred way of displaying categorical variables.  They are easy to understand and make it easy compare across groups of a categorical variable.  When dealing with more than one categorical variable, faceted barplots are frequently preferred over side-by-side or stacked barplots.  Stacked barplots are sometimes nice to look at, but it is quite difficult to compare across the levels since the sizes of the bars are all of different sizes.  Side-by-side barplots can provide an improvement on this, but the issue about comparing across groups still must be dealt with.
 
 
 
