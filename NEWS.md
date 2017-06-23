@@ -1,4 +1,5 @@
 # ModernDive 0.1.3.9000
+
 * Add license to Preamble
 * Added ggplot2 Review and dplyr DataCamp links
 * Fix typos
@@ -37,6 +38,7 @@
 
 # ModernDive 0.1.0
 
+* Fiat Lux!
 * Basic chapter structure in place
 * First pass at II Inference section (Chapters 6-9) complete
 * First revisions of I Data Exploration (Chapters 3-5) nearly complete
