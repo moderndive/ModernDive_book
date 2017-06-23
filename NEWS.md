@@ -5,6 +5,11 @@
 * Fix typos
 * Fixed $T$ distribution plot with histogram in Chapter 7
   * Based on [issue](https://github.com/ismayc/moderndiver-book/issues/3) that identified the use of the wrong data set for resampling
+* Major changes
+  * Reordered chapters to be: visualization -> tidy data -> data manipuluation -> regression -> sampling -> inference.
+* Minor changes
+  * Combined preamble and intro chapter into single intro.Rmd file
+  * Disable PDF output for now.
 
 # ModernDive 0.1.3
 
