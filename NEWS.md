@@ -1,6 +1,6 @@
 # ModernDive 0.1.3.9000
 
-* Administrative
+* New Features
   * Added ggplot2 Review and dplyr DataCamp links
 * Major changes
   * Reordered chapters to be:
