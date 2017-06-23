@@ -1,8 +1,8 @@
 # ModernDive 0.1.3.9000
 
-* New Features
-  * Added ggplot2 Review and dplyr DataCamp links
+
 * Major changes
+  * Started incorporating feedback from Dr. Yana Weinstein from The Learning Scientists http://www.learningscientists.org/yana-weinstein/
   * Reordered chapters to be:
     1. visualization: start book with this
     1. tidy data: start this chapter of a data set that is not tidy and hence can't be `ggplot`ed
@@ -10,10 +10,12 @@
     1. regression
     1. sampling
     1. inference
-  * @nsonneborn started embedding Learning Check solutions/discussion code directly into .Rmd files.
+* New Features
+  * Added ggplot2 Review and dplyr DataCamp links
 * Minor changes
+  * @nsonneborn started embedding Learning Check solutions/discussion code directly into .Rmd files.
   * Combined preamble and intro chapter into single intro.Rmd file
-  * Disable PDF output for now.
+  * Disabled gitbook PDF output for now.
   * Add license to Preamble
   * Chapters
     * Inference:
