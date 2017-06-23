@@ -1,15 +1,24 @@
 # ModernDive 0.1.3.9000
 
-* Added ggplot2 Review and dplyr DataCamp links
-* Fix typos
-* Fixed $T$ distribution plot with histogram in Chapter 7
-  * Based on [issue](https://github.com/ismayc/moderndiver-book/issues/3) that identified the use of the wrong data set for resampling
+* Administrative
+  * Added ggplot2 Review and dplyr DataCamp links
 * Major changes
-  * Reordered chapters to be: visualization -> tidy data -> data manipuluation -> regression -> sampling -> inference.
+  * Reordered chapters to be:
+    1. visualization: start book with this
+    1. tidy data: start this chapter of a data set that is not tidy and hence can't be `ggplot`ed
+    1. data manipuluation: not an end in and of itself, only exists to serve other goals
+    1. regression
+    1. sampling
+    1. inference
+  * @nsonneborn started embedding Learning Check solutions/discussion code directly into .Rmd files.
 * Minor changes
   * Combined preamble and intro chapter into single intro.Rmd file
   * Disable PDF output for now.
   * Add license to Preamble
+  * Chapters
+    * Inference:
+      * Fixed $T$ distribution plot with histogram
+      * Based on [issue](https://github.com/ismayc/moderndiver-book/issues/3) that identified the use of the wrong data set for resampling
   
 
 # ModernDive 0.1.3
