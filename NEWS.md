@@ -1,6 +1,5 @@
 # ModernDive 0.1.3.9000
 
-* Add license to Preamble
 * Added ggplot2 Review and dplyr DataCamp links
 * Fix typos
 * Fixed $T$ distribution plot with histogram in Chapter 7
@@ -10,6 +9,8 @@
 * Minor changes
   * Combined preamble and intro chapter into single intro.Rmd file
   * Disable PDF output for now.
+  * Add license to Preamble
+  
 
 # ModernDive 0.1.3
 
