@@ -2,14 +2,14 @@
 
 
 * Major changes
-  * Started incorporating feedback from Dr. Yana Weinstein from The Learning Scientists http://www.learningscientists.org/yana-weinstein/
   * Reordered chapters to be:
-    1. visualization: start book with this
+    1. visualization: start book with this. Replace Menard graphic with gapminder
     1. tidy data: start this chapter of a data set that is not tidy and hence can't be `ggplot`ed
     1. data manipuluation: not an end in and of itself, only exists to serve other goals
     1. regression
     1. sampling
     1. inference
+  * Started incorporating feedback from Dr. Yana Weinstein from The Learning Scientists http://www.learningscientists.org/yana-weinstein/
 * New Features
   * Added ggplot2 Review and dplyr DataCamp links
 * Minor changes
