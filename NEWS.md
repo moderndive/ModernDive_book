@@ -3,7 +3,9 @@
 
 * Major changes
   * Reordered chapters to be:
-    1. visualization: start book with this. Replace Menard graphic with gapminder
+    1. visualization: start book with this.
+        + Replace Menard graphic with gapminder
+        + Added geom_col to barcharts
     1. tidy data: start this chapter of a data set that is not tidy and hence can't be `ggplot`ed
     1. data manipuluation: not an end in and of itself, only exists to serve other goals
     1. regression
