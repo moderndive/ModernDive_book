@@ -3,7 +3,7 @@
 # Simulating Randomness via mosaic {#sim}
 
 ```{r setup_infer, include=FALSE, purl=FALSE}
-chap <- 6
+chap <- 7
 lc <- 0
 rq <- 0
 # **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
@@ -24,13 +24,22 @@ We then shift to a famous example from statistics lore on a lady tasting tea.  T
 
 ### Needed packages {-}
 
+Let's load all the packages needed for this chapter (this assumes you've already installed them). Read Chapter \@ref(packages) for information on how to install and load R packages.
+
 ```{r message=FALSE, warning=FALSE}
 library(dplyr)
 library(ggplot2)
 library(okcupiddata)
 library(mosaic)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+# Packages needed internally, but not in text.
 library(knitr)
 ```
+
+
+
 
 
 ## Random sampling
@@ -145,19 +154,21 @@ Let's explore these terms for our tasting soup example:
 
 ***
 
+
+
+
+
 ## Visualizing sampling
 
 Let's explore how sampling and these other terms relate to working with data and data visualization.  Here we introduce the `okcupiddata` R package [@R-okcupiddata]. Note that permission to use this data to create the R package was explicitly granted by OkCupid.  More information about this package is available [here](https://github.com/rudeboybert/okcupiddata).  The `profiles` data frame in this R data package contains data about 59,946 OkCupid users who were living within 25 miles of San Francisco, had active profiles on June 26, 2012, were online in the previous year, and had at least one picture in their profile. We will be focusing on the `height` variable, which corresponds to a self-reported height for each individual on their profile.  Note that this is measured in inches.
 
-```{r loadprofiles}
-library(okcupiddata)
-data(profiles)
+```{r loadprofiles, eval=FALSE}
+View(profiles)
 ```
 
 Let's take a look at the distribution of `height` using a histogram and `ggplot2`:
 
 ```{r height-hist, warning=FALSE}
-library(ggplot2)
 ggplot(data = profiles, mapping = aes(x = height)) +
   geom_histogram(bins = 20, color = "white")
 ```
@@ -177,7 +188,6 @@ We see here that this being self-reported data has led to the data being a littl
 To clean up the data a bit, let's focus on just looking at heights between 55 inches and 85 inches.  Remember that the `filter` function in `dplyr` allows us to focus on a subset of rows.  The specific subset of rows we are interested in corresponds to the argument to the `filter` function.  We will create a new data frame called `profiles_subset` that contains all rows with heights between 55 and 85 inclusive.
 
 ```{r filter-profiles}
-library(dplyr)
 profiles_subset <- profiles %>% filter(between(height, 55, 85))
 ```
 
@@ -191,7 +201,6 @@ ggplot(data = profiles_subset, mapping = aes(x = height)) +
 We can think of this data as representing the *population* of interest.  Let's now take a random sample of size 100 from this population and look to see if this sample represents the overall shape of the population.  In other words, we are going to use data visualization as our guide to understand the *representativeness* of the sample selected.
 
 ```{r sample-profiles}
-library(mosaic)
 set.seed(2017)
 profiles_sample1 <- profiles_subset %>% 
   resample(size = 100, replace = FALSE)
@@ -278,16 +287,15 @@ We have looked at two random samples above, but using `mosaic` we can repeat thi
 
 ```{r do-first, include=FALSE}
 if(!file.exists("rds/sample_means.rds")){
-  sample_means <- do(5000) *
+  sample_means <- do(5000) * 
     (profiles_subset %>% resample(size = 100, replace = FALSE) %>% 
-    summarize(mean_height = mean(height)))
+    summarize(mean_height = mean(height))
+    )
   saveRDS(object = sample_means, "rds/sample_means.rds")
 } else {
   sample_means <- readRDS("rds/sample_means.rds")
 }
 ```
-
-
 ```{r do-first-read, eval=FALSE}
 sample_means <- do(5000) *
     (profiles_subset %>% resample(size = 100, replace = FALSE) %>% 
@@ -313,6 +321,9 @@ Note how the range of sample mean height values is much more narrow than the ori
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why is random sampling so important here to create a distribution of sample means that provide a range of plausible values for the population mean height?
 
 ***
+
+
+
 
 
 ## Simulation
@@ -409,7 +420,6 @@ You may be asking yourself how this models a way to test whether the person was 
 We often don't have time to do the physical flipping over and over again and we'd like to be able to do more than just 20 different simulations or so.  Luckily, we can use R to simulate this process many times.  The `mosaic` package includes a function called `rflip()`, which can be used to flip one coin.  Well, not exactly.  It uses pseudo-random number generation to "flip" a virtual coin.  In order for us all to get the same results here, we can set the seed of the pseudo-random number generator.  Let's see an example of this:  (Remember to load the `mosaic` package!)
 
 ```{r message=FALSE}
-library(mosaic)
 set.seed(2017)
 do(1) * rflip(1)
 ```
@@ -425,8 +435,6 @@ We've now done a simulation of what actually happened when you flipped a coin te
 If you look at the output above for our simulation of 13 student guesses, we can begin to get a sense for what an "expected" sample proportion of successes may be.  Around five out of 10 seems to be the most likely value.  What does this say about what we actually observed with a success rate of 9/10?  To better answer this question, we can simulate 5000 student guesses and then look at the distribution of the simulated sample proportion of successes, also known as the **null distribution**.
 
 ```{r include=FALSE}
-library(dplyr)
-
 if(!file.exists("rds/simGuesses.rds")){
   simGuesses <- do(5000) * rflip(10)
   saveRDS(object = simGuesses, "rds/simGuesses.rds")
@@ -434,9 +442,7 @@ if(!file.exists("rds/simGuesses.rds")){
   simGuesses <- readRDS("rds/simGuesses.rds")
 }
 ```
-
 ```{r eval=FALSE}
-library(dplyr)
 simGuesses <- do(5000) * rflip(10)
 ```
 
@@ -454,7 +460,6 @@ In addition, we can plot the distribution of these simulated `heads` using the i
 We already have an idea as to an appropriate plot by the data summarization that we did in the chunk above.  We'd like to see how many heads occurred in the 5000 sets of 10 flips.  In other words, we'd like to see how frequently 9 or more heads occurred in the 10 flips:
 
 ```{r fig.cap="Histogram of number of heads in simulation - needs tweaking"}
-library(ggplot2)
 ggplot(data = simGuesses, mapping = aes(x = heads)) +
   geom_histogram(binwidth = 1, color = "white")
 ```
@@ -462,7 +467,6 @@ ggplot(data = simGuesses, mapping = aes(x = heads)) +
 This horizontal axis labels are a little confusing here.  What does 2.5 or 7.5 heads mean?  In `simGuesses`, `heads` is a `numerical` variable.  Thus, `ggplot` is expecting the values to be on a continuous scale.  We can switch the scale to be discrete by invoking the `factor` function and using `geom_bar` instead of `geom_histogram`:
 
 ```{r fig.cap="Barplot of number of heads in simulation"}
-library(ggplot2)
 ggplot(data = simGuesses, mapping = aes(x = factor(heads))) +
   geom_bar()
 ```
@@ -472,6 +476,10 @@ You'll frequently need to make this conversion to `factor` when making a barplot
 Again, note that the shape of these number of heads follows what appears to be a normal distribution.  We'll see in a related example that if appropriate conditions/assumptions are met with the data that we can expect to see a normal distribution result.  When these conditions aren't met, the simulation methodology we've presented here still works well whereas the traditional normal-based methods start to fall apart.
 
 We will delve further into hypothesis testing in the next few chapters.  This null distribution in combination with the **sampling distribution** concept covered earlier will be of utmost importance going forward.
+
+
+
+
 
 ## Review of `mosaic` simulation functions
 
@@ -496,17 +504,23 @@ In this chapter, we've discussed three functions in the `mosaic` package useful 
 
 ***
 
+
+
+
+
 ## Conclusion
-
-### Script of R code
-
-```{r include=FALSE, eval=FALSE, purl=FALSE}
-knitr::purl("06-sim.Rmd", "docs/scripts/06-sim.R")
-```
-
-An R script file of all R code used in this chapter is available [here](http://ismayc.github.io/moderndiver-book/scripts/06-sim.R).
-
 
 ### What's to come?
 
 This chapter has served as an introduction into inferential techniques that will be discussed in greater detail in Chapter \@ref(hypo) for hypothesis testing and in Chapter \@ref(ci) for confidence intervals. In these chapters, we will see how we can use a related concept of **resampling** when working with the distributions of two groups. All of these concepts will be further reinforced in Chapter \@ref(regress) as well.
+
+### Script of R code
+
+```{r include=FALSE, eval=FALSE, purl=FALSE}
+knitr::purl("07-sim.Rmd", "docs/scripts/07-sim.R")
+```
+
+An R script file of all R code used in this chapter is available [here](http://ismayc.github.io/moderndiver-book/scripts/07-sim.R).
+
+
+
