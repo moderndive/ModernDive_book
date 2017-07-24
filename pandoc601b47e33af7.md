@@ -1,1 +1,0 @@
-**_Learning check_**
