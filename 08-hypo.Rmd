@@ -805,6 +805,208 @@ Condition 3:  This is met since there is no natural pairing of a movie in the Ac
 Since all three conditions are met, we can be reasonably certain that the theory-based test will match the results of the randomization-based test using shuffling.  Remember that theory-based tests can produce some incorrect results in these assumptions are not carefully checked.  The only assumption for randomization and computational-based methods is that the sample is selected at random.  They are our preference and we strongly believe they should be yours as well, but it's important to also see how the theory-based tests can be done and used as an approximation for the computational techniques until at least more researchers are using these techniques that utilize the power of computers.
 
 
+## Resampling-based inference for regression
+
+We can also use the concept of shuffling to determine the standard error of our null distribution and conduct a hypothesis test for a population slope.  Let's go back to our example on Alaskan flights that represent a sample of all Alaskan flights departing NYC in 2013 from Section \@ref(regdata).  Let's test to see if we have evidence that a *positive* relationship exists between the departure delay and arrival delay for Alaskan flights.  We will set up this hypothesis testing process as we have each before via the "There is Only One Test" diagram in Figure \@ref(fig:htdowney).
+
+### Data
+
+Our data is stored in `alaska_flights` and we are focused on the 50 measurements of `dep_delay` and `arr_delay` there.
+
+### Test Statistic $\delta$
+
+Our test statistic here is the sample slope coefficient that we denote with $b_1$.
+
+### Observed effect $\delta^*$
+
+```{r}
+(b1_obs <- tidy(delay_fit)$estimate[2])
+```
+
+The calculated slope value from our observed sample is $b_1 = `r tidy(delay_fit)$estimate[2]`$.
+
+### Model of $H_0$
+
+We are looking to see if a positive relationship exists so $H_a: \beta_1 > 0$.  Our null hypothesis is always in terms of equality so we have $H_0: \beta_1 = 0$.
+
+### Simulated Data
+
+Now to simulate the null hypothesis being true and recreating how our sample was created, we need to think about what it means for $\beta_1$ to be zero. If $\beta_1 = 0$, we said above that there is no relationship between the departure delay and arrival delay.  If there is no relationship, then any one of the arrival delay values could have just as likely occurred with any of the other departure delay values instead of the one that it actually did fall with.  We, therefore, have another example of shuffling in our simulating of data.
+
+**Tactile simulation**
+
+We could use a deck of 100 note cards to create a tactile simulation of this shuffling process.  We would write the 50 different values of departure delays on each of the 50 cards, one per card.  We would then do the same thing for the 50 arrival delays putting them on one per card.
+
+Next, we would lay out each of the 50 departure delay cards and we would shuffle the arrival delay deck.  Then, after shuffling the deck well, we would disperse the cards one per each one of the departure delay cards.  We would then enter these new values in for arrival delay and compute a sample slope based on this shuffling.  We could repeat this process many times, keeping track of our sample slope after each shuffle.
+
+### Distribution of $\delta$ under $H_0$
+
+We can build our randomization distribution in much the same way we did before using the `do` and `shuffle` functions.  Here we will take advantage of the `coef` function we saw earlier to extract the slope and intercept coefficients.  (Our focus will be on the slope here though.)
+
+```{r, include=FALSE}
+if(!file.exists("rds/rand_slope_distn.rds")){
+  rand_slope_distn <- mosaic::do(5000) *
+  (lm(formula = mosaic::shuffle(arr_delay) ~ dep_delay, data = alaska_flights) %>%
+     coef())
+  saveRDS(object = rand_slope_distn, "rds/rand_slope_distn.rds")
+} else {
+  rand_slope_distn <- readRDS("rds/rand_slope_distn.rds")
+}
+```
+```{r many_shuffles_reg, eval=FALSE}
+library(mosaic)
+rand_slope_distn <- mosaic::do(5000) *
+  (lm(formula = shuffle(arr_delay) ~ dep_delay, data = alaska_flights) %>%
+     coef())
+```
+
+```{r}
+names(rand_slope_distn)
+```
+
+We see that the names of our columns are `Intercept` and `dep_delay`.  We want to look at `dep_delay` since that corresponds to the slope coefficients.
+
+```{r}
+ggplot(data = rand_slope_distn, mapping = aes(x = dep_delay)) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+
+### The p-value
+
+Recall that we want to see where our observed sample slope $\delta^* = `r tidy(delay_fit)$estimate[2]`$ falls on this distribution and then count all of the values to the right of it corresponding to $H_a: \beta_0 > 0$.  To get a sense for where our values falls, we can shade all values at least as big as $\delta^*$.
+
+```{r fig.cap="Shaded histogram to show p-value"}
+ggplot(data = rand_slope_distn, aes(x = dep_delay, fill = (dep_delay >= b1_obs))) +
+  geom_histogram(color = "white", bins = 20)
+```
+
+Since `r b1_obs` falls far to the right of this plot, we can say that we have a $p$-value of 0.  We, thus, have evidence to reject the null hypothesis in support of there being a positive association between the departure delay and arrival delay of all Alaskan flights from NYC in 2013.
+
+
+***
+
+```{block lc9-5, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the inference above but this time for the correlation coefficient instead of the slope.
+
+<!--
+Omitted but potentially could be shifted to an example in the confidence interval chapter
+**`paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Use bootstrapping (of points) to determine a range of possible values for the population slope comparing departure delays to arrival delays for Alaskan flights in 2013 from NYC.
+
+-->
+*** 
+
+## Theory-based inference for regression {#theoryreg}
+
+Recall the regression output table from Section \@ref(regeq) with `delay_fit` being a least squares linear regression fit with `arr_delay` as the response and `dep_delay` as the predictor in the `alaska_flights` data frame created in Section \@ref(regdata).
+
+```{r, echo=FALSE}
+delay_fit <- lm(formula = arr_delay ~ dep_delay, data = alaska_flights)
+tidy(delay_fit) %>% 
+  kable()
+```
+
+<!--
+We saw in Chapter \@ref(ci) when trying to estimate the true population mean $\mu$, the sample mean $\overline{x}$ will vary from sample to sample due to sampling variability.  We characterized this variability using the sampling distribution of $\overline{x}$, whose standard deviation is called the standard error. In other words, the standard error quantifies how much $\overline{x}$ varies from sample to sample and can be thought of as a measure of how precise our estimates are. 
+-->
+
+<!--
+All these notions apply in our regression example as well, as -->
+
+We saw in Section \@ref(vizsamp) that random samples have variability and, thus, statistics from those samples have variability as defined by the **sampling distribution**.  
+Recall from Section \@ref(regdata) that `alaska_flights` represents only a random sample of 50 Alaska Airlines flights and not all flights. Hence if we repeated the analysis but with another random sample of 50 flights, the fitted line would likely change slightly due to sampling variability. In this case, there is a true population least squares line is defined by the formula $y = \beta_0 + \beta_1 x + \epsilon$ where
+
+* $\beta_0$ is the true population intercept parameter
+* $\beta_1$ is the true population slope parameter
+* $\epsilon$ represents the error term
+
+$\epsilon$ corresponds to the part of the response variable $y$ that remains unexplained after considering the predictor variable $x$. We will see in Section \@ref(resid) that ideally they should exhibit no systematic pattern in that they are normally distributed, have mean 0, and constant variance. 
+
+The values $b_0 = `r intercept`$ and $b_1 = `r slope`$ are point estimates of $\beta_0$ and $\beta_1$, and thus the second column of the regression output table that has their values is called `estimate`. The third column `std.error` represents the standard errors for each estimate using a theory-based approach.
+
+The rows of the fourth and fifth columns correspond to theory-based hypothesis tests testing $H_0: \beta_0 = 0 \mbox{ vs. } H_1: \beta_0 \neq 0$ and $H_0: \beta_1 = 0 \mbox{ vs. } H_1: \beta_1 \neq 0$. Of particular interest is the second hypothesis test because if $\beta_1 = 0$ then $y = \beta_0 + \epsilon$. Hence the value of $y$ does not depend on the value of $x$ at all, in other words there is no relationship between them. Recall that any hypothesis test involves 1) an observed test statistic and 2) a $p$-value resulting from the comparison of the observed test statistic to a null distribution. The columns "statistic" and "p.value" correspond to these values.
+
+In our example, since the $p$-value corresponding to the hypothesis test $H_0: \beta_1 = 0 \mbox{ vs. } H_1: \beta_1 \neq 0$ is 0, for any value of $\alpha$ we would reject $H_0$ in favor of $H_1$ and declare that there is a significant relationship between arrival delay and departure delay. 
+
+<!--
+**Confidence Intervals**: Similarly, the rows of the "conf.low" and "conf.high" columns correspond to the left and right end points of 95% confidence intervals for $\beta_0$ and $\beta_1$. Similarly to the case of a 95% confidence interval for the population mean $\mu \pm 2 * SE$, the 95% confidence intervals for $\beta_0$ and $\beta$ can be computed as $\mbox{estimate} \pm 2*SE$  Once again, focusing on the confidence interval (`r CI_slope[1]`, `r CI_slope[2]`) for the slope coefficient $\beta_1$, we observe that it does not contain 0, suggesting again that departure delay and arrival delays have a significant relationship.
+
+However, for the conclusions of the hypothesis tests and confidence intervals to be valid, there are certain conditions that must be met, in particular relating to the behavior of the residuals. We will address these assumptions in the upcoming Section \@ref(conditions-for-regression).
+
+-->
+
+For the conclusions of the hypothesis tests for regression to be valid, there are certain conditions that must be met, in particular relating to the behavior of the residuals. We will address these assumptions in the upcoming Subsection \@ref(conditions-for-regression).
+
+### Conditions for regression {#conditions-for-regression}
+
+In order for all inferences from regression to be valid (in particular the hypothesis tests from Subsection \@ref(theoryreg), certain conditions must roughly hold.
+
+1. Nearly normal residuals with mean 0 and constant variance. (Check quantile-quantile plot of standardized residuals.)
+1. Equal variances across explanatory variable. (Check residual plot for non-uniform patterns.)
+1. Independent observations. (Check residual plot for no time series-like patterns.)
+
+As you can see the *residuals* will play a large role in determining whether the conditions are met. In particular, the first two conditions can be roughly interpreted as requiring that there being no systematic pattern to the residuals.  The residuals $\widehat{\epsilon}_i$ are estimates for the error term $\epsilon$ we discussed with the true population regression line, and this is a big reason why they play an important role in validating regression assumptions.
+
+
+### Residual analysis {#resid}
+    
+The following diagram will help you to keep track of what is meant by a residual. Consider the observation marked by the blue dot:
+
+```{r echo=FALSE}
+ggplot(data = alaska_flights, 
+       mapping = aes(x = dep_delay, y = arr_delay)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  annotate("point", x = 44, y = 7, color = "blue", size = 3) +
+  annotate("segment", x = 44, xend = 44, y = 7, yend = -14.155 + 1.218 * 44,
+  color = "blue", arrow = arrow(length = unit(0.03, "npc")))
+```
+
+Recall that $y_i$ is the observed value of the `arr_delay` variable (y-position of blue dot), $\widehat{y}_i$ is the fitted value of the `arr_delay` (value that is being pointed to on the red line), and the residual is $\widehat{\epsilon}_i = y_i - \hat{y}_i$. We can quickly extract the values of all 50 residuals by using the `augment()` function in the `broom` package. Specifically, we are interested in the `.fitted` and `.resid` variables. Let's look at the residuals corresponding to the first six rows of data.
+
+```{r}
+regression_points <- augment(delay_fit) %>% 
+  select(arr_delay, dep_delay, .fitted, .resid)
+regression_points %>% 
+  head() %>% 
+  kable()
+```
+
+Let's begin by analyzing the distribution of the residuals.  We would expect the shape of the distribution to be symmetric and roughly bell-shaped with a peak near zero and fewer and fewer values going into the tails on both the left and right sides.
+
+```{r resid-histogram}
+ggplot(data = regression_points, mapping = aes(x = .resid)) +
+  geom_histogram(binwidth = 10, color = "white") +
+  geom_vline(xintercept = 0, color = "blue")
+```
+
+Next, we create a scatterplot looking at how the fitted values relate to the residual values.
+
+```{r resid-plot, fig.cap="Fitted versus Residuals plot"}
+ggplot(data = regression_points, mapping = aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 0, color = "blue")
+```
+
+Lastly, we create a **quantile-quantile** plot that compares the residual values to what would be expected from a bell-shaped distribution (in particular, the normal distribution).
+
+```{r qqplot1, fig.cap="QQ Plot of residuals"}
+ggplot(data = regression_points, mapping = aes(sample = .resid)) +
+  stat_qq()
+```
+
+**Checking conditions**:
+
+1. We are looking to see if the points are scattered about the blue line at 0 relatively evenly as we look from left to right in Figure \@ref(fig:resid-plot).  We have some reason for concern here as the large lump of values on the left are much more dispersed than those on the right.
+
+2. The second condition is invalidated if there is a trigonometric pattern of up and down throughout the fitted by residual plot in Figure \@ref(fig:resid-plot).  That is not the case here.
+
+3. We look at the *quantile-quantile plot* ("Q-Q plot" for short) for the third condition in Figure \@ref(fig:qqplot1).  We are looking to see if the residuals fall on a straight line with what we would expect if they were normally distributed.  We see some curvature here as well.  We should begin to wonder if regression was valid here with both condition 1 and condition 3 in question.
+
+We have reason to doubt whether a linear regression is valid here.  Unfortunately, all too frequently regressions are run without checking these assumptions carefully.  While small deviations from the assumptions can be OK, larger violations can completely invalidate the results and make any inferences improbable and questionable.
 
 
 
@@ -812,9 +1014,7 @@ Since all three conditions are met, we can be reasonably certain that the theory
 
 ### What's to come?
 
-This chapter examined the basics of hypothesis testing with terminology and also an example of how to apply the "There is Only One Test" diagram to the Lady Tasting Tea example presented in Chapter \@ref(sim) and to an example on comparing the IMDB ratings of action movies and romance movies.  We'll see in Chapter \@ref(ci) how we can provide a range of possible values for an unknown population parameter instead of just running a Yes/No decision from a hypothesis test.
- 
-We will see in Chapter \@ref(regress) many of the same ideas we have seen with hypothesis testing and confidence intervals in the last two chapters.  Regression is frequently associated both correctly and incorrectly with statistics and data analysis, so you'll need to make sure you understand when it is appropriate and when it is not.
+This chapter examined the basics of hypothesis testing with terminology and also an example of how to apply the "There is Only One Test" diagram to the Lady Tasting Tea example presented in Chapter \@ref(sim) and to an example on comparing the IMDB ratings of action movies and romance movies.  Lastly, we looked at how to use resampling and theory-based methods on regression.  We'll see in Chapter \@ref(ci) how we can provide a range of possible values for an unknown population parameter instead of just running a Yes/No decision from a hypothesis test.
 
 ### Script of R code
 
