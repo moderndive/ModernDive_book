@@ -6,7 +6,7 @@
     1. visualization: start book with this.
         + Replace Menard graphic with gapminder
         + Added geom_col to barcharts
-    1. tidy data: start this chapter of a data set that is not tidy and hence can't be `ggplot`ed
+    1. tidy data: start this chapter of a dataset that is not tidy and hence can't be `ggplot`ed
     1. data ~~manipulation~~ wrangling: not an end in and of itself, only exists to serve other goals. ra
     1. regression
     1. sampling
@@ -22,7 +22,7 @@
   * Chapters
     * Inference:
       * Fixed $T$ distribution plot with histogram
-      * Based on [issue](https://github.com/ismayc/moderndiver-book/issues/3) that identified the use of the wrong data set for resampling
+      * Based on [issue](https://github.com/ismayc/moderndiver-book/issues/3) that identified the use of the wrong dataset for resampling
   
 
 # ModernDive 0.1.3
