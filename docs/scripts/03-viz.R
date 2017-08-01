@@ -10,8 +10,7 @@ library(gapminder)
 library(knitr)
 
 ## ---- echo=FALSE---------------------------------------------------------
-data("gapminder")
-gapminder <- gapminder %>% 
+gapminder_2007 <- gapminder %>% 
   filter(year == 2007) %>% 
   select(-year) %>% 
   rename(
@@ -23,7 +22,7 @@ gapminder <- gapminder %>%
   )
 
 ## ---- echo=FALSE---------------------------------------------------------
-gapminder %>% 
+gapminder_2007 %>% 
   head() %>% 
   kable(
     digits=2,
@@ -32,62 +31,60 @@ gapminder %>%
   )
 
 ## ----gapminder, echo=FALSE, fig.cap="Life Expectancy over GDP per Capita in 2007"----
-ggplot(data=gapminder, aes(x=`GDP per Capita`, y=`Life Expectancy`, size=Population, col=Continent)) +
+ggplot(data=gapminder_2007, aes(x=`GDP per Capita`, y=`Life Expectancy`, size=Population, col=Continent)) +
   geom_point()
 
 ## ---- echo=FALSE---------------------------------------------------------
 map <- data_frame(
-  data = c("GDP per Capita", "Life Expectancy", "Population", "Continent"),
+  `data variable` = c("GDP per Capita", "Life Expectancy", "Population", "Continent"),
   aes = c("x", "y", "size", "color"),
   geom = c("point", "point", "point", "point")
 )
 
 map %>% 
   kable(
-    caption = "Summary of Grammar of Graphics", 
+    caption = "Summary of Grammar of Graphics for this plot", 
     booktabs = TRUE
     )
 
 ## **_Review questions_**
 
 ## ------------------------------------------------------------------------
-data(flights)
 all_alaska_flights <- flights %>% 
   filter(carrier == "AS")
 
-## Fill in LC solution here:
+## **Learning Check Solutions**
 
 ## ----noalpha, fig.cap="Arrival Delays vs Departure Delays for Alaska Airlines flights from NYC in 2013"----
 ggplot(data = all_alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
   geom_point()
 
 ## ----nolayers, fig.cap="Plot with No Layers"-----------------------------
-ggplot(data = all_alaska_flights, aes(x = dep_delay, y = arr_delay))
+ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 ## **Learning Check Solutions**
 
 ## ---- include=show_solutions('4-3'), echo=show_solutions('4-3')----------
-ggplot(data=all_alaska_flights, aes(x = dep_time, y = dep_delay)) +
+ggplot(data = all_alaska_flights, mapping = aes(x = dep_time, y = dep_delay)) +
   geom_point()
 
 ## ----alpha, fig.cap="Delay scatterplot with alpha=0.2"-------------------
-ggplot(data = all_alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
+ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point(alpha = 0.2)
 
 ## ----jitter, fig.cap="Jittered delay scatterplot"------------------------
-ggplot(data = all_alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
+ggplot(all_alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
   geom_jitter(width = 30, height = 30)
 
 ## **Learning Check Solutions**
 
 ## ------------------------------------------------------------------------
-data(weather)
 early_january_weather <- weather %>% 
   filter(origin == "EWR" & month == 1 & day <= 15)
 
 ## **Learning Check Solutions**
 
-## ----hourlytemp, fig.cap="Hourly Temperature in Newark for Jan 1-15 2013"----
+## ----hourlytemp, fig.cap="Hourly Temperature in Newark for January 1-15, 2013"----
 ggplot(data = early_january_weather, aes(x = time_hour, y = temp)) +
   geom_line()
 
@@ -194,11 +191,11 @@ kable(
   )
 
 ## ----geombar, fig.cap="Barplot when counts are not pre-tabulated", fig.height=2.5----
-ggplot(data = fruits, mapping = aes(x=fruit)) +
+ggplot(data = fruits, mapping = aes(x = fruit)) +
   geom_bar()
 
 ## ---- geomcol, fig.cap="Barplot when counts are pre-tabulated", fig.height=2.5----
-ggplot(data = fruits_counted, mapping = aes(x=fruit, y=number)) +
+ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
 ## ----flightsbar, fig.cap="Number of flights departing NYC in 2013 by airline using geom_bar", fig.height=2.5----
@@ -206,16 +203,16 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
 
 ## ------------------------------------------------------------------------
-data(airlines)
 kable(airlines)
 
 ## ----message=FALSE-------------------------------------------------------
 flights_table <- flights %>% 
-  count(carrier)
+  group_by(carrier) %>% 
+  summarize(number = n())
 kable(flights_table)
 
 ## ----flightscol, fig.cap="Number of flights departing NYC in 2013 by airline using geom_col", fig.height=2.5----
-ggplot(data = flights_table, mapping = aes(x = carrier, y = n)) +
+ggplot(data = flights_table, mapping = aes(x = carrier, y = number)) +
   geom_col()
 
 ## **Learning Check Solutions**
@@ -251,7 +248,7 @@ ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
 
 ## **Learning Check Solutions**
 
-## ---- fig.cap="Faceted barplot comparing the number of flights by carrier and airport", fig.height=7.5----
+## ----facet-bar-vert, fig.cap="Faceted barplot comparing the number of flights by carrier and airport", fig.height=7.5----
 ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
   geom_bar() +
   facet_grid(name ~ .)

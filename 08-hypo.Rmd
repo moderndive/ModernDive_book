@@ -6,12 +6,31 @@ lc <- 0
 rq <- 0
 # **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
 # **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
+
 knitr::opts_chunk$set(
   tidy = FALSE, 
   out.width = '\\textwidth', 
   fig.height = 4,
   warning = FALSE
 )
+
+# This bit of code is a bug fix on asis blocks, which we use to show/not show LC
+# solutions, which are written like markdown text. In theory, it shouldn't be
+# necessary for knitr versions <=1.11.6, but I've found I still need to for
+# everything to knit properly in asis blocks. More info here: 
+# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
+library(knitr)
+knit_engines$set(asis = function(options) {
+  if (options$echo && options$eval) knit_child(text = options$code)
+})
+
+# This controls which LC solutions to show. Options for solutions_shown: "ALL"
+# (to show all solutions), or subsets of c('3-1', '3-2','3-3'), including the
+# null vector c('') to show no solutions.
+solutions_shown <- c("")
+show_solutions <- function(section){
+  return(solutions_shown == "ALL" | section %in% solutions_shown)
+  }
 ```
 
 We saw some of the main concepts of hypothesis testing introduced in Chapter \@ref(sim).  We will expand further on these ideas here and also provide a framework for understanding hypothesis tests in general.  Instead of presenting you with lots of different formulas and scenarios, we hope to build a way to think about all hypothesis tests.  You can then adapt to different scenarios as needed down the road when you encounter different statistical situations.
@@ -31,6 +50,7 @@ library(mosaic)
 library(knitr)
 library(nycflights13)
 library(ggplot2movies)
+library(broom)
 ```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
@@ -40,6 +60,8 @@ library(ggplot2movies)
 
 
 
+
+---
 
 ## When inference is not needed
 
@@ -106,6 +128,8 @@ Before we hop into this framework, we will provide another way to think about hy
 
 
 
+---
+
 ## Criminal trial analogy {#trial}
 
 We can think of hypothesis testing in the same context as a criminal trial in the United States.  A criminal trial in the United States is a familiar situation in which a choice between two contradictory claims must be made. 
@@ -146,6 +170,8 @@ When you run a hypothesis test, you are the jury of the trial.  You decide wheth
 
 
 
+
+---
 
 ## Types of errors in hypothesis testing
 
@@ -205,6 +231,8 @@ So if we can set $\alpha$ to be whatever we want, why choose 0.05 instead of 0.0
 
 
 
+---
+
 ## Statistical significance
 
 The idea that sample results are more extreme than we would reasonably expect to see by random chance if the null hypothesis were true is the fundamental idea behind statistical hypothesis tests.  If data at least as extreme would be very unlikely if the null hypothesis were true, we say the data are **statistically significant**.  Statistically significant data provide convincing evidence against the null hypothesis in favor of the alternative, and allow us to generalize our sample results to the claim about the population.
@@ -223,6 +251,9 @@ The idea that sample results are more extreme than we would reasonably expect to
 
 
 
+
+
+---
 
 ## Example: Revisiting the Lady Tasting Tea
 
@@ -357,6 +388,8 @@ This helps us better see just how few of the values of `heads` are at our observ
 
 
 
+---
+
 ## Example: Comparing two means
 
 ### Randomization/permutation
@@ -372,7 +405,6 @@ As we saw earlier, simulation is a valuable tool when conducting inferences base
 The `movies` dataset in the `ggplot2movies` package contains information on a large number of movies that have been rated by users of IMDB.com [@R-ggplot2movies].  We are interested in the question here of whether `Action` movies are rated higher on IMDB than `Romance` movies.  We will first need to do a little bit of data wrangling using the ideas from Chapter \@ref(wrangling) to get the data in the form that we would like:
 
 ```{r message=FALSE, warning=FALSE}
-library(ggplot2movies)
 (movies_trimmed <- movies %>% select(title, year, rating, Action, Romance))
 ```
 
@@ -543,7 +575,7 @@ We then calculate the new sample mean rating of the romance deck, and also the n
 ```{r message=FALSE, warning=FALSE}
 shuffled_ratings <- #movies_trimmed %>%
   movies_genre_sample %>% 
-     mutate(rating = shuffle(rating)) %>% 
+     mutate(genre = shuffle(genre)) %>% 
      group_by(genre) %>%
      summarize(mean = mean(rating))
 diff(shuffled_ratings$mean)
@@ -569,7 +601,7 @@ set.seed(2017)
 if(!file.exists("rds/many_shuffles.rds")){
   many_shuffles <- do(5000) * 
     (movies_genre_sample %>% 
-      mutate(rating = shuffle(rating)) %>% 
+     mutate(genre = shuffle(genre)) %>% 
       group_by(genre) %>%
       summarize(mean = mean(rating))
     )
@@ -582,7 +614,7 @@ if(!file.exists("rds/many_shuffles.rds")){
 set.seed(2017)
 many_shuffles <- do(5000) * 
   (movies_genre_sample %>% 
-     mutate(rating = shuffle(rating)) %>% 
+     mutate(genre = shuffle(genre)) %>% 
      group_by(genre) %>%
      summarize(mean = mean(rating))
    )
@@ -674,6 +706,12 @@ its sample statistic lies in the randomization distribution.
 - If the proportion of values as extreme or more extreme than the observed statistic in the randomization
 distribution is smaller than the pre-determined significance level $\alpha$, we reject $H_0$.  Otherwise,
 we fail to reject $H_0$.  (If no significance level is given, one can assume $\alpha = 0.05$.)
+
+
+
+
+
+---
 
 ## Building theory-based methods using computation {#theory-hypo}
 
@@ -805,6 +843,11 @@ Condition 3:  This is met since there is no natural pairing of a movie in the Ac
 Since all three conditions are met, we can be reasonably certain that the theory-based test will match the results of the randomization-based test using shuffling.  Remember that theory-based tests can produce some incorrect results in these assumptions are not carefully checked.  The only assumption for randomization and computational-based methods is that the sample is selected at random.  They are our preference and we strongly believe they should be yours as well, but it's important to also see how the theory-based tests can be done and used as an approximation for the computational techniques until at least more researchers are using these techniques that utilize the power of computers.
 
 
+
+
+
+---
+
 ## Resampling-based inference for regression
 
 We can also use the concept of shuffling to determine the standard error of our null distribution and conduct a hypothesis test for a population slope.  Let's go back to our example on Alaskan flights that represent a sample of all Alaskan flights departing NYC in 2013 from Section \@ref(regdata).  Let's test to see if we have evidence that a *positive* relationship exists between the departure delay and arrival delay for Alaskan flights.  We will set up this hypothesis testing process as we have each before via the "There is Only One Test" diagram in Figure \@ref(fig:htdowney).
@@ -812,6 +855,22 @@ We can also use the concept of shuffling to determine the standard error of our 
 ### Data
 
 Our data is stored in `alaska_flights` and we are focused on the 50 measurements of `dep_delay` and `arr_delay` there.
+
+```{r warning=FALSE}
+# To ensure the random sample of 50 flights is the same for
+# anyone using this code
+set.seed(2017)
+
+# Load Alaska data, deleting rows that have missing departure delay
+# or arrival delay data
+alaska_flights <- flights %>% 
+  filter(carrier == "AS") %>% 
+  filter(!is.na(dep_delay) & !is.na(arr_delay)) %>% 
+  # Select 50 flights that don't have missing delay data
+  sample_n(50)
+```
+
+
 
 ### Test statistic $\delta$
 
@@ -845,8 +904,8 @@ We can build our randomization distribution in much the same way we did before u
 
 ```{r, include=FALSE}
 if(!file.exists("rds/rand_slope_distn.rds")){
-  rand_slope_distn <- mosaic::do(5000) *
-  (lm(formula = mosaic::shuffle(arr_delay) ~ dep_delay, data = alaska_flights) %>%
+  rand_slope_distn <- do(5000) *
+  (lm(formula = arr_delay ~ shuffle(dep_delay), data = alaska_flights) %>%
      coef())
   saveRDS(object = rand_slope_distn, "rds/rand_slope_distn.rds")
 } else {
@@ -854,9 +913,8 @@ if(!file.exists("rds/rand_slope_distn.rds")){
 }
 ```
 ```{r many_shuffles_reg, eval=FALSE}
-library(mosaic)
-rand_slope_distn <- mosaic::do(5000) *
-  (lm(formula = shuffle(arr_delay) ~ dep_delay, data = alaska_flights) %>%
+rand_slope_distn <- do(5000) *
+  (lm(formula = arr_delay ~ shuffle(dep_delay), data = alaska_flights) %>%
      coef())
 ```
 
@@ -898,6 +956,12 @@ Omitted but potentially could be shifted to an example in the confidence interva
 
 -->
 *** 
+
+
+
+
+
+---
 
 ## Theory-based inference for regression {#theoryreg}
 
@@ -949,7 +1013,6 @@ In order for all inferences from regression to be valid (in particular the hypot
 1. Independent observations. (Check residual plot for no time series-like patterns.)
 
 As you can see the *residuals* will play a large role in determining whether the conditions are met. In particular, the first two conditions can be roughly interpreted as requiring that there being no systematic pattern to the residuals.  The residuals $\widehat{\epsilon}_i$ are estimates for the error term $\epsilon$ we discussed with the true population regression line, and this is a big reason why they play an important role in validating regression assumptions.
-
 
 ### Residual analysis {#resid}
     
@@ -1010,6 +1073,10 @@ We have reason to doubt whether a linear regression is valid here.  Unfortunatel
 
 
 
+
+
+---
+
 ## Conclusion
 
 ### What's to come?
@@ -1022,7 +1089,7 @@ This chapter examined the basics of hypothesis testing with terminology and also
 knitr::purl("08-hypo.Rmd", "docs/scripts/08-hypo.R")
 ```
 
-An R script file of all R code used in this chapter is available [here](http://ismayc.github.io/moderndiver-book/scripts/08-hypo.R).
+An R script file of all R code used in this chapter is available [here](http://moderndive.com/scripts/08-hypo.R).
 
     
 
