@@ -1,3 +1,16 @@
+# ModernDive 0.2.0.9000
+
+Development version; a work in progress. Some planned updates:
+
+* **Chapter 6: Data Modeling using Regression via `broom`**
+    + Better treatment of experimental design and its effect on bias/causation than currently exists in chapter.
+    + Examples of regression with categorical predictors with 3 or more levels.
+    + Multivariate regression, in particular the following predictor scenarios: 2 numerical, 2 categorical, and 1 numerical + 1 categorical
+    + Interaction effects
+* **Chapter 7-9: Sampling, Hypothesis Testing, Confidence Intervals** have largely not been updated, pending developments of [`infer`: A tidyverse-friendly R package fo statistical inference](https://github.com/andrewpbray/infer)
+
+
+
 # ModernDive 0.2.0
 
 ## Content changes

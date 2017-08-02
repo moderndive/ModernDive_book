@@ -1,50 +1,21 @@
 # ModernDive
 
-Welcome to the development version of the book **ModernDive: An Introduction to
-Statistical and Data Sciences** available at <http://www.moderndive.com/>. This
-book is generated via the
-[bookdown](https://www.rstudio.com/resources/webinars/introducing-bookdown/)
-package from RStudio. For information on using `bookdown`, see
-<https://bookdown.org/>.
+Welcome to the GitHub repository page for **ModernDive: An Introduction to 
+Statistical and Data Sciences via R** available at [ModernDive.com](http://moderndive.com/). 
 
 
 ## Contents of this Repository
 
-This repository contains :
+ModernDive is built using RStudio's [`bookdown`](https://www.rstudio.com/resources/webinars/introducing-bookdown/) package; for more information on how to use `bookdown` see <https://bookdown.org/>.
 
-* Development version of book
-    + Source code here.
-* Current/live version of the book on <http://www.moderndive.com/>
-    + Book output in `docs` folder.
-    + Source code is available by clicking on the "release" tab above. 
+* The `bookdown` source code for the development version of ModernDive (which can be previewed at <https://ismayc.github.io/moderndiver-book/>) is above. The book output HTML files are in the `docs/` folder.
+* The `bookdown` source code for the latest released version of ModernDive, which can be viewed at [ModernDive.com](http://moderndive.com/), and all past versions of ModernDive is accessible on the [Releases](https://github.com/ismayc/moderndiver-book/releases) page.
+* For information on the all our versions, including our planned changes for the next version, please see [NEWS.md](https://github.com/ismayc/moderndiver-book/blob/master/NEWS.md).
 
+## More Information
 
-## A Work in Progress
+* If you would like to receive periodic updates about ModernDive (roughly every 3 months), please sign up for our [mailing list](http://eepurl.com/cBkItf).
+* Contact Albert at [albert@moderndive.com](mailto:albert@moderndive.com) and Chester [chester@moderndive.com](mailto:chester@moderndive.com).
 
-This book is in constant evolution: below are many items to be addressed in the
-future to improve on the book. 
+<!--* We're on Twitter at [ModernDive](https://twitter.com/ModernDive).-->
 
-### To-do
-
-- Change colors of Learning check/Review Question blocks as needed
-    + Need to match colors in preamble.tex too
-- See if way to automate numbering of Learning check questions
-    + (Hacky way with R variable counting right now)
-    + Currently an issue with https://github.com/rstudio/bookdown/issues/152
-    + Need to specify both CSS and LaTeX environment code for custom blocks
-- Remove hard-coding whenever possible
-- Add captions and labels to all plots
-- Look into appropriate license (LICENSE file)
-
-
-### Notes
-
-- Chunk options with figures shouldn't have `_` or `-` in them
-    + Gives an error when Knitting to PDF since LaTeX is looking for `$`
-
-### Down the road
-
-- Parameterize the chapters so that other examples could be plugged in easily
-   + Will need to set up `ifelse` conditions for the text to make sense in some spots
-- Add `tufte_book` download format but in `gitbook` format
-- Include discussion on ethics of various datasets
