@@ -4,23 +4,23 @@
 
 * Incorporated feedback from consultations with Prof. Yana Weinstein, cognitive psychological scientist and co-founder of [The Learning Scientists](http://www.learningscientists.org/yana-weinstein/).
 * Restructured/revamped chapters
-    + Chapter 1: Introduction
+    + **Chapter 1: Introduction**
         + Friendlier introduction targetted to students is first thing users see. Followed then by introduction  for instructors, ways to connect/contribute, and technical details.
         + Added links to example student projects from two courses that have previously used ModernDive:
             + Middlebury College [MATH 116 Introduction to Statistical and Data Sciences](https://rudeboybert.github.io/MATH116/PS/final_project/final_project_outline.html#past_examples) using student collected data.
             + Pacific University [SOC 301 Social Statistics](https://ismayc.github.io/soc301_s2017/group-projects/index.html) using data from the [fivethirtyeight R package](https://cran.r-project.org/web/packages/fivethirtyeight/vignettes/fivethirtyeight.html)
-    + Chapter 2: Added a "Getting Started" chapter for new R users including
+    + **Chapter 2: Getting Started** New chapter added meant for new R users/coders, including
         + Discusions on R vs RStudio and how to install both (with support videos)
         + A "How do I code in R?" section with links to [DataCamp.com](https://www.datacamp.com/) courses that covers the console, data types, vectors, factors, data frames, boolean operators, functions etc
         + Thorough discussion on R packages
         + An end-to-end starter example analysis of the data frames in the `nycflights13` package using the console, `View()`, `glimpse()` etc.
-    + Chapter 3: Data Visualization now first non-intro chapter.
+    + **Chapter 3: Data Visualization via `ggplot2`** now first non-intro chapter.
         + Replaced Menard's "Napolean's March on Moscow" with Hans Rosling's (RIP) "Gapminder" plots as introductory example to Grammar of Graphics.
         + Added `geom_col()` for making barcharts when data is pre-tabulated, instead of using `geom_bar(stat="identity")` 
-    + Chapter 4: Tidy data bumped back. Added sections on converting from wide to long/tidy format and importing CSV's
-    + Chapter 5: Data ~~manipulation~~ wrangling
-    + Chapter 6: Regression bumped up from end of book to here given its pedagogical importance, added notes on viewing regression in a prediction framework.
-    + Chapter 7-9: Inference. Mostly unchanged for now; see pending changes section below.
+    + **Chapter 4: Tidy Data via `tidyr`** bumped back. Added sections on converting from wide to long/tidy format and importing CSV's
+    + **Chapter 5: Data ~~Manipulation~~ Wrangling via `dplyr`**
+    + **Chapter 6: Data Modeling using Regression via `broom`** bumped up from end of book to here given its pedagogical importance, added notes on viewing regression in a prediction framework.
+    + **Chapter 7-9: Sampling, Hypothesis Testing, Confidence Intervals** Mostly unchanged for now; see pending changes section below.
 
 ## Technical changes
 
@@ -32,12 +32,12 @@
 
 ## Pending changes for next version
 
-* Chapter 6: Regression
+* **Chapter 6: Data Modeling using Regression via `broom`**
     + Better treatment of experimental design and its effect on bias/causation than currently exists in chapter.
     + Examples of regression with categorical predictors with 3 or more levels.
     + Multivariate regression, in particular the following predictor scenarios: 2 numerical, 2 categorical, and 1 numerical + 1 categorical
     + Interaction effects
-* Chapters 7-9: Inference chapters (sampling, hypothesis testing, confidence intervals) have not been updated, pending developments of [`infer`: A tidyverse-friendly R package fo statistical inference](https://github.com/andrewpbray/infer)
+* **Chapter 7-9: Sampling, Hypothesis Testing, Confidence Intervals** have largely not been updated, pending developments of [`infer`: A tidyverse-friendly R package fo statistical inference](https://github.com/andrewpbray/infer)
 
 
 
