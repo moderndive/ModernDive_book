@@ -1,5 +1,7 @@
 # ModernDive <img src="images/hex_blue_text.png" align="right" width=125 />
 
+[![Build Status](https://travis-ci.org/ismayc/moderndiver-book.svg?branch=master)](https://travis-ci.org/ismayc/moderndiver-book) - Currently deploys to https://ismayc.github.io/moderndive (IN TESTING)
+
 Welcome to the GitHub repository page for **ModernDive: An Introduction to 
 Statistical and Data Sciences via R** available at [ModernDive.com](http://moderndive.com/). 
 
