@@ -1,4 +1,4 @@
-# Data Modeling using Regression via broom {#regression}
+# Data Modeling with Regression {#regression}
 
 ```{r setup_reg, include=FALSE, purl=FALSE}
 chap <- 6
@@ -53,7 +53,6 @@ library(nycflights13)
 library(ggplot2)
 library(dplyr)
 library(broom)
-library(knitr)
 ```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
@@ -65,366 +64,154 @@ library(mvtnorm)
 
 
 
----
 
-<!--Subsection on Alaska Data -->
+## Datasets
 
-## Data: Alaskan Airlines delays {#regdata}
+### Professor evaluations
 
-Say you are junior airlines analyst, charged with exploring the relationship/association of departure delays and arrival delays for Alaska Airlines flights leaving New York City in 2013. You however, don't have enough time to dig up information on all flights, and thus take a random sample of 50 flights. Is there a meaningful relationship between departure and arrival delays? Do higher departure delays lead to higher arrival delays? Most of us would assume so. Let us explore the relationship between these two variables using a scatterplot in Figure \@ref(fig:regplot1).
+A study conducted at the University of Texas in Austin
+available at [openintro.org](https://www.openintro.org/stat/data/?data=evals) 
+investigated associations between teacher evalutions and
+various attributes of the instructor. 
+
+* **Question**: Can we explain a professor's teaching evaluation score using these
+attritubes?
+* Outcome variable $y$: Average teaching score, based on students evaluations between 1 and 5
+* Explanatory variables $x$
+    + their rank: teaching, tenure track, or tenured
+    + their ethnicity: minority or non-minority
+    + their (binary) gender: male or female
+    + their language: whether or not english was their mother tongue
+    + their age:
+    + their average "beauty" rating, based on a panel of 6 students' scores between 1 and 10.
+
+First let's load the data and look at a random sample of 5 rows:
+
+```{r}
+load(url("http://www.openintro.org/stat/data/evals.RData"))
+evals <- evals %>%
+  select(score, ethnicity, gender, language, age, bty_avg, rank)
+```
 
 ```{r, echo=FALSE}
-# The following ensures the random sample of 50 flights is the same for anyone
-# using this code
-set.seed(2017)
-```
-
-```{r regplot1, warning=FALSE, fig.cap="Departure and Arrival Flight Delays for a sample of 50 Alaskan flights from NYC"}
-# Load Alaska data, deleting rows that have missing departure delay
-# or arrival delay data
-alaska_flights <- flights %>% 
-  filter(carrier == "AS") %>% 
-  filter(!is.na(dep_delay) & !is.na(arr_delay)) %>% 
-  # Select 50 flights that don't have missing delay data
-  sample_n(50)
-
-ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
-   geom_point()
-```
-
-Note how we used the `dplyr` package's `sample_n()` function to sample 50 points at random. A similarly useful function is `sample_frac()`, sampling a specified fraction of the data.
-
-
-```{block lc9-1, type='learncheck', purl=FALSE}
-**_Learning check_**
-```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Does there appear to be a linear relationship with arrival delay and departure delay?  In other words, could you fit a straight line to the data and have it explain well how `arr_delay` increases as `dep_delay` increases?
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Is there only one possible straight line that fits the data "well"?  How could you decide on which one is best if there are multiple options?
-
-```{block, type='learncheck', purl=FALSE}
-```
-
-
-
-
-
----
-
-<!--Subsection on Correlation -->
-
-## Correlation
-
-One way to measure the association between two numerical variables is measuring their correlation.  In fact, the **correlation coefficient** measures the degree to which points formed by two numerical variables make a straight line and is a summary measure of the strength of their relationship.
-
-**Definition: Correlation Coefficient**
-
-The *correlation coefficient* measures the strength of linear association between two variables.
-
-**Properties of the Correlation Coefficient**: It is always between -1 and 1, where 
-
-  - -1 indicates a perfect negative relationship
-  - 0 indicates no relationship
-  - +1 indicates a perfect positive relationship
-   
-We can look at a variety of different datasets and their corresponding correlation coefficients in the following plot.
-
-```{r corr-coefs, echo=FALSE, fig.cap="Different Correlation Coefficients"}
-library(mvtnorm) 
-correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
-n_sim <- 100
-
-values <- NULL
-for(i in 1:length(correlation)){
-  rho <- correlation[i]
-  sigma <- matrix(c(5, rho * sqrt(50), rho * sqrt(50), 10), 2, 2) 
-  sim <- rmvnorm(
-    n = n_sim,
-    mean = c(20,40),
-    sigma = sigma
-    ) %>%
-    as_data_frame() %>% 
-    mutate(correlation = round(rho,2))
-  
-  values <- bind_rows(values, sim)
-}
-
-ggplot(data = values, mapping = aes(V1, V2)) +
-  geom_point() +
-  facet_wrap(~ correlation, ncol = 3) +
-  labs(x = "", y = "") + 
-  theme(
-    axis.text.x = element_blank(),
-    axis.text.y = element_blank(),
-    axis.ticks = element_blank()
+evals %>% 
+  sample_n(5) %>% 
+  kable(
+    digits=2,
+    caption = "Random sample of 5 instructors", 
+    booktabs = TRUE
   )
 ```
-    
-```{block lc9-2, type='learncheck', purl=FALSE}
-**_Learning check_**
+
+
+## One numerical x: Professor evaluations
+
+### Exploratory data analysis
+
+Let's
+
+* Model the outcome variable y: teacher evaluation score
+* Using explanatory variable x: beauty score
+
+Let's plot the data:
+
+```{r numxplot1, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin"}
+ggplot(evals, aes(x=bty_avg, y=score)) + 
+  geom_point() + 
+  labs(x="Beauty Score", y="Teaching Score")
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  Make a guess as to the value of the correlation coefficient between `arr_delay` and `dep_delay` in the `alaska_flights` data frame.
+The above suffers from *overplotting*; let's break it up with a little random jitter added to the points. Note, we are
+only altering the visualization of the points; the original data is the same.
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  Do you think that the correlation coefficient between `arr_delay` and `dep_delay` is the same as the correlation coefficient between `dep_delay` and `arr_delay`?  Explain.
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What do you think the correlation between temperatures in Fahrenheit and temperatures in Celsius is?
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What do you think the correlation is between the number of days that have passed in a calendar year and the number of days left in a calendar year? For example, on January 3, 2017, two days have passed while 362 days remain.
-
-```{block, type='learncheck', purl=FALSE}
-``` 
-
-We can calculate the correlation coefficient for our example of flight delays via the `cor()` function in R
-
-```{r, warning=FALSE, echo=TRUE}
-alaska_flights %>% 
-  summarize(correl = cor(dep_delay, arr_delay))
+```{r numxplot2, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin: Jittered"}
+ggplot(evals, aes(x=bty_avg, y=score)) + 
+  geom_jitter() + 
+  labs(x="Beauty Score", y="Teaching Score")
 ```
 
-The sample correlation coefficient is denoted by $r$. In this case, $r = `r cor(alaska_flights$dep_delay, alaska_flights$arr_delay)`$.
 
-```{block lc9-3, type='learncheck', purl=FALSE}
-**_Learning check_**
+### Correlation coefficient
+
+The correlation coefficient between teacher evaluation score and beauty score is
+high:
+
+```{r, eval=FALSE}
+cor(evals$score, evals$bty_avg)
 ```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Would you quantify the value of `correl` calculated above as being 
-
-- strongly positively linear, 
-- weakly positively linear, 
-- not linear,
-- weakly negatively linear, or
-- strongly positively linear?
-
-Discuss your choice and what it means about the relationship between `dep_delay` and `arr_delay`.
-
-```{block, type='learncheck', purl=FALSE}
-```  
-  
-If you'd like a little more practice in determining the linear relationship between two variables by quantifying a correlation coefficient, you should check out the [Guess the Correlation](http://guessthecorrelation.com/) game online.
-
-### Correlation does not imply causation
-
-Just because arrival delays are related to departure delays in a somewhat linear fashion, we can't say with certainty that arrival delays are **caused entirely** by departure delays.  Certainly it appears that as one increases, the other tends to increase as well, but that might not always be the case.  We can only say that there is an **association** between them. 
-
-Causation is a tricky problem and frequently takes either carefully designed experiments or methods to control for the effects of potential confounding variables.  Both these approaches attempt either to remove all confounding variables or take them into account as best they can, and only focus on the behavior of a outcome variable in the presence of the levels of the other variable(s).
-
-Be careful as you read studies to make sure that the writers aren't falling into this fallacy of correlation implying causation.  If you spot one, you may want to send them a link to [Spurious Correlations](http://www.tylervigen.com/spurious-correlations).
-
-```{block lc9-4, type='learncheck', purl=FALSE}
-**_Learning check_**
-```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are some other confounding
-variables besides departure delay that we could attribute to an increase in arrival delays?  Remember that a variable is something that has to **vary**!
-
-```{block, type='learncheck', purl=FALSE}
-``` 
-
-
-
-
-
----
-
-<!--Section on SLR -->
-
-## Simple linear regression
-
-As suggested both visually and by their correlation coefficient of $r = `r cor(alaska_flights$dep_delay, alaska_flights$arr_delay)`$, there appears to be a strong positive linear association between these delay variables where
-
-* The dependent/outcome variable $y$ is `arr_delay`
-* The independent/explanatory variable $x$ is `dep_delay`
-
-What would be the "best fitting line"?.  One example of a line that fits the data well can be computed by using **simple linear regression**. In Figure \@ref(fig:with-reg) we add the **simple linear regression line** by adding a `geom_smooth()` layer to our plot where `lm` is short for "linear model." 
-
-```{r with-reg, echo=TRUE, fig.cap="Regression line fit on delays"}
-ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, color = "red")
-```
-
 ```{r, echo=FALSE}
-# USED INTERNALLY: Least squares line values, used for in-text output
-delay_fit <- lm(formula = arr_delay ~ dep_delay, data = alaska_flights)
-intercept <- tidy(delay_fit, conf.int=TRUE)$estimate[1] %>% round(3)
-slope <- tidy(delay_fit, conf.int=TRUE)$estimate[2] %>% round(3)
-CI_intercept <- c(tidy(delay_fit, conf.int=TRUE)$conf.low[1], tidy(delay_fit, conf.int=TRUE)$conf.high[1]) %>% round(3)
-CI_slope <- c(tidy(delay_fit, conf.int=TRUE)$conf.low[2], tidy(delay_fit, conf.int=TRUE)$conf.high[2]) %>% round(3)
-```
-
-### Best fitting line
-
-We now unpack one possible criterion for a line to be a "best fitting line" to a set of points. Let's choose an arbitrary point on the graph and label it the color blue:
-
-```{r echo=FALSE}
-best_fit_plot <- ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, color = "red") +
-  annotate("point", x = 44, y = 7, color = "blue", size = 3)
-best_fit_plot
-```
-
-Now consider this point's *deviation* from the regression line.
-
-```{r echo=FALSE}
-best_fit_plot <- best_fit_plot +
-  annotate("segment", x = 44, xend = 44, y = 7, yend = intercept + slope * 44,
-           color = "blue", arrow = arrow(length = unit(0.03, "npc")))
-best_fit_plot
-```
-
-Do this for another point.
-
-```{r echo=FALSE}
-best_fit_plot <- best_fit_plot +
-  annotate("point", x = 15, y = 34, color = "blue", size = 3) +
-  annotate("segment", x = 15, xend = 15, y = 34, yend = intercept + slope * 15,
-           color = "blue", arrow = arrow(length = unit(0.03, "npc")))
-best_fit_plot
-```
-
-And for another point.
-
-```{r echo=FALSE}
-best_fit_plot <- best_fit_plot +
-  annotate("point", x = 7, y = -20, color = "blue", size = 3) +
-  annotate("segment", x = 7, xend = 7, y = -20, yend = intercept + slope * 7,
-           color = "blue", arrow = arrow(length = unit(0.03, "npc")))  
-best_fit_plot
-```
-
-We repeat this process for each of the 50 points in our sample.  The pattern that emerges here is that the least squares line minimizes the sum of the squared arrow lengths (i.e., the least squares) for all of the points. We square the arrow lengths so that positive and negative deviations of the same amount are treated equally.  That's why alternative names for the simple linear regression line are the **least-squares line** and the **best fitting line**. It can be proven via calculus and linear algebra that this line uniquely minimizes the sum of the squared arrow lengths. 
-
-**Definitions:**
-
-For $i$ ranging from 1 to $n$ (the number of observations in your dataset), we define the following:
-
-* **Observed Value** $y_i$
-    - The vertical position of the black dots.
-* **Fitted/Predicted Value** $\widehat{y}_i$
-    - The vertical position of the corresponding value on the red regression line. 
-      In other words, the blue arrow tips.
-* **Residual** $\widehat{\epsilon}_i = y_i - \widehat{y}_i$
-    - The length of the blue arrows.
-
-Some observations on residuals:
-
-* As suggested by the word residual (left over), residuals represent the lack of fit of a line to a model, in other words the model's error. 
-* Note the order of the subtraction. You start at the actual data point $y_i$ (blue dot) and then subtract away the fitted value $\widehat{y_i}$ (the tip of the blue arrow).
-* If the observed value is exactly equal to the fitted value, then the residual is 0.
-* Of all possible lines, the least squares line minimizes the sum of all n residuals squared. 
-
-They play an important part in regression analysis; we will revisit the topic in Subsection \@ref(resid).
-
-
-
-
-
----
-
-<!--Subsection on Equation of the line -->
-
-## Equation of the line {#regeq}
-
-Figure \@ref(fig:with-reg) displayed the fitted least squares line in red, which we now define as 
-
-$$\widehat{y} = b_0 + b_1 x$$
-
-where $b_0$ and $b_1$ are the computed $y$-intercept and slope coefficients. We first use R's `lm()` function to fit a linear regression model (which we save in `delay_fit`) and then use the `tidy()` function in the `broom` package to display the $b_0$ and $b_1$ coefficients and further information about them in a **regression output table**. Almost any statistical software package you use for regression will output results that contain the following information.
-
-<!--
-Removed the CI addition since it needs more explanation.
--->
-
-```{r fit}
-delay_fit <- lm(formula = arr_delay ~ dep_delay, data = alaska_flights)
-tidy(delay_fit) %>% 
-  kable()
-```
-
-We see the regression output table has two rows, one corresponding to the $y$-intercept and the other the slope, with the first column "estimate" corresponding to their values. Thus, our equation is $$\widehat{y} = `r intercept` + `r slope` \, x.$$  It is usually preferred to actually write the names of the variables instead of $x$ and $y$ for context, so the line could also be written as $$\widehat{arr\_delay} = `r intercept` + `r slope` \, dep\_delay.$$
-
-For the remainder of this section, we answer the following questions:
-
-* How do we interpret these coefficients? Subsection \@ref(interpretation)
-
-<!--
-What are the additional columns in the regression output? Subsection \@ref(inference)
--->
-
-* How can I use the regression model to make predictions of arrival delay if I know the departure delay? Subsection \@ref(prediction)
-
-<!--
-These were the values of the first columns of the regression output table. We can also extract the coefficients by using the `coef` function:
-
-```{r}
-coef(delay_fit)
-```
--->
-
-### Coefficient interpretation {#interpretation}
-
-After you have determined your line of best fit, it is good practice to interpret the results to see if they make sense. The intercept $b_0=`r intercept`$ can be interpreted as the average associated arrival delay when a plane has a 0 minute departure delay. In other words, flights that depart on time arrive on average `r intercept` early (a negative delay). One explanation for this is that Alaska Airlines is overestimating their flying times, and hence flights tend to arrive early. In this case, the intercept had a direct interpretation since there are observations with $x=0$ values, in other words had 0 departure delay. However, in other contexts, the intercept may have no direct interpretation.
-
-The slope is the more interesting of the coefficients as it summarizes the relationship between $x$ and $y$. Slope is defined as rise over run or the change in $y$ for every one unit increase in $x$.  For our specific example, $b_1=`r slope`$ that for every one **minute** increase in the departure delay of Alaskan Airlines flights from NYC, there is an associated average increase in arrival delay of `r slope` minutes. This estimate does make some practical sense.  It would be strange if arrival delays went down as departure delays increased; in this case the coefficient would be negative.  We also expect that the longer a flight is delayed on departure, the more likely the longer a flight is delayed on arrival.  
-
-**Important note**:  The correlation coefficient and the slope of the regression line are not the same thing, as the correlation coefficient only measures the strength of linear association.  They will always share the same sign (positive correlation coefficients correspond to positive slope coefficients and the same holds true for negative values), but otherwise they are not equal.  For example, say we have 3 sets of points (red, green, blue) and their corresponding regression lines. Their regression lines all have different slopes, but the correlation coefficient is $r = 1$ for all three. In other words, all three groups of points have a perfect (positive) linear relationship.
-
-```{r, echo=FALSE, warning=FALSE, fig.height=4}
-vals <- seq(-2, 2, length=20)
-example <- data_frame(
-  x = rep(vals, 3),
-  y = c(0.01*vals, 1*vals, 3*vals),
-  slope = factor(rep(c(0.01, 1, 3), each = length(vals)))
-)
-ggplot(example, aes(x = x, y = y, col = slope)) +
-  geom_point(size = 2) + 
-  geom_smooth(method = "lm", se = FALSE)
+evals %>% 
+  summarize(correlation = cor(score, bty_avg)) %>% 
+  kable(
+    digits=3,
+    caption = "Correlation coefficient between teaching score and beauty score", 
+    booktabs = TRUE
+  )
 ```
 
 
-### Predicting values {#prediction}
+### Simple linear regression
 
-Let's say that we are waiting for our flight to leave New York City on Alaskan Airlines and we are told that our flight is going to be delayed 25 minutes.  What could we predict for our arrival delay based on the least squares line in Figure \@ref(fig:regplot1)?  In Figure \@ref(fig:with-reg-predict), we denote a departure delay of $x = 25$ minutes with a dashed black line. The predicted arrival time $\widehat{y}$ according to this regression model is $\widehat{y} = `r intercept` + `r slope`\times 25 = `r intercept + slope*25  %>% round(2)`$, indicated with the blue dot. This value does make some sense since flights that aren't delayed greatly from the beginning do tend to make up time in the air to compensate.
+Let's
 
-```{r with-reg-predict, echo=FALSE, fig.cap="Predicting Arrival Delay when Departure Delay is 25m"}
-ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, color = "red") +
-  geom_vline(xintercept = 25, linetype="dashed") +
-  annotate("point", x = 25, y = intercept + slope*25, color = "blue", size = 3) 
+* Fit a simple linear regression using the command `lm(y ~ x, data)` below:
+* Output the table in tidy data format using the `tidy()` function from the `broom` package.
+
+```{r, eval=FALSE}
+lm(score~bty_avg, data=evals) %>% 
+  tidy()
+```
+```{r, echo=FALSE}
+lm(score~bty_avg, data=evals) %>% 
+  tidy() %>% 
+  kable(
+    digits=3,
+    caption = "Regression line estimates", 
+    booktabs = TRUE
+  )
 ```
 
-Instead of manually calculating the fitted value $\widehat{y}$ for a given $x$ value, we can use the `augment()` function in the `broom` package to automate this. For example, we automate this procedure for departure delays of 25, 30, and 15 minutes. The three fitted $\widehat{y}$ are in the `.fitted` column while `.se.fit` is a measure of the uncertainty associated with the prediction (more on this topic when we study confidence intervals in Chapter \@ref(ci)).
+Let's plot the regression line with a new layer called `+ geom_smooth(method="lm")`:
 
-```{r}
-new_alaskan_flight <- data_frame(dep_delay = c(25, 30, 15))
-delay_fit %>% 
-  augment(newdata = new_alaskan_flight) %>% 
-  kable()
+```{r numxplot3, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin: With regression line"}
+ggplot(evals, aes(x=bty_avg, y=score)) + 
+  geom_point() + 
+  labs(x="Beauty Score", y="Teaching Score") +
+  geom_smooth(method="lm")
+```
+
+Let's ignore the grey bars now (which are "error" bars) by adding the argument `se=FALSE` to `geom_smooth`
+
+```{r numxplot4, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin: With regression line, no error bars"}
+ggplot(evals, aes(x=bty_avg, y=score)) + 
+  geom_point() + 
+  labs(x="Beauty Score", y="Teaching Score") +
+  geom_smooth(method="lm", se=FALSE)
 ```
 
 
 
+### Observed values, fitted values, and residuals
+
+```{r numxplot5, echo=FALSE, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin: With regression line, no error bars"}
+x <- 7.333
+y <- 4.9
+y_hat <- coef(lm(score~bty_avg, data=evals)) %>% as.numeric()
+y_hat <- y_hat * c(1, x) 
+y_hat <- sum(y_hat)
+
+ggplot(evals, aes(x=bty_avg, y=score)) + 
+  geom_point() + 
+  labs(x="Beauty Score", y="Teaching Score") +
+  geom_smooth(method="lm", se=FALSE) +
+  annotate("point", x=x, y=y, col="red", size=3) +
+  annotate("point", x=x, y=y_hat, col="red", shape=15, size=3) +
+  annotate("segment", x=x, xend=x, y=y, yend=y_hat, color = "blue", arrow = arrow(type="closed", length = unit(0.02, "npc"))) 
+```
+
+* Red point: *Observed point* $(x,y) = (\mbox{beauty score}, \mbox{teaching score}) = (7.333, 4.9)$. *Observed value* $y=4.9$
+* Red square: *Fitted point* $(x,\widehat{y}) = (\mbox{beauty score}, \mbox{fitted teaching score}) = (7.333, 4.371)$. *Fitted value* $\widehat{y} = 4.371$. Why 4.371? From table above: $\widehat{y} = b_0 + b_1 x = 3.880 + 0.067 \times 7.333$
+* Length of blue arrow: *Residual* (i.e. error) $y - \widehat{y} = 4.9 - 4.371 = 0.529$
 
 
----
-
-<!--Subsection on Conclusion -->
-
-## Conclusion
-
-### What's to come?  
-
-This concludes the **Data Exploration via the `tidyverse`** unit of this book.  You should start feeling more and more confident about both plotting variables (or multiple variables together) in various datasets and wrangling data as we've done in this chapter.  You've also been introduced to the concept of modeling with data using the powerful tool of regression.  You are encouraged to step back through the code in earlier chapters and make changes as you see fit based on your updated knowledge.  
-
-In Chapter \@ref(sim), we'll begin to build the pieces needed to understand how this unit of **Data Exploration** can tie into statistical inference in the **Inference** part of the book.  Remember that the focus throughout is on data visualization and we'll see that next when we discuss sampling, resampling, and bootstrapping.  These ideas will lead us into hypothesis testing and confidence intervals.
-
-### Script of R code
-
-An R script file of all R code used in this chapter is available [here](http://moderndive.com/scripts/06-regression.R).
-      
-    
 
