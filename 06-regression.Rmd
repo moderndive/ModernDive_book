@@ -58,6 +58,7 @@ library(broom)
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 # Packages needed internally, but not in text.
 library(mvtnorm) 
+library(tidyr)
 ```
 
 
@@ -193,12 +194,13 @@ ggplot(evals, aes(x=bty_avg, y=score)) +
 
 ### Observed values, fitted values, and residuals
 
-```{r numxplot5, echo=FALSE, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin: With regression line, no error bars"}
+```{r numxplot5, echo=FALSE, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin: Fitted value and residual"}
 x <- 7.333
 y <- 4.9
 y_hat <- coef(lm(score~bty_avg, data=evals)) %>% as.numeric()
 y_hat <- y_hat * c(1, x) 
 y_hat <- sum(y_hat)
+resid <- y - y_hat
 
 ggplot(evals, aes(x=bty_avg, y=score)) + 
   geom_point() + 
@@ -210,8 +212,137 @@ ggplot(evals, aes(x=bty_avg, y=score)) +
 ```
 
 * Red point: *Observed point* $(x,y) = (\mbox{beauty score}, \mbox{teaching score}) = (7.333, 4.9)$. *Observed value* $y=4.9$
-* Red square: *Fitted point* $(x,\widehat{y}) = (\mbox{beauty score}, \mbox{fitted teaching score}) = (7.333, 4.371)$. *Fitted value* $\widehat{y} = 4.371$. Why 4.371? From table above: $\widehat{y} = b_0 + b_1 x = 3.880 + 0.067 \times 7.333$
-* Length of blue arrow: *Residual* (i.e. error) $y - \widehat{y} = 4.9 - 4.371 = 0.529$
+* Red square: *Fitted point* $(x,\widehat{y}) = (\mbox{beauty score}, \mbox{fitted teaching score}) = (7.333, 4.369)$. *Fitted value* $\widehat{y} = 4.369$. Why 4.371? From table above: $\widehat{y} = b_0 + b_1 x = 3.880 + 0.067 \times 7.333 = 4.369$
+* Length of blue arrow: *Residual* (i.e. error) $y - \widehat{y} = 4.9 - 4.369 = 0.531$
+
+Let's extract point-by-point information now:
+
+* for all `r nrow(evals)` points in our plot, in other words
+* for all `r nrow(evals)` instructors in the study, in other words
+* for all `r nrow(evals)` rows in the `evals` data frame
+
+using the `augment()` function from the `broom` package. This function
+*augments* the original data by adding new information resulting from the
+regression. Let's look at 5 arbitrarily chosen rows. (Note that the first row in
+the table corresponds to the red points and blue arrow in Figure
+\@ref(fig:numxplot5)):
+
+```{r, eval=FALSE}
+point_by_point_info <- lm(score~bty_avg, data=evals) %>% 
+  augment() %>% 
+  select(score, bty_avg, .fitted, .resid)
+point_by_point_info
+```
+```{r, echo=FALSE}
+set.seed(76)
+point_by_point_info <- lm(score~bty_avg, data=evals) %>% 
+  augment() %>% 
+  select(score, bty_avg, .fitted, .resid)
+point_by_point_info %>% 
+  slice(c(21, sample(1:nrow(evals), 4))) %>% 
+  kable(
+    digits=3,
+    caption = "Point-by-point information", 
+    booktabs = TRUE
+  )
+```
+
+The periods in the variable names indicated that they are new information that
+was added to the original dataset. In particular
+
+* **.fitted**: the fitted value $\widehat{y}$ corresponding to an observed point $(x,y)$. One 
+example is the red square in Figure \@ref(fig:numxplot5)
+* **.resid**: the residual $y - \widehat{y}$. One example is the length of the blue arrow
+in Figure \@ref(fig:numxplot5).
 
 
 
+
+### Residual analysis
+
+Recall the residuals can be thought of as "lack-of-fit", or "left-overs", or
+"errors". Ideally, we want there to be *no systematic pattern* to the residuals. 
+What does this mean?
+
+1. The residuals should be on average 0. 
+1. The spread of the residuals should be consistent.
+1. The value of the residuals should not depend on the value of x
+
+Let's look at the residuals two ways. First, recall in Figure \@ref(fig:numxplot5)
+above we plotted:
+
+* On the y-axis: $y$ teaching score
+* On the x-axis: $x$ beauty score
+
+Instead, in Figure \@ref(fig:numxplot6) below let's plot
+
+* On the y-axis: $y-\widehat{y}$ residual instead
+* On the x-axis: $x$ beauty score (same as before)
+
+```{r numxplot6, echo=FALSE, warning=FALSE, fig.cap="Plot of Residuals over beauty score"}
+ggplot(point_by_point_info, aes(x=bty_avg, y=.resid)) + 
+  geom_point() + 
+  labs(x="Beauty Score", y="Residual") +
+  geom_hline(yintercept=0, col="blue", size =1) +
+  annotate("point", x=x, y=resid, col="red", size=3) +
+  annotate("point", x=x, y=0, col="red", shape=15, size=3) +
+  annotate("segment", x=x, xend=x, y=resid, yend=0, color = "blue", arrow = arrow(type="closed", length = unit(0.02, "npc"))) 
+```
+
+You can think of Figure \@ref(fig:numxplot6) as Figure \@ref(fig:numxplot5), but
+with the blue line flattened out. Does it seem like there is *no systematic pattern*
+to the residuals?
+
+Here are some hypothetical examples where there is a systematic pattern to the
+residuals:
+
+```{r numxplot7, echo=FALSE, warning=FALSE, fig.cap="Examples of less than ideal residual patterns"}
+temp <- evals
+temp$`Example 1` <- ((evals$bty_avg-5)^2 - 6 + rnorm(nrow(evals), 0, 0.5))*0.4
+temp$`Example 2` <- (rnorm(nrow(evals), 0, 0.075*evals$bty_avg^2))*0.4
+
+temp <- temp %>%
+  select(bty_avg, `Example 1`, `Example 2`) %>% 
+  gather(type, eps, -bty_avg)
+
+ggplot(temp, aes(x=bty_avg, y=eps)) +
+  geom_point() + 
+  labs(x="Beauty Score", y="Residual") +
+  geom_hline(yintercept=0, col="blue", size =1) +
+  facet_wrap(~type)
+```
+
+The second way to look at the residuals is using a histogram:
+
+```{r numxplot8, warning=FALSE, fig.cap="Histogram of residuals"}
+ggplot(point_by_point_info, aes(x=.resid)) +
+  geom_histogram(binwidth = 0.25) +
+  labs(x="Residual")
+```
+
+This histogram seems to indicate that we have more positive residuals than negative.
+Since Residual  = $y-\widehat{y} > 0$ when $y > \widehat{y}$, it seems
+our fitted professor score from the regression model have a slight tendency of
+being small than the actually observed score.
+
+This histogram has a slight *left-skew* in that there is a long tail on the
+left. Another way to say this is this data exhibit a *negative skew*. Here are examples
+of an ideal and less than ideal patterns of residuals.
+
+```{r numxplot9, echo=FALSE, warning=FALSE, fig.cap="Examples of ideal and less than ideal residual patterns"}
+temp <- evals
+temp$`Ideal` <- rnorm(nrow(temp), 0, sd=sd(point_by_point_info$.resid))
+temp$`Less than ideal` <- rnorm(nrow(temp), 0, sd=sd(point_by_point_info$.resid))^2
+
+temp <- temp %>%
+  select(bty_avg, `Ideal`, `Less than ideal`) %>% 
+  gather(type, eps, -bty_avg)
+
+ggplot(temp, aes(x=eps)) +
+  geom_histogram(binwidth = 0.25) +
+  labs(x="Residual") +
+  facet_wrap(~type, scales = "free")
+```
+
+In fact, we'll see later on that we would like the residuals to be *normally distributed* with
+mean 0. In other words, be bell-shaped and centered at 0!
