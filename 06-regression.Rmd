@@ -264,7 +264,6 @@ the table corresponds to the red points and blue arrow in Figure
 point_by_point_info <- lm(score~bty_avg, data=evals) %>% 
   augment() %>% 
   select(score, bty_avg, .fitted, .resid)
-point_by_point_info
 ```
 ```{r, echo=FALSE}
 set.seed(76)
@@ -291,7 +290,7 @@ in Figure \@ref(fig:numxplot5).
 
 
 
-### Residual analysis
+### Residual analysis {#residual_analysis}
 
 Recall the residuals can be thought of as "lack-of-fit", or "left-overs", or
 "errors". Ideally, we want there to be *no systematic pattern* to the residuals. 
@@ -483,8 +482,8 @@ For the regression line in the plot, the sum of the squared residuals is `r lm(s
 
 ### Exploratory data analysis
 
-Let's load the country-by-country life expectancy data available in 
-Section \@ref(datalifeexp).
+Let's load the country-by-country life expectancy `gapminder2007` data frame
+that we created in the "Datasets" Section \@ref(datalifeexp).
 
 ```{r, eval=TRUE}
 lifeExp_by_continent <- gapminder2007 %>% 
@@ -508,8 +507,8 @@ median_africa <- lifeExp_by_continent %>%
   pull(median)
 ```
 
-The median life expectancy in Africa in was 52.93. Let's look at a boxplot
-of life expectancy and mark the median for Africa in red.
+The median life expectancy in Africa in was 52.93. Let's look at a boxplot of
+life expectancy and mark the median for Africa in red.
 
 ```{r catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007"}
 ggplot(gapminder2007, aes(x=continent, y=lifeExp)) +
@@ -518,7 +517,7 @@ ggplot(gapminder2007, aes(x=continent, y=lifeExp)) +
   labs(x = "Continent", y="Life expectancy (years)")
 ```
 
-Let's look nubmer of years difference
+Let's look number of years difference relative to Africa's median.
 
 ```{r catxplot2, warning=FALSE, fig.cap="Difference in life expectancy relative to African median of 52.93 years"}
 ggplot(gapminder2007, aes(x=continent, y=lifeExp-52.93)) +
@@ -528,7 +527,11 @@ ggplot(gapminder2007, aes(x=continent, y=lifeExp-52.93)) +
 ```
 
 
-### Regression 
+### Simple linear regression
+
+Note that while the boxplots in Figure \@ref(fig:catxplot2)) involved medians,
+regression involves means. Using the `gapminder2007` data frame again, let's compute
+*mean* life expectancy instead of median.
 
 ```{r, eval=FALSE}
 gapminder2007 %>% 
@@ -546,6 +549,16 @@ gapminder2007 %>%
   )
 ```
 
+Let's now compute the *regression table*. Recall:
+
+* `lm(lifeExp ~ continent, data=gapminder2007)` is a regression where
+    + $y$ is the numerical outcome variable life expectancy
+    + $x$ is the categorical explanatory/predictor variable continent
+* We then pipe this into `tidy()` from the `broom` package. All this does is
+output the regression table in a clean format; "tidy data" format as seen in
+Chapter \@ref(tidy) in fact!
+* You can think of the following two lines of code as a `generate_regression_table()` function:
+
 ```{r, eval=FALSE}
 lm(lifeExp ~ continent, data=gapminder2007) %>% 
   tidy()
@@ -560,6 +573,27 @@ lm(lifeExp ~ continent, data=gapminder2007) %>%
   )
 ```
 
+What are these values? Recall:
+
+* Africa is treated as the "baseline for comparison".
+    + The intercept of 54.81 corresponds to the mean life expectancy of Africa.
+    + It was chosen for no other reason than it is first alphabetically. You can
+    manually specify which continent to use as baseline, but we leave that to a more
+    advanced course.
+* continentAmericas was created by the regression.
+    + It is the additional mean life expectancy of the Americas *above and beyond
+    the baseline of comparison which is Africa*. Note that 18.80 = 73.61 - 54.81,
+    the difference in mean life expectancies of the Americas and Africa from the 
+    table of continent means above.
+* Same goes for Asia, Europe, and Oceania
+* What are std.error, statistic, and p.value? We'll see this later in the course
+after we've seen statistical inference, but here's a preview:
+    + std.error is the standard error: it quantifies the uncertainy
+    + statistic and p.value: these inform us on the *statistical significance*
+
+To really bring home what the values in the regression table are, let's subtract
+the mean life expectancy for Africa of 54.81 from each of the 5 mean life expectancies
+we computed in the table above and add a new column.
 
 ```{r, eval=FALSE}
 gapminder2007 %>% 
@@ -571,10 +605,57 @@ gapminder2007 %>%
 gapminder2007 %>% 
   group_by(continent) %>% 
   summarize(mean = mean(lifeExp)) %>% 
-  mutate(compare_to_africa = mean - 54.81) %>% 
+  mutate(compared_to_africa = mean - 54.81) %>% 
   kable(
     digits=2,
-    caption = "Relative to baseline", 
+    caption = "Continent means and comparison of means relative to baseline", 
     booktabs = TRUE
   )
 ```
+
+
+### Observed values, fitted values, and residuals
+
+Let's extract point-by-point information now:
+
+* for all `r nrow(gapminder2007)` points in the five boxplots in Figure \@ref(fig:catxplot2)) 
+* for all `r nrow(gapminder2007)` countries in our dataset
+* for all `r nrow(gapminder2007)` rows in the `gapminder2007` data frame
+
+```{r, eval=FALSE}
+point_by_point_info <- lm(lifeExp ~ continent, data=gapminder2007) %>% 
+  augment() %>% 
+  select(lifeExp, continent, .fitted, .resid)
+```
+
+Note:
+
+* `lm(lifeExp ~ continent, data=gapminder2007)` is the regression from earlier
+* We then pipe this into `augment()` from the `broom` package. All this does is
+output point-by-point information in a clean format; "tidy data" format as seen
+in Chapter \@ref(tidy) in fact!
+* We then only select the `lifeExp`, `continent`, `.fitted`, and  `.resid` columns.
+We don't need the rest, so let's keep our output clean.
+
+Let's look at a random sample of 5 of these `r nrow(gapminder2007)` rows:
+
+```{r, echo=FALSE}
+set.seed(76)
+point_by_point_info <- lm(lifeExp ~ continent, data=gapminder2007) %>% 
+  augment() %>% 
+  select(lifeExp, continent, .fitted, .resid)
+point_by_point_info %>% 
+  kable(
+    digits=3,
+    caption = "Point-by-point information (5 of 142 rows)", 
+    booktabs = TRUE
+  )
+```
+
+
+### Residual analysis
+
+Recall our discussion on residuals from Section \@ref(residual_analysis). Let's repeat
+this.
+
+
