@@ -59,6 +59,7 @@ library(broom)
 # Packages needed internally, but not in text.
 library(mvtnorm) 
 library(tidyr)
+library(forcats)
 ```
 
 
@@ -145,7 +146,7 @@ this data was drawn from, so we can't generalize any of these results.
 an individual has
 * Outcome variable $y$ `Balance`
 * Explanatory variables
-    + $x_1$ `Income`: Income in $10000's
+    + $x_1$ `Income`: Income in $1000's
     + $x_2$ `Limit`: Credit limit
 
 First let's load the data and look at a random sample of 5 rows:
@@ -773,7 +774,7 @@ plot_ly(showscale=FALSE) %>%
   ) %>% 
   layout(
     scene = list(
-      xaxis = list(title = "x1 - Income (in $10K)"),
+      xaxis = list(title = "x1 - Income (in $1000)"),
       yaxis = list(title = "x2 - Limit ($)"),
       zaxis = list(title = "y - Balance ($)")
     )
@@ -784,7 +785,7 @@ Let's do the next best thing and look at two separate scatterplots of the outcom
 variable $y$ credit card balance in dollars with
 
 1. Explanatory/predictor variable $x$ being credit limit in dollars
-1. Explanatory/predictor variable $x$ being income in $10,000 units
+1. Explanatory/predictor variable $x$ being income in $1000 units
 
 ```{r 2numxplot1, warning=FALSE, fig.cap="Relationship between credit card balance and credit limit"}
 ggplot(Credit, aes(x=Limit, y=Balance)) +
@@ -796,7 +797,7 @@ ggplot(Credit, aes(x=Limit, y=Balance)) +
 ```{r 2numxplot2, warning=FALSE, fig.cap="Relationship between credit card balance and income"}
 ggplot(Credit, aes(x=Income, y=Balance)) +
   geom_point() +
-  labs(x="Income (in $10K)", y="Credit card balance (in $)") +
+  labs(x="Income (in $1000)", y="Credit card balance (in $)") +
   geom_smooth(method="lm", se=FALSE)
 ```
 
@@ -825,7 +826,7 @@ Credit %>%
   summarize(correlation = cor(Income, Balance)) %>% 
   kable(
     digits=3,
-    caption = "Correlation between income (in $10K) and credit card balance", 
+    caption = "Correlation between income (in $1000) and credit card balance", 
     booktabs = TRUE
   )
 ```
@@ -835,11 +836,11 @@ in particular between credit limit and credit card balance! Makes sense! Note
 however there were a few individuals who had balances of 0!
 
 What if in instead we looked the correlation coefficient between income and
-credit card balance, where income was in dollars and not tens of thousands of dollars? i.e. we 
-multiply $Income$ by 10,000?
+credit card balance, where income was in dollars and not thousands of dollars? i.e. we 
+multiply Income by 1000?
 
 ```{r, eval=FALSE}
-cor(Credit$Income * 10000, Credit$Balance)
+cor(Credit$Income * 1000, Credit$Balance)
 ```
 ```{r, echo=FALSE}
 Credit %>% 
@@ -855,7 +856,7 @@ We see it is the same! We say that correlation coefficient is invariant to linea
 transformations! In other words
 
 * The correlation between $x$ and $y$ will be the same as
-* The correlation between $x$ and $a\times y + b$ where $a, b$ are numerical values (real numbers in mathematical terms)
+* The correlation between $a\times x + b$ and $y$ where $a, b$ are numerical values (real numbers in mathematical terms)
 
 
 ### Multiple regression
@@ -893,4 +894,58 @@ a caveat to our interpretation: *all other things being equal, for every increas
 * Income: -$7.66. Negative? Say what? Didn't we see in Figure
 \@ref(fig:2numxplot2)) that the relationship was positive and that the
 correlation between Income and credit card balance was positive?
+
+Here is a histogram of all `nrow(Credit)` values of `Limit` where the vertical red
+lines cut up the data into quartiles.
+
+```{r, 2numxplot3, echo=FALSE, fig.cap="Histogram of credit limits and quartiles"}
+ggplot(Credit, aes(x=Limit)) +
+  geom_histogram() +
+  geom_vline(xintercept=quantile(Credit$Limit, probs=c(0.25, 0.5, 0.75)), col="red")
+```
+
+In other words, 
+
+1. 25% of people had credit limits between \$0 and \$3088. Let's call this group "low" credit limit bracket.
+1. 25% of people had credit limits between \$3088 and \$4622. Let's call this group "medium-low" credit limit bracket.
+1. 25% of people had credit limits between \$4622 and \$5873. Let's call this group "medium-high" credit limit bracket.
+1. 25% of peopel had credit limits over \$5873. Let's call this group "high" credit limit bracket.
+
+```{r, 2numxplot4, echo=FALSE, warning=FALSE, fig.cap="Relationship between credit card balance and income for different credit limit brackets"}
+Credit <- Credit %>% 
+  mutate(limit_bracket = cut_number(Limit, 4)) %>% 
+  mutate(limit_bracket = fct_recode(limit_bracket,
+    "low" =  "[855,3.09e+03]",
+    "medium-low" = "(3.09e+03,4.62e+03]", 
+    "medium-high" = "(4.62e+03,5.87e+03]", 
+    "high" = "(5.87e+03,1.39e+04]"
+  ))
+
+ggplot(Credit, aes(x=Income, y=Balance, col=limit_bracket)) +
+  geom_point() +
+  geom_smooth(method="lm", se=FALSE) +
+  labs(x="Income (in $1000)", y="Credit card balance (in $)", color="Credit limit\nbracket")
+```
+
+Figure \@ref(fig:2numxplot4)) is actually the same as Figure \@ref(fig:2numxplot2)), but now with colors distinguishing the credit limit brackets. We now see that for the 
+
+1. low
+1. medium-low
+1. medium-high
+
+income bracket groups, the strong positive relationship between credit card balance
+and income disappears! Only for the high bracket does the relationship stay somewhat positive. In this example credit limit is a *confounding variable* for credit card balance and income.
+
+Alternatively, we could also have used facets, where each facet has roughly 25% of people based
+on the credit limit bracket. However, IMO the above plot is easier to read.
+
+```{r, 2numxplot5, echo=FALSE, warning=FALSE, fig.cap="Relationship between credit card balance and income for different credit limit brackets"}
+ggplot(Credit, aes(x=Income, y=Balance)) +
+  geom_point() +
+  facet_wrap(~limit_bracket) +
+  geom_smooth(method="lm", se=FALSE) +
+  labs(x="Income (in $1000)", y="Credit card balance (in $)")
+```
+
+
 
