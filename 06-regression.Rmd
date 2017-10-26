@@ -135,7 +135,7 @@ gapminder2007 %>%
 
 
 
-### Credit card balance
+### Credit card balance {#datacreditcard}
 
 The `ISLR` package contains the `Credit` data frame, which contains information
 on Credit balances. Unfortunately, I don't have information on which population
@@ -206,7 +206,7 @@ evals %>%
   summarize(correlation = cor(score, bty_avg)) %>% 
   kable(
     digits=3,
-    caption = "Correlation coefficient between teaching score and beauty score", 
+    caption = "Correlation between teaching score and beauty score", 
     booktabs = TRUE
   )
 ```
@@ -673,6 +673,7 @@ point_by_point_info <- lm(lifeExp ~ continent, data=gapminder2007) %>%
   augment() %>% 
   select(lifeExp, continent, .fitted, .resid)
 point_by_point_info %>% 
+  sample_n(5) %>% 
   kable(
     digits=3,
     caption = "Point-by-point information (5 of 142 rows)", 
@@ -736,9 +737,160 @@ Looks pretty good!
 
 
 
+ 
 
 
 
 
 
+## Two numerical x: Credit card balance
+
+We now move from *simple linear regression*, which involves a single
+explanatory/predictor variable, to *multiple regression*, which involves more
+than one explanatory/predictor variable.
+
+### Exploratory data analysis
+
+Let's load the Credit card balance `Credit` data frame
+that we created in the "Datasets" Section \@ref(datacreditcard).
+
+Now that we have two numerical predictors, an ideal way to visualize this data
+is with a 3D scatterplot. Unfortunately we can't show such a plot in this book, but
+you can run the following code in R to create an interactive 3D plot using the `plotly` package.
+
+```{r, eval=FALSE}
+library(ISLR)
+library(plotly)
+plot_ly(showscale=FALSE) %>%
+  add_markers(
+    x = Credit$Income,
+    y = Credit$Limit,
+    z = Credit$Balance,
+    hoverinfo = 'text',
+    text = ~paste("x1 - Income: ", Credit$Income, 
+                  "</br> x2 - Limit: ", Credit$Limit, 
+                  "</br> y - Balance: ", Credit$Balance)
+  ) %>% 
+  layout(
+    scene = list(
+      xaxis = list(title = "x1 - Income (in $10K)"),
+      yaxis = list(title = "x2 - Limit ($)"),
+      zaxis = list(title = "y - Balance ($)")
+    )
+  )
+```
+
+Let's do the next best thing and look at two separate scatterplots of the outcome
+variable $y$ credit card balance in dollars with
+
+1. Explanatory/predictor variable $x$ being credit limit in dollars
+1. Explanatory/predictor variable $x$ being income in $10,000 units
+
+```{r 2numxplot1, warning=FALSE, fig.cap="Relationship between credit card balance and credit limit"}
+ggplot(Credit, aes(x=Limit, y=Balance)) +
+  geom_point() +
+  labs(x="Credit limit (in $)", y="Credit card balance (in $)") +
+  geom_smooth(method="lm", se=FALSE)
+```
+
+```{r 2numxplot2, warning=FALSE, fig.cap="Relationship between credit card balance and credit limit"}
+ggplot(Credit, aes(x=Income, y=Balance)) +
+  geom_point() +
+  labs(x="Income (in $10K)", y="Credit card balance (in $)") +
+  geom_smooth(method="lm", se=FALSE)
+```
+
+In both cases, there seems to be a positive relationship. Let's look at the 
+correlation coefficient in both cases. 
+
+```{r, eval=FALSE}
+cor(Credit$Limit, Credit$Balance)
+```
+```{r, echo=FALSE}
+Credit %>% 
+  summarize(correlation = cor(Limit, Balance)) %>% 
+  kable(
+    digits=3,
+    caption = "Correlation between credit limit and credit card balance", 
+    booktabs = TRUE
+  )
+```
+
+
+```{r, eval=FALSE}
+cor(Credit$Income, Credit$Balance)
+```
+```{r, echo=FALSE}
+Credit %>% 
+  summarize(correlation = cor(Income, Balance)) %>% 
+  kable(
+    digits=3,
+    caption = "Correlation between income (in $10K) and credit card balance", 
+    booktabs = TRUE
+  )
+```
+
+In both cases, the correlation coefficient indicates a strong linear relationship,
+in particular between credit limit and credit card balance! Makes sense! Note 
+however there were a few individuals who had balances of 0!
+
+What if in instead we looked the correlation coefficient between income and
+credit card balance, where income was in dollars and not tens of thousands of dollars? i.e. we 
+multiply $Income$ by 10,000?
+
+```{r, eval=FALSE}
+cor(Credit$Income * 10000, Credit$Balance)
+```
+```{r, echo=FALSE}
+Credit %>% 
+  summarize(correlation = cor(Income, Balance)) %>% 
+  kable(
+    digits=3,
+    caption = "Correlation between income (in $) and credit card balance", 
+    booktabs = TRUE
+  )
+```
+
+We see it is the same! We say that correlation coefficient is invariant to linear
+transformations! In other words
+
+* The correlation between $x$ and $y$ will be the same as
+* The correlation between $x$ and $a\times y + b$ where $a, b$ are numerical values (real numbers in mathematical terms)
+
+
+### Multiple regression
+
+Let's now compute the *regression table*
+
+```{r, eval=FALSE}
+lm(Balance ~ Limit + Income, data=Credit) %>% 
+  tidy()
+```
+```{r, echo=FALSE}
+lm(Balance ~ Limit + Income, data=Credit) %>% 
+  tidy() %>% 
+  kable(
+    digits=2,
+    caption = "Regression table", 
+    booktabs = TRUE
+  )
+```
+
+Whereas in simple linear regression with a single numerical predictor, for
+multiple linear regression with two numerical predictors, the regression line
+is now a *regression plane*. In other words, a flat surface! See the
+interactive 3D scatterplot with a regression plane added [here](https://rudeboybert.github.io/STAT135/index.html#36_multiple_regression).
+
+How do we interpret the three values that define the plane?
+
+* Intercept: -$385.18. In this case, the intercept doesn't have a practical
+interpretation as no one can have a credit card balance of less than $0. It is
+used merely to situation the plane.
+* Limit: $0.26. Now that we have multiple variables to consider, we have to add
+a caveat to our interpretation: *all other things being equal, for every increase in one dollar in credit limit, there is an associated increase of on average 26 cents in credit card balance*. Note:
+    + Again, we are not making any causal statements, only statements relating to the association between credit limit and balance
+    + The *all other things being equal* related to the other explanatory/predictor variables, in this case only one: Income. This is equivalent to saying "holding income constant, we observed an associated increase of $0.26 in credit card balance for every dollar increase in credit limit"
+* Income: -$7.66. Negative? Say what? Didn't we see in Figure
+\@ref(fig:2numxplot2)) that the relationship was positive and that the
+correlation between Income and credit card balance was positive?
 
