@@ -69,7 +69,7 @@ library(forcats)
 
 ## Datasets
 
-### Professor evaluations
+### Professor evaluations {#profevals}
 
 A study conducted at the University of Texas in Austin
 available at [openintro.org](https://www.openintro.org/stat/data/?data=evals) 
@@ -167,7 +167,7 @@ Credit %>%
 
 
 
-## One numerical x: Professor evaluations
+## One numerical x: Professor evaluations {#onenumerical}
 
 ### Exploratory data analysis
 
@@ -507,7 +507,7 @@ For the regression line in the plot, the sum of the squared residuals is `r lm(s
 
 
 
-## One categorical x: Professor evaluations
+## One categorical x: Worldwide life expectancy
 
 ### Exploratory data analysis
 
@@ -756,32 +756,8 @@ Let's load the Credit card balance `Credit` data frame
 that we created in the "Datasets" Section \@ref(datacreditcard).
 
 Now that we have two numerical predictors, an ideal way to visualize this data
-is with a 3D scatterplot. Unfortunately we can't show such a plot in this book, but
-you can run the following code in R to create an interactive 3D plot using the `plotly` package.
-
-```{r, eval=FALSE}
-library(ISLR)
-library(plotly)
-plot_ly(showscale=FALSE) %>%
-  add_markers(
-    x = Credit$Income,
-    y = Credit$Limit,
-    z = Credit$Balance,
-    hoverinfo = 'text',
-    text = ~paste("x1 - Income: ", Credit$Income, 
-                  "</br> x2 - Limit: ", Credit$Limit, 
-                  "</br> y - Balance: ", Credit$Balance)
-  ) %>% 
-  layout(
-    scene = list(
-      xaxis = list(title = "x1 - Income (in $1000)"),
-      yaxis = list(title = "x2 - Limit ($)"),
-      zaxis = list(title = "y - Balance ($)")
-    )
-  )
-```
-
-Let's do the next best thing and look at two separate scatterplots of the outcome
+is with a 3D scatterplot. Unfortunately this is beyond the scope of this book,
+so let's do the next best thing and look at two separate scatterplots of the outcome
 variable $y$ credit card balance in dollars with
 
 1. Explanatory/predictor variable $x$ being credit limit in dollars
@@ -949,3 +925,128 @@ ggplot(Credit, aes(x=Income, y=Balance)) +
 
 
 
+ 
+
+
+
+
+
+## One numerical x and one categorical x: Professor evaluations
+
+Let's revisit the professor evaluation data introduced in Section \@ref(profevals). In
+Section \@ref(#onenumerical) we studied the relationship between 
+
+* $y$: outcome variable of teacher evaluation score
+* $x$: numerical explanatory variable of beauty score
+
+Now let's say we want to also consider age instead of beauty score and a
+categorical explanatory/predictor variable: the binary gender of the professor.
+Our modeling situation now becomes
+
+* y: outcome variable of teacher evaluation score
+* predictor variables
+    + $x_1$: numerical explanatory/predictor variable of age
+    + $x_2$: categorical explanatory/predictor variable of gender
+
+
+### Exploratory data analysis
+
+```{r numxcatxplot1, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin by gender: Jittered"}
+ggplot(evals, aes(x=age, y=score, col=gender)) + 
+  geom_jitter() + 
+  labs(x="Age", y="Teaching Score", color="Gender") +
+  geom_smooth(method="lm", se=FALSE)
+```
+
+We notice some interesting trends:
+
+1. There are almost no women faculty over the age of 60.
+1. Fitting separate regression lines for men and women, we see they have different slopes.
+We see that the associated effect of increasing age seems to be much harsher for women than men. In other words, they have different slopes.
+
+
+
+### Multiple regression
+
+Let's now compute the *regression table*
+
+```{r, eval=FALSE}
+lm(score ~ age + gender, data=evals) %>% 
+  tidy()
+```
+```{r, echo=FALSE}
+lm(score ~ age + gender, data=evals) %>% 
+  tidy() %>% 
+  kable(
+    digits=4,
+    caption = "Regression table", 
+    booktabs = TRUE
+  )
+```
+
+The modeling equation for this is:
+
+$$
+\begin{align}
+\widehat{y} &= b_0 + b_1 x_1 + b_2 x_2 \\
+\widehat{score} &= b_0 + b_{age} age + b_{male} \mathbb{1}[\mbox{is male}] \\
+\end{align}
+$$
+
+What this looks like is in Figure \@ref(fig:numxcatxplot2)) below. 
+
+```{r numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin by gender: same slope"}
+coeff <- lm(score ~ age + gender, data=evals) %>% coef() %>% as.numeric()
+slopes <- evals %>% 
+  group_by(gender) %>% 
+  summarise(min=min(age), max=max(age)) %>% 
+  mutate(intercept = coeff[1]) %>% 
+  mutate(intercept = ifelse(gender=="male", intercept + coeff[3], intercept)) %>% 
+  gather(point, age, -c(gender, intercept)) %>% 
+  mutate(y_hat = intercept + age*coeff[2])
+
+ggplot(evals, aes(x=age, y=score, col=gender)) + 
+  geom_jitter() + 
+  labs(x="Age", y="Teaching Score", color="Gender") +
+  geom_line(data=slopes, aes(y=y_hat), size=1)
+```
+
+We see that:
+
+* Females are treated as the baseline for comparison for no other reason than "female" is alphabetically earlier than "male". The $b_{male} = 0.1906$ is the vertical "bump" that men get in their teaching evaluation scores. Or more precisely, it is the average difference in teaching score
+that men get *relative to the baseline of women*
+* Accordingly, the intercepts are (which in this case make no sense since no professor can have age 0):
+    + for women: $b_0$ = 4.484
+    + for men: $b_0 + b_{male}$ = 4.484 + 0.191 = 4.675
+* Both men and women have the same slope. In other words, *in this model* the associated effect of age is the same for men and women: all other things being equal, for every increase in 1 in age,
+there is on average an associated decrease of $b_{age}$ = -0.0086 in teaching score
+
+**Hold up**: Figure \@ref(fig:numxcatxplot2)) is different than Figure \@ref(fig:numxcatxplot1))! What is going on? What we have in the original plot is an *interaction effect* between age and gender!
+
+
+### Interaction effects
+
+We say a model has an interaction effect if the associated effect of one variable *depends on the value of another variable*.
+
+Let's now compute the *regression table*
+
+```{r, eval=FALSE}
+lm(score ~ age * gender, data=evals) %>% 
+  tidy()
+```
+```{r, echo=FALSE}
+lm(score ~ age * gender, data=evals) %>% 
+  tidy() %>% 
+  kable(
+    digits=4,
+    caption = "Regression table", 
+    booktabs = TRUE
+  )
+```
+
+$$
+\begin{align}
+\widehat{y} &= b_0 + b_1 x_1 + b_2 x_2 + b_3 x_1x_2\\
+\widehat{score} &= b_0 + b_{age} age + b_{male} \mathbb{1}[\mbox{is male}] + \beta{age,male}age\mathbb{1}[\mbox{is male}] \\
+\end{align}
+$$
