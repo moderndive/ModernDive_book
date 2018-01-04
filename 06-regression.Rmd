@@ -52,7 +52,7 @@ Let's load all the packages needed for this chapter (this assumes you've already
 library(nycflights13)
 library(ggplot2)
 library(dplyr)
-library(broom)
+library(moderndive)
 ```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
@@ -240,18 +240,14 @@ evals %>%
 
 ### Simple linear regression
 
-Let's
-
-* Fit a simple linear regression using the command `lm(y ~ x, data)` below:
+Let's fit a simple linear regression using the command `get_regression_table(y ~ x, data)` below:
 * Output the table in tidy data format using the `tidy()` function from the `broom` package.
 
 ```{r, eval=FALSE}
-lm(score ~ bty_avg, data = evals) %>%
-  tidy()
+get_regression_table(score ~ bty_avg, data = evals)
 ```
 ```{r, echo=FALSE}
-lm(score ~ bty_avg, data = evals) %>%
-  tidy() %>%
+get_regression_table(score ~ bty_avg, data = evals) %>%
   kable(
     digits = 3,
     caption = "Regression line estimates",
@@ -316,15 +312,12 @@ the table corresponds to the red points and blue arrow in Figure
 \@ref(fig:numxplot5)):
 
 ```{r, eval=FALSE}
-point_by_point_info <- lm(score ~ bty_avg, data = evals) %>%
-  augment() %>%
-  select(score, bty_avg, .fitted, .resid)
+point_by_point_info <- get_regression_points(score ~ bty_avg, data = evals)
+point_by_point_info
 ```
 ```{r, echo=FALSE}
 set.seed(76)
-point_by_point_info <- lm(score ~ bty_avg, data = evals) %>%
-  augment() %>%
-  select(score, bty_avg, .fitted, .resid)
+point_by_point_info <- get_regression_points(score ~ bty_avg, data = evals) 
 point_by_point_info %>%
   slice(c(21, sample(1:nrow(evals), 4))) %>%
   kable(
@@ -339,7 +332,7 @@ was added to the original dataset. In particular
 
 * **.fitted**: the fitted value $\widehat{y}$ corresponding to an observed point $(x,y)$. One 
 example is the red square in Figure \@ref(fig:numxplot5)
-* **.resid**: the residual $y - \widehat{y}$. One example is the length of the blue arrow
+* **residual**: the residual $y - \widehat{y}$. One example is the length of the blue arrow
 in Figure \@ref(fig:numxplot5).
 
 
@@ -367,7 +360,7 @@ Instead, in Figure \@ref(fig:numxplot6) below let's plot
 * On the x-axis: $x$ beauty score (same as before)
 
 ```{r numxplot6, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score"}
-ggplot(point_by_point_info, aes(x = bty_avg, y = .resid)) +
+ggplot(point_by_point_info, aes(x = bty_avg, y = residual)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue", size = 1) +
@@ -403,7 +396,7 @@ ggplot(temp, aes(x = bty_avg, y = eps)) +
 The second way to look at the residuals is using a histogram:
 
 ```{r numxplot8, warning=FALSE, fig.cap="Histogram of residuals"}
-ggplot(point_by_point_info, aes(x = .resid)) +
+ggplot(point_by_point_info, aes(x = residual)) +
   geom_histogram(binwidth = 0.25, color = "white") +
   labs(x = "Residual")
 ```
@@ -419,9 +412,9 @@ of an ideal and less than ideal patterns of residuals.
 
 ```{r numxplot9, echo=FALSE, warning=FALSE, fig.cap="Examples of ideal and less than ideal residual patterns"}
 temp <- evals
-temp$`Ideal` <- rnorm(nrow(temp), 0, sd = sd(point_by_point_info$.resid))
+temp$`Ideal` <- rnorm(nrow(temp), 0, sd = sd(point_by_point_info$residual))
 temp$`Less than ideal` <-
-  rnorm(nrow(temp), 0, sd = sd(point_by_point_info$.resid))^2
+  rnorm(nrow(temp), 0, sd = sd(point_by_point_info$residual))^2
 
 temp <- temp %>%
   select(bty_avg, `Ideal`, `Less than ideal`) %>%
@@ -530,7 +523,7 @@ $$
 
 We square the arrow lengths so that positive and negative deviations of the same amount are treated equally.  That's why alternative names for the simple linear regression line are the **least-squares line** and the **best fitting line**. It can be proven via calculus and linear algebra that this line uniquely minimizes the sum of the squared arrow lengths. 
 
-For the regression line in the plot, the sum of the squared residuals is `r lm(score~bty_avg, data=evals) %>% augment() %>% summarise(SSE = sum(.resid^2)) %>% pull(SSE) %>% round(3)`.
+For the regression line in the plot, the sum of the squared residuals is `r get_regression_points(score~bty_avg, data=evals) %>% summarise(SSE = sum(residual^2)) %>% pull(SSE) %>% round(3)`.
 
 
 
@@ -613,7 +606,7 @@ gapminder2007 %>%
 
 Let's now compute the *regression table*. Recall:
 
-* `lm(lifeExp ~ continent, data=gapminder2007)` is a regression where
+* `get_regression_table(lifeExp ~ continent, data=gapminder2007)` returns a regression table where
     + $y$ is the numerical outcome variable life expectancy
     + $x$ is the categorical explanatory/predictor variable continent
 * We then pipe this into `tidy()` from the `broom` package. All this does is
@@ -622,12 +615,10 @@ Chapter \@ref(tidy) in fact!
 * You can think of the following two lines of code as a `generate_regression_table()` function:
 
 ```{r, eval=FALSE}
-lm(lifeExp ~ continent, data = gapminder2007) %>%
-  tidy()
+get_regression_table(lifeExp ~ continent, data = gapminder2007)
 ```
 ```{r, echo=FALSE}
-lm(lifeExp ~ continent, data = gapminder2007) %>%
-  tidy() %>%
+get_regression_table(lifeExp ~ continent, data = gapminder2007) %>%
   kable(
     digits = 2,
     caption = "Regression table",
@@ -685,9 +676,8 @@ Let's extract point-by-point information now:
 * for all `r nrow(gapminder2007)` rows in the `gapminder2007` data frame
 
 ```{r, eval=FALSE}
-point_by_point_info <- lm(lifeExp ~ continent, data = gapminder2007) %>%
-  augment() %>%
-  select(lifeExp, continent, .fitted, .resid)
+point_by_point_info <- get_regression_points(lifeExp ~ continent, data = gapminder2007)
+point_by_point_info
 ```
 
 Note:
@@ -696,16 +686,14 @@ Note:
 * We then pipe this into `augment()` from the `broom` package. All this does is
 output point-by-point information in a clean format; "tidy data" format as seen
 in Chapter \@ref(tidy) in fact!
-* We then only select the `lifeExp`, `continent`, `.fitted`, and  `.resid` columns.
+* We then only select the `lifeExp`, `continent`, `.fitted`, and  `residual` columns.
 We don't need the rest, so let's keep our output clean.
 
 Let's look at a random sample of 5 of these `r nrow(gapminder2007)` rows:
 
 ```{r, echo=FALSE}
 set.seed(76)
-point_by_point_info <- lm(lifeExp ~ continent, data = gapminder2007) %>%
-  augment() %>%
-  select(lifeExp, continent, .fitted, .resid)
+point_by_point_info <- get_regression_points(lifeExp ~ continent, data = gapminder2007)
 point_by_point_info %>%
   sample_n(5) %>%
   kable(
@@ -729,7 +717,7 @@ of overplotting issues. Note here we control the amount of jitter horizontally
 by setting the `width` argument. Doesn't seem to bad!
 
 ```{r catxplot7, warning=FALSE, fig.cap="Plot of residuals over continent"}
-ggplot(point_by_point_info, aes(x = continent, y = .resid)) +
+ggplot(point_by_point_info, aes(x = continent, y = residual)) +
   geom_jitter(width = 0.1) +
   labs(x = "Continent", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue", size = 1)
@@ -762,7 +750,7 @@ gapminder2007 %>%
 Second, let's look at a histogram of all `r nrow(gapminder2007)` residuals:
 
 ```{r catxplot8, warning=FALSE, fig.cap="Histogram of residuals"}
-ggplot(point_by_point_info, aes(x = .resid)) +
+ggplot(point_by_point_info, aes(x = residual)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Residual")
 ```
@@ -873,12 +861,10 @@ transformations! In other words
 Let's now compute the *regression table*
 
 ```{r, eval=FALSE}
-lm(Balance ~ Limit + Income, data = Credit) %>%
-  tidy()
+get_regression_table(Balance ~ Limit + Income, data = Credit)
 ```
 ```{r, echo=FALSE}
-lm(Balance ~ Limit + Income, data = Credit) %>%
-  tidy() %>% 
+get_regression_table(Balance ~ Limit + Income, data = Credit) %>% 
   kable(
     digits = 2,
     caption = "Regression table", 
@@ -910,8 +896,7 @@ lines cut up the data into quartiles.
 ```{r, 2numxplot3, echo=FALSE, fig.cap="Histogram of credit limits and quartiles"}
 ggplot(Credit, aes(x = Limit)) +
   geom_histogram(color = "white") +
-  geom_vline(xintercept = quantile(Credit$Limit, probs = c(0.25, 0.5, 0.75)),
-             col = "red")
+  geom_vline(xintercept = quantile(Credit$Limit, probs = c(0.25, 0.5, 0.75)), col = "red")
 ```
 
 In other words, 
@@ -1006,12 +991,10 @@ We see that the associated effect of increasing age seems to be much harsher for
 Let's now compute the *regression table*
 
 ```{r, eval=FALSE}
-lm(score ~ age + gender, data = evals) %>%
-  tidy()
+get_regression_table(score ~ age + gender, data = evals)
 ```
 ```{r, echo=FALSE}
-lm(score ~ age + gender, data = evals) %>%
-  tidy() %>% 
+get_regression_table(score ~ age + gender, data = evals) %>% 
   kable(
     digits = 4,
     caption = "Regression table", 
@@ -1068,12 +1051,10 @@ We say a model has an interaction effect if the associated effect of one variabl
 Let's now compute the *regression table*
 
 ```{r, eval=FALSE}
-lm(score ~ age * gender, data = evals) %>%
-  tidy()
+get_regression_table(score ~ age * gender, data = evals)
 ```
 ```{r, echo=FALSE}
-lm(score ~ age * gender, data = evals) %>%
-  tidy() %>% 
+get_regression_table(score ~ age * gender, data = evals) %>% 
   kable(
     digits = 4,
     caption = "Regression table", 
@@ -1241,12 +1222,10 @@ Let's now compute the *regression table*. Let's jump straight into considering
 a model that incorporates an interaction term as described earlier. 
 
 ```{r, eval=FALSE}
-lm(box_office ~ person_of_color * subject_sex, data = biopics) %>%
-  tidy()
+get_regression_table(box_office ~ person_of_color * subject_sex, data = biopics)
 ```
 ```{r, echo=FALSE}
-lm(box_office ~ person_of_color * subject_sex, data = biopics) %>%
-  tidy() %>% 
+get_regression_table(box_office ~ person_of_color * subject_sex, data = biopics) %>% 
   kable(
     digits = 4,
     caption = "Regression table", 
@@ -1290,7 +1269,6 @@ Let's revisit the professor evaluations data that we analysized using multiple r
 ```{r}
 library(ggplot2)
 library(dplyr)
-library(broom)
 
 load(url("http://www.openintro.org/stat/data/evals.RData"))
 evals <- evals %>%
@@ -1336,12 +1314,10 @@ Last, let's recall the regressions we fit. First, the regression with no
 interaction effect: note the use of `+` in the formula.
 
 ```{r, eval=FALSE}
-lm(score ~ age + gender, data = evals) %>%
-  tidy()
+get_regression_table(score ~ age + gender, data = evals)
 ```
 ```{r, echo=FALSE}
-lm(score ~ age + gender, data = evals) %>%
-  tidy() %>% 
+get_regression_table(score ~ age + gender, data = evals) %>% 
   kable(
     digits = 4,
     caption = "Model 1: Regression table with no interaction effect included", 
@@ -1352,12 +1328,10 @@ lm(score ~ age + gender, data = evals) %>%
 Second, the regression with an interaction effect: note the use of `*` in the formula.
 
 ```{r, eval=FALSE}
-lm(score ~ age * gender, data = evals) %>%
-  tidy()
+get_regression_table(score ~ age * gender, data = evals)
 ```
 ```{r, echo=FALSE}
-lm(score ~ age * gender, data = evals) %>%
-  tidy() %>% 
+get_regression_table(score ~ age * gender, data = evals) %>% 
   kable(
     digits = 4,
     caption = "Model 2: Regression table with interaction effect included", 
@@ -1372,12 +1346,10 @@ Let's recompute the regression tables, but with a new argument added: `tidy(conf
 interaction effect: note the use of `+` in the formula.
 
 ```{r, eval=FALSE}
-lm(score ~ age + gender, data = evals) %>%
-  tidy(conf.int = TRUE)
+get_regression_table(score ~ age + gender, data = evals)
 ```
 ```{r, echo=FALSE}
-lm(score ~ age + gender, data = evals) %>%
-  tidy(conf.int = TRUE) %>% 
+get_regression_table(score ~ age + gender, data = evals) %>% 
   kable(
     digits = 4,
     caption = "Model 1: Regression table with no interaction effect included", 
@@ -1388,12 +1360,10 @@ lm(score ~ age + gender, data = evals) %>%
 Second, the regression with an interaction effect: note the use of `*` in the formula.
 
 ```{r, eval=FALSE}
-lm(score ~ age * gender, data = evals) %>%
-  tidy(conf.int = TRUE)
+get_regression_table(score ~ age * gender, data = evals)
 ```
 ```{r, echo=FALSE}
-lm(score ~ age * gender, data = evals) %>%
-  tidy(conf.int = TRUE) %>% 
+get_regression_table(score ~ age * gender, data = evals) %>% 
   kable(
     digits = 4,
     caption = "Model 2: Regression table with interaction effect included", 
@@ -1408,15 +1378,14 @@ lm(score ~ age * gender, data = evals) %>%
 Let's compute the residuals using `augment()` to see if there is a pattern.
 
 ```{r residual0, warning=FALSE}
-point_by_point_info <- lm(score ~ age * gender, data = evals) %>%
-  augment() %>%
-  select(score, age, gender, .fitted, .resid)
+point_by_point_info <- get_regression_points(score ~ age * gender, data = evals)
+point_by_point_info
 ```
 
 First the histogram:
 
 ```{r residual1, warning=FALSE, fig.cap="Model 2 (with interaction) histogram of residual"}
-ggplot(point_by_point_info, aes(x = .resid)) +
+ggplot(point_by_point_info, aes(x = residual)) +
   geom_histogram(binwidth = 0.25, color = "white") +
   labs(x = "Residual")
 ```
@@ -1427,9 +1396,16 @@ Second, the residuals as compared to the predictor variables:
 * $x_2$: categorical explanatory/predictor variable of `gender`
 
 ```{r residual2, warning=FALSE, fig.cap="Model 2 (with interaction) residuals vs predictor"}
-ggplot(point_by_point_info, aes(x = age, y = .resid)) +
+ggplot(point_by_point_info, aes(x = age, y = residual)) +
   geom_point() +
   labs(x = "age", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue", size = 1) +
   facet_wrap(~ gender)
 ```
+
+
+
+
+
+
+## How does `get_regression_table()` work?
