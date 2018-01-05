@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
   tidy = FALSE,
   out.width = "\\textwidth"
   )
-options(scipen = 99, digits = 4)
+options(scipen = 99, digits = 3)
 
 # This bit of code is a bug fix on asis blocks, which we use to show/not show LC
 # solutions, which are written like markdown text. In theory, it shouldn't be
@@ -32,30 +32,42 @@ show_solutions <- function(section){
   }
 ```
 
-Now that we are equipped with data visualization skills from Chapter \@ref(viz), data wrangling skills from Chapter \@ref(wrangling), and an understanding of the "tidy" data format from Chapter \@ref(tidy), we now proceed to discuss once of the most commonly used statistical procedures: *regression*.  Much as we saw with the Grammar of Graphics in Chapter \@ref(viz), the fundamental premise of (simple linear) regression is to *model* the relationship between 
+Now that we are equipped with data visualization skills from Chapter \@ref(viz), data wrangling skills from Chapter \@ref(wrangling), and an understanding of the "tidy" data format from Chapter \@ref(tidy), we now proceed with data modeling. The fundamental premise of data modeling is *to model the relationship* between:
 
-* An outcome/dependent/predicted variable $y$
-* As a function of a covariate/independent/predictor variable $x$
+* An outcome variable $y$, also called a dependent variable
+* Explantory/predictor variables $\vec{x}$, also called independent variables and covariates. The arrow on top of the $x$ indicates that we have a *vector* or a series of values.
 
-Why do we have multiple labels for the same concept? What’s their root? Regression, in its simplest form, can be viewed in two ways:
+Why do we have two different labels, explanatory and predictor, for the variables $\vec{x}$? That's because data modeling can be viewed through two lenses
 
-1. **For Prediction**: You want to predict an outcome variable $y$ based on the information contained in a set of predictor variables. You don't care so much about understanding how all the variables relate and interact, but so long as you can make good predictions about $y$, you're fine. 
-1. **For Explanation**: You want to study the relationship between an outcome variable $y$ and a set of explanatory variables, determine the significance of any found relationships, and have measures summarizing these.
+1. **Modeling for explanation**: You want to study the relationship between an outcome variable $y$ and a set of explanatory variables, determine the significance of any found relationships, and have measures summarizing these. For example: "Does knowing a population's smoking habits explain their lung cancer prevalence?"
+1. **Modeling for prediction**: You want to predict an outcome variable $y$ based on the information contained in a set of predictor variables. You don't care so much about understanding how all the variables relate and interact, but so long as you can make good predictions about $y$, you're fine. For example: "Can we predict whether someone will enjoy a recommended movie based on their previous movie ratings?"
 
-In this chapter, we use the `flights` data frame in the `nycflights13` package to look at the relationship between departure delay, arrival delay, and other variables related to flights.  We will also discuss the concept of *correlation* and how it is frequently incorrectly implied to also lead to *causation*. This chapter also introduces the `broom` package, which is a useful tool for summarizing the results of regression fits in "tidy" format.
+Data modeling is used in a wide variety of fields, including statistical inference, causal inference, artificial intelligence, and machine learning. There are many techniques for data modeling, such as tree-based models, neural networks/deep learning, and more. However, we'll focus on one particular technique: *linear regression*, one of the most commonly-used and easy to understand approaches to modeling. Linear regression involves:
+
+* An outcome variable $y$ that is *numerical*
+* Explantory/predictor variables $\vec{x}$ that are either *numerical* or *categorical*
+
+In this chapter, we'll start considering a wider array of datasets, all easily accessible via R packages. 
+
+We will also discuss the concept of *correlation* and how it is frequently incorrectly used to imply *causation*. 
 
 ### Needed packages {-}
 
-Let's load all the packages needed for this chapter (this assumes you've already installed them). If needed, read Section \@ref(packages) for information on how to install and load R packages.
+Let's load all the packages needed for this chapter. If needed, read Section \@ref(packages) for information on how to install and load R packages.
 
-```{r message=FALSE, warning=FALSE}
-library(nycflights13)
+```{r neededpackages, message=FALSE, warning=FALSE}
 library(ggplot2)
 library(dplyr)
 library(moderndive)
 ```
 
-```{r message=FALSE, warning=FALSE, echo=FALSE}
+Notice we load a new package called `moderndive` thus you'll need to install this once. This is an accompaniment package to the ModernDive book that includes 3 useful functions for linear regression:
+
+1. `get_regression_table()`: Fit a linear regression and get the *regression table*
+1. `get_regression_points()`: Fit a linear regression and get all the relevant points, including the *fitted value* $\widehat{y}$ and *residuals*
+1. `get_regression_summaries()`: Fit a linear regression and get summary statistics about the regression, including values called $R^2$ and $R^2$-adjusted.
+
+```{r internalpackages, message=FALSE, warning=FALSE, echo=FALSE}
 # Packages needed internally, but not in text.
 library(mvtnorm)
 library(tidyr)
@@ -67,17 +79,14 @@ library(forcats)
 
 
 
-## Datasets
 
-### Professor evaluations {#profevals}
 
-A study conducted at the University of Texas in Austin
-available at [openintro.org](https://www.openintro.org/stat/data/?data=evals) 
-investigated associations between teacher evalutions and
-various attributes of the instructor. 
 
-* **Question**: Can we explain a professor's teaching evaluation score using these
-attritubes?
+
+## One numerical x: Professor evaluations {#onenumerical}
+
+We now consider data from a study conducted at the University of Texas in Austin where researchers were interested in answering the following question: what factors can explain differences in instructor's teaching evaluation scores? A full description of the study can be found at [openintro.org](https://www.openintro.org/stat/data/?data=evals), but let's summarize the variables that were collected for $n=463$ instructors:
+
 * Outcome variable $y$: Average teaching score, based on students evaluations between 1 and 5
 * Explanatory variables $x$
     + their rank: teaching, tenure track, or tenured
@@ -87,26 +96,339 @@ attritubes?
     + their age:
     + their average "beauty" rating, based on a panel of 6 students' scores between 1 and 10.
 
-First let's load the data and look at a random sample of 5 rows:
+Let's load the data and `select()` only the 7 variables listed above:
 
 ```{r}
 load(url("http://www.openintro.org/stat/data/evals.RData"))
 evals <- evals %>%
-  select(score, ethnicity, gender, language, age, bty_avg, rank)
+  select(score, bty_avg, ethnicity, gender, language, age, rank)
 ```
+
+First, let's look at a random sample of 5 out of the 463 instructors:
 
 ```{r, echo=FALSE}
 evals %>%
   sample_n(5) %>%
   kable(
-    digits = 2,
+    digits = 3,
     caption = "Random sample of 5 instructors",
     booktabs = TRUE
   )
 ```
 
+In this section we'll try to explain differences in instructor evaluations scores as a function of their beauty scores. We'll model the relationship between these two variables with a particular kind of linear regression called *simple linear regression*. Simple linear regression is the most basic form of linear regression where we have
 
-### Country-by-country life expectancies in 2007 {#datalifeexp}
+1. A numerical outcome variable $y$, in this case `score`
+1. A single numerical explanatory/predictor variable $x$, in this case `bty_avg`
+
+### Exploratory data analysis
+
+A crucial step before doing any kind of modeling or analysis however is performing an *exploratory data analysis*, or EDA, of all our data. EDA can give you a sense of the distribution of data, whether there are outliers and/or missing values, but most importantly it can inform how to build your model. There are many aproaches to EDA, here are three:
+
+1. Most fundamentally, just looking at the raw values, in a spreadsheet for example. While this may seem trivial, many people ignore this crucial step!
+1. Compute summary statistics likes means, medians, and standard deviations.
+1. Create data visualizations.
+
+We start off by looking at the raw values. You can do this by running `View(evals)` in the console to pop-up the spreadsheet viewer, but let's use the `glimpse()`
+
+```{r}
+glimpse(evals)
+```
+
+We see that both variables of interest, `bty_avg` and `score`, consist of numerical values, as well as the `age` variable. The variables `ethnicity`, `gender`, `language`, and `rank` however are categorical. Let's now compute some summary statistics for both the explanatory/predictor variable and the outcome variable using the `summary()` function, which returns the minimum, the first quartile, the median, the mean AKA the average, the third quartile, and the maximum.
+
+```{r}
+summary(evals$bty_avg)
+summary(evals$score)
+```
+
+We get an idea of how the values in both variables distributed. For example, the average teaching score was 4.17 out of 5 whereas beauty scores range from 1.67 to 8.17. The `summary()` function however only returns what are called *univariate* summaries i.e. summaries about single variables. Since we are considering the relationship between two numerical variables, it would be nice to have a summary statistic that simultaneously considers both variables. The correlation coefficient is a *bivariate* summary statistic that fits this bill. It is a value between -1 and 1 that summarizes the *strength of the linear relationship between two numerical variables*; for more discussion on the correlation coefficient, see Section \@ref(correlationcoefficient) below. The correlation coefficient is computed using the `cor()` function, and in our case, the correlation is positive. 
+
+```{r}
+cor(evals$score, evals$bty_avg)
+```
+
+Since both the `score` and `bty_avg` variables are numerical, a scatterplot is an appropriate graph to visaulize this data. Let's do this using `geom_point()` and set informative axes labels and title.
+
+```{r numxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin"}
+ggplot(evals, aes(x = bty_avg, y = score)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores")
+```
+
+However Figure \@ref(fig:numxplot1) suffers from *overplotting*; let's break it up with a little random jitter added to the points in Figure \@ref(fig:numxplot2); note that we are only altering the visualization of the points; the original data stays the same.
+
+```{r numxplot2, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin: Jittered"}
+ggplot(evals, aes(x = bty_avg, y = score)) +
+  geom_jitter() +
+  labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores")
+```
+
+From this visualization we make several observations:
+
+1. Most beauty scores lie between 2 and 8
+1. Most teaching scores lie between 3 and 5
+1. Most importantly, there seems to be a slight positive relationship between teaching score and beauty score, meaning as instructors have higher beauty scores, they tend to have higher teaching scores as well!
+
+Let's first improve on Figure \@ref(fig:numxplot2) by adding the "best-fitting" line in Figure \@ref(fig:numxplot3); this is easily done by adding a new layer to the plot `+ geom_smooth(method="lm")`. 
+
+```{r numxplot3, warning=FALSE, fig.cap="Simple linear regression line with error band"}
+ggplot(evals, aes(x = bty_avg, y = score)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") +  
+  geom_smooth(method = "lm")
+```
+
+The positive slope of the blue line is consistent with our observation from earlier that there is a positive relationship between `score` and `bty_avg`. What do we mean by "best-fitting" line? While the intuition is easy to visualize in the above plot, there is a mathematically precise definition of "best", which we discuss in Section \@ref(leastsquares) below.
+
+What are the grey bands surrounding the blue line? These are *standard error* bands, which can be thought of as error/uncertainty bands. We'll revisit this concept later so let's suppress these grey bars for now by adding the argument `se=FALSE` to `geom_smooth(method = "lm")`:
+
+```{r numxplot4, warning=FALSE, fig.cap="Simple linear regression line without error bands"}
+ggplot(evals, aes(x = bty_avg, y = score)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+
+### Simple linear regression
+
+Need to describe what simple linear regression is. 
+
+In order to define a line like the one in Figure \@ref(fig:numxplot4), we need two quantities called *coefficients*: an intercept coefficient (the value of $y$ at $x=0$) and a slope coefficient. What are the intercept and slope coefficients of the above blue best fitting simple linear regression line? Let's get these values by outputting something called the *linear regression table* using the `get_regression_table()` function that we've included in the `moderndive` R package:
+
+```{r, eval=FALSE}
+get_regression_table(score ~ bty_avg, data = evals)
+```
+```{r, echo=FALSE}
+evals_line <- get_regression_table(score ~ bty_avg, data = evals) %>%
+  pull(estimate)
+```
+```{r numxplot4b, echo=FALSE}
+get_regression_table(score ~ bty_avg, data = evals) %>%
+  kable(
+    digits = 3,
+    caption = "Linear regression table",
+    booktabs = TRUE
+  )
+```
+
+Let's consider the inputs to this function first. This function always has form `get_regression_table(y~x, data, digits = 3, print = FALSE)`:
+
+1. `y ~ x` is a "formula" input that tells R to fit a simple linear regression of the outcome variable `y` as a function of `x`. Above since we are interested in explaining `score` as a function of `bty_avg`, we input `score ~ bty_avg`. Be very careful to always put the outcome variable before the tilde.
+1. `data` is the data frame that contains the variables `y` and `x`. In the above case, we set `data = evals`
+1. `digits` specifies the digits of precision we want the regression table to have. `digits` defaults to 3, in other words, if you don't specify this argument, `digits = 3` is used by default.
+1. `print` is a `TRUE`/`FALSE` boolean value that sets whether or not the output should be printed in Markdown table format, suitable for use in R markdown
+
+Now let's consider the output regression, which has two rows denoted by the first column `term`: one corresponding to the intercept $b_0$ and one corresponding to the slope $b_{\text{bty_avg}}$ `bty_avg`. The second column `estimate` gives us the fitted values for both these values, thus in Figure \@ref(fig:numxplot4) the intercept is `r evals_line[1]`, meaning for an instructor that had a beauty score of $x=0$, they had on average a teaching score of `r evals_line[1]`. In this case however, while the intercept has a mathematical interpretation, there is no practical interpretation no instructors had anywhere near a beauty score of 0. Furthermore, since `score` is an average of a panel of 6 students' ratings from 1 to 10, a `bty_avg` of 0 would be impossible.
+
+More interestingly is the slope associated with `bty_avg` of `r evals_line[2]`. The interpretation is: for every increase of 1 in `bty_avg`, there is an *associated* increase of *on average* `r evals_line[2]` units of `score`. We note in particular that the sign of this slope is positive, again suggestive of a positive relationship between beauty scores and teaching scores. We are very careful with our wording:
+
+* We say there is an *associated* increase, to be cautious not to imply causation.
+* We say that this associated increase is *on average* `r evals_line[2]` units of `score` because this increase isn't always exactly `r evals_line[2]` as we can see in Figure \@ref(fig:numxplot4), but rather the average associated increase.
+
+But what about the remaining 5 columns? We'll revisit these when we cover *inference for regression* after you've covered Chapter \@ref(hypo) where you learn about *hypothesis testing* and Chapter \@ref(ci) where you'll learn about *confidence intervals*. For now, we'll only focus on the `term` and `estimate` columns.
+
+We've included the `get_regression_table()` in the `moderndive` package to make generating clean regression tables easy, and thus have hidden a lot of details from you. If you are curious to know what is going on under the hood of this function, see Section \@ref(underthehood) below. 
+
+
+### Observed values, fitted values, and residuals
+
+We just saw how to get the value of the intercept and the slope of the regression line from the regression table generated by `get_regression_table()`. Now instead, say we want information on individual points, in this case one of the `n=463` instructors in this dataset, one corresponding to each row of `evals`. For example, say we are interested in the 21st instructor in this dataset:
+
+```{r, echo=FALSE}
+index <- which(evals$bty_avg == 7.333 & evals$score == 4.9)
+target_point <- get_regression_points(score ~ bty_avg, data = evals) %>% 
+  slice(index)
+x <- target_point$bty_avg
+y <- target_point$score
+y_hat <- target_point$score_hat
+resid <- target_point$residual
+evals %>%
+  slice(index) %>%
+  kable(
+    digits = 3,
+    caption = "Data for 21st instructor",
+    booktabs = TRUE
+  )
+```
+
+What is the value on the blue line corresponding to this instructors `bty_avg` of `r x`? In Figure \@ref(fig:numxplot5) we mark three values in particular corresponding to this instructor:
+
+* The red circle corresponds to the *observed value* $y$ = `r y` and corresponds to this instructors' observed teaching score.
+* The red square corresponds to the *fitted value* $\widehat{y}$ = `r y_hat` and corresponds to the value on the regression line for $x = `r x`$. We compute this value using the intercept and slope in the regression table above: $\widehat{y} = b_0 + b_1 x = `r evals_line[1]` + `r evals_line[2]` \times `r x` = `r y_hat`$
+* The length of the blue arrow is the *residual* $y - \widehat{y} = `r y` - `r y_hat` = `r y-y_hat`. The residual can be thought of as the error/lack-of-fit for this particular point. So the bigger the residual, the less the fitted value $\widehat{y}$ matches up with the observed value $y$.
+
+```{r numxplot5, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual"}
+best_fit_plot <- ggplot(evals, aes(x = bty_avg, y = score)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") + 
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("point", x = x, y = y, col = "red", size = 3) +
+  annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
+  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
+           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
+best_fit_plot
+```
+
+What if we want both
+
+1. the fitted value $\widehat{y} = b_0 + b_1 \times x$
+1. the residual $y - \widehat{y}$
+
+not only the 21st instructor but
+
+* for all `r nrow(evals)` instructors in the study, in other words
+* for all `r nrow(evals)` rows in the `evals` data frame, in other words
+* for all `r nrow(evals)` points in regression plot in Figure \@ref(fig:numxplot4)?
+
+We could repeat the above calculations 463 times, but that would be tedious and time consuming. Instead, let's use the `get_regression_points()` function that we've included in the `moderndive` R package. Note that in the table below we only present the results for 5 arbitrarily chosen rows out of `r nrow(evals)`.
+
+```{r, eval=FALSE}
+regression_points <- get_regression_points(score ~ bty_avg, data = evals)
+regression_points
+```
+```{r, echo=FALSE}
+set.seed(76)
+regression_points <- get_regression_points(score ~ bty_avg, data = evals) 
+regression_points %>%
+  slice(c(index, sample(1:nrow(evals), 4))) %>%
+  kable(
+    digits = 3,
+    caption = "Regression points (5 arbitrarily chosen rows out of 463)",
+    booktabs = TRUE
+  )
+```
+
+Just as with the `get_regression_table()` function, the inputs to the `get_regression_points()` function are the same, however the outputs are different. Let's inspect the individual columns:
+
+* The `score` column represents the observed value of the outcome variable $y$
+* The `bty_avg` column represents the values of the explanatory/predictor variable $x$
+* The `score_hat` column represents the fitted values $\widehat{y}$
+* The `residual` column respresents the residuals $y - \widehat{y}$
+
+The prove to ourselves that the results make sense, let's manually replicate the internal computation that `get_regression_points()` performs using the `mutate()` verb from Chapter \@ref(wrangling)
+
+1. First we compute a duplicate of the fitted values $\widehat{y} = b_0 + b_1 \times x$ where the intercept $b_0$ = `r evals_line[1]` and the slope $b_1$ = `r evals_line[2]` and store these in `score_hat_2`
+1. Then we compute the a duplicated the residuals $y - \widehat{y}$ and store these in `residual_2`
+
+```{r, eval=FALSE}
+regression_points <- regression_points %>% 
+  mutate(score_hat_2 = 3.880 + 0.067 * bty_avg) %>% 
+  mutate(residual_2 = score - score_hat_2)
+regression_points
+```
+```{r, echo=FALSE}
+set.seed(76)
+regression_points <- regression_points %>% 
+  mutate(score_hat_2 = 3.880 + 0.067 * bty_avg) %>% 
+  mutate(residual_2 = score - score_hat_2)
+regression_points %>%
+  slice(c(index, sample(1:nrow(evals), 4))) %>%
+  kable(
+    digits = 3,
+    caption = "Regression points (5 arbitrarily chosen rows out of 463)",
+    booktabs = TRUE
+  )
+```
+
+We see that our manually computed variables `score_hat_2` and `residual_2` equal the original results (up to rounding error).
+
+### Residual analysis {#residual_analysis}
+
+Recall the residuals can be thought of the error or the "lack-of-fit" between the observed value $y$ and the fitted value $\widehat{y}$ on the blue regression line in Figure \@ref(fig:numxplot4). Ideally when we fit a regression model, we'd like there to be *no systematic pattern* to these residuals. In other words, the error is seemingly random. What does this mean?
+
+1. The residuals should be on average 0. In other words, sometimes we'll make a positive error, sometimes we'll make a negative error, but on average the error is 0. 
+1. The spread of the residuals should be consistent.
+1. The value of the residuals should not depend on the value of x. If it did, then the errors would not be seemingly random.
+
+Investigating any such patterns is known as *residual analysis*. Let's perform our residual analysis in two ways. First, recall in Figure \@ref(fig:numxplot5) above we plotted:
+
+* On the y-axis: $y$ teaching score
+* On the x-axis: $x$ beauty score
+* Blue arrow: one example of a residual
+
+Instead, in Figure \@ref(fig:numxplot6) below let's plot
+
+* On the y-axis: the residual $y-\widehat{y}$ instead
+* On the x-axis: $x$ beauty score (same as before)
+
+```{r numxplot6, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score"}
+ggplot(regression_points, aes(x = bty_avg, y = residual)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Residual") +
+  geom_hline(yintercept = 0, col = "blue", size = 1) +
+  annotate("point", x = x, y = resid, col = "red", size = 3) +
+  annotate("point", x = x, y = 0, col = "red", shape = 15, size = 3) +
+  annotate("segment", x = x, xend = x, y = resid, yend = 0, color = "blue",
+           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
+```
+
+You can think of Figure \@ref(fig:numxplot6) as Figure \@ref(fig:numxplot5), but
+with the blue line flattened out. Does it seem like there is *no systematic pattern*
+to the residuals? This question is rather qualitative and subjective in nature, thus different people may respond different. However, it can be argued that there isn't a *drastic* pattern in the residuals. 
+
+Here are some hypothetical examples where there are *drastic* patterns to the
+residuals:
+
+```{r numxplot7, echo=FALSE, warning=FALSE, fig.cap="Examples of less than ideal residual patterns"}
+resid_ex <- evals
+resid_ex$ex_1 <- ((evals$bty_avg - 5) ^ 2 - 6 + rnorm(nrow(evals), 0, 0.5)) * 0.4
+resid_ex$ex_2 <- (rnorm(nrow(evals), 0, 0.075 * evals$bty_avg ^ 2)) * 0.4
+  
+resid_ex <- resid_ex %>%
+  select(bty_avg, ex_1, ex_2) %>%
+  gather(type, eps, -bty_avg) %>% 
+  mutate(type = ifelse(type == "ex_1", "Example 1", "Example 2"))
+
+ggplot(resid_ex, aes(x = bty_avg, y = eps)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Residual") +
+  geom_hline(yintercept = 0, col = "blue", size = 1) +
+  facet_wrap(~type)
+```
+
+The second way to look at the residuals is using a histogram:
+
+```{r numxplot8, warning=FALSE, fig.cap="Histogram of residuals"}
+ggplot(regression_points, aes(x = residual)) +
+  geom_histogram(binwidth = 0.25, color = "white") +
+  labs(x = "Residual")
+```
+
+This histogram seems to indicate that we have more positive residuals than negative. Since residual = $y-\widehat{y} > 0$ when $y > \widehat{y}$, it seems our fitted teaching score from the regression model tend to *underestimate* the true teaching score. This histogram has a slight *left-skew* in that there is a long tail on the left. Another way to say this is this data exhibit a *negative skew*. Here are examples of an ideal and less than ideal patterns of residuals.
+
+```{r numxplot9, echo=FALSE, warning=FALSE, fig.cap="Examples of ideal and less than ideal residual patterns"}
+resid_ex <- evals
+resid_ex$`Ideal` <- rnorm(nrow(resid_ex), 0, sd = sd(regression_points$residual))
+resid_ex$`Less than ideal` <-
+  rnorm(nrow(resid_ex), 0, sd = sd(regression_points$residual))^2
+
+resid_ex <- resid_ex %>%
+  select(bty_avg, `Ideal`, `Less than ideal`) %>%
+  gather(type, eps, -bty_avg)
+
+ggplot(resid_ex, aes(x = eps)) +
+  geom_histogram(binwidth = 0.25, color = "white") +
+  labs(x = "Residual") +
+  facet_wrap( ~ type, scales = "free")
+```
+
+In fact, we'll see later on that we would like the residuals to be *normally distributed* with
+mean 0. In other words, be bell-shaped and centered at 0! While this requirement and residual analysis in general may some of you as not being overly critical at this point, we'll see later after we've covered *statistical inference* that for the last five columns of the regression table from earlier (std error, statistic, p-value, conf low, and conf high) to have valid interpretations, the above three conditions should roughly hold. More on this in Section . 
+
+
+
+
+
+ 
+
+
+
+
+
+
+## One categorical x: Worldwide life expectancy in 2007
 
 The `gapminder` package contains the `gapminder` data frame, which contains
 development data about various countries for 5-year intervals between 1952 and 2007
@@ -134,407 +456,6 @@ gapminder2007 %>%
   kable(digits = 1)
 ```
 
-
-
-### Credit card balance {#datacreditcard}
-
-The `ISLR` package contains the `Credit` data frame, which contains information
-on Credit balances. Unfortunately, I don't have information on which population
-this data was drawn from, so we can't generalize any of these results.
-
-* **Question**: What variables are associated with how much credit card debt
-an individual has
-* Outcome variable $y$ `Balance`
-* Explanatory variables
-    + $x_1$ `Income`: Income in $1000's
-    + $x_2$ `Limit`: Credit limit
-
-First let's load the data and look at a random sample of 5 rows:
-
-```{r}
-library(ISLR)
-Credit <- Credit %>%
-  select(Balance, Income, Limit)
-```
-
-```{r, echo=FALSE}
-Credit %>%
-  sample_n(5) %>%
-  kable(digits = 1)
-```
-
-
-### Biopics {#biopics}
-
-Let's look at the `biopics` dataset in the
-[`fivethirtyeight`](https://rudeboybert.github.io/fivethirtyeight/) package.
-After loading the package, run `?biopics` in the console to read the help file.
-This data is from the article ["Straight Outta Compton" Is The Rare Biopic Not About White Dudes](https://fivethirtyeight.com/features/straight-outta-compton-is-the-rare-biopic-not-about-white-dudes/).  
-
-First let's load the data and look at a random sample of 5 rows:
-
-```{r}
-library(fivethirtyeight)
-biopics <- biopics %>%
-  select(title, box_office, person_of_color, subject_sex) %>%
-  # Remove those that are missing
-  filter(!is.na(box_office))
-```
-
-```{r, echo=FALSE}
-biopics %>%
-  sample_n(5) %>%
-  kable(digits = 1)
-```
-
-
-
-
-
-
-## One numerical x: Professor evaluations {#onenumerical}
-
-### Exploratory data analysis
-
-Let's
-
-* Model the outcome variable y: teacher evaluation score
-* Using explanatory variable x: beauty score
-
-Let's plot the data:
-
-```{r numxplot1, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin"}
-ggplot(evals, aes(x = bty_avg, y = score)) +
-  geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score")
-```
-
-The above suffers from *overplotting*; let's break it up with a little random jitter added to the points. Note, we are
-only altering the visualization of the points; the original data is the same.
-
-```{r numxplot2, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin: Jittered"}
-ggplot(evals, aes(x = bty_avg, y = score)) +
-  geom_jitter() +
-  labs(x = "Beauty Score", y = "Teaching Score")
-```
-
-
-
-### Correlation coefficient
-
-The correlation coefficient between teacher evaluation score and beauty score weakly positive:
-
-```{r, eval=FALSE}
-cor(evals$score, evals$bty_avg)
-```
-```{r, echo=FALSE}
-evals %>%
-  summarize(correlation = cor(score, bty_avg)) %>%
-  kable(
-    digits = 3,
-    caption = "Correlation between teaching score and beauty score",
-    booktabs = TRUE
-  )
-```
-
-
-### Simple linear regression
-
-Let's fit a simple linear regression using the command `get_regression_table(y ~ x, data)` below:
-* Output the table in tidy data format using the `tidy()` function from the `broom` package.
-
-```{r, eval=FALSE}
-get_regression_table(score ~ bty_avg, data = evals)
-```
-```{r, echo=FALSE}
-get_regression_table(score ~ bty_avg, data = evals) %>%
-  kable(
-    digits = 3,
-    caption = "Regression line estimates",
-    booktabs = TRUE
-  )
-```
-
-Let's plot the regression line with a new layer called `+ geom_smooth(method="lm")`:
-
-```{r numxplot3, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin: With regression line"}
-ggplot(evals, aes(x = bty_avg, y = score)) +
-  geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score") +
-  geom_smooth(method = "lm")
-```
-
-Let's ignore the grey bars now (which are "error" bars) by adding the argument `se=FALSE` to `geom_smooth`
-
-```{r numxplot4, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin: With regression line, no error bars"}
-ggplot(evals, aes(x = bty_avg, y = score)) +
-  geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score") +
-  geom_smooth(method = "lm", se = FALSE)
-```
-
-
-
-### Observed values, fitted values, and residuals
-
-```{r numxplot5, echo=FALSE, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin: Example of fitted value and residual"}
-x <- 7.333
-y <- 4.9
-y_hat <- coef(lm(score ~ bty_avg, data = evals)) %>% as.numeric()
-y_hat <- y_hat * c(1, x)
-y_hat <- sum(y_hat)
-resid <- y - y_hat
-
-ggplot(evals, aes(x = bty_avg, y = score)) +
-  geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score") +
-  geom_smooth(method = "lm", se = FALSE) +
-  annotate("point", x = x, y = y, col = "red", size = 3) +
-  annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
-  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
-           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
-```
-
-* Red point: *Observed point* $(x,y) = (\mbox{beauty score}, \mbox{teaching score}) = (7.333, 4.9)$. *Observed value* $y=4.9$
-* Red square: *Fitted point* $(x,\widehat{y}) = (\mbox{beauty score}, \mbox{fitted teaching score}) = (7.333, 4.369)$. *Fitted value* $\widehat{y} = 4.369$. Why 4.371? From table above: $\widehat{y} = b_0 + b_1 x = 3.880 + 0.067 \times 7.333 = 4.369$
-* Length of blue arrow: *Residual* (i.e. error) $y - \widehat{y} = 4.9 - 4.369 = 0.531$
-
-Let's extract point-by-point information now:
-
-* for all `r nrow(evals)` points in our plot, in other words
-* for all `r nrow(evals)` instructors in the study, in other words
-* for all `r nrow(evals)` rows in the `evals` data frame
-
-using the `augment()` function from the `broom` package. This function
-*augments* the original data by adding new information resulting from the
-regression. Let's look at 5 arbitrarily chosen rows. (Note that the first row in
-the table corresponds to the red points and blue arrow in Figure
-\@ref(fig:numxplot5)):
-
-```{r, eval=FALSE}
-point_by_point_info <- get_regression_points(score ~ bty_avg, data = evals)
-point_by_point_info
-```
-```{r, echo=FALSE}
-set.seed(76)
-point_by_point_info <- get_regression_points(score ~ bty_avg, data = evals) 
-point_by_point_info %>%
-  slice(c(21, sample(1:nrow(evals), 4))) %>%
-  kable(
-    digits = 3,
-    caption = "Point-by-point information (5 of 463 rows)",
-    booktabs = TRUE
-  )
-```
-
-The periods in the variable names indicated that they are new information that
-was added to the original dataset. In particular
-
-* **.fitted**: the fitted value $\widehat{y}$ corresponding to an observed point $(x,y)$. One 
-example is the red square in Figure \@ref(fig:numxplot5)
-* **residual**: the residual $y - \widehat{y}$. One example is the length of the blue arrow
-in Figure \@ref(fig:numxplot5).
-
-
-
-
-### Residual analysis {#residual_analysis}
-
-Recall the residuals can be thought of as "lack-of-fit", or "left-overs", or
-"errors". Ideally, we want there to be *no systematic pattern* to the residuals. 
-What does this mean?
-
-1. The residuals should be on average 0. 
-1. The spread of the residuals should be consistent.
-1. The value of the residuals should not depend on the value of x
-
-Let's look at the residuals two ways. First, recall in Figure \@ref(fig:numxplot5)
-above we plotted:
-
-* On the y-axis: $y$ teaching score
-* On the x-axis: $x$ beauty score
-
-Instead, in Figure \@ref(fig:numxplot6) below let's plot
-
-* On the y-axis: $y-\widehat{y}$ residual instead
-* On the x-axis: $x$ beauty score (same as before)
-
-```{r numxplot6, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score"}
-ggplot(point_by_point_info, aes(x = bty_avg, y = residual)) +
-  geom_point() +
-  labs(x = "Beauty Score", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue", size = 1) +
-  annotate("point", x = x, y = resid, col = "red", size = 3) +
-  annotate("point", x = x, y = 0, col = "red", shape = 15, size = 3) +
-  annotate("segment", x = x, xend = x, y = resid, yend = 0, color = "blue",
-           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
-```
-
-You can think of Figure \@ref(fig:numxplot6) as Figure \@ref(fig:numxplot5), but
-with the blue line flattened out. Does it seem like there is *no systematic pattern*
-to the residuals?
-
-Here are some hypothetical examples where there is a systematic pattern to the
-residuals:
-
-```{r numxplot7, echo=FALSE, warning=FALSE, fig.cap="Examples of less than ideal residual patterns"}
-temp <- evals
-temp$`Example 1` <- ((evals$bty_avg - 5) ^ 2 - 6 + rnorm(nrow(evals), 0, 0.5)) * 0.4
-temp$`Example 2` <- (rnorm(nrow(evals), 0, 0.075 * evals$bty_avg ^ 2)) * 0.4
-  
-temp <- temp %>%
-  select(bty_avg, `Example 1`, `Example 2`) %>%
-  gather(type, eps, -bty_avg)
-
-ggplot(temp, aes(x = bty_avg, y = eps)) +
-  geom_point() +
-  labs(x = "Beauty Score", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue", size = 1) +
-  facet_wrap(~type)
-```
-
-The second way to look at the residuals is using a histogram:
-
-```{r numxplot8, warning=FALSE, fig.cap="Histogram of residuals"}
-ggplot(point_by_point_info, aes(x = residual)) +
-  geom_histogram(binwidth = 0.25, color = "white") +
-  labs(x = "Residual")
-```
-
-This histogram seems to indicate that we have more positive residuals than negative.
-Since Residual  = $y-\widehat{y} > 0$ when $y > \widehat{y}$, it seems
-our fitted professor score from the regression model have a slight tendency of
-being small than the actually observed score.
-
-This histogram has a slight *left-skew* in that there is a long tail on the
-left. Another way to say this is this data exhibit a *negative skew*. Here are examples
-of an ideal and less than ideal patterns of residuals.
-
-```{r numxplot9, echo=FALSE, warning=FALSE, fig.cap="Examples of ideal and less than ideal residual patterns"}
-temp <- evals
-temp$`Ideal` <- rnorm(nrow(temp), 0, sd = sd(point_by_point_info$residual))
-temp$`Less than ideal` <-
-  rnorm(nrow(temp), 0, sd = sd(point_by_point_info$residual))^2
-
-temp <- temp %>%
-  select(bty_avg, `Ideal`, `Less than ideal`) %>%
-  gather(type, eps, -bty_avg)
-
-ggplot(temp, aes(x = eps)) +
-  geom_histogram(binwidth = 0.25, color = "white") +
-  labs(x = "Residual") +
-  facet_wrap( ~ type, scales = "free")
-```
-
-In fact, we'll see later on that we would like the residuals to be *normally distributed* with
-mean 0. In other words, be bell-shaped and centered at 0!
-
-
-
-### Best fitting lines
-
-Regression lines are also known as "best fitting lines". But what do we mean by best? Let's unpack the criteria
-that is used by regression to determine best. Recall the plot in Figure \@ref(fig:numxplot5)) where for a professor
-with a beauty average score of $x=7.333$
-
-* The observed value $y=4.9$ was marked with a red circle
-* The fitted value $\widehat{y} = 4.369$ on the regression line was marked with a red square
-* The residual $y-\widehat{y} = 4.9-4.369 = 0.531$ was the length of the blue arrow.
-
-Let's do this for another arbitrarily chosen professor whose beauty score was
-$x=2.333$. The residual in this case is $2.7 - 4.036 = -1.336$.
-
-```{r echo=FALSE}
-x <- 7.333
-y <- 4.9
-y_hat <- coef(lm(score ~ bty_avg, data = evals)) %>% as.numeric()
-y_hat <- y_hat * c(1, x)
-y_hat <- sum(y_hat)
-resid <- y - y_hat
-
-best_fit_plot <- ggplot(evals, aes(x = bty_avg, y = score)) +
-  geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score") +
-  geom_smooth(method = "lm", se = FALSE) +
-  annotate("point", x = x, y = y, col = "red", size = 3) +
-  annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
-  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color  =  "blue",
-           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
-
-x <- 2.333
-y <- 2.7
-y_hat <- coef(lm(score ~ bty_avg, data = evals)) %>% as.numeric()
-y_hat <- y_hat * c(1, x)
-y_hat <- sum(y_hat)
-resid <- y - y_hat
-best_fit_plot <- best_fit_plot +
-  annotate("point", x = x, y = y, col = "red", size = 3) +
-  annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
-  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
-           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
-best_fit_plot
-```
-
-Let's do this for another arbitrarily chosen professor whose beauty score was
-$x=3.667$. The residual in this case is $4.4 - 4.125 = 0.2753$.
-
-```{r echo=FALSE}
-x <- 3.667
-y <- 4.4
-y_hat <- coef(lm(score ~ bty_avg, data = evals)) %>% as.numeric()
-y_hat <- y_hat * c(1, x)
-y_hat <- sum(y_hat)
-resid <- y - y_hat
-best_fit_plot <- best_fit_plot +
-  annotate("point", x = x, y = y, col = "red", size = 3) +
-  annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
-  annotate("segment", x = x, xend = x, y = y, yend = y_hat,
-           color = "blue", 
-           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
-best_fit_plot
-```
-
-Let's do this for another arbitrarily chosen professor whose beauty score was
-$x=6$. The residual in this case is $3.8 - 4.28 = -0.4802$.
-
-```{r echo=FALSE}
-x <- 6
-y <- 3.8
-y_hat <- coef(lm(score ~ bty_avg, data = evals)) %>% as.numeric()
-y_hat <- y_hat * c(1, x)
-y_hat <- sum(y_hat)
-resid <- y - y_hat
-best_fit_plot <- best_fit_plot +
-  annotate("point", x = x, y = y, col = "red", size = 3) +
-  annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
-  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
-           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
-best_fit_plot
-```
-
-
-Now let's say we repeated this process for all `r nrow(evals)` professors in our
-dataset. Regression *minimizes the sum of all `r nrow(evals)` arrow lengths
-squared.* In other words, it minimizes the sum of the squared residuals:
-
-$$
-\sum_{i=1}^{n}(y_i - \widehat{y}_i)^2
-$$
-
-We square the arrow lengths so that positive and negative deviations of the same amount are treated equally.  That's why alternative names for the simple linear regression line are the **least-squares line** and the **best fitting line**. It can be proven via calculus and linear algebra that this line uniquely minimizes the sum of the squared arrow lengths. 
-
-For the regression line in the plot, the sum of the squared residuals is `r get_regression_points(score~bty_avg, data=evals) %>% summarise(SSE = sum(residual^2)) %>% pull(SSE) %>% round(3)`.
-
-
-
- 
-
-
-
-
-
-## One categorical x: Worldwide life expectancy
-
 ### Exploratory data analysis
 
 Let's load the country-by-country life expectancy `gapminder2007` data frame
@@ -548,7 +469,7 @@ lifeExp_by_continent <- gapminder2007 %>%
 ```{r, echo=FALSE}
 lifeExp_by_continent %>%
   kable(
-    digits = 2,
+    digits = 3,
     caption = "Life expectancy by continent",
     booktabs = TRUE
   )
@@ -584,7 +505,7 @@ ggplot(gapminder2007, aes(x = continent, y = lifeExp - 52.93)) +
 
 ### Simple linear regression
 
-Note that while the boxplots in Figure \@ref(fig:catxplot2)) involved medians,
+Note that while the boxplots in Figure \@ref(fig:catxplot2) involved medians,
 regression involves means. Using the `gapminder2007` data frame again, let's compute
 *mean* life expectancy instead of median.
 
@@ -598,7 +519,7 @@ gapminder2007 %>%
   group_by(continent) %>%
   summarize(mean = mean(lifeExp)) %>%
   kable(
-    digits = 2,
+    digits = 3,
     caption = "Continent means",
     booktabs = TRUE
   )
@@ -620,7 +541,7 @@ get_regression_table(lifeExp ~ continent, data = gapminder2007)
 ```{r, echo=FALSE}
 get_regression_table(lifeExp ~ continent, data = gapminder2007) %>%
   kable(
-    digits = 2,
+    digits = 3,
     caption = "Regression table",
     booktabs = TRUE
   )
@@ -660,7 +581,7 @@ gapminder2007 %>%
   summarize(mean = mean(lifeExp)) %>%
   mutate(compared_to_africa = mean - 54.81) %>%
   kable(
-    digits = 2,
+    digits = 3,
     caption = "Continent means and comparison of means relative to baseline",
     booktabs = TRUE
   )
@@ -671,13 +592,13 @@ gapminder2007 %>%
 
 Let's extract point-by-point information now:
 
-* for all `r nrow(gapminder2007)` points in the five boxplots in Figure \@ref(fig:catxplot2)) 
+* for all `r nrow(gapminder2007)` points in the five boxplots in Figure \@ref(fig:catxplot2) 
 * for all `r nrow(gapminder2007)` countries in our dataset
 * for all `r nrow(gapminder2007)` rows in the `gapminder2007` data frame
 
 ```{r, eval=FALSE}
-point_by_point_info <- get_regression_points(lifeExp ~ continent, data = gapminder2007)
-point_by_point_info
+regression_points <- get_regression_points(lifeExp ~ continent, data = gapminder2007)
+regression_points
 ```
 
 Note:
@@ -693,8 +614,8 @@ Let's look at a random sample of 5 of these `r nrow(gapminder2007)` rows:
 
 ```{r, echo=FALSE}
 set.seed(76)
-point_by_point_info <- get_regression_points(lifeExp ~ continent, data = gapminder2007)
-point_by_point_info %>%
+regression_points <- get_regression_points(lifeExp ~ continent, data = gapminder2007)
+regression_points %>%
   sample_n(5) %>%
   kable(
     digits = 3,
@@ -717,7 +638,7 @@ of overplotting issues. Note here we control the amount of jitter horizontally
 by setting the `width` argument. Doesn't seem to bad!
 
 ```{r catxplot7, warning=FALSE, fig.cap="Plot of residuals over continent"}
-ggplot(point_by_point_info, aes(x = continent, y = residual)) +
+ggplot(regression_points, aes(x = continent, y = residual)) +
   geom_jitter(width = 0.1) +
   labs(x = "Continent", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue", size = 1)
@@ -750,7 +671,7 @@ gapminder2007 %>%
 Second, let's look at a histogram of all `r nrow(gapminder2007)` residuals:
 
 ```{r catxplot8, warning=FALSE, fig.cap="Histogram of residuals"}
-ggplot(point_by_point_info, aes(x = residual)) +
+ggplot(regression_points, aes(x = residual)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Residual")
 ```
@@ -766,6 +687,31 @@ Looks pretty good!
 
 
 ## Two numerical x: Credit card balance
+
+The `ISLR` package contains the `Credit` data frame, which contains information
+on Credit balances. Unfortunately, I don't have information on which population
+this data was drawn from, so we can't generalize any of these results.
+
+* **Question**: What variables are associated with how much credit card debt
+an individual has
+* Outcome variable $y$ `Balance`
+* Explanatory variables
+    + $x_1$ `Income`: Income in $1000's
+    + $x_2$ `Limit`: Credit limit
+
+First let's load the data and look at a random sample of 5 rows:
+
+```{r}
+library(ISLR)
+Credit <- Credit %>%
+  select(Balance, Income, Limit)
+```
+
+```{r, echo=FALSE}
+Credit %>%
+  sample_n(5) %>%
+  kable(digits = 1)
+```
 
 We now move from *simple linear regression*, which involves a single
 explanatory/predictor variable, to *multiple regression*, which involves more
@@ -866,7 +812,7 @@ get_regression_table(Balance ~ Limit + Income, data = Credit)
 ```{r, echo=FALSE}
 get_regression_table(Balance ~ Limit + Income, data = Credit) %>% 
   kable(
-    digits = 2,
+    digits = 3,
     caption = "Regression table", 
     booktabs = TRUE
   )
@@ -887,7 +833,7 @@ a caveat to our interpretation: *all other things being equal, for every increas
     + Again, we are not making any causal statements, only statements relating to the association between credit limit and balance
     + The *all other things being equal* related to the other explanatory/predictor variables, in this case only one: Income. This is equivalent to saying "holding income constant, we observed an associated increase of $0.26 in credit card balance for every dollar increase in credit limit"
 * Income: -$7.66. Negative? Say what? Didn't we see in Figure
-\@ref(fig:2numxplot2)) that the relationship was positive and that the
+\@ref(fig:2numxplot2) that the relationship was positive and that the
 correlation between Income and credit card balance was positive?
 
 Here is a histogram of all `nrow(Credit)` values of `Limit` where the vertical red
@@ -923,7 +869,7 @@ ggplot(Credit, aes(x = Income, y = Balance, col = limit_bracket)) +
        color = "Credit limit\nbracket")
 ```
 
-Figure \@ref(fig:2numxplot4)) is actually the same as Figure \@ref(fig:2numxplot2)), but now with colors distinguishing the credit limit brackets. We now see that for the 
+Figure \@ref(fig:2numxplot4) is actually the same as Figure \@ref(fig:2numxplot2), but now with colors distinguishing the credit limit brackets. We now see that for the 
 
 1. low
 1. medium-low
@@ -956,14 +902,14 @@ ggplot(Credit, aes(x = Income, y = Balance)) +
 Let's revisit the professor evaluation data introduced in Section \@ref(profevals). In
 Section \@ref(#onenumerical) we studied the relationship between 
 
-* $y$: outcome variable of teacher evaluation score
+* $y$: outcome variable of instructor evaluation score
 * $x$: numerical explanatory variable of beauty score
 
 Now let's say we want to also consider age instead of beauty score and a
 categorical explanatory/predictor variable: the binary gender of the professor.
 Our modeling situation now becomes
 
-* y: outcome variable of teacher evaluation score
+* y: outcome variable of instructor evaluation score
 * predictor variables
     + $x_1$: numerical explanatory/predictor variable of age
     + $x_2$: categorical explanatory/predictor variable of gender
@@ -971,7 +917,7 @@ Our modeling situation now becomes
 
 ### Exploratory data analysis
 
-```{r numxcatxplot1, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin by gender: Jittered"}
+```{r numxcatxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin by gender: Jittered"}
 ggplot(evals, aes(x = age, y = score, col = gender)) +
   geom_jitter() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
@@ -996,7 +942,7 @@ get_regression_table(score ~ age + gender, data = evals)
 ```{r, echo=FALSE}
 get_regression_table(score ~ age + gender, data = evals) %>% 
   kable(
-    digits = 4,
+    digits = 3,
     caption = "Regression table", 
     booktabs = TRUE
   )
@@ -1011,9 +957,9 @@ $$
 \end{align}
 $$
 
-What this looks like is in Figure \@ref(fig:numxcatxplot2)) below. 
+What this looks like is in Figure \@ref(fig:numxcatxplot2) below. 
 
-```{r numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Teacher evaluation scores at UT Austin by gender: same slope"}
+```{r numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin by gender: same slope"}
 coeff <- lm(score ~ age + gender, data = evals) %>% 
   coef() %>%
   as.numeric()
@@ -1041,7 +987,7 @@ that men get *relative to the baseline of women*
 * Both men and women have the same slope. In other words, *in this model* the associated effect of age is the same for men and women: all other things being equal, for every increase in 1 in age,
 there is on average an associated decrease of $b_{age}$ = -0.0086 in teaching score
 
-**Hold up**: Figure \@ref(fig:numxcatxplot2)) is different than Figure \@ref(fig:numxcatxplot1))! What is going on? What we have in the original plot is an *interaction effect* between age and gender!
+**Hold up**: Figure \@ref(fig:numxcatxplot2) is different than Figure \@ref(fig:numxcatxplot1)! What is going on? What we have in the original plot is an *interaction effect* between age and gender!
 
 
 ### Interaction effects
@@ -1056,7 +1002,7 @@ get_regression_table(score ~ age * gender, data = evals)
 ```{r, echo=FALSE}
 get_regression_table(score ~ age * gender, data = evals) %>% 
   kable(
-    digits = 4,
+    digits = 3,
     caption = "Regression table", 
     booktabs = TRUE
   )
@@ -1081,6 +1027,31 @@ $$
 
 ## Two categorical x: Biopics
 
+
+Let's look at the `biopics` dataset in the
+[`fivethirtyeight`](https://rudeboybert.github.io/fivethirtyeight/) package.
+After loading the package, run `?biopics` in the console to read the help file.
+This data is from the article ["Straight Outta Compton" Is The Rare Biopic Not About White Dudes](https://fivethirtyeight.com/features/straight-outta-compton-is-the-rare-biopic-not-about-white-dudes/).  
+
+First let's load the data and look at a random sample of 5 rows:
+
+```{r}
+library(fivethirtyeight)
+biopics <- biopics %>%
+  select(title, box_office, person_of_color, subject_sex) %>%
+  # Remove those that are missing
+  filter(!is.na(box_office))
+```
+
+```{r, echo=FALSE}
+biopics %>%
+  sample_n(5) %>%
+  kable(digits = 1)
+```
+
+
+
+
 Before we conduct an exploratory data analysis of the `biopics` data, let's first
 have a discussion $\log$-transformations.
 
@@ -1094,7 +1065,7 @@ ggplot(biopics, aes(x = box_office)) +
   labs(x = "Box office revenue")
 ```
 
-In Figure \@ref(fig:logtransform1)), we see there is a right-skew to both the
+In Figure \@ref(fig:logtransform1), we see there is a right-skew to both the
 x-values. This is because there are a few Hollywood blockbusters being compared
 with many (likely) smaller-scale independent films. Let's look at the top 5 and
 bottom 5 grossing movies in this dataset: 
@@ -1104,7 +1075,7 @@ biopics %>%
   arrange(desc(box_office)) %>%
   slice(1:5) %>% 
   kable(
-    digits = 2,
+    digits = 3,
     caption = "Top 5 grossing movies in data", 
     booktabs = TRUE
   )
@@ -1115,13 +1086,13 @@ biopics %>%
   arrange(box_office) %>%
   slice(1:5) %>% 
   kable(
-    digits = 2,
+    digits = 3,
     caption = "Bottom 5 grossing movies in data", 
     booktabs = TRUE
   )
 ```
 
-The scale of box office revenue is completely different! Hence, in Figure \@ref(fig:logtransform1)), it's really hard to see what's going on at the
+The scale of box office revenue is completely different! Hence, in Figure \@ref(fig:logtransform1), it's really hard to see what's going on at the
 lower-end. 
 
 Let's unskew this variable and compare not *absolute* differences, but rather,
@@ -1150,7 +1121,7 @@ ggplot(biopics, aes(x = box_office)) +
 Note that
 
 * The two plots are identical, but the values on the x-axis are different.
-* In both Figure \@ref(fig:logtransform2)) Figure \@ref(fig:logtransform3)), equivalent distances on each axes correspond to not equivalent absolute differences, but equivalent relative/multiplicative differences. So for example, the horizontal distance on the plot from Budget = `1e+05` = $10^5$ to Budget  = `1e+06` = $10^6$ is equal to the horizontal distance on the plot from Budget = `1e+06` = $10^6$ to Budget = `1e+07` = $10^7$.
+* In both Figure \@ref(fig:logtransform2) Figure \@ref(fig:logtransform3), equivalent distances on each axes correspond to not equivalent absolute differences, but equivalent relative/multiplicative differences. So for example, the horizontal distance on the plot from Budget = `1e+05` = $10^5$ to Budget  = `1e+06` = $10^6$ is equal to the horizontal distance on the plot from Budget = `1e+06` = $10^6$ to Budget = `1e+07` = $10^7$.
 
 
 
@@ -1183,7 +1154,7 @@ biopics %>%
   summarise(mean_box_office = mean(box_office)) %>%
   arrange(desc(mean_box_office)) %>% 
   kable(
-    digits = 2,
+    digits = 3,
     caption = "Group means", 
     booktabs = TRUE
   )
@@ -1203,7 +1174,7 @@ biopics %>%
   summarise(n = n()) %>%
   arrange(desc(n)) %>% 
   kable(
-    digits = 2,
+    digits = 3,
     caption = "Number of movies of each type in dataset", 
     booktabs = TRUE
   )
@@ -1227,7 +1198,7 @@ get_regression_table(box_office ~ person_of_color * subject_sex, data = biopics)
 ```{r, echo=FALSE}
 get_regression_table(box_office ~ person_of_color * subject_sex, data = biopics) %>% 
   kable(
-    digits = 4,
+    digits = 3,
     caption = "Regression table", 
     booktabs = TRUE
   )
@@ -1261,7 +1232,7 @@ Recreate four group means from the Table 6.15 above:
 
 Let's revisit the professor evaluations data that we analysized using multiple regression with one numerical and one categorical predictor. In particular
 
-* $y$: outcome variable of teacher evaluation `score`
+* $y$: outcome variable of instructor evaluation `score`
 * predictor variables
     + $x_1$: numerical explanatory/predictor variable of `age`
     + $x_2$: categorical explanatory/predictor variable of `gender`
@@ -1319,7 +1290,7 @@ get_regression_table(score ~ age + gender, data = evals)
 ```{r, echo=FALSE}
 get_regression_table(score ~ age + gender, data = evals) %>% 
   kable(
-    digits = 4,
+    digits = 3,
     caption = "Model 1: Regression table with no interaction effect included", 
     booktabs = TRUE
   )
@@ -1333,7 +1304,7 @@ get_regression_table(score ~ age * gender, data = evals)
 ```{r, echo=FALSE}
 get_regression_table(score ~ age * gender, data = evals) %>% 
   kable(
-    digits = 4,
+    digits = 3,
     caption = "Model 2: Regression table with interaction effect included", 
     booktabs = TRUE
   )
@@ -1351,7 +1322,7 @@ get_regression_table(score ~ age + gender, data = evals)
 ```{r, echo=FALSE}
 get_regression_table(score ~ age + gender, data = evals) %>% 
   kable(
-    digits = 4,
+    digits = 3,
     caption = "Model 1: Regression table with no interaction effect included", 
     booktabs = TRUE
   )
@@ -1365,7 +1336,7 @@ get_regression_table(score ~ age * gender, data = evals)
 ```{r, echo=FALSE}
 get_regression_table(score ~ age * gender, data = evals) %>% 
   kable(
-    digits = 4,
+    digits = 3,
     caption = "Model 2: Regression table with interaction effect included", 
     booktabs = TRUE
   )
@@ -1378,14 +1349,14 @@ get_regression_table(score ~ age * gender, data = evals) %>%
 Let's compute the residuals using `augment()` to see if there is a pattern.
 
 ```{r residual0, warning=FALSE}
-point_by_point_info <- get_regression_points(score ~ age * gender, data = evals)
-point_by_point_info
+regression_points <- get_regression_points(score ~ age * gender, data = evals)
+regression_points
 ```
 
 First the histogram:
 
 ```{r residual1, warning=FALSE, fig.cap="Model 2 (with interaction) histogram of residual"}
-ggplot(point_by_point_info, aes(x = residual)) +
+ggplot(regression_points, aes(x = residual)) +
   geom_histogram(binwidth = 0.25, color = "white") +
   labs(x = "Residual")
 ```
@@ -1396,7 +1367,7 @@ Second, the residuals as compared to the predictor variables:
 * $x_2$: categorical explanatory/predictor variable of `gender`
 
 ```{r residual2, warning=FALSE, fig.cap="Model 2 (with interaction) residuals vs predictor"}
-ggplot(point_by_point_info, aes(x = age, y = residual)) +
+ggplot(regression_points, aes(x = age, y = residual)) +
   geom_point() +
   labs(x = "age", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue", size = 1) +
@@ -1408,4 +1379,93 @@ ggplot(point_by_point_info, aes(x = age, y = residual)) +
 
 
 
-## How does `get_regression_table()` work?
+## Other topics
+
+### Correlation coefficient {#correlationcoefficient}
+
+### Best fitting line {#leastsquares}
+
+Regression lines are also known as "best fitting lines". But what do we mean by best? Let's unpack the criteria
+that is used by regression to determine best. Recall the plot in Figure \@ref(fig:numxplot5) where for a professor
+with a beauty average score of $x=7.333$
+
+* The observed value $y=4.9$ was marked with a red circle
+* The fitted value $\widehat{y} = 4.369$ on the regression line was marked with a red square
+* The residual $y-\widehat{y} = 4.9-4.369 = 0.531$ was the length of the blue arrow.
+
+Let's do this for another arbitrarily chosen professor whose beauty score was
+$x=2.333$. The residual in this case is $2.7 - 4.036 = -1.336$.
+
+```{r echo=FALSE}
+index <- which(evals$bty_avg == 2.333 & evals$score == 2.7)
+target_point <- get_regression_points(score ~ bty_avg, data = evals) %>% 
+  slice(index)
+x <- target_point$bty_avg
+y <- target_point$score
+y_hat <- target_point$score_hat
+resid <- target_point$residual
+
+best_fit_plot <- best_fit_plot +
+  annotate("point", x = x, y = y, col = "red", size = 3) +
+  annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
+  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
+           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
+best_fit_plot
+```
+
+Let's do this for another arbitrarily chosen professor whose beauty score was
+$x=3.667$. The residual in this case is $4.4 - 4.125 = 0.2753$.
+
+```{r echo=FALSE}
+index <- which(evals$bty_avg == 3.667 & evals$score == 4.4)
+target_point <- get_regression_points(score ~ bty_avg, data = evals) %>% 
+  slice(index)
+x <- target_point$bty_avg
+y <- target_point$score
+y_hat <- target_point$score_hat
+resid <- target_point$residual
+
+best_fit_plot <- best_fit_plot +
+  annotate("point", x = x, y = y, col = "red", size = 3) +
+  annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
+  annotate("segment", x = x, xend = x, y = y, yend = y_hat,
+           color = "blue", 
+           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
+best_fit_plot
+```
+
+Let's do this for another arbitrarily chosen professor whose beauty score was
+$x=6$. The residual in this case is $3.8 - 4.28 = -0.4802$.
+
+```{r echo=FALSE}
+index <- which(evals$bty_avg == 6 & evals$score == 3.8)
+target_point <- get_regression_points(score ~ bty_avg, data = evals) %>% 
+  slice(index)
+x <- target_point$bty_avg
+y <- target_point$score
+y_hat <- target_point$score_hat
+resid <- target_point$residual
+
+best_fit_plot <- best_fit_plot +
+  annotate("point", x = x, y = y, col = "red", size = 3) +
+  annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
+  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
+           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
+best_fit_plot
+```
+
+
+Now let's say we repeated this process for all `r nrow(evals)` professors in our
+dataset. Regression *minimizes the sum of all `r nrow(evals)` arrow lengths
+squared.* In other words, it minimizes the sum of the squared residuals:
+
+$$
+\sum_{i=1}^{n}(y_i - \widehat{y}_i)^2
+$$
+
+We square the arrow lengths so that positive and negative deviations of the same amount are treated equally.  That's why alternative names for the simple linear regression line are the **least-squares line** and the **best fitting line**. It can be proven via calculus and linear algebra that this line uniquely minimizes the sum of the squared arrow lengths. 
+
+For the regression line in the plot, the sum of the squared residuals is `r get_regression_points(score~bty_avg, data=evals) %>% summarise(SSE = sum(residual^2)) %>% pull(SSE) %>% round(3)`.
+
+
+### How does `get_regression_table()` work? {#underthehood}
