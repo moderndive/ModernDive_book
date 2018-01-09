@@ -55,6 +55,7 @@ Let's load all the packages needed for this chapter. If needed, read Section \@r
 
 ```{r neededpackages, message=FALSE, warning=FALSE}
 library(ggplot2)
+library(GGally)
 library(dplyr)
 library(moderndive)
 ```
@@ -480,13 +481,13 @@ The concept of a "best-fitting" line is a little different when the explanatory/
 
 ### Exploratory data analysis {#model2EDA}
 
-Let's look at the raw data values. Either by bringing up RStudio's spreadsheet viewer. Here is a snapshot of 5 randomly chosen rows out of the `r nrow(gapminder2007)` countries
+Let’s look at the raw data values both by bringing up RStudio’s spreadsheet viewer, altho in Table \@(tab:model2-data-preview) we only show 5 randomly selected countries out of `r nrow(gapminder2007)`, and using the `glimpse()` function:
 
 ```{r, eval=FALSE}
 View(gapminder2007)
 ```
 
-```{r, echo=FALSE}
+```{r model2-data-preview, echo=FALSE}
 gapminder2007 %>%
   sample_n(5) %>%
   knitr::kable(
@@ -495,8 +496,6 @@ gapminder2007 %>%
     booktabs = TRUE
   )
 ```
-
-or using the `glimpse()` function.
 
 ```{r}
 glimpse(gapminder2007)
@@ -806,7 +805,9 @@ Let’s load the data and `select()` only the 6 variables listed above:
 ```{r}
 library(ISLR)
 Credit <- Credit %>%
-  select(Balance, Income, Limit, Rating, Age, Education)
+  select(Balance, Limit, Income, Rating, Age, Education)
+Credit <- Credit %>% 
+  select(Balance, Limit, Income)
 ```
 
 Unfortunately, no information on how this data was sampled was provided, so we're not able to generalize any such results to a greater population, but we will still use this data to demonstrate *multiple regression*. Multiple regression is a form of linear regression where there are now more than one explanatory/predictor variables and thus the interpretation of the associated effect of any one explanatory/predictor variable must be made in conjuction with the other explanatory/predictor variable. We'll perform multiple regression with:
@@ -817,11 +818,17 @@ Unfortunately, no information on how this data was sampled was provided, so we'r
     1. A second numerical explanatory/predictor variable $x_2$, in this case `Income`
 
 
+
+
 ### Exploratory data analysis {#model3EDA}
 
-First, let’s look at a random sample of 5 out of the 400 card holders:
+Let’s look at the raw data values both by bringing up RStudio’s spreadsheet viewer, altho in Table \@(tab:model3-data-preview) we only show 5 randomly selected credit card holders out of `r nrow(Credit)`, and using the `glimpse()` function:
 
-```{r, echo=FALSE}
+```{r, eval=FALSE}
+View(Credit)
+```
+
+```{r model3-data-preview, echo=FALSE}
 Credit %>%
   sample_n(5) %>%
   knitr::kable(
@@ -831,16 +838,60 @@ Credit %>%
   )
 ```
 
+```{r}
+glimpse(Credit)
+```
 
-Let's load the Credit card balance `Credit` data frame
-that we created in the "Datasets" Section \@ref(datacreditcard).
+Let's look at some summary statistics:
 
-Now that we have two numerical predictors, an ideal way to visualize this data
-is with a 3D scatterplot. Unfortunately this is beyond the scope of this book,
-so let's do the next best thing and look at two separate scatterplots of the outcome
-variable $y$ credit card balance in dollars with
+```{r}
+summary(Credit)
+```
 
+We observe for example
 
+1. The typical credit card balance is around $500
+1. The typical credit card limit is around $5000
+1. The typical income is around $40,000.
+
+Since our outcome variable `Balance` and the explanatory/predictor variables
+`Limit` and `Rating` are numerical, we can compute the correlation coefficient
+between pairs of these variables. However, instead running the `cor()` command
+twice, once for each explanatory/predictor variable:
+
+```{r, eval=FALSE}
+cor(Credit$Balance, Credit$Limit)
+cor(Credit$Balance, Credit$Income)
+```
+
+We can simultaneously compute them by returning a *correlation matrix* in 
+Table \@ref(tab:model3-correlation). We read off the correlation coefficent
+for any pair of variables by looking them up in the appropriate row/column combination.
+
+```{r, eval=FALSE}
+Credit %>% 
+  select(Balance, Limit, Income) %>% 
+  cor()
+```
+```{r model3-correlation, echo=FALSE}
+Credit %>% 
+  select(Balance, Limit, Income) %>% 
+  cor() %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Correlations between credit card balance, credit limit, and credit rating", 
+    booktabs = TRUE
+  )
+```
+
+For example, the correlation coefficients of:
+
+1. `Balance` with itself is 1
+1. `Balance` with `Limit` is 0.862, indicating a strong positive linear relationship, which makes sense as only individuals with large credit limits and accrue large credit card balances.
+1. `Balance` with `Income` is 0.464, suggestive of another positive linear relationship, although not as strong as the relationship between `Balance` and `Limit`.
+1. As an added bonus, we can read off the correlation coefficient of the two explanatory/predictor variables, `Limit` and `Income` of 0.792. In this case, we say there is a high degree of *collinearity* between these two explanatory/predictor variables.
+
+Let's visualize the relationship of the outcome variable with each of the two explanatory/predictor variables 
 
 ```{r 2numxplot1, warning=FALSE, fig.cap="Relationship between credit card balance and credit limit"}
 ggplot(Credit, aes(x = Limit, y = Balance)) +
@@ -856,62 +907,46 @@ ggplot(Credit, aes(x = Income, y = Balance)) +
   geom_smooth(method = "lm", se = FALSE)
 ```
 
-In both cases, there seems to be a positive relationship. Let's look at the 
-correlation coefficient in both cases. 
+In both cases, there seems to be a positive relationship.
 
-```{r, eval=FALSE}
-cor(Credit$Limit, Credit$Balance)
-```
-```{r, echo=FALSE}
-Credit %>%
-  summarize(correlation = cor(Limit, Balance)) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Correlation between credit limit and credit card balance", 
-    booktabs = TRUE
+However, Figures \@ref(2numxplot1) and \@ref(2numxplot2) only focus on the relationship of the outcome variable with each of the explanatory/predictor variables independently. To get a sense of the *joint* relationship of all three variables simultaneously through a visualization, let's display the data in a 3-dimentional (3D) scatterplot, where
+
+1. The numerical outcome variable $y$ `Balance` is on the z-axis (vertical one)
+1. The two numerical explanatory/predictor variables form the x and y axes (on the floor). In this case
+    1. The first numerical explanatory/predictor variable $x_1$ `Income` is on the x-axis
+    1. The second numerical explanatory/predictor variable $x_2$ `Limit` is on the y-axis
+
+Click on the following image to open an interactive 3D scatterplot in your browser:
+
+```{r, eval=FALSE, echo=FALSE}
+library(ISLR)
+library(plotly)
+plot_ly(showscale=FALSE) %>%
+  add_markers(
+    x = Credit$Income,
+    y = Credit$Limit,
+    z = Credit$Balance,
+    hoverinfo = 'text',
+    text = ~paste("x1 - Income: ", Credit$Income, 
+                  "</br> x2 - Limit: ", Credit$Limit, 
+                  "</br> y - Balance: ", Credit$Balance)
+  ) %>% 
+  layout(
+    scene = list(
+      xaxis = list(title = "x1 - Income (in $10K)"),
+      yaxis = list(title = "x2 - Limit ($)"),
+      zaxis = list(title = "y - Balance ($)")
+    )
   )
 ```
 
+<a target="_blank" href="http://rpubs.com/moderndive/credit_card_balance_3D_scatterplot"><img src="images/credit_card_balance_3D_scatterplot.png" title="Example Image Link" width="600"/></a>
 
-```{r, eval=FALSE}
-cor(Credit$Income, Credit$Balance)
-```
-```{r, echo=FALSE}
-Credit %>% 
-  summarize(correlation = cor(Income, Balance)) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Correlation between income (in $1000) and credit card balance", 
-    booktabs = TRUE
-  )
-```
 
-In both cases, the correlation coefficient indicates a strong linear relationship,
-in particular between credit limit and credit card balance! Makes sense! Note 
-however there were a few individuals who had balances of 0!
 
-What if in instead we looked the correlation coefficient between income and
-credit card balance, where income was in dollars and not thousands of dollars? i.e. we 
-multiply Income by 1000?
 
-```{r, eval=FALSE}
-cor(Credit$Income * 1000, Credit$Balance)
-```
-```{r, echo=FALSE}
-Credit %>%
-  summarize(correlation = cor(Income, Balance)) %>%
-  knitr::kable(
-    digits = 3,
-    caption = "Correlation between income (in $) and credit card balance", 
-    booktabs = TRUE
-  )
-```
 
-We see it is the same! We say that correlation coefficient is invariant to linear
-transformations! In other words
 
-* The correlation between $x$ and $y$ will be the same as
-* The correlation between $a\times x + b$ and $y$ where $a, b$ are numerical values (real numbers in mathematical terms)
 
 
 ### Multiple regression {#model3table}
@@ -1502,6 +1537,34 @@ ggplot(regression_points, aes(x = age, y = residual)) +
 ## Other topics
 
 ### Correlation coefficient {#correlationcoefficient}
+
+What if in instead we looked the correlation coefficient between `Income` and
+credit card `Balance`, where `Income` was in dollars and not thousands of dollars?
+i.e. we multiply `Income` by 1000?
+
+```{r, eval=FALSE}
+Credit %>% 
+  select(Balance, Limit, Income) %>% 
+  mutate(Income = Income * 1000) %>% 
+  cor()
+```
+```{r, echo=FALSE}
+Credit %>% 
+  select(Balance, Limit, Income) %>% 
+  mutate(Income = Income * 1000) %>% 
+  cor() %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Correlation between income (in $) and credit card balance", 
+    booktabs = TRUE
+  )
+```
+
+We see it is the same! We say that correlation coefficient is invariant to linear
+transformations! In other words
+
+* The correlation between $x$ and $y$ will be the same as
+* The correlation between $a\times x + b$ and $y$ where $a, b$ are numerical values (real numbers in mathematical terms)
 
 ### Best fitting line {#leastsquares}
 
