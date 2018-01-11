@@ -1015,6 +1015,10 @@ Just as we did when we had a single numerical explanatory/predictor variable $x$
 ```{r, eval=FALSE}
 get_regression_table(Balance ~ Limit + Income, data = Credit)
 ```
+```{r, echo=FALSE}
+Credit_line <- get_regression_table(Balance ~ Limit + Income, data = Credit) %>%
+  pull(estimate)
+```
 ```{r model3-table-output, echo=FALSE}
 get_regression_table(Balance ~ Limit + Income, data = Credit) %>% 
   knitr::kable(
@@ -1038,9 +1042,105 @@ However, recall in Figure \@ref(fig:2numxplot1) that when considered separately,
 
 ### Observed/fitted values and residuals {#model3points}
 
+As we did previously, in Table \@ref(tab:model3-points-table) let's unpack the output of the `get_regression_points()` function for our model for credit card balance
+
+* for all `r nrow(Credit)` card holders in the dataset, in other words
+* for all `r nrow(Credit)` rows in the `Credit` data frame, in other words
+* for all `r nrow(Credit)` points
+
+```{r, eval=FALSE}
+regression_points <- get_regression_points(Balance ~ Limit + Income, data = Credit)
+regression_points
+```
+```{r model3-points-table, echo=FALSE}
+set.seed(76)
+regression_points <- get_regression_points(Balance ~ Limit + Income, data = Credit)
+regression_points %>%
+  slice(1:5) %>%
+  knitr::kable(
+    digits = 3,
+    caption = "Regression points (first 5 rows of 400)",
+    booktabs = TRUE
+  )
+```
+
+Recall the format of the output:
+
+* `balance` corresponds to $y$ the observed value
+* `balance_hat` corresponds to $\widehat{y}$ the fitted value
+* `reisdual` corresponds to the residual $y - \widehat{y}$
+
+As we did in Section \@ref(model1points) let's prove to ourselves that the results make sense by manually replicate the internal computation that `get_regression_points()` performs using the `mutate()` verb from Chapter \@ref(wrangling)
+
+1. First we compute a duplicate of the fitted values $\widehat{y} = b_0 + b_1 \times x_1 + b_2 \times x_2$ where the intercept $b_0$ = `r Credit_line[1]`, the slope $b_1$ for `Limit` of `r Credit_line[2]`, and the slope $b_2$ for `Income` of `r Credit_line[3]` and store these in `balance_hat_2`
+1. Then we compute the a duplicated the residuals $y - \widehat{y}$ and store these in `residual_2`
+
+```{r, eval=FALSE}
+regression_points <- regression_points %>% 
+  mutate(balance_hat_2 = -385.179 + 0.264 * Limit - 7.663 * Income) %>% 
+  mutate(residual_2 = balance - balance_hat_2)
+regression_points
+```
+```{r, echo=FALSE}
+set.seed(76)
+regression_points <- regression_points %>% 
+  mutate(balance_hat_2 = -385.179 + 0.264 * limit - 7.663 * income) %>% 
+  mutate(residual_2 = balance - balance_hat_2)
+regression_points %>%
+  slice(1:5) %>%
+  knitr::kable(
+    digits = 3,
+    caption = "Regression points (first five rows)",
+    booktabs = TRUE
+  )
+```
+
+We see that our manually computed variables `balance_hat_2` and `residual_2` equal the original results (up to rounding error).
+
+### Residual analysis {#model3residuals}
+
+Recall our discussion on residuals from Section \@ref(model1residuals) where our goal was to investigate whether or not there was a *systematic pattern* to the residuals, as ideally since residuals can be thought of as error, there should be no such pattern. While there are many ways to do such residual analysis, we focused on two approaches based on visualizations. 
+
+1. A plot with residuals on the y-axis and the predictor (in this case continent) on the x-axis
+1. A histogram of all residuals
+
+First, let's plot the residuals vs continent in Figure \@ref(fig:catxplot7), but also let's plot all `r nrow(gapminder2007)` points with a little horizontal random jitter by setting the `width = 0.1` parameter in `geom_jitter()` 
+
+```{r model3_residuals_hist, warning=FALSE, fig.cap="Plot of residuals over continent"}
+```
+
+We observe:
+
+1. While not perfectly balanced above and below the line $y=0$, there seems to
+be a rough balance of both positive and negative residuals for all 5 continents.
+1. However, there is one clear outlier in Asia. It has the smallest residual,
+hence also has the smallest life expectancy in Asia.
+
+Let's see investigate the 5 countries in Asia with the shortest life expectancy:
 
 
-### Residual analysis {#model3points}
+This was the earlier identified residual for Afghanistan of -26.9. Unfortunately 
+given recent geopolitical turmoil, individuals who live in Afghanistan have a 
+drastically lower life expectancy. 
+
+Second, let's look at a histogram of all `r nrow(gapminder2007)` values of
+residuals in Figure \@ref(fig:catxplot8). In this case, the residuals form a
+rather nice bell-shape, although there are a couple of very low and very high
+values at the tails. As we said previously, searching for patterns in residuals
+can be somewhat subjective, but ideally we hope there are no "drastic" patterns.
+
+
+
+### Your turn
+
+Repeat this same analysis but using GDP per capita `gdpPercap` as the outcome variable. Recall the four steps we've been following:
+
+1. Perform an exploratory data analysis
+1. Fit a linear regression model and get information about the model
+1. Get information on all $n$ data points considered in this analysis. 
+1. Perform a residual analysis and look for any systematic patterns in the residuals.
+
+
 
 ## 5RM#4: Teacher Evaluations Part II {#model4}
 
