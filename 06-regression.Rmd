@@ -9,7 +9,9 @@ rq <- 0
 
 knitr::opts_chunk$set(
   tidy = FALSE,
-  out.width = "\\textwidth"
+  out.width = "\\textwidth",
+  message = FALSE,
+  warning = FALSE
   )
 options(scipen = 99, digits = 3)
 
@@ -64,6 +66,7 @@ library(moderndive)
 library(mvtnorm)
 library(tidyr)
 library(forcats)
+library(gridExtra)
 ```
 
 Notice we load a new package called `moderndive` thus you'll need to install this once. This is an accompaniment package to the ModernDive book that includes 3 useful functions for linear regression.
@@ -820,8 +823,6 @@ Unfortunately, no information on how this data was sampled was provided, so we'r
     1. A second numerical explanatory/predictor variable $x_2$, in this case `Income`
 
 
-
-
 ### Exploratory data analysis {#model3EDA}
 
 Let's look at the raw data values both by bringing up RStudio's spreadsheet viewer, although in Table \@ref(tab:model3-data-preview) we only show 5 randomly selected credit card holders out of `r nrow(Credit)`, and using the `glimpse()` function:
@@ -893,25 +894,37 @@ For example, the correlation coefficients of:
 1. `Balance` with `Income` is 0.464, suggestive of another positive linear relationship, although not as strong as the relationship between `Balance` and `Limit`.
 1. As an added bonus, we can read off the correlation coefficient of the two explanatory/predictor variables, `Limit` and `Income` of 0.792. In this case, we say there is a high degree of *collinearity* between these two explanatory/predictor variables.
 
-Let's visualize the relationship of the outcome variable with each of the two explanatory/predictor variables 
+Let's visualize the relationship of the outcome variable with each of the two explanatory/predictor variables in two separate plots
 
-```{r 2numxplot1, warning=FALSE, fig.cap="Relationship between credit card balance and credit limit"}
+```{r, eval=FALSE}
 ggplot(Credit, aes(x = Limit, y = Balance)) +
   geom_point() +
-  labs(x = "Credit limit (in $)", y = "Credit card balance (in $)") +
+  labs(x = "Credit limit (in $)", y = "Credit card balance (in $)", 
+       title = "Relationship between balance and credit limit") +
   geom_smooth(method = "lm", se = FALSE)
-```
-
-```{r 2numxplot2, warning=FALSE, fig.cap="Relationship between credit card balance and income"}
+  
 ggplot(Credit, aes(x = Income, y = Balance)) +
   geom_point() +
-  labs(x = "Income (in $1000)", y = "Credit card balance (in $)") +
+  labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
+       title = "Relationship between balance and income") +
   geom_smooth(method = "lm", se = FALSE)
 ```
 
-In both cases, there seems to be a positive relationship.
+```{r 2numxplot1, echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"}
+model3_balance_vs_limit_plot <- ggplot(Credit, aes(x = Limit, y = Balance)) +
+  geom_point() +
+  labs(x = "Credit limit (in $)", y = "Credit card balance (in $)", 
+       title = "Balance vs credit limit") +
+  geom_smooth(method = "lm", se = FALSE)
+model3_balance_vs_income_plot <- ggplot(Credit, aes(x = Income, y = Balance)) +
+  geom_point() +
+  labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
+       title = "Balance vs income") +
+  geom_smooth(method = "lm", se = FALSE)
+grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)
+```
 
-However, Figures \@ref(fig:2numxplot1) and \@ref(fig:2numxplot2) only focus on the relationship of the outcome variable with each of the explanatory/predictor variables independently. To get a sense of the *joint* relationship of all three variables simultaneously through a visualization, let's display the data in a 3-dimensional (3D) scatterplot, where
+In both cases, there seems to be a positive relationship. However the two plots in Figure \@ref(fig:2numxplot1) only focus on the relationship of the outcome variable with each of the explanatory/predictor variables independently. To get a sense of the *joint* relationship of all three variables simultaneously through a visualization, let's display the data in a 3-dimensional (3D) scatterplot, where
 
 1. The numerical outcome variable $y$ `Balance` is on the z-axis (vertical one)
 1. The two numerical explanatory/predictor variables form the x and y axes (on the floor). In this case
@@ -995,7 +1008,6 @@ plot_ly(showscale=FALSE) %>%
 ```
 
 
-
 ### Multiple regression {#model3table}
 
 Just as we did when we had a single numerical explanatory/predictor variable $x$ in Section \@ref(model1table) and when we had a single categorical explanatory/predictor variable $x$ in Section \@ref(model2table), we fit a regression model and obtain the regression table in our two numerical explanatory/predictor variable scenario. To fit a regression model and obtain a table using `get_regression_table()`, we now use a `+` to consider multiple explanatory/predictor variables. In this case since we want to preform a regression of `Limit` and `Income` simultaneously, we input `Balance ~ Limit + Income`
@@ -1003,7 +1015,7 @@ Just as we did when we had a single numerical explanatory/predictor variable $x$
 ```{r, eval=FALSE}
 get_regression_table(Balance ~ Limit + Income, data = Credit)
 ```
-```{r, echo=FALSE}
+```{r model3-table-output, echo=FALSE}
 get_regression_table(Balance ~ Limit + Income, data = Credit) %>% 
   knitr::kable(
     digits = 3,
@@ -1012,82 +1024,22 @@ get_regression_table(Balance ~ Limit + Income, data = Credit) %>%
   )
 ```
 
-
 How do we interpret these three values that define the regression plane?
 
-* Intercept: -$385.18. In this case, the intercept doesn't have a practical
-interpretation as no one can have a credit card balance of less than $0. It is
-used merely to situate the plane in 3D space. 
+* Intercept: -$385.18. The intercept in our case represents the credit card balance for an individual who has both a credit `Limit` of $0 and `Income` of $0. In our data however, the intercept has limited practical interpretation as no individuals had `Limit` or `Income` values of $0 and furthermore the smallest credit card balance was $0. Rather, it is used to situate the regression plane in 3D space. 
 * Limit: $0.26. Now that we have multiple variables to consider, we have to add
-a caveat to our interpretation: *all other things being equal, for every increase in one dollar in credit limit, there is an associated increase of on average 26 cents in credit card balance*. Note:
-    + Again, we are not making any causal statements, only statements relating to the association between credit limit and balance
-    + The *all other things being equal* related to the other explanatory/predictor variables, in this case only one: Income. This is equivalent to saying "holding income constant, we observed an associated increase of $0.26 in credit card balance for every dollar increase in credit limit"
-* Income: -$7.66. Negative? Say what? Didn't we see in Figure
-\@ref(fig:2numxplot2) that the relationship was positive and that the
-correlation between Income and credit card balance was positive?
+a caveat to our interpretation: *all other things being equal, for every increase of one unit in credit `Limit` (dollars), there is an associated increase of on average $0.26 in credit card balance*. Note:
+    + Just as we did in Section \@ref(model1table), we are not making any causal statements, only statements relating to the association between credit limit and balance
+    + The *all other things being equal* is making a statement about all other explanatory/predictor variables, in this case only one: `Income`. This is equivalent to saying "holding `Income` constant, we observed an associated increase of $0.26 in credit card balance for every dollar increase in credit limit"
+* Income: -$7.66. Similarly, *all other things being equal, for every increase of one unit in `Income` (in other words, $1000 in income), there is an associated decrease of on average $7.66 in credit card balance*.
 
-Here is a histogram of all `nrow(Credit)` values of `Limit` where the vertical red
-lines cut up the data into quartiles.
-
-```{r, 2numxplot3, echo=FALSE, fig.cap="Histogram of credit limits and quartiles"}
-ggplot(Credit, aes(x = Limit)) +
-  geom_histogram(color = "white") +
-  geom_vline(xintercept = quantile(Credit$Limit, probs = c(0.25, 0.5, 0.75)), col = "red")
-```
-
-In other words, 
-
-1. 25% of people had credit limits between \$0 and \$3088. Let's call this group "low" credit limit bracket.
-1. 25% of people had credit limits between \$3088 and \$4622. Let's call this group "medium-low" credit limit bracket.
-1. 25% of people had credit limits between \$4622 and \$5873. Let's call this group "medium-high" credit limit bracket.
-1. 25% of people had credit limits over \$5873. Let's call this group "high" credit limit bracket.
-
-```{r, 2numxplot4, echo=FALSE, warning=FALSE, fig.cap="Relationship between credit card balance and income for different credit limit brackets"}
-Credit <- Credit %>% 
-  mutate(limit_bracket = cut_number(Limit, 4)) %>% 
-  mutate(limit_bracket = fct_recode(limit_bracket,
-    "low" =  "[855,3.09e+03]",
-    "medium-low" = "(3.09e+03,4.62e+03]", 
-    "medium-high" = "(4.62e+03,5.87e+03]", 
-    "high" = "(5.87e+03,1.39e+04]"
-  ))
-
-ggplot(Credit, aes(x = Income, y = Balance, col = limit_bracket)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
-       color = "Credit limit\nbracket")
-```
-
-Figure \@ref(fig:2numxplot4) is actually the same as Figure \@ref(fig:2numxplot2), but now with colors distinguishing the credit limit brackets. We now see that for the 
-
-1. low
-1. medium-low
-1. medium-high
-
-income bracket groups, the strong positive relationship between credit card balance
-and income disappears! Only for the high bracket does the relationship stay somewhat positive. In this example credit limit is a *confounding variable* for credit card balance and income.
-
-Alternatively, we could also have used facets, where each facet has roughly 25% of people based
-on the credit limit bracket. However, IMO the above plot is easier to read.
-
-```{r, 2numxplot5, echo=FALSE, warning=FALSE, fig.cap="Relationship between credit card balance and income for different credit limit brackets"}
-ggplot(Credit, aes(x = Income, y = Balance)) +
-  geom_point() +
-  facet_wrap(~limit_bracket) +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(x = "Income (in $1000)", y = "Credit card balance (in $)")
-```
-
-
-
- 
-
-
-
+However, recall in Figure \@ref(fig:2numxplot1) that when considered separately, both `Limit` and `Income` had positive relationships with the outcome variable `Balance`: as card holders' credit limits increased their credit card balances tended to increase as well, and a similar relationship held for incomes and balances. In the above multiple regression, however, the slope for `Income` is now -7.66, suggesting a *negative relationship* between income and credit card balance. What explains these contradictory results? This is a phenomenon known as Simpson's Paradox, a phenomenon in which a trend appears in several different groups of data but disappears or reverses when these groups are combined; we expand on this in Section \@ref(simpsonsparadox).
 
 
 ### Observed/fitted values and residuals {#model3points}
+
+
+
 ### Residual analysis {#model3points}
 
 ## 5RM#4: Teacher Evaluations Part II {#model4}
@@ -1694,3 +1646,76 @@ For the regression line in the plot, the sum of the squared residuals is `r get_
 
 
 ### How does `get_regression_table()` work? {#underthehood}
+
+
+### Simpson's Paradox {#simpsonsparadox}
+
+Recall in Section \@ref(model3), we saw the two following seemingly contraditory results when studying the relationship between credit card balance, credit limit, and income. On the one hand, the right hand plot of Figure \@ref(fig:2numxplot1) suggested that credit card balance and income were positively related:
+
+```{r echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"}
+grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)
+```
+
+On the other hand, the multiple regression in Table \@ref(tab:model3-table-output), suggested that when modeling credit card balance as a function of both credit limit and income at the same time, credit limit has a negative relationship with balance, as evidenced by the slope of -7.66. How can this be?
+
+First, let's dive a little deeper into the explanatory/predictor variable `Limit`. Figure \@ref(fig:credit_limit_quartiles) shows a histogram of all `r nrow(Credit)` values of `Limit`, along with vertical red lines that cut up the data into quartiles, meaning: 
+
+1. 25% of credit limits were between \$0 and \$3088. Let's call this the "low" credit limit bracket.
+1. 25% of credit limits were between \$3088 and \$4622. Let's call this the "medium-low" credit limit bracket.
+1. 25% of credit limits were between \$4622 and \$5873. Let's call this the "medium-high" credit limit bracket.
+1. 25% of credit limits were over \$5873. Let's call this the "high" credit limit bracket.
+
+```{r, credit_limit_quartiles, echo=FALSE, fig.cap="Histogram of credit limits and quartiles"}
+ggplot(Credit, aes(x = Limit)) +
+  geom_histogram(color = "white") +
+  geom_vline(xintercept = quantile(Credit$Limit, probs = c(0.25, 0.5, 0.75)), col = "red", linetype = "dashed")
+```
+
+Let's now display
+
+1. The scatterplot showing the relationship between credit card balance and limit (the right-hand plot of Figure \@ref(fig:2numxplot1)).
+1. The scatterplot showing the relationship between credit card balance and limit now with a color aesthetic added corresponding to the credit limit bracket.
+
+```{r, 2numxplot4, fig.height=4, echo=FALSE, fig.cap="Relationship between credit card balance and income for different credit limit brackets"}
+Credit <- Credit %>% 
+  mutate(limit_bracket = cut_number(Limit, 4)) %>% 
+  mutate(limit_bracket = fct_recode(limit_bracket,
+    "low" =  "[855,3.09e+03]",
+    "medium-low" = "(3.09e+03,4.62e+03]", 
+    "medium-high" = "(4.62e+03,5.87e+03]", 
+    "high" = "(5.87e+03,1.39e+04]"
+  ))
+
+model3_balance_vs_income_plot_colored <- ggplot(Credit, aes(x = Income, y = Balance, col = limit_bracket)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
+       color = "Credit limit\nbracket", title = "Balance vs income") + 
+  theme(legend.position = "bottom")
+  
+grid.arrange(model3_balance_vs_income_plot, model3_balance_vs_income_plot_colored, nrow = 1)
+#cowplot::plot_grid(model3_balance_vs_income_plot, model3_balance_vs_income_plot_colored, nrow = 1, rel_widths = c(2/5, 3/5))
+```
+
+The left-hand plot focuses of the relationship between balance and income in aggregate, but the right-hand plot focuses on the relationship between balance and income *broken down by credit limit bracket*. Whereas in aggregate there is an overall positive relationship, but when broken down We now see that for the 
+
+1. low
+1. medium-low
+1. medium-high
+
+income bracket groups, the strong positive relationship between credit card balance and income disappears! Only for the high bracket does the relationship stay somewhat positive. In this example credit limit is a *confounding variable* for credit card balance and income.
+
+<!--
+Alternatively, we could also have used facets, where each facet has roughly 25% of people based
+on the credit limit bracket. However, IMO the above plot is easier to read.
+
+```{r, 2numxplot5, echo=FALSE, warning=FALSE, fig.cap="Relationship between credit card balance and income for different credit limit brackets"}
+ggplot(Credit, aes(x = Income, y = Balance)) +
+  geom_point() +
+  facet_wrap(~limit_bracket) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Income (in $1000)", y = "Credit card balance (in $)")
+```
+--> 
+
+
