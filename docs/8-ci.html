@@ -32,8 +32,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   
   
-<link rel="prev" href="11-wrapping-up.html">
-<link rel="next" href="B-appendixB.html">
+<link rel="prev" href="7-sampling.html">
+<link rel="next" href="9-hypo.html">
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
@@ -468,40 +468,322 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <html>
 <img src='http://moderndive.com/images/logos/wide_format.png' alt="ModernDive">
 </html>
-<div id="appendixA" class="section level1">
-<h1><span class="header-section-number">A</span> Statistical Background</h1>
-<div id="basic-statistical-terms" class="section level2">
-<h2><span class="header-section-number">A.1</span> Basic statistical terms</h2>
-<div id="mean" class="section level3">
-<h3><span class="header-section-number">A.1.1</span> Mean</h3>
-<p>The mean is the most commonly reported measure of center. It is commonly called the “average” though this term can be a little ambiguous. The mean is the sum of all of the data elements divided by how many elements there are. If we have <span class="math inline">\(n\)</span> data points, the mean is given by: <span class="math display">\[Mean = \frac{x_1 + x_2 + \cdots + x_n}{n}\]</span></p>
+<div id="ci" class="section level1">
+<h1><span class="header-section-number">8</span> Confidence Intervals</h1>
+<p><strong>Definition: Confidence Interval</strong></p>
+<p>A <em>confidence interval</em> gives a range of plausible values for a parameter. It depends on a specified <em>confidence level</em> with higher confidence levels corresponding to wider confidence intervals and lower confidence levels corresponding to narrower confidence intervals. Common confidence levels include 90%, 95%, and 99%.</p>
+<p>Usually we don’t just begin chapters with a definition, but <em>confidence intervals</em> are simple to define and play an important role in the sciences and any field that uses data. You can think of a confidence interval as playing the role of a net when fishing. Instead of just trying to catch a fish with a single spear (estimating an unknown parameter by using a single point estimate/statistic), we can use a net to try to provide a range of possible locations for the fish (use a range of possible values based around our statistic to make a plausible guess as to the location of the parameter).</p>
+<div id="needed-packages-5" class="section level3 unnumbered">
+<h3>Needed packages</h3>
+<p>Let’s load all the packages needed for this chapter (this assumes you’ve already installed them). If needed, read Section <a href="2-getting-started.html#packages">2.3</a> for information on how to install and load R packages.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(dplyr)
+<span class="kw">library</span>(ggplot2)
+<span class="kw">library</span>(mosaic)
+<span class="kw">library</span>(knitr)
+<span class="kw">library</span>(ggplot2movies)</code></pre></div>
+<!--
+There is only one CI 
+  - Still need to build a diagram
+-->
+<hr />
 </div>
-<div id="median" class="section level3">
-<h3><span class="header-section-number">A.1.2</span> Median</h3>
-<p>The median is calculated by first sorting a variable’s data from smallest to largest. After sorting the data, the middle element in the list is the <strong>median</strong>. If the middle falls between two values, then the median is the mean of those two values.</p>
+<div id="bootstrapping" class="section level2">
+<h2><span class="header-section-number">8.1</span> Bootstrapping</h2>
+<p>Just as we did in Chapter <a href="9-hypo.html#hypo">9</a> with the Lady Tasting Tea when making hypotheses about a population total with which we would like to test which one is more plausible, we can also use computation to infer conclusions about a population quantitative statistic such as the mean. In this case, we will focus on constructing confidence intervals to produce plausible values for a population mean. (We can do a similar analysis for a population median or other summary measure as well.)</p>
+<p>Traditionally, the way to construct confidence intervals for a mean is to assume a normal distribution for the population or to invoke the Central Limit Theorem and get, what often appears to be magic, results. (This is similar to what was done in Section <a href="9-hypo.html#theory-hypo">9.8</a>.) These methods are often not intuitive, especially for those that lack a strong mathematical background. They also come with their fair share of assumptions and often turn Statistics, a field that is full of tons of useful applications to many different fields and disciplines, into a robotic procedural-based topic. It doesn’t have to be that way!</p>
+<p>In this section, we will introduce the concept of <strong>bootstrapping</strong>. It will be a useful tool that will allow us to estimate the variability of our statistic from sample to sample. One neat feature of bootstrapping is that it enables us to approximate the sampling distribution and estimate the distribution’s standard deviation using ONLY the information in the one selected (original) sample. It sounds just as plagued with the magical type qualities of traditional theory-based inference on initial glance but we will see that it provides an intuitive and useful way to make inferences, especially when the samples are of medium to large size.</p>
+<p>To introduce the concept of bootstrapping, we again will use the <code>movies</code> dataset in the <code>ggplot2movies</code> data frame. Recall that you can also glance at this data frame using the <code>View</code> function and look at the help documentation for <code>movies</code> using the <code>?</code> function. We will explore many other features of this dataset in the chapters to come, but here we will be focusing on the <code>rating</code> variable corresponding to the average IMDB user rating.</p>
+<p>You may notice that this dataset is quite large: 58,788 movies have data collected about them here. This will correspond to our population of ALL movies. Remember from Chapter <a href="#sim"><strong>??</strong></a> that our population is rarely known. We use this dataset as our population here to show you the power of bootstrapping in estimating population parameters. We’ll see how <strong>confidence intervals</strong> built using the bootstrap distribution perform at including our population parameter of interest. Here we can actually calculate these values since our population is known, but remember that in general this isn’t the case.</p>
+<p>Let’s take a look at what the distribution of our population <code>ratings</code> looks like. We’ll see that we will use the distribution of our sample(s) as an estimate of this population histogram.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">movies <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> rating)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">color =</span> <span class="st">&quot;white&quot;</span>, <span class="dt">bins =</span> <span class="dv">20</span>)</code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-220"></span>
+<img src="ismaykim_files/figure-html/unnamed-chunk-220-1.png" alt="Population ratings histogram" width="\textwidth" />
+<p class="caption">
+Figure 8.1: Population ratings histogram
+</p>
 </div>
-<div id="standard-deviation" class="section level3">
-<h3><span class="header-section-number">A.1.3</span> Standard deviation</h3>
-<p>We will next discuss the <strong>standard deviation</strong> of a sample dataset pertaining to one variable. The formula can be a little intimidating at first but it is important to remember that it is essentially a measure of how far to expect a given data value is from its mean:</p>
-<p><span class="math display">\[Standard \, deviation = \sqrt{\frac{(x_1 - Mean)^2 + (x_2 - Mean)^2 + \cdots + (x_n - Mean)^2}{n - 1}}\]</span></p>
+<div class="learncheck">
+<p>
+<strong><em>Learning check</em></strong>
+</p>
 </div>
-<div id="five-number-summary" class="section level3">
-<h3><span class="header-section-number">A.1.4</span> Five-number summary</h3>
-<p>The <strong>five-number summary</strong> consists of five values: minimum, first quantile (25<sup>th</sup> percentile), median (50<sup>th</sup> percentile), third quantile (75<sup>th</sup>) quantile, and maximum. The quantiles are calculated as</p>
+<p><strong>(LC9.1)</strong> Why was a histogram chosen as the plot to make for the <code>rating</code> variable above?</p>
+<p><strong>(LC9.2)</strong> What does the shape of the <code>rating</code> histogram tell us about how IMDB users rate movies? What stands out about the plot?</p>
+<div class="learncheck">
+
+</div>
+<p>It’s important to think about what our goal is here. We would like to produce a confidence interval for the population mean <code>rating</code>. We will have to pretend for a moment that we don’t have all 58,788 movies. Let’s say that we only have a random sample of 50 movies from this dataset instead. In order to get a random sample, we can use the <code>resample</code> function in the <code>mosaic</code> package with <code>replace = FALSE</code>. We could also use the <code>sample_n</code> function from <code>dplyr</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">2017</span>)
+movies_sample &lt;-<span class="st"> </span>movies <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">sample_n</span>(<span class="dv">50</span>)</code></pre></div>
+<p>The <code>sample_n</code> function has filtered the data frame <code>movies</code> “at random” to choose only 50 rows from the larger <code>movies</code> data frame. We store information on these 50 movies in the <code>movies_sample</code> data frame.</p>
+<p>Let’s now explore what the <code>rating</code> variable looks like for these 50 movies:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(<span class="dt">data =</span> movies_sample, <span class="kw">aes</span>(<span class="dt">x =</span> rating)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">color =</span> <span class="st">&quot;white&quot;</span>, <span class="dt">bins =</span> <span class="dv">20</span>)</code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-223"></span>
+<img src="ismaykim_files/figure-html/unnamed-chunk-223-1.png" alt="Sample ratings histogram" width="\textwidth" />
+<p class="caption">
+Figure 8.2: Sample ratings histogram
+</p>
+</div>
+<p>Remember that we can think of this histogram as an estimate of our population distribution histogram that we saw above. We are interested in the population mean rating and trying to find a range of plausible values for that value. A good start in guessing the population mean is to use the mean of our sample <code>rating</code> from the <code>movies_sample</code> data:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(movies_sample_mean &lt;-<span class="st"> </span>movies_sample <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">   </span><span class="kw">summarize</span>(<span class="dt">mean =</span> <span class="kw">mean</span>(rating)))</code></pre></div>
+<pre><code># A tibble: 1 x 1
+   mean
+  &lt;dbl&gt;
+1  5.89</code></pre>
+<p>Note the use of the <code>( )</code> at the beginning and the end of this creation of the <code>movies_sample_mean</code> object. If you’d like to print out your newly created object, you can enclose it in the parentheses as we have here.</p>
+<p>This value of 5.894 is just one guess at the population mean. The idea behind <em>bootstrapping</em> is to sample <strong>with replacement</strong> from the original sample to create new <strong>resamples</strong> of the same size as our original sample.</p>
+<p>Returning to our example, let’s investigate what one such resample of the <code>movies_sample</code> dataset accomplishes. We can create one resample/bootstrap sample by using the <code>resample</code> function in the <code>mosaic</code> package.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">boot1 &lt;-<span class="st"> </span><span class="kw">resample</span>(movies_sample) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">arrange</span>(orig.id)</code></pre></div>
+<p>The important thing to note here is the original row numbers from the <code>movies_sample</code> data frame in the far right column called <code>orig.ids</code>. Since we are sampling with replacement, there is a strong likelihood that some of the 50 observational units are going to be selected again.</p>
+<p>You may be asking yourself what does this mean and how does this lead us to creating a distribution for the sample mean. Recall that the original sample mean of our data was calculated using the <code>summarize</code> function above.</p>
+<div class="learncheck">
+<p>
+<strong><em>Learning check</em></strong>
+</p>
+</div>
+<p><strong>(LC9.3)</strong> What happens if we change the seed to our pseudo-random generation? Try it above when we used <code>resample</code> to describe the resulting <code>movies_sample</code>.</p>
+<p><strong>(LC9.4)</strong> Why is sampling at random important from the <code>movies</code> data frame? Why don’t we just pick <code>Action</code> movies and do bootstrapping with this <code>Action</code> movies subset?</p>
+<p><strong>(LC9.5)</strong> What was the purpose of assuming we didn’t have access to the full <code>movies</code> dataset here?</p>
+<div class="learncheck">
+
+</div>
+<p>Before we had a calculated mean in our original sample of 5.894. Let’s calculate the mean of <code>ratings</code> in our bootstrapped sample:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(movies_boot1_mean &lt;-<span class="st"> </span>boot1 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">summarize</span>(<span class="dt">mean =</span> <span class="kw">mean</span>(rating)))</code></pre></div>
+<pre><code># A tibble: 1 x 1
+   mean
+  &lt;dbl&gt;
+1  5.69</code></pre>
+<p>More than likely the calculated bootstrap sample mean is different than the original sample mean. This is what was meant earlier by the sample means having some variability. What we are trying to do is replicate many different samples being taken from a larger population. Our best guess at what the population looks like is multiple copies of the sample we collected. We then can sample from that larger “created” population by generating bootstrap samples.</p>
+<p>Similar to what we did in the previous section, we can repeat this process using the <code>do</code> function followed by an asterisk. Let’s look at 10 different bootstrap means for <code>ratings</code> from <code>movies_sample</code>. Note the use of the <code>resample</code> function here.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">do</span>(<span class="dv">10</span>) <span class="op">*</span><span class="st"> </span>
+<span class="st">  </span>(<span class="kw">resample</span>(movies_sample) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">     </span><span class="kw">summarize</span>(<span class="dt">mean =</span> <span class="kw">mean</span>(rating)))</code></pre></div>
+<pre><code>   mean
+1  5.94
+2  5.57
+3  5.83
+4  6.29
+5  6.03
+6  5.92
+7  6.00
+8  5.85
+9  6.10
+10 5.61</code></pre>
+<p>You should see some variability begin to tease its way out here. Many of the simulated means will be close to our original sample mean but many will stray pretty far away. This occurs because outliers may have been selected a couple of times in the resampling or small values were selected more than larger. There are myriad reasons why this might be the case.</p>
+<p>So what’s the next step now? Just as we repeated the repetitions thousands of times with the “Lady Tasting Tea” example, we can do a similar thing here:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">trials &lt;-<span class="st"> </span><span class="kw">do</span>(<span class="dv">5000</span>) <span class="op">*</span><span class="st"> </span><span class="kw">summarize</span>(<span class="kw">resample</span>(movies_sample), <span class="dt">mean =</span> <span class="kw">mean</span>(rating))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(<span class="dt">data =</span> trials, <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> mean)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">bins =</span> <span class="dv">30</span>, <span class="dt">color =</span> <span class="st">&quot;white&quot;</span>)</code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-231"></span>
+<img src="ismaykim_files/figure-html/unnamed-chunk-231-1.png" alt="Bootstrapped means histogram" width="\textwidth" />
+<p class="caption">
+Figure 8.3: Bootstrapped means histogram
+</p>
+</div>
+<p>The shape of this resulting distribution may look familiar to you. It resembles the well-known normal (bell-shaped) curve. At this point, we can easily calculate a confidence interval. In fact, we have a couple different options. We will first use the percentiles of the distribution we just created to isolate the middle 95% of values. This will correspond to our 95% confidence interval for the population mean <code>rating</code>, denoted by <span class="math inline">\(\mu\)</span>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(ciq_mean_rating &lt;-<span class="st"> </span><span class="kw">confint</span>(trials, <span class="dt">level =</span> <span class="fl">0.95</span>, <span class="dt">method =</span> <span class="st">&quot;quantile&quot;</span>))</code></pre></div>
+<pre><code>  name lower upper level     method estimate
+1 mean  5.46   6.3  0.95 percentile     5.89</code></pre>
+<p>It’s always important at this point to interpret the results of this confidence interval calculation. In this context, we can say something like the following:</p>
+<blockquote>
+<p>Based on the sample data and bootstrapping techniques, we can be 95% confident that the true mean rating of <strong>ALL</strong> IMDB ratings is between 5.46 and 6.3.</p>
+</blockquote>
+<p>This statement may seem a little confusing to you. Another way to think about this is that this confidence interval was constructed using the sample data by a procedure that is <strong>95% reliable</strong> in that of 100 generated confidence intervals based on 100 different random samples, we expect on average that 95 of them will capture the true unknown parameter. This also means that we will get invalid results 5% of the time. Just as we had a trade-off with <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span> with hypothesis tests, we have a similar trade-off here with setting the confidence level.</p>
+<p>To further reiterate this point, the graphic below from <span class="citation">Diez, Barr, and Çetinkaya-Rundel (2014)</span> shows us that if we repeated a confidence interval process 25 times with 25 different samples, we would expect about 95% of them to actually contain the population parameter of interest. This parameter is marked with a dotted vertical line. We can see that only one confidence interval does not overlap with this value. (The one marked in red.) Therefore 24 in 25 (96%), which is quite close to our 95% reliability, do include the population parameter.</p>
+<div class="figure" style="text-align: center"><span id="fig:ci-coverage"></span>
+<img src="images/cis.png" alt="Confidence interval coverage plot from OpenIntro" width="\textwidth" />
+<p class="caption">
+Figure 8.4: Confidence interval coverage plot from OpenIntro
+</p>
+</div>
+<p>Remember that we are pretending like we don’t know what the mean IMDB rating for ALL movies is. Our population here is all of the movies listed in the <code>movies</code> data frame from <code>ggplot2movies</code>. So does our bootstrapped confidence interval here contain the actual mean value?</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">movies <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">summarize</span>(<span class="dt">mean_rating =</span> <span class="kw">mean</span>(rating))</code></pre></div>
+<pre><code># A tibble: 1 x 1
+  mean_rating
+        &lt;dbl&gt;
+1        5.93</code></pre>
+<p>We see here that the population mean does fall in our range of plausible values generated from the bootstrapped samples.</p>
+<p>We can also get an idea of how the theory-based inference techniques would have approximated this confidence interval by using the formula <span class="math display">\[\bar{x} \pm (2 * SE),\]</span> where <span class="math inline">\(\bar{x}\)</span> is our original sample mean and <span class="math inline">\(SE\)</span> stands for <strong>standard error</strong> and corresponds to the standard deviation of the bootstrap distribution. The value of 2 here corresponds to it being a 95% confidence interval. (95% of the values in a normal distribution fall within 2 standard deviations of the mean.) This formula assumes that the bootstrap distribution is symmetric and bell-shaped. This is often the case with bootstrap distributions, especially those in which the original distribution of the sample is not highly skewed.</p>
+<p><strong>Definition: standard error</strong></p>
+<p>The <em>standard error</em> is the standard deviation of the sampling distribution. The sampling distribution may be approximated by the bootstrap distribution or the null distribution depending on the context. Traditional theory-based methodologies for inference also have formulas for standard errors, assuming some conditions are met.</p>
+<p>To compute this type of confidence interval, we only need to make a slight modification to the <code>confint</code> function seen above. (The expression after the <span class="math inline">\(\pm\)</span> sign is known as the <strong>margin of error</strong>.)</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(cise_mean_rating &lt;-<span class="st"> </span><span class="kw">confint</span>(trials, <span class="dt">level =</span> <span class="fl">0.95</span>, <span class="dt">method =</span> <span class="st">&quot;stderr&quot;</span>))</code></pre></div>
+<pre><code>  name lower upper level method estimate margin.of.error
+1 mean  5.47  6.32  0.95 stderr     5.89           0.425</code></pre>
+<blockquote>
+<p>Based on the sample data and bootstrapping techniques, we can be 95% confident that the true mean rating of ALL IMDB ratings is between 5.467 and 6.316.</p>
+</blockquote>
+<div class="learncheck">
+<p>
+<strong><em>Learning check</em></strong>
+</p>
+</div>
+<p><strong>(LC9.6)</strong> Reproduce the bootstrapping above using a sample of size 50 instead of 25. What changes do you see?</p>
+<p><strong>(LC9.7)</strong> Reproduce the bootstrapping above using a sample of size 5 instead of 25. What changes do you see?</p>
+<p><strong>(LC9.8)</strong> How does the sample size affect the analysis above?</p>
+<p><strong>(LC9.9)</strong> Why must bootstrap samples be the same size as the original sample?</p>
+<div class="learncheck">
+
+</div>
+<div id="review-of-bootstrapping" class="section level3">
+<h3><span class="header-section-number">8.1.1</span> Review of bootstrapping</h3>
+<p>We can summarize the process to generate a bootstrap distribution here in a series of steps that clearly identify the terminology we will use <span class="citation">(R. Lock et al. 2012)</span>.</p>
 <ul>
-<li>first quantile (<span class="math inline">\(Q_1\)</span>): the median of the first half of the sorted data</li>
-<li>third quantile (<span class="math inline">\(Q_3\)</span>): the median of the second half of the sorted data</li>
+<li>Generate <em>bootstrap samples</em> by sampling with replacement from the original sample, using the same sample size.</li>
+<li>Compute the statistic of interest, called a <em>bootstrap statistic</em>, for each of the bootstrap samples.</li>
+<li>Collect the statistics for many bootstrap samples to create a <em>bootstrap distribution</em>.</li>
 </ul>
-<p>The <em>interquartile range</em> is defined as <span class="math inline">\(Q_3 - Q_1\)</span> and is a measure of how spread out the middle 50% of values is. The five-number summary is not influenced by the presence of outliers in the ways that the mean and standard deviation are. It is, thus, recommended for skewed datasets.</p>
+<p>Visually, we can represent this process in the following diagram.</p>
+<div class="figure" style="text-align: center"><span id="fig:bootstrapimg"></span>
+<img src="images/bootstrap.png" alt="Bootstrapping diagram from Lock5 textbook" width="\textwidth" />
+<p class="caption">
+Figure 8.5: Bootstrapping diagram from Lock5 textbook
+</p>
 </div>
-<div id="distribution" class="section level3">
-<h3><span class="header-section-number">A.1.5</span> Distribution</h3>
-<p>The <strong>distribution</strong> of a variable/dataset corresponds to generalizing patterns in the dataset. It often shows how frequently elements in the dataset appear. It shows how the data varies and gives some information about where a typical element in the data might fall. Distributions are most easily seen through data visualization.</p>
+<hr />
 </div>
-<div id="outliers" class="section level3">
-<h3><span class="header-section-number">A.1.6</span> Outliers</h3>
-<p><strong>Outliers</strong> correspond to values in the dataset that fall far outside the range of “ordinary” values. In regards to a boxplot (by default), they correspond to values below <span class="math inline">\(Q_1 - (1.5 * IQR)\)</span> or above <span class="math inline">\(Q_3 + (1.5 * IQR)\)</span>.</p>
-<p>Note that these terms (aside from <strong>Distribution</strong>) only apply to quantitative variables.</p>
+</div>
+<div id="relation-to-hypothesis-testing" class="section level2">
+<h2><span class="header-section-number">8.2</span> Relation to hypothesis testing</h2>
+<p>Recall that we found a statistically significant difference in the sample mean of romance movie ratings compared to the sample mean of action movie ratings. We concluded Chapter <a href="9-hypo.html#hypo">9</a> by attempting to understand just how much greater we could expect the <em>population</em> mean romance movie rating to be compared to the <em>population</em> mean action movie rating. In order to do so, we will calculate a confidence interval for the difference <span class="math inline">\(\mu_r - \mu_a\)</span>. We’ll then go back to our population parameter values and see if our confidence interval contains our parameter value.</p>
+<p>We could use bootstrapping in a way similar to that done above, except now on a difference in sample means, to create a distribution and then use the <code>confint</code> function with the option of <code>quantile</code> to determine a confidence interval for the plausible values of the difference in population means. This is an excellent programming activity and the reader is urged to try to do so.</p>
+<p>Recall what the randomization/null distribution looked like for our simulated shuffled sample means:</p>
+<p><strong>Note all this code was moved over from hypothesis testing</strong></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(movies_trimmed &lt;-<span class="st"> </span>movies <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(title, year, rating, Action, Romance))</code></pre></div>
+<pre><code># A tibble: 58,788 x 5
+                      title  year rating Action Romance
+                      &lt;chr&gt; &lt;int&gt;  &lt;dbl&gt;  &lt;int&gt;   &lt;int&gt;
+ 1                        $  1971    6.4      0       0
+ 2        $1000 a Touchdown  1939    6.0      0       0
+ 3   $21 a Day Once a Month  1941    8.2      0       0
+ 4                  $40,000  1996    8.2      0       0
+ 5 $50,000 Climax Show, The  1975    3.4      0       0
+ 6                    $pent  2000    4.3      0       0
+ 7                  $windle  2002    5.3      1       0
+ 8                     &#39;15&#39;  2002    6.7      0       0
+ 9                      &#39;38  1987    6.6      0       0
+10                  &#39;49-&#39;17  1917    6.0      0       0
+# ... with 58,778 more rows</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">movies_trimmed &lt;-<span class="st"> </span>movies_trimmed <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span>(Action <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">&amp;</span><span class="st"> </span>Romance <span class="op">==</span><span class="st"> </span><span class="dv">1</span>))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">movies_trimmed &lt;-<span class="st"> </span>movies_trimmed <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">genre =</span> <span class="kw">ifelse</span>(Action <span class="op">==</span><span class="st"> </span><span class="dv">1</span>, <span class="st">&quot;Action&quot;</span>,
+                        <span class="kw">ifelse</span>(Romance <span class="op">==</span><span class="st"> </span><span class="dv">1</span>, <span class="st">&quot;Romance&quot;</span>,
+                               <span class="st">&quot;Neither&quot;</span>))) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">filter</span>(genre <span class="op">!=</span><span class="st"> &quot;Neither&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>Action, <span class="op">-</span>Romance)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">2017</span>)
+movies_genre_sample &lt;-<span class="st"> </span>movies_trimmed <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(genre) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">sample_n</span>(<span class="dv">34</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ungroup</span>()</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mean_ratings &lt;-<span class="st"> </span>movies_genre_sample <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(genre) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">mean =</span> <span class="kw">mean</span>(rating))
+obs_diff &lt;-<span class="st"> </span><span class="kw">diff</span>(mean_ratings<span class="op">$</span>mean)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">shuffled_ratings &lt;-<span class="st"> </span><span class="co">#movies_trimmed %&gt;%</span>
+<span class="st">  </span>movies_genre_sample <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">     </span><span class="kw">mutate</span>(<span class="dt">genre =</span> <span class="kw">shuffle</span>(genre)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">     </span><span class="kw">group_by</span>(genre) <span class="op">%&gt;%</span>
+<span class="st">     </span><span class="kw">summarize</span>(<span class="dt">mean =</span> <span class="kw">mean</span>(rating))
+<span class="kw">diff</span>(shuffled_ratings<span class="op">$</span>mean)</code></pre></div>
+<pre><code>[1] -0.132</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">2017</span>)
+many_shuffles &lt;-<span class="st"> </span><span class="kw">do</span>(<span class="dv">5000</span>) <span class="op">*</span><span class="st"> </span>
+<span class="st">  </span>(movies_genre_sample <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">     </span><span class="kw">mutate</span>(<span class="dt">genre =</span> <span class="kw">shuffle</span>(genre)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">     </span><span class="kw">group_by</span>(genre) <span class="op">%&gt;%</span>
+<span class="st">     </span><span class="kw">summarize</span>(<span class="dt">mean =</span> <span class="kw">mean</span>(rating))
+   )</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">rand_distn &lt;-<span class="st"> </span>many_shuffles <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(.index) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">diffmean =</span> <span class="kw">diff</span>(mean))
+<span class="kw">head</span>(rand_distn, <span class="dv">10</span>)</code></pre></div>
+<pre><code># A tibble: 10 x 2
+   .index diffmean
+    &lt;dbl&gt;    &lt;dbl&gt;
+ 1      1 -0.13235
+ 2      2 -0.19706
+ 3      3 -0.02647
+ 4      4  0.71471
+ 5      5 -0.47353
+ 6      6 -0.12059
+ 7      7 -0.17353
+ 8      8 -0.20882
+ 9      9 -0.00882
+10     10 -0.33235</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(<span class="dt">data =</span> rand_distn, <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> diffmean)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">color =</span> <span class="st">&quot;white&quot;</span>, <span class="dt">bins =</span> <span class="dv">20</span>)</code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-245"></span>
+<img src="ismaykim_files/figure-html/unnamed-chunk-245-1.png" alt="Simulated shuffled sample means histogram" width="\textwidth" />
+<p class="caption">
+Figure 8.6: Simulated shuffled sample means histogram
+</p>
+</div>
+<p>With this null distribution being quite symmetric and bell-shaped, the standard error method introduced above likely provides a good estimate of a range of plausible values for <span class="math inline">\(\mu_r - \mu_a\)</span>. Another nice option here is that we can use the standard deviation of the null/randomization distribution we just found with our hypothesis test.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(std_err &lt;-<span class="st"> </span>rand_distn <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">summarize</span>(<span class="dt">se =</span> <span class="kw">sd</span>(diffmean)))</code></pre></div>
+<pre><code># A tibble: 1 x 1
+     se
+  &lt;dbl&gt;
+1  0.34</code></pre>
+<p>We can use the general formula of <span class="math inline">\(statistic \pm (2 * SE)\)</span> for a confidence interval to obtain the following result for plausible values of the difference in population means at the 95% level.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(lower &lt;-<span class="st"> </span>obs_diff <span class="op">-</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>std_err))</code></pre></div>
+<pre><code>     se
+1 0.269</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">(upper &lt;-<span class="st"> </span>obs_diff <span class="op">+</span><span class="st"> </span>(<span class="dv">2</span> <span class="op">*</span><span class="st"> </span>std_err))</code></pre></div>
+<pre><code>    se
+1 1.63</code></pre>
+<p>We can, therefore, say that we are 95% confident that the population mean rating for romance movies is between 0.269 and 1.631 points higher than for that of action movies.</p>
+<p>The important thing to check here is whether 0 is contained in the confidence interval. If it is, it is plausible that the difference in the two population means between the two groups is 0. This means that the null hypothesis is plausible. The results of the hypothesis test and the confidence interval should match as they do here. We rejected the null hypothesis with hypothesis testing and we have evidence here that the mean rating for romance movies is higher than for action movies.</p>
+<hr />
+</div>
+<div id="effect-size" class="section level2">
+<h2><span class="header-section-number">8.3</span> Effect size</h2>
+<p>The phrase <strong>effect size</strong> has been thrown around recently as an alternative to <span class="math inline">\(p\)</span>-values. In combination with the confidence interval, it can be often more valuable than just looking at the results of a hypothesis test. It depends on the scientific discipline exactly what is meant by “effect size” but, in general, it refers to <em>the magnitude of the difference between group measurements</em>. For our two sample problem involving movies, it is the observed difference in sample means <code>obs_diff</code>.</p>
+<p>It’s worthy of mention here that confidence intervals are always centered at the observed statistic. In other words, if you are looking at a confidence interval and someone asks you what the “effect size” is you can simply find the midpoint of the stated confidence interval.</p>
+<div class="learncheck">
+<p>
+<strong><em>Learning check</em></strong>
+</p>
+</div>
+<p><strong>(LC9.10)</strong> Check to see whether the difference in population mean ratings for the two genres falls in the confidence interval we found here. Are we guaranteed that it will fall in the range of plausible values?</p>
+<p><strong>(LC9.11)</strong> Why do you think many scientific fields are shifting to preferring inclusion of confidence intervals in articles over just <span class="math inline">\(p\)</span>-values and hypothesis tests?</p>
+<p><strong>(LC9.12)</strong> Why is 95% related to a value of 2 in the margin of error? What would approximate values be for 90% and for 99%?</p>
+<p><strong>(LC9.13)</strong> Why is a 95% confidence interval wider than a 90% confidence interval? Explain by using a concrete example from everyday life about what is meant by “confidence.”</p>
+<p><strong>(LC9.14)</strong> How would confidence intervals correspond to one-sided hypothesis tests?</p>
+<p><strong>(LC9.15)</strong> There is a relationship between the significance level and the confidence level. What do you think it is?</p>
+<p><strong>(LC9.16)</strong> The moment the phrase “standard error” is mentioned, there seems to be someone that says “The standard error is <span class="math inline">\(s\)</span> divided by the square root of <span class="math inline">\(n\)</span>.” This standard error formula is used in the theory-based procedure for an inference on one mean. But… does it always work? For <code>samp1</code>, <code>samp2</code>, and <code>samp3</code> below, do the following:</p>
+<ol style="list-style-type: decimal">
+<li>produce a bootstrap distribution based on the sample</li>
+<li>calculate the standard deviation of the bootstrap distribution</li>
+<li>compare this value of the standard error to what you obtain when you calculate the standard deviation of the sample <span class="math inline">\(s\)</span> divided by <span class="math inline">\(\sqrt{n}\)</span>.</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df1 &lt;-<span class="st"> </span><span class="kw">data_frame</span>(<span class="dt">samp1 =</span> <span class="kw">rexp</span>(<span class="dv">50</span>))
+df2 &lt;-<span class="st"> </span><span class="kw">data_frame</span>(<span class="dt">samp2 =</span> <span class="kw">rnorm</span>(<span class="dv">100</span>))
+df3 &lt;-<span class="st"> </span><span class="kw">data_frame</span>(<span class="dt">samp3 =</span> <span class="kw">rbeta</span>(<span class="dv">20</span>, <span class="dv">5</span>, <span class="dv">5</span>))</code></pre></div>
+<p>Describe how <span class="math inline">\(s / \sqrt{n}\)</span> does in approximating the standard error for these three samples and their corresponding bootstrap distributions.</p>
+<div class="learncheck">
+
+</div>
+<hr />
+</div>
+<div id="conclusion-5" class="section level2">
+<h2><span class="header-section-number">8.4</span> Conclusion</h2>
+<div id="whats-to-come-5" class="section level3">
+<h3><span class="header-section-number">8.4.1</span> What’s to come?</h3>
+<p>This concludes the <strong>Inference</strong> unit of this book. You should now have a thorough introduction into topics in both data science and statistics. In the last chapter of the textbook, we’ll summarize the purpose of this book as well as present an excellent example of what goes into making an effective story via data.</p>
+<!--
+We will see in Chapter \@ref(regression) many of the same ideas we have seen with hypothesis testing and confidence intervals in the last two chapters.  Regression is frequently associated both correctly and incorrectly with statistics and data analysis, so you'll need to make sure you understand when it is appropriate and when it is not.
+-->
+</div>
+<div id="script-of-r-code-4" class="section level3">
+<h3><span class="header-section-number">8.4.2</span> Script of R code</h3>
+<p>An R script file of all R code used in this chapter is available <a href="http://moderndive.com/scripts/09-ci.R">here</a>.</p>
 
 </div>
 </div>
@@ -511,8 +793,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
           </div>
         </div>
       </div>
-<a href="11-wrapping-up.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="B-appendixB.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="7-sampling.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="9-hypo.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
@@ -541,7 +823,7 @@ gitbook.start({
 "size": 2
 },
 "edit": {
-"link": "https://github.com/ismayc/moderndiver-book/edit/master/91-appendixA.Rmd",
+"link": "https://github.com/ismayc/moderndiver-book/edit/master/08-confidence-intervals.Rmd",
 "text": "Edit"
 },
 "download": null,

@@ -1,0 +1,150 @@
+# Inference for Regression {#inference-for-regression}
+
+## Refresher: Professor evaluations data
+
+Let's revisit the professor evaluations data that we analyzed using multiple regression with one numerical and one categorical predictor. In particular
+
+* $y$: outcome variable of instructor evaluation `score`
+* predictor variables
+    + $x_1$: numerical explanatory/predictor variable of `age`
+    + $x_2$: categorical explanatory/predictor variable of `gender`
+    
+```{r}
+library(ggplot2)
+library(dplyr)
+
+load(url("http://www.openintro.org/stat/data/evals.RData"))
+evals <- evals %>%
+  select(score, ethnicity, gender, language, age, bty_avg, rank)
+```
+
+First, recall that we had two competing potential models to explain professors'
+teaching scores:
+
+1. Model 1: No interaction term. i.e. both male and female profs have the same slope describing the associated effect of age on teaching score
+1. Model 2: Includes an interaction term. i.e. we allow for male and female profs to have different slopes describing the associated effect of age on teaching score
+
+### Refresher: Visualizations
+
+Recall the plots we made for both these models:
+
+```{r model1, echo=FALSE, warning=FALSE, fig.cap="Model 1: no interaction effect included"}
+coeff <- lm(score ~ age + gender, data = evals) %>% coef() %>% as.numeric()
+slopes <- evals %>%
+  group_by(gender) %>%
+  summarise(min = min(age), max = max(age)) %>%
+  mutate(intercept = coeff[1]) %>%
+  mutate(intercept = ifelse(gender == "male", intercept + coeff[3], intercept)) %>%
+  gather(point, age, -c(gender, intercept)) %>%
+  mutate(y_hat = intercept + age * coeff[2])
+  
+  ggplot(evals, aes(x = age, y = score, col = gender)) +
+  geom_jitter() +
+  labs(x = "Age", y = "Teaching Score", color = "Gender") +
+  geom_line(data = slopes, aes(y = y_hat), size = 1)
+```
+
+```{r model2, echo=FALSE, warning=FALSE, fig.cap="Model 2: interaction effect included"}
+ggplot(evals, aes(x = age, y = score, col = gender)) +
+  geom_jitter() +
+  labs(x = "Age", y = "Teaching Score", color = "Gender") +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+### Refresher: Regression tables
+
+Last, let's recall the regressions we fit. First, the regression with no 
+interaction effect: note the use of `+` in the formula.
+
+```{r, eval=FALSE}
+get_regression_table(score ~ age + gender, data = evals)
+```
+```{r, echo=FALSE}
+get_regression_table(score ~ age + gender, data = evals) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Model 1: Regression table with no interaction effect included", 
+    booktabs = TRUE
+  )
+```
+
+Second, the regression with an interaction effect: note the use of `*` in the formula.
+
+```{r, eval=FALSE}
+get_regression_table(score ~ age * gender, data = evals)
+```
+```{r, echo=FALSE}
+get_regression_table(score ~ age * gender, data = evals) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Model 2: Regression table with interaction effect included", 
+    booktabs = TRUE
+  )
+```
+
+
+### New output: Confidence intervals
+
+Let's recompute the regression tables, but with a new argument added: `tidy(conf.int=TRUE)`. This will add the 95% confidence intervals to our outputs. First, the regression with no 
+interaction effect: note the use of `+` in the formula.
+
+```{r, eval=FALSE}
+get_regression_table(score ~ age + gender, data = evals)
+```
+```{r, echo=FALSE}
+get_regression_table(score ~ age + gender, data = evals) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Model 1: Regression table with no interaction effect included", 
+    booktabs = TRUE
+  )
+```
+
+Second, the regression with an interaction effect: note the use of `*` in the formula.
+
+```{r, eval=FALSE}
+get_regression_table(score ~ age * gender, data = evals)
+```
+```{r, echo=FALSE}
+get_regression_table(score ~ age * gender, data = evals) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Model 2: Regression table with interaction effect included", 
+    booktabs = TRUE
+  )
+```
+
+
+
+### Refresher: Residual analysis
+
+Let's compute the residuals using `augment()` to see if there is a pattern.
+
+```{r residual0, warning=FALSE}
+regression_points <- get_regression_points(score ~ age * gender, data = evals)
+regression_points
+```
+
+First the histogram:
+
+```{r residual1, warning=FALSE, fig.cap="Model 2 (with interaction) histogram of residual"}
+ggplot(regression_points, aes(x = residual)) +
+  geom_histogram(binwidth = 0.25, color = "white") +
+  labs(x = "Residual")
+```
+
+Second, the residuals as compared to the predictor variables:
+
+* $x_1$: numerical explanatory/predictor variable of `age`
+* $x_2$: categorical explanatory/predictor variable of `gender`
+
+```{r residual2, warning=FALSE, fig.cap="Model 2 (with interaction) residuals vs predictor"}
+ggplot(regression_points, aes(x = age, y = residual)) +
+  geom_point() +
+  labs(x = "age", y = "Residual") +
+  geom_hline(yintercept = 0, col = "blue", size = 1) +
+  facet_wrap(~ gender)
+```
+
+
+
