@@ -1,6 +1,7 @@
 # ModernDive 0.2.0.9000
 
 - Added wide-logo to top of each chapter and `logos` folder
+- Added favicon (icon in browser tab)
 
 Development version; a work in progress. Some planned updates:
 
