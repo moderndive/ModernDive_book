@@ -38,29 +38,49 @@ show_solutions <- function(section){
 
 Now that we are equipped with data visualization skills from Chapter \@ref(viz), data wrangling skills from Chapter \@ref(wrangling), and an understanding of the "tidy" data format from Chapter \@ref(tidy), we now proceed with data modeling. The fundamental premise of data modeling is *to model the relationship* between:
 
-* An outcome variable $y$, also called a dependent variable
-* Explanatory/predictor variables $\vec{x}$, also called independent variables and covariates. The arrow on top of the $x$ indicates that we have a *vector* or a series of values.
+* An outcome variable $y$, also called a dependent variable and 
+* Explanatory/predictor variables, also called independent variables and covariates, 
+    + $x$ if there is only one explanatory/predictor variable
+    + $x_1, x_2, \ldots$ if there are multiple explanatory/predictor variables
 
-Why do we have two different labels, explanatory and predictor, for the variables $\vec{x}$? That's because data modeling can be viewed through two lenses
+Another way to state this is using mathematical terminology: we will model the outcome variable $y$ *as a function* of the explanatory/predictor variable $x$.  Why do we have two different labels, explanatory and predictor, for the variable $x$? That's because roughly speaking data modeling can be used for two purposes:
 
-1. **Modeling for explanation**: You want to study the relationship between an outcome variable $y$ and a set of explanatory variables, determine the significance of any found relationships, and have measures summarizing these. For example: "Does knowing a population's smoking habits explain their lung cancer prevalence?"
-1. **Modeling for prediction**: You want to predict an outcome variable $y$ based on the information contained in a set of predictor variables. You don't care so much about understanding how all the variables relate and interact, but so long as you can make good predictions about $y$, you're fine. For example: "Can we predict whether someone will enjoy a recommended movie based on their previous movie ratings?"
+1. **Modeling for prediction**: You want to predict an outcome variable $y$ based on the information contained in a set of predictor variables. You don't care so much about understanding how all the variables relate and interact, but so long as you can make good predictions about $y$, you're fine. For example, if we know many individuals' risk factors for lung cancer, such as smoking habits and age, can we predict whether or not they will develop lung cancer? Here we wouldn't care so much about distinguishing the degree to which the different risk factors contribute to lung cancer, but instead only on whether or not they could be put together to make reliable predictions.
+1. **Modeling for explanation**: You want to explicitly describe the relationship between an outcome variable $y$ and a set of explanatory variables, determine the significance of any found relationships, and have measures summarizing these. Continuing our example from above, we would now be interested in describing the individual effects of the different risk factors and quantifying the magnitude of these effects. One reason could be to design an intervention to reduce lung cancer cases in a population, such as targeting smokers of a specific age group with advertisement for smoking cessation programs. In this book, we'll focus more on this latter purpose.
 
-Data modeling is used in a wide variety of fields, including statistical inference, causal inference, artificial intelligence, and machine learning. There are many techniques for data modeling, such as tree-based models, neural networks/deep learning, and more. However, we'll focus on one particular technique: *linear regression*, one of the most commonly-used and easy to understand approaches to modeling. Linear regression involves:
+Data modeling is used in a wide variety of fields, including statistical inference, causal inference, artificial intelligence, and machine learning. There are many techniques for data modeling, such as tree-based models, neural networks/deep learning, and more. However, we'll focus on one particular technique: *linear regression*, one of the most commonly-used and easy to understand approaches to modeling. Recall our discussion in Chapter \@ref(#explore-dataframes) on numerical and categorical variables. Linear regression involves:
 
 * An outcome variable $y$ that is *numerical*
-* Explanatory/predictor variables $\vec{x}$ that are either *numerical* or *categorical*
+* Explanatory variables $\vec{x}$ that are either *numerical* or *categorical*
 
-In this chapter, we'll start considering a wider array of datasets, all easily accessible via R packages. We will also discuss the concept of *correlation* and how it is frequently incorrectly used to imply *causation*. 
+Whereas there is always only one numerical outcome variable $y$, we have choices on both the number and the type of explanatory variables $\vec{x}$ to use. We're going to the following regression scenarios, where we have 
+
+1. A single numerical explanatory variable $x$ in Chapter \ref@(model1). This scenario is known as *simple linear regression*. 
+1. A single categorical explanatory variable $x$ in Chapter \ref@(model2). 
+1. Two numerical explanatory variables $x_1$ and $x_2$ in Chapter \ref@(model3). This is the first of two *multiple regression* scenarios we'll cover where there are now more than one explanatory variable.
+1. One numerical and one categorical explanatory variable in Chapter \ref@(model3). This is the second *multiple regression* scenario we'll cover. We'll also introduce *interaction models* here.
+
+We'll study all 4 of these regression scenarios using real data, all easily accessible via R packages! <!--We will also discuss the concept of *correlation* and how it is frequently incorrectly used to imply *causation*.-->
+
+
+
 
 ### Needed packages {-}
 
-Let's load all the packages needed for this chapter. If needed, read Section \@ref(packages) for information on how to install and load R packages.
+In this chapter we introduce a new package, `moderndive`, that is an accompaniment package to the ModernDive book that includes useful functions for linear regression and other functions and data used in later in the book. However because this is a relatively new package, we're have to install this package in a different way than was covered in Section \@ref(packages). 
+
+First, install the `remotes` package like you would normally install a package, then run the following line to install the `moderndive` package:
+
+```{r, message=FALSE, warning=FALSE}
+library(remotes)
+# remotes::install_github("moderndive/moderndive")
+```
+
+Let's now load all the packages needed for this chapter. If needed, read Section \@ref(packages) for information on how to install and load R packages. 
 
 ```{r, message=FALSE, warning=FALSE}
 library(ggplot2)
 library(dplyr)
-# remotes::install_github("moderndive/moderndive")
 library(moderndive)
 ```
 
@@ -72,76 +92,43 @@ library(forcats)
 library(gridExtra)
 ```
 
-Notice we load a new package called `moderndive` thus you'll need to install this once. This is an accompaniment package to the ModernDive book that includes 3 useful functions for linear regression.
-
-<!--
-1. `get_regression_table()`: Fit a linear regression and get the *regression table*
-1. `get_regression_points()`: Fit a linear regression and get all the relevant points, including the *fitted value* $\widehat{y}$ and *residuals*
-1. `get_regression_summaries()`: Fit a linear regression and get summary statistics about the regression, including values called $R^2$ and $R^2$-adjusted.
--->
 
 
 
 
 
-## Five Regression Models - The 5RM
-
-As stated in the introduction, linear regression can be used to model the relationship between
-
-* An outcome variable $y$ that is *numerical*
-* Explanatory/predictor variables $\vec{x}$ that are either *numerical* or *categorical*
-
-Whereas there is always only one numerical outcome variable $y$, we have choices on both the number and the type of explanatory/predictor variables $\vec{x}$ to use. In this Chapter, we're going to cover five regression models which we term the "5RM":
-
-1. 5RM#1: A single numerical explanatory/predictor variable $x$. This scenario is known as *simple linear regression*. We'll be using the `evals` dataset of instructor evaluations at the University of Texas, Austin.
-1. 5RM#2: A single categorical explanatory/predictor variable $x$. We'll be using the `gapminder` dataset of international development data.
-1. 5RM#3: Two numerical explanatory/predictor variables $x_1$ and $x_2$. This is the first scenario of *multiple regression* given that there are now more than one explanatory/predictor variable. We'll be using the `Credit` dataset of credit card balance data. 
-1. 5RM#4: One numerical and one categorical explanatory/predictor variable. We'll cover *interaction models* here. We'll revisit the `evals` dataset here. 
-1. 5RM#5: Two categorical explanatory/predictor variables. We'll be using the `biopics` dataset of movie data. 
 
 
+## One numerical $x$ {#model1}
+
+Why do some professors and instructors at universities and colleges get high teaching evaluations from students while others don't? What factors can explain these differences? Are there biases? These are questions that are of interest to univerisity/college administrators, as teaching evaluations are among the many criteria considered in determining which professors and instructors should get promotions. Researchers at the University of Texas in Austin tried to answer this question: what factors can explain differences in instructor's teaching evaluation scores? To this end, they collected information on n = 463 instructors. A full description of the study can be found at [openintro.org](https://www.openintro.org/stat/data/?data=evals).
+
+We'll keep things simple for now and try to explain differences in instructor evaluations scores as a function of one numerical variable: their "beauty score" which we'll describe shortly. Could it be that instructors with higher beauty scores also have higher teaching evaluations? Could it be instead that instructors with higher beauty scores tend to have lower teaching evaluations? Or could it be there is no relationship between beauty score and teaching evaluations? 
+
+We'll achieve this by modeling the relationship between these two variables with a particular kind of linear regression called *simple linear regression*. Simple linear regression is the most basic form of linear regression where we have
+
+1. A numerical outcome variable $y$. In this case their teaching score.
+1. A single numerical explanatory variable $x$. In this case their beauty score.
 
 
-## 5RM#1: Understanding Teacher Evaluations {#model1}
+### Exploratory data analysis {#model1EDA}
 
-Why do some professors at universities and colleges get high teaching evaluations from students while others don't? What factors can explain these differences? Are there biases? These are questions that are interest to professors and administrators, as teaching evaluations are among the criteria considered for promotion to tenure.
+A crucial step before doing any kind of modeling or analysis however is performing an *exploratory data analysis*, or EDA, of all our data. Exploratory data analysis can give you a sense of the distribution of data, whether there are outliers and/or missing values, but most importantly it can inform how to build your model. There are many approaches to exploratory data analysis, here are three:
 
-Researchers at the University of Texas in Austin tried to answer this question: what factors can explain differences in instructor's teaching evaluation scores? To this end, the collected information on $n=463$ instructors. A full description of the study can be found at [openintro.org](https://www.openintro.org/stat/data/?data=evals), but let's summarize the variables that were collected:
+1. Most fundamentally: just looking at the raw values, in a spreadsheet for example. While this may seem trivial, many people ignore this crucial step!
+1. Compute summary statistics likes means, medians, and standard deviations.
+1. Create data visualizations.
 
-* Outcome variable $y$: Average teaching score, based on students evaluations between 1 and 5
-* Explanatory variables $x$
-    + their rank: teaching, tenure track, or tenured
-    + their ethnicity: minority or non-minority
-    + their (binary) gender: male or female
-    + their language: whether or not English was their mother tongue
-    + their age:
-    + their average "beauty" rating, based on a panel of 6 students' scores between 1 and 10.
-
-Let's load the data and `select()` only the 7 variables listed above:
+Let's load the data, `select` only a subset of 6 of the variables, and look at the raw values. Recall you can look at the raw values by running `View(evals)` in the console to pop-up the spreadsheet viewer. Here however we present only a snapshot of 5 randomly chosen rows:
 
 ```{r}
 load(url("http://www.openintro.org/stat/data/evals.RData"))
 evals <- evals %>%
-  select(score, bty_avg, ethnicity, gender, language, age, rank)
+  select(score, bty_avg)
 ```
 
-
-In this section we'll try to explain differences in instructor evaluations scores as a function of their beauty scores. We'll model the relationship between these two variables with a particular kind of linear regression called *simple linear regression*. Simple linear regression is the most basic form of linear regression where we have
-
-1. A numerical outcome variable $y$, in this case teaching `score`
-1. A single numerical explanatory/predictor variable $x$, in this case `bty_avg`
-
-### Exploratory data analysis {#model1EDA}
-
-A crucial step before doing any kind of modeling or analysis however is performing an *exploratory data analysis*, or EDA, of all our data. EDA can give you a sense of the distribution of data, whether there are outliers and/or missing values, but most importantly it can inform how to build your model. There are many approaches to EDA, here are three:
-
-1. Most fundamentally, just looking at the raw values, in a spreadsheet for example. While this may seem trivial, many people ignore this crucial step!
-1. Compute summary statistics likes means, medians, and standard deviations.
-1. Create data visualizations.
-
-We start off by looking at the raw values. You can do this by running `View(evals)` in the console to pop-up the spreadsheet viewer. Here is a snapshot of 5 randomly chosen rows:
-
 ```{r, echo=FALSE}
+set.seed(76)
 evals %>%
   sample_n(5) %>%
   knitr::kable(
@@ -151,24 +138,83 @@ evals %>%
   )
 ```
 
-Let's also use the `glimpse()` function:
+While a full description of each of these variables can be found at [openintro.org](https://www.openintro.org/stat/data/?data=evals), let's summarize what each of these variables mean
+
+1. `score`: Numerical variable of the average teaching score based on students evaluations between 1 and 5. This is the outcome variable $y$ of interest.
+1. `bty_avg`: Numerical variable of average "beauty" rating based on a panel of 6 students' scores between 1 and 10. This is the numerical explanatory variable $x$ of interest.
+<!--
+1. `ethnicity`: Categorical variable of with two levels, `minority` or `non-minority`.
+1. `gender`: Categorical variable of (binary) gender `men` or `women`
+1. `language`: Categorical variable of the instructor's native language: `english` or `non-english`.
+1. `age`: A numerical variable of age (recall our discussion in Chapter \@ref(explore-dataframes) on why `age` is numerical here).
+-->
+
+Another way to look at the raw values is using the `glimpse()` function, which gives us a slightly different view of the data. We see that `Observations: 463`, indicating that there are 463 observations in `evals`, each correponding to a particular instructor at UT Austin. Expressed differently, each row in the data frame `evals` corresponds to one of 463 instructors. 
 
 ```{r}
 glimpse(evals)
 ```
 
-We see that both variables of interest, `bty_avg` and `score`, consist of numerical values, as well as the `age` variable. The variables `ethnicity`, `gender`, `language`, and `rank` however are categorical. Let's now compute some summary statistics for both the explanatory/predictor variable and the outcome variable using the `summary()` function, which returns the minimum, the first quartile, the median, the mean AKA the average, the third quartile, and the maximum.
+Since both the outcome variable `score` and the explanatory variable `bty_avg` are numerical, we can compute summary statistics about them such as the mean and median. Let's take `evals`, then select only the two variables of interest for now, and pipe them into the `summary()` command which returns: the minimum (smallest) value, the first quartile, the median, the mean (average), the third quartile, and the maximum (largest) value. 
 
 ```{r}
-summary(evals$bty_avg)
-summary(evals$score)
+evals %>% 
+  summary()
 ```
 
-We get an idea of how the values in both variables distributed. For example, the average teaching score was 4.17 out of 5 whereas beauty scores range from 1.67 to 8.17. The `summary()` function however only returns what are called *univariate* summaries i.e. summaries about single variables. Since we are considering the relationship between two numerical variables, it would be nice to have a summary statistic that simultaneously considers both variables. The correlation coefficient is a *bivariate* summary statistic that fits this bill. It is a value between -1 and 1 that summarizes the *strength of the linear relationship between two numerical variables*; for more discussion on the correlation coefficient, see Section \@ref(correlationcoefficient) below. The correlation coefficient is computed using the `cor()` function, and in our case, the correlation is positive. 
+We get an idea of how the values in both variables are distributed. For example, the average teaching score was 4.17 out of 5 whereas the average beauty score was 4.42 out of 10. Furthermore, the middle 50% of teaching scores were between 3.80 and 4.6 (the first and third quartiles) while the middle 50% of beauty scores were between 3.17 and 5.5 out of 10. 
+
+The `summary()` function however only returns what are called *univariate* summaries i.e. summaries about single variables at a time. Since we are considering the relationship between two numerical variables, it would be nice to have a summary statistic that simultaneously considers both variables. The correlation coefficient is a *bivariate* summary statistic that fits this bill. It is a value between -1 and 1 that summarizes the *strength of the linear relationship between two numerical variables* where
+
+* -1 indicates a perfect *negative relationship*: as the value of one variable goes up, the value of the other variable goes down.
+* 0 indicates no relationship: the values of both variables go up/down independently of each other.
+* +1 indicates a perfect *positive relationship*: as the value of one variable goes up, the value of the other variable goes up as well.
+
+Figure \@ref(fig:correlation1) gives examples of different correlation coefficient values for hypothetical numerical variables $x$ and $y$. We see that while for a correlation coefficient of -0.75 there is still a negative relationship between $x$ and $y$, it is not as strong as the negative relationship between $x$ and $y$
+
+```{r correlation1, echo=FALSE, fig.cap="Different correlation coefficients"}
+correlation <- c(-0.9999, -0.75, 0, 0.75, 0.9999)
+n_sim <- 100
+
+values <- NULL
+for(i in 1:length(correlation)){
+  rho <- correlation[i]
+  sigma <- matrix(c(5, rho * sqrt(50), rho * sqrt(50), 10), 2, 2) 
+  sim <- rmvnorm(
+    n = n_sim,
+    mean = c(20,40),
+    sigma = sigma
+    ) %>%
+    as_data_frame() %>% 
+    mutate(correlation = round(rho, 2))
+  
+  values <- bind_rows(values, sim)
+}
+
+ggplot(data = values, mapping = aes(V1, V2)) +
+  geom_point() +
+  facet_wrap(~ correlation, nrow = 2) +
+  labs(x = "x", y = "y") + 
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()
+  )
+```
+
+
+
+
+
+
+The correlation coefficient is computed using the `cor()` function, and in our case, the correlation is what we would call "weakly positive".
 
 ```{r}
 cor(evals$score, evals$bty_avg)
 ```
+
+For more discussion on the correlation coefficient see Section \@ref(correlationcoefficient) below. 
+
 
 Since both the `score` and `bty_avg` variables are numerical, a scatterplot is an appropriate graph to visualize this data. Let's do this using `geom_point()` and set informative axes labels and title.
 
@@ -330,7 +376,7 @@ regression_points %>%
 Just as with the `get_regression_table()` function, the inputs to the `get_regression_points()` function are the same, however the outputs are different. Let's inspect the individual columns:
 
 * The `score` column represents the observed value of the outcome variable $y$
-* The `bty_avg` column represents the values of the explanatory/predictor variable $x$
+* The `bty_avg` column represents the values of the explanatory variable $x$
 * The `score_hat` column represents the fitted values $\widehat{y}$
 * The `residual` column represents the residuals $y - \widehat{y}$
 
@@ -446,9 +492,16 @@ mean 0. In other words, be bell-shaped and centered at 0! While this requirement
 
 ### Your Turn
 
-Repeat the above analysis where teaching `score` is the outcome variable, but now use `age` as the explanatory/predictor variable. Recall the steps:
+Repeat the above analysis where teaching `score` is the outcome variable, but now use `age` as the explanatory variable. Recall the steps:
 
-1. Perform an exploratory data analysis by
+```{r}
+load(url("http://www.openintro.org/stat/data/evals.RData"))
+evals <- evals %>%
+  select(score, age)
+```
+
+
+1. Perform an exploratory data analysis (EDA) by
     a) Looking at the raw values
     a) Computing summary statistics of the variables of interest
     a) Creating informative visualizations
@@ -464,7 +517,7 @@ Repeat the above analysis where teaching `score` is the outcome variable, but no
 
 
 
-## 5RM#2: Life Expectancy {#model2}
+## One categorical $x$ {#model2}
 
 It's an unfortunate truth that life expectancy is not the same across various countries in the world; there are a multitude of factors that are associated with how long people live. International development agencies are very interested in studying these differences in the hope of understanding where governments should allocate resources to address this problem. One way to compare differences in life expectancy is between continents: "Do countries in certain continents have higher life expectancy?" or "Do certain continents have a lot of variation in life expectancy?"
 
@@ -484,12 +537,12 @@ gapminder2007 <- gapminder %>%
   select(country, continent, lifeExp, gdpPercap)
 ```
 
-In this section we'll try to explain between country differences in life expectancy as a function of which continent the country is located in. We'll model the relationship between these two variables with linear regression again, but note that our explanatory/predictor variable $x$ is now categorical, and not numerical like when we covered simple linear regression in Section \@ref(model1):
+In this section we'll try to explain between country differences in life expectancy as a function of which continent the country is located in. We'll model the relationship between these two variables with linear regression again, but note that our explanatory variable $x$ is now categorical, and not numerical like when we covered simple linear regression in Section \@ref(model1):
 
 1. A numerical outcome variable $y$, in this case `lifeExp`
-1. A single numerical explanatory/predictor variable $x$, in this case `continent`
+1. A single numerical explanatory variable $x$, in this case `continent`
 
-The concept of a "best-fitting" line is a little different when the explanatory/predictor variable $x$ is numerical; we'll study these differences shortly.
+The concept of a "best-fitting" line is a little different when the explanatory variable $x$ is numerical; we'll study these differences shortly.
 
 
 ### Exploratory data analysis {#model2EDA}
@@ -514,7 +567,7 @@ gapminder2007 %>%
 glimpse(gapminder2007)
 ```
 
-We see that the variable `continent` is indeed categorical, as it is encoded as `fctr` which stands for "factor": R's way of storing categorical variables. Let's look at a summary of the explanatory/predictor variable `continent`:
+We see that the variable `continent` is indeed categorical, as it is encoded as `fctr` which stands for "factor": R's way of storing categorical variables. Let's look at a summary of the explanatory variable `continent`:
 
 ```{r}
 summary(gapminder2007$continent)
@@ -620,7 +673,7 @@ Using the "eyeball test", we make the following observations:
 
 ### Linear regression {#model2table}
 
-In Section \@ref(model1table) we introduced *simple* linear regression, which involves modeling the relationship between a numerical outcome variable $y$ as a function of a numerical explanatory/predictor variable $x$, in our life expectancy example, we now have a categorical explanatory/predictor variable $x$ `continent`. While we still can fit a regression model, given our categorical explanatory/predictor variable we no longer have a concept of a "best-fitting" line, but differences relative to a baseline for comparison.
+In Section \@ref(model1table) we introduced *simple* linear regression, which involves modeling the relationship between a numerical outcome variable $y$ as a function of a numerical explanatory variable $x$, in our life expectancy example, we now have a categorical explanatory variable $x$ `continent`. While we still can fit a regression model, given our categorical explanatory variable we no longer have a concept of a "best-fitting" line, but differences relative to a baseline for comparison.
 
 Before we fit our regression model, let's create a table similar to Table \@ref(tab:catxplot0), but
 
@@ -677,12 +730,12 @@ value in Table \@ref(tab:continent-mean-life-expectancies).
 minus Africa. Note that 25.9 = 80.7 - 54.8 is the 3rd "mean vs Africa"
 value in Table \@ref(tab:continent-mean-life-expectancies).
 
-Let's generalize this idea a bit. If we fit a linear regression model using an explanatory/predictor variable $x$ that has $k$ levels, a regression model will return an intercept and $k-1$ "slope" coefficients of differences in means relative to a baseline mean for comparison. In our case, since there are $k=5$ continents, the regression model returns an intercept corresponding to the baseline for comparison Africa and $k-1=4$ slope coefficients corresponding to the Americas, Asia, Europe, and Oceania. Africa was chosen as the baseline by R for no other reason than it is first alphabetically of the 5 continents. Note you can manually specify which continent to use as baseline, but we leave that to a more advanced course.
+Let's generalize this idea a bit. If we fit a linear regression model using an explanatory variable $x$ that has $k$ levels, a regression model will return an intercept and $k-1$ "slope" coefficients of differences in means relative to a baseline mean for comparison. In our case, since there are $k=5$ continents, the regression model returns an intercept corresponding to the baseline for comparison Africa and $k-1=4$ slope coefficients corresponding to the Americas, Asia, Europe, and Oceania. Africa was chosen as the baseline by R for no other reason than it is first alphabetically of the 5 continents. Note you can manually specify which continent to use as baseline, but we leave that to a more advanced course.
 
 
 ### Observed/fitted values and residuals {#model2points}
 
-What do fitted values $\widehat{y}$ and residuals $y - \widehat{y}$ correspond to when the explanatory/predictor variable $x$ is categorical? Let's investigate these values for the first 10 countries in the `gapminder2007` dataset: 
+What do fitted values $\widehat{y}$ and residuals $y - \widehat{y}$ correspond to when the explanatory variable $x$ is categorical? Let's investigate these values for the first 10 countries in the `gapminder2007` dataset: 
 
 ```{r, echo=FALSE}
 gapminder2007 %>%
@@ -793,7 +846,7 @@ ggplot(regression_points, aes(x = residual)) +
 
 Repeat this same analysis but using GDP per capita `gdpPercap` as the outcome variable. Recall the four steps we've been following:
 
-1. Perform an exploratory data analysis
+1. Perform an exploratory data analysis (EDA)
 1. Fit a linear regression model and get information about the model
 1. Get information on all $n$ data points considered in this analysis. 
 1. Perform a residual analysis and look for any systematic patterns in the residuals.
@@ -802,7 +855,7 @@ Repeat this same analysis but using GDP per capita `gdpPercap` as the outcome va
 
 
 
-## 5RM#3: Credit Card Balance {#model3}
+## Two numerical $x$ {#model3}
 
 Much like our teacher evaluation data in Section \@ref(model1), let's now attempt to identify factors that are associated with how much credit card debt an individual will hold. The textbook [An Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani is an intermediate-level textbook on statistical and machine learning freely available [here](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf). It has an accompanying R packaged called `ISLR` with datasets that the authors use to demonstrate various machine learning methods. 
 One dataset that is frequently used by the authors is the `Credit` dataset where predictions are made on the balance held by various credit card holders based on information like income, credit limit, and education level. Let's consider the following variables:
@@ -823,12 +876,12 @@ Credit <- Credit %>%
   select(Balance, Limit, Income, Rating, Age, Education)
 ```
 
-Unfortunately, no information on how this data was sampled was provided, so we're not able to generalize any such results to a greater population, but we will still use this data to demonstrate *multiple regression*. Multiple regression is a form of linear regression where there are now more than one explanatory/predictor variables and thus the interpretation of the associated effect of any one explanatory/predictor variable must be made in conjunction with the other explanatory/predictor variable. We'll perform multiple regression with:
+Unfortunately, no information on how this data was sampled was provided, so we're not able to generalize any such results to a greater population, but we will still use this data to demonstrate *multiple regression*. Multiple regression is a form of linear regression where there are now more than one explanatory variables and thus the interpretation of the associated effect of any one explanatory variable must be made in conjunction with the other explanatory variable. We'll perform multiple regression with:
 
 1. A numerical outcome variable $y$, in this case teaching credit card `Balance`
-1. Two explanatory/predictor variables:
-    1. A first numerical explanatory/predictor variable $x_1$, in this case credit `Limit`
-    1. A second numerical explanatory/predictor variable $x_2$, in this case `Income`
+1. Two explanatory variables:
+    1. A first numerical explanatory variable $x_1$, in this case credit `Limit`
+    1. A second numerical explanatory variable $x_2$, in this case `Income`
 
 
 ### Exploratory data analysis {#model3EDA}
@@ -865,10 +918,10 @@ We observe for example
 1. The typical credit card limit is around $5000
 1. The typical income is around $40,000.
 
-Since our outcome variable `Balance` and the explanatory/predictor variables
+Since our outcome variable `Balance` and the explanatory variables
 `Limit` and `Rating` are numerical, we can compute the correlation coefficient
 between pairs of these variables. However, instead running the `cor()` command
-twice, once for each explanatory/predictor variable:
+twice, once for each explanatory variable:
 
 ```{r, eval=FALSE}
 cor(Credit$Balance, Credit$Limit)
@@ -900,9 +953,9 @@ For example, the correlation coefficients of:
 1. `Balance` with itself is 1
 1. `Balance` with `Limit` is 0.862, indicating a strong positive linear relationship, which makes sense as only individuals with large credit limits and accrue large credit card balances.
 1. `Balance` with `Income` is 0.464, suggestive of another positive linear relationship, although not as strong as the relationship between `Balance` and `Limit`.
-1. As an added bonus, we can read off the correlation coefficient of the two explanatory/predictor variables, `Limit` and `Income` of 0.792. In this case, we say there is a high degree of *collinearity* between these two explanatory/predictor variables.
+1. As an added bonus, we can read off the correlation coefficient of the two explanatory variables, `Limit` and `Income` of 0.792. In this case, we say there is a high degree of *collinearity* between these two explanatory variables.
 
-Let's visualize the relationship of the outcome variable with each of the two explanatory/predictor variables in two separate plots
+Let's visualize the relationship of the outcome variable with each of the two explanatory variables in two separate plots
 
 ```{r, eval=FALSE}
 ggplot(Credit, aes(x = Limit, y = Balance)) +
@@ -932,12 +985,12 @@ model3_balance_vs_income_plot <- ggplot(Credit, aes(x = Income, y = Balance)) +
 grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)
 ```
 
-In both cases, there seems to be a positive relationship. However the two plots in Figure \@ref(fig:2numxplot1) only focus on the relationship of the outcome variable with each of the explanatory/predictor variables independently. To get a sense of the *joint* relationship of all three variables simultaneously through a visualization, let's display the data in a 3-dimensional (3D) scatterplot, where
+In both cases, there seems to be a positive relationship. However the two plots in Figure \@ref(fig:2numxplot1) only focus on the relationship of the outcome variable with each of the explanatory variables independently. To get a sense of the *joint* relationship of all three variables simultaneously through a visualization, let's display the data in a 3-dimensional (3D) scatterplot, where
 
 1. The numerical outcome variable $y$ `Balance` is on the z-axis (vertical one)
-1. The two numerical explanatory/predictor variables form the x and y axes (on the floor). In this case
-    1. The first numerical explanatory/predictor variable $x_1$ `Income` is on the x-axis
-    1. The second numerical explanatory/predictor variable $x_2$ `Limit` is on the y-axis
+1. The two numerical explanatory variables form the x and y axes (on the floor). In this case
+    1. The first numerical explanatory variable $x_1$ `Income` is on the x-axis
+    1. The second numerical explanatory variable $x_2$ `Limit` is on the y-axis
 
 Click on the following image to open an interactive 3D scatterplot in your browser:
 
@@ -966,7 +1019,7 @@ plot_ly(showscale=FALSE) %>%
   )
 ```
 
-Previously in Figure \@ref(fig:numxplot4), we plotted a "best-fitting" regression line through a set of points where the numerical outcome variable $y$ was teaching `score` and a single numerical explanatory/predictor variable $x$ `bty_avg`. What is the analogous concept when we have *two* numerical predictor variables? Instead of a best-fitting line, we now have a best-fitting *plane*, which is 3D generalization of lines which exist in 2D. Click on the following image to open an interactive plot of the regression plane in your browser.
+Previously in Figure \@ref(fig:numxplot4), we plotted a "best-fitting" regression line through a set of points where the numerical outcome variable $y$ was teaching `score` and a single numerical explanatory variable $x$ `bty_avg`. What is the analogous concept when we have *two* numerical predictor variables? Instead of a best-fitting line, we now have a best-fitting *plane*, which is 3D generalization of lines which exist in 2D. Click on the following image to open an interactive plot of the regression plane in your browser.
 
 <a target="_blank" href="https://beta.rstudioconnect.com/connect/#/apps/3214/"><img src="images/credit_card_balance_regression_plane.png" title="Example Image Link" width="600"/></a>
 
@@ -1018,7 +1071,7 @@ plot_ly(showscale=FALSE) %>%
 
 ### Multiple regression {#model3table}
 
-Just as we did when we had a single numerical explanatory/predictor variable $x$ in Section \@ref(model1table) and when we had a single categorical explanatory/predictor variable $x$ in Section \@ref(model2table), we fit a regression model and obtain the regression table in our two numerical explanatory/predictor variable scenario. To fit a regression model and obtain a table using `get_regression_table()`, we now use a `+` to consider multiple explanatory/predictor variables. In this case since we want to preform a regression of `Limit` and `Income` simultaneously, we input `Balance ~ Limit + Income`
+Just as we did when we had a single numerical explanatory variable $x$ in Section \@ref(model1table) and when we had a single categorical explanatory variable $x$ in Section \@ref(model2table), we fit a regression model and obtain the regression table in our two numerical explanatory variable scenario. To fit a regression model and obtain a table using `get_regression_table()`, we now use a `+` to consider multiple explanatory variables. In this case since we want to preform a regression of `Limit` and `Income` simultaneously, we input `Balance ~ Limit + Income`
 
 ```{r, eval=FALSE}
 Balance_model <- lm(Balance ~ Limit + Income, data = Credit)
@@ -1044,7 +1097,7 @@ How do we interpret these three values that define the regression plane?
 * Limit: $0.26. Now that we have multiple variables to consider, we have to add
 a caveat to our interpretation: *all other things being equal, for every increase of one unit in credit `Limit` (dollars), there is an associated increase of on average $0.26 in credit card balance*. Note:
     + Just as we did in Section \@ref(model1table), we are not making any causal statements, only statements relating to the association between credit limit and balance
-    + The *all other things being equal* is making a statement about all other explanatory/predictor variables, in this case only one: `Income`. This is equivalent to saying "holding `Income` constant, we observed an associated increase of $0.26 in credit card balance for every dollar increase in credit limit"
+    + The *all other things being equal* is making a statement about all other explanatory variables, in this case only one: `Income`. This is equivalent to saying "holding `Income` constant, we observed an associated increase of $0.26 in credit card balance for every dollar increase in credit limit"
 * Income: -$7.66. Similarly, *all other things being equal, for every increase of one unit in `Income` (in other words, $1000 in income), there is an associated decrease of on average $7.66 in credit card balance*.
 
 However, recall in Figure \@ref(fig:2numxplot1) that when considered separately, both `Limit` and `Income` had positive relationships with the outcome variable `Balance`: as card holders' credit limits increased their credit card balances tended to increase as well, and a similar relationship held for incomes and balances. In the above multiple regression, however, the slope for `Income` is now -7.66, suggesting a *negative relationship* between income and credit card balance. What explains these contradictory results? This is a phenomenon known as Simpson's Paradox, a phenomenon in which a trend appears in several different groups of data but disappears or reverses when these groups are combined; we expand on this in Section \@ref(simpsonsparadox).
@@ -1147,33 +1200,39 @@ Another way to intepret this histogram is that since the residual is computed as
 
 ### Your turn
 
-Repeat this same analysis but using `Age` and `Rating` as the two numerical explanatory/predictor variables. Recall the four steps we've been following:
+Repeat this same analysis but using `Age` and `Rating` as the two numerical explanatory variables. Recall the four steps we've been following:
 
-1. Perform an exploratory data analysis
+1. Perform an exploratory data analysis (EDA)
 1. Fit a linear regression model and get information about the model
 1. Get information on all $n$ data points considered in this analysis. 
 1. Perform a residual analysis and look for any systematic patterns in the residuals.
 
 
 
-## 5RM#4: Teacher Evaluations Part II {#model4}
+## One numerical & one categorical $x$ {#model4}
 
-Let's revisit the professor evaluation data introduced in Section \@ref(model1), where we studied the relationship between
-
-1. the numerical outcome variable $y$: instructor evaluation score `score`
-1. the numerical explanatory/predictor variable $x$: beauty score `bty_avg`
-
-This analysis suggested that there is a positive relationship between `bty_avg` and `score`, in other words as instructors had higher beauty scores, they also tended to have higher teaching evaluation scores. Now let's say instead of `bty_avg` we are interested in the numerical explanatory/predictor variable $x_1$ `age` and furthermore we want to use a second $x_2$, the (binary) categorical variable `gender`. Our modeling scenario now becomes
+Let's revisit the instructor evaluation data introduced in Section \@ref(model1), where we studied the relationship between
 
 1. the numerical outcome variable $y$: instructor evaluation score `score`
-1. Two explanatory/predictor variables:
-    1. A first numerical explanatory/predictor variable $x_1$: `age`
-    1. A second numerical explanatory/predictor variable $x_2$, in this case `gender`
+1. the numerical explanatory variable $x$: beauty score `bty_avg`
+
+This analysis suggested that there is a positive relationship between `bty_avg` and `score`, in other words as instructors had higher beauty scores, they also tended to have higher teaching evaluation scores. Now let's say instead of `bty_avg` we are interested in the numerical explanatory variable $x_1$ `age` and furthermore we want to use a second $x_2$, the (binary) categorical variable `gender`. Our modeling scenario now becomes
+
+1. the numerical outcome variable $y$: instructor evaluation score `score`
+1. Two explanatory variables:
+    1. A first numerical explanatory variable $x_1$: `age`
+    1. A second numerical explanatory variable $x_2$, in this case `gender`
 
 
 ### Exploratory data analysis {#model4EDA}
 
-We've already performed some elements of our exploratory data analysis in Section \@ref(model4EDA), in particular of the outcome variable `score`, so let's now only consider our two new explanatory/predictor variables
+```{r}
+load(url("http://www.openintro.org/stat/data/evals.RData"))
+evals <- evals %>%
+  select(score, bty_avg, age, gender)
+```
+
+We've already performed some elements of our exploratory data analysis (EDA) in Section \@ref(model4EDA), in particular of the outcome variable `score`, so let's now only consider our two new explanatory variables
 
 ```{r}
 evals %>% 
@@ -1256,7 +1315,7 @@ We see that:
 
 * Females are treated as the baseline for comparison for no other reason than "female" is alphabetically earlier than "male". The $b_{male} = 0.1906$ is the vertical "bump" that men get in their teaching evaluation scores. Or more precisely, it is the average difference in teaching score
 that men get *relative to the baseline of women*
-* Accordingly, the intercepts are (which in this case make no sense since no professor can have age 0):
+* Accordingly, the intercepts are (which in this case make no sense since no instructor can have age 0):
     + for women: $b_0$ = 4.484
     + for men: $b_0 + b_{male}$ = 4.484 + 0.191 = 4.675
 * Both men and women have the same slope. In other words, *in this model* the associated effect of age is the same for men and women: all other things being equal, for every increase in 1 in age,
@@ -1303,7 +1362,9 @@ $$
 
 
 ### Residual analysis {#model4residuals}
-## 5RM#5: Biographical Movies {#model5}
+
+<!--
+## Two categorical $x$ {#model5}
 
 Let's look at the `biopics` dataset in the
 [`fivethirtyeight`](https://rudeboybert.github.io/fivethirtyeight/) package.
@@ -1329,7 +1390,7 @@ biopics %>%
 
 
 
-Before we conduct an exploratory data analysis of the `biopics` data, let's first
+Before we conduct an exploratory data analysis (EDA) of the `biopics` data, let's first
 have a discussion $\log$-transformations.
 
 ### log-transformations
@@ -1508,6 +1569,9 @@ Recreate four group means from the Table 6.15 above:
 ### Observed/fitted values and residuals {#model5points}
 ### Residual analysis {#model5residuals}
 
+-->
+
+
 ## Inference for regression
 
 In Chapter \@ref(inference-for-regression), we'll revisit regression after the
@@ -1518,6 +1582,37 @@ In Chapter \@ref(inference-for-regression), we'll revisit regression after the
 ## Other topics
 
 ### Correlation coefficient {#correlationcoefficient}
+
+```{r corr-coefs, echo=FALSE, fig.cap="Different Correlation Coefficients"}
+correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
+n_sim <- 100
+
+values <- NULL
+for(i in 1:length(correlation)){
+  rho <- correlation[i]
+  sigma <- matrix(c(5, rho * sqrt(50), rho * sqrt(50), 10), 2, 2) 
+  sim <- rmvnorm(
+    n = n_sim,
+    mean = c(20,40),
+    sigma = sigma
+    ) %>%
+    as_data_frame() %>% 
+    mutate(correlation = round(rho,2))
+  
+  values <- bind_rows(values, sim)
+}
+
+ggplot(data = values, mapping = aes(V1, V2)) +
+  geom_point() +
+  facet_wrap(~ correlation, ncol = 3) +
+  labs(x = "", y = "") + 
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()
+  )
+```
+
 
 What if in instead we looked the correlation coefficient between `Income` and
 credit card `Balance`, where `Income` was in dollars and not thousands of dollars?
@@ -1550,14 +1645,14 @@ transformations! In other words
 ### Best fitting line {#leastsquares}
 
 Regression lines are also known as "best fitting lines". But what do we mean by best? Let's unpack the criteria
-that is used by regression to determine best. Recall the plot in Figure \@ref(fig:numxplot5) where for a professor
+that is used by regression to determine best. Recall the plot in Figure \@ref(fig:numxplot5) where for a instructor
 with a beauty average score of $x=7.333$
 
 * The observed value $y=4.9$ was marked with a red circle
 * The fitted value $\widehat{y} = 4.369$ on the regression line was marked with a red square
 * The residual $y-\widehat{y} = 4.9-4.369 = 0.531$ was the length of the blue arrow.
 
-Let's do this for another arbitrarily chosen professor whose beauty score was
+Let's do this for another arbitrarily chosen instructor whose beauty score was
 $x=2.333$. The residual in this case is $2.7 - 4.036 = -1.336$.
 
 ```{r echo=FALSE}
@@ -1577,7 +1672,7 @@ best_fit_plot <- best_fit_plot +
 best_fit_plot
 ```
 
-Let's do this for another arbitrarily chosen professor whose beauty score was
+Let's do this for another arbitrarily chosen instructor whose beauty score was
 $x=3.667$. The residual in this case is $4.4 - 4.125 = 0.2753$.
 
 ```{r, echo=FALSE}
@@ -1599,7 +1694,7 @@ best_fit_plot <- best_fit_plot +
 best_fit_plot
 ```
 
-Let's do this for another arbitrarily chosen professor whose beauty score was
+Let's do this for another arbitrarily chosen instructor whose beauty score was
 $x=6$. The residual in this case is $3.8 - 4.28 = -0.4802$.
 
 ```{r here, echo=FALSE}
@@ -1621,7 +1716,7 @@ best_fit_plot
 ```
 
 
-Now let's say we repeated this process for all `r nrow(evals)` professors in our
+Now let's say we repeated this process for all `r nrow(evals)` instructors in our
 dataset. Regression *minimizes the sum of all `r nrow(evals)` arrow lengths
 squared.* In other words, it minimizes the sum of the squared residuals:
 
@@ -1647,7 +1742,7 @@ grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow =
 
 On the other hand, the multiple regression in Table \@ref(tab:model3-table-output), suggested that when modeling credit card balance as a function of both credit limit and income at the same time, credit limit has a negative relationship with balance, as evidenced by the slope of -7.66. How can this be?
 
-First, let's dive a little deeper into the explanatory/predictor variable `Limit`. Figure \@ref(fig:credit_limit_quartiles) shows a histogram of all `r nrow(Credit)` values of `Limit`, along with vertical red lines that cut up the data into quartiles, meaning: 
+First, let's dive a little deeper into the explanatory variable `Limit`. Figure \@ref(fig:credit_limit_quartiles) shows a histogram of all `r nrow(Credit)` values of `Limit`, along with vertical red lines that cut up the data into quartiles, meaning: 
 
 1. 25% of credit limits were between \$0 and \$3088. Let's call this the "low" credit limit bracket.
 1. 25% of credit limits were between \$3088 and \$4622. Let's call this the "medium-low" credit limit bracket.
