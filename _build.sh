@@ -1,8 +1,7 @@
 #!/bin/sh
 
-Rscript -e "bookdown::clean_book(TRUE); bookdown::render_book('index.Rmd', 'bookdown::gitbook');   
-  # Note order matters here:
-  chapter_titles <- c("getting-started", "visualization", "tidy", "wrangling", 
+Rscript -e "bookdown::clean_book(TRUE); bookdown::render_book('index.Rmd', 'bookdown::gitbook')"   
+Rscript -e 'chapter_titles <- c("getting-started", "visualization", "tidy", "wrangling", 
                       "regression", "multiple-regression", "sampling", 
                       "confidence-intervals", "hypothesis-testing",
                       "inference-for-regression", "thinking-with-data");
@@ -11,4 +10,4 @@ Rscript -e "bookdown::clean_book(TRUE); bookdown::render_book('index.Rmd', 'book
     Rmd_file <- stringr::str_c(chapter_numbers[i], "-", chapter_titles[i], ".Rmd")
     R_file <- stringr::str_c("docs/scripts/", chapter_numbers[i], "-", chapter_titles[i], ".R")
     knitr::purl(Rmd_file, R_file)
-  }"
+  }'
