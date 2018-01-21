@@ -1,3 +1,5 @@
+dir.create("docs/scripts")
+
 # Note order matters here:
 chapter_titles <- c("getting-started", "visualization", "tidy", "wrangling", 
                     "regression", "multiple-regression", "sampling", 
