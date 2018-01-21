@@ -4,9 +4,6 @@ library(ggplot2)
 library(nycflights13)
 library(knitr)
 
-## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
-# Packages needed internally, but not in text.
-
 ## ---- eval=FALSE---------------------------------------------------------
 ## portland_flights <- flights %>%
 ##   filter(dest == "PDX")
@@ -21,21 +18,6 @@ library(knitr)
 ## not_BTV_SEA <- flights %>%
 ##   filter(!(dest == "BTV" | dest == "SEA"))
 ## View(not_BTV_SEA)
-
-## **Learning Check Solutions**
-
-## ---- eval=FALSE, echo=show_solutions('5-1')-----------------------------
-## # Original in book
-## not_BTV_SEA <- flights %>%
-##   filter(!(dest == "BTV" | dest == "SEA"))
-## 
-## # Alternative way
-## not_BTV_SEA <- flights %>%
-##   filter(!dest == "BTV" & !dest == "SEA")
-## 
-## # Yet another way
-## not_BTV_SEA <- flights %>%
-##   filter(dest != "BTV" & dest != "SEA")
 
 ## ------------------------------------------------------------------------
 summary_temp <- weather %>% 
@@ -54,27 +36,6 @@ kable(summary_temp)
 ## summary_temp <- weather %>%
 ##   summarize(mean = mean(temp, na.rm = TRUE)) %>%
 ##   summarize(std_dev = sd(temp, na.rm = TRUE))
-
-## **Learning Check Solutions**
-
-## ---- eval=show_solutions('5-2'), echo=show_solutions('5-2')-------------
-weather %>% 
-  summarize(count = n())
-
-## **`r paste0("(LC", chap, ".", (lc), ")")`** Why doesn't the following code work?
-
-## ----eval=FALSE, include=show_solutions('5-2')---------------------------
-## summary_temp <- weather %>%
-##   summarize(mean = mean(temp, na.rm = TRUE)) %>%
-##   summarize(std_dev = sd(temp, na.rm = TRUE))
-
-## Consider the output of only running the first two lines:
-
-## ---- eval=show_solutions('5-2'), echo=show_solutions('5-2')-------------
-weather %>%   
-  summarize(mean = mean(temp, na.rm = TRUE))
-
-## Because after the first `summarize()`, the variable `temp` disappears as it has been collapsed to the value `mean`. So when we try to run the second `summarize()`, it can't find the variable temp` to compute the standard deviation of.
 
 ## ------------------------------------------------------------------------
 summary_monthly_temp <- weather %>% 
@@ -99,63 +60,6 @@ kable(by_monthly_origin)
 by_monthly_origin2 <- flights %>% 
   dplyr::count(origin, month)
 kable(by_monthly_origin2)
-
-## **_Learning check_**
-
-## **Learning Check Solutions**
-
-## ---- echo=show_solutions('5-2')-----------------------------------------
-library(dplyr)
-library(nycflights13)
-
-summary_temp_by_month <- weather %>% 
-  group_by(month) %>% 
-  summarize(
-          mean = mean(temp, na.rm = TRUE),
-          std_dev = sd(temp, na.rm = TRUE)
-          )
-
-## ---- echo=FALSE, include=show_solutions('5-3')--------------------------
-kable(summary_temp_by_month)
-
-## The standard deviation is a quantification of **spread** and **variability**. We
-
-## ---- echo=show_solutions('5-3'), include=show_solutions('5-3')----------
-summary_temp_by_day <- weather %>% 
-  group_by(year, month, day) %>% 
-  summarize(
-          mean = mean(temp, na.rm = TRUE),
-          std_dev = sd(temp, na.rm = TRUE)
-          )
-summary_temp_by_day
-
-## Note: `group_by(day)` is not enough, because `day` is a value between 1-31. We need to `group_by(year, month, day)`
-
-## ---- echo=show_solutions('5-3'), include=show_solutions('5-3')----------
-by_monthly_origin <- flights %>% 
-  group_by(month, origin) %>% 
-  summarize(count = n())
-
-## ---- eval=FALSE, echo=show_solutions('5-3')-----------------------------
-## by_monthly_origin
-
-## ---- echo=FALSE, include=show_solutions('5-3')--------------------------
-kable(by_monthly_origin)
-
-## The difference is they are organized/sorted by `month` first, then `origin`
-
-## ---- echo=show_solutions('5-3'), include=show_solutions('5-3')----------
-count_flights_by_airport <- flights %>% 
-  group_by(origin, month) %>% 
-  summarize(count=n())
-
-## ---- eval=FALSE, include=show_solutions('5-3')--------------------------
-## count_flights_by_airport
-
-## ---- echo=FALSE, include=show_solutions('5-3')--------------------------
-kable(count_flights_by_airport)
-
-## All remarkably similar!
 
 ## NA
 ## ------------------------------------------------------------------------
@@ -187,8 +91,6 @@ flights <- flights %>%
     hours = air_time / 60,
     gain_per_hour = gain / hours
   )
-
-## **Learning Check Solutions**
 
 ## ---- eval---------------------------------------------------------------
 freq_dest <- flights %>% 
@@ -226,8 +128,6 @@ freq_dest %>% arrange(desc(num_flights))
 ##   inner_join(airports, by = c("dest" = "faa")) %>%
 ##   rename(airport_name = name)
 ## View(named_dests)
-
-## **Learning Check Solutions**
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## glimpse(flights)
@@ -289,40 +189,4 @@ freq_dest %>% arrange(desc(num_flights))
 ##   arrange(desc(num_flights)) %>%
 ##   top_n(n = 10)
 ## View(ten_freq_dests)
-
-## **Learning Check Solutions**
-
-## ---- echo=show_solutions('5-6'), include=show_solutions('5-6')----------
-library(dplyr)
-library(nycflights13)
-
-## ---- echo=show_solutions('5-6'), include=show_solutions('5-6')----------
-# The regular way:
-flights %>% 
-  select(dest, air_time, distance)
-
-# Since they are sequential columns in the dataset
-flights %>% 
-  select(dest:distance)
-
-# Not as effective, by removing everything else
-flights %>% 
-  select(-year, -month, -day, -dep_time, -sched_dep_time, -dep_delay, -arr_time,
-         -sched_arr_time, -arr_delay, -carrier, -flight, -tailnum, -origin, 
-         -hour, -minute, -time_hour)
-
-## **`r paste0("(LC", chap, ".", (lc - 1), ")")`** Why might we want to use the `select` function on a data frame?
-
-## ---- echo=show_solutions('5-6'), include=show_solutions('5-6')----------
-# Anything that starts with "d"
-flights %>% 
-  select(starts_with("d"))
-# Anything related to delays:
-flights %>% 
-  select(ends_with("delay"))
-# Anything related to departures:
-flights %>% 
-  select(contains("dep"))
-
-## **`r paste0("(LC", chap, ".", (lc-1), ")")`** Create a new data frame that shows the top 5 airports with the largest arrival delays from NYC in 2013. To narrow down the data frame, to make it easier to look at. Using `View()` for example.
 
