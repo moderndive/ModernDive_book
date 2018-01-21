@@ -51,12 +51,14 @@ Data modeling is used in a wide variety of fields, including statistical inferen
 * An outcome variable $y$ that is *numerical*
 * Explanatory variables $\vec{x}$ that are either *numerical* or *categorical*
 
-Whereas there is always only one numerical outcome variable $y$, we have choices on both the number and the type of explanatory variables $\vec{x}$ to use. We're going to the following regression scenarios, where we have 
+Whereas there is always only one numerical outcome variable $y$, we have choices on both the number and the type of explanatory variables $\vec{x}$ to use. We're going to cover the following regression scenarios:
 
-1. A single numerical explanatory variable $x$ in Chapter \ref@(model1). This scenario is known as *simple linear regression*. 
-1. A single categorical explanatory variable $x$ in Chapter \ref@(model2). 
-1. Two numerical explanatory variables $x_1$ and $x_2$ in Chapter \ref@(model3). This is the first of two *multiple regression* scenarios we'll cover where there are now more than one explanatory variable.
-1. One numerical and one categorical explanatory variable in Chapter \ref@(model3). This is the second *multiple regression* scenario we'll cover. We'll also introduce *interaction models* here.
+* In this chapter, Chapter \@ref(regression) on basic regression, where we'll always have only one explanatory variable:
+    + A single numerical explanatory variable $x$ in Section \ref@(model1). This scenario is known as *simple linear regression*. 
+    + A single categorical explanatory variable $x$ in Section \ref@(model2).
+* In the next chapter: Chapter \@ref(multiple-regression) on *multiple regression*, where we'll have more than one explanatory variable:
+    + Two numerical explanatory variables $x_1$ and $x_2$ in Section \ref@(model3). 
+    + One numerical and one categorical explanatory variable in Section \ref@(model3). We'll also introduce *interaction models* here, there the effect of one explanatory variable depends on the value of another. 
 
 We'll study all 4 of these regression scenarios using real data, all easily accessible via R packages! <!--We will also discuss the concept of *correlation* and how it is frequently incorrectly used to imply *causation*.-->
 
@@ -255,11 +257,26 @@ ggplot(evals, aes(x = bty_avg, y = score)) +
 
 ### Simple linear regression {#model1table}
 
-In order to define a line like the one in Figure \@ref(fig:numxplot4), we need two quantities called *coefficients*: an intercept coefficient (the value of $y$ at $x=0$) and a slope coefficient. What are the intercept and slope coefficients of the above blue regression line? Let's get these values by outputting something called the *linear regression table* using the `get_regression_table()` function that we've included in the `moderndive` R package:
+If case you've forgotten from high school algebra, in general the equation of a line is $y = a + bx$ which is defined by two coefficients (which we defined earlier as "quantitative expressions of a specific property of a phenomenon):
+
+* the intercept coefficient $a$, or the value of $y$ when $x=0$, and 
+* the slope coefficient $b$, or the increase in $y$ for every increase of one in $x$
+
+However, when defining a line specifically for regression, like the blue regression line in Figure \@ref(fig:numxplot4), we use slightly different notation: the equation of the regression line is $\widehat{y} = b_0 + b_1 x$ where
+
+* the intercept coefficient is $b_0$, or the value of $\widehat{y}$ when $x=0$, and 
+* the slope coefficient $b_1$, or the increase in $\widehat{y}$ for every increase of one in $x$
+
+Why do we put a "hat" on top of the $y$? It's a form of notation specific for regression, which we'll introduce in the next subsection \@ref{model1points} when we discuss *fitted values*. For now, let's ignore the hat and treat the equation of the line as you would from high school algebra. We know looking at Figure \@ref(fig:numxplot4) that the slope coefficient corresponding to `bty_avg` should be positive. Why? Because as `bty_avg` increases, professors tend to roughly have larger teaching evaluation `scores`. However, what are the specific values of the intercept and slope coefficients? Let's not worry about computing these by hand, but instead let the computer do the work for us, specifically R!
+
+Let's get the value of the intercept and slope coefficients by outputting something called the *linear regression table*. This is always done in a two-step process:
+
+1. First "fit" the linear regression model to the `data` using the `lm()` function. `lm` stands for "linear model", given that we are dealing with lines.
+1. Then apply the `get_regression_table()` function from the `moderndive` R package to `score_model`
 
 ```{r, eval=FALSE}
-score_model <- lm(score ~ bty_avg, data = evals)
-get_regression_table(score_model)
+lm(score ~ bty_avg, data = evals) %>% 
+  get_regression_table(digits = 2)
 ```
 ```{r, echo=FALSE}
 score_model <- lm(score ~ bty_avg, data = evals)
@@ -277,23 +294,27 @@ score_model %>%
   )
 ```
 
-Let's consider the inputs to this function first. This function always has form `get_regression_table(y~x, data, digits = 3, print = FALSE)`:
+Whoa! There is a lot going on, both in terms of the inputs and outputs! Let's unpack this slowly. First, the `lm()` function that "fits" the linear regression model is typically used as `lm(y ~ x, data = DATA_FRAME_NAME)` where:
 
-1. `y ~ x` is a "formula" input that tells R to fit a simple linear regression of the outcome variable `y` as a function of `x`. Above since we are interested in explaining `score` as a function of `bty_avg`, we input `score ~ bty_avg`. Be very careful to always put the outcome variable before the tilde.
-1. `data` is the data frame that contains the variables `y` and `x`. In the above case, we set `data = evals`
-1. `digits` specifies the digits of precision we want the regression table to have. `digits` defaults to 3, in other words, if you don't specify this argument, `digits = 3` is used by default.
-1. `print` is a `TRUE`/`FALSE` Boolean value that sets whether or not the output should be printed in Markdown table format, suitable for use in R markdown
+* `y` is the outcome variable, followed by a tilde `~`, the key to the left of "1" on your keyboard. In our case, `y` is set to `score`.
+* `x` is the explanatory variable. In our case, `x` is set to `bty_avg`. We call the combination `y ~ x` a *model formula*.
+* `DATA_FAME_NAME` is the name of the data frame that contains the variables `y` and `x`. In our case the `evals` data frame.
 
-Now let's consider the output regression, which has two rows denoted by the first column `term`: one corresponding to the intercept $b_0$ and one corresponding to the slope $b_{\text{bty_avg}}$ `bty_avg`. The second column `estimate` gives us the fitted values for both these values, thus in Figure \@ref(fig:numxplot4) the intercept is `r evals_line[1]`, meaning for an instructor that had a beauty score of $x=0$, they had on average a teaching score of `r evals_line[1]`. In this case however, while the intercept has a mathematical interpretation, there is no practical interpretation no instructors had anywhere near a beauty score of 0. Furthermore, since `score` is an average of a panel of 6 students' ratings from 1 to 10, a `bty_avg` of 0 would be impossible.
+Then we pipe this output to be the input of the `get_regression_table()` function, just as when we discussed piping in Section \@ref(piping) in the data wrangling chapter. An additional arguments to the `get_regression_table()` function is `digits`, where we specify the number of significant digits of precision (number of digits after the decimal points) we want the regression table to have. `digits` defaults to 3, meaning if you don't specify this argument, `digits = 3` is used by default. We'd like to point out that all the `get_regression_table()` function in the `moderndive` package does is generate regression table outputs that are clean and easy-to-read while hiding a lot of the code necessary to do so and not much else. This is known as a *wrapper function* in computer programming, which takes other functions and "wraps" them in a single function. While not necessary to understand regression, if you are curious to know what is going on under the hood of `get_regression_table()`, see Section \@ref(underthehood) below. 
 
-More interestingly is the slope associated with `bty_avg` of `r evals_line[2]`. The interpretation is: for every increase of 1 in `bty_avg`, there is an *associated* increase of *on average* `r evals_line[2]` units of `score`. We note in particular that the sign of this slope is positive, again suggestive of a positive relationship between beauty scores and teaching scores. We are very careful with our wording:
+<!--
+1. `print` is a `TRUE`/`FALSE` value that sets whether or not the output should be in a print friendly format (specifically in Markdown table format suitable for use in R Markdown documents). `print` defaults to `FALSE`, meaning if you don't specify this argument, `print = FALSE` is used by default. We'll ignore the use of the `print` argument until Chapter \@ref(thinking-with-data) on "thinking with data."
+-->
 
-* We say there is an *associated* increase, to be cautious not to imply causation.
-* We say that this associated increase is *on average* `r evals_line[2]` units of `score` because this increase isn't always exactly `r evals_line[2]` as we can see in Figure \@ref(fig:numxplot4), but rather the average associated increase.
+Now let's consider the outputted regression table, which has two rows denoted by the first column `term`: one corresponding to the intercept coefficient $b_0$ and one corresponding to the slope coefficient $b_1$ for `bty_avg`. The second column `estimate` gives us the "fitted" (or computed) values for both these coefficients. Therefore the blue regression line in Figure \@ref(fig:numxplot4) is $\widehat{\text{score}} = b_0 + b_{\text{bty avg}} \text{bty avg} = `r evals_line[1]` + `r evals_line[2]`\text{bty avg}$ where 
 
-But what about the remaining 5 columns? We'll revisit these when we cover *inference for regression* after you've covered Chapter \@ref(hypo) where you learn about *hypothesis testing* and Chapter \@ref(ci) where you'll learn about *confidence intervals*. For now, we'll only focus on the `term` and `estimate` columns.
+* The intercept coefficient $b_0$ = `r evals_line[1]`, meaning for instructors that had a hypothetical beauty score of 0, the would on average have a teaching score of `r evals_line[1]`. In this case however, while the intercept has a mathematical interpretation when defining the regression line, there is no *practical* interpretation since `score` is an average of a panel of 6 students' ratings from 1 to 10, a `bty_avg` of 0 would be impossible. Furthermore, no instructors had a beauty score anywhere near 0.
+* Of more interest is the slope coefficient associated with `bty_avg` $b_{\text{bty avg}}$ = `r evals_line[2]`. This is a numerical quantity that summarizes the relationship between the outcome and explanatory variables. It is interpreted as follows, for every increase of 1 unit in `bty_avg`, there is an *associated* increase of *on average* `r evals_line[2]` units of `score`. We note in particular that the sign of this slope is positive, suggesting a positive relationship between beauty scores and teaching scores. We are very careful with our wording:
+    + We only stated that there is an *associated* increase, and not necessarily a *causal* increase. For example, perhaps its not that beauty directly affects teaching scores, but instead individuals from wealthier backgrounds tends to have had better education and training, and hence have higher teaching scores, but these same individuals also have higher beauty scores. Avoiding such reasoning can be summarized by the adage "correlation is not necessarily causation". In other words, just because two variables are correlated, it doesn't mean one directly causes the other. We discuss these ideas more in Section \@ref(correlation-is-not-causation).  
+    + We say that this associated increase is *on average* `r evals_line[2]` units of teaching `score` and not that the associated increase is *exactly* `r evals_line[2]` units of `score` across all values of `bty_avg`. This is because the slope is the average increase across all points as shown by the regression line in Figure \@ref(fig:numxplot4). 
 
-We've included the `get_regression_table()` in the `moderndive` package to make generating clean regression tables easy, and thus have hidden a lot of details from you. If you are curious to know what is going on under the hood of this function, see Section \@ref(underthehood) below. 
+But what about the remaining 5 columns: `std_error`, `statistic`, `p_value`, `conf_low` and `conf_high`? They give you information on the *statistical significance* of these results, or their "meaningfulness." We'll revisit these in Chapter \@ref(inference-for-regression) on (statistical) inference for regression after we've covered standard errors in Chapter \@ref(sampling) (`std_error`), confidence intervals in Chapter \@ref(ci) (`conf_low` and `conf_high`), and hypothesis testing in Chapter \@ref(hypo) (`statistic` and `p_value`). For now, we'll only focus on the `term` and `estimate` columns.
+
 
 
 ### Observed/fitted values and residuals {#model1points}
@@ -922,6 +943,11 @@ transformations! In other words
 
 * The correlation between $x$ and $y$ will be the same as
 * The correlation between $a\times x + b$ and $y$ where $a, b$ are numerical values (real numbers in mathematical terms)
+
+### Correlation is not necessarily causation {#correlation-is-not-causation}
+
+Causation is a tricky problem and frequently takes either carefully designed experiments or methods to control for the effects of potential confounding variables.  Both these approaches attempt either to remove all confounding variables or take them into account as best they can, and only focus on the behavior of a outcome variable in the presence of the levels of the other variable(s). Be careful as you read studies to make sure that the writers aren't falling into this fallacy of correlation implying causation.  If you spot one, you may want to send them a link to [Spurious Correlations](http://www.tylervigen.com/spurious-correlations).
+
 
 ### Best fitting line {#leastsquares}
 
