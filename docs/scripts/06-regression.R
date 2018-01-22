@@ -1,5 +1,5 @@
-## ---- message=FALSE, warning=FALSE---------------------------------------
-library(remotes)
+## ---- message=FALSE, warning=FALSE, include=FALSE------------------------
+# library(remotes)
 # remotes::install_github("moderndive/moderndive")
 
 ## ---- message=FALSE, warning=FALSE---------------------------------------
