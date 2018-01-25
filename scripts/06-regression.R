@@ -124,7 +124,7 @@ evals %>%
 
 ## ----numxplot5, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual"----
 best_fit_plot <- ggplot(evals, aes(x = bty_avg, y = score)) +
-  geom_point() +
+  geom_jitter() +
   labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") + 
   geom_smooth(method = "lm", se = FALSE) +
   annotate("point", x = x, y = y, col = "red", size = 3) +
@@ -141,29 +141,10 @@ best_fit_plot
 set.seed(76)
 regression_points <- get_regression_points(score_model) 
 regression_points %>%
-  slice(c(index, sample(1:nrow(evals), 4))) %>%
+  slice(c(index, index+1, index+2, index+3)) %>%
   knitr::kable(
     digits = 3,
-    caption = "Regression points (5 arbitrarily chosen rows out of 463)",
-    booktabs = TRUE
-  )
-
-## ---- eval=FALSE---------------------------------------------------------
-## regression_points <- regression_points %>%
-##   mutate(score_hat_2 = 3.880 + 0.067 * bty_avg) %>%
-##   mutate(residual_2 = score - score_hat_2)
-## regression_points
-
-## ---- echo=FALSE---------------------------------------------------------
-set.seed(76)
-regression_points <- regression_points %>% 
-  mutate(score_hat_2 = 3.880 + 0.067 * bty_avg) %>% 
-  mutate(residual_2 = score - score_hat_2)
-regression_points %>%
-  slice(c(index, sample(1:nrow(evals), 4))) %>%
-  knitr::kable(
-    digits = 3,
-    caption = "Regression points (5 arbitrarily chosen rows out of 463)",
+    caption = "Regression points (for only 21st through 24th instructor)",
     booktabs = TRUE
   )
 
@@ -203,6 +184,7 @@ resid_ex <- evals
 resid_ex$`Ideal` <- rnorm(nrow(resid_ex), 0, sd = sd(regression_points$residual))
 resid_ex$`Less than ideal` <-
   rnorm(nrow(resid_ex), 0, sd = sd(regression_points$residual))^2
+resid_ex$`Less than ideal` <- resid_ex$`Less than ideal` - mean(resid_ex$`Less than ideal` )
 
 resid_ex <- resid_ex %>%
   select(bty_avg, `Ideal`, `Less than ideal`) %>%
@@ -213,10 +195,10 @@ ggplot(resid_ex, aes(x = eps)) +
   labs(x = "Residual") +
   facet_wrap( ~ type, scales = "free")
 
-## ------------------------------------------------------------------------
-load(url("http://www.openintro.org/stat/data/evals.RData"))
-evals <- evals %>%
-  select(score, age)
+## ---- eval = FALSE-------------------------------------------------------
+## load(url("http://www.openintro.org/stat/data/evals.RData"))
+## evals <- evals %>%
+##   select(score, age)
 
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(gapminder)
