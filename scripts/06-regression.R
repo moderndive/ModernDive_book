@@ -128,7 +128,7 @@ evals %>%
 best_fit_plot <- ggplot(evals, aes(x = bty_avg, y = score)) +
   geom_jitter() +
   labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") + 
-  geom_smooth(method = "lm", se = FALSE) +
+  geom_point(method = "lm", se = FALSE) +
   annotate("point", x = x, y = y, col = "red", size = 3) +
   annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
   annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
