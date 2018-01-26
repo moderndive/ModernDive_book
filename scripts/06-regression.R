@@ -9,6 +9,8 @@ library(mvtnorm)
 library(tidyr)
 library(forcats)
 library(gridExtra)
+library(broom)
+library(janitor)
 
 ## ------------------------------------------------------------------------
 load(url("http://www.openintro.org/stat/data/evals.RData"))
@@ -134,7 +136,8 @@ best_fit_plot <- ggplot(evals, aes(x = bty_avg, y = score)) +
 best_fit_plot
 
 ## ---- eval=FALSE---------------------------------------------------------
-## regression_points <- get_regression_points(score_model)
+## regression_points <- score_model %>%
+##   get_regression_points()
 ## regression_points
 
 ## ---- echo=FALSE---------------------------------------------------------
@@ -204,7 +207,7 @@ ggplot(resid_ex, aes(x = eps)) +
 library(gapminder)
 gapminder2007 <- gapminder %>%
   filter(year == 2007) %>% 
-  select(country, continent, lifeExp, gdpPercap)
+  select(country, continent, lifeExp)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## View(gapminder2007)
@@ -275,19 +278,6 @@ ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
   geom_boxplot() +
   labs(x = "Continent", y = "Life expectancy (years)", title = "Life expectancy by continent") 
 
-## ----catxplot1b, warning=FALSE, fig.cap="Life expectancy in 2007"--------
-ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
-  geom_boxplot() +
-  labs(x = "Continent", y = "Life expectancy (years)", title = "Life expectancy by continent") +
-  geom_hline(yintercept = 52.93, color = "red")
-
-## ----catxplot2, warning=FALSE, fig.cap="Difference in life expectancy relative to African median of 52.93 years"----
-ggplot(gapminder2007, aes(x = continent, y = lifeExp - 52.93)) +
-  geom_boxplot() +
-  geom_hline(yintercept = 52.93 - 52.93, col = "red") +
-  labs(x = "Continent", y = "Difference in life expectancy vs Africa (years)",
-       title = "Life expectancy relative to Africa")
-
 ## ----continent-mean-life-expectancies, echo=FALSE------------------------
 gapminder2007 %>%
   group_by(continent) %>%
@@ -300,8 +290,8 @@ gapminder2007 %>%
   )
 
 ## ---- eval=FALSE---------------------------------------------------------
-## lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
-## get_regression_table(lifeExp_model)
+## lifeExp_model %>%
+##   get_regression_table()
 
 ## ---- echo=FALSE---------------------------------------------------------
 lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
@@ -326,7 +316,8 @@ gapminder2007 %>%
   )
 
 ## ---- eval=FALSE---------------------------------------------------------
-## regression_points <- get_regression_points(lifeExp_model)
+## regression_points <- lifeExp_model %>%
+##   get_regression_points()
 ## regression_points
 
 ## ---- echo=FALSE---------------------------------------------------------
@@ -341,7 +332,7 @@ regression_points %>%
 
 ## ----catxplot7, warning=FALSE, fig.cap="Plot of residuals over continent"----
 ggplot(regression_points, aes(x = continent, y = residual)) +
-  geom_jitter(width = 0.5) + 
+  geom_jitter(width = 0.1) + 
   labs(x = "Continent", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue")
 
@@ -365,6 +356,14 @@ gapminder2007 %>%
 ggplot(regression_points, aes(x = residual)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Residual")
+
+## ---- eval = FALSE-------------------------------------------------------
+## # The following commands reloads the gapminder from scratch:
+## data("gapminder")
+## 
+## gapminder2007 <- gapminder %>%
+##   filter(year == 2007) %>%
+##   select(country, continent, gdpPercap)
 
 ## ----correlation2, echo=FALSE, fig.cap="Different Correlation Coefficients"----
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
@@ -393,25 +392,6 @@ ggplot(data = values, mapping = aes(V1, V2)) +
     axis.text.x = element_blank(),
     axis.text.y = element_blank(),
     axis.ticks = element_blank()
-  )
-
-## ----cor-credit, eval=FALSE----------------------------------------------
-## library(ISLR)
-## Credit %>%
-##   select(Balance, Limit, Income) %>%
-##   mutate(Income = Income * 1000) %>%
-##   cor()
-
-## ----cor-credit-2, echo=FALSE--------------------------------------------
-library(ISLR)
-Credit %>% 
-  select(Balance, Limit, Income) %>% 
-  mutate(Income = Income * 1000) %>% 
-  cor() %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Correlation between income (in $) and credit card balance", 
-    booktabs = TRUE
   )
 
 ## ----echo=FALSE----------------------------------------------------------
@@ -467,4 +447,30 @@ best_fit_plot <- best_fit_plot +
   annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 best_fit_plot
+
+## ---- eval = FALSE-------------------------------------------------------
+## lm(score ~ bty_avg, data = evals) %>%
+##   get_regression_table()
+
+## ---- echo = FALSE-------------------------------------------------------
+lm(score ~ bty_avg, data = evals) %>% 
+  get_regression_table() %>% 
+  knitr::kable()
+
+## ---- eval = FALSE-------------------------------------------------------
+## library(broom)
+## library(janitor)
+## lm(score ~ bty_avg, data = evals) %>%
+##   tidy(conf.int = TRUE) %>%
+##   mutate_if(is.numeric, round, digits = 3) %>%
+##   clean_names()
+
+## ---- echo = FALSE-------------------------------------------------------
+library(broom)
+library(janitor)
+lm(score ~ bty_avg, data = evals) %>% 
+  tidy(conf.int = TRUE) %>% 
+  mutate_if(is.numeric, round, digits = 3) %>%
+  clean_names() %>% 
+  knitr::kable()
 

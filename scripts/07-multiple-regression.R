@@ -388,6 +388,25 @@ get_regression_table(box_office_model) %>%
     booktabs = TRUE
   )
 
+## ----cor-credit, eval=FALSE----------------------------------------------
+## library(ISLR)
+## Credit %>%
+##   select(Balance, Limit, Income) %>%
+##   mutate(Income = Income * 1000) %>%
+##   cor()
+
+## ----cor-credit-2, echo=FALSE--------------------------------------------
+library(ISLR)
+Credit %>% 
+  select(Balance, Limit, Income) %>% 
+  mutate(Income = Income * 1000) %>% 
+  cor() %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Correlation between income (in $) and credit card balance", 
+    booktabs = TRUE
+  )
+
 ## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
 grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)
 
