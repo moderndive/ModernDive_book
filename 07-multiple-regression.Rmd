@@ -34,50 +34,22 @@ show_solutions <- function(section){
   }
 ```
 
-Now that we are equipped with data visualization skills from Chapter \@ref(viz), data wrangling skills from Chapter \@ref(wrangling), and an understanding of the "tidy" data format from Chapter \@ref(tidy), we now proceed with data modeling. The fundamental premise of data modeling is *to model the relationship* between:
+In Chapter \@ref(regression) we introduced ideas related to modeling, in particular that the fundamental premise of modeling is *to make explicit the relationship* between an outcome variable $y$, also called a dependent variable and an explanatory/predictor variable $x$, also called an independent variable or covariate. There are many modeling approaches one could take, among the most well-known being linear regression which was the focus of the last chapter. Whereas in the last chapter we only focused on regression scenarios where there is only one explanatory/predictor variable, in this chapter, we now focus on modeling scenarios where there is more than one; this is known as multiple regression. You can imagine when trying to model a particular outcome variable, like teaching evaluation score as in Section \@ref(model1) or life expectancy as in Section \@ref(model2), it would be very useful to incorporate more than one explanatory variable. 
 
-* An outcome variable $y$, also called a dependent variable and 
-* An explanatory/predictor variable $x$, also called an independent variable or covariate. 
-
-Another way to state this is using mathematical terminology: we will model the outcome variable $y$ *as a function* of the explanatory/predictor variable $x$.  Why do we have two different labels, explanatory and predictor, for the variable $x$? That's because roughly speaking data modeling can be used for two purposes:
-
-1. **Modeling for prediction**: You want to predict an outcome variable $y$ based on the information contained in a set of predictor variables. You don't care so much about understanding how all the variables relate and interact, but so long as you can make good predictions about $y$, you're fine. For example, if we know many individuals' risk factors for lung cancer, such as smoking habits and age, can we predict whether or not they will develop lung cancer? Here we wouldn't care so much about distinguishing the degree to which the different risk factors contribute to lung cancer, but instead only on whether or not they could be put together to make reliable predictions.
-1. **Modeling for explanation**: You want to explicitly describe the relationship between an outcome variable $y$ and a set of explanatory variables, determine the significance of any found relationships, and have measures summarizing these. Continuing our example from above, we would now be interested in describing the individual effects of the different risk factors and quantifying the magnitude of these effects. One reason could be to design an intervention to reduce lung cancer cases in a population, such as targeting smokers of a specific age group with advertisement for smoking cessation programs. In this book, we'll focus more on this latter purpose.
-
-Data modeling is used in a wide variety of fields, including statistical inference, causal inference, artificial intelligence, and machine learning. There are many techniques for data modeling, such as tree-based models, neural networks/deep learning, and more. However, we'll focus on one particular technique: *linear regression*, one of the most commonly-used and easy to understand approaches to modeling. Recall our discussion in Subsection \@ref(exploredataframes) on numerical and categorical variables. Linear regression involves:
-
-* An outcome variable $y$ that is *numerical*
-* Explanatory variables $\vec{x}$ that are either *numerical* or *categorical*
-
-Whereas there is always only one numerical outcome variable $y$, we have choices on both the number and the type of explanatory variables $\vec{x}$ to use. We're going to the following regression scenarios, where we have 
-
-1. A single numerical explanatory variable $x$ in Chapter \ref@(model1). This scenario is known as *simple linear regression*. 
-1. A single categorical explanatory variable $x$ in Chapter \ref@(model2). 
-1. Two numerical explanatory variables $x_1$ and $x_2$ in Chapter \ref@(model3). This is the first of two *multiple regression* scenarios we'll cover where there are now more than one explanatory variable.
-1. One numerical and one categorical explanatory variable in Chapter \ref@(model3). This is the second *multiple regression* scenario we'll cover. We'll also introduce *interaction models* here.
-
-We'll study all 4 of these regression scenarios using real data, all easily accessible via R packages! <!--We will also discuss the concept of *correlation* and how it is frequently incorrectly used to imply *causation*.-->
+Since our regression models will now consider more than one explanatory/predictor variable, the interpretation of the associated effect of any one explanatory/predictor variables must be made in conjunction with the others. For example, say we are modeling individuals' incomes as a function of their number of years of education and their parents wealth, when interpreting the effect of education on income, one has to consider the effect of their parents's wealth at the same time, as these two variables are almost certainly related. 
 
 
 
 
 ### Needed packages {-}
 
-In this chapter we introduce a new package, `moderndive`, that is an accompaniment package to the ModernDive book that includes useful functions for linear regression and other functions and data used in later in the book. However because this is a relatively new package, we're have to install this package in a different way than was covered in Section \@ref(packages). 
-
-First, install the `remotes` package like you would normally install a package, then run the following line to install the `moderndive` package:
-
-```{r, message=FALSE, warning=FALSE}
-library(remotes)
-# remotes::install_github("moderndive/moderndive")
-```
-
-Let's now load all the packages needed for this chapter. If needed, read Section \@ref(packages) for information on how to install and load R packages. 
+Let's load all the packages needed for this chapter (this assumes you've already installed them). Read Section \@ref(packages) for information on how to install and load R packages.
 
 ```{r, message=FALSE, warning=FALSE}
 library(ggplot2)
 library(dplyr)
 library(moderndive)
+library(ISLR)
 ```
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
@@ -90,38 +62,29 @@ library(gridExtra)
 
 
 
-## Two numerical x {#model3}
+## Two numerical explanatory variables {#model3}
 
-Much like our teacher evaluation data in Section \@ref(model1), let's now attempt to identify factors that are associated with how much credit card debt an individual will hold. The textbook [An Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani is an intermediate-level textbook on statistical and machine learning freely available [here](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf). It has an accompanying R packaged called `ISLR` with datasets that the authors use to demonstrate various machine learning methods. 
-One dataset that is frequently used by the authors is the `Credit` dataset where predictions are made on the balance held by various credit card holders based on information like income, credit limit, and education level. Let's consider the following variables:
+Let's now attempt to identify factors that are associated with how much credit card debt an individual will have. The textbook [An Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani is an intermediate-level textbook on statistical and machine learning freely available [here](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf). It has an accompanying R packaged called `ISLR` with datasets that the authors use to demonstrate various machine learning methods. One dataset that is frequently used by the authors is the `Credit` dataset where predictions are made on the credit card balance held by $n$ = 400 credit card holders based on information about them like income, credit limit, and education level. 
 
-* Outcome variable $y$: Credit card balance in dollars
-* Explanatory variables $x$:
-    + income in $1000's
-    + credit card limit in dollars
-    + credit rating
-    + card holder's age
-    + years of education
+Since no information was provided as to who these $n$ = 400 individuals are and how they came to be included in this dataset, it will be hard to make any scientific claims based on this data. That being said, we'll still use `Credit` to demonstrate multiple regression with:
 
-Let's load the data and `select()` only the 6 variables listed above:
-
-```{r, warning=FALSE, message=FALSE}
-library(ISLR)
-Credit <- Credit %>%
-  select(Balance, Limit, Income, Rating, Age, Education)
-```
-
-Unfortunately, no information on how this data was sampled was provided, so we're not able to generalize any such results to a greater population, but we will still use this data to demonstrate *multiple regression*. Multiple regression is a form of linear regression where there are now more than one explanatory variables and thus the interpretation of the associated effect of any one explanatory variable must be made in conjunction with the other explanatory variable. We'll perform multiple regression with:
-
-1. A numerical outcome variable $y$, in this case teaching credit card `Balance`
+1. A numerical outcome variable $y$, in this case teaching credit card balance.
 1. Two explanatory variables:
-    1. A first numerical explanatory variable $x_1$, in this case credit `Limit`
-    1. A second numerical explanatory variable $x_2$, in this case `Income`
+    1. A first numerical explanatory variable $x_1$. In this case, their credit limit.
+    1. A second numerical explanatory variable $x_2$. In this case, their income (in thousands of dollars).
 
 
 ### Exploratory data analysis {#model3EDA}
 
-Let's look at the raw data values both by bringing up RStudio's spreadsheet viewer, although in Table \@ref(tab:model3-data-preview) we only show 5 randomly selected credit card holders out of `r nrow(Credit)`, and using the `glimpse()` function:
+Let's load the `Credit` data and `select()` only the needed subset of the variables. 
+
+```{r, warning=FALSE, message=FALSE}
+library(ISLR)
+Credit <- Credit %>%
+  select(Balance, Limit, Income)
+```
+
+Let's look at the raw data values both by bringing up RStudio's spreadsheet viewer and the `glimpse()` function, although in Table \@ref(tab:model3-data-preview) we only show 5 randomly selected credit card holders out of `r nrow(Credit)`:
 
 ```{r, eval=FALSE}
 View(Credit)
@@ -149,32 +112,30 @@ summary(Credit)
 
 We observe for example
 
-1. The typical credit card balance is around $500
-1. The typical credit card limit is around $5000
-1. The typical income is around $40,000.
+1. The mean and median credit card balance is around $500. 25% of card holders had debts of 69 dollars or less.
+1. The mean and median credit card limit is just under $5000.
+1. 75% of these card holders had incomes of $57,500 or less.
 
 Since our outcome variable `Balance` and the explanatory variables
 `Limit` and `Rating` are numerical, we can compute the correlation coefficient
-between pairs of these variables. However, instead running the `cor()` command
-twice, once for each explanatory variable:
+between pairs of these variables. There are two way of doing this. First, we could
+run the `cor()` command as seen in Section \@ref(model1EDA) twice, once for
+each explanatory variable:
 
 ```{r, eval=FALSE}
 cor(Credit$Balance, Credit$Limit)
 cor(Credit$Balance, Credit$Income)
 ```
 
-We can simultaneously compute them by returning a *correlation matrix* in 
-Table \@ref(tab:model3-correlation). We read off the correlation coefficient
+Or we can simultaneously compute them by returning a *correlation matrix* in 
+Table \@ref(tab:model3-correlation). We can read off the correlation coefficient
 for any pair of variables by looking them up in the appropriate row/column combination.
 
 ```{r, eval=FALSE}
-Credit %>% 
-  select(Balance, Limit, Income) %>% 
-  cor()
+cor(Credit)
 ```
 ```{r model3-correlation, echo=FALSE}
 Credit %>% 
-  select(Balance, Limit, Income) %>% 
   cor() %>% 
   knitr::kable(
     digits = 3,
@@ -183,14 +144,16 @@ Credit %>%
   )
 ```
 
-For example, the correlation coefficients of:
+For example, the correlation coefficient of:
 
 1. `Balance` with itself is 1
-1. `Balance` with `Limit` is 0.862, indicating a strong positive linear relationship, which makes sense as only individuals with large credit limits and accrue large credit card balances.
+1. `Balance` with `Limit` is 0.862, indicating a strong positive linear relationship, which makes sense as only individuals with large credit limits can accrue large credit card balances.
 1. `Balance` with `Income` is 0.464, suggestive of another positive linear relationship, although not as strong as the relationship between `Balance` and `Limit`.
-1. As an added bonus, we can read off the correlation coefficient of the two explanatory variables, `Limit` and `Income` of 0.792. In this case, we say there is a high degree of *collinearity* between these two explanatory variables.
+1. As an added bonus, we can read off the correlation coefficient of the two explanatory variables, `Limit` and `Income` of 0.792. In this case, we say there is a high degree of *collinearity* between these two explanatory variables. 
 
-Let's visualize the relationship of the outcome variable with each of the two explanatory variables in two separate plots
+Collinearity (or multicollinearity) is a phenomenon in which one explanatory variable in a multiple regression model can be linearly predicted from the others with a substantial degree of accuracy. So in this case, if we knew someone's credit card `Limit` and since `Limit` and `Income` are highly correlated, we could make a fairly accurate guess as to that person's `Income`. Or put loosely, these two variables provided redundant information. For now let's ignore any issues related to collinearity and press on.
+
+Let's visualize the relationship of the outcome variable with each of the two explanatory variables in two separate plots:
 
 ```{r, eval=FALSE}
 ggplot(Credit, aes(x = Limit, y = Balance)) +
@@ -220,16 +183,16 @@ model3_balance_vs_income_plot <- ggplot(Credit, aes(x = Income, y = Balance)) +
 grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)
 ```
 
-In both cases, there seems to be a positive relationship. However the two plots in Figure \@ref(fig:2numxplot1) only focus on the relationship of the outcome variable with each of the explanatory variables independently. To get a sense of the *joint* relationship of all three variables simultaneously through a visualization, let's display the data in a 3-dimensional (3D) scatterplot, where
+First, there is a positive relationship between credit limit and balance, since as credit limit increases so also does credit card balance; this is to be expected given the strongly positive correlation coefficient of 0.862. In the case of income, the positive relationship doesn't appear as strong, given the weakly positive correlation coefficient of 0.464. However the two plots in Figure \@ref(fig:2numxplot1) only focus on the relationship of the outcome variable with each of the explanatory variables independently. To get a sense of the *joint* relationship of all three variables simultaneously through a visualization, let's display the data in a 3-dimensional (3D) scatterplot, where
 
-1. The numerical outcome variable $y$ `Balance` is on the z-axis (vertical one)
+1. The numerical outcome variable $y$ `Balance` is on the z-axis (vertical axis)
 1. The two numerical explanatory variables form the x and y axes (on the floor). In this case
     1. The first numerical explanatory variable $x_1$ `Income` is on the x-axis
     1. The second numerical explanatory variable $x_2$ `Limit` is on the y-axis
 
 Click on the following image to open an interactive 3D scatterplot in your browser:
 
-<center><a target="_blank" href="http://rpubs.com/moderndive/credit_card_balance_3D_scatterplot"><img src="images/credit_card_balance_3D_scatterplot.png" title="3D scatterplot" width="600"/></a></center>
+<center><a target="_blank" href="http://rpubs.com/moderndive/credit_card_balance_3D_scatterplot"><img src="images/credit_card_balance_3D_scatterplot.png" title="3D scatterplot" width="800"/></a></center>
 
 ```{r, eval=FALSE, echo=FALSE}
 # Save as 798 x 562 images/credit_card_balance_3D_scatterplot.png
@@ -256,7 +219,7 @@ plot_ly(showscale=FALSE) %>%
 
 Previously in Figure \@ref(fig:numxplot4), we plotted a "best-fitting" regression line through a set of points where the numerical outcome variable $y$ was teaching `score` and a single numerical explanatory variable $x$ `bty_avg`. What is the analogous concept when we have *two* numerical predictor variables? Instead of a best-fitting line, we now have a best-fitting *plane*, which is 3D generalization of lines which exist in 2D. Click on the following image to open an interactive plot of the regression plane in your browser.
 
-<center><a target="_blank" href="https://beta.rstudioconnect.com/connect/#/apps/3214/"><img src="images/credit_card_balance_regression_plane.png" title="Regression plane" width="600"/></a></center>
+<center><a target="_blank" href="https://beta.rstudioconnect.com/connect/#/apps/3214/"><img src="images/credit_card_balance_regression_plane.png" title="Regression plane" width="800"/></a></center>
 
 ```{r, eval=FALSE, echo=FALSE}
 # Save as 798 x 562 images/credit_card_balance_regression_plane.png
@@ -306,7 +269,7 @@ plot_ly(showscale=FALSE) %>%
 
 ### Multiple regression {#model3table}
 
-Just as we did when we had a single numerical explanatory variable $x$ in Section \@ref(model1table) and when we had a single categorical explanatory variable $x$ in Section \@ref(model2table), we fit a regression model and obtain the regression table in our two numerical explanatory variable scenario. To fit a regression model and obtain a table using `get_regression_table()`, we now use a `+` to consider multiple explanatory variables. In this case since we want to preform a regression of `Limit` and `Income` simultaneously, we input `Balance ~ Limit + Income`
+Just as we did when we had a single numerical explanatory variable $x$ in Section \@ref(model1table) and when we had a single categorical explanatory variable $x$ in Section \@ref(model2table), we fit a regression model and get the regression table in our two numerical explanatory variable scenario. To fit a regression model and get a table using `get_regression_table()`, we now use a `+` to consider multiple explanatory variables. In this case since we want to preform a regression of `Limit` and `Income` simultaneously, we input `Balance ~ Limit + Income`
 
 ```{r, eval=FALSE}
 Balance_model <- lm(Balance ~ Limit + Income, data = Credit)
@@ -335,16 +298,12 @@ a caveat to our interpretation: *all other things being equal, for every increas
     + The *all other things being equal* is making a statement about all other explanatory variables, in this case only one: `Income`. This is equivalent to saying "holding `Income` constant, we observed an associated increase of $0.26 in credit card balance for every dollar increase in credit limit"
 * Income: -$7.66. Similarly, *all other things being equal, for every increase of one unit in `Income` (in other words, $1000 in income), there is an associated decrease of on average $7.66 in credit card balance*.
 
-However, recall in Figure \@ref(fig:2numxplot1) that when considered separately, both `Limit` and `Income` had positive relationships with the outcome variable `Balance`: as card holders' credit limits increased their credit card balances tended to increase as well, and a similar relationship held for incomes and balances. In the above multiple regression, however, the slope for `Income` is now -7.66, suggesting a *negative relationship* between income and credit card balance. What explains these contradictory results? This is a phenomenon known as Simpson's Paradox, a phenomenon in which a trend appears in several different groups of data but disappears or reverses when these groups are combined; we expand on this in Section \@ref(simpsonsparadox).
+However, recall in Figure \@ref(fig:2numxplot1) that when considered separately, both `Limit` and `Income` had positive relationships with the outcome variable `Balance`: as card holders' credit limits increased their credit card balances tended to increase as well, and a similar relationship held for incomes and balances. In the above multiple regression, however, the slope for `Income` is now -7.66, suggesting a *negative relationship* between income and credit card balance. What explains these contradictory results? This is a phenomenon known as Simpson's Paradox, a phenomenon in which a trend appears in several different groups of data but disappears or reverses when these groups are combined; we expand on this in Section \@ref(simpsonsparadox) where we'll look at the relationship between credit `Limit` and credit card balance but split by different income bracket groups.
 
 
 ### Observed/fitted values and residuals {#model3points}
 
-As we did previously, in Table \@ref(tab:model3-points-table) let's unpack the output of the `get_regression_points()` function for our model for credit card balance
-
-* for all `r nrow(Credit)` card holders in the dataset, in other words
-* for all `r nrow(Credit)` rows in the `Credit` data frame, in other words
-* for all `r nrow(Credit)` points
+As we did previously, in Table \@ref(tab:model3-points-table) let's unpack the output of the `get_regression_points()` function for our model for credit card balance for all `r nrow(Credit)` card holders in the dataset. Recall that each card holder corresponds to one of the `r nrow(Credit)` rows in the `Credit` data frame and also for one of the `r nrow(Credit)` points in the 3D scatterplots in Section \@ref(model3EDA).
 
 ```{r, eval=FALSE}
 regression_points <- get_regression_points(Balance_model)
@@ -366,34 +325,8 @@ Recall the format of the output:
 
 * `balance` corresponds to $y$ the observed value
 * `balance_hat` corresponds to $\widehat{y}$ the fitted value
-* `reisdual` corresponds to the residual $y - \widehat{y}$
+* `residual` corresponds to the residual $y - \widehat{y}$
 
-As we did in Section \@ref(model1points) let's prove to ourselves that the results make sense by manually replicate the internal computation that `get_regression_points()` performs using the `mutate()` verb from Chapter \@ref(wrangling)
-
-1. First we compute a duplicate of the fitted values $\widehat{y} = b_0 + b_1 \times x_1 + b_2 \times x_2$ where the intercept $b_0$ = `r Credit_line[1]`, the slope $b_1$ for `Limit` of `r Credit_line[2]`, and the slope $b_2$ for `Income` of `r Credit_line[3]` and store these in `balance_hat_2`
-1. Then we compute the a duplicated the residuals $y - \widehat{y}$ and store these in `residual_2`
-
-```{r, eval=FALSE}
-regression_points <- regression_points %>% 
-  mutate(Balance_hat_2 = -385.179 + 0.264 * Limit - 7.663 * Income) %>% 
-  mutate(residual_2 = Balance - Balance_hat_2)
-regression_points
-```
-```{r, echo=FALSE}
-set.seed(76)
-regression_points <- regression_points %>% 
-  mutate(Balance_hat_2 = -385.179 + 0.264 * Limit - 7.663 * Income) %>% 
-  mutate(residual_2 = Balance - Balance_hat_2)
-regression_points %>%
-  slice(1:5) %>%
-  knitr::kable(
-    digits = 3,
-    caption = "Regression points (first five rows)",
-    booktabs = TRUE
-  )
-```
-
-We see that our manually computed variables `balance_hat_2` and `residual_2` equal the original results (up to rounding error).
 
 ### Residual analysis {#model3residuals}
 
@@ -421,7 +354,7 @@ model3_residual_vs_income_plot <- ggplot(regression_points, aes(x = Income, y = 
 grid.arrange(model3_residual_vs_limit_plot, model3_residual_vs_income_plot, nrow = 1)
 ```
 
-In this case, there does appear to be a systematic pattern to the residuals, as the scatter of the residuals around the line $y=0$ is definitely not consistent. This behavior of the residuals is further evidenced by the histogram of residuals in Figure \@ref(fig:model3_residuals_hist). We observe that the residuals have a slight right-skew (a long tail towards the right). Ideally, these residuals should be bell-shaped around a residual value of 0. 
+In this case, there does appear to be a systematic pattern to the residuals, as the scatter of the residuals around the line $y=0$ is definitely not consistent. This behavior of the residuals is further evidenced by the histogram of residuals in Figure \@ref(fig:model3_residuals_hist). We observe that the residuals have a slight right-skew (recall we say that data is right-skewed, or positively-skewed, if there is a tail to the right). Ideally, these residuals should be bell-shaped around a residual value of 0. 
 
 ```{r model3_residuals_hist, warning=FALSE, fig.cap="Plot of residuals over continent"}
 ggplot(regression_points, aes(x = residual)) +
@@ -429,7 +362,7 @@ ggplot(regression_points, aes(x = residual)) +
   labs(x = "Residual")
 ```
 
-Another way to interpret this histogram is that since the residual is computed as $y - \widehat{y}$ = `balance` - `balance_hat`, we have some values where the fitted value $\widehat{y}$ is very much lower than the observed value $y$. In other words, we are underfitting certain credit card holder's balance by a very large amount. 
+Another way to interpret this histogram is that since the residual is computed as $y - \widehat{y}$ = `balance` - `balance_hat`, we have some values where the fitted value $\widehat{y}$ is very much lower than the observed value $y$. In other words, we are underestimating certain credit card holder's balance by a very large amount. 
 
 
 
@@ -444,27 +377,28 @@ Repeat this same analysis but using `Age` and `Rating` as the two numerical expl
 
 
 
-## One numerical & one categorical x {#model4}
 
-Let's revisit the instructor evaluation data introduced in Section \@ref(model1), where we studied the relationship between
 
-1. the numerical outcome variable $y$: instructor evaluation score `score`
-1. the numerical explanatory variable $x$: beauty score `bty_avg`
 
-This analysis suggested that there is a positive relationship between `bty_avg` and `score`, in other words as instructors had higher beauty scores, they also tended to have higher teaching evaluation scores. Now let's say instead of `bty_avg` we are interested in the numerical explanatory variable $x_1$ `age` and furthermore we want to use a second $x_2$, the (binary) categorical variable `gender`. Our modeling scenario now becomes
 
-1. the numerical outcome variable $y$: instructor evaluation score `score`
+## One numerical & one categorical explanatory variable {#model4}
+
+Let's revisit the instructor evaluation data introduced in Section \@ref(model1), where we studied the relationship between instructor evaluation scores and their beauty scores. This analysis suggested that there is a positive relationship between `bty_avg` and `score`, in other words as instructors had higher beauty scores, they also tended to have higher teaching evaluation scores. Now let's say instead of `bty_avg` we are interested in the numerical explanatory variable $x_1$ `age` and furthermore we want to use a second explanatory variable $x_2$, the (binary) categorical variable `gender`. Our modeling scenario now becomes
+
+1. A numerical outcome variable $y$. As before, instructor evaluation score.
 1. Two explanatory variables:
-    1. A first numerical explanatory variable $x_1$: `age`
-    1. A second numerical explanatory variable $x_2$, in this case `gender`
+    1. A numerical explanatory variable $x_1$: In this case, their age.
+    1. A categorical explanatory variable $x_2$: In this case, their binary gender.
 
 
 ### Exploratory data analysis {#model4EDA}
 
+Let's reload the `evals` data and `select()` only the needed subset of variables. 
+
 ```{r eval=FALSE}
 load(url("http://www.openintro.org/stat/data/evals.RData"))
 evals <- evals %>%
-  select(score, bty_avg, age, gender)
+  select(score, age, gender)
 ```
 
 ```{r echo=FALSE}
@@ -477,24 +411,34 @@ evals <- evals %>%
   select(score, bty_avg, age, gender)
 ```
 
-We've already performed some elements of our exploratory data analysis (EDA) in Section \@ref(model4EDA), in particular of the outcome variable `score`, so let's now only consider our two new explanatory variables
+Let's look at the raw data values both by bringing up RStudio's spreadsheet viewer and the `glimpse()` function, although in Table \@ref(tab:model4-data-preview) we only show 5 randomly selected instructors out of `r nrow(evals)`:
 
-```{r}
-evals %>% 
-  select(age, gender) %>% 
-  summary()
+```{r, eval=FALSE}
+View(evals)
 ```
 
-```{r}
-cor(evals$score, evals$age)
+```{r model4-data-preview, echo=FALSE}
+evals %>%
+  sample_n(5) %>%
+  knitr::kable(
+    digits = 3,
+    caption = "Random sample of 5 instructors",
+    booktabs = TRUE
+  )
 ```
 
-In Figure \@ref(numxcatxplot1), we plot a scatterplot of `score` over `age`, but given that `gender` is a binary categorical variable
+Let's look at some summary statistics:
+
+```{r}
+summary(evals)
+```
+
+In Figure \@ref(fig:numxcatxplot1), we plot a scatterplot of `score` over `age`, but given that `gender` is a binary categorical variable
 
 1. We can assign a color to points from each of the two levels of `gender`: female and male
 1. Furthermore, the `geom_smooth(method = "lm", se = FALSE)` layer automatically fits a different regression line for each 
 
-```{r numxcatxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin split by gender: Jittered"}
+```{r numxcatxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin split by gender (jittered)"}
 ggplot(evals, aes(x = age, y = score, col = gender)) +
   geom_jitter() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
@@ -505,13 +449,13 @@ We notice some interesting trends:
 
 1. There are almost no women faculty over the age of 60.
 1. Fitting separate regression lines for men and women, we see they have different slopes.
-We see that the associated effect of increasing age seems to be much harsher for women than men. In other words, they have different slopes.
+We see that the associated effect of increasing age seems to be much harsher for women than men. In other words, as women age, the drop in their teaching score appears to be more faster.
 
 
 
 ### Multiple regression {#model4table}
 
-Let's now compute the *regression table*
+Much like we started to consider multiple explanatory variables using the `+` sign in Section(model3table), let's fit a regression model and get the regression table, this time saving our regression model fit in `score_model_2` so as to not overwrite the model `score_model` from Section \@ref(model1table). 
 
 ```{r, eval=FALSE}
 score_model_2 <- lm(score ~ age + gender, data = evals)
@@ -527,16 +471,15 @@ get_regression_table(score_model_2) %>%
   )
 ```
 
-The modeling equation for this is:
+The modeling equation for this scenario is:
 
 $$
 \begin{align}
-\widehat{y} &= b_0 + b_1 x_1 + b_2 x_2 \\
-\widehat{score} &= b_0 + b_{age} age + b_{male} \mathbb{1}[\mbox{is male}] \\
+\widehat{y} &= b_0 + b_1 * x_1 + b_2 * x_2 \\
+\widehat{\mbox{score}} &= b_0 + b_{\mbox{age}} * \mbox{age} + b_{\mbox{male}} * \mathbb{1}[\mbox{is male}] \\
 \end{align}
 $$
-
-What this looks like is in Figure \@ref(fig:numxcatxplot2) below. 
+where $\mathbb{1}[\mbox{is male}]$ is an *indicator function* for `sex == male`. In other words,  $\mathbb{1}[\mbox{is male}]$ equals one if the current observation corresponds to a male professor, and 0 if the current observation corresponds to a femal professor. This model can be visualized in Figure \@ref(fig:numxcatxplot2). 
 
 ```{r numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin by gender: same slope"}
 coeff <- lm(score ~ age + gender, data = evals) %>% 
@@ -566,254 +509,109 @@ that men get *relative to the baseline of women*
 * Both men and women have the same slope. In other words, *in this model* the associated effect of age is the same for men and women: all other things being equal, for every increase in 1 in age,
 there is on average an associated decrease of $b_{age}$ = -0.0086 in teaching score
 
-**Hold up**: Figure \@ref(fig:numxcatxplot2) is different than Figure \@ref(fig:numxcatxplot1)! What is going on? What we have in the original plot is an *interaction effect* between age and gender!
+But wait, why is Figure \@ref(fig:numxcatxplot2) is different than Figure \@ref(fig:numxcatxplot1)! What is going on? What we have in the original plot is we've incorporated what's know as an *interaction effect* between age and gender.
 
 
-### Mutiple regression with interaction effects
+### Mutiple regression with interaction effects {#model4interactiontable}
+
+We say a model has an *interaction effect* if the associated effect of one variable *depends on the value of another variable*. In this case, the effect of `age` will depend on the value of `gender`. Put differently, the effect of age on teaching scores will differ for men and for women, as was suggested by the different slopes for men and women in our visual exploratory data analysis in Figure \@ref(fig:numxcatxplot1).
+
+Let's fit a regression with an interaction term. Instead of using the `+` sign in the enumeration of explanatory variables, we use the `*` sign. Let's fit this regression and save it in `score_model_3`, then we get the regression table using the `get_regression_table()` function as before. 
+
+```{r, eval=FALSE}
+score_model_interaction <- lm(score ~ age * gender, data = evals)
+get_regression_table(score_model_interaction)
+```
+```{r, echo=FALSE}
+score_model_interaction <- lm(score ~ age * gender, data = evals)
+get_regression_table(score_model_interaction) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Regression table", 
+    booktabs = TRUE
+  )
+```
+
+The modeling equation for this scenario is:
+
+$$
+\begin{align}
+\widehat{y} &= b_0 + b_1*x_1 + b_2*x_2 + b_3*x_1*x_2\\
+\widehat{\mbox{score}} &= b_0 + b_{\mbox{age}}*\mbox{age} + b_{\mbox{male}}*\mathbb{1}[\mbox{is male}] + b_{\mbox{age,male}}*\mbox{age}*\mathbb{1}[\mbox{is male}] \\
+\end{align}
+$$
+
+Oof, that's a lot of rows in the regression table output and a lot of terms in the model equation. The fourth term being added on the right hand side of the equation corresponds to the *interaction term*. Let's simply things by considering men and women separately. First, recall that $\mathbb{1}[\mbox{is male}]$ equals 1 if a particular observation (or row in `evals`) corresponds to a male instructors. In this case, using the values from the regression table the fitted value of $\widehat{\mbox{score}}$ is:
+
+$$
+\begin{align}
+\widehat{\mbox{score}} &= b_0 + b_{\mbox{age}}*\mbox{age} + b_{\mbox{male}}*\mathbb{1}[\mbox{is male}] + b_{\mbox{age,male}}*\mbox{age}*\mathbb{1}[\mbox{is male}] \\
+&= b_0 + b_{\mbox{age}}*\mbox{age} + b_{\mbox{male}}*1 + b_{\mbox{age,male}}\mbox{age}*1 \\
+&= \left(b_0 + b_{\mbox{male}}\right) + \left(b_{\mbox{age}} +  b_{\mbox{age,male}} \right)*\mbox{age} \\
+&= \left(4.883 + -0.446\right) + \left(-0.018 +  0.014 \right)*\mbox{age} \\
+&= 4.437 -0.004*\mbox{age}
+\end{align}
+$$
+
+Second, recall that $\mathbb{1}[\mbox{is male}]$ equals 0 if a particular observation corresponds to a female instructors. Again, using the values from the regression table the fitted value of $\widehat{\mbox{score}}$ is:
+
+$$
+\begin{align}
+\widehat{\mbox{score}} &= b_0 + b_{\mbox{age}}*\mbox{age} + b_{\mbox{male}}*\mathbb{1}[\mbox{is male}] + b_{\mbox{age,male}}*\mbox{age}*\mathbb{1}[\mbox{is male}] \\
+&= b_0 + b_{\mbox{age}}*\mbox{age} + b_{\mbox{male}}*0 + b_{\mbox{age,male}}\mbox{age}*0 \\
+&= b_0 + b_{\mbox{age}}*\mbox{age}\\
+&= 4.883 -0.018*\mbox{age}
+\end{align}
+$$
+
+Let's summarize these values in a table:
+
+```{r, echo=FALSE}
+data_frame(
+  Gender = c("Male instructors", "Female instructors"),
+  Intercept = c(4.437, 4.883),
+  `Slope for age` = c(-0.004, -0.018)
+) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Comparison of male and female intercepts and age slopes", 
+    booktabs = TRUE
+  )
+```
+
+We see that while male instructors have a lower intercept, as they age, they have a less steep associated average decrease in teaching scores: 0.004 units teaching score units per year as opposed to -0.018 for women. This is consistent with the different slopes and intercepts of the red and blue regression lines fit in Figure \@ref(fig:numxcatxplot1). Recall our definition of a model having an interaction effect: when the associated effect of one variable, in this case age, depends on the value of another variable, in this case gender. 
+
+But how do we know when it's appropriate to include an interaction effect? For example, which is the more appropriate model? The regular multiple regression model without an interaction term we saw in Section \@ref{model4table} or the multiple regression model with the interaction term we just saw? We'll revisit this question in Section \@ref(inference-for-regression).
+
 ### Observed/fitted values and residuals {#model4points}
 
-We say a model has an interaction effect if the associated effect of one variable *depends on the value of another variable*.
-
-Let's now compute the *regression table*
+Now say we want to apply the above calculations for male and female instructors for all `r nrow(evals)` instructors in the `evals` dataset. As our multiple regression models get more and more complex, computing such values by hand gets more and more tedious. The `get_regression_points()` function spares us this tedium and returns all fitted values and all residuals. For simplicity, let's focus only on the fitted interaction model, which is saved in `score_model_interaction`
 
 ```{r, eval=FALSE}
-score_model_2 <- lm(score ~ age * gender, data = evals)
-get_regression_table(score_model_2)
+regression_points <- get_regression_points(score_model_interaction)
+regression_points
 ```
-```{r, echo=FALSE}
-get_regression_table(score_model_2) %>% 
+```{r model4-points-table, echo=FALSE}
+set.seed(76)
+regression_points <- get_regression_points(score_model_interaction)
+regression_points %>%
+  slice(1:5) %>%
   knitr::kable(
     digits = 3,
-    caption = "Regression table", 
+    caption = "Regression points (first 5 rows of 463)",
     booktabs = TRUE
   )
 ```
 
-The model formula is
+Recall the format of the output:
 
-$$
-\begin{align}
-\widehat{y} &= b_0 + b_1 x_1 + b_2 x_2 + b_3 x_1x_2\\
-\widehat{score} &= b_0 + b_{age} age + b_{male} \mathbb{1}[\mbox{is male}] + b_{age,male}age\mathbb{1}[\mbox{is male}] \\
-\end{align}
-$$
+* `score` corresponds to $y$ the observed value
+* `score_hat` corresponds to $\widehat{y} = \widehat{\mbox{score}}$ the fitted value
+* `residual` corresponds to the residual $y - \widehat{y}$
 
-
-
- 
-
-
-
-
-
-### Residual analysis {#model4residuals}
 
 <!--
-## Two categorical $x$ {#model5}
-
-Let's look at the `biopics` dataset in the
-[`fivethirtyeight`](https://rudeboybert.github.io/fivethirtyeight/) package.
-After loading the package, run `?biopics` in the console to read the help file.
-This data is from the article ["Straight Outta Compton" Is The Rare Biopic Not About White Dudes](https://fivethirtyeight.com/features/straight-outta-compton-is-the-rare-biopic-not-about-white-dudes/).  
-
-First let's load the data and look at a random sample of 5 rows:
-
-```{r}
-library(fivethirtyeight)
-biopics <- biopics %>%
-  select(title, box_office, person_of_color, subject_sex) %>%
-  # Remove those that are missing
-  filter(!is.na(box_office))
-```
-
-```{r, echo=FALSE}
-biopics %>%
-  sample_n(5) %>%
-  knitr::kable(digits = 1)
-```
-
-
-
-
-Before we conduct an exploratory data analysis (EDA) of the `biopics` data, let's first
-have a discussion $\log$-transformations.
-
-### log-transformations
-
-Let's consider a histogram of the box office revenues for the `biopics` dataset
-
-```{r logtransform1, echo=TRUE, message=FALSE, warning=FALSE, fig.cap="Histogram of box office revenue"}
-ggplot(biopics, aes(x = box_office)) +
-  geom_histogram(color = "white") +
-  labs(x = "Box office revenue")
-```
-
-In Figure \@ref(fig:logtransform1), we see there is a right-skew to both the
-x-values. This is because there are a few Hollywood blockbusters being compared
-with many (likely) smaller-scale independent films. Let's look at the top 5 and
-bottom 5 grossing movies in this dataset: 
-
-```{r, echo=FALSE}
-biopics %>%
-  arrange(desc(box_office)) %>%
-  slice(1:5) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Top 5 grossing movies in data", 
-    booktabs = TRUE
-  )
-```
-
-```{r, echo=FALSE}
-biopics %>%
-  arrange(box_office) %>%
-  slice(1:5) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Bottom 5 grossing movies in data", 
-    booktabs = TRUE
-  )
-```
-
-The scale of box office revenue is completely different! Hence, in Figure \@ref(fig:logtransform1), it's really hard to see what's going on at the
-lower-end. 
-
-Let's unskew this variable and compare not *absolute* differences, but rather,
-*relative* differences i.e. differences in "order of magnitude" using a
-`log10()` transformation:
-
-```{r logtransform2, echo=TRUE, message=FALSE, warning=FALSE, fig.cap="Histogram of log10(box office revenue)"}
-ggplot(biopics, aes(x = log10(box_office))) +
-  geom_histogram(color = "white") +
-  labs(x = "log10(Box office revenue)")
-```
-
-We can see a little better what's going on at the lower end of the box office revenue scale.
-However the values on the axes require a little thinking to process. For example
-at $x=7$, this corresponds to movies with revenue of $10^7 = 10,000,000$
-dollars. So instead, let's *rescale* the x-axis so that it displays the data in
-their original units.
-
-```{r logtransform3, echo=TRUE, message=FALSE, warning=FALSE, fig.cap="Histogram of box office revenue (log-10 scale)"}
-ggplot(biopics, aes(x = box_office)) +
-  geom_histogram(color = "white") +
-  scale_x_log10() +
-  labs(x = "Box office revenue (log10-scale))")
-```
-
-Note that
-
-* The two plots are identical, but the values on the x-axis are different.
-* In both Figure \@ref(fig:logtransform2) Figure \@ref(fig:logtransform3), equivalent distances on each axes correspond to not equivalent absolute differences, but equivalent relative/multiplicative differences. So for example, the horizontal distance on the plot from Budget = `1e+05` = $10^5$ to Budget  = `1e+06` = $10^6$ is equal to the horizontal distance on the plot from Budget = `1e+06` = $10^6$ to Budget = `1e+07` = $10^7$.
-
-
-
-### Exploratory data analysis {#model5EDA}
-
-Let's now consider the box office gross earnings in the US of these movies on a log10
-scale:
-
-```{r 2catxplot, echo=TRUE, warning=FALSE, fig.cap="Box office revenue vs biopic subject info"}
-ggplot(biopics, aes(x = subject_sex, y = box_office)) +
-  facet_wrap(~person_of_color, nrow = 1) +
-  scale_y_log10() +
-  geom_boxplot() +
-  labs(x = "Subject sex", y = "Box office revenue (log10-scale)", title =
-  "Person of color?")
-```
-
-It seems in this dataset, men of color had the highest median box office gross. Let's
-look at a table of means instead of medians.
-
-```{r, eval=FALSE}
-biopics %>%
-  group_by(person_of_color, subject_sex) %>%
-  summarise(mean_box_office = mean(box_office)) %>%
-  arrange(desc(mean_box_office))
-```
-```{r, echo=FALSE}
-biopics %>%
-  group_by(person_of_color, subject_sex) %>%
-  summarise(mean_box_office = mean(box_office)) %>%
-  arrange(desc(mean_box_office)) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Group means", 
-    booktabs = TRUE
-  )
-```
-
-Keep in mind two things though. First, the sample sizes are different:
-
-```{r, eval=FALSE}
-biopics %>%
-  group_by(person_of_color, subject_sex) %>%
-  summarise(n = n()) %>%
-  arrange(desc(n))
-```
-```{r, echo=FALSE}
-biopics %>%
-  group_by(person_of_color, subject_sex) %>%
-  summarise(n = n()) %>%
-  arrange(desc(n)) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Number of movies of each type in dataset", 
-    booktabs = TRUE
-  )
-```
-
-Second, can we *generalize* these results to *all movies*? How was the selection
-of movies sampled? Is it a representative sample of all movies, or was their a
-systematic reason these were included?
-
-
-
-### Multiple regression {#model5table}
-
-
-Let's now compute the *regression table*. Let's jump straight into considering
-a model that incorporates an interaction term as described earlier. 
-
-```{r, eval=FALSE}
-box_office_model <- lm(box_office ~ person_of_color * subject_sex, data = biopics)
-get_regression_table(box_office_model)
-```
-```{r, echo=FALSE}
-box_office_model <- lm(box_office ~ person_of_color * subject_sex, data = biopics)
-get_regression_table(box_office_model) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Regression table", 
-    booktabs = TRUE
-  )
-```
-
-The model formula is
-
-$$
-\begin{align}
-\widehat{y} &= b_0 + b_1 x_1 + b_2 x_2 + b_3 x_1x_2\\
-\widehat{score} &= b_0 + b_{color}\mathbb{1}[\mbox{of color}] + b_{male} \mathbb{1}[\mbox{is male}] + b_{color,male}\mathbb{1}[\mbox{of color}]\mathbb{1}[\mbox{is male}] \\
-\end{align}
-$$
-
-
-Recreate four group means from the Table 6.15 above:
-
-* Female not of color: 18088799 = 18088799 = $b_0$. Note: *Women not of color are the baseline group*.
-* Male not of color: 22871074 = 18088799 + 4782275 = $b_0 + b_{male}$
-* Female of color: 20035820 = 18088799 + 1947021 = $b_0 + b_{color}$
-* Male of color: 31648028 = 18088799 + 1947021 + 4782275 + 6829933 = $b_0 + b_{color} + b_{male} + b_{color,male}$. Note: $b_{color,male}$ is the *interaction term*.
-
-
-
-
-
-
-### Observed/fitted values and residuals {#model5points}
-### Residual analysis {#model5residuals}
-
+### Residual analysis {#model4residuals}
 -->
 
 
@@ -825,12 +623,15 @@ Recreate four group means from the Table 6.15 above:
 
 ### More on the correlation coefficient {#correlationcoefficient2}
 
-What if in instead we looked the correlation coefficient between `Income` and
-credit card `Balance`, where `Income` was in dollars and not thousands of dollars?
-i.e. we multiply `Income` by 1000?
+Recall in Table \@ref(tab:model3-correlation), we saw that the correlation
+coefficient between `Income` in thousands of dollars and credit card `Balance`
+was 0.862. What if in instead we looked the correlation coefficient between
+`Income` and credit card `Balance`, but where `Income` was in dollars and not
+thousands of dollars? i.e. we multiplied `Income` by 1000?
 
-```{r cor-credit, eval=FALSE}
+```{r, eval=FALSE}
 library(ISLR)
+data(Credit)
 Credit %>% 
   select(Balance, Limit, Income) %>% 
   mutate(Income = Income * 1000) %>% 
@@ -838,6 +639,7 @@ Credit %>%
 ```
 ```{r cor-credit-2, echo=FALSE}
 library(ISLR)
+data(Credit)
 Credit %>% 
   select(Balance, Limit, Income) %>% 
   mutate(Income = Income * 1000) %>% 
@@ -873,7 +675,7 @@ First, let's dive a little deeper into the explanatory variable `Limit`. Figure 
 1. 25% of credit limits were between \$4622 and \$5873. Let's call this the "medium-high" credit limit bracket.
 1. 25% of credit limits were over \$5873. Let's call this the "high" credit limit bracket.
 
-```{r, credit_limit_quartiles, echo=FALSE, fig.cap="Histogram of credit limits and quartiles"}
+```{r credit_limit_quartiles, echo=FALSE, fig.cap="Histogram of credit limits and quartiles"}
 ggplot(Credit, aes(x = Limit)) +
   geom_histogram(color = "white") +
   geom_vline(xintercept = quantile(Credit$Limit, probs = c(0.25, 0.5, 0.75)), col = "red", linetype = "dashed")
