@@ -194,7 +194,7 @@ model3_residual_vs_income_plot <- ggplot(regression_points, aes(x = Income, y = 
        title = "Residuals vs income")
 grid.arrange(model3_residual_vs_limit_plot, model3_residual_vs_income_plot, nrow = 1)
 
-## ----model3_residuals_hist, warning=FALSE, fig.cap="Plot of residuals over continent"----
+## ----model3-residuals-hist, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
 ggplot(regression_points, aes(x = residual)) +
   geom_histogram(color = "white") +
   labs(x = "Residual")
@@ -304,6 +304,18 @@ regression_points %>%
     booktabs = TRUE
   )
 
+## ----residual1, warning=FALSE, fig.cap="Interaction model histogram of residuals"----
+ggplot(regression_points, aes(x = residual)) +
+  geom_histogram(binwidth = 0.25, color = "white") +
+  labs(x = "Residual")
+
+## ----residual2, warning=FALSE, fig.cap="Interaction model residuals vs predictor"----
+ggplot(regression_points, aes(x = age, y = residual)) +
+  geom_point() +
+  labs(x = "age", y = "Residual") +
+  geom_hline(yintercept = 0, col = "blue", size = 1) +
+  facet_wrap(~gender)
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## library(ISLR)
 ## data(Credit)
@@ -328,7 +340,7 @@ Credit %>%
 ## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
 grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)
 
-## ----credit_limit_quartiles, echo=FALSE, fig.cap="Histogram of credit limits and quartiles"----
+## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and quartiles"----
 ggplot(Credit, aes(x = Limit)) +
   geom_histogram(color = "white") +
   geom_vline(xintercept = quantile(Credit$Limit, probs = c(0.25, 0.5, 0.75)), col = "red", linetype = "dashed")

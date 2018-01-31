@@ -64,7 +64,7 @@ ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 ## **Learning Check Solutions**
 
-## ---- include=show_solutions('4-3'), echo=show_solutions('4-3')----------
+## ---- include=show_solutions('3-2'), echo=show_solutions('3-2')----------
 ggplot(data = all_alaska_flights, mapping = aes(x = dep_time, y = dep_delay)) +
   geom_point()
 
@@ -96,7 +96,7 @@ ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = temp)) +
 
 ## **Learning Check Solutions**
 
-## ---- include=show_solutions('4-4'), echo=show_solutions('3-6')----------
+## ---- include=show_solutions('3-5'), echo=show_solutions('3-5')----------
 ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = humid)) +
   geom_line()
 
@@ -116,16 +116,20 @@ ggplot(data = weather, mapping = aes(x = temp)) +
 ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(bins = 60, color = "white")
 
+## ----fig.cap=paste(hist_title, "- 60 Colored Bins")----------------------
+ggplot(data = weather, mapping = aes(x = temp)) +
+  geom_histogram(bins = 60, color = "white", fill = "steelblue")
+
 ## ----fig.cap=paste(hist_title, "- Binwidth = 10"), fig.height=5----------
 ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(binwidth = 10, color = "white")
 
 ## **Learning Check Solutions**
 
-## ---- echo=show_solutions('4-5'), include=show_solutions('4-5'), message=FALSE, warning=FALSE----
+## ---- echo=show_solutions('3-7'), include=show_solutions('3-7'), message=FALSE, warning=FALSE----
 IQR(weather$temp, na.rm=TRUE)
 
-## ---- echo=show_solutions('4-5'), include=show_solutions('4-5'), message=FALSE, warning=FALSE----
+## ---- echo=show_solutions('3-7'), include=show_solutions('3-7'), message=FALSE, warning=FALSE----
 summary(weather$temp)
 
 ## ----facethistogram, fig.cap="Faceted histogram"-------------------------
