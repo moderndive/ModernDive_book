@@ -224,8 +224,17 @@ ggplot(regression_points, aes(x = residual)) +
   geom_histogram(color = "white") +
   labs(x = "Residual")
 
-## ------------------------------------------------------------------------
-load(url("http://www.openintro.org/stat/data/evals.RData"))
+## ----eval=FALSE----------------------------------------------------------
+## load(url("http://www.openintro.org/stat/data/evals.RData"))
+## evals <- evals %>%
+##   select(score, bty_avg, age, gender)
+
+## ----echo=FALSE----------------------------------------------------------
+if(!file.exists("data/evals.RData")){
+  download.file(url = "http://www.openintro.org/stat/data/evals.RData", 
+                destfile = "data/evals.RData")
+}
+load(file = "data/evals.RData")
 evals <- evals %>%
   select(score, bty_avg, age, gender)
 

@@ -88,7 +88,11 @@ stocks %>%
   )
 
 ## ----message=FALSE-------------------------------------------------------
-dem_score <- read_csv("http://ismayc.github.io/dem_score.csv")
+if(!file.exists("data/dem_score.csv")){
+  download.file(url = "http://ismayc.github.io/dem_score.csv", 
+                destfile = "data/dem_score.csv")
+}
+dem_score <- read_csv("data/dem_score.csv")
 dem_score
 
 ## ------------------------------------------------------------------------

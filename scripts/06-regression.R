@@ -2,6 +2,7 @@
 library(ggplot2)
 library(dplyr)
 library(moderndive)
+library(gapminder)
 
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 # Packages needed internally, but not in text.
@@ -12,8 +13,17 @@ library(gridExtra)
 library(broom)
 library(janitor)
 
-## ------------------------------------------------------------------------
-load(url("http://www.openintro.org/stat/data/evals.RData"))
+## ----eval=FALSE----------------------------------------------------------
+## load(url("http://www.openintro.org/stat/data/evals.RData"))
+## evals <- evals %>%
+##   select(score, bty_avg)
+
+## ----echo=FALSE----------------------------------------------------------
+if(!file.exists("data/evals.RData")){
+  download.file(url = "http://www.openintro.org/stat/data/evals.RData", 
+                destfile = "data/evals.RData")
+}
+load("data/evals.RData")
 evals <- evals %>%
   select(score, bty_avg)
 
@@ -32,6 +42,7 @@ glimpse(evals)
 
 ## ------------------------------------------------------------------------
 evals %>% 
+  select(score, bty_avg) %>% 
   summary()
 
 ## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients"----
@@ -144,7 +155,7 @@ best_fit_plot
 set.seed(76)
 regression_points <- get_regression_points(score_model) 
 regression_points %>%
-  slice(c(index, index+1, index+2, index+3)) %>%
+  slice(c(index, index + 1, index + 2, index + 3)) %>%
   knitr::kable(
     digits = 3,
     caption = "Regression points (for only 21st through 24th instructor)",
@@ -198,7 +209,7 @@ ggplot(resid_ex, aes(x = eps)) +
   labs(x = "Residual") +
   facet_wrap( ~ type, scales = "free")
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## load(url("http://www.openintro.org/stat/data/evals.RData"))
 ## evals <- evals %>%
 ##   select(score, age)
@@ -395,7 +406,11 @@ ggplot(data = values, mapping = aes(V1, V2)) +
   )
 
 ## ----echo=FALSE----------------------------------------------------------
-load(url("http://www.openintro.org/stat/data/evals.RData"))
+if(!file.exists("data/evals.RData")){
+  download.file(url = "http://www.openintro.org/stat/data/evals.RData", 
+                destfile = "data/evals.RData")
+}
+load("data/evals.RData")
 evals <- evals %>%
   select(score, bty_avg)
 index <- which(evals$bty_avg == 2.333 & evals$score == 2.7)
