@@ -100,8 +100,8 @@ ggplot(evals, aes(x = bty_avg, y = score)) +
   geom_smooth(method = "lm", se = FALSE)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## lm(score ~ bty_avg, data = evals) %>%
-##   get_regression_table(digits = 2)
+## score_model <- lm(score ~ bty_avg, data = evals)
+## get_regression_table(score_model, digits = 2)
 
 ## ---- echo=FALSE---------------------------------------------------------
 score_model <- lm(score ~ bty_avg, data = evals)
@@ -110,8 +110,7 @@ evals_line <- score_model %>%
   pull(estimate)
 
 ## ----numxplot4b, echo=FALSE----------------------------------------------
-score_model %>% 
-  get_regression_table() %>%
+get_regression_table(score_model) %>%
   knitr::kable(
     digits = 3,
     caption = "Linear regression table",
@@ -147,8 +146,7 @@ best_fit_plot <- ggplot(evals, aes(x = bty_avg, y = score)) +
 best_fit_plot
 
 ## ---- eval=FALSE---------------------------------------------------------
-## regression_points <- score_model %>%
-##   get_regression_points()
+## regression_points <- get_regression_points(score_model)
 ## regression_points
 
 ## ---- echo=FALSE---------------------------------------------------------
@@ -301,8 +299,8 @@ gapminder2007 %>%
   )
 
 ## ---- eval=FALSE---------------------------------------------------------
-## lifeExp_model %>%
-##   get_regression_table()
+## lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
+## get_regression_table(lifeExp_model)
 
 ## ---- echo=FALSE---------------------------------------------------------
 lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
@@ -327,8 +325,7 @@ gapminder2007 %>%
   )
 
 ## ---- eval=FALSE---------------------------------------------------------
-## regression_points <- lifeExp_model %>%
-##   get_regression_points()
+## regression_points <- get_regression_points(lifeExp_model)
 ## regression_points
 
 ## ---- echo=FALSE---------------------------------------------------------
