@@ -57,19 +57,3 @@ get_regression_table(score_model_3) %>%
     booktabs = TRUE
   )
 
-## ----residual0, warning=FALSE--------------------------------------------
-regression_points <- get_regression_points(score_model_3)
-regression_points
-
-## ----residual1, warning=FALSE, fig.cap="Model 2 (with interaction) histogram of residual"----
-ggplot(regression_points, aes(x = residual)) +
-  geom_histogram(binwidth = 0.25, color = "white") +
-  labs(x = "Residual")
-
-## ----residual2, warning=FALSE, fig.cap="Model 2 (with interaction) residuals vs predictor"----
-ggplot(regression_points, aes(x = age, y = residual)) +
-  geom_point() +
-  labs(x = "age", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue", size = 1) +
-  facet_wrap(~ gender)
-

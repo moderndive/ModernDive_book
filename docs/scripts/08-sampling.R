@@ -1,12 +1,13 @@
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
+library(moderndive)
+
 library(okcupiddata)
 library(mosaic)
 
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
-library(knitr)
 
 ## ----height-hist, warning=FALSE------------------------------------------
 ggplot(data = profiles, mapping = aes(x = height)) +
