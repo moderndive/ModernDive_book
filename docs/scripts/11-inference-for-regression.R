@@ -1,12 +1,24 @@
 ## ---- echo=FALSE---------------------------------------------------------
 library(tidyr)
 
-## ------------------------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
+## library(ggplot2)
+## library(dplyr)
+## library(moderndive)
+## 
+## load(url("http://www.openintro.org/stat/data/evals.RData"))
+## evals <- evals %>%
+##   select(score, ethnicity, gender, language, age, bty_avg, rank)
+
+## ----echo=FALSE----------------------------------------------------------
 library(ggplot2)
 library(dplyr)
 library(moderndive)
-
-load(url("http://www.openintro.org/stat/data/evals.RData"))
+if(!file.exists("data/evals.RData")){
+  download.file(url = "http://www.openintro.org/stat/data/evals.RData", 
+                destfile = "data/evals.RData")
+}
+load(file = "data/evals.RData")
 evals <- evals %>%
   select(score, ethnicity, gender, language, age, bty_avg, rank)
 
