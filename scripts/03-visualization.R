@@ -147,6 +147,14 @@ ggplot(data = weather, mapping = aes(x = month, y = temp)) +
 ggplot(data = weather, mapping = aes(x = factor(month), y = temp)) +
   geom_boxplot()
 
+## ----monthtempbox2, echo=FALSE, fig.cap="November boxplot with points", fig.height=3.7----
+quartiles <- weather %>% filter(month == 11) %>% pull(temp) %>% quantile(prob=c(0.25, 0.5, 0.75))
+weather %>% 
+  filter(month %in% c(11)) %>% 
+  ggplot(mapping = aes(x = factor(month), y = temp)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.05, height = 0.5, alpha = 0.2)
+
 ## **Learning Check Solutions**
 
 ## ---- echo=show_solutions('3-9'), eval=FALSE-----------------------------
