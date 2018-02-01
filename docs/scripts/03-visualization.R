@@ -26,12 +26,12 @@ gapminder_2007 %>%
   head() %>% 
   kable(
     digits=2,
-    caption = "Gapminder 2007 Data", 
+    caption = "Gapminder 2007 Data: First 6 of 142 countries", 
     booktabs = TRUE
   )
 
 ## ----gapminder, echo=FALSE, fig.cap="Life Expectancy over GDP per Capita in 2007"----
-ggplot(data=gapminder_2007, aes(x=`GDP per Capita`, y=`Life Expectancy`, size=Population, col=Continent)) +
+ggplot(data = gapminder_2007, mapping = aes(x=`GDP per Capita`, y=`Life Expectancy`, size=Population, col=Continent)) +
   geom_point()
 
 ## ---- echo=FALSE---------------------------------------------------------
@@ -56,7 +56,7 @@ all_alaska_flights <- flights %>%
 ## **Learning Check Solutions**
 
 ## ----noalpha, fig.cap="Arrival Delays vs Departure Delays for Alaska Airlines flights from NYC in 2013"----
-ggplot(data = all_alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
+ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point()
 
 ## ----nolayers, fig.cap="Plot with No Layers"-----------------------------
@@ -64,7 +64,7 @@ ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 ## **Learning Check Solutions**
 
-## ---- include=show_solutions('4-3'), echo=show_solutions('4-3')----------
+## ---- include=show_solutions('3-2'), echo=show_solutions('3-2')----------
 ggplot(data = all_alaska_flights, mapping = aes(x = dep_time, y = dep_delay)) +
   geom_point()
 
@@ -73,8 +73,14 @@ ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
   geom_point(alpha = 0.2)
 
 ## ----jitter, fig.cap="Jittered delay scatterplot"------------------------
-ggplot(all_alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
+ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_jitter(width = 30, height = 30)
+
+## ---- eval = FALSE-------------------------------------------------------
+## ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
+##   geom_jitter(width = 30, height = 30)
+## ggplot(all_alaska_flights, aes(x = dep_delay, y = arr_delay)) +
+##   geom_jitter(width = 30, height = 30)
 
 ## **Learning Check Solutions**
 
@@ -85,13 +91,13 @@ early_january_weather <- weather %>%
 ## **Learning Check Solutions**
 
 ## ----hourlytemp, fig.cap="Hourly Temperature in Newark for January 1-15, 2013"----
-ggplot(data = early_january_weather, aes(x = time_hour, y = temp)) +
+ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = temp)) +
   geom_line()
 
 ## **Learning Check Solutions**
 
-## ---- include=show_solutions('4-4'), echo=show_solutions('3-6')----------
-ggplot(data = early_january_weather, aes(x = time_hour, y = humid)) +
+## ---- include=show_solutions('3-5'), echo=show_solutions('3-5')----------
+ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = humid)) +
   geom_line()
 
 ## ----echo=FALSE, fig.height=0.8, fig.cap="Plot of Hourly Temperature Recordings from NYC in 2013"----
@@ -110,36 +116,54 @@ ggplot(data = weather, mapping = aes(x = temp)) +
 ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(bins = 60, color = "white")
 
+## ----fig.cap=paste(hist_title, "- 60 Colored Bins")----------------------
+ggplot(data = weather, mapping = aes(x = temp)) +
+  geom_histogram(bins = 60, color = "white", fill = "steelblue")
+
 ## ----fig.cap=paste(hist_title, "- Binwidth = 10"), fig.height=5----------
 ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(binwidth = 10, color = "white")
 
 ## **Learning Check Solutions**
 
-## ---- echo=show_solutions('4-5'), include=show_solutions('4-5'), message=FALSE, warning=FALSE----
+## ---- echo=show_solutions('3-7'), include=show_solutions('3-7'), message=FALSE, warning=FALSE----
 IQR(weather$temp, na.rm=TRUE)
 
-## ---- echo=show_solutions('4-5'), include=show_solutions('4-5'), message=FALSE, warning=FALSE----
+## ---- echo=show_solutions('3-7'), include=show_solutions('3-7'), message=FALSE, warning=FALSE----
 summary(weather$temp)
 
 ## ----facethistogram, fig.cap="Faceted histogram"-------------------------
-ggplot(data = weather, aes(x = temp)) +
+ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(binwidth = 5, color = "white") +
   facet_wrap(~ month, nrow = 4)
 
 ## **Learning Check Solutions**
 
 ## ----badbox, fig.cap="Invalid boxplot specification", fig.height=3.5-----
-ggplot(data = weather, aes(x = month, y = temp)) +
+ggplot(data = weather, mapping = aes(x = month, y = temp)) +
   geom_boxplot()
 
 ## ----monthtempbox, fig.cap="Month by temp boxplot", fig.height=3.7-------
 ggplot(data = weather, mapping = aes(x = factor(month), y = temp)) +
   geom_boxplot()
 
+## ----monthtempbox2, echo=FALSE, fig.cap="November boxplot", fig.height=3.7----
+weather %>% 
+  filter(month %in% c(11)) %>% 
+  ggplot(mapping = aes(x = factor(month), y = temp)) +
+  geom_boxplot()
+
+## ----monthtempbox3, echo=FALSE, fig.cap="November boxplot with points", fig.height=3.7----
+quartiles <- weather %>% filter(month == 11) %>% pull(temp) %>% quantile(prob=c(0.25, 0.5, 0.75))
+weather %>% 
+  filter(month %in% c(11)) %>% 
+  ggplot(mapping = aes(x = factor(month), y = temp)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.05, height = 0.5, alpha = 0.2)
+
 ## **Learning Check Solutions**
 
-## ---- echo=show_solutions('3-9'), eval=FALSE-----------------------------
+## ---- echo=FALSE, eval=FALSE---------------------------------------------
 ## weather %>%
 ##   filter(month==5 & temp < 25)
 
@@ -150,17 +174,17 @@ weather %>%
 
 ## There appears to be only one hour and only at JFK that recorded 13.1 F (-10.5 C) in the month of May. This is probably a data entry mistake!
 
-## ---- echo=show_solutions('3-9'), eval=FALSE-----------------------------
-## weather %>%
-##   group_by(month) %>%
-##   summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
-##   arrange(desc(IQR))
+## ---- echo=FALSE, eval=FALSE---------------------------------------------
+## # weather %>%
+## #   group_by(month) %>%
+## #   summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
+## #   arrange(desc(IQR))
 
 ## ---- echo=FALSE, include=show_solutions('3-9')--------------------------
-weather %>% 
-  group_by(month) %>% 
-  summarize(IQR = IQR(temp, na.rm=TRUE)) %>% 
-  arrange(desc(IQR)) %>% 
+weather %>%
+  group_by(month) %>%
+  summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
+  arrange(desc(IQR)) %>%
   kable()
 
 ## **`r paste0("(LC", chap, ".", (lc - 1), ")")`: We looked at the distribution of a continuous variable over a categorical variable here with this boxplot. Why can't we look at the distribution of one continuous variable over the distribution of another continuous variable? Say, temperature across pressure, for example?**
@@ -218,7 +242,7 @@ ggplot(data = flights_table, mapping = aes(x = carrier, y = number)) +
 ## **Learning Check Solutions**
 
 ## ----carrierpie, echo=FALSE, fig.cap="The dreaded pie chart", fig.height=5----
-ggplot(flights, aes(x = factor(1), fill = carrier)) +
+ggplot(flights, mapping = aes(x = factor(1), fill = carrier)) +
   geom_bar(width = 1) +
   coord_polar(theta = "y") +
   theme(axis.title.x = element_blank(), 

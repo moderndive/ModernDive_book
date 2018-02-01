@@ -1,11 +1,8 @@
 ## ---- message=FALSE, warning=FALSE---------------------------------------
-library(remotes)
-# remotes::install_github("moderndive/moderndive")
-
-## ---- message=FALSE, warning=FALSE---------------------------------------
 library(ggplot2)
 library(dplyr)
 library(moderndive)
+library(ISLR)
 
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 # Packages needed internally, but not in text.
@@ -17,7 +14,7 @@ library(gridExtra)
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(ISLR)
 Credit <- Credit %>%
-  select(Balance, Limit, Income, Rating, Age, Education)
+  select(Balance, Limit, Income)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## View(Credit)
@@ -42,13 +39,10 @@ summary(Credit)
 ## cor(Credit$Balance, Credit$Income)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## Credit %>%
-##   select(Balance, Limit, Income) %>%
-##   cor()
+## cor(Credit)
 
 ## ----model3-correlation, echo=FALSE--------------------------------------
 Credit %>% 
-  select(Balance, Limit, Income) %>% 
   cor() %>% 
   knitr::kable(
     digits = 3,
@@ -126,7 +120,7 @@ grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow =
 ##   t()
 ## 
 ## # plot points and plane
-## plot_ly(showscale=FALSE) %>%
+## plot_ly(showscale = FALSE) %>%
 ##   add_markers(
 ##     x = Credit$Income,
 ##     y = Credit$Limit,
@@ -181,25 +175,6 @@ regression_points %>%
   )
 
 ## ---- eval=FALSE---------------------------------------------------------
-## regression_points <- regression_points %>%
-##   mutate(Balance_hat_2 = -385.179 + 0.264 * Limit - 7.663 * Income) %>%
-##   mutate(residual_2 = Balance - Balance_hat_2)
-## regression_points
-
-## ---- echo=FALSE---------------------------------------------------------
-set.seed(76)
-regression_points <- regression_points %>% 
-  mutate(Balance_hat_2 = -385.179 + 0.264 * Limit - 7.663 * Income) %>% 
-  mutate(residual_2 = Balance - Balance_hat_2)
-regression_points %>%
-  slice(1:5) %>%
-  knitr::kable(
-    digits = 3,
-    caption = "Regression points (first five rows)",
-    booktabs = TRUE
-  )
-
-## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(regression_points, aes(x = Limit, y = residual)) +
 ##   geom_point() +
 ##   labs(x = "Credit limit (in $)", y = "Residual", title = "Residuals vs credit limit")
@@ -219,25 +194,41 @@ model3_residual_vs_income_plot <- ggplot(regression_points, aes(x = Income, y = 
        title = "Residuals vs income")
 grid.arrange(model3_residual_vs_limit_plot, model3_residual_vs_income_plot, nrow = 1)
 
-## ----model3_residuals_hist, warning=FALSE, fig.cap="Plot of residuals over continent"----
+## ----model3-residuals-hist, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
 ggplot(regression_points, aes(x = residual)) +
   geom_histogram(color = "white") +
   labs(x = "Residual")
 
-## ------------------------------------------------------------------------
-load(url("http://www.openintro.org/stat/data/evals.RData"))
+## ----eval=FALSE----------------------------------------------------------
+## load(url("http://www.openintro.org/stat/data/evals.RData"))
+## evals <- evals %>%
+##   select(score, age, gender)
+
+## ----echo=FALSE----------------------------------------------------------
+if(!file.exists("data/evals.RData")){
+  download.file(url = "http://www.openintro.org/stat/data/evals.RData", 
+                destfile = "data/evals.RData")
+}
+load(file = "data/evals.RData")
 evals <- evals %>%
   select(score, bty_avg, age, gender)
 
-## ------------------------------------------------------------------------
-evals %>% 
-  select(age, gender) %>% 
-  summary()
+## ---- eval=FALSE---------------------------------------------------------
+## View(evals)
+
+## ----model4-data-preview, echo=FALSE-------------------------------------
+evals %>%
+  sample_n(5) %>%
+  knitr::kable(
+    digits = 3,
+    caption = "Random sample of 5 instructors",
+    booktabs = TRUE
+  )
 
 ## ------------------------------------------------------------------------
-cor(evals$score, evals$age)
+summary(evals)
 
-## ----numxcatxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin split by gender: Jittered"----
+## ----numxcatxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin split by gender (jittered)"----
 ggplot(evals, aes(x = age, y = score, col = gender)) +
   geom_jitter() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
@@ -274,124 +265,82 @@ ggplot(evals, aes(x = age, y = score, col = gender)) +
   geom_line(data = slopes, aes(y = y_hat), size = 1)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## score_model_2 <- lm(score ~ age * gender, data = evals)
-## get_regression_table(score_model_2)
+## score_model_interaction <- lm(score ~ age * gender, data = evals)
+## get_regression_table(score_model_interaction)
 
 ## ---- echo=FALSE---------------------------------------------------------
-get_regression_table(score_model_2) %>% 
+score_model_interaction <- lm(score ~ age * gender, data = evals)
+get_regression_table(score_model_interaction) %>% 
   knitr::kable(
     digits = 3,
     caption = "Regression table", 
     booktabs = TRUE
   )
 
-## ------------------------------------------------------------------------
-library(fivethirtyeight)
-biopics <- biopics %>%
-  select(title, box_office, person_of_color, subject_sex) %>%
-  # Remove those that are missing
-  filter(!is.na(box_office))
-
 ## ---- echo=FALSE---------------------------------------------------------
-biopics %>%
-  sample_n(5) %>%
-  knitr::kable(digits = 1)
-
-## ----logtransform1, echo=TRUE, message=FALSE, warning=FALSE, fig.cap="Histogram of box office revenue"----
-ggplot(biopics, aes(x = box_office)) +
-  geom_histogram(color = "white") +
-  labs(x = "Box office revenue")
-
-## ---- echo=FALSE---------------------------------------------------------
-biopics %>%
-  arrange(desc(box_office)) %>%
-  slice(1:5) %>% 
+data_frame(
+  Gender = c("Male instructors", "Female instructors"),
+  Intercept = c(4.437, 4.883),
+  `Slope for age` = c(-0.004, -0.018)
+) %>% 
   knitr::kable(
     digits = 3,
-    caption = "Top 5 grossing movies in data", 
-    booktabs = TRUE
-  )
-
-## ---- echo=FALSE---------------------------------------------------------
-biopics %>%
-  arrange(box_office) %>%
-  slice(1:5) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Bottom 5 grossing movies in data", 
-    booktabs = TRUE
-  )
-
-## ----logtransform2, echo=TRUE, message=FALSE, warning=FALSE, fig.cap="Histogram of log10(box office revenue)"----
-ggplot(biopics, aes(x = log10(box_office))) +
-  geom_histogram(color = "white") +
-  labs(x = "log10(Box office revenue)")
-
-## ----logtransform3, echo=TRUE, message=FALSE, warning=FALSE, fig.cap="Histogram of box office revenue (log-10 scale)"----
-ggplot(biopics, aes(x = box_office)) +
-  geom_histogram(color = "white") +
-  scale_x_log10() +
-  labs(x = "Box office revenue (log10-scale))")
-
-## ----2catxplot, echo=TRUE, warning=FALSE, fig.cap="Box office revenue vs biopic subject info"----
-ggplot(biopics, aes(x = subject_sex, y = box_office)) +
-  facet_wrap(~person_of_color, nrow = 1) +
-  scale_y_log10() +
-  geom_boxplot() +
-  labs(x = "Subject sex", y = "Box office revenue (log10-scale)", title =
-  "Person of color?")
-
-## ---- eval=FALSE---------------------------------------------------------
-## biopics %>%
-##   group_by(person_of_color, subject_sex) %>%
-##   summarise(mean_box_office = mean(box_office)) %>%
-##   arrange(desc(mean_box_office))
-
-## ---- echo=FALSE---------------------------------------------------------
-biopics %>%
-  group_by(person_of_color, subject_sex) %>%
-  summarise(mean_box_office = mean(box_office)) %>%
-  arrange(desc(mean_box_office)) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Group means", 
+    caption = "Comparison of male and female intercepts and age slopes", 
     booktabs = TRUE
   )
 
 ## ---- eval=FALSE---------------------------------------------------------
-## biopics %>%
-##   group_by(person_of_color, subject_sex) %>%
-##   summarise(n = n()) %>%
-##   arrange(desc(n))
+## regression_points <- get_regression_points(score_model_interaction)
+## regression_points
 
-## ---- echo=FALSE---------------------------------------------------------
-biopics %>%
-  group_by(person_of_color, subject_sex) %>%
-  summarise(n = n()) %>%
-  arrange(desc(n)) %>% 
+## ----model4-points-table, echo=FALSE-------------------------------------
+set.seed(76)
+regression_points <- get_regression_points(score_model_interaction)
+regression_points %>%
+  slice(1:5) %>%
   knitr::kable(
     digits = 3,
-    caption = "Number of movies of each type in dataset", 
+    caption = "Regression points (first 5 rows of 463)",
     booktabs = TRUE
   )
 
-## ---- eval=FALSE---------------------------------------------------------
-## box_office_model <- lm(box_office ~ person_of_color * subject_sex, data = biopics)
-## get_regression_table(box_office_model)
+## ----residual1, warning=FALSE, fig.cap="Interaction model histogram of residuals"----
+ggplot(regression_points, aes(x = residual)) +
+  geom_histogram(binwidth = 0.25, color = "white") +
+  labs(x = "Residual")
 
-## ---- echo=FALSE---------------------------------------------------------
-box_office_model <- lm(box_office ~ person_of_color * subject_sex, data = biopics)
-get_regression_table(box_office_model) %>% 
+## ----residual2, warning=FALSE, fig.cap="Interaction model residuals vs predictor"----
+ggplot(regression_points, aes(x = age, y = residual)) +
+  geom_point() +
+  labs(x = "age", y = "Residual") +
+  geom_hline(yintercept = 0, col = "blue", size = 1) +
+  facet_wrap(~gender)
+
+## ---- eval=FALSE---------------------------------------------------------
+## library(ISLR)
+## data(Credit)
+## Credit %>%
+##   select(Balance, Limit, Income) %>%
+##   mutate(Income = Income * 1000) %>%
+##   cor()
+
+## ----cor-credit-2, echo=FALSE--------------------------------------------
+library(ISLR)
+data(Credit)
+Credit %>% 
+  select(Balance, Limit, Income) %>% 
+  mutate(Income = Income * 1000) %>% 
+  cor() %>% 
   knitr::kable(
     digits = 3,
-    caption = "Regression table", 
+    caption = "Correlation between income (in $) and credit card balance", 
     booktabs = TRUE
   )
 
 ## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
 grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)
 
-## ---- credit_limit_quartiles, echo=FALSE, fig.cap="Histogram of credit limits and quartiles"----
+## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and quartiles"----
 ggplot(Credit, aes(x = Limit)) +
   geom_histogram(color = "white") +
   geom_vline(xintercept = quantile(Credit$Limit, probs = c(0.25, 0.5, 0.75)), col = "red", linetype = "dashed")

@@ -1,11 +1,8 @@
-## ---- message=FALSE, warning=FALSE, include=FALSE------------------------
-# library(remotes)
-# remotes::install_github("moderndive/moderndive")
-
 ## ---- message=FALSE, warning=FALSE---------------------------------------
 library(ggplot2)
 library(dplyr)
 library(moderndive)
+library(gapminder)
 
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 # Packages needed internally, but not in text.
@@ -13,9 +10,20 @@ library(mvtnorm)
 library(tidyr)
 library(forcats)
 library(gridExtra)
+library(broom)
+library(janitor)
 
-## ------------------------------------------------------------------------
-load(url("http://www.openintro.org/stat/data/evals.RData"))
+## ----eval=FALSE----------------------------------------------------------
+## load(url("http://www.openintro.org/stat/data/evals.RData"))
+## evals <- evals %>%
+##   select(score, bty_avg)
+
+## ----echo=FALSE----------------------------------------------------------
+if(!file.exists("data/evals.RData")){
+  download.file(url = "http://www.openintro.org/stat/data/evals.RData", 
+                destfile = "data/evals.RData")
+}
+load("data/evals.RData")
 evals <- evals %>%
   select(score, bty_avg)
 
@@ -34,6 +42,7 @@ glimpse(evals)
 
 ## ------------------------------------------------------------------------
 evals %>% 
+  select(score, bty_avg) %>% 
   summary()
 
 ## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients"----
@@ -91,8 +100,8 @@ ggplot(evals, aes(x = bty_avg, y = score)) +
   geom_smooth(method = "lm", se = FALSE)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## lm(score ~ bty_avg, data = evals) %>%
-##   get_regression_table(digits = 2)
+## score_model <- lm(score ~ bty_avg, data = evals)
+## get_regression_table(score_model, digits = 2)
 
 ## ---- echo=FALSE---------------------------------------------------------
 score_model <- lm(score ~ bty_avg, data = evals)
@@ -101,8 +110,7 @@ evals_line <- score_model %>%
   pull(estimate)
 
 ## ----numxplot4b, echo=FALSE----------------------------------------------
-score_model %>% 
-  get_regression_table() %>%
+get_regression_table(score_model) %>%
   knitr::kable(
     digits = 3,
     caption = "Linear regression table",
@@ -128,9 +136,9 @@ evals %>%
 
 ## ----numxplot5, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual"----
 best_fit_plot <- ggplot(evals, aes(x = bty_avg, y = score)) +
-  geom_point() +
+  geom_jitter() +
   labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") + 
-  geom_smooth(method = "lm", se = FALSE) +
+  geom_point(method = "lm", se = FALSE) +
   annotate("point", x = x, y = y, col = "red", size = 3) +
   annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
   annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
@@ -145,29 +153,10 @@ best_fit_plot
 set.seed(76)
 regression_points <- get_regression_points(score_model) 
 regression_points %>%
-  slice(c(index, sample(1:nrow(evals), 4))) %>%
+  slice(c(index, index + 1, index + 2, index + 3)) %>%
   knitr::kable(
     digits = 3,
-    caption = "Regression points (5 arbitrarily chosen rows out of 463)",
-    booktabs = TRUE
-  )
-
-## ---- eval=FALSE---------------------------------------------------------
-## regression_points <- regression_points %>%
-##   mutate(score_hat_2 = 3.880 + 0.067 * bty_avg) %>%
-##   mutate(residual_2 = score - score_hat_2)
-## regression_points
-
-## ---- echo=FALSE---------------------------------------------------------
-set.seed(76)
-regression_points <- regression_points %>% 
-  mutate(score_hat_2 = 3.880 + 0.067 * bty_avg) %>% 
-  mutate(residual_2 = score - score_hat_2)
-regression_points %>%
-  slice(c(index, sample(1:nrow(evals), 4))) %>%
-  knitr::kable(
-    digits = 3,
-    caption = "Regression points (5 arbitrarily chosen rows out of 463)",
+    caption = "Regression points (for only 21st through 24th instructor)",
     booktabs = TRUE
   )
 
@@ -207,6 +196,7 @@ resid_ex <- evals
 resid_ex$`Ideal` <- rnorm(nrow(resid_ex), 0, sd = sd(regression_points$residual))
 resid_ex$`Less than ideal` <-
   rnorm(nrow(resid_ex), 0, sd = sd(regression_points$residual))^2
+resid_ex$`Less than ideal` <- resid_ex$`Less than ideal` - mean(resid_ex$`Less than ideal` )
 
 resid_ex <- resid_ex %>%
   select(bty_avg, `Ideal`, `Less than ideal`) %>%
@@ -217,16 +207,16 @@ ggplot(resid_ex, aes(x = eps)) +
   labs(x = "Residual") +
   facet_wrap( ~ type, scales = "free")
 
-## ------------------------------------------------------------------------
-load(url("http://www.openintro.org/stat/data/evals.RData"))
-evals <- evals %>%
-  select(score, age)
+## ---- eval=FALSE---------------------------------------------------------
+## load(url("http://www.openintro.org/stat/data/evals.RData"))
+## evals <- evals %>%
+##   select(score, age)
 
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(gapminder)
 gapminder2007 <- gapminder %>%
   filter(year == 2007) %>% 
-  select(country, continent, lifeExp, gdpPercap)
+  select(country, continent, lifeExp)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## View(gapminder2007)
@@ -297,19 +287,6 @@ ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
   geom_boxplot() +
   labs(x = "Continent", y = "Life expectancy (years)", title = "Life expectancy by continent") 
 
-## ----catxplot1b, warning=FALSE, fig.cap="Life expectancy in 2007"--------
-ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
-  geom_boxplot() +
-  labs(x = "Continent", y = "Life expectancy (years)", title = "Life expectancy by continent") +
-  geom_hline(yintercept = 52.93, color = "red")
-
-## ----catxplot2, warning=FALSE, fig.cap="Difference in life expectancy relative to African median of 52.93 years"----
-ggplot(gapminder2007, aes(x = continent, y = lifeExp - 52.93)) +
-  geom_boxplot() +
-  geom_hline(yintercept = 52.93 - 52.93, col = "red") +
-  labs(x = "Continent", y = "Difference in life expectancy vs Africa (years)",
-       title = "Life expectancy relative to Africa")
-
 ## ----continent-mean-life-expectancies, echo=FALSE------------------------
 gapminder2007 %>%
   group_by(continent) %>%
@@ -363,7 +340,7 @@ regression_points %>%
 
 ## ----catxplot7, warning=FALSE, fig.cap="Plot of residuals over continent"----
 ggplot(regression_points, aes(x = continent, y = residual)) +
-  geom_jitter(width = 0.5) + 
+  geom_jitter(width = 0.1) + 
   labs(x = "Continent", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue")
 
@@ -387,6 +364,14 @@ gapminder2007 %>%
 ggplot(regression_points, aes(x = residual)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Residual")
+
+## ---- eval = FALSE-------------------------------------------------------
+## # The following commands reloads the gapminder from scratch:
+## data("gapminder")
+## 
+## gapminder2007 <- gapminder %>%
+##   filter(year == 2007) %>%
+##   select(country, continent, gdpPercap)
 
 ## ----correlation2, echo=FALSE, fig.cap="Different Correlation Coefficients"----
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
@@ -417,27 +402,12 @@ ggplot(data = values, mapping = aes(V1, V2)) +
     axis.ticks = element_blank()
   )
 
-## ----cor-credit, eval=FALSE----------------------------------------------
-## library(ISLR)
-## Credit %>%
-##   select(Balance, Limit, Income) %>%
-##   mutate(Income = Income * 1000) %>%
-##   cor()
-
-## ----cor-credit-2, echo=FALSE--------------------------------------------
-library(ISLR)
-Credit %>% 
-  select(Balance, Limit, Income) %>% 
-  mutate(Income = Income * 1000) %>% 
-  cor() %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Correlation between income (in $) and credit card balance", 
-    booktabs = TRUE
-  )
-
 ## ----echo=FALSE----------------------------------------------------------
-load(url("http://www.openintro.org/stat/data/evals.RData"))
+if(!file.exists("data/evals.RData")){
+  download.file(url = "http://www.openintro.org/stat/data/evals.RData", 
+                destfile = "data/evals.RData")
+}
+load("data/evals.RData")
 evals <- evals %>%
   select(score, bty_avg)
 index <- which(evals$bty_avg == 2.333 & evals$score == 2.7)
@@ -489,4 +459,30 @@ best_fit_plot <- best_fit_plot +
   annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 best_fit_plot
+
+## ---- eval = FALSE-------------------------------------------------------
+## lm(score ~ bty_avg, data = evals) %>%
+##   get_regression_table()
+
+## ---- echo = FALSE-------------------------------------------------------
+lm(score ~ bty_avg, data = evals) %>% 
+  get_regression_table() %>% 
+  knitr::kable()
+
+## ---- eval = FALSE-------------------------------------------------------
+## library(broom)
+## library(janitor)
+## lm(score ~ bty_avg, data = evals) %>%
+##   tidy(conf.int = TRUE) %>%
+##   mutate_if(is.numeric, round, digits = 3) %>%
+##   clean_names()
+
+## ---- echo = FALSE-------------------------------------------------------
+library(broom)
+library(janitor)
+lm(score ~ bty_avg, data = evals) %>% 
+  tidy(conf.int = TRUE) %>% 
+  mutate_if(is.numeric, round, digits = 3) %>%
+  clean_names() %>% 
+  knitr::kable()
 
