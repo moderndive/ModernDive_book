@@ -163,7 +163,7 @@ weather %>%
 
 ## **Learning Check Solutions**
 
-## ---- echo=show_solutions('3-9'), eval=FALSE-----------------------------
+## ---- echo=FALSE, eval=FALSE---------------------------------------------
 ## weather %>%
 ##   filter(month==5 & temp < 25)
 
@@ -174,17 +174,17 @@ weather %>%
 
 ## There appears to be only one hour and only at JFK that recorded 13.1 F (-10.5 C) in the month of May. This is probably a data entry mistake!
 
-## ---- echo=show_solutions('3-9'), eval=FALSE-----------------------------
-## weather %>%
-##   group_by(month) %>%
-##   summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
-##   arrange(desc(IQR))
+## ---- echo=FALSE, eval=FALSE---------------------------------------------
+## # weather %>%
+## #   group_by(month) %>%
+## #   summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
+## #   arrange(desc(IQR))
 
 ## ---- echo=FALSE, include=show_solutions('3-9')--------------------------
-weather %>% 
-  group_by(month) %>% 
-  summarize(IQR = IQR(temp, na.rm=TRUE)) %>% 
-  arrange(desc(IQR)) %>% 
+weather %>%
+  group_by(month) %>%
+  summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
+  arrange(desc(IQR)) %>%
   kable()
 
 ## **`r paste0("(LC", chap, ".", (lc - 1), ")")`: We looked at the distribution of a continuous variable over a categorical variable here with this boxplot. Why can't we look at the distribution of one continuous variable over the distribution of another continuous variable? Say, temperature across pressure, for example?**
