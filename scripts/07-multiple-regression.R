@@ -120,7 +120,7 @@ grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow =
 ##   t()
 ## 
 ## # plot points and plane
-## plot_ly(showscale=FALSE) %>%
+## plot_ly(showscale = FALSE) %>%
 ##   add_markers(
 ##     x = Credit$Income,
 ##     y = Credit$Limit,
