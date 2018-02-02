@@ -1,9 +1,8 @@
-# ModernDive 0.2.0.9000
+# ModernDive 0.3.0
 
 - Added wide-logo to top of each chapter and `logos` folder
 - Added favicon (icon in browser tab)
-
-Development version; a work in progress. Some planned updates:
+- Moved home repository from <https://github.com/ismayc/moderndiver-book/> to <https://github.com/moderndive/moderndive_book>
 
 * **Chapter 6: Data Modeling using Regression via `broom`**
     + Better treatment of experimental design and its effect on bias/causation than currently exists in chapter.
@@ -59,7 +58,7 @@ Development version; a work in progress. Some planned updates:
 
 # ModernDive 0.1.3
 
-* Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/ismayc/moderndiver-book/issues/2)
+* Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/moderndive/moderndive_book/issues/2)
     * Reverted to using screenshot with link instead
 * Updated link to `dplyr` [cheatsheet](https://github.com/rstudio/cheatsheets/raw/master/source/pdfs/data-transformation-cheatsheet.pdf) and `ggplot2` [cheatsheet](https://www.rstudio.com/wp-content/uploads/2016/11/ggplot2-cheatsheet-2.1.pdf)
 * Began adding DataCamp chapters as Review Questions to the end of Chapters 3 and 4 (More to come)
@@ -74,7 +73,7 @@ Development version; a work in progress. Some planned updates:
 * Fixed edit link to point to moderndive-book GitHub repo instead of moderndive-source repo
 * Fixed broken links to script files at the end of Chapters 4-9
 * Added `purl=FALSE` to chunks that do not contain useful code to the reader
-* Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/ismayc/moderndiver-book/issues/2)
+* Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/moderndive/moderndive_book/issues/2)
 
 
 
