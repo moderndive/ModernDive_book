@@ -112,7 +112,7 @@ bowl_summaries %>%
 ## ---- echo=FALSE---------------------------------------------------------
 set.seed(76)
 
-## ----sampling-distribution-virtual-2, echo=FALSE, fig.cap="Virtual simulation: Ten thousand sample proportions red based on ten thousand samples of size 50"----
+## ----sampling-distribution-virtual-2, echo=TRUE, fig.cap="Virtual simulation: Ten thousand sample proportions red based on ten thousand samples of size 50"----
 # Draw one million samples of size n = 50
 all_samples <- rep_sample_n(bowl, size = 50, reps = 10000)
 
