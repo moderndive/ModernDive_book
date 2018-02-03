@@ -1,15 +1,23 @@
 # ModernDive 0.3.0
 
-- Added wide-logo to top of each chapter and `logos` folder
-- Added favicon (icon in browser tab)
-- Moved home repository from <https://github.com/ismayc/moderndiver-book/> to <https://github.com/moderndive/moderndive_book>
+## Content changes
 
-* **Chapter 6: Data Modeling using Regression via `broom`**
-    + Better treatment of experimental design and its effect on bias/causation than currently exists in chapter.
-    + Examples of regression with categorical predictors with 3 or more levels.
-    + Multivariate regression, in particular the following predictor scenarios: 2 numerical, 2 categorical, and 1 numerical + 1 categorical
-    + Interaction effects
-* **Chapter 7-9: Sampling, Hypothesis Testing, Confidence Intervals** have largely not been updated, pending developments of [`infer`: A tidyverse-friendly R package fo statistical inference](https://github.com/andrewpbray/infer)
+* Reorganized chapter sequencing according to flowchart at top of [Section 1.1](http://moderndive.com/index.html#intro-for-students)
+* Added "Data Modeling" portion to book
+    + Chapter 6 - Basic regression: one numerical explanatory variable, correlation, one categorical explanatory variable)
+    + Chapter 7 - Multiple regression: two numerical explanatory variables, one numerical and one categorical, interaction effects
+    + Uses new [`moderndive`](https://moderndive.github.io/moderndive/) package, which includes `get_regression_table()` and `get_regression_points()` wrapper functions to simplify outputing of clean regression tables and observed/fitted values + resisuals
+* Added Chapter 8 (still under construction) - Sampling using [sampling bowl](https://github.com/moderndive/moderndive/blob/master/data-raw/sampling_bowl.jpeg)
+* Chapters 9 and 10 on confidence intervals and hypothesis testing have not yet been updated, as we were awaiting the now launched package: [`infer`: A tidyverse-friendly R package fo statistical inference](https://github.com/andrewpbray/infer)
+* Chapter 4: Added section on using `tidyr::gather()` for converting wide data to long AKA "tidy" format
+
+
+## Other changes
+
+- Development version of book now available at <http://moderndive.netlify.com/>; deployed via travis-ci + netlify. 
+- Added wide ModernDive logo to top of each chapter and `logos` folder
+- Added favicon (icon in browser tab)
+- Moved home GitHub repository from <https://github.com/ismayc/moderndiver-book/> to <https://github.com/moderndive/moderndive_book>
 
 
 
