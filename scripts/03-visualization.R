@@ -187,7 +187,7 @@ weather %>%
   arrange(desc(IQR)) %>%
   kable()
 
-## **`r paste0("(LC", chap, ".", (lc - 1), ")")`: We looked at the distribution of a continuous variable over a categorical variable here with this boxplot. Why can't we look at the distribution of one continuous variable over the distribution of another continuous variable? Say, temperature across pressure, for example?**
+## **`r paste0("(LC", chap, ".", (lc - 1), ")")`: We looked at the distribution of a numerical variable over a categorical variable here with this boxplot. Why can't we look at the distribution of one numerical variable over the distribution of another numerical variable? Say, temperature across pressure, for example?**
 
 ## ------------------------------------------------------------------------
 fruits <- data_frame(
@@ -226,10 +226,19 @@ ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
 ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
 
-## ------------------------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
+## airlines
+
+## ---- echo=FALSE---------------------------------------------------------
 kable(airlines)
 
-## ----message=FALSE-------------------------------------------------------
+## ----message=FALSE, eval=FALSE-------------------------------------------
+## flights_table <- flights %>%
+##   group_by(carrier) %>%
+##   summarize(number = n())
+## flights_table
+
+## ----message=FALSE, echo=FALSE-------------------------------------------
 flights_table <- flights %>% 
   group_by(carrier) %>% 
   summarize(number = n())

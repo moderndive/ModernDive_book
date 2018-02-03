@@ -4,6 +4,8 @@
 
 ## ----message=FALSE-------------------------------------------------------
 library(dplyr)
+
+# Be sure to install these first!
 library(nycflights13)
 library(knitr)
 

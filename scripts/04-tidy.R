@@ -30,10 +30,10 @@ show_solutions <- function(section){
   }
 
 ## ----warning=FALSE, message=FALSE----------------------------------------
-library(nycflights13)
 library(dplyr)
-library(tidyr)
 library(ggplot2)
+library(nycflights13)
+library(tidyr)
 library(readr)
 
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
@@ -87,7 +87,18 @@ stocks %>%
     booktabs = TRUE
   )
 
-## ----message=FALSE-------------------------------------------------------
+## ------------------------------------------------------------------------
+glimpse(airports)
+
+## **_Learning check_**
+
+## **Learning Check Solutions**
+
+## ----message=FALSE, eval=FALSE-------------------------------------------
+## dem_score <- read_csv("http://ismayc.github.io/dem_score.csv")
+## dem_score
+
+## ----message=FALSE, echo=FALSE-------------------------------------------
 if(!file.exists("data/dem_score.csv")){
   download.file(url = "http://ismayc.github.io/dem_score.csv", 
                 destfile = "data/dem_score.csv")
@@ -119,13 +130,6 @@ ggplot(data = guat_tidy, mapping = aes(x = parse_number(year), y = democracy_sco
 ## **Learning Check Solutions**
 
 ## `dem_tidy <- gather(data = dem_score, key = year, value = democracy_score, - country)`
-
-## ------------------------------------------------------------------------
-glimpse(airports)
-
-## **_Learning check_**
-
-## **Learning Check Solutions**
 
 ## ----message=FALSE-------------------------------------------------------
 library(dplyr)
