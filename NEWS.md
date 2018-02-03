@@ -3,13 +3,15 @@
 ## Content changes
 
 * Reorganized chapter sequencing according to flowchart at top of [Section 1.1](http://moderndive.com/index.html#intro-for-students)
+* Chapter 2 - Getting Started: Added more explanation on R packages, including analogy for `install.packages()` and `library()` (akin to downloading apps onto phone)
 * Added "Data Modeling" portion to book
     + Chapter 6 - Basic regression: one numerical explanatory variable, correlation, one categorical explanatory variable)
     + Chapter 7 - Multiple regression: two numerical explanatory variables, one numerical and one categorical, interaction effects
     + Uses new [`moderndive`](https://moderndive.github.io/moderndive/) package, which includes `get_regression_table()` and `get_regression_points()` wrapper functions to simplify outputing of clean regression tables and observed/fitted values + resisuals
-* Added Chapter 8 (still under construction) - Sampling using [sampling bowl](https://github.com/moderndive/moderndive/blob/master/data-raw/sampling_bowl.jpeg)
-* Chapters 9 and 10 on confidence intervals and hypothesis testing have not yet been updated, as we were awaiting the now launched package: [`infer`: A tidyverse-friendly R package fo statistical inference](https://github.com/andrewpbray/infer)
-* Chapter 4: Added section on using `tidyr::gather()` for converting wide data to long AKA "tidy" format
+* Added "statistical inference" portion to book
+    + Added Chapter 8 - Sampling (still under construction) using [sampling bowl](https://github.com/moderndive/moderndive/blob/master/data-raw/sampling_bowl.jpeg)
+    + Chapters 9 and 10 on confidence intervals and hypothesis testing have not yet been updated, as we were awaiting the now launched package: [`infer`: A tidyverse-friendly R package fo statistical inference](https://github.com/andrewpbray/infer)
+    + Added Chapter 11 - Inference for regression (still under construction), where we'll revisit the regression models fit in Chapters 6 & 7
 
 
 ## Other changes
