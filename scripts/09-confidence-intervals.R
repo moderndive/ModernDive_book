@@ -1,6 +1,34 @@
+## ---- message=FALSE, warning=FALSE---------------------------------------
+library(dplyr)
+library(ggplot2)
+library(infer)
+
+# Clean data
+mtcars <- mtcars %>%
+  as_tibble() %>% 
+  mutate(am = factor(am))
+
+# Simulate sampling distribution of two-sample difference in means:
+sampling_distribution <- mtcars %>%
+  specify(mpg ~ am) %>%
+  generate(reps = 1000, type = "bootstrap") %>%
+  calculate(stat = "diff in means", order = c("1", "0")) 
+
+# Compute 95% confidence interval:
+conf_int <- sampling_distribution %>% 
+  pull(stat) %>% 
+  quantile(probs = c(0.025, 0.975))
+
+# Visualize:
+plot <- sampling_distribution %>% 
+  visualize()
+plot +
+  geom_vline(xintercept = conf_int, col = "red", size = 1)
+
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
+library(infer)
 library(mosaic)
 library(knitr)
 library(ggplot2movies)

@@ -3,102 +3,138 @@ library(dplyr)
 library(ggplot2)
 library(moderndive)
 
-library(okcupiddata)
-library(mosaic)
-
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
+library(knitr)
 
-## ----height-hist, warning=FALSE------------------------------------------
-ggplot(data = profiles, mapping = aes(x = height)) +
-  geom_histogram(bins = 20, color = "white")
+## ---- eval=FALSE---------------------------------------------------------
+## bowl_samples
 
-## ----filter-profiles-----------------------------------------------------
-profiles_subset <- profiles %>% filter(between(height, 55, 85))
+## ----students, echo=FALSE------------------------------------------------
+bowl_samples %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "In real life: 10 samples of size 50",
+    booktabs = TRUE
+  )
 
-## ----height-hist2, warning=FALSE-----------------------------------------
-ggplot(data = profiles_subset, mapping = aes(x = height)) +
-  geom_histogram(bins = 20, color = "white")
+## ---- eval=FALSE---------------------------------------------------------
+## bowl_samples <- bowl_samples %>%
+##   mutate(prop_red = red/n) %>%
+##   select(group, prop_red)
+## bowl_samples
 
-## ----sample-profiles-----------------------------------------------------
-set.seed(2017)
-profiles_sample1 <- profiles_subset %>% 
-  resample(size = 100, replace = FALSE)
+## ----sample-prop-red, echo=FALSE-----------------------------------------
+bowl_samples <- bowl_samples %>% 
+  mutate(prop_red = red/n) %>% 
+  select(group, prop_red)
+bowl_samples %>%
+  knitr::kable(
+    digits = 3,
+    caption = "In real life: 10 sample proportions red based on samples of size 50",
+    booktabs = TRUE
+  )
 
-## ----plot-sample1--------------------------------------------------------
-ggplot(data = profiles_sample1, mapping = aes(x = height)) +
-  geom_histogram(bins = 20, color = "white", fill = "red") +
-  coord_cartesian(xlim = c(55, 85))
+## ----samplingdistribution, echo=FALSE, fig.cap="In real life: 10 sample proportions red based on 10 samples of size 50"----
+ggplot(bowl_samples, aes(x = prop_red)) +
+  geom_histogram(binwidth = 0.05) +
+  labs(x="Sample proportion red in sample of size n=50", y="Number of samples",
+       title="Sample proportion red in ten samples of size n=50") 
 
-## ----sample-profiles2----------------------------------------------------
-profiles_sample2 <- profiles_subset %>% resample(size = 100, replace = FALSE)
-ggplot(data = profiles_sample2, mapping = aes(x = height)) +
-  geom_histogram(bins = 20, color = "black", fill = "yellow") +
-  coord_cartesian(xlim = c(55, 85))
+## ---- eval=FALSE---------------------------------------------------------
+## bowl_samples %>%
+##   summarize(mean = mean(prop_red), sd = sd(prop_red))
 
-## ----sample-profiles3----------------------------------------------------
-profiles_sample3 <- profiles_subset %>% filter(height >= 72)
-ggplot(data = profiles_sample3, mapping = aes(x = height)) +
-  geom_histogram(bins = 20, color = "white", fill = "blue") +
-  coord_cartesian(xlim = c(55, 85))
+## ---- echo=FALSE---------------------------------------------------------
+bowl_summaries <- bowl_samples %>% 
+  summarize(mean = mean(prop_red), sd = sd(prop_red))
+bowl_summaries %>% 
+  kable(digits = 3)
 
-## ----mean1---------------------------------------------------------------
-profiles_sample1 %>% summarize(mean(height))
+## ---- eval=FALSE---------------------------------------------------------
+## View(bowl)
 
-## ----mean2---------------------------------------------------------------
-profiles_sample2 %>% summarize(mean(height))
+## ---- echo=FALSE---------------------------------------------------------
+bowl %>% 
+  slice(1:10) %>%
+  knitr::kable(
+    align = c("r", "r"),
+    digits = 3,
+    caption = "First 10 balls in virtual sampling bowl",
+    booktabs = TRUE
+  )
 
-## ----mean3---------------------------------------------------------------
-profiles_sample3 %>% summarize(mean(height))
+## ---- echo=FALSE---------------------------------------------------------
+set.seed(76)
 
-## ----do-first, include=FALSE---------------------------------------------
-if(!file.exists("rds/sample_means.rds")){
-  sample_means <- do(5000) * 
-    (profiles_subset %>% resample(size = 100, replace = FALSE) %>% 
-    summarize(mean_height = mean(height))
-    )
-  saveRDS(object = sample_means, "rds/sample_means.rds")
-} else {
-  sample_means <- readRDS("rds/sample_means.rds")
-}
+## ---- eval=FALSE---------------------------------------------------------
+## all_samples <- rep_sample_n(bowl, size = 50, reps = 10)
+## View(all_samples)
 
-## ----do-first-read, eval=FALSE-------------------------------------------
-## sample_means <- do(5000) *
-##     (profiles_subset %>% resample(size = 100, replace = FALSE) %>%
-##     summarize(mean_height = mean(height)))
+## ---- echo=FALSE---------------------------------------------------------
+all_samples <- rep_sample_n(bowl, size = 50, reps = 10)
 
-## ----do-plot-------------------------------------------------------------
-ggplot(data = sample_means, mapping = aes(x = mean_height)) +
-  geom_histogram(color = "white", bins = 20)
+## ---- eval=FALSE---------------------------------------------------------
+## bowl_samples_virtual <- all_samples %>%
+##   mutate(is_red = color == "red") %>%
+##   group_by(replicate) %>%
+##   summarize(prop_red = mean(is_red))
+## bowl_samples_virtual
 
-## ----message=FALSE-------------------------------------------------------
-set.seed(2017)
-do(1) * rflip(1)
+## ----sample-prop-red-virtual, echo=FALSE---------------------------------
+bowl_samples_virtual <- all_samples %>% 
+  mutate(is_red = color == "red") %>% 
+  group_by(replicate) %>% 
+  summarize(prop_red = mean(is_red))
+bowl_samples_virtual %>%
+  knitr::kable(
+    digits = 3,
+    caption = "Virtual simulation: 10 sample proportions red based on samples of size 50",
+    booktabs = TRUE
+  )
 
-## ------------------------------------------------------------------------
-do(13) * rflip(10)
+## ----sampling-distribution-virtual, echo=FALSE, fig.cap="Virtual simulation: 10 sample proportions red based on 10 samples of size 50"----
+ggplot(bowl_samples_virtual, aes(x = prop_red)) +
+  geom_histogram(binwidth = 0.05) +
+  labs(x="Sample proportion red in sample of size n=50", y="Number of samples",
+       title="Sample proportion red in ten samples of size n=50") 
 
-## ----include=FALSE-------------------------------------------------------
-if(!file.exists("rds/simGuesses.rds")){
-  simGuesses <- do(5000) * rflip(10)
-  saveRDS(object = simGuesses, "rds/simGuesses.rds")
-} else {
-  simGuesses <- readRDS("rds/simGuesses.rds")
-}
+## ---- eval=FALSE---------------------------------------------------------
+## bowl_samples_virtual %>%
+##   summarize(mean = mean(prop_red), sd = sd(prop_red))
 
-## ----eval=FALSE----------------------------------------------------------
-## simGuesses <- do(5000) * rflip(10)
+## ---- echo=FALSE---------------------------------------------------------
+bowl_summaries_virtual <- bowl_samples %>% 
+  summarize(mean = mean(prop_red), sd = sd(prop_red))
+bowl_summaries %>% 
+  kable(digits = 3)
 
-## ------------------------------------------------------------------------
-simGuesses %>% 
-  group_by(heads) %>%
-  summarize(count = n())
+## ---- echo=FALSE---------------------------------------------------------
+set.seed(76)
 
-## ----fig.cap="Histogram of number of heads in simulation - needs tweaking"----
-ggplot(data = simGuesses, mapping = aes(x = heads)) +
-  geom_histogram(binwidth = 1, color = "white")
+## ----sampling-distribution-virtual-2, echo=FALSE, fig.cap="Virtual simulation: Ten thousand sample proportions red based on ten thousand samples of size 50"----
+# Draw one million samples of size n = 50
+all_samples <- rep_sample_n(bowl, size = 50, reps = 10000)
 
-## ----fig.cap="Barplot of number of heads in simulation"------------------
-ggplot(data = simGuesses, mapping = aes(x = factor(heads))) +
-  geom_bar()
+# For each sample, as marked by the variable `replicate`, compute the proportion red
+bowl_samples_virtual <- all_samples %>% 
+  mutate(is_red = color == "red") %>% 
+  group_by(replicate) %>% 
+  summarize(prop_red = mean(is_red))
+
+# Plot the histogram
+ggplot(bowl_samples_virtual, aes(x = prop_red)) +
+  geom_histogram(binwidth = 0.02) +
+  labs(x="Sample proportion red in sample of size n=50", y="Number of samples",
+       title="Sample proportion red in ten samples of size n=50") 
+
+## ---- eval=FALSE---------------------------------------------------------
+## bowl_samples_virtual %>%
+##   summarize(mean = mean(prop_red), sd = sd(prop_red))
+
+## ---- echo=FALSE---------------------------------------------------------
+bowl_summaries_virtual <- bowl_samples %>% 
+  summarize(mean = mean(prop_red), sd = sd(prop_red))
+bowl_summaries %>% 
+  kable(digits = 3)
 

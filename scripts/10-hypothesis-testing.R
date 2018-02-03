@@ -1,3 +1,33 @@
+## ---- message=FALSE, warning=FALSE---------------------------------------
+library(dplyr)
+library(ggplot2)
+library(infer)
+
+# Clean data
+mtcars <- mtcars %>%
+  as_tibble() %>% 
+  mutate(am = factor(am))
+
+# Observed test statistic
+obs_stat <- mtcars %>% 
+  group_by(am) %>%
+  summarize(mean = mean(mpg)) %>%
+  summarize(obs_stat = diff(mean)) %>%
+  pull(obs_stat)
+
+# Simulate null distribution of two-sample difference in means:
+null_distribution <- mtcars %>%
+  specify(mpg ~ am) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("1", "0"))
+
+# Visualize:
+plot <- null_distribution %>% 
+  visualize()
+plot +
+  geom_vline(xintercept = obs_stat, col = "red", size = 1)
+
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
@@ -45,6 +75,7 @@ t2 <- sum(sim2 == "Correct")
 t3 <- sum(sim3 == "Correct")
 
 ## ------------------------------------------------------------------------
+simGuesses <- do(5000) * rflip(10)
 ggplot(data = simGuesses, aes(x = factor(heads))) +
   geom_bar()
 
