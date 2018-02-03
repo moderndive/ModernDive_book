@@ -20,13 +20,13 @@ bowl_samples %>%
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## bowl_samples <- bowl_samples %>%
-##   mutate(prop_red = red/n) %>%
+##   mutate(prop_red = red / n) %>%
 ##   select(group, prop_red)
 ## bowl_samples
 
 ## ----sample-prop-red, echo=FALSE-----------------------------------------
 bowl_samples <- bowl_samples %>% 
-  mutate(prop_red = red/n) %>% 
+  mutate(prop_red = red / n) %>% 
   select(group, prop_red)
 bowl_samples %>%
   knitr::kable(
@@ -37,9 +37,10 @@ bowl_samples %>%
 
 ## ----samplingdistribution, echo=FALSE, fig.cap="In real life: 10 sample proportions red based on 10 samples of size 50"----
 ggplot(bowl_samples, aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.05) +
-  labs(x="Sample proportion red in sample of size n=50", y="Number of samples",
-       title="Sample proportion red in ten samples of size n=50") 
+  geom_histogram(binwidth = 0.05, color = "white") +
+  labs(x = "Sample proportion red in sample of size n=50", 
+       y="Number of samples",
+       title = "Sample proportion red in ten samples of size n=50") 
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## bowl_samples %>%
@@ -95,7 +96,7 @@ bowl_samples_virtual %>%
 
 ## ----sampling-distribution-virtual, echo=FALSE, fig.cap="Virtual simulation: 10 sample proportions red based on 10 samples of size 50"----
 ggplot(bowl_samples_virtual, aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.05) +
+  geom_histogram(binwidth = 0.05, color = "white") +
   labs(x="Sample proportion red in sample of size n=50", y="Number of samples",
        title="Sample proportion red in ten samples of size n=50") 
 
@@ -118,15 +119,15 @@ all_samples <- rep_sample_n(bowl, size = 50, reps = 10000)
 
 # For each sample, as marked by the variable `replicate`, compute the proportion red
 bowl_samples_virtual <- all_samples %>% 
-  mutate(is_red = color == "red") %>% 
+  mutate(is_red = (color == "red")) %>% 
   group_by(replicate) %>% 
   summarize(prop_red = mean(is_red))
 
 # Plot the histogram
 ggplot(bowl_samples_virtual, aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.02) +
-  labs(x="Sample proportion red in sample of size n=50", y="Number of samples",
-       title="Sample proportion red in ten samples of size n=50") 
+  geom_histogram(binwidth = 0.02, color = "white") +
+  labs(x = "Sample proportion red in sample of size n=50", y="Number of samples",
+       title = "Sample proportion red in ten samples of size n=50") 
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## bowl_samples_virtual %>%
