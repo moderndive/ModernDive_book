@@ -6,7 +6,7 @@
 * Chapter 2 - Getting Started: Added more explanation on R packages, including analogy for `install.packages()` and `library()` (akin to downloading apps onto phone)
 * Added "Data Modeling" portion to book
     + Chapter 6 - Basic regression: one numerical explanatory variable, correlation, one categorical explanatory variable)
-    + Chapter 7 - Multiple regression: two numerical explanatory variables, one numerical and one categorical, interaction effects
+    + Chapter 7 - Multiple regression: two numerical explanatory variables, one numerical and one categorical, interaction effects, Simpson's Paradox
     + Uses new [`moderndive`](https://moderndive.github.io/moderndive/) package, which includes `get_regression_table()` and `get_regression_points()` wrapper functions to simplify outputing of clean regression tables and observed/fitted values + resisuals
 * Added "statistical inference" portion to book
     + Added Chapter 8 - Sampling (still under construction) using [sampling bowl](https://github.com/moderndive/moderndive/blob/master/data-raw/sampling_bowl.jpeg)
