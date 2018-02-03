@@ -16,7 +16,7 @@ library(janitor)
 ## ----eval=FALSE----------------------------------------------------------
 ## load(url("http://www.openintro.org/stat/data/evals.RData"))
 ## evals <- evals %>%
-##   select(score, bty_avg)
+##   select(score, bty_avg, age)
 
 ## ----echo=FALSE----------------------------------------------------------
 if(!file.exists("data/evals.RData")){
@@ -25,7 +25,7 @@ if(!file.exists("data/evals.RData")){
 }
 load("data/evals.RData")
 evals <- evals %>%
-  select(score, bty_avg)
+  select(score, bty_avg, age)
 
 ## ---- echo=FALSE---------------------------------------------------------
 set.seed(76)
@@ -219,16 +219,11 @@ ggplot(resid_ex, aes(x = eps)) +
   labs(x = "Residual") +
   facet_wrap( ~ type, scales = "free")
 
-## ---- eval=FALSE---------------------------------------------------------
-## load(url("http://www.openintro.org/stat/data/evals.RData"))
-## evals <- evals %>%
-##   select(score, age)
-
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(gapminder)
 gapminder2007 <- gapminder %>%
   filter(year == 2007) %>% 
-  select(country, continent, lifeExp)
+  select(country, continent, lifeExp, gdpPercap)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## View(gapminder2007)
@@ -377,14 +372,6 @@ ggplot(regression_points, aes(x = residual)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Residual")
 
-## ---- eval = FALSE-------------------------------------------------------
-## # The following commands reloads the gapminder from scratch:
-## data("gapminder")
-## 
-## gapminder2007 <- gapminder %>%
-##   filter(year == 2007) %>%
-##   select(country, continent, gdpPercap)
-
 ## ----correlation2, echo=FALSE, fig.cap="Different Correlation Coefficients"----
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
 n_sim <- 100
@@ -473,18 +460,18 @@ best_fit_plot <- best_fit_plot +
 best_fit_plot
 
 ## ---- eval = FALSE-------------------------------------------------------
-## lm(score ~ bty_avg, data = evals) %>%
-##   get_regression_table()
+## score_model <- lm(score ~ bty_avg, data = evals)
+## get_regression_table(score_model, digits = 2)
 
 ## ---- echo = FALSE-------------------------------------------------------
-lm(score ~ bty_avg, data = evals) %>% 
-  get_regression_table() %>% 
+score_model <- lm(score ~ bty_avg, data = evals)
+get_regression_table(score_model, digits = 2) %>% 
   knitr::kable()
 
 ## ---- eval = FALSE-------------------------------------------------------
 ## library(broom)
 ## library(janitor)
-## lm(score ~ bty_avg, data = evals) %>%
+## score_model %>%
 ##   tidy(conf.int = TRUE) %>%
 ##   mutate_if(is.numeric, round, digits = 3) %>%
 ##   clean_names()
@@ -492,7 +479,7 @@ lm(score ~ bty_avg, data = evals) %>%
 ## ---- echo = FALSE-------------------------------------------------------
 library(broom)
 library(janitor)
-lm(score ~ bty_avg, data = evals) %>% 
+score_model %>% 
   tidy(conf.int = TRUE) %>% 
   mutate_if(is.numeric, round, digits = 3) %>%
   clean_names() %>% 

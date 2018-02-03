@@ -14,7 +14,7 @@ library(gridExtra)
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(ISLR)
 Credit <- Credit %>%
-  select(Balance, Limit, Income)
+  select(Balance, Limit, Income, Rating, Age)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## View(Credit)
@@ -32,17 +32,22 @@ Credit %>%
 glimpse(Credit)
 
 ## ------------------------------------------------------------------------
-summary(Credit)
+Credit %>% 
+  select(Balance, Limit, Income) %>% 
+  summary()
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## cor(Credit$Balance, Credit$Limit)
 ## cor(Credit$Balance, Credit$Income)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## cor(Credit)
+## Credit %>%
+##   select(Balance, Limit, Income) %>%
+##   cor()
 
 ## ----model3-correlation, echo=FALSE--------------------------------------
 Credit %>% 
+  select(Balance, Limit, Income) %>% 
   cor() %>% 
   knitr::kable(
     digits = 3,
@@ -321,7 +326,7 @@ ggplot(regression_points, aes(x = age, y = residual)) +
 ## library(ISLR)
 ## data(Credit)
 ## Credit %>%
-##   select(Balance, Limit, Income) %>%
+##   select(Balance, Income) %>%
 ##   mutate(Income = Income * 1000) %>%
 ##   cor()
 
@@ -329,7 +334,7 @@ ggplot(regression_points, aes(x = age, y = residual)) +
 library(ISLR)
 data(Credit)
 Credit %>% 
-  select(Balance, Limit, Income) %>% 
+  select(Balance, Income) %>% 
   mutate(Income = Income * 1000) %>% 
   cor() %>% 
   knitr::kable(
