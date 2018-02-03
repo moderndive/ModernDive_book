@@ -54,12 +54,12 @@ kable(by_origin)
 by_monthly_origin <- flights %>% 
   group_by(origin, month) %>% 
   summarize(count = n())
-kable(by_monthly_origin)
+by_monthly_origin
 
-## ------------------------------------------------------------------------
-by_monthly_origin2 <- flights %>% 
-  dplyr::count(origin, month)
-kable(by_monthly_origin2)
+## ---- eval=FALSE---------------------------------------------------------
+## by_monthly_origin <- flights %>%
+##   count(origin, month)
+## by_monthly_origin
 
 ## NA
 ## ------------------------------------------------------------------------
@@ -99,10 +99,12 @@ freq_dest <- flights %>%
 freq_dest
 
 ## ------------------------------------------------------------------------
-freq_dest %>% arrange(num_flights)
+freq_dest %>% 
+  arrange(num_flights)
 
 ## ------------------------------------------------------------------------
-freq_dest %>% arrange(desc(num_flights))
+freq_dest %>% 
+  arrange(desc(num_flights))
 
 ## ----eval=FALSE----------------------------------------------------------
 ## View(airlines)

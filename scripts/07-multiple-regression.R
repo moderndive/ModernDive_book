@@ -73,7 +73,8 @@ model3_balance_vs_income_plot <- ggplot(Credit, aes(x = Income, y = Balance)) +
   geom_point() +
   labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
        title = "Balance vs income") +
-  geom_smooth(method = "lm", se = FALSE)
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_y_continuous(limits = c(0, NA))
 grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)
 
 ## ---- eval=FALSE, echo=FALSE---------------------------------------------
@@ -355,12 +356,20 @@ Credit <- Credit %>%
     "high" = "(5.87e+03,1.39e+04]"
   ))
 
+model3_balance_vs_income_plot <- ggplot(Credit, aes(x = Income, y = Balance)) +
+  geom_point() +
+  labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
+       title = "Balance vs income (overall)") +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_y_continuous(limits = c(0, NA))
+
 model3_balance_vs_income_plot_colored <- ggplot(Credit, aes(x = Income, y = Balance, col = limit_bracket)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
-       color = "Credit limit\nbracket", title = "Balance vs income") + 
-  theme(legend.position = "bottom")
+       color = "Credit limit\nbracket", title = "Balance vs income (by bracket)") + 
+  theme(legend.position = "none") +
+  scale_y_continuous(limits = c(0, NA))
   
 grid.arrange(model3_balance_vs_income_plot, model3_balance_vs_income_plot_colored, nrow = 1)
 #cowplot::plot_grid(model3_balance_vs_income_plot, model3_balance_vs_income_plot_colored, nrow = 1, rel_widths = c(2/5, 3/5))

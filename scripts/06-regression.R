@@ -82,20 +82,29 @@ ggplot(evals, aes(x = bty_avg, y = score)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores")
 
+## ---- echo=FALSE---------------------------------------------------------
+set.seed(76)
+
 ## ----numxplot2, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin: Jittered"----
 ggplot(evals, aes(x = bty_avg, y = score)) +
   geom_jitter() +
   labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores")
 
+## ---- echo=FALSE---------------------------------------------------------
+set.seed(76)
+
 ## ----numxplot3, warning=FALSE, fig.cap="Regression line"-----------------
 ggplot(evals, aes(x = bty_avg, y = score)) +
-  geom_jitter() +
+  geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") +  
   geom_smooth(method = "lm")
 
+## ---- echo=FALSE---------------------------------------------------------
+set.seed(76)
+
 ## ----numxplot4, warning=FALSE, fig.cap="Regression line without error bands"----
 ggplot(evals, aes(x = bty_avg, y = score)) +
-  geom_jitter() +
+  geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") +
   geom_smooth(method = "lm", se = FALSE)
 
@@ -134,11 +143,14 @@ evals %>%
     booktabs = TRUE
   )
 
+## ---- echo=FALSE---------------------------------------------------------
+set.seed(76)
+
 ## ----numxplot5, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual"----
 best_fit_plot <- ggplot(evals, aes(x = bty_avg, y = score)) +
-  geom_jitter() +
+  geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") + 
-  geom_point(method = "lm", se = FALSE) +
+  geom_smooth(method = "lm", se = FALSE) +
   annotate("point", x = x, y = y, col = "red", size = 3) +
   annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
   annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
