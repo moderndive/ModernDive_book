@@ -70,10 +70,18 @@ Let's now attempt to identify factors that are associated with how much credit c
 
 Since no information was provided as to who these $n$ = 400 individuals are and how they came to be included in this dataset, it will be hard to make any scientific claims based on this data. Recall our discussion from the previous chapter that correlation does not necessarily imply causation. That being said, we'll still use `Credit` to demonstrate multiple regression with:
 
-1. A numerical outcome variable $y$, in this case teaching credit card balance.
+1. A numerical outcome variable $y$, in this case credit card balance.
 1. Two explanatory variables:
     1. A first numerical explanatory variable $x_1$. In this case, their credit limit.
     1. A second numerical explanatory variable $x_2$. In this case, their income (in thousands of dollars).
+
+
+In the forthcoming Learning Checks, we'll consider a different scenario:
+
+1. The same numerical outcome variable $y$: credit card balance.
+1. Two new explanatory variables:
+    1. A first numerical explanatory variable $x_1$: their credit rating.
+    1. A second numerical explanatory variable $x_2$: their age.
 
 
 ### Exploratory data analysis {#model3EDA}
@@ -83,7 +91,7 @@ Let's load the `Credit` data and `select()` only the needed subset of variables.
 ```{r, warning=FALSE, message=FALSE}
 library(ISLR)
 Credit <- Credit %>%
-  select(Balance, Limit, Income)
+  select(Balance, Limit, Income, Rating, Age)
 ```
 
 Let's look at the raw data values both by bringing up RStudio's spreadsheet viewer and the `glimpse()` function. Although in Table \@ref(tab:model3-data-preview) we only show 5 randomly selected credit card holders out of `r nrow(Credit)`:
@@ -109,7 +117,9 @@ glimpse(Credit)
 Let's look at some summary statistics:
 
 ```{r}
-summary(Credit)
+Credit %>% 
+  select(Balance, Limit, Income) %>% 
+  summary()
 ```
 
 We observe, for example,
@@ -134,10 +144,13 @@ Table \@ref(tab:model3-correlation). We can read off the correlation coefficient
 for any pair of variables by looking them up in the appropriate row/column combination.
 
 ```{r, eval=FALSE}
-cor(Credit)
+Credit %>%
+  select(Balance, Limit, Income) %>% 
+  cor()
 ```
 ```{r model3-correlation, echo=FALSE}
 Credit %>% 
+  select(Balance, Limit, Income) %>% 
   cor() %>% 
   knitr::kable(
     digits = 3,
@@ -269,6 +282,21 @@ plot_ly(showscale = FALSE) %>%
   )
 ```
 
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Conduct a new exploratory data analysis with the same outcome variable $y$ being `Balance` but with `Rating` and `Age` as the new explanatory variables $x_1$ and $x_2$. Remember, this involves three things:
+
+a) Looking at the raw values
+a) Computing summary statistics of the variables of interest.
+a) Creating informative visualizations
+
+What can you say about the relationship between a credit card holder's balance and their credit rating and age?
+
+```{block, type='learncheck', purl=FALSE}
+```
+
 
 ### Multiple regression {#model3table}
 
@@ -304,6 +332,15 @@ a caveat to our interpretation: *all other things being equal, for every increas
 However, recall in Figure \@ref(fig:2numxplot1) that when considered separately, both `Limit` and `Income` had positive relationships with the outcome variable `Balance`: as card holders' credit limits increased their credit card balances tended to increase as well, and a similar relationship held for incomes and balances. In the above multiple regression, however, the slope for `Income` is now -7.66, suggesting a *negative relationship* between income and credit card balance. What explains these contradictory results? 
 
 This is known as Simpson's Paradox, a phenomenon in which a trend appears in several different groups of data but disappears or reverses when these groups are combined. We expand on this in Subsection \@ref(simpsonsparadox) where we'll look at the relationship between credit `Limit` and credit card balance but split by different income bracket groups.
+
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Fit a new simple linear regression using `lm(Balance ~ Rating + Age, data = Credit)` where `Rating` and `Age` are the new numerical explanatory variables $x_1$ and $x_2$. Get information about the "best-fitting" line from the regression table by applying the `get_regression_table()` function. How do the regression results match up with the results from your exploratory data analysis above? 
+
+```{block, type='learncheck', purl=FALSE}
+```
 
 
 ### Observed/fitted values and residuals {#model3points}
@@ -369,18 +406,14 @@ ggplot(regression_points, aes(x = residual)) +
 
 Another way to interpret this histogram is that since the residual is computed as $y - \widehat{y}$ = `balance` - `balance_hat`, we have some values where the fitted value $\widehat{y}$ is very much lower than the observed value $y$. In other words, we are underestimating certain credit card holders' balances by a very large amount. 
 
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
 
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Continuing with our regression using `Rating` and `Age` as the explanatory variables and credit card `Balance` as the outcome variable, use the `get_regression_points()` function to get the observed values, fitted values, and residuals for all `r nrow(Credit)` credit card holders and perform a residual analysis and look for any systematic patterns in the residuals.
 
-### Your turn
-
-Repeat this same analysis but using `Age` and `Rating` as the two numerical explanatory variables. Recall the four steps we've been following:
-
-1. Perform an exploratory data analysis (EDA).
-1. Fit a linear regression model and get information about the model.
-1. Get information on all $n$ data points considered in this analysis. 
-1. Perform a residual analysis and look for any systematic patterns in the residuals.
-
-
+```{block, type='learncheck', purl=FALSE}
+```
 
 
 
@@ -648,7 +681,7 @@ ggplot(regression_points, aes(x = age, y = residual)) +
 
 Recall in Table \@ref(tab:model3-correlation), we saw that the correlation
 coefficient between `Income` in thousands of dollars and credit card `Balance`
-was 0.862. What if in instead we looked at the correlation coefficient between
+was 0.464. What if in instead we looked at the correlation coefficient between
 `Income` and credit card `Balance`, but where `Income` was in dollars and not
 thousands of dollars? This can be done by multiplying `Income` by 1000.
 
@@ -656,7 +689,7 @@ thousands of dollars? This can be done by multiplying `Income` by 1000.
 library(ISLR)
 data(Credit)
 Credit %>% 
-  select(Balance, Limit, Income) %>% 
+  select(Balance, Income) %>% 
   mutate(Income = Income * 1000) %>% 
   cor()
 ```
@@ -664,7 +697,7 @@ Credit %>%
 library(ISLR)
 data(Credit)
 Credit %>% 
-  select(Balance, Limit, Income) %>% 
+  select(Balance, Income) %>% 
   mutate(Income = Income * 1000) %>% 
   cor() %>% 
   knitr::kable(
@@ -771,7 +804,7 @@ ggplot(Credit, aes(x = Income, y = Balance)) +
 
 ### What's to come?
 
-Congratulations! We're ready to proceed to the third portion of this book: "statistical inference" using a new package called `infer`.  Once we've covered Chapters \@ref(sampling) on sampling, \@ref(ci) on confidence intervals, and \@ref(hypo) on hypothesis testing, we'll come back to the models we've seen in "data modeling" in Chapter \@ref(inference-for-regression) on inference for regression. 
+Congratulations! We're ready to proceed to the third portion of this book: "statistical inference" using a new package called `infer`.  Once we've covered Chapters \@ref(sampling) on sampling, \@ref(ci) on confidence intervals, and \@ref(hypo) on hypothesis testing, we'll come back to the models we've seen in "data modeling" in Chapter \@ref(inference-for-regression) on inference for regression. As we said at the end of Chapter \@ref(regression), we'll see why we've been conducting the residual analyses from Subsections {#model3residuals} and {#model4residuals}; we are actually verifying some very important assumptions that must be met for the `std_error` (standard error), `p_value`, `conf_low` and `conf_high` (the end-points of the confidence intervals) columns in our regression tables to have valid interpretation. 
 
 <center><img src="images/flowcharts/flowchart/flowchart.006.png" title="ModernDive flowchart" width="800"/></center>
 
