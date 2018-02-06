@@ -193,7 +193,7 @@ fruits_counted <- data_frame(
   number = c(3, 2)
 )
 
-## ---- echo=FALSE---------------------------------------------------------
+## ----fruits, echo=FALSE--------------------------------------------------
 kable(
     fruits,
     digits=2,
@@ -201,7 +201,7 @@ kable(
     booktabs = TRUE
   )
 
-## ---- echo=FALSE---------------------------------------------------------
+## ----fruitscounted, echo=FALSE-------------------------------------------
 kable(
     fruits_counted,
     digits=2,
@@ -209,11 +209,11 @@ kable(
     booktabs = TRUE
   )
 
-## ----geombar, fig.cap="Barplot when counts are not pre-tabulated", fig.height=2.5----
+## ----geombar, fig.cap="Barplot when counts are not pre-counted", fig.height=2.5----
 ggplot(data = fruits, mapping = aes(x = fruit)) +
   geom_bar()
 
-## ---- geomcol, fig.cap="Barplot when counts are pre-tabulated", fig.height=2.5----
+## ---- geomcol, fig.cap="Barplot when counts are pre-counted", fig.height=2.5----
 ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
