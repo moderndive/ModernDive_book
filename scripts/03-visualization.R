@@ -270,7 +270,7 @@ ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
 
 ## **Learning Check Solutions**
 
-## ---- fig.cap="Side-by-side barplot comparing the number of flights by carrier and airport", fig.height=5----
+## ---- fig.cap="Side-by-side AKA dodged barplot comparing the number of flights by carrier and airport", fig.height=5----
 ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
   geom_bar(position = "dodge")
 
@@ -279,7 +279,7 @@ ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
 ## ----facet-bar-vert, fig.cap="Faceted barplot comparing the number of flights by carrier and airport", fig.height=7.5----
 ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
   geom_bar() +
-  facet_grid(name ~ .)
+  facet_wrap(~ name, ncol = 1)
 
 ## **Learning Check Solutions**
 
