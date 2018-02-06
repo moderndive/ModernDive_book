@@ -163,22 +163,17 @@ weather %>%
 
 ## **Learning Check Solutions**
 
-## ---- echo=FALSE, eval=FALSE---------------------------------------------
-## weather %>%
-##   filter(month==5 & temp < 25)
-
-## ---- include=show_solutions('3-9'), echo=FALSE--------------------------
+## ---- include=show_solutions('3-9'), echo=show_solutions('3-9')----------
 weather %>% 
-  filter(month==5 & temp < 25) %>% 
-  kable()
+  filter(month==5 & temp < 25)
 
 ## There appears to be only one hour and only at JFK that recorded 13.1 F (-10.5 C) in the month of May. This is probably a data entry mistake!
 
-## ---- echo=FALSE, eval=FALSE---------------------------------------------
-## # weather %>%
-## #   group_by(month) %>%
-## #   summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
-## #   arrange(desc(IQR))
+## ---- echo=show_solutions('3-9'), eval=FALSE-----------------------------
+## weather %>%
+##   group_by(month) %>%
+##   summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
+##   arrange(desc(IQR))
 
 ## ---- echo=FALSE, include=show_solutions('3-9')--------------------------
 weather %>%
