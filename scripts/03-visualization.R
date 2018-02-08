@@ -289,6 +289,6 @@ ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
 #  include_url("https://coggle.it/diagram/V_G2gzukTDoQ-aZt-", 
 #              height = "1000px")
 #} else {
-  include_graphics("images/coggleviz.png", dpi = 300)
+  #include_graphics("images/coggleviz.png")
 #}
 
