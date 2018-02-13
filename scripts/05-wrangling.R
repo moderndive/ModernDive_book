@@ -73,10 +73,23 @@ by_origin <- flights %>%
 kable(by_origin)
 
 ## ------------------------------------------------------------------------
-by_monthly_origin <- flights %>% 
+by_origin_monthly <- flights %>% 
   group_by(origin, month) %>% 
   summarize(count = n())
+by_origin_monthly
+
+## ------------------------------------------------------------------------
+by_monthly_origin <- flights %>% 
+  group_by(month, origin) %>% 
+  summarize(count = n())
 by_monthly_origin
+
+## ------------------------------------------------------------------------
+by_origin_monthly_incorrect <- flights %>% 
+  group_by(origin) %>% 
+  group_by(month) %>% 
+  summarize(count = n())
+by_origin_monthly_incorrect
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## by_monthly_origin <- flights %>%
