@@ -2,7 +2,6 @@
 library(dplyr)
 library(ggplot2)
 library(nycflights13)
-library(knitr)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## portland_flights <- flights %>%
@@ -19,12 +18,22 @@ library(knitr)
 ##   filter(!(dest == "BTV" | dest == "SEA"))
 ## View(not_BTV_SEA)
 
-## ------------------------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
+## summary_temp <- weather %>%
+##   summarize(mean = mean(temp), std_dev = sd(temp))
+## summary_temp
+
+## ---- echo=FALSE---------------------------------------------------------
 summary_temp <- weather %>% 
   summarize(mean = mean(temp), std_dev = sd(temp))
 kable(summary_temp)
 
-## ------------------------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
+## summary_temp <- weather %>%
+##   summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
+## summary_temp
+
+## ---- echo=FALSE---------------------------------------------------------
 summary_temp <- weather %>% 
   summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
 kable(summary_temp)
@@ -37,14 +46,27 @@ kable(summary_temp)
 ##   summarize(mean = mean(temp, na.rm = TRUE)) %>%
 ##   summarize(std_dev = sd(temp, na.rm = TRUE))
 
-## ------------------------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
+## summary_monthly_temp <- weather %>%
+##   group_by(month) %>%
+##   summarize(mean = mean(temp, na.rm = TRUE),
+##             std_dev = sd(temp, na.rm = TRUE))
+## summary_monthly_temp
+
+## ---- echo=FALSE---------------------------------------------------------
 summary_monthly_temp <- weather %>% 
   group_by(month) %>% 
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))
 kable(summary_monthly_temp)
 
-## ------------------------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
+## by_origin <- flights %>%
+##   group_by(origin) %>%
+##   summarize(count = n())
+## by_origin
+
+## ---- echo=FALSE---------------------------------------------------------
 by_origin <- flights %>% 
   group_by(origin) %>% 
   summarize(count = n())
@@ -66,7 +88,21 @@ by_monthly_origin
 flights <- flights %>% 
   mutate(gain = dep_delay - arr_delay)
 
-## ------------------------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
+## gain_summary <- flights %>%
+##   summarize(
+##     min = min(gain, na.rm = TRUE),
+##     q1 = quantile(gain, 0.25, na.rm = TRUE),
+##     median = quantile(gain, 0.5, na.rm = TRUE),
+##     q3 = quantile(gain, 0.75, na.rm = TRUE),
+##     max = max(gain, na.rm = TRUE),
+##     mean = mean(gain, na.rm = TRUE),
+##     sd = sd(gain, na.rm = TRUE),
+##     missing = sum(is.na(gain))
+##   )
+## gain_summary
+
+## ----echo=FALSE----------------------------------------------------------
 gain_summary <- flights %>% 
   summarize(
     min = min(gain, na.rm = TRUE),

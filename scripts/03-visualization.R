@@ -2,7 +2,6 @@
 library(nycflights13)
 library(ggplot2)
 library(dplyr)
-library(knitr)
 
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
