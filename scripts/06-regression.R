@@ -198,7 +198,7 @@ ggplot(resid_ex, aes(x = bty_avg, y = eps)) +
   geom_hline(yintercept = 0, col = "blue", size = 1) +
   facet_wrap(~type)
 
-## ----model1_residuals_hist, warning=FALSE, fig.cap="Histogram of residuals"----
+## ----model1residualshist, echo=FALSE, warning=FALSE, fig.cap= "Histogram of residuals"----
 ggplot(regression_points, aes(x = residual)) +
   geom_histogram(binwidth = 0.25, color = "white") +
   labs(x = "Residual")
@@ -255,7 +255,7 @@ lifeExp_worldwide %>%
     booktabs = TRUE
   )
 
-## ------------------------------------------------------------------------
+## ----lifeExp2007hist, echo=FALSE, warning=FALSE, fig.cap="Histogram of Life Expectancy in 2007"----
 ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", y = "Number of countries", title = "Worldwide life expectancy")
