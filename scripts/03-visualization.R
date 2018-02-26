@@ -267,6 +267,10 @@ flights_namedports <- flights %>%
 ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
   geom_bar()
 
+## ---- eval=FALSE---------------------------------------------------------
+## ggplot(data = flights_namedports, mapping = aes(x = carrier), fill = name) +
+##   geom_bar()
+
 ## **Learning Check Solutions**
 
 ## ---- fig.cap="Side-by-side AKA dodged barplot comparing the number of flights by carrier and airport", fig.height=5----
