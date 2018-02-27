@@ -110,7 +110,7 @@ ggplot(evals, aes(x = bty_avg, y = score)) +
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## score_model <- lm(score ~ bty_avg, data = evals)
-## get_regression_table(score_model, digits = 2)
+## get_regression_table(score_model, digits = 3)
 
 ## ---- echo=FALSE---------------------------------------------------------
 score_model <- lm(score ~ bty_avg, data = evals)
@@ -461,11 +461,11 @@ best_fit_plot
 
 ## ---- eval = FALSE-------------------------------------------------------
 ## score_model <- lm(score ~ bty_avg, data = evals)
-## get_regression_table(score_model, digits = 2)
+## get_regression_table(score_model, digits = 3)
 
 ## ---- echo = FALSE-------------------------------------------------------
 score_model <- lm(score ~ bty_avg, data = evals)
-get_regression_table(score_model, digits = 2) %>% 
+get_regression_table(score_model, digits = 3) %>% 
   knitr::kable()
 
 ## ---- eval = FALSE-------------------------------------------------------
