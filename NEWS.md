@@ -1,3 +1,7 @@
+# ModernDive 0.3.0.9000
+
+- Updated links to free DataCamp course in Visualization and Data Wrangling chapters
+
 # ModernDive 0.3.0
 
 ## Content changes
