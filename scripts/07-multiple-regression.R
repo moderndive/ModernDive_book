@@ -13,6 +13,7 @@ library(gridExtra)
 
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(ISLR)
+data("Credit")
 Credit <- Credit %>%
   select(Balance, Limit, Income, Rating, Age)
 
