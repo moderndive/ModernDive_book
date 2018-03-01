@@ -52,7 +52,7 @@ Credit %>%
   cor() %>% 
   knitr::kable(
     digits = 3,
-    caption = "Correlations between credit card balance, credit limit, and credit rating", 
+    caption = "Correlations between credit card balance, credit limit, and income", 
     booktabs = TRUE
   )
 
