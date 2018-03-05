@@ -172,6 +172,12 @@ regression_points %>%
     booktabs = TRUE
   )
 
+## ---- eval=FALSE, echo=TRUE----------------------------------------------
+## ggplot(regression_points, aes(x = bty_avg, y = residual)) +
+##   geom_point() +
+##   labs(x = "Beauty Score", y = "Residual") +
+##   geom_hline(yintercept = 0, col = "blue", size = 1)
+
 ## ----numxplot6, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score"----
 ggplot(regression_points, aes(x = bty_avg, y = residual)) +
   geom_point() +
@@ -197,6 +203,11 @@ ggplot(resid_ex, aes(x = bty_avg, y = eps)) +
   labs(x = "Beauty Score", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue", size = 1) +
   facet_wrap(~type)
+
+## ---- eval=FALSE, echo=TRUE----------------------------------------------
+## ggplot(regression_points, aes(x = residual)) +
+##   geom_histogram(binwidth = 0.25, color = "white") +
+##   labs(x = "Residual")
 
 ## ----model1residualshist, echo=FALSE, warning=FALSE, fig.cap= "Histogram of residuals"----
 ggplot(regression_points, aes(x = residual)) +
