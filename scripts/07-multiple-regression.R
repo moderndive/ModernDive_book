@@ -291,7 +291,6 @@ data_frame(
   `Slope for age` = c(-0.004, -0.018)
 ) %>% 
   knitr::kable(
-    digits = 3,
     caption = "Comparison of male and female intercepts and age slopes", 
     booktabs = TRUE
   )
