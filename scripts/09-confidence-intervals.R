@@ -1,3 +1,8 @@
+## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
+# Packages needed internally, but not in text.
+library(knitr)
+library(readr)
+
 ## ---- message=FALSE, warning=FALSE---------------------------------------
 library(dplyr)
 library(ggplot2)
@@ -24,6 +29,89 @@ plot <- sampling_distribution %>%
   visualize()
 plot +
   geom_vline(xintercept = conf_int, col = "red", size = 1)
+
+## ---- eval=TRUE, message=FALSE, warning=FALSE----------------------------
+library(readr)
+tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv")
+
+## ---- eval=FALSE, message=FALSE, warning=FALSE---------------------------
+## conf_ints <- tactile_prop_red %>%
+##   rename(p_hat = prop_red) %>%
+##   mutate(
+##     n = 50,
+##     SE = sqrt(p_hat*(1-p_hat)/n),
+##     MoE = 1.96 * SE,
+##     conf_low = p_hat - MoE,
+##     conf_high = p_hat + MoE
+##   )
+## conf_ints
+
+## ---- echo=FALSE, message=FALSE, warning=FALSE---------------------------
+conf_ints <- tactile_prop_red %>% 
+  rename(p_hat = prop_red) %>% 
+  select(-replicate) %>% 
+  mutate(
+    n = 50, 
+    SE = sqrt(p_hat*(1-p_hat)/n),
+    MoE = 1.96*SE,
+    conf_low = p_hat - MoE,
+    conf_high = p_hat + MoE,
+    y = 1:n()
+  )
+conf_ints %>% 
+  select(-y) %>% 
+  kable(
+    digits = 3,
+    caption = "33 confidence intervals based on 33 tactile samples of size n=50", 
+    booktabs = TRUE
+  )
+
+## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals based on 33 tactile samples of size n=50", fig.height=6----
+groups <- conf_ints$group
+conf_ints %>% 
+    mutate(
+      p = 900/2400,
+      captured = conf_low <= p & p <= conf_high
+    ) %>% 
+    ggplot() +
+    geom_point(aes(x=p_hat, y=y, col=captured)) +
+    geom_vline(xintercept=900/2400, col="red") +
+  geom_segment(aes(y=y, yend=y, x=conf_low, xend=conf_high, col=captured)) +
+  scale_y_continuous(breaks=1:33, labels=groups) +
+  labs(
+    x = expression("Proportion red"),
+    y = "",
+    title=expression(paste("95% confidence intervals for ", p, sep=""))
+  ) +
+  scale_color_manual(values=c("blue", "orange")) 
+
+## ----virtual-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"----
+set.seed(81)
+sampling_responses <- data_frame(
+  p_hat = rbinom(n=100, prob = 900/2400, size=50)/50
+) %>% 
+  mutate(
+    Group = 1:n(), 
+    n=50,
+    SE = sqrt(p_hat*(1-p_hat)/n),
+    MoE = 1.96*SE,
+    left = p_hat - MoE,
+    right = p_hat + MoE,
+    y = 1:n(),
+    p = 900/2400,
+    captured = left <= p & p <= right
+  )
+
+ggplot(sampling_responses) +
+  geom_point(aes(x=p_hat, y=y, col=captured)) +
+  geom_segment(aes(y=y, yend=y, x=left, xend=right, col=captured)) +
+  labs(
+    x = expression("Proportion red"),
+    y = "Replicate ID",
+    title=expression(paste("95% confidence intervals for ", p, sep=""))
+  ) +
+  scale_color_manual(values=c("blue", "orange")) + 
+  geom_vline(xintercept=900/2400, col="red") 
 
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(dplyr)
