@@ -32,7 +32,13 @@ show_solutions <- function(section){
   }
 ```
 
----
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+# Packages needed internally, but not in text.
+library(knitr)
+library(readr)
+```
+
+
 
 ```{block, type='learncheck', purl=FALSE}
 **Note: This chapter is still under construction. If you would like to contribute, please check us out on GitHub at <https://github.com/moderndive/moderndive_book>.**
@@ -44,7 +50,8 @@ show_solutions <- function(section){
 </center>
 ```
 
----
+
+
 
 
 ## Sneak peak of `infer`
@@ -86,7 +93,139 @@ plot +
 ```
 
 
----
+
+## Continuing tactile sampling exercise
+
+Recall our tactile sampling exercise from Chapter \@ref(sampling) where 33 groups of students took samples of size $n=50$ from a population of $N=2400$ balls.
+
+```{r, eval=TRUE, message=FALSE, warning=FALSE}
+library(readr)
+tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv")
+```
+
+
+### Constructing a confidence interval
+
+To construct a confidence interval for $p$ the unknown true population parameter we
+
+1. Collect a sample of size $n$
+1. Compute $\widehat{p}$
+1. Compute the standard error $\text{SE} = \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
+1. Compute the margin of error $\text{MoE} = 1.96 \times \text{SE}$
+1. Compute both end points of the confidence interval:
+    + `conf_low`: $\widehat{p} - \text{MoE}$ = $\widehat{p} - 1.96\times\text{SE}$
+    + `conf_high`: $\widehat{p} + \text{MoE}$ = $\widehat{p} + 1.96\times\text{SE}$
+
+Let's do that for 33 samples of size $n=50$ saved in `tactile_prop_red` by adding/modifying new columns:
+
+1. Rename `prop_red` to `p_hat`, the official name of the sample proportion
+1. Make explicit the sample size `n` of $n=50$
+1. the standard error `SE`
+2. the margin of error `MoE`
+3. the left endpoint of the confidence interval `left`
+4. the right endpoint of the confidence interval `right`
+
+```{r, eval=FALSE, message=FALSE, warning=FALSE}
+conf_ints <- tactile_prop_red %>% 
+  rename(p_hat = prop_red) %>% 
+  mutate(
+    n = 50,
+    SE = sqrt(p_hat*(1-p_hat)/n),
+    MoE = 1.96 * SE,
+    conf_low = p_hat - MoE,
+    conf_high = p_hat + MoE
+  )
+conf_ints
+```
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+conf_ints <- tactile_prop_red %>% 
+  rename(p_hat = prop_red) %>% 
+  select(-replicate) %>% 
+  mutate(
+    n = 50, 
+    SE = sqrt(p_hat*(1-p_hat)/n),
+    MoE = 1.96*SE,
+    conf_low = p_hat - MoE,
+    conf_high = p_hat + MoE,
+    y = 1:n()
+  )
+conf_ints %>% 
+  select(-y) %>% 
+  kable(
+    digits = 3,
+    caption = "33 confidence intervals based on 33 tactile samples of size n=50", 
+    booktabs = TRUE
+  )
+```
+
+Let's plot:
+
+1. These 33 confidence intervals for $p$: from `conf_low` to `conf_high`
+1. The true population proportion $p = \frac{900}{2400} = 0.375$ with a red vertical line
+
+```{r tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals based on 33 tactile samples of size n=50", fig.height=6}
+groups <- conf_ints$group
+conf_ints %>% 
+    mutate(
+      p = 900/2400,
+      captured = conf_low <= p & p <= conf_high
+    ) %>% 
+    ggplot() +
+    geom_point(aes(x=p_hat, y=y, col=captured)) +
+    geom_vline(xintercept=900/2400, col="red") +
+  geom_segment(aes(y=y, yend=y, x=conf_low, xend=conf_high, col=captured)) +
+  scale_y_continuous(breaks=1:33, labels=groups) +
+  labs(
+    x = expression("Proportion red"),
+    y = "",
+    title=expression(paste("95% confidence intervals for ", p, sep=""))
+  ) +
+  scale_color_manual(values=c("blue", "orange")) 
+```
+
+We see that:
+
+* In 31 cases, the confidence intervals "capture" the true $p = \frac{900}{2400} = 0.375$
+* In 2 cases, the confidence intervals do not "capture" the true $p = \frac{900}{2400} = 0.375$
+
+Let's say however, we repeated the above 100 times, not tactilely, but virtually. What do I mean? Do this 100 times
+
+1. Simulate collecting a sample of size $n=50$
+1. Compute the confidence interval for $p$
+
+Here are the results:
+
+```{r virtual-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"}
+set.seed(81)
+sampling_responses <- data_frame(
+  p_hat = rbinom(n=100, prob = 900/2400, size=50)/50
+) %>% 
+  mutate(
+    Group = 1:n(), 
+    n=50,
+    SE = sqrt(p_hat*(1-p_hat)/n),
+    MoE = 1.96*SE,
+    left = p_hat - MoE,
+    right = p_hat + MoE,
+    y = 1:n(),
+    p = 900/2400,
+    captured = left <= p & p <= right
+  )
+
+ggplot(sampling_responses) +
+  geom_point(aes(x=p_hat, y=y, col=captured)) +
+  geom_segment(aes(y=y, yend=y, x=left, xend=right, col=captured)) +
+  labs(
+    x = expression("Proportion red"),
+    y = "Replicate ID",
+    title=expression(paste("95% confidence intervals for ", p, sep=""))
+  ) +
+  scale_color_manual(values=c("blue", "orange")) + 
+  geom_vline(xintercept=900/2400, col="red") 
+```
+
+We see that of our 100 confidence intervals based on samples of size $n=50$, 96 of them captured the true $p = \frac{900}{2400}$, whereas 4 of them missed. As we create more and more confidence intervals based on more and more samples, about 95% of these intervals will capture. In other words our procedure is "95% reliable."
+
 
 
 ## Under construction...
@@ -132,8 +271,6 @@ There is only one CI
 
 
 
-
----
 
 ## Bootstrapping
 
@@ -331,7 +468,7 @@ knitr::include_graphics("images/bootstrap.png")
 
 
 
----
+
 
 ## Relation to hypothesis testing
 
@@ -437,7 +574,7 @@ The important thing to check here is whether 0 is contained in the confidence in
 
 
 
----
+
 
 ## Effect size
 
@@ -487,7 +624,7 @@ Describe how $s / \sqrt{n}$ does in approximating the standard error for these t
 
 
 
----
+
 
 ## Conclusion  
 
