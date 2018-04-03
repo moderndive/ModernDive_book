@@ -1,7 +1,13 @@
+## ----message=FALSE, warning=FALSE----------------------------------------
+library(dplyr)
+library(ggplot2)
+library(moderndive)
+# For loading CSV files:
+library(readr)
+
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
-library(readr)
 
 ## ---- message=FALSE, warning=FALSE---------------------------------------
 library(dplyr)
@@ -85,26 +91,59 @@ conf_ints %>%
   ) +
   scale_color_manual(values=c("blue", "orange")) 
 
-## ----virtual-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"----
-set.seed(81)
-sampling_responses <- data_frame(
-  p_hat = rbinom(n=100, prob = 900/2400, size=50)/50
-) %>% 
+## ------------------------------------------------------------------------
+# First: Take 100 virtual samples of n=50 balls
+virtual_samples <- bowl %>% 
+  rep_sample_n(size = 50, reps = 100)
+
+# Second: For each virtual sample compute the proportion red
+virtual_prop_red <- virtual_samples %>% 
+  group_by(replicate) %>% 
+  summarize(red = sum(color == "red")) %>% 
+  mutate(prop_red = red / 50)
+
+# Third: Compute the 95% confidence interval as above
+virtual_prop_red <- virtual_prop_red %>% 
+  rename(p_hat = prop_red) %>% 
   mutate(
-    Group = 1:n(), 
-    n=50,
+    n = 50,
     SE = sqrt(p_hat*(1-p_hat)/n),
-    MoE = 1.96*SE,
-    left = p_hat - MoE,
-    right = p_hat + MoE,
-    y = 1:n(),
-    p = 900/2400,
-    captured = left <= p & p <= right
+    MoE = 1.96 * SE,
+    conf_low = p_hat - MoE,
+    conf_high = p_hat + MoE
   )
 
-ggplot(sampling_responses) +
+## ----virtual-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"----
+set.seed(79)
+
+virtual_samples <- bowl %>% 
+  rep_sample_n(size = 50, reps = 100)
+
+# Second: For each virtual sample compute the proportion red
+virtual_prop_red <- virtual_samples %>% 
+  group_by(replicate) %>% 
+  summarize(red = sum(color == "red")) %>% 
+  mutate(prop_red = red / 50)
+
+# Third: Compute the 95% confidence interval as above
+virtual_prop_red <- virtual_prop_red %>% 
+  rename(p_hat = prop_red) %>% 
+  mutate(
+    n = 50,
+    SE = sqrt(p_hat*(1-p_hat)/n),
+    MoE = 1.96 * SE,
+    conf_low = p_hat - MoE,
+    conf_high = p_hat + MoE
+  ) %>% 
+  mutate(
+    y = 1:n(),
+    p = 900/2400,
+    captured = conf_low <= p & p <= conf_high
+  )
+
+ggplot(virtual_prop_red) +
   geom_point(aes(x=p_hat, y=y, col=captured)) +
-  geom_segment(aes(y=y, yend=y, x=left, xend=right, col=captured)) +
+  geom_segment(aes(y=y, yend=y, x=conf_low, xend=conf_high, col=captured)) +
   labs(
     x = expression("Proportion red"),
     y = "Replicate ID",
