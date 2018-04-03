@@ -36,9 +36,9 @@ plot <- sampling_distribution %>%
 plot +
   geom_vline(xintercept = conf_int, col = "red", size = 1)
 
-## ---- eval=TRUE, message=FALSE, warning=FALSE----------------------------
-library(readr)
-tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv")
+## ---- eval=FALSE, message=FALSE, warning=FALSE---------------------------
+## library(readr)
+## tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv")
 
 ## ---- eval=FALSE, message=FALSE, warning=FALSE---------------------------
 ## conf_ints <- tactile_prop_red %>%
@@ -53,7 +53,7 @@ tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampl
 ## conf_ints
 
 ## ---- echo=FALSE, message=FALSE, warning=FALSE---------------------------
-conf_ints <- tactile_prop_red %>% 
+conf_ints <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv") %>% 
   rename(p_hat = prop_red) %>% 
   select(-replicate) %>% 
   mutate(
