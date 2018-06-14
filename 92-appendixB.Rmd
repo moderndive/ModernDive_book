@@ -27,14 +27,11 @@ knitr::opts_chunk$set(tidy = FALSE,
 ```{r}
 library(dplyr)
 library(ggplot2)
-library(mosaic)
+library(infer)
 library(knitr)
 library(readr)
+library(janitor)
 ```
-
-## Under construction...
-
-The content here will be deprecated with a shift to using the `infer` package in the months to come.
 
 ## Inference mind map
 
@@ -67,19 +64,19 @@ this survey is the age at first marriage. 5,534 randomly sampled US women betwee
 
 ### Competing hypotheses
 
-#### In words
+#### In words {-}
 
 - Null hypothesis: The mean age of first marriage for all US women from 2006 to 2010 is equal to 23 years.
 
 - Alternative hypothesis:  The mean age of first marriage for all US women from 2006 to 2010 is greater than 23 years.
 
 
-#### In symbols (with annotations)
+#### In symbols (with annotations) {-}
 
 - $H_0: \mu = \mu_{0}$, where $\mu$ represents the mean age of first marriage for all US women from 2006 to 2010 and $\mu_0$ is 23.
 - $H_A: \mu > 23$
 
-#### Set $\alpha$
+#### Set $\alpha$ {-}
 
 It's important to set the significance level before starting the testing using the data. Let's set the significance level at 5\% here.
 
@@ -89,11 +86,11 @@ It's important to set the significance level before starting the testing using t
 #download.file("http://ismayc.github.io/teaching/sample_problems/ageAtMar.csv", 
 #  destfile = "data/ageAtMar.csv",
 #  method = "curl")
-ageAtMar <- read_csv("data/ageAtMar.csv")
+age_at_marriage <- read_csv("data/ageAtMar.csv")
 ```
 
 ```{r summarize1}
-age_summ <- ageAtMar %>%
+age_summ <- age_at_marriage %>%
   summarize(sample_size = n(),
     mean = mean(age),
     sd = sd(age),
@@ -108,12 +105,20 @@ kable(age_summ)
 The histogram below also shows the distribution of `age`.
 
 ```{r hist1b}
-ageAtMar %>% ggplot(aes(x = age)) +
+ggplot(data = age_at_marriage, mapping = aes(x = age)) +
   geom_histogram(binwidth = 3, color = "white")
 ```
 
+The observed statistic of interest here is the sample mean:
 
-#### Guess about statistical significance
+```{r}
+x_bar <- age_at_marriage %>% 
+  specify(response = age) %>% 
+  calculate(stat = "mean")
+```
+
+
+#### Guess about statistical significance {-}
 
 We are looking to see if the observed sample mean of `r age_summ$mean` is statistically greater than $\mu_0 = 23$.  They seem to be quite close, but we have a large sample size here.  Let's guess that the large sample size will lead us to reject this practically small difference. 
 
@@ -121,18 +126,18 @@ We are looking to see if the observed sample mean of `r age_summ$mean` is statis
 
 ### Non-traditional methods
 
-```{r include=FALSE}
+#### Bootstrapping for hypothesis test {-}
+
+In order to look to see if the observed sample mean of `r age_summ$mean` is statistically greater than $\mu_0 = 23$, we need to account for the sample size.  We also need to determine a process that replicates how the original sample of size `r nrow(age_at_marriage)` was selected.  
+
+We can use the idea of *bootstrapping* to simulate the population from which the sample came and then generate samples from that simulated population to account for sampling variability.  Recall how bootstrapping would apply in this context:
+
+```{r echo=FALSE}
 mu0 <- 23
 ```
 
 
-#### Bootstrapping for hypothesis test
-
-In order to look to see if the observed sample mean of `r age_summ$mean` is statistically greater than $\mu_0 = 23$, we need to account for the sample size.  We also need to determine a process that replicates how the original sample of size `r nrow(ageAtMar)` was selected.  
-
-We can use the idea of *bootstrapping* to simulate the population from which the sample came and then generate samples from that simulated population to account for sampling variability.  Recall how bootstrapping would apply in this context:
-
-1. Sample with replacement from our original sample of `r nrow(ageAtMar)` women and repeat this process 10,000 times, 
+1. Sample with replacement from our original sample of `r nrow(age_at_marriage)` women and repeat this process 10,000 times, 
 2. calculate the mean for each of the 10,000 bootstrap samples created in Step 1.,
 3. combine all of these bootstrap statistics calculated in Step 2 into a `boot_distn` object, and
 4. shift the center of this distribution over to the null value of `r mu0`. (This is needed since it will be centered at `r age_summ$mean` via the process of bootstrapping.)
@@ -140,91 +145,88 @@ We can use the idea of *bootstrapping* to simulate the population from which the
 
 ```{r, echo=FALSE}
 if(!file.exists("rds/null_distn_one_mean.rds")){
-  set.seed(2017)
-  mu0 <- 23
-  shift <- mu0 - age_summ$mean
-  null_distn_one_mean <- do(10000) * 
-    resample(ageAtMar, replace = TRUE) %>% 
-    mutate(age = age + shift) %>% 
-    summarize(mean_age = mean(age))
+  set.seed(2018)
+  null_distn_one_mean <- age_at_marriage %>% 
+    specify(response = age) %>% 
+    hypothesize(null = "point", mu = 23) %>% 
+    generate(reps = 10000) %>% 
+    calculate(stat = "mean")
   saveRDS(object = null_distn_one_mean, "rds/null_distn_one_mean.rds")
 } else {
   null_distn_one_mean <- readRDS("rds/null_distn_one_mean.rds")
 }
 ```
 ```{r sim1, eval=FALSE}
-set.seed(2017)
-mu0 <- 23
-shift <- mu0 - age_summ$mean
-null_distn_one_mean <- do(10000) * 
-  resample(ageAtMar, replace = TRUE) %>% 
-  mutate(age = age + shift) %>% 
-  summarize(mean_age = mean(age))
+set.seed(2018)
+null_distn_one_mean <- age_at_marriage %>% 
+  specify(response = age) %>% 
+  hypothesize(null = "point", mu = 23) %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "mean")
 ```
 ```{r}
-ggplot(null_distn_one_mean, aes(x = mean_age)) +
-  geom_histogram(bins = 30, color = "white")
+null_distn_one_mean %>% visualize()
 ```
 
 We can next use this distribution to observe our $p$-value.  Recall this is a right-tailed test so we will be looking for values that are greater than or equal to `r age_summ$mean` for our $p$-value.
 
 ```{r}
-obs_mean <- age_summ$mean
-ggplot(null_distn_one_mean, aes(x = mean_age)) +
-  geom_histogram(bins = 30, color = "white") +
-  geom_vline(color = "red", xintercept = obs_mean)
+null_distn_one_mean %>%
+  visualize(obs_stat = x_bar, direction = "greater")
 ```
 
-##### Calculate $p$-value
+##### Calculate $p$-value {-}
 
 ```{r}
 pvalue <- null_distn_one_mean %>%
-  filter( mean_age >= obs_mean ) %>%
-  nrow() / nrow(null_distn_one_mean)
+  get_pvalue(obs_stat = x_bar, direction = "greater")
 pvalue
 ```
 
 So our $p$-value is `r pvalue` and we reject the null hypothesis at the 5% level.  You can also see this from the histogram above that we are far into the tail of the null distribution.
 
-#### Bootstrapping for confidence interval
+#### Bootstrapping for confidence interval {-}
 
-We can also create a confidence interval for the unknown population parameter $\mu$ using our sample data using *bootstrapping*.  Note that we don't need to shift this distribution since we want the center of our confidence interval to be our point estimate $\bar{x}_{obs} = `r obs_mean`$.
+We can also create a confidence interval for the unknown population parameter $\mu$ using our sample data using *bootstrapping*. Note that we don't need to shift this distribution since we want the center of our confidence interval to be our point estimate $\bar{x}_{obs} = `r x_bar`$.
 
 ```{r, echo=FALSE}
 if(!file.exists("rds/boot_distn_one_mean.rds")){
-  boot_distn_one_mean <- do(10000) * 
-    resample(ageAtMar, replace = TRUE) %>% 
-    summarize(mean_age = mean(age))  
+  boot_distn_one_mean <- age_at_marriage %>% 
+    specify(response = age) %>% 
+    generate(reps = 10000) %>% 
+    calculate(stat = "mean")
   saveRDS(object = boot_distn_one_mean, "rds/boot_distn_one_mean.rds")
 } else {
   boot_distn_one_mean <- readRDS("rds/boot_distn_one_mean.rds")
 }
 ```
 ```{r boot1, eval=FALSE}
-boot_distn_one_mean <- do(10000) * 
-  resample(ageAtMar, replace = TRUE) %>% 
-  summarize(mean_age = mean(age))
+boot_distn_one_mean <- age_at_marriage %>% 
+  specify(response = age) %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "mean")
 ```
 
 ```{r}
-ggplot(boot_distn_one_mean, aes(x = mean_age)) +
-  geom_histogram(bins = 30, color = "white")
+boot_distn_one_mean %>% visualize()
 ```
 
 ```{r}
-boot_distn_one_mean %>% summarize(lower = quantile(mean_age, probs = 0.025),
-    upper = quantile(mean_age, probs = 0.975))
+ci <- boot_distn_one_mean %>% 
+  summarize(lower = quantile(stat, probs = 0.025),
+            upper = quantile(stat, probs = 0.975))
+ci
 ```
 
 We see that `r mu0` is not contained in this confidence interval as a plausible value of $\mu$ (the unknown population mean) and the entire interval is larger than `r mu0`.  This matches with our hypothesis test results of rejecting the null hypothesis in favor of the alternative ($\mu > 23$).
 
-**Interpretation**:  We are 95% confident the true mean age of first marriage for all US women from 2006 to 2010 is between `r boot_distn_one_mean$lower` and `r boot_distn_one_mean$upper`.
+**Interpretation**:  We are 95% confident the true mean age of first marriage for all US women from 2006 to 2010 is between `r ci$lower` and `r ci$upper`.
 
 ---
 
 ### Traditional methods
 
-#### Check conditions
+#### Check conditions {-}
 
 Remember that in order to use the shortcut (formula-based, theoretical) approach, we need to check that some conditions are met.
 
@@ -239,68 +241,57 @@ Remember that in order to use the shortcut (formula-based, theoretical) approach
 The Q-Q plot below also shows some skew.
 
 ```{r qqplotmean}
-ggplot(data = ageAtMar, mapping = aes(sample = age)) +
+ggplot(data = age_at_marriage, mapping = aes(sample = age)) +
   stat_qq()
 ```
 
 The sample size here is quite large though ($n = 5534$) so both conditions are met.
 
-#### Test statistic
+#### Test statistic {-}
 
-The test statistic is a random variable based on the sample data.  Here, we want to look at a way to estimate the population mean $\mu$.  A good guess is the sample mean $\bar{X}$.  Recall that this sample mean is actually a random variable that will vary as different samples are (theoretically, would be) collected.  We are looking to see how likely is it for us to have observed a sample mean of $\bar{x}_{obs} = `r obs_mean`$ or larger assuming that the population mean is `r mu0` (assuming the null hypothesis is true).  If the conditions are met and assuming $H_0$ is true, we can "standardize" this original test statistic of $\bar{X}$ into a $T$ statistic that follows a $t$ distribution with degrees of freedom equal to $df = n - 1$:
+The test statistic is a random variable based on the sample data.  Here, we want to look at a way to estimate the population mean $\mu$.  A good guess is the sample mean $\bar{X}$.  Recall that this sample mean is actually a random variable that will vary as different samples are (theoretically, would be) collected.  We are looking to see how likely is it for us to have observed a sample mean of $\bar{x}_{obs} = `r x_bar`$ or larger assuming that the population mean is `r mu0` (assuming the null hypothesis is true).  If the conditions are met and assuming $H_0$ is true, we can "standardize" this original test statistic of $\bar{X}$ into a $T$ statistic that follows a $t$ distribution with degrees of freedom equal to $df = n - 1$:
 
 $$ T =\dfrac{ \bar{X} - \mu_0}{ S / \sqrt{n} } \sim t (df = n - 1) $$
 
 where $S$ represents the standard deviation of the sample and $n$ is the sample size.
 
-##### Observed test statistic
+##### Observed test statistic {-}
 
-While one could compute this observed test statistic by "hand", the focus here is on the set-up of the problem and in understanding which formula for the test statistic applies.  We can use the `t.test` function to perform this analysis for us. 
+While one could compute this observed test statistic by "hand", the focus here is on the set-up of the problem and in understanding which formula for the test statistic applies.  We can use the `t_test()` function to perform this analysis for us. 
 
-```{r t.test1a}
-t.test(x = ageAtMar$age, 
+```{r t.test1a, eval=FALSE}
+t_test_results <- age_at_marriage %>% 
+  t_test(formula = age ~ NULL,
        alternative = "greater",
        mu = 23)
+t_test_results
 ```
 
 
-```{r inference1, eval=FALSE, include=FALSE}
-inference(y = ageAtMar$age, 
-          est = "mean", 
-          null = 23, 
-          alternative = "greater",
-          type = "ht", 
-          method = "theoretical", 
-          eda_plot = FALSE, 
-          inf_plot = FALSE)
+```{r t.test1b, echo=FALSE}
+t_test_results <- as.data.frame(age_at_marriage) %>% 
+  t_test(formula = age ~ NULL,
+       alternative = "greater",
+       mu = 23)
+t_test_results
 ```
 
-We see here that the $t_{obs}$ value is around 6.94. Recall that for large sample sizes the $t$ distribution is essentially the standard normal distribution and this is why the statistic is reported as `Z`.
+We see here that the $t_{obs}$ value is `r t_test_results$statistic`.
 
-#### Compute $p$-value
+#### Compute $p$-value {-}
 
-The $p$-value---the probability of observing an $t_{obs}$ value of 6.94 or more in our null distribution of a $t$ with 5433 degrees of freedom---is essentially 0.  This can also be calculated in R directly:
+The $p$-value---the probability of observing an $t_{obs}$ value of `r t_test_results$statistic` or more in our null distribution of a $t$ with 5533 degrees of freedom---is essentially `r t_test_results$p_value`.
 
-```{r pval1}
-pt(6.936, df = nrow(ageAtMar) - 1, lower.tail = FALSE)
-```
-
-We can also use the $N(0, 1)$ distribution here:
-
-```{r pval2}
-pnorm(6.936, lower.tail = FALSE)
-```
-
-#### State conclusion
+#### State conclusion {-}
 
 We, therefore, have sufficient evidence to reject the null hypothesis.  Our initial guess that our observed sample mean was statistically greater than the hypothesized mean has supporting evidence here.  Based on this sample, we have evidence that the mean age of first marriage for all US women from 2006 to 2010 is greater than 23 years.
 
-#### Confidence interval
+#### Confidence interval {-}
 
 The confidence interval reported above with `t.test` is known as a one-sided confidence interval and gives the lowest value one could expect $\mu$ to be with 95% confidence.  We usually want a range of values so we can use `alternative = "two.sided"` to get the similar values compared to the bootstrapping process:
 
 ```{r t.test1}
-t.test(x = ageAtMar$age, 
+t.test(x = age_at_marriage$age, 
        alternative = "two.sided",
        mu = 23)$conf
 ```
@@ -327,7 +318,7 @@ The CEO of a large electric utility claims that 80 percent of his 1,000,000 cust
 
 ### Competing hypotheses
 
-#### In words
+#### In words {-}
 
 - Null hypothesis: The proportion of all customers of the large electric utility satisfied with service they receive is equal 0.80.
 
@@ -341,12 +332,12 @@ The CEO of a large electric utility claims that 80 percent of his 1,000,000 cust
 - Alternative hypothesis:  There is an association between the variables in the population.
 -->
 
-#### In symbols (with annotations)
+#### In symbols (with annotations) {-}
 
 - $H_0: \pi = p_{0}$, where $\pi$ represents the proportion of all customers of the large electric utility satisfied with service they receive and $p_0$ is 0.8.
 - $H_A: \pi \ne 0.8$
 
-#### Set $\alpha$
+#### Set $\alpha$ {-}
 
 It's important to set the significance level before starting the testing using the data. Let's set the significance level at 5% here.
 
@@ -355,7 +346,7 @@ It's important to set the significance level before starting the testing using t
 ```{r read_data2}
 elec <- c(rep("satisfied", 73), rep("unsatisfied", 27)) %>% 
   as_data_frame() %>% 
-  rename("satisfy" = value)
+  rename(satisfy = value)
 ```
 
 The bar graph below also shows the distribution of `satisfy`.
@@ -365,64 +356,71 @@ ggplot(data = elec, aes(x = satisfy)) +
   geom_bar()
 ```
 
+The observed statistic is computed as
 
-#### Guess about statistical significance
+```{r}
+p_hat <- elec %>% 
+  specify(response = satisfy, success = "satisfied") %>% 
+  calculate(stat = "prop")
+```
 
-We are looking to see if the sample proportion of `r prop.table(table(elec$satisfy))[1]` is statistically different from $p_0 = 0.8$ based on this sample.  They seem to be quite close, and our sample size is not huge here ($n = 100$).  Let's guess that we do not have evidence to reject the null hypothesis.
+
+#### Guess about statistical significance {-}
+
+We are looking to see if the sample proportion of `r pull(p_hat)` is statistically different from $p_0 = 0.8$ based on this sample.  They seem to be quite close, and our sample size is not huge here ($n = 100$).  Let's guess that we do not have evidence to reject the null hypothesis.
 
 ***
 
 ### Non-traditional methods
 
-#### Simulation for hypothesis test
+#### Simulation for hypothesis test {-}
 
-In order to look to see if `r prop.table(table(elec$satisfy))[1]` is statistically different from 0.8, we need to account for the sample size.  We also need to determine a process that replicates how the original sample of size 100 was selected.  We can use the idea of an unfair coin to *simulate* this process.  We will simulate flipping an unfair coin (with probability of success 0.8 matching the null hypothesis) 100 times.  Then we will keep track of how many heads come up in those 100 flips.  Our simulated statistic matches with how we calculated the original statistic $\hat{p}$:  the number of heads (satisfied) out of our total sample of 100. We then repeat this process many times (say 10,000) to create the null distribution looking at the simulated proportions of successes:
+In order to look to see if `r pull(p_hat)` is statistically different from 0.8, we need to account for the sample size.  We also need to determine a process that replicates how the original sample of size 100 was selected.  We can use the idea of an unfair coin to *simulate* this process.  We will simulate flipping an unfair coin (with probability of success 0.8 matching the null hypothesis) 100 times.  Then we will keep track of how many heads come up in those 100 flips.  Our simulated statistic matches with how we calculated the original statistic $\hat{p}$:  the number of heads (satisfied) out of our total sample of 100. We then repeat this process many times (say 10,000) to create the null distribution looking at the simulated proportions of successes:
 
 
 ```{r, echo=FALSE}
 if(!file.exists("rds/null_distn_one_prop.rds")){
-  set.seed(2017)
-  null_distn_one_prop <- do(10000) * rflip(100, prob = 0.8)
+  set.seed(2018)
+  null_distn_one_prop <- elec %>% 
+    specify(response = satisfy, success = "satisfied") %>% 
+    hypothesize(null = "point", p = 0.8) %>% 
+    generate(reps = 10000) %>% 
+    calculate(stat = "prop")
   saveRDS(object = null_distn_one_prop, "rds/null_distn_one_prop.rds")
 } else {
   null_distn_one_prop <- readRDS("rds/null_distn_one_prop.rds")
 }
 ```
 ```{r sim2, eval=FALSE}
-set.seed(2017)
-null_distn_one_prop <- do(10000) * rflip(100, prob = 0.8)
+set.seed(2018)
+null_distn_one_prop <- elec %>% 
+  specify(response = satisfy, success = "satisfied") %>% 
+  hypothesize(null = "point", p = 0.8) %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "prop")
 ```
 
 ```{r}
-ggplot(null_distn_one_prop, aes(x = prop)) +
-  geom_histogram(bins = 30, color = "white")
+null_distn_one_prop %>% visualize()
 ```
-
-
 
 We can next use this distribution to observe our $p$-value.  Recall this is a two-tailed test so we will be looking for values that are 0.8 - 0.73 = 0.07 away from 0.8 in BOTH directions for our $p$-value:
 
 ```{r}
-p_hat <- 73/100
-dist <- 0.8 - p_hat
-ggplot(null_distn_one_prop, aes(x = prop)) +
-  geom_histogram(bins = 30, color = "white") +
-  geom_vline(color = "red", xintercept = 0.8 + dist) +
-  geom_vline(color = "red", xintercept = p_hat)
+null_distn_one_prop %>% 
+  visualize(obs_stat = p_hat, direction = "both")
 ```
 
-##### Calculate $p$-value
+##### Calculate $p$-value {-}
 
 ```{r}
-pvalue <- null_distn_one_prop %>%
-  filter( (prop >= 0.8 + dist) | (prop <= p_hat) ) %>%
-  nrow() / nrow(null_distn_one_prop)
-pvalue
+pvalue <- null_distn_one_prop %>% 
+  get_pvalue(obs_stat = p_hat, direction = "both")
 ```
 
 So our $p$-value is `r pvalue` and we fail to reject the null hypothesis at the 5% level.
 
-#### Bootstrapping for confidence interval
+#### Bootstrapping for confidence interval {-}
 
 We can also create a confidence interval for the unknown population parameter $\pi$ using our sample data.  To do so, we use *bootstrapping*, which involves 
 
@@ -434,43 +432,44 @@ We can also create a confidence interval for the unknown population parameter $\
 
 ```{r, echo=FALSE}
 if(!file.exists("rds/boot_distn_one_prop.rds")){
-  boot_distn_one_prop <- do(10000) * 
-    (elec %>% resample(size = 100, replace = TRUE) )%>% 
-    summarize(success_rate = mean(satisfy == "satisfied"))
+  boot_distn_one_prop <- elec %>% 
+    specify(response = satisfy, success = "satisfied") %>% 
+    generate(reps = 10000) %>% 
+    calculate(stat = "prop")
   saveRDS(object = boot_distn_one_prop, "rds/boot_distn_one_prop.rds")
 } else {
   boot_distn_one_prop <- readRDS("rds/boot_distn_one_prop.rds")
 }
 ```
 ```{r boot2, eval=FALSE}
-boot_distn_one_prop <- do(10000) * 
-  (elec %>% resample(size = 100, replace = TRUE) )%>% 
-  summarize(success_rate = mean(satisfy == "satisfied"))
+boot_distn_one_prop <- elec %>% 
+  specify(response = satisfy, success = "satisfied") %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "prop")
 ```
 
 Just as we use the `mean` function for calculating the mean over a numerical variable, we can also use it to compute the proportion of successes for a categorical variable where we specify what we are calling a "success" after the `==`.  (Think about the formula for calculating a mean and how R handles logical statements such as `satisfy == "satisfied"` for why this must be true.)
 
 ```{r}
-ggplot(boot_distn_one_prop, aes(x = success_rate)) +
-  geom_histogram(bins = 30, color = "white")
+boot_distn_one_prop %>% visualize()
 ```
 
 ```{r}
-boot_distn_one_prop %>% summarize(lower = quantile(success_rate, probs = 0.025),
-    upper = quantile(success_rate, probs = 0.975))
+ci <- boot_distn_one_prop %>% 
+  summarize(lower = quantile(stat, probs = 0.025),
+    upper = quantile(stat, probs = 0.975))
+ci
 ```
 
 We see that 0.80 is contained in this confidence interval as a plausible value of $\pi$ (the unknown population proportion).  This matches with our hypothesis test results of failing to reject the null hypothesis.
 
-**Interpretation**:  We are 95% confident the true proportion of customers who are satisfied with the service they receive is between `r boot_distn_one_prop$lower` and `r boot_distn_one_prop$upper`.
-
-**Note**:  You could also use the null distribution with a shift to have its center at $\hat{p} = 0.73$ instead of at $p_0 = 0.8$ and calculate its percentiles.  The confidence interval produced via this method should be comparable to the one done using bootstrapping above.
+**Interpretation**:  We are 95% confident the true proportion of customers who are satisfied with the service they receive is between `r ci$lower` and `r ci$upper`.
 
 ---
 
 ### Traditional methods
 
-#### Check conditions
+#### Check conditions {-}
 
 Remember that in order to use the shortcut (formula-based, theoretical) approach, we need to check that some conditions are met.
 
@@ -482,13 +481,13 @@ Remember that in order to use the shortcut (formula-based, theoretical) approach
 
     This condition is met since 73 and 27 are both greater than 10.
 
-#### Test statistic
+#### Test statistic {-}
 
 The test statistic is a random variable based on the sample data.  Here, we want to look at a way to estimate the population proportion $\pi$.  A good guess is the sample proportion $\hat{P}$.  Recall that this sample proportion is actually a random variable that will vary as different samples are (theoretically, would be) collected.  We are looking to see how likely is it for us to have observed a sample proportion of $\hat{p}_{obs} = `r p_hat`$ or larger assuming that the population proportion is 0.80 (assuming the null hypothesis is true).  If the conditions are met and assuming $H_0$ is true, we can standardize this original test statistic of $\hat{P}$ into a $Z$ statistic that follows a $N(0, 1)$ distribution.
 
 $$ Z =\dfrac{ \hat{P} - p_0}{\sqrt{\dfrac{p_0(1 - p_0)}{n} }} \sim N(0, 1) $$
 
-##### Observed test statistic
+##### Observed test statistic {-}
 
 While one could compute this observed test statistic by "hand" by plugging the observed values into the formula, the focus here is on the set-up of the problem and in understanding which formula for the test statistic applies. The calculation has been done in R below for completeness though:
 
@@ -501,9 +500,14 @@ n <- 100
 
 We see here that the $z_{obs}$ value is around `r z_obs`. Our observed sample proportion of `r p_hat` is `r -z_obs` standard errors below the hypothesized parameter value of `r p0`.
 
-#### Compute $p$-value
+#### Visualize and compute $p$-value {-}
 
 ```{r pvaloneprop}
+elec %>% 
+  specify(response = satisfy, success = "satisfied") %>% 
+  hypothesize(null = "point", p = 0.8) %>% 
+  calculate(stat = "z") %>% 
+  visualize(method = "theoretical", obs_stat = z_obs, direction = "both")
 2 * pnorm(z_obs)
 ```
 
@@ -523,7 +527,7 @@ stats::prop.test(x = table(elec$satisfy),
 
 Note that the 95 percent confidence interval given above matches well with the one calculated using bootstrapping.
 
-#### State conclusion
+#### State conclusion {-}
 
 We, therefore, do not have sufficient evidence to reject the null hypothesis.  Our initial guess that our observed sample proportion was not statistically greater than the hypothesized proportion has not been invalidated.  Based on this sample, we have do not evidence that the proportion of all customers of the large electric utility satisfied with service they receive is different from 0.80, at the 5% level.
 
@@ -553,24 +557,24 @@ different than that of non-college graduates. [Tweaked a bit from @isrs2014 [Cha
 
 ### Competing hypotheses
 
-#### In words
+#### In words {-}
 
 - Null hypothesis: There is no association between having an opinion on drilling and having a college degree for all registered California voters in 2010.
 
 - Alternative hypothesis:  There is an association between having an opinion on drilling and having a college degree for all registered California voters in 2010.
 
-#### Another way in words
+#### Another way in words {-}
 
 - Null hypothesis: The probability that a Californian voter in 2010 having no opinion on drilling and is a college graduate is the **same** as that of a non-college graduate.
 
 - Alternative hypothesis:  These parameter probabilities are different.
 
-#### In symbols (with annotations)
+#### In symbols (with annotations) {-}
 
 - $H_0: \pi_{college} = \pi_{no\_college}$ or $H_0: \pi_{college} - \pi_{no\_college} = 0$, where $\pi$ represents the probability of not having an opinion on drilling.
 - $H_A: \pi_{college} - \pi_{no\_college} \ne 0$
 
-#### Set $\alpha$
+#### Set $\alpha$ {-}
 
 It's important to set the significance level before starting the testing using the data. Let's set the significance level at 5% here.
 
@@ -584,13 +588,12 @@ offshore <- read_csv("data/offshore.csv")
 ```
 
 ```{r summarize2}
-table(offshore$college_grad, offshore$response)
+offshore %>% tabyl(college_grad, response)
 off_summ <- offshore %>% 
   group_by(college_grad) %>% 
   summarize(prop_no_opinion = mean(response == "no opinion"),
     sample_size = n())
 ```
-
 
 ```{r stacked_bar}
 ggplot(offshore, aes(x = college_grad, fill = response)) +
@@ -598,20 +601,20 @@ ggplot(offshore, aes(x = college_grad, fill = response)) +
   coord_flip()
 ```
 
-#### Guess about statistical significance
+#### Guess about statistical significance {-}
 
-We are looking to see if a difference exists in the heights of the bars corresponding to `no opinion` for the plot.  Based solely on the plot, we have little reason to believe that a difference exists since the bars seem to be about the same height, BUT...it's important to use statistics to see if that difference is actually statistically significant!
+We are looking to see if a difference exists in the size of the bars corresponding to `no opinion` for the plot.  Based solely on the plot, we have little reason to believe that a difference exists since the bars seem to be about the same size, BUT...it's important to use statistics to see if that difference is actually statistically significant!
 
 
 ***
 
 ### Non-traditional methods
 
-#### Collecting summary info
+#### Collecting summary info {-}
 
 Next we will assign some key values to variable names in R:
 
-```{r stats1}
+```{r stats1, include=FALSE}
 phat_nograd <- off_summ$prop_no_opinion[1]
 phat_grad <- off_summ$prop_no_opinion[2]
 obs_diff <- phat_grad - phat_nograd
@@ -619,8 +622,16 @@ n_nograd <- off_summ$sample_size[1]
 n_grad <- off_summ$sample_size[2]
 ```
 
+The observed statistic is
 
-#### Randomization for hypothesis test
+```{r}
+d_hat <- offshore %>% 
+  specify(response ~ college_grad, success = "no opinion") %>% 
+  calculate(stat = "diff in props", order = c("yes", "no"))
+```
+
+
+#### Randomization for hypothesis test {-}
 
 In order to look to see if the observed sample proportion of no opinion for college graduates of `r phat_nograd` is statistically different than that for graduates of `r phat_grad`, we need to account for the sample sizes.  Note that this is the same as looking to see if $\hat{p}_{grad} - \hat{p}_{nograd}$ is statistically different than 0.  We also need to determine a process that replicates how the original group sizes of `r n_nograd` and `r n_grad` were selected.  
 
@@ -629,114 +640,85 @@ We can use the idea of *randomization testing* (also known as *permutation testi
 
 ```{r, echo=FALSE}
 if(!file.exists("rds/null_distn_two_props.rds")){
-  set.seed(2017)
-  many_shuffles <- do(10000) * 
-    (offshore %>%
-       mutate(college_grad = shuffle(college_grad)) %>% 
-       group_by(college_grad) %>%
-       summarize(prop_no_opinion = mean(response == "no opinion"))
-    )
-  null_distn_two_props <- many_shuffles %>% 
-    group_by(.index) %>%
-    summarize(diffprop = diff(prop_no_opinion))
+  set.seed(2018)
+  null_distn_two_props <- offshore %>% 
+    specify(response ~ college_grad, success = "no opinion") %>%
+    hypothesize(null = "independence") %>% 
+    generate(reps = 10000) %>% 
+    calculate(stat = "diff in props", order = c("yes", "no"))
   saveRDS(object = null_distn_two_props, "rds/null_distn_two_props.rds")
 } else {
   null_distn_two_props <- readRDS("rds/null_distn_two_props.rds")
 }
 ```
 ```{r sim3, eval=FALSE}
-set.seed(2017)
-many_shuffles <- do(10000) * 
-  (offshore %>%
-     mutate(college_grad = shuffle(college_grad)) %>% 
-     group_by(college_grad) %>%
-     summarize(prop_no_opinion = mean(response == "no opinion"))
-   )
-null_distn_two_props <- many_shuffles %>% 
-  group_by(.index) %>%
-  summarize(diffprop = diff(prop_no_opinion))
+set.seed(2018)
+null_distn_two_props <- offshore %>% 
+  specify(response ~ college_grad, success = "no opinion") %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "diff in props", order = c("yes", "no"))
 ```
-
 
 ```{r}
-ggplot(null_distn_two_props, aes(x = diffprop)) +
-  geom_histogram(bins = 25, color = "white")
+null_distn_two_props %>% visualize()
 ```
+
 
 We can next use this distribution to observe our $p$-value.  Recall this is a two-tailed test so we will be looking for values that are greater than or equal to `r obs_diff` or less than or equal to `r -obs_diff` for our $p$-value.
 
 ```{r}
-ggplot(null_distn_two_props, aes(x = diffprop)) +
-  geom_histogram(bins = 20, color = "white") +
-  geom_vline(color = "red", xintercept = obs_diff) +
-  geom_vline(color = "red", xintercept = -obs_diff)
+null_distn_two_props %>% 
+  visualize(obs_stat = d_hat, direction = "two_sided")
 ```
 
-##### Calculate $p$-value
+
+##### Calculate $p$-value {-}
 
 ```{r}
-pvalue <- null_distn_two_props %>%
-  filter( (diffprop <= obs_diff) | (diffprop >= -obs_diff) ) %>%
-  nrow() / nrow(null_distn_two_props)
-pvalue
+pvalue <- null_distn_two_props %>% 
+  get_pvalue(obs_stat = d_hat, direction = "two_sided")
 ```
 
 So our $p$-value is `r pvalue` and we reject the null hypothesis at the 5% level.  You can also see this from the histogram above that we are far into the tails of the null distribution.
 
-#### Bootstrapping for confidence interval
+#### Bootstrapping for confidence interval {-}
 
-We can also create a confidence interval for the unknown population parameter $\pi_{college} - \pi_{no\_college}$ using our sample data with *bootstrapping*.  Here we will bootstrap each of the groups with replacement instead of shuffling.  This is done using the `groups`
-argument in the `resample` function to fix the size of each group to
-be the same as the original group sizes of `r n_nograd` for non-college graduates and `r n_grad` for college graduates.
+We can also create a confidence interval for the unknown population parameter $\pi_{college} - \pi_{no\_college}$ using our sample data with *bootstrapping*.
 
 
 ```{r, echo=FALSE}
 if(!file.exists("rds/boot_distn_two_props.rds")){
-  boot_props <- do(10000) *
-    offshore %>% 
-    resample(replace = TRUE, groups = college_grad) %>% 
-    group_by(college_grad) %>% 
-    summarize(prop_no_opinion = mean(response == "no opinion"))
-  
-  # Next, we calculate the difference in sample proportions for each of the 10,000 replications:
-  boot_distn_two_props <- boot_props %>% 
-    group_by(.index) %>% 
-    summarize(diffprop = diff(prop_no_opinion))
+  boot_distn_two_props <- offshore %>% 
+    specify(response ~ college_grad, success = "no opinion") %>%
+    generate(reps = 10000) %>% 
+    calculate(stat = "diff in props", order = c("yes", "no"))
   saveRDS(object = boot_distn_two_props, "rds/boot_distn_two_props.rds")
 } else {
   boot_distn_two_props <- readRDS("rds/boot_distn_two_props.rds")
 }
 ```
 ```{r boot3, eval=FALSE}
-boot_props <- do(10000) *
-  offshore %>% 
-  resample(replace = TRUE, groups = college_grad) %>% 
-  group_by(college_grad) %>% 
-  summarize(prop_no_opinion = mean(response == "no opinion"))
-
-# Next, we calculate the difference in sample proportions for each of the 10,000 replications:
-boot_distn_two_props <- boot_props %>% 
-  group_by(.index) %>% 
-  summarize(diffprop = diff(prop_no_opinion))
+boot_distn_two_props <- offshore %>% 
+  specify(response ~ college_grad, success = "no opinion") %>%
+  generate(reps = 10000) %>% 
+  calculate(stat = "diff in props", order = c("yes", "no"))
 ```
 
 ```{r}
-ggplot(boot_distn_two_props, aes(x = diffprop)) +
-  geom_histogram(bins = 30, color = "white")
+boot_distn_two_props %>% visualize()
 ```
 
 ```{r}
 ci_boot <- boot_distn_two_props %>% 
-  summarize(lower = quantile(diffprop, probs = 0.025),
-    upper = quantile(diffprop, probs = 0.975))
+  summarize(lower = quantile(stat, probs = 0.025),
+    upper = quantile(stat, probs = 0.975))
 ci_boot
 ```
 
 We see that 0 is not contained in this confidence interval as a plausible value of $\pi_{college} - \pi_{no\_college}$ (the unknown population parameter).  This matches with our hypothesis test results of rejecting the null hypothesis.  Since zero is not a plausible value of the population parameter, we have evidence that the proportion of college graduates in California with no opinion on drilling is different than that of non-college graduates.
 
 **Interpretation**:  We are 95% confident the true proportion of non-college graduates with no opinion on offshore drilling in California is between `r round(-ci_boot$lower, 2)` dollars smaller to `r round(-ci_boot$upper, 2)` dollars smaller than for college graduates.
-
-**Note**:  You could also use the null distribution based on randomization with a shift to have its center at $\hat{p}_{college} - \hat{p}_{no\_college} = \$`r round(obs_diff, 2)`$ instead of at 0 and calculate its percentiles.  The confidence interval produced via this method should be comparable to the one done using bootstrapping above.
 
 ---
 
@@ -768,40 +750,32 @@ The test statistic is a random variable based on the sample data.  Here, we are 
 
 $$ Z =\dfrac{ (\hat{P}_1 - \hat{P}_2) - 0}{\sqrt{\dfrac{\hat{P}(1 - \hat{P})}{n_1} + \dfrac{\hat{P}(1 - \hat{P})}{n_2} }} \sim N(0, 1) $$ where $\hat{P} = \dfrac{\text{total number of successes} }{ \text{total number of cases}}.$
 
-#### Observed test statistic
+#### Observed test statistic {-}
 
 While one could compute this observed test statistic by "hand", the focus here is on the set-up of the problem and in understanding which formula for the test statistic applies.  We can use the `prop.test` function to perform this analysis for us.
 
 ```{r prop.test2}
-stats::prop.test(x = table(offshore$college_grad, offshore$response),
-       n = nrow(offshore),
-       alternative = "two.sided",
-       correct = FALSE)
+z_hat <- offshore %>% 
+  specify(response ~ college_grad, success = "no opinion") %>% 
+  calculate(stat = "z", order = c("yes", "no"))
 ```
 
-`prop.test` does a $\chi^2$ test here but this matches up exactly with what we would expect from the test statistic above since $Z^2 = \chi^2$ so $\sqrt{9.99} = 3.16 = z_{obs}$:  The $p$-values are the same because we are focusing on a two-tailed test.  The observed difference in sample proportions is 3.16 standard deviations larger than 0.
+The observed difference in sample proportions is 3.16 standard deviations smaller than 0.
 
 
 ```{r infer1, include=FALSE, eval=FALSE}
-inference(x = offshore$college_grad, 
-          y = offshore$response, 
-          est = "proportion", 
-          success = "no opinion",
-          alternative = "twosided", 
-          type = "ht", 
-          null = 0,
-          method = "theoretical", 
-          eda_plot = FALSE, 
-          inf_plot = FALSE)
+offshore %>% 
+  specify(response ~ college_grad, success = "no opinion") %>%
+  hypothesize(null = "independence") %>% 
+  calculate(stat = "z", order = c("yes", "no")) %>% 
+  visualize(method = "theoretical", obs_stat = z_hat, direction = "both")
 ```
 
-The $p$-value---the probability of observing a $Z$ value of 3.16 or more extreme in our null distribution---is 0.0016.  This can also be calculated in R directly:
+The $p$-value---the probability of observing a $Z$ value of -3.16 or more extreme in our null distribution---is 0.0016.  This can also be calculated in R directly:
 
 ```{r pval2prop}
-2 * pnorm(3.16, lower.tail = FALSE)
+2 * pnorm(-3.16, lower.tail = TRUE)
 ```
-
-The 95% confidence interval is also stated above in the `prop.test` results.
 
 ### State conclusion
 
@@ -832,24 +806,24 @@ a hypothesis test based on two randomly selected samples from the 2000 Census. [
 
 ### Competing hypotheses
 
-#### In words
+#### In words {-}
 
 - Null hypothesis: There is no association between income and location (Cleveland, OH and Sacramento, CA).
 
 - Alternative hypothesis:  There is an association between income and location (Cleveland, OH and Sacramento, CA).
 
-#### Another way in words
+#### Another way in words {-}
 
 - Null hypothesis: The mean income is the **same** for both cities.
 
 - Alternative hypothesis:  The mean income is different for the two cities.
 
-#### In symbols (with annotations)
+#### In symbols (with annotations) {-}
 
 - $H_0: \mu_{sac} = \mu_{cle}$ or $H_0: \mu_{sac} - \mu_{cle} = 0$, where $\mu$ represents the average income.
 - $H_A: \mu_{sac} - \mu_{cle} \ne 0$
 
-#### Set $\alpha$
+#### Set $\alpha$ {-}
 
 It's important to set the significance level before starting the testing using the data. Let's set the significance level at 5% here.
 
@@ -859,14 +833,14 @@ It's important to set the significance level before starting the testing using t
 #download.file("http://ismayc.github.io/teaching/sample_problems/cleSac.txt", 
 #              destfile = "data/cleSac.txt", 
 #              method = "curl")
-cleSac <- read.delim("data/cleSac.txt") %>%
+cle_sac <- read.delim("data/cleSac.txt") %>%
   rename(metro_area = Metropolitan_area_Detailed,
          income = Total_personal_income) %>%
   na.omit()
 ```
 
 ```{r summarize3}
-inc_summ <- cleSac %>% group_by(metro_area) %>%
+inc_summ <- cle_sac %>% group_by(metro_area) %>%
   summarize(sample_size = n(),
     mean = mean(income),
     sd = sd(income),
@@ -881,13 +855,13 @@ kable(inc_summ)
 The boxplot below also shows the mean for each group highlighted by the red dots.
 
 ```{r boxplot}
-ggplot(cleSac, aes(x = metro_area, y = income)) +
+ggplot(cle_sac, aes(x = metro_area, y = income)) +
   geom_boxplot() +
   stat_summary(fun.y = "mean", geom = "point", color = "red")
 ```
 
 
-#### Guess about statistical significance
+#### Guess about statistical significance {-}
 
 We are looking to see if a difference exists in the mean income of the two levels of the explanatory variable.  Based solely on the boxplot, we have reason to believe that no difference exists.  The distributions of income seem similar and the means fall in roughly the same place.
 
@@ -896,11 +870,12 @@ We are looking to see if a difference exists in the mean income of the two level
 
 ### Non-traditional methods
 
-#### Collecting summary info
+#### Collecting summary info {-}
 
-Next we will assign some key values to variable names in R:
+We now compute the observed statistic:
 
-```{r stats2}
+```{r stats2, include=FALSE}
+# Next we will assign some key values to variable names in R:
 xbar_cle <- inc_summ$mean[1]
 xbar_sac <- inc_summ$mean[2]
 obs_diff <- xbar_sac - xbar_cle
@@ -908,8 +883,15 @@ n_cle <- inc_summ$sample_size[1]
 n_sac <- inc_summ$sample_size[2]
 ```
 
+```{r}
+d_hat <- cle_sac %>% 
+  specify(income ~ metro_area) %>% 
+  calculate(stat = "diff in means", 
+            order = c("Sacramento_ CA", "Cleveland_ OH"))
+```
 
-#### Randomization for hypothesis test
+
+#### Randomization for hypothesis test {-}
 
 In order to look to see if the observed sample mean for Sacramento of `r xbar_cle` is statistically different than that for Cleveland of `r xbar_sac`, we need to account for the sample sizes.  Note that this is the same as looking to see if $\bar{x}_{sac} - \bar{x}_{cle}$ is statistically different than 0.  We also need to determine a process that replicates how the original group sizes of `r n_cle` and `r n_sac` were selected.  
 
@@ -917,60 +899,49 @@ We can use the idea of *randomization testing* (also known as *permutation testi
 
 ```{r, echo=FALSE}
 if(!file.exists("rds/null_distn_two_means.rds")){
-  set.seed(2017)
-  many_shuffles <- do(10000) * 
-    (cleSac %>%
-       mutate(metro_area = shuffle(metro_area)) %>% 
-       group_by(metro_area) %>%
-       summarize(mean_inc = mean(income))
-    )
-  null_distn_two_means <- many_shuffles %>% 
-    group_by(.index) %>%
-    summarize(diffmean = diff(mean_inc))
+  set.seed(2018)
+null_distn_two_means <- cle_sac %>% 
+    specify(income ~ metro_area) %>% 
+    hypothesize(null = "independence") %>% 
+    generate(reps = 10000) %>% 
+    calculate(stat = "diff in means",
+              order = c("Sacramento_ CA", "Cleveland_ OH"))
   saveRDS(object = null_distn_two_means, "rds/null_distn_two_means.rds")
 } else {
   null_distn_two_means <- readRDS("rds/null_distn_two_means.rds")
 }
 ```
 ```{r sim4, eval=FALSE}
-set.seed(2017)
-many_shuffles <- do(10000) * 
-  (cleSac %>%
-     mutate(metro_area = shuffle(metro_area)) %>% 
-     group_by(metro_area) %>%
-     summarize(mean_inc = mean(income))
-   )
-null_distn_two_means <- many_shuffles %>% 
-  group_by(.index) %>%
-  summarize(diffmean = diff(mean_inc))
+set.seed(2018)
+null_distn_two_means <- cle_sac %>% 
+  specify(income ~ metro_area) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "diff in means",
+            order = c("Sacramento_ CA", "Cleveland_ OH"))
 ```
 
 ```{r}
-ggplot(null_distn_two_means, aes(x = diffmean)) +
-  geom_histogram(bins = 30, color = "white")
+null_distn_two_means %>% visualize()
 ```
 
-We can next use this distribution to observe our $p$-value.  Recall this is a two-tailed test so we will be looking for values that are greater than or equal to `r obs_diff` or less than or equal to `r -obs_diff` for our $p$-value.
+We can next use this distribution to observe our $p$-value.  Recall this is a two-tailed test so we will be looking for values that are greater than or equal to `r d_hat` or less than or equal to `r -d_hat` for our $p$-value.
 
 ```{r}
-ggplot(null_distn_two_means, aes(x = diffmean)) +
-  geom_histogram(bins = 30, color = "white") +
-  geom_vline(color = "red", xintercept = obs_diff) +
-  geom_vline(color = "red", xintercept = -obs_diff)
+null_distn_two_means %>% 
+  visualize(obs_stat = d_hat, direction = "both")
 ```
 
-##### Calculate $p$-value
+##### Calculate $p$-value {-}
 
 ```{r}
-pvalue <- null_distn_two_means %>%
-  filter( (diffmean >= obs_diff) | (diffmean <= -obs_diff) ) %>%
-  nrow() / nrow(null_distn_two_means)
-pvalue
+null_distn_two_means %>% 
+  get_pvalue(obs_stat = d_hat, direction = "both")
 ```
 
 So our $p$-value is `r pvalue` and we fail to reject the null hypothesis at the 5% level.  You can also see this from the histogram above that we are not very far into the tail of the null distribution.
 
-#### Bootstrapping for confidence interval
+#### Bootstrapping for confidence interval {-}
 
 We can also create a confidence interval for the unknown population parameter $\mu_{sac} - \mu_{cle}$ using our sample data with *bootstrapping*.  Here we will bootstrap each of the groups with replacement instead of shuffling.  This is done using the `groups`
 argument in the `resample` function to fix the size of each group to
@@ -978,44 +949,33 @@ be the same as the original group sizes of `r n_sac` for Sacramento and `r n_cle
 
 ```{r, echo=FALSE}
 if(!file.exists("rds/boot_distn_two_means.rds")){
-  boot_means <- do(10000) *
-    cleSac %>% 
-    resample(replace = TRUE, groups = metro_area) %>% 
-    group_by(metro_area) %>% 
-    summarize(mean_inc = mean(income))
-  
-  # Next, we calculate the difference in sample means for each of the 10,000 replications:
-  boot_distn_two_means <- boot_means %>% 
-    group_by(.index) %>% 
-    summarize(diffmean = diff(mean_inc))
+  boot_distn_two_means <- cle_sac %>% 
+    specify(income ~ metro_area) %>% 
+    generate(reps = 10000) %>% 
+    calculate(stat = "diff in means",
+              order = c("Sacramento_ CA", "Cleveland_ OH"))
   saveRDS(object = boot_distn_two_means, "rds/boot_distn_two_means.rds")
 } else {
   boot_distn_two_means <- readRDS("rds/boot_distn_two_means.rds")
 }
 ```
 ```{r boot4, eval=FALSE}
-boot_means <- do(10000) *
-  cleSac %>% 
-  resample(replace = TRUE, groups = metro_area) %>% 
-  group_by(metro_area) %>% 
-  summarize(mean_inc = mean(income))
-
-# Next, we calculate the difference in sample means for each of the 10,000 replications:
-boot_distn_two_means <- boot_means %>% 
-  group_by(.index) %>% 
-  summarize(diffmean = diff(mean_inc))
+boot_distn_two_means <- cle_sac %>% 
+  specify(income ~ metro_area) %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "diff in means",
+            order = c("Sacramento_ CA", "Cleveland_ OH"))
 ```
 
 
 ```{r}
-ggplot(boot_distn_two_means, aes(x = diffmean)) +
-  geom_histogram(bins = 30, color = "white")
+boot_distn_two_means %>% visualize()
 ```
 
 ```{r}
 ci_boot <- boot_distn_two_means %>% 
-  summarize(lower = quantile(diffmean, probs = 0.025),
-    upper = quantile(diffmean, probs = 0.975))
+  summarize(lower = quantile(stat, probs = 0.025),
+    upper = quantile(stat, probs = 0.975))
 ci_boot
 ```
 
@@ -1023,13 +983,13 @@ We see that 0 is contained in this confidence interval as a plausible value of $
 
 **Interpretation**:  We are 95% confident the true mean yearly income for those living in Sacramento is between `r round(-ci_boot$lower, 2)` dollars smaller to `r round(ci_boot$upper, 2)` dollars higher than for Cleveland.
 
-**Note**:  You could also use the null distribution based on randomization with a shift to have its center at $\bar{x}_{sac} - \bar{x}_{cle} = \$`r round(obs_diff, 2)`$ instead of at 0 and calculate its percentiles.  The confidence interval produced via this method should be comparable to the one done using bootstrapping above.
+**Note**:  You could also use the null distribution based on randomization with a shift to have its center at $\bar{x}_{sac} - \bar{x}_{cle} = \$`r round(d_hat, 2)`$ instead of at 0 and calculate its percentiles.  The confidence interval produced via this method should be comparable to the one done using bootstrapping above.
 
 ---
 
 ### Traditional methods
 
-##### Check conditions
+##### Check conditions {-}
 
 Remember that in order to use the short-cut (formula-based, theoretical) approach, we need to check that some conditions are met.
 
@@ -1040,12 +1000,12 @@ Remember that in order to use the short-cut (formula-based, theoretical) approac
 2. _Approximately normal_:  The distribution of the response for each group should be normal or the sample sizes should be at least 30.
 
 ```{r hist}
-ggplot(cleSac, aes(x = income)) +
+ggplot(cle_sac, aes(x = income)) +
   geom_histogram(color = "white", binwidth = 20000) +
   facet_wrap(~ metro_area)
 ```
 
-    We have some reason to doubt the normality assumption here since both the histograms show deviation from a normal model fitting the data well for each group.  The sample sizes for each group are greater than 100 though so the assumptions should still apply.
+  We have some reason to doubt the normality assumption here since both the histograms show deviation from a normal model fitting the data well for each group.  The sample sizes for each group are greater than 100 though so the assumptions should still apply.
 
 
 3. _Independent samples_: The samples should be collected without any natural pairing.
@@ -1058,18 +1018,22 @@ The test statistic is a random variable based on the sample data.  Here, we are 
 
 $$ T =\dfrac{ (\bar{X}_1 - \bar{X}_2) - 0}{ \sqrt{\dfrac{S_1^2}{n_1} + \dfrac{S_2^2}{n_2}}  } \sim t (df = min(n_1 - 1, n_2 - 1)) $$ where 1 = Sacramento and 2 = Cleveland with $S_1^2$ and $S_2^2$ the sample variance of the incomes of both cities, respectively, and $n_1 = 175$ for Sacramento and $n_2 = 212$ for Cleveland.
 
-#### Observed test statistic
+#### Observed test statistic {-}
 
 Note that we could also do (ALMOST) this test directly using the `t.test` function.  The `x` and `y` arguments are expected to both be numeric vectors here so we'll need to appropriately filter our datasets.
 
 ```{r t.test2}
-cleveland <- cleSac %>% filter(metro_area == "Cleveland_ OH")
-sacramento <- cleSac %>% filter(metro_area != "Cleveland_ OH")
-t.test(y = cleveland$income, x = sacramento$income,
-       alternative = "two.sided")
+cle_sac %>% 
+  specify(income ~ metro_area) %>% 
+  calculate(stat = "t",
+            order = c("Cleveland_ OH", "Sacramento_ CA"))
 ```
 
+<!--
 Note that the degrees of freedom reported above are different than what we used above in specifying the **Test Statistic**.  The degrees of freedom used here is also known as the Satterthwaite approximation and involves a quite complicated formula.  For most problems, the much simpler smaller of sample sizes minus one will suffice.
+-->
+
+We see here that the observed test statistic value is around -1.5. <!-- with $df = min(212 - 1, 175 - 1) = 174$.-->
 
 While one could compute this observed test statistic by "hand", the focus here is on the set-up of the problem and in understanding which formula for the test statistic applies. 
 
@@ -1078,18 +1042,15 @@ We can use the `inference` function in the `oilabs` package to perform this anal
 -->
 
 ```{r infer2, eval=FALSE, include=FALSE}
-inference(x = cleSac$metro_area, 
-          y = cleSac$income, 
-          est = "mean", 
-          null = 0,
-          alternative = "twosided", 
-          type = "ht", 
-          method = "theoretical", 
-          eda_plot = FALSE,
-          inf_plot = FALSE)
+cle_sac %>% 
+  specify(income ~ metro_area) %>% 
+  hypothesize(null = "independence") %>% 
+  calculate(stat = "t",
+            order = c("Sacramento_ CA", "Cleveland_ OH")) %>% 
+  visualize()
 ```
 
-We see here that the observed test statistic value is around -1.5 with $df = min(212 - 1, 175 - 1) = 174$.  Recall that for large degrees of freedom, the $t$ distribution is roughly equal to the standard normal curve so our difference in `df` for the Satterthwaite and "min" variations doesn't really matter.
+<!--Recall that for large degrees of freedom, the $t$ distribution is roughly equal to the standard normal curve so our difference in `df` for the Satterthwaite and "min" variations doesn't really matter.-->
 
 ### Compute $p$-value
 
@@ -1121,29 +1082,29 @@ Observing the bootstrap distribution and the null distribution that were created
 ***
 
 
-
+<!-- UP TO HERE -->
 
 
 ## Two means (paired samples)
 
-#### Problem statement
+#### Problem statement {-}
 
 Trace metals in drinking water affect the flavor and an unusually high concentration can pose a health hazard. Ten pairs of data were taken measuring zinc concentration in bottom water and surface water at 10 randomly selected locations on a stretch of river. Do the data suggest that the true average concentration in the surface water is smaller than that of bottom water? (Note that units are not given.)  [Tweaked a bit from https://onlinecourses.science.psu.edu/stat500/node/51]
 
 ### Competing hypotheses
 
-#### In words
+#### In words {-}
 
 - Null hypothesis: The mean concentration in the bottom water is the same as that of the surface water at different paired locations.
 
 - Alternative hypothesis:  The mean concentration in the surface water is smaller than that of the bottom water at different paired locations.
 
-#### In symbols (with annotations)
+#### In symbols (with annotations) {-}
 
 - $H_0: \mu_{diff} = 0$, where $\mu_{diff}$ represents the mean difference in concentration for surface water minus bottom water.
 - $H_A: \mu_{diff} < 0$
 
-#### Set $\alpha$
+#### Set $\alpha$ {-}
 
 It's important to set the significance level before starting the testing using the data. Let's set the significance level at 5% here.
 
@@ -1161,21 +1122,26 @@ We want to look at the differences in `surface - bottom` for each location:
 ```{r}
 zinc_diff <- zinc_tidy %>% 
   group_by(loc_id) %>% 
-  summarize(pair_diff = diff(concentration))
+  summarize(pair_diff = diff(concentration)) %>% 
+  ungroup()
 ```
 
+Next we calculate the mean difference as our observed statistic:
 
 ```{r summarize4}
-zinc_summ <- zinc_diff %>%
-  summarize(sample_size = n(),
-    mean = mean(pair_diff),
-    sd = sd(pair_diff),
-    minimum = min(pair_diff),
-    lower_quartile = quantile(pair_diff, 0.25),
-    median = median(pair_diff),
-    upper_quartile = quantile(pair_diff, 0.75),
-    max = max(pair_diff))
-kable(zinc_summ)
+# zinc_summ <- zinc_diff %>%
+#   summarize(sample_size = n(),
+#     mean = mean(pair_diff),
+#     sd = sd(pair_diff),
+#     minimum = min(pair_diff),
+#     lower_quartile = quantile(pair_diff, 0.25),
+#     median = median(pair_diff),
+#     upper_quartile = quantile(pair_diff, 0.75),
+#     max = max(pair_diff))
+# kable(zinc_summ)
+d_hat <- zinc_diff %>% 
+  specify(response = pair_diff) %>% 
+  calculate(stat = "mean")
 ```
 
 The histogram below also shows the distribution of `pair_diff`.
@@ -1186,127 +1152,117 @@ ggplot(zinc_diff, aes(x = pair_diff)) +
 ```
 
 
-#### Guess about statistical significance
+#### Guess about statistical significance {-}
 
-We are looking to see if the sample paired mean difference of `r zinc_summ$mean` is statistically less than 0.  They seem to be quite close, but we have a small number of pairs here.  Let's guess that we will fail to reject the null hypothesis. 
+We are looking to see if the sample paired mean difference of `r d_hat` is statistically less than 0.  They seem to be quite close, but we have a small number of pairs here.  Let's guess that we will fail to reject the null hypothesis. 
 
 ***
 
 ### Non-traditional methods
 
-#### Collecting summary info
+#### Collecting summary info {-}
 
 Next we will assign some key values to variable names in R:
 
 ```{r stats3}
-obs_diff <- zinc_summ$mean
-n_pairs <- zinc_summ$sample_size
+# obs_diff <- zinc_summ %>% select(mean)
+# n_pairs <- zinc_summ %>% select(sample_size)
 ```
 
 
-#### Randomization for hypothesis test
+#### Bootstrapping for hypothesis test {-}
 
 In order to look to see if the observed sample mean difference $\bar{x}_{diff} = `r obs_diff`$ is statistically less than 0, we need to account for the number of pairs.  We also need to determine a process that replicates how the paired data was selected in a way similar to how we calculated our original difference in sample means.
 
-We can use the idea of *randomization testing* (also known as *permutation testing*) to simulate the population from which the sample came and then generate samples using *shuffling* from that simulated population to account for sampling variability.  In this case, we will shuffle along each paired location.  So values that were on the bottom of location 1 may now be switched to be on the surface or vice versa.
+Treating the differences as our data of interest, we next use the process of **bootstrapping** to build other simulated samples and then calculate the mean of the bootstrap samples. We hypothesize that the mean difference is zero. 
+
+This process is similar to comparing the One Mean example seen above, but using the differences between the two groups as a single sample with a hypothesized mean difference of 0.
 
 ```{r, echo=FALSE}
 if(!file.exists("rds/null_distn_paired_means.rds")){
-  set.seed(2017)
-  many_shuffles <- do(10000) * 
-    (zinc_tidy %>%
-       mutate(location = shuffle(location, groups = loc_id)) %>% 
-       group_by(loc_id) %>% 
-       summarize(pair_diff = diff(concentration))
-    )
-  null_distn_paired_means <- many_shuffles %>% 
-    group_by(.index) %>%
-    summarize(mean_diff = mean(pair_diff))
+  set.seed(2018)
+  null_distn_paired_means <- zinc_diff %>% 
+    specify(response = pair_diff) %>% 
+    hypothesize(null = "point", mu = 0) %>% 
+    generate(reps = 10000) %>% 
+    calculate(stat = "mean")
   saveRDS(object = null_distn_paired_means, "rds/null_distn_paired_means.rds")
 } else {
   null_distn_paired_means <- readRDS("rds/null_distn_paired_means.rds")
 }
 ```
 ```{r sim5, eval=FALSE}
-set.seed(2017)
-many_shuffles <- do(10000) * 
-  (zinc_tidy %>%
-     mutate(location = shuffle(location, groups = loc_id)) %>% 
-     group_by(loc_id) %>% 
-     summarize(pair_diff = diff(concentration))
-   )
-null_distn_paired_means <- many_shuffles %>% 
-  group_by(.index) %>%
-  summarize(mean_diff = mean(pair_diff))
+set.seed(2018)
+null_distn_paired_means <- zinc_diff %>% 
+  specify(response = pair_diff) %>% 
+  hypothesize(null = "point", mu = 0) %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "mean")
 ```
 
 ```{r}
-ggplot(null_distn_paired_means, aes(x = mean_diff)) +
-  geom_histogram(bins = 30, color = "white")
+null_distn_paired_means %>% visualize()
 ```
 
 We can next use this distribution to observe our $p$-value.  Recall this is a left-tailed test so we will be looking for values that are less than or equal to `r obs_diff` for our $p$-value.
 
 ```{r}
-ggplot(null_distn_paired_means, aes(x = mean_diff)) +
-  geom_histogram(bins = 30, color = "white") +
-  geom_vline(color = "red", xintercept = obs_diff)
+null_distn_paired_means %>% 
+  visualize(obs_stat = d_hat, direction = "less")
 ```
 
-##### Calculate $p$-value
+##### Calculate $p$-value {-}
 
 ```{r}
-pvalue <- null_distn_paired_means %>%
-  filter(mean_diff <= obs_diff) %>%
-  nrow() / nrow(null_distn_paired_means)
-pvalue
+null_distn_paired_means %>% 
+  get_pvalue(obs_stat = d_hat, direction = "less")
 ```
 
 So our $p$-value is essentially `r pvalue` and we reject the null hypothesis at the 5% level.  You can also see this from the histogram above that we are far into the left tail of the null distribution.
 
-#### Bootstrapping for confidence interval
+#### Bootstrapping for confidence interval {-}
 
 We can also create a confidence interval for the unknown population parameter $\mu_{diff}$ using our sample data (the calculated differences) with *bootstrapping*.  This is similar to the bootstrapping done in a one sample mean case, except now our data is differences instead of raw numerical data.
-
+Note that this code is identical to the pipeline shown in the hypothesis test above except the `hypothesize()` function is not called.
 
 ```{r, echo=FALSE}
 if(!file.exists("rds/boot_distn_paired_means.rds")){
-  boot_distn_paired_means <- do(10000) * 
-    resample(zinc_diff, replace = TRUE) %>% 
-    summarize(mean_diff = mean(pair_diff))
+  boot_distn_paired_means <- zinc_diff %>% 
+    specify(response = pair_diff) %>% 
+    generate(reps = 10000) %>% 
+    calculate(stat = "mean")
   saveRDS(object = boot_distn_paired_means, "rds/boot_distn_paired_means.rds")
 } else {
   boot_distn_paired_means <- readRDS("rds/boot_distn_paired_means.rds")
 }
 ```
 ```{r boot5, eval=FALSE}
-boot_distn_paired_means <- do(10000) * 
-  resample(zinc_diff, replace = TRUE) %>% 
-  summarize(mean_diff = mean(pair_diff))
+boot_distn_paired_means <- zinc_diff %>% 
+  specify(response = pair_diff) %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "mean")
 ```
 
 ```{r}
-ggplot(boot_distn_paired_means, aes(x = mean_diff)) +
-  geom_histogram(bins = 30, color = "white")
+boot_distn_paired_means %>% visualize()
 ```
 
 ```{r}
-boot_distn_paired_means %>% 
-  summarize(lower = quantile(mean_diff, probs = 0.025),
-    upper = quantile(mean_diff, probs = 0.975))
+ci_boot <- boot_distn_paired_means %>% 
+  summarize(lower = quantile(stat, probs = 0.025),
+    upper = quantile(stat, probs = 0.975))
+ci_boot
 ```
 
 We see that 0 is not contained in this confidence interval as a plausible value of $\mu_{diff}$ (the unknown population parameter).  This matches with our hypothesis test results of rejecting the null hypothesis.  Since zero is not a plausible value of the population parameter and since the entire confidence interval falls below zero, we have evidence that surface zinc concentration levels are lower, on average, than bottom level zinc concentrations.
 
 **Interpretation**:  We are 95% confident the true mean zinc concentration on the surface is between `r round(-ci_boot$lower, 2)` units smaller to `r round(-ci_boot$upper, 2)` units smaller than on the bottom.
 
-**Note**:  You could also use the null distribution based on randomization with a shift to have its center at $\bar{x}_{diff} = `r round(obs_diff, 2)`$ instead of at 0 and calculate its percentiles.  The confidence interval produced via this method should be comparable to the one done using bootstrapping above.
-
 ---
 
 ### Traditional methods
 
-#### Check conditions
+#### Check conditions {-}
 
 Remember that in order to use the shortcut (formula-based, theoretical) approach, we need to check that some conditions are met.
 
@@ -1318,7 +1274,7 @@ Remember that in order to use the shortcut (formula-based, theoretical) approach
 
     The histogram above does show some skew so we have reason to doubt the population being normal based on this sample.  We also only have 10 pairs which is fewer than the 30 needed.  A theory-based test may not be valid here.
     
-#### Test statistic
+#### Test statistic {-}
 
 The test statistic is a random variable based on the sample data.  Here, we want to look at a way to estimate the population mean difference $\mu_{diff}$.  A good guess is the sample mean difference $\bar{X}_{diff}$.  Recall that this sample mean is actually a random variable that will vary as different samples are (theoretically, would be) collected.  We are looking to see how likely is it for us to have observed a sample mean of $\bar{x}_{diff, obs} = 0.0804$ or larger assuming that the population mean difference is 0 (assuming the null hypothesis is true).  If the conditions are met and assuming $H_0$ is true, we can "standardize" this original test statistic of $\bar{X}_{diff}$ into a $T$ statistic that follows a $t$ distribution with degrees of freedom equal to $df = n - 1$:
 
@@ -1326,39 +1282,38 @@ $$ T =\dfrac{ \bar{X}_{diff} - 0}{ S_{diff} / \sqrt{n} } \sim t (df = n - 1) $$
 
 where $S$ represents the standard deviation of the sample differences and $n$ is the number of pairs.
 
-##### Observed test statistic
+##### Observed test statistic {-}
 
 While one could compute this observed test statistic by "hand", the focus here is on the set-up of the problem and in understanding which formula for the test statistic applies.  We can use the `t.test` function on the differences to perform this analysis for us. 
 
-```{r t.test3}
-stats::t.test(x = zinc_diff$pair_diff, 
-       alternative = "less",
-       mu = 0)
+```{r t.test3a, echo=FALSE}
+t_test_results <- as.data.frame(zinc_diff) %>% 
+  t_test(formula = pair_diff ~ NULL, 
+         alternative = "less",
+         mu = 0)
+t_test_results
+```
+
+```{r t.test3b, eval=FALSE}
+t_test_results <- zinc_diff %>% 
+  t_test(formula = pair_diff ~ NULL, 
+         alternative = "less",
+         mu = 0)
+t_test_results
 ```
 
 
-```{r inference2, eval=FALSE, include=FALSE}
-inference(y = zinc_conc$diff, 
-          est = "mean", 
-          null = 0, 
-          alternative = "greater",
-          type = "ht", 
-          method = "theoretical", 
-          eda_plot = FALSE, 
-          inf_plot = FALSE)
-```
+We see here that the $t_{obs}$ value is `r t_test_results$statistic`.
 
-We see here that the $t_{obs}$ value is around -5.
+#### Compute $p$-value {-}
 
-#### Compute $p$-value
-
-The $p$-value---the probability of observing a $t_{obs}$ value of -5 or less in our null distribution of a $t$ with 9 degrees of freedom---is 0.0004.  This can also be calculated in R directly:
+The $p$-value---the probability of observing a $t_{obs}$ value of `r  t_test_results$statistic` or less in our null distribution of a $t$ with 9 degrees of freedom---is ` t_test_results$p_value`.  This can also be calculated in R directly:
 
 ```{r pvalpair}
-pt(-5, df = nrow(zinc_diff) - 1, lower.tail = TRUE)
+pt(-4.8638, df = nrow(zinc_diff) - 1, lower.tail = TRUE)
 ```
 
-#### State conclusion
+#### State conclusion {-}
 
 We, therefore, have sufficient evidence to reject the null hypothesis.  Our initial guess that our observed sample mean difference was not statistically less than the hypothesized mean of 0 has been invalidated here.  Based on this sample, we have evidence that the mean concentration in the bottom water is greater than that of the surface water at different paired locations.
 
@@ -1366,4 +1321,4 @@ We, therefore, have sufficient evidence to reject the null hypothesis.  Our init
 
 ### Comparing results
 
-Observing the bootstrap distribution and the null distribution that were created, it makes quite a bit of sense that the results are so similar for traditional and non-traditional methods in terms of the $p$-value and the confidence interval since these distributions look very similar to normal distributions.  The conditions were not met since the number of pairs was small, but the sample data was not highly skewed.  Using any of the methods whether they are traditional (formula-based) or non-traditional (computational-based) lead to similar results.
+Observing the bootstrap distribution and the null distribution that were created, it makes quite a bit of sense that the results are so similar for traditional and non-traditional methods in terms of the $p$-value and the confidence interval since these distributions look very similar to normal distributions.  The conditions were not met since the number of pairs was small, but the sample data was not highly skewed.  Using any of the methods whether they are traditional (formula-based) or non-traditional (computational-based) lead to similar results here.
