@@ -22,11 +22,15 @@ tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampl
 tactile_prop_red %>% 
   kable(
     digits = 2,
-    caption = "33 sample proportions based on 33 tactile samples of size n=50", 
+    caption = "33 sample proportions based on 33 tactile samples of size n = 50", 
     booktabs = TRUE
   )
 
+## ----eval=FALSE----------------------------------------------------------
 ## ggplot(tactile_prop_red, aes(x = prop_red)) +
+##   geom_histogram(binwidth = 0.05, color = "white") +
+##   labs(x = "Sample proportion red based on n = 50") +
+##   ggtitle("Histogram of 33 sample proportions based on 33 tactile samples of size n=50")
 
 ## ----samplingdistribution-tactile, echo=FALSE, fig.cap="Histogram of 33 sample proportions based on 33 tactile samples of size n=50"----
 tactile_histogram <- ggplot(tactile_prop_red, aes(x = prop_red)) +
@@ -110,8 +114,8 @@ virtual_prop_red %>%
 ## ---- eval = FALSE-------------------------------------------------------
 ## ggplot(virtual_prop_red, aes(x = prop_red)) +
 ##   geom_histogram(binwidth = 0.05, color = "white") +
-##   labs(x = "Sample proportion red based on n = 50",
-##        title = "Histogram of 33 sample proportions based on 33 virtual samples of size n=50")
+##   labs(x = "Sample proportion red based on n = 50") +
+##   ggtitle("Histogram of 33 sample proportions based on 33 virtual samples of size n=50")
 
 ## ----samplingdistribution-virtual, echo=FALSE, fig.cap="Histogram of 33 sample proportions red based on 33 virtual samples of size n=50"----
 virtual_histogram <- ggplot(virtual_prop_red, aes(x = prop_red)) +
@@ -151,7 +155,8 @@ virtual_prop_red <- virtual_samples %>%
 ## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(virtual_prop_red, aes(x = prop_red)) +
 ##   geom_histogram(binwidth = 0.05, color = "white") +
-##   labs(x = "Sample proportion red based on n = 50", title = "Histogram of 1000 sample proportions based on 1000 virtual samples of size n=50")
+##   labs(x = "Sample proportion red based on n = 50") +
+##   ggtitle("Histogram of 1000 sample proportions from 1000 virtual samples of size n=50")
 
 ## ---- echo=FALSE---------------------------------------------------------
 virtual_prop_red <- virtual_samples %>% 
@@ -161,7 +166,7 @@ virtual_prop_red <- virtual_samples %>%
 
 ggplot(virtual_prop_red, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, color = "white") +
-  labs(x = "Sample proportion red based on n = 50", title = "Histogram of 1000 sample proportions based on 1000 virtual samples of size n=50") 
+  labs(x = "Sample proportion red based on n = 50", title = "Histogram of 1000 sample proportions from 1000 virtual samples of size n=50") 
 
 ## ------------------------------------------------------------------------
 virtual_samples_50 <- bowl %>% 

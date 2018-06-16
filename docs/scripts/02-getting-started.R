@@ -1,15 +1,15 @@
-## ---- eval=FALSE-------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## library(ggplot2)
 ## library(dplyr)
 
-## ----message=FALSE-----------------------------------------------
+## ----message=FALSE-------------------------------------------------------
 library(dplyr)
 
 # Be sure to install these first!
 library(nycflights13)
 library(knitr)
 
-## ----load_flights------------------------------------------------
+## ----load_flights--------------------------------------------------------
 flights
 
 ## **_Learning check_**
@@ -17,7 +17,7 @@ flights
 ## **Learning Check Solutions**
 
 ## NA
-## ----------------------------------------------------------------
+## ------------------------------------------------------------------------
 glimpse(flights)
 
 ## **_Learning check_**
@@ -25,18 +25,18 @@ glimpse(flights)
 ## **Learning Check Solutions**
 
 ## NA
-## ----eval=FALSE--------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 ## airlines
 ## kable(airlines)
 
-## ----eval=FALSE--------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 ## airlines
 ## airlines$name
 
-## ----eval=FALSE--------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 ## ?flights
 
-## ---- echo=FALSE, warning=FALSE, message=FALSE, results='hide'----
+## ---- echo=FALSE, warning=FALSE, message=FALSE, results='hide'-----------
 # needed_pkgs <- c("nycflights13", "tibble", "dplyr", "ggplot2", "knitr", 
 #   "okcupiddata", "dygraphs", "rmarkdown", "mosaic", 
 #   "ggplot2movies", "fivethirtyeight", "readr")
