@@ -28,80 +28,80 @@ summary_temp <- weather %>%
   summarize(mean = mean(temp), std_dev = sd(temp))
 kable(summary_temp)
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## summary_temp <- weather %>%
 ##   summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
 ## summary_temp
 
-## ---- echo=FALSE-----------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 summary_temp <- weather %>% 
   summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
 kable(summary_temp)
 
-## --------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 #summary_temp$mean
 
-## ----eval=FALSE------------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 ## summary_temp <- weather %>%
 ##   summarize(mean = mean(temp, na.rm = TRUE)) %>%
 ##   summarize(std_dev = sd(temp, na.rm = TRUE))
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## summary_monthly_temp <- weather %>%
 ##   group_by(month) %>%
 ##   summarize(mean = mean(temp, na.rm = TRUE),
 ##             std_dev = sd(temp, na.rm = TRUE))
 ## summary_monthly_temp
 
-## ---- echo=FALSE-----------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 summary_monthly_temp <- weather %>% 
   group_by(month) %>% 
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))
 kable(summary_monthly_temp)
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## by_origin <- flights %>%
 ##   group_by(origin) %>%
 ##   summarize(count = n())
 ## by_origin
 
-## ---- echo=FALSE-----------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 by_origin <- flights %>% 
   group_by(origin) %>% 
   summarize(count = n())
 kable(by_origin)
 
-## --------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 by_origin_monthly <- flights %>% 
   group_by(origin, month) %>% 
   summarize(count = n())
 by_origin_monthly
 
-## --------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 by_monthly_origin <- flights %>% 
   group_by(month, origin) %>% 
   summarize(count = n())
 by_monthly_origin
 
-## --------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 by_origin_monthly_incorrect <- flights %>% 
   group_by(origin) %>% 
   group_by(month) %>% 
   summarize(count = n())
 by_origin_monthly_incorrect
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## by_monthly_origin <- flights %>%
 ##   count(origin, month)
 ## by_monthly_origin
 
 ## NA
-## --------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 flights <- flights %>% 
   mutate(gain = dep_delay - arr_delay)
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## gain_summary <- flights %>%
 ##   summarize(
 ##     min = min(gain, na.rm = TRUE),
@@ -115,7 +115,7 @@ flights <- flights %>%
 ##   )
 ## gain_summary
 
-## ----echo=FALSE------------------------------------------------------------
+## ----echo=FALSE----------------------------------------------------------
 gain_summary <- flights %>% 
   summarize(
     min = min(gain, na.rm = TRUE),
@@ -129,11 +129,11 @@ gain_summary <- flights %>%
   )
 kable(gain_summary)
 
-## ----message=FALSE, fig.cap="Histogram of gain variable"-------------------
+## ----message=FALSE, fig.cap="Histogram of gain variable"-----------------
 ggplot(data = flights, mapping = aes(x = gain)) +
   geom_histogram(color = "white", bins = 20)
 
-## --------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 flights <- flights %>% 
   mutate(
     gain = dep_delay - arr_delay,
@@ -141,37 +141,37 @@ flights <- flights %>%
     gain_per_hour = gain / hours
   )
 
-## ---- eval-----------------------------------------------------------------
+## ---- eval---------------------------------------------------------------
 freq_dest <- flights %>% 
   group_by(dest) %>% 
   summarize(num_flights = n())
 freq_dest
 
-## --------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 freq_dest %>% 
   arrange(num_flights)
 
-## --------------------------------------------------------------------------
+## ------------------------------------------------------------------------
 freq_dest %>% 
   arrange(desc(num_flights))
 
-## ----eval=FALSE------------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 ## View(airlines)
 
-## ----eval=FALSE------------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 ## flights_joined <- flights %>%
 ##   inner_join(airlines, by = "carrier")
 ## View(flights)
 ## View(flights_joined)
 
-## ----eval=FALSE------------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 ## View(airports)
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## flights %>%
 ##   inner_join(airports, by = c("dest" = "faa"))
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## named_dests <- flights %>%
 ##   group_by(dest) %>%
 ##   summarize(num_flights = n()) %>%
@@ -180,60 +180,60 @@ freq_dest %>%
 ##   rename(airport_name = name)
 ## View(named_dests)
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## glimpse(flights)
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## flights %>%
 ##   select(carrier, flight)
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## flights_no_year <- flights %>%
 ##   select(-year)
 ## names(flights_no_year)
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## flight_arr_times <- flights %>%
 ##   select(month:day, arr_time:sched_arr_time)
 ## flight_arr_times
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## flights_reorder <- flights %>%
 ##   select(month:day, hour:time_hour, everything())
 ## names(flights_reorder)
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## flights_begin_a <- flights %>%
 ##   select(starts_with("a"))
 ## flights_begin_a
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## flights_delays <- flights %>%
 ##   select(ends_with("delay"))
 ## flights_delays
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## flights_time <- flights %>%
 ##   select(contains("time"))
 ## flights_time
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## flights_time_new <- flights %>%
 ##   select(contains("time")) %>%
 ##   rename(departure_time = dep_time,
 ##          arrival_time = arr_time)
 ## names(flights_time)
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## named_dests %>%
 ##   top_n(n = 10, wt = num_flights)
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## named_dests  %>%
 ##   top_n(n = 10, wt = num_flights) %>%
 ##   arrange(desc(num_flights))
 
-## ---- eval=FALSE-----------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## ten_freq_dests <- flights %>%
 ##   group_by(dest) %>%
 ##   summarize(num_flights = n()) %>%
