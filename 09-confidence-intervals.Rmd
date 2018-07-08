@@ -58,7 +58,7 @@ library(dplyr)
 library(ggplot2)
 library(janitor)
 library(moderndive)
-# remotes::install_github("andrewpbray/infer", ref = "p_value")
+# remotes::install_github("andrewpbray/infer", ref = "develop")
 library(infer)
 # For loading CSV files:
 library(readr)
@@ -553,7 +553,8 @@ ggplot(perc_cis) +
   labs(
     x = expression("Age in 2011 (Years)"),
     y = "Replicate ID",
-    title = expression(paste("95% percentile-based confidence intervals for ", mu, sep = ""))
+    title = expression(paste("95% percentile-based confidence intervals for ", 
+                             mu, sep = ""))
   ) +
   scale_color_manual(values = c("blue", "orange")) + 
   geom_vline(xintercept = pennies_mu, color = "red") 
@@ -604,7 +605,9 @@ ggplot(se_cis) +
   labs(
     x = expression("Age in 2011 (Years)"),
     y = "Replicate ID",
-    title = expression(paste("90% standard error-based confidence intervals for ", mu, sep = ""))
+    title = expression(paste(
+      "90% standard error-based confidence intervals for ", mu, sep = "")
+      )
   ) +
   scale_color_manual(values = c("blue", "orange")) + 
   geom_vline(xintercept = pennies_mu, color = "red") 
@@ -711,11 +714,11 @@ To construct a theory-based confidence interval for $p$, the unknown true popula
 
 1. Collect a sample of size $n$
 1. Compute $\widehat{p}$
-1. Compute the standard error $\text{SE} = \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
-1. Compute the margin of error $\text{MoE} = 1.96 \times \text{SE} =  1.96 \times \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
+1. Compute the standard error $$\text{SE} = \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$$
+1. Compute the margin of error $$\text{MoE} = 1.96 \times \text{SE} =  1.96 \times \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$$
 1. Compute both end points of the confidence interval:
-    + `conf_low`: $\widehat{p} - \text{MoE} = \widehat{p} - 1.96\times\text{SE} = \widehat{p} - 1.96\times\sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
-    + `conf_high`: $\widehat{p} + \text{MoE} = \widehat{p} + 1.96\times\text{SE} = \widehat{p} + 1.96\times\sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
+    + The lower end point `lower_ci`: $$\widehat{p} - \text{MoE} = \widehat{p} - 1.96\times\text{SE} = \widehat{p} - 1.96\times\sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$$
+    + The upper end point `upper_ci`: $$\widehat{p} + \text{MoE} = \widehat{p} + 1.96\times\text{SE} = \widehat{p} + 1.96\times\sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$$
 1. Alternatively, you can succinctly summarize a 95% confidence interval for $p$ using the $\pm$ symbol:
 
 $$
@@ -730,8 +733,7 @@ Let's load the tactile sampling data for the 33 groups from Chapter \@ref(sampli
 <!-- Load tactile_prop_red into moderndive package too -->
 
 ```{r, eval=FALSE, message=FALSE, warning=FALSE}
-library(readr)
-tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv")
+tactile_prop_red
 ```
 
 Let's now apply the above procedure for constructing confidence intervals for $p$ using the data saved in `tactile_prop_red` by adding/modifying new columns using the `dplyr` package data wrangling tools seen in Chapter \@ref(wrangling):
@@ -740,8 +742,8 @@ Let's now apply the above procedure for constructing confidence intervals for $p
 1. Make explicit the sample size `n` of $n=50$
 1. the standard error `SE`
 2. the margin of error `MoE`
-3. the left endpoint of the confidence interval `conf_low`
-4. the right endpoint of the confidence interval `conf_high`
+3. the left endpoint of the confidence interval `lower_ci`
+4. the right endpoint of the confidence interval `upper_ci`
 
 ```{r, eval=FALSE, message=FALSE, warning=FALSE}
 conf_ints <- tactile_prop_red %>% 
@@ -750,50 +752,50 @@ conf_ints <- tactile_prop_red %>%
     n = 50,
     SE = sqrt(p_hat * (1 - p_hat) / n),
     MoE = 1.96 * SE,
-    conf_low = p_hat - MoE,
-    conf_high = p_hat + MoE
+    lower_ci = p_hat - MoE,
+    upper_ci = p_hat + MoE
   )
 conf_ints
 ```
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-conf_ints <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv") %>% 
+conf_ints <- tactile_prop_red %>% 
   rename(p_hat = prop_red) %>% 
   select(-replicate) %>% 
   mutate(
     n = 50, 
     SE = sqrt(p_hat*(1-p_hat)/n),
     MoE = 1.96*SE,
-    conf_low = p_hat - MoE,
-    conf_high = p_hat + MoE,
-    y = 1:n()
+    lower_ci = p_hat - MoE,
+    upper_ci = p_hat + MoE,
+    y = seq_len(n())
   )
 conf_ints %>% 
   select(-y) %>% 
   kable(
     digits = 3,
-    caption = "33 confidence intervals based on 33 tactile samples of size n=50", 
+    caption = "33 confidence intervals from 33 tactile samples of size n=50", 
     booktabs = TRUE
   )
 ```
 
 Let's plot:
 
-1. These 33 confidence intervals for $p$: from `conf_low` to `conf_high`
+1. These 33 confidence intervals for $p$: from `lower_ci` to `upper_ci`
 1. The true population proportion $p = 900 / 2400 = 0.375$ with a red vertical line
 
 ```{r tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals based on 33 tactile samples of size n=50", fig.height=6}
 groups <- conf_ints$group
 conf_ints %>%
   mutate(p = 900 / 2400,
-         captured = conf_low <= p & p <= conf_high) %>%
+         captured = lower_ci <= p & p <= upper_ci) %>%
   ggplot() +
   geom_point(aes(x = p_hat, y = y, col = captured)) +
   geom_vline(xintercept = 900 / 2400, col = "red") +
   geom_segment(aes(
     y = y,
     yend = y,
-    x = conf_low,
-    xend = conf_high,
+    x = lower_ci,
+    xend = upper_ci,
     col = captured
   )) +
   scale_y_continuous(breaks = 1:33, labels = groups) +
@@ -806,8 +808,8 @@ conf_ints %>%
 
 We see that:
 
-* In 31 cases, the confidence intervals "capture" the true $p = \frac{900}{2400} = 0.375$
-* In 2 cases, the confidence intervals do not "capture" the true $p = \frac{900}{2400} = 0.375$
+* In 31 cases, the confidence intervals "capture" the true $p = 900 / 2400 = 0.375$
+* In 2 cases, the confidence intervals do not "capture" the true $p = 900 / 2400 = 0.375$
 
 Thus, the confidence intervals capture the true proportion $31 / 33 = `r 31 / 33 * 100`% of the time using this theory-based methodology.
 
@@ -820,8 +822,8 @@ Let's say however, we repeated the above 100 times, not tactilely, but virtually
 1. Compute the standard error $\text{SE} = \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
 1. Compute the margin of error $\text{MoE} = 1.96 \times \text{SE} =  1.96 \times \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
 1. Compute both end points of the confidence interval:
-    + `conf_low`: $\widehat{p} - \text{MoE} = \widehat{p} - 1.96\times\text{SE} = \widehat{p} - 1.96\times\sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
-    + `conf_high`: $\widehat{p} + \text{MoE} = \widehat{p} + 1.96\times\text{SE} = \widehat{p} +1.96\times\sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
+    + `lower_ci`: $\widehat{p} - \text{MoE} = \widehat{p} - 1.96\times\text{SE} = \widehat{p} - 1.96\times\sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
+    + `upper_ci`: $\widehat{p} + \text{MoE} = \widehat{p} + 1.96\times\text{SE} = \widehat{p} +1.96\times\sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
 
 Run the following three steps, being sure to `View()` the resulting data frame after each step so you can convince yourself of what's going on:
 
@@ -843,8 +845,8 @@ virtual_prop_red <- virtual_prop_red %>%
     n = 50,
     SE = sqrt(p_hat*(1-p_hat)/n),
     MoE = 1.96 * SE,
-    conf_low = p_hat - MoE,
-    conf_high = p_hat + MoE
+    lower_ci = p_hat - MoE,
+    upper_ci = p_hat + MoE
   )
 ```
 
@@ -869,18 +871,18 @@ virtual_prop_red <- virtual_prop_red %>%
     n = 50,
     SE = sqrt(p_hat * (1 - p_hat) / n),
     MoE = 1.96 * SE,
-    conf_low = p_hat - MoE,
-    conf_high = p_hat + MoE
+    lower_ci = p_hat - MoE,
+    upper_ci = p_hat + MoE
   ) %>% 
   mutate(
-    y = 1:n(),
-    p = 900/2400,
-    captured = conf_low <= p & p <= conf_high
+    y = seq_len(n()),
+    p = 900 / 2400,
+    captured = lower_ci <= p & p <= upper_ci
   )
 
 ggplot(virtual_prop_red) +
   geom_point(aes(x = p_hat, y = y, color = captured)) +
-  geom_segment(aes(y = y, yend = y, x = conf_low, xend = conf_high, 
+  geom_segment(aes(y = y, yend = y, x = lower_ci, xend = upper_ci, 
                    color = captured)) +
   labs(
     x = expression("Proportion red"),
@@ -900,18 +902,6 @@ Theoretical methods like this have largely been used in the past since we didn't
 If you see someone else yawn, are you more likely to yawn? In an [episode](http://www.discovery.com/tv-shows/mythbusters/mythbusters-database/yawning-contagious/) of the show *Mythbusters*, they tested the myth that yawning is contagious. The snippet from the show is available to view on the Discovery Network website [here](https://www.discovery.com/tv-shows/mythbusters/videos/is-yawning-contagious).
 
 Fifty adults who thought they were being considered for an appearance on the show were interviewed by a show recruiter ("confederate") who either yawned or did not. Participants then sat by themselves in a large van and were asked to wait. While in the van, the Mythbusters watched via hidden camera to see if the unaware participants yawned. The data frame containing the results is available at `mythbusters_yawn` in the `moderndive` package. Let's check it out.
-
-<!-- Add this data to pkg -->
-
-```{r include=FALSE}
-group <- c(rep("control", 12), rep("seed", 24), 
-            rep("control", 4), rep("seed", 10))
-yawn <- c(rep("no", 36), rep("yes", 14))
-mythbusters_yawn <- tibble::tibble(group, yawn) %>% 
-  sample_n(50) %>% 
-  mutate(subj = seq(1, 50)) %>% 
-  select(subj, group, yawn)
-```
 
 ```{r}
 mythbusters_yawn
