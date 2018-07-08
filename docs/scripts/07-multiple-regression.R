@@ -38,8 +38,10 @@ Credit %>%
   summary()
 
 ## ---- eval=FALSE---------------------------------------------------------
-## cor(Credit$Balance, Credit$Limit)
-## cor(Credit$Balance, Credit$Income)
+## Credit %>%
+##   get_correlation(Balance ~ Limit)
+## Credit %>%
+##   get_correlation(Balance ~ Income)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## Credit %>%
@@ -206,25 +208,15 @@ ggplot(regression_points, aes(x = residual)) +
   geom_histogram(color = "white") +
   labs(x = "Residual")
 
-## ----eval=FALSE----------------------------------------------------------
-## load(url("http://www.openintro.org/stat/data/evals.RData"))
-## evals <- evals %>%
-##   select(score, age, gender)
-
-## ----echo=FALSE----------------------------------------------------------
-if(!file.exists("data/evals.RData")){
-  download.file(url = "http://www.openintro.org/stat/data/evals.RData", 
-                destfile = "data/evals.RData")
-}
-load(file = "data/evals.RData")
-evals <- evals %>%
-  select(score, bty_avg, age, gender)
+## ------------------------------------------------------------------------
+evals_less <- evals %>%
+  select(score, age, gender)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## View(evals)
+## View(evals_less)
 
 ## ----model4-data-preview, echo=FALSE-------------------------------------
-evals %>%
+evals_less %>%
   sample_n(5) %>%
   knitr::kable(
     digits = 3,
@@ -233,20 +225,20 @@ evals %>%
   )
 
 ## ------------------------------------------------------------------------
-summary(evals)
+summary(evals_less)
 
 ## ----numxcatxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin split by gender (jittered)"----
-ggplot(evals, aes(x = age, y = score, col = gender)) +
+ggplot(evals_less, aes(x = age, y = score, color = gender)) +
   geom_jitter() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
   geom_smooth(method = "lm", se = FALSE)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## score_model_2 <- lm(score ~ age + gender, data = evals)
+## score_model_2 <- lm(score ~ age + gender, data = evals_less)
 ## get_regression_table(score_model_2)
 
 ## ---- echo=FALSE---------------------------------------------------------
-score_model_2 <- lm(score ~ age + gender, data = evals)
+score_model_2 <- lm(score ~ age + gender, data = evals_less)
 get_regression_table(score_model_2) %>% 
   knitr::kable(
     digits = 3,
@@ -255,10 +247,10 @@ get_regression_table(score_model_2) %>%
   )
 
 ## ----numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin by gender: same slope"----
-coeff <- lm(score ~ age + gender, data = evals) %>% 
+coeff <- lm(score ~ age + gender, data = evals_less) %>% 
   coef() %>%
   as.numeric()
-slopes <- evals %>%
+slopes <- evals_less %>%
   group_by(gender) %>%
   summarise(min = min(age), max = max(age)) %>%
   mutate(intercept = coeff[1]) %>%
@@ -266,17 +258,17 @@ slopes <- evals %>%
   gather(point, age, -c(gender, intercept)) %>%
   mutate(y_hat = intercept + age * coeff[2])
 
-ggplot(evals, aes(x = age, y = score, col = gender)) +
+ggplot(evals_less, aes(x = age, y = score, col = gender)) +
   geom_jitter() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
   geom_line(data = slopes, aes(y = y_hat), size = 1)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## score_model_interaction <- lm(score ~ age * gender, data = evals)
+## score_model_interaction <- lm(score ~ age * gender, data = evals_less)
 ## get_regression_table(score_model_interaction)
 
 ## ---- echo=FALSE---------------------------------------------------------
-score_model_interaction <- lm(score ~ age * gender, data = evals)
+score_model_interaction <- lm(score ~ age * gender, data = evals_less)
 get_regression_table(score_model_interaction) %>% 
   knitr::kable(
     digits = 3,
@@ -320,7 +312,7 @@ ggplot(regression_points, aes(x = age, y = residual)) +
   geom_point() +
   labs(x = "age", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue", size = 1) +
-  facet_wrap(~gender)
+  facet_wrap(~ gender)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## library(ISLR)

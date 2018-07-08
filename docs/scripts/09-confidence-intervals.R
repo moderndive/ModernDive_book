@@ -3,7 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(janitor)
 library(moderndive)
-# remotes::install_github("andrewpbray/infer", ref = "p_value")
+# remotes::install_github("andrewpbray/infer", ref = "develop")
 library(infer)
 # For loading CSV files:
 library(readr)
@@ -250,7 +250,8 @@ ggplot(perc_cis) +
   labs(
     x = expression("Age in 2011 (Years)"),
     y = "Replicate ID",
-    title = expression(paste("95% percentile-based confidence intervals for ", mu, sep = ""))
+    title = expression(paste("95% percentile-based confidence intervals for ", 
+                             mu, sep = ""))
   ) +
   scale_color_manual(values = c("blue", "orange")) + 
   geom_vline(xintercept = pennies_mu, color = "red") 
@@ -296,7 +297,9 @@ ggplot(se_cis) +
   labs(
     x = expression("Age in 2011 (Years)"),
     y = "Replicate ID",
-    title = expression(paste("90% standard error-based confidence intervals for ", mu, sep = ""))
+    title = expression(paste(
+      "90% standard error-based confidence intervals for ", mu, sep = "")
+      )
   ) +
   scale_color_manual(values = c("blue", "orange")) + 
   geom_vline(xintercept = pennies_mu, color = "red") 
@@ -349,8 +352,7 @@ bootstrap_props %>%
   visualize(bins = 25, endpoints = standard_error_ci)
 
 ## ---- eval=FALSE, message=FALSE, warning=FALSE---------------------------
-## library(readr)
-## tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv")
+## tactile_prop_red
 
 ## ---- eval=FALSE, message=FALSE, warning=FALSE---------------------------
 ## conf_ints <- tactile_prop_red %>%
@@ -359,28 +361,28 @@ bootstrap_props %>%
 ##     n = 50,
 ##     SE = sqrt(p_hat * (1 - p_hat) / n),
 ##     MoE = 1.96 * SE,
-##     conf_low = p_hat - MoE,
-##     conf_high = p_hat + MoE
+##     lower_ci = p_hat - MoE,
+##     upper_ci = p_hat + MoE
 ##   )
 ## conf_ints
 
 ## ---- echo=FALSE, message=FALSE, warning=FALSE---------------------------
-conf_ints <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv") %>% 
+conf_ints <- tactile_prop_red %>% 
   rename(p_hat = prop_red) %>% 
   select(-replicate) %>% 
   mutate(
     n = 50, 
     SE = sqrt(p_hat*(1-p_hat)/n),
     MoE = 1.96*SE,
-    conf_low = p_hat - MoE,
-    conf_high = p_hat + MoE,
-    y = 1:n()
+    lower_ci = p_hat - MoE,
+    upper_ci = p_hat + MoE,
+    y = seq_len(n())
   )
 conf_ints %>% 
   select(-y) %>% 
   kable(
     digits = 3,
-    caption = "33 confidence intervals based on 33 tactile samples of size n=50", 
+    caption = "33 confidence intervals from 33 tactile samples of size n=50", 
     booktabs = TRUE
   )
 
@@ -388,15 +390,15 @@ conf_ints %>%
 groups <- conf_ints$group
 conf_ints %>%
   mutate(p = 900 / 2400,
-         captured = conf_low <= p & p <= conf_high) %>%
+         captured = lower_ci <= p & p <= upper_ci) %>%
   ggplot() +
   geom_point(aes(x = p_hat, y = y, col = captured)) +
   geom_vline(xintercept = 900 / 2400, col = "red") +
   geom_segment(aes(
     y = y,
     yend = y,
-    x = conf_low,
-    xend = conf_high,
+    x = lower_ci,
+    xend = upper_ci,
     col = captured
   )) +
   scale_y_continuous(breaks = 1:33, labels = groups) +
@@ -424,8 +426,8 @@ virtual_prop_red <- virtual_prop_red %>%
     n = 50,
     SE = sqrt(p_hat*(1-p_hat)/n),
     MoE = 1.96 * SE,
-    conf_low = p_hat - MoE,
-    conf_high = p_hat + MoE
+    lower_ci = p_hat - MoE,
+    upper_ci = p_hat + MoE
   )
 
 ## ----virtual-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"----
@@ -447,18 +449,18 @@ virtual_prop_red <- virtual_prop_red %>%
     n = 50,
     SE = sqrt(p_hat * (1 - p_hat) / n),
     MoE = 1.96 * SE,
-    conf_low = p_hat - MoE,
-    conf_high = p_hat + MoE
+    lower_ci = p_hat - MoE,
+    upper_ci = p_hat + MoE
   ) %>% 
   mutate(
-    y = 1:n(),
-    p = 900/2400,
-    captured = conf_low <= p & p <= conf_high
+    y = seq_len(n()),
+    p = 900 / 2400,
+    captured = lower_ci <= p & p <= upper_ci
   )
 
 ggplot(virtual_prop_red) +
   geom_point(aes(x = p_hat, y = y, color = captured)) +
-  geom_segment(aes(y = y, yend = y, x = conf_low, xend = conf_high, 
+  geom_segment(aes(y = y, yend = y, x = lower_ci, xend = upper_ci, 
                    color = captured)) +
   labs(
     x = expression("Proportion red"),
@@ -467,15 +469,6 @@ ggplot(virtual_prop_red) +
   ) +
   scale_color_manual(values = c("blue", "orange")) + 
   geom_vline(xintercept = 900 / 2400, color = "red") 
-
-## ----include=FALSE-------------------------------------------------------
-group <- c(rep("control", 12), rep("seed", 24), 
-            rep("control", 4), rep("seed", 10))
-yawn <- c(rep("no", 36), rep("yes", 14))
-mythbusters_yawn <- tibble::tibble(group, yawn) %>% 
-  sample_n(50) %>% 
-  mutate(subj = seq(1, 50)) %>% 
-  select(subj, group, yawn)
 
 ## ------------------------------------------------------------------------
 mythbusters_yawn

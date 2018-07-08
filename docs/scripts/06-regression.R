@@ -1,10 +1,10 @@
-## ---- message=FALSE, warning=FALSE---------------------------------------
+## ---- message=FALSE, warning=FALSE---------------------------------------------------------------
 library(ggplot2)
 library(dplyr)
 library(moderndive)
 library(gapminder)
 
-## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
+## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------------------------------
 # Packages needed internally, but not in text.
 library(mvtnorm)
 library(tidyr)
@@ -13,23 +13,17 @@ library(gridExtra)
 library(broom)
 library(janitor)
 
-## ----eval=FALSE----------------------------------------------------------
-## load(url("http://www.openintro.org/stat/data/evals.RData"))
-## evals <- evals %>%
-##   select(score, bty_avg, age)
-
-## ----echo=FALSE----------------------------------------------------------
-if(!file.exists("data/evals.RData")){
-  download.file(url = "http://www.openintro.org/stat/data/evals.RData", 
-                destfile = "data/evals.RData")
-}
-load("data/evals.RData")
-evals <- evals %>%
+## ------------------------------------------------------------------------------------------------
+evals_small <- evals %>%
   select(score, bty_avg, age)
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------------------------------
+## evals_small %>%
+##   sample_n(5)
+
+## ---- echo=FALSE---------------------------------------------------------------------------------
 set.seed(76)
-evals %>%
+evals_small %>%
   sample_n(5) %>%
   knitr::kable(
     digits = 3,
@@ -37,20 +31,20 @@ evals %>%
     booktabs = TRUE
   )
 
-## ------------------------------------------------------------------------
-glimpse(evals)
+## ------------------------------------------------------------------------------------------------
+glimpse(evals_small)
 
-## ------------------------------------------------------------------------
-evals %>% 
+## ------------------------------------------------------------------------------------------------
+evals_small %>% 
   select(score, bty_avg) %>% 
   summary()
 
-## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients"----
+## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients"----------------------
 correlation <- c(-0.9999, -0.75, 0, 0.75, 0.9999)
 n_sim <- 100
 
 values <- NULL
-for(i in 1:length(correlation)){
+for(i in seq_len(length(correlation))){
   rho <- correlation[i]
   sigma <- matrix(c(5, rho * sqrt(50), rho * sqrt(50), 10), 2, 2) 
   sim <- rmvnorm(
@@ -74,51 +68,73 @@ ggplot(data = values, mapping = aes(V1, V2)) +
     axis.ticks = element_blank()
   )
 
-## ------------------------------------------------------------------------
-cor(evals$score, evals$bty_avg)
+## ----include=FALSE-------------------------------------------------------------------------------
+# To be removed when `moderndive` updated
+library(formula.tools)
+get_correlation <- function(data, formula) {
+    
+  outcome_variable <- formula %>% lhs() %>% all.vars()
+  explanatory_variable <- formula %>% rhs() %>% all.vars()
+  
+  correlation <- stats::cor(data[[outcome_variable]],
+             data[[explanatory_variable]])
+  
+  tibble::tibble(correlation)
+}
 
-## ----numxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin"----
-ggplot(evals, aes(x = bty_avg, y = score)) +
+## ------------------------------------------------------------------------------------------------
+evals_small %>% 
+  get_correlation(formula = score ~ bty_avg)
+
+## ------------------------------------------------------------------------------------------------
+cor(x = evals_small$bty_avg, y = evals_small$score)
+
+## ----numxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin"---------------
+ggplot(evals_small, aes(x = bty_avg, y = score)) +
   geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores")
+  labs(x = "Beauty Score", y = "Teaching Score", 
+       title = "Relationship of teaching and beauty scores")
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------------------------------
 set.seed(76)
 
-## ----numxplot2, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin: Jittered"----
-ggplot(evals, aes(x = bty_avg, y = score)) +
+## ----numxplot2, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin: Jittered"-----
+ggplot(evals_small, aes(x = bty_avg, y = score)) +
   geom_jitter() +
-  labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores")
+  labs(x = "Beauty Score", y = "Teaching Score", 
+       title = "Relationship of teaching and beauty scores")
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------------------------------
 set.seed(76)
 
-## ----numxplot3, warning=FALSE, fig.cap="Regression line"-----------------
-ggplot(evals, aes(x = bty_avg, y = score)) +
+## ----numxplot3, warning=FALSE, fig.cap="Regression line"-----------------------------------------
+ggplot(evals_small, aes(x = bty_avg, y = score)) +
   geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") +  
+  labs(x = "Beauty Score", y = "Teaching Score", 
+       title = "Relationship of teaching and beauty scores") +  
   geom_smooth(method = "lm")
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------------------------------
 set.seed(76)
 
-## ----numxplot4, warning=FALSE, fig.cap="Regression line without error bands"----
-ggplot(evals, aes(x = bty_avg, y = score)) +
+## ----numxplot4, warning=FALSE, fig.cap="Regression line without error bands"---------------------
+ggplot(evals_small, aes(x = bty_avg, y = score)) +
   geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") +
+  labs(x = "Beauty Score", y = "Teaching Score", 
+       title = "Relationship of teaching and beauty scores") +
   geom_smooth(method = "lm", se = FALSE)
 
-## ---- eval=FALSE---------------------------------------------------------
-## score_model <- lm(score ~ bty_avg, data = evals)
+## ----regtable, eval=FALSE------------------------------------------------------------------------
+## score_model <- lm(score ~ bty_avg, data = evals_small)
 ## get_regression_table(score_model, digits = 3)
 
-## ---- echo=FALSE---------------------------------------------------------
-score_model <- lm(score ~ bty_avg, data = evals)
+## ---- echo=FALSE---------------------------------------------------------------------------------
+score_model <- lm(score ~ bty_avg, data = evals_small)
 evals_line <- score_model %>% 
   get_regression_table() %>%
   pull(estimate)
 
-## ----numxplot4b, echo=FALSE----------------------------------------------
+## ----numxplot4b, echo=FALSE----------------------------------------------------------------------
 get_regression_table(score_model) %>%
   knitr::kable(
     digits = 3,
@@ -126,8 +142,8 @@ get_regression_table(score_model) %>%
     booktabs = TRUE
   )
 
-## ---- echo=FALSE---------------------------------------------------------
-index <- which(evals$bty_avg == 7.333 & evals$score == 4.9)
+## ---- echo=FALSE---------------------------------------------------------------------------------
+index <- which(evals_small$bty_avg == 7.333 & evals_small$score == 4.9)
 target_point <- score_model %>% 
   get_regression_points() %>% 
   slice(index)
@@ -135,7 +151,7 @@ x <- target_point$bty_avg
 y <- target_point$score
 y_hat <- target_point$score_hat
 resid <- target_point$residual
-evals %>%
+evals_small %>%
   slice(index) %>%
   knitr::kable(
     digits = 3,
@@ -143,13 +159,14 @@ evals %>%
     booktabs = TRUE
   )
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------------------------------
 set.seed(76)
 
 ## ----numxplot5, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual"----
-best_fit_plot <- ggplot(evals, aes(x = bty_avg, y = score)) +
+best_fit_plot <- ggplot(evals_small, aes(x = bty_avg, y = score)) +
   geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score", title = "Relationship of teaching and beauty scores") + 
+  labs(x = "Beauty Score", y = "Teaching Score", 
+       title = "Relationship of teaching and beauty scores") + 
   geom_smooth(method = "lm", se = FALSE) +
   annotate("point", x = x, y = y, col = "red", size = 3) +
   annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
@@ -157,11 +174,11 @@ best_fit_plot <- ggplot(evals, aes(x = bty_avg, y = score)) +
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 best_fit_plot
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------------------------------
 ## regression_points <- get_regression_points(score_model)
 ## regression_points
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------------------------------
 set.seed(76)
 regression_points <- get_regression_points(score_model) 
 regression_points %>%
@@ -172,13 +189,13 @@ regression_points %>%
     booktabs = TRUE
   )
 
-## ---- eval=FALSE, echo=TRUE----------------------------------------------
+## ---- eval=FALSE, echo=TRUE----------------------------------------------------------------------
 ## ggplot(regression_points, aes(x = bty_avg, y = residual)) +
 ##   geom_point() +
 ##   labs(x = "Beauty Score", y = "Residual") +
 ##   geom_hline(yintercept = 0, col = "blue", size = 1)
 
-## ----numxplot6, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score"----
+## ----numxplot6, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score"---------
 ggplot(regression_points, aes(x = bty_avg, y = residual)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Residual") +
@@ -189,9 +206,9 @@ ggplot(regression_points, aes(x = bty_avg, y = residual)) +
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 
 ## ----numxplot7, echo=FALSE, warning=FALSE, fig.cap="Examples of less than ideal residual patterns"----
-resid_ex <- evals
-resid_ex$ex_1 <- ((evals$bty_avg - 5) ^ 2 - 6 + rnorm(nrow(evals), 0, 0.5)) * 0.4
-resid_ex$ex_2 <- (rnorm(nrow(evals), 0, 0.075 * evals$bty_avg ^ 2)) * 0.4
+resid_ex <- evals_small
+resid_ex$ex_1 <- ((evals_small$bty_avg - 5) ^ 2 - 6 + rnorm(nrow(evals_small), 0, 0.5)) * 0.4
+resid_ex$ex_2 <- (rnorm(nrow(evals_small), 0, 0.075 * evals_small$bty_avg ^ 2)) * 0.4
   
 resid_ex <- resid_ex %>%
   select(bty_avg, ex_1, ex_2) %>%
@@ -204,18 +221,18 @@ ggplot(resid_ex, aes(x = bty_avg, y = eps)) +
   geom_hline(yintercept = 0, col = "blue", size = 1) +
   facet_wrap(~type)
 
-## ---- eval=FALSE, echo=TRUE----------------------------------------------
+## ---- eval=FALSE, echo=TRUE----------------------------------------------------------------------
 ## ggplot(regression_points, aes(x = residual)) +
 ##   geom_histogram(binwidth = 0.25, color = "white") +
 ##   labs(x = "Residual")
 
-## ----model1residualshist, echo=FALSE, warning=FALSE, fig.cap= "Histogram of residuals"----
+## ----model1residualshist, echo=FALSE, warning=FALSE, fig.cap= "Histogram of residuals"-----------
 ggplot(regression_points, aes(x = residual)) +
   geom_histogram(binwidth = 0.25, color = "white") +
   labs(x = "Residual")
 
 ## ----numxplot9, echo=FALSE, warning=FALSE, fig.cap="Examples of ideal and less than ideal residual patterns"----
-resid_ex <- evals
+resid_ex <- evals_small
 resid_ex$`Ideal` <- rnorm(nrow(resid_ex), 0, sd = sd(regression_points$residual))
 resid_ex$`Less than ideal` <-
   rnorm(nrow(resid_ex), 0, sd = sd(regression_points$residual))^2
@@ -230,16 +247,16 @@ ggplot(resid_ex, aes(x = eps)) +
   labs(x = "Residual") +
   facet_wrap( ~ type, scales = "free")
 
-## ---- warning=FALSE, message=FALSE---------------------------------------
+## ---- warning=FALSE, message=FALSE---------------------------------------------------------------
 library(gapminder)
 gapminder2007 <- gapminder %>%
   filter(year == 2007) %>% 
   select(country, continent, lifeExp, gdpPercap)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------------------------------
 ## View(gapminder2007)
 
-## ----model2-data-preview, echo=FALSE-------------------------------------
+## ----model2-data-preview, echo=FALSE-------------------------------------------------------------
 gapminder2007 %>%
   sample_n(5) %>%
   knitr::kable(
@@ -248,17 +265,17 @@ gapminder2007 %>%
     booktabs = TRUE
   )
 
-## ------------------------------------------------------------------------
+## ------------------------------------------------------------------------------------------------
 glimpse(gapminder2007)
 
-## ------------------------------------------------------------------------
+## ------------------------------------------------------------------------------------------------
 summary(gapminder2007$continent)
 
-## ---- eval=TRUE----------------------------------------------------------
+## ---- eval=TRUE----------------------------------------------------------------------------------
 lifeExp_worldwide <- gapminder2007 %>%
   summarize(median = median(lifeExp), mean = mean(lifeExp))
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------------------------------
 lifeExp_worldwide %>%
   knitr::kable(
     digits = 3,
@@ -269,14 +286,15 @@ lifeExp_worldwide %>%
 ## ----lifeExp2007hist, echo=FALSE, warning=FALSE, fig.cap="Histogram of Life Expectancy in 2007"----
 ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
-  labs(x = "Life expectancy", y = "Number of countries", title = "Worldwide life expectancy")
+  labs(x = "Life expectancy", y = "Number of countries", 
+       title = "Worldwide life expectancy")
 
-## ---- eval=TRUE----------------------------------------------------------
+## ---- eval=TRUE----------------------------------------------------------------------------------
 lifeExp_by_continent <- gapminder2007 %>%
   group_by(continent) %>%
   summarize(median = median(lifeExp), mean = mean(lifeExp))
 
-## ----catxplot0, echo=FALSE-----------------------------------------------
+## ----catxplot0, echo=FALSE-----------------------------------------------------------------------
 lifeExp_by_continent %>%
   knitr::kable(
     digits = 3,
@@ -284,7 +302,7 @@ lifeExp_by_continent %>%
     booktabs = TRUE
   )
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------------------------------
 median_africa <- lifeExp_by_continent %>%
   filter(continent == "Africa") %>%
   pull(median)
@@ -294,18 +312,20 @@ mean_africa <- lifeExp_by_continent %>%
 n_countries <- gapminder2007 %>% nrow()
 n_countries_africa <- gapminder2007 %>% filter(continent == "Africa") %>% nrow()
 
-## ----catxplot0b, warning=FALSE, fig.cap="Life expectancy in 2007"--------
+## ----catxplot0b, warning=FALSE, fig.cap="Life expectancy in 2007"--------------------------------
 ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
-  labs(x = "Life expectancy", y = "Number of countries", title = "Life expectancy by continent") +
-  facet_wrap(~continent, nrow = 2)
+  labs(x = "Life expectancy", y = "Number of countries", 
+       title = "Life expectancy by continent") +
+  facet_wrap(~ continent, nrow = 2)
 
-## ----catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007"---------
+## ----catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007"---------------------------------
 ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
   geom_boxplot() +
-  labs(x = "Continent", y = "Life expectancy (years)", title = "Life expectancy by continent") 
+  labs(x = "Continent", y = "Life expectancy (years)", 
+       title = "Life expectancy by continent") 
 
-## ----continent-mean-life-expectancies, echo=FALSE------------------------
+## ----continent-mean-life-expectancies, echo=FALSE------------------------------------------------
 gapminder2007 %>%
   group_by(continent) %>%
   summarize(mean = mean(lifeExp)) %>%
@@ -316,16 +336,16 @@ gapminder2007 %>%
     booktabs = TRUE
   )
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------------------------------
 ## lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
 ## get_regression_table(lifeExp_model)
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------------------------------
 lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
 evals_line <- get_regression_table(lifeExp_model) %>%
   pull(estimate)
 
-## ----catxplot4b, echo=FALSE----------------------------------------------
+## ----catxplot4b, echo=FALSE----------------------------------------------------------------------
 get_regression_table(lifeExp_model) %>%
   knitr::kable(
     digits = 3,
@@ -333,7 +353,7 @@ get_regression_table(lifeExp_model) %>%
     booktabs = TRUE
   )
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------------------------------
 gapminder2007 %>%
   slice(1:10) %>%
   knitr::kable(
@@ -342,11 +362,11 @@ gapminder2007 %>%
     booktabs = TRUE
   )
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------------------------------
 ## regression_points <- get_regression_points(lifeExp_model)
 ## regression_points
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------------------------------
 regression_points <- get_regression_points(lifeExp_model)
 regression_points %>%
   slice(1:10) %>%
@@ -356,18 +376,18 @@ regression_points %>%
     booktabs = TRUE
   )
 
-## ----catxplot7, warning=FALSE, fig.cap="Plot of residuals over continent"----
+## ----catxplot7, warning=FALSE, fig.cap="Plot of residuals over continent"------------------------
 ggplot(regression_points, aes(x = continent, y = residual)) +
   geom_jitter(width = 0.1) + 
   labs(x = "Continent", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue")
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------------------------------
 ## gapminder2007 %>%
 ##   filter(continent == "Asia") %>%
 ##   arrange(lifeExp)
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------------------------------
 gapminder2007 %>%
   filter(continent == "Asia") %>%
   arrange(lifeExp) %>%
@@ -378,17 +398,17 @@ gapminder2007 %>%
     booktabs = TRUE
   )
 
-## ----catxplot8, warning=FALSE, fig.cap="Histogram of residuals"----------
+## ----catxplot8, warning=FALSE, fig.cap="Histogram of residuals"----------------------------------
 ggplot(regression_points, aes(x = residual)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Residual")
 
-## ----correlation2, echo=FALSE, fig.cap="Different Correlation Coefficients"----
+## ----correlation2, echo=FALSE, fig.cap="Different Correlation Coefficients"----------------------
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
 n_sim <- 100
 
 values <- NULL
-for(i in 1:length(correlation)){
+for(i in seq_len(length(correlation))){
   rho <- correlation[i]
   sigma <- matrix(c(5, rho * sqrt(50), rho * sqrt(50), 10), 2, 2) 
   sim <- rmvnorm(
@@ -412,15 +432,8 @@ ggplot(data = values, mapping = aes(V1, V2)) +
     axis.ticks = element_blank()
   )
 
-## ----echo=FALSE----------------------------------------------------------
-if(!file.exists("data/evals.RData")){
-  download.file(url = "http://www.openintro.org/stat/data/evals.RData", 
-                destfile = "data/evals.RData")
-}
-load("data/evals.RData")
-evals <- evals %>%
-  select(score, bty_avg)
-index <- which(evals$bty_avg == 2.333 & evals$score == 2.7)
+## ----echo=FALSE----------------------------------------------------------------------------------
+index <- which(evals_small$bty_avg == 2.333 & evals_small$score == 2.7)
 target_point <- get_regression_points(score_model) %>% 
   slice(index)
 x <- target_point$bty_avg
@@ -435,9 +448,9 @@ best_fit_plot <- best_fit_plot +
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 best_fit_plot
 
-## ---- echo=FALSE---------------------------------------------------------
-index <- which(evals$bty_avg == 3.667 & evals$score == 4.4)
-score_model <- lm(score ~ bty_avg, data = evals)
+## ---- echo=FALSE---------------------------------------------------------------------------------
+index <- which(evals_small$bty_avg == 3.667 & evals_small$score == 4.4)
+score_model <- lm(score ~ bty_avg, data = evals_small)
 target_point <- get_regression_points(score_model) %>% 
   slice(index)
 x <- target_point$bty_avg
@@ -453,9 +466,9 @@ best_fit_plot <- best_fit_plot +
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 best_fit_plot
 
-## ----here, echo=FALSE----------------------------------------------------
-index <- which(evals$bty_avg == 6 & evals$score == 3.8)
-score_model <- lm(score ~ bty_avg, data = evals)
+## ----here, echo=FALSE----------------------------------------------------------------------------
+index <- which(evals_small$bty_avg == 6 & evals_small$score == 3.8)
+score_model <- lm(score ~ bty_avg, data = evals_small)
 target_point <- get_regression_points(score_model) %>%
   slice(index)
 x <- target_point$bty_avg
@@ -470,29 +483,33 @@ best_fit_plot <- best_fit_plot +
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 best_fit_plot
 
-## ---- eval = FALSE-------------------------------------------------------
-## score_model <- lm(score ~ bty_avg, data = evals)
+## ---- eval = FALSE-------------------------------------------------------------------------------
+## score_model <- lm(score ~ bty_avg, data = evals_small)
 ## get_regression_table(score_model, digits = 3)
 
-## ---- echo = FALSE-------------------------------------------------------
-score_model <- lm(score ~ bty_avg, data = evals)
+## ---- echo = FALSE-------------------------------------------------------------------------------
+score_model <- lm(score ~ bty_avg, data = evals_small)
 get_regression_table(score_model, digits = 3) %>% 
   knitr::kable()
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE-------------------------------------------------------------------------------
 ## library(broom)
 ## library(janitor)
 ## score_model %>%
 ##   tidy(conf.int = TRUE) %>%
 ##   mutate_if(is.numeric, round, digits = 3) %>%
-##   clean_names()
+##   clean_names() %>%
+##   rename(lower_ci = conf_low,
+##          upper_ci = conf_high)
 
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo = FALSE-------------------------------------------------------------------------------
 library(broom)
 library(janitor)
 score_model %>% 
   tidy(conf.int = TRUE) %>% 
   mutate_if(is.numeric, round, digits = 3) %>%
   clean_names() %>% 
+  rename(lower_ci = conf_low,
+         upper_ci = conf_high) %>% 
   knitr::kable()
 
