@@ -2,24 +2,148 @@
 
 # Thinking with Data {#thinking-with-data}
 
----
+```{r setup_thinking_with_data, include=FALSE}
+chap <- 12
+lc <- 0
+rq <- 0
+# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
+# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
 
-```{block, type='learncheck', purl=FALSE}
-**Note: This chapter is still under construction. If you would like to contribute, please check us out on GitHub at <https://github.com/moderndive/moderndive_book>**.
+knitr::opts_chunk$set(
+  tidy = FALSE, 
+  out.width = '\\textwidth'
+  )
 
-<center>
-<img src="images/sign-2408065_1920.png" alt="Drawing" style="height: 100px;"/>
-</center>
+# This bit of code is a bug fix on asis blocks, which we use to show/not show LC
+# solutions, which are written like markdown text. In theory, it shouldn't be
+# necessary for knitr versions <=1.11.6, but I've found I still need to for
+# everything to knit properly in asis blocks. More info here: 
+# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
+library(knitr)
+knit_engines$set(asis = function(options) {
+  if (options$echo && options$eval) knit_child(text = options$code)
+})
+
+# This controls which LC solutions to show. Options for solutions_shown: "ALL"
+# (to show all solutions), or subsets of c('4-4', '4-5'), including the
+# null vector c('') to show no solutions.
+solutions_shown <- c('12-1')
+show_solutions <- function(section){
+  return(solutions_shown == "ALL" | section %in% solutions_shown)
+  }
 ```
 
----
 
+### Needed packages {-}
+
+Let's load all the packages needed for this chapter (this assumes you've already installed them). If needed, read Section \@ref(packages) for information on how to install and load R packages.
+
+```{r warning=FALSE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(moderndive)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+# Packages needed internally, but not in text.
+library(knitr)
+library(patchwork)
+```
+
+### DataCamp {-}
 
 The case study below was the inspiration for a large part of ModernDive co-author [Albert Y. Kim's](https://twitter.com/rudeboybert) DataCamp course "Modeling with Data in the Tidyverse." If you're interested in complementing your learning below in an interactive online environment, click on the image below to access the course. The relevant chapters are Chapter 1 "Introduction to Modeling" and Chapter 3 "Modeling with Multiple Regression".
 
 <center>
 <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse"><img src="images/datacamp_intro_to_modeling.png" alt="Drawing" style="height: 200px;"/></a>
 </center>
+
+
+***
+
+
+## Case study: Seattle house prices
+
+* Load the [Seattle house prices dataset](https://www.kaggle.com/harlfoxem/housesalesprediction) from Kaggle saved in `moderndive::house_prices`
+* Model $y$ the sale `price` of house as a function of two explanatory/predictor variables:
+    1. $x_1$: size (`sqft_living` square feet)
+    1. $x_2$: `condition` (catgorical w/ 1 = lowest, 5 = best)
+* Communicate the results to a realtor
+
+
+### Exploratory data analysis
+
+Load subset of variables:
+
+```{r}
+house_prices %>% 
+  select(id, date, price, sqft_living, condition) %>% 
+  head()
+```
+
+
+Variables `price` and `sqft_living` are right-skewed:
+
+```{r}
+p1 <- ggplot(house_prices, aes(x = price)) +
+  geom_histogram() +
+  labs(x = "price", title = "House prices in Seattle")
+p2 <- ggplot(house_prices, aes(x = sqft_living)) +
+  geom_histogram() +
+  labs(x = "square feet", title = "Size of houses in Seattle")
+p1 + p2
+```
+
+Apply a log base 10 tranformation: 
+
+```{r}
+house_prices <- house_prices %>%
+  mutate(
+    log10_price = log10(price),
+    log10_sqft_living = log10(sqft_living)
+    )
+
+p1 <- ggplot(house_prices, aes(x = log10_price)) +
+  geom_histogram() +
+  labs(x = "log10 price", title = "House prices in Seattle")
+p2 <- ggplot(house_prices, aes(x = log10_sqft_living)) +
+  geom_histogram() +
+  labs(x = "log10 square feet", title = "Size of houses in Seattle")
+p1 + p2
+```
+
+Visualize the relationship between the variables using facets...
+
+```{r}
+ggplot(house_prices, aes(x = log10_sqft_living, y = log10_price)) +
+  geom_point(alpha = 0.5) +
+  labs(y = "log10 price", x = "log10 square footage", title = "House prices in Seattle") +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~condition)
+```
+
+... or colors
+
+```{r}
+ggplot(house_prices, aes(x = log10_sqft_living, y = log10_price, col = condition)) +
+  geom_point(alpha = 0.1) +
+  labs(y = "log10 price", x = "log10 square footage", title = "House prices in Seattle") +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+
+
+### Regression modeling
+
+* Fit an interaction model which allows for a unique regression line for each `condition` value
+* Output the regression table **along with confidence intervals, not just the p-values**.
+
+```{r}
+model_price <- lm(log10_price ~ log10_sqft_living * condition, data = house_prices)
+get_regression_table(model_price)
+```
+
+
 
 ## Effective Data Storytelling
 
