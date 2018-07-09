@@ -2,29 +2,251 @@
 
 # Thinking with Data {#thinking-with-data}
 
----
+```{r setup_thinking_with_data, include=FALSE}
+chap <- 12
+lc <- 0
+rq <- 0
+# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
+# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
 
-```{block, type='learncheck', purl=FALSE}
-**Note: This chapter is still under construction. If you would like to contribute, please check us out on GitHub at <https://github.com/moderndive/moderndive_book>**.
+knitr::opts_chunk$set(
+  tidy = FALSE, 
+  out.width = '\\textwidth'
+  )
 
-<center>
-<img src="images/sign-2408065_1920.png" alt="Drawing" style="height: 100px;"/>
-</center>
+# This bit of code is a bug fix on asis blocks, which we use to show/not show LC
+# solutions, which are written like markdown text. In theory, it shouldn't be
+# necessary for knitr versions <=1.11.6, but I've found I still need to for
+# everything to knit properly in asis blocks. More info here: 
+# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
+library(knitr)
+knit_engines$set(asis = function(options) {
+  if (options$echo && options$eval) knit_child(text = options$code)
+})
+
+# This controls which LC solutions to show. Options for solutions_shown: "ALL"
+# (to show all solutions), or subsets of c('4-4', '4-5'), including the
+# null vector c('') to show no solutions.
+solutions_shown <- c('12-1')
+show_solutions <- function(section){
+  return(solutions_shown == "ALL" | section %in% solutions_shown)
+  }
 ```
 
----
+Recall in Section \@ref(sec:intro-for-students) "Introduction for students" and at the end of chapters throughout this book, we displayed the "ModernDive flowchart" mapping your journey through this book.
+
+```{r moderndive-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="ModernDive Flowchart"}
+knitr::include_graphics("images/flowcharts/flowchart/flowchart.002.png")
+```
+
+Let's get a refresher of what you've covered so far. You first got started with with data in Chapter \@ref(getting-started), where you learned about the difference between R and RStudio, started coding in R, started understanding what R packages are, and explored your first dataset: all domestic departure flights from a New York City airport in 2013. Then:
+
+1. **Data science**: You assembled your data science toolbox using `tidyverse` packages. In particular:
+    + Ch.\@ref(viz): Visualizing data via the `ggplot2` package.
+    + Ch.\@ref(tidy): Understanding the concept of "tidy" data as a standardized data input format for all packages in the `tidyverse`
+    + Ch.\@ref(wrangling): Wranging data via the `dplyr` package.
+1. **Data modeling**: Using these data science tools and helper functions from the `moderndive` package, you started performing data modeling. In particular:
+    + Ch.\@ref(regression): Constructing basic regression models.
+    + Ch.\@ref(multiple-regression): Constructing multiple regression models.
+1. **Statistical inference**: Once again using your newly acquired data science tools, we unpacked statistical inference using the `infer` package. In particular:
+    + Ch.\@ref(sampling): Understanding the role that sampling variability plays in statistical inference using both tactile and virtual simulations of sampling from a "bowl" with an unknown proportion of red balls.
+    + Ch.\@ref(confidence-intervals): Building confidence intervals.
+    + Ch.\@ref(hypothesis-testing): Conducting hypothesis tests.
+1. **Data modeling revisited**: Armed with your new understanding of statistical inference, you revisited and reviewed the models you constructed in Ch.\@ref(regression) & Ch.\@ref(regression). In particular:
+    + Ch.\@ref(inference-for-regression): Interpreting both the statistical and practice significance of the results of the models.
+
+All this was our approach of guiding you through your first experiences of ["thinking with data"](https://arxiv.org/pdf/1410.3127.pdf), an expresssion originally coined by Diane Lambert of Google. How the philosophy underlying this expression guided our mapping of the flowchart above was well put in the introduction to the ["Practical Data Science for Stats"](https://peerj.com/collections/50-practicaldatascistats/) collection of preprints focusing on the practical side of data science workflows and statistical analysis, curated by [Jennifer Bryan](https://twitter.com/jennybryan?lang=en) and [Hadley Wickham](https://twitter.com/hadleywickham?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor):
+
+> There are many aspects of day-to-day analytical work that are almost absent from the conventional statistics literature and curriculum. And yet these activities account for a considerable share of the time and effort of data analysts and applied statisticians. The goal of this collection is to increase the visibility and adoption of modern data analytical workflows. We aim to facilitate the transfer of tools and frameworks between industry and academia, between software engineering and Stats/CS, and across different domains.
+
+In other words, in order to be equipped to "think with data" in the 21st century, future analysts need preparation going through the entirety of the ["Data/Science Pipeline"](http://r4ds.had.co.nz/explore-intro.html) we also saw earlier and not just parts of it.
+
+```{r pipeline-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="Data/Science Pipeline"}
+knitr::include_graphics("images/tidy1.png")
+```
+
+In Section \@ref(seattle-house-prices), we'll take you through full-pass of the "Data/Science Pipeline" where we'll analyze the sale price of houses in Seattle, WA, USA. In Section \@ref(data-journalism), we'll present you with examples of effective data storytelling, in particular the articles from the data journalism website [FiveThirtyEight.com](https://fivethirtyeight.com/), many of whose source datasets are accessible from the `fivethirtyeight` R package.
 
 
-## Effective Data Storytelling
+### Needed packages {-}
 
-As we've progressed throughout this book, you've seen how to work with data in a variety of ways.  You've learned effective strategies for plotting data by understanding which types of plots work best for which combinations of variable types.  You've summarized data in table form and calculated summary statistics for a variety of different variables.  Further, you've seen the value of inference as a process to come to conclusions about a population by using a random sample.  Lastly, you've explored how to use linear regression and the importance of checking the conditions required to make it a valid procedure.  All throughout, you've learned many computational techniques and focused on reproducible research in writing R code and keeping track of your work in R Markdown.  All of these steps go into making a great story using data.
+Let's load all the packages needed for this chapter (this assumes you've already installed them). Read Section \@ref(packages) for information on how to install and load R packages.
 
-As the textbook comes to a close, we thought it best that you explore what stellar work is being produced by data journalists throughout the world that specialize in effective data storytelling.  We recommend you read and analyze this article by Walt Hickey entitled [The Dollar-And-Cents Case Against Hollywood’s Exclusion of Women](http://fivethirtyeight.com/features/the-dollar-and-cents-case-against-hollywoods-exclusion-of-women/).  As you read over it, think carefully about how Walt is using data, graphics, and analyses to paint the picture for the reader of what the story is he wants to tell.  
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(moderndive)
+library(fivethirtyeight)
+```
 
-In the spirit of reproducibility, the members of FiveThirtyEight have also shared the data that they used to create this story and some R code [here](https://github.com/fivethirtyeight/data/tree/master/bechdel).  A vignette showing how to reproduce one of the plots at the end of the article using `dplyr`, `ggplot2`, and other packages in Hadley's `tidyverse` is available [here](https://cran.r-project.org/web/packages/fivethirtyeight/vignettes/bechdel.html) as part of the [`fivethirtyeight` R package](https://rudeboybert.github.io/fivethirtyeight/) [@R-fivethirtyeight].  Great data stories don't mislead the reader, but rather engulf them in understanding the importance that data plays in our lives through the captivation of storytelling.
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+# Packages needed internally, but not in text.
+library(knitr)
+library(patchwork)
+```
 
 
-## Examples
+### DataCamp {-}
+
+The case study of Seattle house prices below was the inspiration for a large part of ModernDive co-author [Albert Y. Kim's](https://twitter.com/rudeboybert) DataCamp course "Modeling with Data in the Tidyverse." If you're interested in complementing your learning below in an interactive online environment, click on the image below to access the course. The relevant chapters are Chapter 1 "Introduction to Modeling" and Chapter 3 "Modeling with Multiple Regression".
+
+<center>
+<a target="_blank" class="page-link" href="https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse"><img src="images/datacamp_intro_to_modeling.png" alt="Drawing" style="height: 200px;"/></a>
+</center>
+
+Cases studies involving data in the `fivethirtyeight` R package form the basis of ModernDive co-author [Chester Ismay's](https://twitter.com/old_man_chester?lang=en) DataCamp course "Effective Data Storytelling in the Tidyverse". This free course can be accessed [here](https://www.datacamp.com/courses/effective-data-storytelling-using-the-tidyverse-free).
+
+***
+
+
+## Case study: Seattle house prices {#seattle-house-prices}
+
+* Load the [Seattle house prices dataset](https://www.kaggle.com/harlfoxem/housesalesprediction) from Kaggle saved in `moderndive::house_prices`
+* Model $y$ the sale `price` of house as a function of two explanatory/predictor variables:
+    1. $x_1$: size (`sqft_living` square feet)
+    1. $x_2$: `condition` (catgorical w/ 1 = lowest, 5 = best)
+* Communicate the results to a realtor
+
+
+### Needed tools
+
+Let's load all the packages needed for this chapter (this assumes you've already installed them). If needed, read Section \@ref(packages) for information on how to install and load R packages.
+
+```{r warning=FALSE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(moderndive)
+```
+
+### Exploratory data analysis
+
+Load subset of variables:
+
+```{r}
+house_prices %>% 
+  select(id, date, price, sqft_living, condition) %>% 
+  head()
+```
+
+
+Variables `price` and `sqft_living` are right-skewed:
+
+```{r}
+p1 <- ggplot(house_prices, aes(x = price)) +
+  geom_histogram() +
+  labs(x = "price", title = "House prices in Seattle")
+p2 <- ggplot(house_prices, aes(x = sqft_living)) +
+  geom_histogram() +
+  labs(x = "square feet", title = "Size of houses in Seattle")
+p1 + p2
+```
+
+Apply a log base 10 tranformation: 
+
+```{r}
+house_prices <- house_prices %>%
+  mutate(
+    log10_price = log10(price),
+    log10_sqft_living = log10(sqft_living)
+    )
+
+p1 <- ggplot(house_prices, aes(x = log10_price)) +
+  geom_histogram() +
+  labs(x = "log10 price", title = "House prices in Seattle")
+p2 <- ggplot(house_prices, aes(x = log10_sqft_living)) +
+  geom_histogram() +
+  labs(x = "log10 square feet", title = "Size of houses in Seattle")
+p1 + p2
+```
+
+Visualize the relationship between the variables using facets...
+
+```{r}
+ggplot(house_prices, aes(x = log10_sqft_living, y = log10_price)) +
+  geom_point(alpha = 0.5) +
+  labs(y = "log10 price", x = "log10 square footage", title = "House prices in Seattle") +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~condition)
+```
+
+... or colors
+
+```{r}
+ggplot(house_prices, aes(x = log10_sqft_living, y = log10_price, col = condition)) +
+  geom_point(alpha = 0.1) +
+  labs(y = "log10 price", x = "log10 square footage", title = "House prices in Seattle") +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+
+
+### Regression modeling
+
+* Fit an interaction model which allows for a unique regression line for each `condition` value
+* Output the regression table **along with confidence intervals, not just the p-values**.
+
+```{r}
+model_price <- lm(log10_price ~ log10_sqft_living * condition, data = house_prices)
+get_regression_table(model_price)
+```
+
+
+### Insight
+
+
+
+## Case study: Effective data storytelling {#data-journalism}
+
+As we've progressed throughout this book, you've seen how to work with data in a variety of ways.  You've learned effective strategies for plotting data by understanding which types of plots work best for which combinations of variable types.  You've summarized data in table form and calculated summary statistics for a variety of different variables.  Further, you've seen the value of inference as a process to come to conclusions about a population by using a random sample.  Lastly, you've explored how to use linear regression and the importance of checking the conditions required to make it a valid procedure.  All throughout, you've learned many computational techniques and focused on reproducible research in writing R code. We now present another case study, but this time of the "effective data storytelling" done by data journalists around the world. Great data stories don't mislead the reader, but rather engulf them in understanding the importance that data plays in our lives through the captivation of storytelling.
+
+### Bechdel test for Hollywood gender representation
+
+We recommend you read and analyze this article by Walt Hickey entitled [The Dollar-And-Cents Case Against Hollywood’s Exclusion of Women](http://fivethirtyeight.com/features/the-dollar-and-cents-case-against-hollywoods-exclusion-of-women/) on the Bechdel test, an informal test of gender representation in a movie.  As you read over it, think carefully about how Walt is using data, graphics, and analyses to paint the picture for the reader of what the story is he wants to tell.  In the spirit of reproducibility, the members of FiveThirtyEight have also shared the [data and R code](https://github.com/fivethirtyeight/data/tree/master/bechdel) that they used to create for this story and many more of their articles on [GitHub](https://github.com/fivethirtyeight/data).
+
+ModernDive co-authors [Chester Ismay](https://twitter.com/old_man_chester?lang=en) and [Albert Y. Kim](https://twitter.com/rudeboybert) along with [Jennifer Chunn](https://twitter.com/jchunn206) went one step further by creating the [`fivethirtyeight` R package](https://fivethirtyeight-r.netlify.com/). The `fivethirtyeight` package takes FiveThirtyEight's article data from GitHub, ["tames"](http://rpubs.com/rudeboybert/fivethirtyeight_tamedata) it so that it's novice-friendly, and makes all data, documentation, and the original article easily accessible via an R package. 
+
+The package homepage also includes a list of [all `fivethirtyeight` data sets](https://fivethirtyeight-r.netlify.com/articles/fivethirtyeight.html#data-sets) included. 
+
+Furthermore, example "vignettes" of fully reproducible start-to-finish analyses of some of these data using `dplyr`, `ggplot2`, and other packages in the `tidyverse` is available [here](https://fivethirtyeight-r.netlify.com/articles/). For example, a vignette showing how to reproduce one of the plots at the end of the above article on the Bechdel test is available [here](https://fivethirtyeight-r.netlify.com/articles/bechdel.html). 
+
+### US Births in 1999
+
+Here is another example involving the `US_births_1994_2003` data frame of all births in the United States between 1994 and 2003. For more information on this data frame including a link to the original article on FiveThirtyEight.com, check out the help file by running `?US_births_1994_2003` in the console. First, let's load all necessary packages:
+
+```{r fivethirtyeight}
+library(ggplot2)
+library(dplyr)
+library(fivethirtyeight)
+```
+
+It's always a good idea to preview your data, either by using RStudio's spreadsheet `View()` function or using `glimpse()` from the dplyr package below:
+
+```{r}
+# Preview data
+glimpse(US_births_1994_2003)
+```
+
+We'll focus on the number of `births` for each `date`, but only for births that occurred in 1999. Recall we achieve this using the `filter()` command from `dplyr` package:
+
+```{r}
+US_births_1999 <- US_births_1994_2003 %>%
+  filter(year == 1999)
+```
+
+Since `date` is a notion of time, which has a sequential ordering to it, a linegraph AKA a "time series" plot would be more appropriate than a scatterplot. In other words, use a `geom_line()` instead of `geom_point()`:
+
+```{r}
+ggplot(US_births_1999, aes(x = date, y = births)) +
+  geom_line() +
+  labs(x = "Data", y = "Number of births", title = "US Births in 1999")
+```
+
+We see a big valley occuring just before January 1st, 2000, mostly likely due to the holiday season. However, what about the major peak of over 14,000 births occuring just before October 1st, 1999? What could be the reason for this anomalously high spike in ? Time to think with data!
+
+
+### Other examples
+
+Stand by!
 
 
 
