@@ -16,6 +16,9 @@ knitr::opts_chunk$set(
   warning = FALSE
   )
 
+# In knitr::kable printing replace all NA's with blanks
+options(knitr.kable.NA = '')
+
 # This bit of code is a bug fix on asis blocks, which we use to show/not show LC
 # solutions, which are written like markdown text. In theory, it shouldn't be
 # necessary for knitr versions <=1.11.6, but I've found I still need to for
@@ -43,6 +46,8 @@ At the most basic level, graphics/plots/charts (we use these terms interchangeab
 
 As we will see, plots/graphics also help us to identify patterns and outliers in our data.  We will see that a common extension of these ideas is to compare the *distribution* of one quantitative variable (i.e., what the spread of a variable looks like or how the variable is *distributed* in terms of its values) as we go across the levels of a different categorical variable.
 
+
+
 ### Needed packages {-}
 
 Let's load all the packages needed for this chapter (this assumes you've already installed them). Read Section \@ref(packages) for information on how to install and load R packages.
@@ -57,9 +62,16 @@ library(dplyr)
 # Packages needed internally, but not in text.
 library(gapminder)
 library(knitr)
+library(readr)
 ```
 
+### DataCamp {-}
 
+Our approach to introducing data visualization via the Grammar of Graphics and the `ggplot2` package is very similar to the approach taken in [David Robinson's](https://twitter.com/drob) DataCamp course "Introduction to the Tidyverse," a course targetted at people new to R and the tidyverse. If you're interested in complementing your learning below in an interactive online environment, click on the image below to access the course. The relevant chapters are Chapter 2 on "Data visualization" and Chapter 4 on "Types of visualizations".
+
+<center>
+<a target="_blank" class="page-link" href="https://www.datacamp.com/courses/introduction-to-the-tidyverse"><img src="images/datacamp_intro_to_tidyverse.png" alt="Drawing" style="height: 150px;"/></a>
+</center>
 
 
 
@@ -249,12 +261,14 @@ This code snippet makes use of functions in the `dplyr` package for data wrangli
 
 We proceed to create the scatterplot using the `ggplot()` function:
 
-```{r noalpha, fig.cap="Arrival Delays vs Departure Delays for Alaska Airlines flights from NYC in 2013"}
+```{r noalpha, fig.cap="Arrival Delays vs Departure Delays for Alaska Airlines flights from NYC in 2013", message=TRUE}
 ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point()
 ```
 
-In Figure \@ref(fig:noalpha) we see that a positive relationship exists between `dep_delay` and `arr_delay`: as departure delays increase, arrival delays tend to also increase.  We also note that the majority of points fall near the point (0, 0).  There is a large mass of points clustered there. Let's break this down, keeping in mind our discussion in Section \@ref(grammarofgraphics):
+In Figure \@ref(fig:noalpha) we see that a positive relationship exists between `dep_delay` and `arr_delay`: as departure delays increase, arrival delays tend to also increase.  We also note that the majority of points fall near the point (0, 0).  There is a large mass of points clustered there. Furthermore after executing this code, R returns a warning message alerting us to the fact that 5 rows were ignored due to mising values. For 5 rows either the value for `dep_delay` or `arr_delay` or both were missing, and thus these rows were ignored in our plot.
+
+Let's go back to the `ggplot()` function call that created this visualization, keeping in mind our discussion in Section \@ref(grammarofgraphics):
 
 * Within the `ggplot()` function call, we specify two of the components of the grammar:
     1. The `data` frame to be `all_alaska_flights` by setting `data = all_alaska_flights`
@@ -327,16 +341,48 @@ The key feature to note in Figure \@ref(fig:alpha) is that the transparency of t
 
 Note that there is no `aes()` surrounding `alpha = 0.2` here.  Since we are NOT mapping a variable to an aesthetic but instead are just changing a setting, we don't need to create a mapping with `aes()`.  In fact, you'll receive an error if you try to change the second line above to `geom_point(aes(alpha = 0.2))`.
 
-The second way of relieving overplotting is to *jitter* the points a bit.  In other words, we are going to add just a bit of random noise to the points to better see them and remove some of the overplotting.  You can think of "jittering" as shaking the points around a bit on the plot. Instead of using `geom_point`, we use `geom_jitter` to perform this shaking. To specify how much jitter to add, we adjust the `width` and `height` arguments.  This corresponds to how hard you'd like to shake the plot in units corresponding to those for both the horizontal and vertical variables (in this case, minutes).
+The second way of relieving overplotting is to *jitter* the points a bit. In other words, we are going to add just a bit of random noise to the points to better see them and alleviate some of the overplotting.  You can think of "jittering" as shaking the points around a bit on the plot. Let's illustrate using a simple example first. Say we have a data frame `jitter_example` with 4 rows of identical value 0 for both `x` and `y`:
+
+```{r jitter-example-df, echo=FALSE}
+jitter_example <- data_frame(
+  x = c(0, 0, 0, 0),
+  y = c(0, 0, 0, 0)
+)
+```
+```{r jitter-example-df-01}
+jitter_example
+```
+
+We display the resulting scatterplot in Figure \@ref(fig:jitter-example-plot-1); observe that the 4 points are superimposed on top of each other. While we know there are 4 values being plotted, this fact might not be apparent to others.
+
+```{r jitter-example-plot-1, fig.cap="Regular scatterplot of jitter example data", echo=FALSE}
+ggplot(data = jitter_example, mapping = aes(x = x, y = y)) + 
+  geom_point() +
+  coord_cartesian(xlim = c(-0.025, 0.025), ylim = c(-0.025, 0.025)) + 
+  labs(title = "Regular scatterplot")
+```
+
+In Figure \@ref(fig:jitter-example-plot-2) we instead display a *jittered scatterplot*. Since each point is given a random "nudge", it is now plainly evident that there are four points. 
+
+```{r jitter-example-plot-2, fig.cap="Jittered scatterplot of jitter example data", echo=FALSE}
+ggplot(data = jitter_example, mapping = aes(x = x, y = y)) + 
+  geom_jitter(width = 0.01, height = 0.01) +
+  coord_cartesian(xlim = c(-0.025, 0.025), ylim = c(-0.025, 0.025)) + 
+  labs(title = "Jittered scatterplot")
+```
+
+To create a jittered scatterplot, instead of using `geom_point`, we use `geom_jitter`. To specify how much jitter to add, we adjust the `width` and `height` arguments.  This corresponds to how hard you'd like to shake the plot in units corresponding to those for both the horizontal and vertical variables (in this case, minutes). It is important to add just enough jitter to break any overlap in points, but not so much that we completely obscure the overall pattern in points. 
 
 ```{r jitter, fig.cap="Jittered delay scatterplot"}
 ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_jitter(width = 30, height = 30)
 ```
 
-Note how this function call is identical to the one in Subsection \@ref(geompoint), but with `geom_point()` replaced with `geom_jitter()`. The plot in Figure \@ref(fig:jitter) helps us a little bit in getting a sense for the overplotting, but with a relatively large data-set like this one (`r nrow(all_alaska_flights)` flights), it can be argued that changing the transparency of the points by setting `alpha` proved more effective.
+Observe how this function call is identical to the one in Subsection \@ref(geompoint), but with `geom_point()` replaced with `geom_jitter()`. Also, it is important to note that `geom_jitter()` is strictly a visualization tool and that does not alter the original values saved in `jitter_example`.
 
-We'll see later on that the two following R commands will yield the exact same plot:
+The plot in Figure \@ref(fig:jitter) helps us a little bit in getting a sense for the overplotting, but with a relatively large data-set like this one (`r nrow(all_alaska_flights)` flights), it can be argued that changing the transparency of the points by setting `alpha` proved more effective. 
+
+Furthermore, we'll see later on that the two following R commands will yield the exact same plot:
 
 ```{r, eval = FALSE}
 ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
@@ -410,8 +456,8 @@ This is similar to the previous use of the `filter` command in Section \@ref(sca
 
 ```{asis lc-early_january_weather-solutions, include=show_solutions('3-4')}
 **Learning Check Solutions**  
-**LC `r paste0("(LC", chap, ".", (lc - 1), ")")`**: Take a look at both the `weather` and `early_january_weather` data frames by running `View(weather)` and `View(early_january_weather)` in the console. In what respect do these data frames differ? *The rows of `early_january_weather` are a subset of `weather`.*  
-**LC`r paste0("(LC", chap, ".", (lc), ")")`**: `View()` the `flights` data frame again. Why does the `time_hour` variable correctly identify the hour of the measurement whereas the `hour` variable does not? *Because to uniquely identify an hour, we need the `year`/`month`/`day`/`hour` sequence, whereas there are only 24 possible `hour`'s.*  
+**`r paste0("(LC", chap, ".", (lc - 1), ")")`**: Take a look at both the `weather` and `early_january_weather` data frames by running `View(weather)` and `View(early_january_weather)` in the console. In what respect do these data frames differ? *The rows of `early_january_weather` are a subset of `weather`.*  
+**`r paste0("(LC", chap, ".", (lc), ")")`**: `View()` the `flights` data frame again. Why does the `time_hour` variable correctly identify the hour of the measurement whereas the `hour` variable does not? *Because to uniquely identify an hour, we need the `year`/`month`/`day`/`hour` sequence, whereas there are only 24 possible `hour`'s.*  
 ```
 
 ```{block, type='learncheck', purl=FALSE}
@@ -449,9 +495,9 @@ Much as with the `ggplot()` call in Chapter \@ref(geompoint), we describe the co
 
 ```{asis lc-linegraph-solutions, include=show_solutions('3-5')}
 **Learning Check Solutions**  
-**LC `r paste0("(LC", chap, ".", (lc - 2), ")")`**: Why should linegraphs be avoided when there is not a clear ordering of the horizontal axis? *Because lines suggest connectedness and ordering.*  
-**LC `r paste0("(LC", chap, ".", (lc - 1), ")")`**: Why are linegraphs frequently used when time is the explanatory variable? *Because time is sequential: subsequent observations are closely related to each other.*  
-**LC `r paste0("(LC", chap, ".", (lc), ")")`**: Plot a time series of a variable other than `temp` for Newark Airport in the first 15 days of January 2013. *Humidity is a good one to look at, since this very closely related to the cycles of a day.*  
+**`r paste0("(LC", chap, ".", (lc - 2), ")")`**: Why should linegraphs be avoided when there is not a clear ordering of the horizontal axis? *Because lines suggest connectedness and ordering.*  
+**`r paste0("(LC", chap, ".", (lc - 1), ")")`**: Why are linegraphs frequently used when time is the explanatory variable? *Because time is sequential: subsequent observations are closely related to each other.*  
+**`r paste0("(LC", chap, ".", (lc), ")")`**: Plot a time series of a variable other than `temp` for Newark Airport in the first 15 days of January 2013. *Humidity is a good one to look at, since this very closely related to the cycles of a day.*  
 ```
 
 ```{r, include=show_solutions('3-5'), echo=show_solutions('3-5')}
@@ -545,11 +591,11 @@ ggplot(data = weather, mapping = aes(x = temp)) +
 
 ```{asis lc-histogram-solutions, include=show_solutions('3-7')}
 **Learning Check Solutions**  
-**LC `r paste0("(LC", chap, ".", (lc - 3), ")")`: What does changing the number of bins from 30 to 60 tell us about the distribution of temperatures?** The distribution doesn't change much. But by refining the bid width, we see that the temperature data has a high degree of accuracy. What do I mean by accuracy? Looking at the `temp` variabile by `View(weather)`, we see that the precision of each temperature recording is 2 decimal places.
+**`r paste0("(LC", chap, ".", (lc - 3), ")")`: What does changing the number of bins from 30 to 60 tell us about the distribution of temperatures?** The distribution doesn't change much. But by refining the bid width, we see that the temperature data has a high degree of accuracy. What do I mean by accuracy? Looking at the `temp` variabile by `View(weather)`, we see that the precision of each temperature recording is 2 decimal places.
 
-**LC `r paste0("(LC", chap, ".", (lc - 2), ")")`: Would you classify the distribution of temperatures as symmetric or skewed?** It is rather symmetric, i.e. there are no __long tails__ on only one side of the distribution
+**`r paste0("(LC", chap, ".", (lc - 2), ")")`: Would you classify the distribution of temperatures as symmetric or skewed?** It is rather symmetric, i.e. there are no __long tails__ on only one side of the distribution
 
-**LC `r paste0("(LC", chap, ".", (lc - 1), ")")`: What would you guess is the "center" value in this distribution?  Why did you make that choice?** The center is around `r mean(weather$temp, na.rm=TRUE)`&deg;F. By running the `summary()` command, we see that the mean and median are very similar. In fact, when the distribution is symmetric the mean equals the median.
+**`r paste0("(LC", chap, ".", (lc - 1), ")")`: What would you guess is the "center" value in this distribution?  Why did you make that choice?** The center is around `r mean(weather$temp, na.rm=TRUE)`&deg;F. By running the `summary()` command, we see that the mean and median are very similar. In fact, when the distribution is symmetric the mean equals the median.
 
 **`r paste0("(LC", chap, ".", (lc), ")")`: Is this data spread out greatly from the center or is it close? Why?**
 
@@ -621,7 +667,7 @@ As we might expect, the temperature tends to increase as summer approaches and t
 * Certain months have much more consistent weather (August in particular), while others have crazy variability like January and October, representing changes in the seasons.
 * The two variables we are see the relationship of are `temp` and `month`.
     
-**LC `r paste0("(LC", chap, ".", (lc - 2), ")")`: What do the numbers 1-12 correspond to in the plot above? What about 25, 50, 75, 100?**
+**`r paste0("(LC", chap, ".", (lc - 2), ")")`: What do the numbers 1-12 correspond to in the plot above? What about 25, 50, 75, 100?**
   
 * While month is technically a number between 1-12, we're viewing it as a categorical variable here. Specifically an **ordinal categorical** variable since there is a ordering to the categories
 * 25, 50, 75, 100 are temperatures
@@ -673,9 +719,16 @@ ggplot(data = weather, mapping = aes(x = factor(month), y = temp)) +
   geom_boxplot()
 ```
 
-We have introduced a new function called `factor()` here.  One of the things this function does is to convert a discrete value like `month` (1, 2, ..., 12) into a categorical variable.  The "box" part of this plot represents the 25^th^ percentile, the median (50^th^ percentile), and the 75^th^ percentile.  The dots correspond to *outliers*.  (The specific formulation for these outliers is discussed in Appendix \@ref(appendixA).)  The lines show how the data varies that is not in the center 50% defined by the first and third quantiles.  Longer lines correspond to more variability and shorter lines correspond to less variability.
+We have introduced a new function called `factor()` here which converts a discrete numerical values, like `month` whose values are the numbers 1 through 12, into a categorical variable variable with "labels" 1 through 12. So for example, after converting `month` to a categorical variable, we couldn't perform any mathematical operations on its values. Note also that the labels have an ordering on the x-axis in Figure \@ref(fig:monthtempbox); this ordering is based on the alphanumeric ordering of the numbers 1 through 12. 
 
-Looking at this plot we can see, as expected, that summer months (6 through 8) have higher median temperatures. We can easily compare temperatures across months by drawing imaginary horizontal lines across the plot. Furthermore, the height of the 12 boxes are informative too; they tell us about variability, or spread, of temperatures recorded in a given month. 
+The resulting Figure \@ref(fig:monthtempbox) shows 12 separate "box and whiskers" plots with the following features:
+
+* The "box" portions of this plot represent the 25^th^ percentile AKA the 1^st^ quartile, the median AKA the 50^th^ percentile AKA the 2^nd^ quartile, and the 75^th^ percentile AKA the 3^rd^ quartile.
+* The height of each box, i.e. the value of the 3^rd^ quartile minus the value of the 1^st^ quartile, is called the *interquartile range* ($IQR$). It is a measure of spread of the middle 50% of values, with longer boxes indicating more variability.
+* The "whisker" portions of these plots extend out from the bottoms and tops of the boxes and represent points less than the 25^th^ percentile and greater than the 75^th^ percentiles respectively. They're set to extend out no more than $1.5 \times IQR$ units away from either end of the boxes. We say "no more than" because the ends of the whiskers represent the first observed values of `temp` to be within the range of the whiskers. The length of these whiskers show how the data outside the middle 50% of values vary, with longer whiskers indicating more variability.
+* The dots representing values falling outside the whiskers are called *outliers*. It is important to keep in mind that the definition of an outlier is somewhat arbitrary and not absolute. In this case, they are defined by the length of the whiskers, which are no more than $1.5 \times IQR$ units long.
+
+Looking at this plot we can see, as expected, that summer months (6 through 8) have higher median temperatures as evidenced by the higher solid lines in the middle of the boxes. We can easily compare temperatures across months by drawing imaginary horizontal lines across the plot. Furthermore, the height of the 12 boxes as quantified by the interquartile ranges are informative too; they tell us about variability, or spread, of temperatures recorded in a given month. 
 
 But to really bring home what boxplots show, let's focus only on the month of November's `r weather %>% filter(month == 11) %>% nrow()` temperature recordings.
 
@@ -703,6 +756,7 @@ What the boxplot does is summarize the `r weather %>% filter(month == 11) %>% nr
 1. 25% of points fall between the bottom edge of the box and the solid middle line which is the median of `r quartiles[2] %>% round(3)` degrees Farenheit (7.8 degrees Celsius). In other words 25% of observations were between `r quartiles[1] %>% round(3)` and `r quartiles[2] %>% round(3)` degrees Farenheit.
 1. 25% of points fall between the solid middle line and the top edge of the box which is the third quartile of `r quartiles[3] %>% round(3)` degrees Farenheit (11.1 degrees Celsius). In other words 25% of observations were between `r quartiles[2] %>% round(3)` and `r quartiles[3] %>% round(3)` degrees Farenheit.
 1. 25% of points fall over the top edge of the box. In other words 25% of observations were warmer than `r quartiles[3] %>% round(3)` degrees Farenheit.
+1. The middle 50% of points lie within the interquartile range `r (quartiles[3] - quartiles[1]) %>% round(3)` degrees Farenheit.
 
 ```{block lc-boxplot, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -1084,6 +1138,21 @@ Barplots are the preferred way of displaying categorical variables.  They are ea
 
 
 ## Conclusion
+
+### Putting it all together
+
+Let's recap all five of the Five Named Graphs (5NG) in Table \@ref(tab:viz-summary-table) summarizing their differences. Using these 5NG, you'll be able to visualize the distributions and relationships of variables contained in a wide array of datasets. This will be even more the case as we start to map more variables to more of each `geom`etic object's `aes`thetic attribute options, further unlocking the awesome power of the `ggplot2` package.
+
+```{r viz-summary-table, echo=FALSE, message=FALSE}
+# Original at https://docs.google.com/spreadsheets/d/1vzqlFiT6qm5wzy_L_0nL7EWAd6jiUZmLSCFhDhztDSg/edit#gid=0
+read_csv("data/ch3_summary_table - Sheet1.csv", na = "") %>% 
+  rename_(" " = "X1") %>% 
+  kable(
+    caption = "Summary of 5NG", 
+    booktabs = TRUE
+  )
+```
+
 
 ### Review questions
 
