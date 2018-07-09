@@ -13,12 +13,10 @@ library(patchwork)
 set.seed(79)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## library(readr)
-## tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv")
+## tactile_prop_red
 ## View(tactile_prop_red)
 
 ## ----tactile-prop-red, echo=FALSE, message=FALSE, warning=FALSE----------
-tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv")
 tactile_prop_red %>% 
   kable(
     digits = 2,
