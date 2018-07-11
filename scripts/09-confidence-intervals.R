@@ -3,7 +3,6 @@ library(dplyr)
 library(ggplot2)
 library(janitor)
 library(moderndive)
-# remotes::install_github("andrewpbray/infer", ref = "p_value")
 library(infer)
 # For loading CSV files:
 library(readr)

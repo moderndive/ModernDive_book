@@ -1,7 +1,6 @@
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
-# remotes::install_github("andrewpbray/infer", ref = "p_value")
 library(infer)
 library(nycflights13)
 library(ggplot2movies)

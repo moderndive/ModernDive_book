@@ -48,6 +48,11 @@ HTMLWidgets.widget({
         // get dygraph attrs and populate file field
         var attrs = x.attrs;
         attrs.file = x.data;
+	      
+	// disable zoom interaction except for clicks
+        if (attrs.disableZoom) {
+          attrs.interactionModel = Dygraph.Interaction.nonInteractiveModel_;
+        }
         
         // convert non-arrays to arrays
         for (var index = 0; index < attrs.file.length; index++) {
@@ -140,6 +145,21 @@ HTMLWidgets.widget({
         // custom data handler
         if (x.dataHandler) {
           attrs.dataHandler = Dygraph.DataHandlers[x.dataHandler];
+        }
+
+        // custom circles
+        if (x.pointShape) {
+          if (typeof x.pointShape === 'string') {
+            attrs.drawPointCallback = Dygraph.Circles[x.pointShape.toUpperCase()];
+            attrs.drawHighlightPointCallback = Dygraph.Circles[x.pointShape.toUpperCase()];
+          } else {
+            for (var s in x.pointShape) {
+              if (x.pointShape.hasOwnProperty(s)) {
+                attrs.series[s].drawPointCallback = Dygraph.Circles[x.pointShape[s].toUpperCase()];
+                attrs.series[s].drawHighlightPointCallback = Dygraph.Circles[x.pointShape[s].toUpperCase()];
+              }
+            }
+          }
         }
     
         // if there is no existing dygraph perform initialization
