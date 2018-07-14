@@ -84,6 +84,7 @@ library(forcats)
 library(gridExtra)
 library(broom)
 library(janitor)
+library(patchwork)
 ```
 
 ### DataCamp {-}
@@ -235,10 +236,9 @@ The correlation coefficient can also be computed using the `cor()` function, whe
 cor(x = evals_small$bty_avg, y = evals_small$score)
 ```
 
-
 In our case, the correlation coefficient of `r cor(x = evals_small$bty_avg, y = evals_small$score) %>% round(3)` indicates that the relationship between teaching evaluation score and beauty average is "weakly positive." There is a certain amount of subjectivity in interpreting correlation coefficients, especially those that aren't close to -1, 0, and 1. For help developing such intuition and more discussion on the correlation coefficient see Subsection \@ref(correlationcoefficient) below. 
 
-Let's now proceed by visualizing this data. Since both the `score` and `bty_avg` variables are numerical, a scatterplot is an appropriate graph to visualize this data. Let's do this using `geom_point()` and set informative axes labels and title.
+Let's now proceed by visualizing this data. Since both the `score` and `bty_avg` variables are numerical, a scatterplot is an appropriate graph to visualize this data. Let's do this using `geom_point()` and set informative axes labels and title and display the result in Figure \@ref(fig:numxplot1).
 
 ```{r numxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin"}
 ggplot(evals_small, aes(x = bty_avg, y = score)) +
@@ -247,7 +247,13 @@ ggplot(evals_small, aes(x = bty_avg, y = score)) +
        title = "Relationship of teaching and beauty scores")
 ```
 
-However Figure \@ref(fig:numxplot1) suffers from *overplotting*. Recall from the data visualization Subsection \@ref(overplotting) that overplotting occurs when several points are stacked directly on top of each other thereby obscuring the number of points. For example, let's focus on the 6 points in the top-right of the plot with a beauty score of around 8 out of 10: are there truly only 6 points, or are there many more just stacked on top of each other? You can think of these as *ties*. Let's break up these ties with a little random "jitter" added to the points in Figure \@ref(fig:numxplot2). Jittering adds a little random bump to each of the points to break up these ties. Remember that the `geom_jitter` only alters the visual display of the points; the values in the data frame stay the same.
+Observe the following:
+
+1. Most "beauty" scores lie between 2 and 8.
+1. Most teaching scores lie between 3 and 5.
+1. Recall our earlier computation of the correlation coefficient, which describes the strength of the linear relationship between two numerical variables. Looking at Figure \@ref(fig:numxplot2), it is not immediately apparent that these two variables are positively related. This is to be expected given the positive, but rather weak (close to 0), correlation coefficient of `r cor(evals_small$score, evals_small$bty_avg) %>% round(3)`.
+
+Before we continue, we bring to light an important fact about this dataset: it suffers from *overplotting*. Recall from the data visualization Subsection \@ref(overplotting) that overplotting occurs when several points are stacked directly on top of each other thereby obscuring the number of points. For example, let's focus on the 6 points in the top-right of the plot with a beauty score of around 8 out of 10: are there truly only 6 points, or are there many more just stacked on top of each other? You can think of these as *ties*. Let's break up these ties with a little random "jitter" added to the points in Figure \@ref(fig:numxplot2). 
 
 ```{r, echo=FALSE}
 set.seed(76)
@@ -259,17 +265,34 @@ ggplot(evals_small, aes(x = bty_avg, y = score)) +
        title = "Relationship of teaching and beauty scores")
 ```
 
-From Figure \@ref(fig:numxplot2) we make several observations:
+Jittering adds a little random bump to each of the points to break up these ties: just enough so you can distinguish them, but not so much that the plot is overly altered. Furthemore, jittering is strictly a visualization tool; it does not alter the original values in the dataset. 
+
+Let's compare side-by-side the regular scatterplot in Figure \@ref(fig:numxplot1) with the jittered scatterplot in Figure \@ref(fig:numxplot2) in Figure \@ref(fig:numxplot2-a).
+
+```{r numxplot2-a, warning=FALSE, fig.cap="Comparing regular and jittered scatterplots."}
+box <- data_frame(x=c(7.6, 8, 8, 7.6, 7.6), y=c(4.75, 4.75, 5.1, 5.1, 4.75))
+p1 <- ggplot(evals_small, aes(x = bty_avg, y = score)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Teaching Score", 
+       title = "Regular scatterplot") +
+  geom_path(data = box, aes(x=x, y=y), col = "orange", size = 1)
+set.seed(76)
+p2 <- ggplot(evals_small, aes(x = bty_avg, y = score)) +
+  geom_jitter() +
+  labs(x = "Beauty Score", y = "Teaching Score", 
+       title = "Jittered scatterplot") +
+  geom_path(data = box, aes(x=x, y=y), col = "orange", size = 1)
+p1 + p2
+```
+
+We make several further observations:
 
 <!-- We might want to actually highlight these points in the plot. -->
 
-1. Focusing our attention on the top-right of the plot again, we now see that those originally unjittered 6 points actually were actually 12!
+1. Focusing our attention on the top-right of the plot again, as noted earlier where there seemd to only be 6 points in the regular scatterplot, we see there were in fact really 9 as seen in the jittered scatterplot. 
 1. A further interesting trend is that the jittering revealed a large number of instructors with beauty scores of between 3 and 4.5, towards the lower end of the beauty scale. 
-1. Most beauty scores lie between 2 and 8.
-1. Most teaching scores lie between 3 and 5.
-1. Recall our earlier computation of the correlation coefficient, which describes the strength of the linear relationship between two numerical variables. Looking at Figure \@ref(fig:numxplot2), it is not immediately apparent that these two variables are positively related. This is to be expected given the positive, but rather weak (close to 0), correlation coefficient of `r cor(evals_small$score, evals_small$bty_avg) %>% round(3)`.
 
-Going back to the unjittered plot in Figure \@ref(fig:numxplot1), let's improve on it by adding a "regression line" in Figure \@ref(fig:numxplot3). This is easily done by adding a new layer to the `ggplot` code that created Figure \@ref(fig:numxplot2): `+ geom_smooth(method = "lm")`. A regression line is a "best fitting" line in that of all possible lines you could draw on this plot, it is "best" in terms of some mathematical criteria. We discuss the criteria for "best" in Subsection \@ref(leastsquares) below, but we suggest you read this only after covering the concept of a *residual* coming up in Subsection \@ref(model1points). 
+Going forward for simplicity's sake however, we'll only present regular scatterplot rather than the jittered scatterplots; we'll only keep the overplotting in mind whenever looking at such plots. Going back to scatterplot in Figure \@ref(fig:numxplot1), let's improve on it by adding a "regression line" in Figure \@ref(fig:numxplot3). This is easily done by adding a new layer to the `ggplot` code that created Figure \@ref(fig:numxplot2): `+ geom_smooth(method = "lm")`. A regression line is a "best fitting" line in that of all possible lines you could draw on this plot, it is "best" in terms of some mathematical criteria. We discuss the criteria for "best" in Subsection \@ref(leastsquares) below, but we suggest you read this only after covering the concept of a *residual* coming up in Subsection \@ref(model1points). 
 
 ```{r, echo=FALSE}
 set.seed(76)
@@ -329,14 +352,42 @@ However, when defining a line specifically for regression, like the blue regress
 
 Why do we put a "hat" on top of the $y$? It's a form of notation commonly used in regression, which we'll introduce in the next Subsection \@ref(model1points) when we discuss *fitted values*. For now, let's ignore the hat and treat the equation of the line as you would from secondary school / high school algebra recognizing the slope and the intercept. We know looking at Figure \@ref(fig:numxplot4) that the slope coefficient corresponding to `bty_avg` should be positive. Why? Because as `bty_avg` increases, professors tend to roughly have larger teaching evaluation `scores`. However, what are the specific values of the intercept and slope coefficients? Let's not worry about computing these by hand, but instead let the computer do the work for us. Specifically let's use R!
 
-Let's get the value of the intercept and slope coefficients by outputting something called the *linear regression table*. This will be done in a two-step process:
+Let's get the value of the intercept and slope coefficients by outputting something called the *linear regression table*. We will fit the linear regression model to the `data` using the `lm()` function and save this to `score_model`. `lm` stands for "linear model", given that we are dealing with lines. When we say "fit", we are saying find the best fitting line to this data.
 
-1. First "fit" the linear regression model to the `data` using the `lm()` function and save this to `score_model`. `lm` stands for "linear model", given that we are dealing with lines. When we say "fit", we are saying find the best fitting line to this data.
-1. Then apply the `get_regression_table()` function from the `moderndive` R package to `score_model`.
+The `lm()` function that "fits" the linear regression model is typically used as `lm(y ~ x, data = data_frame_name)` where:
+
+* `y` is the outcome variable, followed by a tilde (`~`). This is likely the key to the left of "1" on your keyboard. In our case, `y` is set to `score`.
+* `x` is the explanatory variable. In our case, `x` is set to `bty_avg`. We call the combination `y ~ x` a *model formula*. Recall the use of this notation when we computed the correlation coefficient using the `get_correlation()` function in Subsection \@ref(model1EDA).
+* `data_frame_name` is the name of the data frame that contains the variables `y` and `x`. In our case, `data_frame_name` is the `evals_small` data frame.
+
+```{r regtable-0}
+score_model <- lm(score ~ bty_avg, data = evals_small)
+score_model
+```
+
+This output is telling us that the `Intercept` coefficient $b_0$ of the regression line is 3.8803 and the slope coefficient for `by_avg` is 0.0666.  Therefore the blue regression line in Figure \@ref(fig:numxplot4) is 
+
+$$\widehat{\text{score}} = b_0 + b_{\text{bty_avg}} \cdot\text{bty_avg} = 3.8803 + 0.0666\cdot\text{ bty_avg}$$ 
+
+where
+
+* The intercept coefficient $b_0 = 3.8803$ means for instructors that had a hypothetical beauty score of 0, we would expect them to have on average a teaching score of 3.8803. In this case however, while the intercept has a mathematical interpretation when defining the regression line, there is no *practical* interpretation since `score` is an average of a panel of 6 students' ratings from 1 to 10, a `bty_avg` of 0 would be impossible. Furthermore, no instructors had a beauty score anywhere near 0 in this data.
+* Of more interest is the slope coefficient associated with `bty_avg`: $b_{\text{bty avg}} = +0.0666$. This is a numerical quantity that summarizes the relationship between the outcome and explanatory variables. Note that the sign is positive, suggesting a positive relationship between beauty scores and teaching scores, meaning as beauty scores go up, so also do teaching scores go up. The slope's precise interpretation is:
+
+    > For every increase of 1 unit in `bty_avg`, there is an *associated* increase of, *on average*, 0.0666 units of `score`. 
+
+Such interpretations need be carefully worded:
+
+* We only stated that there is an *associated* increase, and not necessarily a *causal* increase. For example, perhaps it's not that beauty directly affects teaching scores, but instead individuals from wealthier backgrounds tend to have had better education and training, and hence have higher teaching scores, but these same individuals also have higher beauty scores. Avoiding such reasoning can be summarized by the adage "correlation is not necessarily causation." In other words, just because two variables are correlated, it doesn't mean one directly causes the other. We discuss these ideas more in Subsection \@ref(correlation-is-not-causation).  
+* We say that this associated increase is *on average* 0.0666 units of teaching `score` and not that the associated increase is *exactly* 0.0666 units of `score` across all values of `bty_avg`. This is because the slope is the average increase across all points as shown by the regression line in Figure \@ref(fig:numxplot4). 
+
+Now that we've learned how to compute the equation for the blue regression line in Figure \@ref(fig:numxplot4) and interpreted all its terms, let's take our modeling one step further. This time after fitting the model using the `lm()`, let's get something called the *regression table* using the `get_regression_table()` function from the `moderndive` package:
 
 ```{r regtable, eval=FALSE}
+# Fit regression model:
 score_model <- lm(score ~ bty_avg, data = evals_small)
-get_regression_table(score_model, digits = 3)
+# Get regression table:
+get_regression_table(score_model)
 ```
 ```{r, echo=FALSE}
 score_model <- lm(score ~ bty_avg, data = evals_small)
@@ -353,32 +404,28 @@ get_regression_table(score_model) %>%
   )
 ```
 
-Whoa! There is a lot going on, both in terms of the inputs and outputs! Let's unpack this slowly. First, the `lm()` function that "fits" the linear regression model is typically used as `lm(y ~ x, data = DATA_FRAME_NAME)` where:
+Note how we took the output of the model fit saved in `score_model` and used it as an input to the subsequent `get_regression_table()` function. The output now looks like a table: in fact it is a data frame. The values of the intercept and slope of 3.880 and 0.0666 are now in the `estimate` column. But what are the remaining 5 columns: `std_error`, `statistic`, `p_value`, `lower_ci` and `upper_ci`? What do they tell us? They tell us about both the *statistical significance* and *practical significance* of our model results. You can think of this loosely as the "meaningfulness" of the results from a statistical perspective.
 
-* `y` is the outcome variable, followed by a tilde (`~`). This is likely the key to the left of "1" on your keyboard. In our case, `y` is set to `score`.
-* `x` is the explanatory variable. In our case, `x` is set to `bty_avg`. We call the combination `y ~ x` a *model formula*. Recall the use of this notation when we computed the correlation coefficient using the `get_correlation()` function in Subsection \@ref(#model1EDA).
-* `DATA_FRAME_NAME` is the name of the data frame that contains the variables `y` and `x`. In our case, `DATA_FRAME_NAME` is the `evals_small` data frame.
+We are going to put aside these ideas for now and revisit them in Chapter \@ref(inference-for-regression) on (statistical) inference for regression, after we've had a chance to cover:
 
-Then we take the saved model in `score_model` and apply the `get_regression_table()` function to it. This returns a cleanly formatted regression table. An additional argument to the `get_regression_table()` function is `digits`, where we specify the number of significant digits of precision (number of digits after the decimal points) we want the regression table to have. The `digits` argument defaults to 3, meaning if you don't specify this argument, `digits = 3` is used by default. 
+* Standard errors in Chapter \@ref(sampling) (`std_error`)
+* Confidence intervals in Chapter \@ref(confidence-intervals) (`lower_ci` and `upper_ci`)
+* Hypothesis testing in Chapter \@ref(hypothesis-testing) (`statistic` and `p_value`). 
 
-All the `get_regression_table()` function in the `moderndive` package does is generate regression table outputs that are clean and easy-to-read while hiding a lot of the code necessary to do so and not much else. This is known as a *wrapper function* in computer programming, which takes other pre-existing functions and "wraps" them in a single function. While not necessary to understand regression, if you are curious to know what is going on under the hood of `get_regression_table()`, see Subsection \@ref(underthehood) below. 
+For now, we'll only focus on the `term` and `estimate` columns of any regression table. 
 
-<!--
-1. `print` is a `TRUE`/`FALSE` value that sets whether or not the output should be in a print friendly format (specifically in Markdown table format suitable for use in R Markdown documents). `print` defaults to `FALSE`, meaning if you don't specify this argument, `print = FALSE` is used by default. We'll ignore the use of the `print` argument until Chapter \@ref(thinking-with-data) on "thinking with data."
--->
+The `get_regression_table()` from the `moderndive` is an example of what's known as a *wrapper function* in computer programming, which takes other pre-existing functions and "wraps" them into a single function.  This concept is illustrated in Figure \@ref(moderndive-figure-wrapper).
 
-Now let's consider the outputted regression table, which has two rows denoted by the first column `term`: one corresponding to the intercept coefficient $b_0$ and one corresponding to the slope coefficient $b_1$ for `bty_avg`. The second column `estimate` gives us the "fitted" (or computed) values for both these coefficients. Therefore the blue regression line in Figure \@ref(fig:numxplot4) is $\widehat{\text{score}} = b_0 + b_{\text{bty avg}} \text{bty avg} = `r evals_line[1]` + `r evals_line[2]`\text{ bty avg}$ where 
+```{r moderndive-figure-wrapper, echo=FALSE, fig.align='center', fig.cap="The concept of a 'wrapper' function."}
+knitr::include_graphics("images/flowcharts/flowchart.011-cropped.png")
+```
 
-* The intercept coefficient $b_0$ is `r evals_line[1]`. Meaning for instructors that had a hypothetical beauty score of 0, we would expect those to, on average, have a teaching score of `r evals_line[1]`. In this case however, while the intercept has a mathematical interpretation when defining the regression line, there is no *practical* interpretation since `score` is an average of a panel of 6 students' ratings from 1 to 10, a `bty_avg` of 0 would be impossible. Furthermore, no instructors had a beauty score anywhere near 0 in this data.
-* Of more interest is the slope coefficient associated with `bty_avg`: $$b_{\text{bty avg}} = `r evals_line[2]`.$$ This is a numerical quantity that summarizes the relationship between the outcome and explanatory variables. It is interpreted as:
+So all you need to worry about is the what the inputs look like and what the outputs look like; you the details "under the hood of the car." In our regression modeling example, the `get_regression_table()` has
 
-    > For every increase of 1 unit in `bty_avg`, there is an *associated* increase of, *on average*, `r evals_line[2]` units of `score`. 
+* Input: A saved `lm()` linear regression
+* Output: A data frame with information on the intercept and slope of the regression line. 
 
-    We note in particular that the sign of this slope is positive, suggesting a positive relationship between beauty scores and teaching scores. We are very careful with our wording:
-    + We only stated that there is an *associated* increase, and not necessarily a *causal* increase. For example, perhaps it's not that beauty directly affects teaching scores, but instead individuals from wealthier backgrounds tend to have had better education and training, and hence have higher teaching scores, but these same individuals also have higher beauty scores. Avoiding such reasoning can be summarized by the adage "correlation is not necessarily causation." In other words, just because two variables are correlated, it doesn't mean one directly causes the other. We discuss these ideas more in Subsection \@ref(correlation-is-not-causation).  
-    + We say that this associated increase is *on average* `r evals_line[2]` units of teaching `score` and not that the associated increase is *exactly* `r evals_line[2]` units of `score` across all values of `bty_avg`. This is because the slope is the average increase across all points as shown by the regression line in Figure \@ref(fig:numxplot4). 
-    
-    + But what about the remaining 5 columns: `std_error`, `statistic`, `p_value`, `lower_ci` and `upper_ci`? They give you information on the *statistical significance* of these results, or their "meaningfulness" from a statistical perspective. We'll revisit these in Chapter \@ref(inference-for-regression) on (statistical) inference for regression after we've covered standard errors in Chapter \@ref(sampling) (`std_error`), confidence intervals in Chapter \@ref(confidence-intervals) (`lower_ci` and `upper_ci`), and hypothesis testing in Chapter \@ref(hypothesis-testing) (`statistic` and `p_value`). For now, we'll only focus on the `term` and `estimate` columns.
+If you're interested in learning more about the `get_regression_table()` function's construction and thinking, see Subsection \@ref(underthehood) below. 
 
 ```{block, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -415,7 +462,7 @@ evals_small %>%
   )
 ```
 
-What is the value on the blue line corresponding to this instructor's `bty_avg` of `r x`? In Figure \@ref(fig:numxplot5) we mark three values in particular corresponding to this instructor. Note we revert back to the `geom_point()` as the `geom_jitter()` has random noise added to teach point, making it difficult to identify points exactly.
+What is the value on the blue line corresponding to this instructor's `bty_avg` of `r x`? In Figure \@ref(fig:numxplot5) we mark three values in particular corresponding to this instructor. 
 
 * Red circle: This is the *observed value* $y$ = `r y` and corresponds to this instructor's actual teaching score.
 * Red square: This is the *fitted value* $\widehat{y}$ and corresponds to the value on the regression line for $x$ = `r x`. This value is computed using the intercept and slope in the regression table above: $$\widehat{y} = b_0 + b_1 x = `r evals_line[1]` + `r evals_line[2]` * `r x` = `r y_hat`$$
@@ -442,7 +489,10 @@ What if we want both
 1. the fitted value $\widehat{y} = b_0 + b_1 \times x$ and
 1. the residual $y - \widehat{y}$
 
-not only the 21st instructor but for all `r nrow(evals_small)` instructors in the study? Recall that each instructor corresponds to one of the `r nrow(evals_small)` rows in the `evals_small` data frame and also one of the `r nrow(evals_small)` points in the regression plot in Figure \@ref(fig:numxplot4). We could repeat the above calculations by hand 463 times, but that would be tedious and time consuming. Instead, let's use the `get_regression_points()` function that we've included in the `moderndive` R package. Note that in the table below we only present the results for the 21st through the 24th instructors.
+not only the 21st instructor but for all `r nrow(evals_small)` instructors in the study? Recall that each instructor corresponds to one of the `r nrow(evals_small)` rows in the `evals_small` data frame and also one of the `r nrow(evals_small)` points in the regression plot in Figure \@ref(fig:numxplot4). 
+
+
+We could repeat the above calculations by hand 463 times, but that would be tedious and time consuming. Instead, let's use the `get_regression_points()` function that we've included in the `moderndive` R package. Note that in the table below we only present the results for the 21st through the 24th instructors.
 
 ```{r, eval=FALSE}
 regression_points <- get_regression_points(score_model)
@@ -466,6 +516,8 @@ Just as with the `get_regression_table()` function, the inputs to the `get_regre
 * The `bty_avg` column represents the values of the explanatory variable $x$.
 * The `score_hat` column represents the fitted values $\widehat{y}$.
 * The `residual` column represents the residuals $y - \widehat{y}$.
+
+`get_regression_points()` is another example of a wrapper function we described in Figure \@ref(fig:moderndive-figure-wrapper). If you're curious about this function as well, check out Subsection \@ref(underthehood).
 
 Just as we did for the 21st instructor in the `evals_small` dataset (in the first row of the table above), let's repeat the above calculations for the 24th instructor in the `evals_small` dataset (in the fourth row of the table above):
 
@@ -991,7 +1043,34 @@ As we suggested in Subsection \@ref(model1EDA), interpreting coefficients that a
 
 ### Correlation is not necessarily causation {#correlation-is-not-causation}
 
-Causation is a tricky problem and frequently takes either carefully designed experiments or methods to control for the effects of potential confounding variables.  Both these approaches attempt either to remove all confounding variables or take them into account as best they can, and only focus on the behavior of an outcome variable in the presence of the levels of the other variable(s). Be careful as you read studies to make sure that the writers aren't falling into this fallacy of correlation implying causation.  If you spot one, you may want to send them a link to [Spurious Correlations](http://www.tylervigen.com/spurious-correlations).
+You'll note throughout this chapter we've been very cautious in making statements of the "associated effect" of explanatory variables on the outcome variables, for example our statement from Subsection \@ref(model1table) that "for every increase of 1 unit in `bty_avg`, there is an *associated* increase of, *on average*, `r evals_line[2]` units of `score`." We stay this because we are careful not to make *causal* statements. So while beauty score `bty_avg` is positively correlated with teaching `score`, does it directly cause effects on teaching score.
+
+For example, let's say an instructor has their `bty_avg` reevaluated, but only after taking steps to try to boost their beauty score. Does this mean that they will suddenly be a better instructor? Or will they suddenly get higher teaching scores? Maybe? 
+
+Here is another example, a not-so-great medical doctor goes through their medical records and finds that patients who slept with their shoes on tended to wake up more with headaches. So this doctor declares "Sleeping with shoes on cause headaches!" 
+
+```{r moderndive-figure-causal-graph-2, echo=FALSE, fig.align='center', fig.cap="Does sleeping with shoes on cause headaches?"}
+knitr::include_graphics("images/flowcharts/flowchart.010-cropped.png")
+```
+
+However as some of you might have guessed, if someone is sleeping with their shoes on its probably because they are drunk. Furthermore, drinking more tends to cause more hangovers, and hence more headaches. 
+
+In this instance, alcohol is what's known as a *confounding/lurking* variable. It "lurks" behinding the scenes, confounding or making less apparent, the causal effect (if any) of "sleeping with shoes on" with waking up with a headache. We can summarize this notion in Figure \@ref(fig:moderndive-figure-causal-graph) with a *causal graph* where:
+
+* Y: Is an *outcome* variable, here "waking up with a headache."
+* X: Is a *treatment* variable whose causal effect we are interested in, here "sleeping with shoes on."
+
+```{r moderndive-figure-causal-graph, echo=FALSE, fig.align='center', fig.cap="Causal graph."}
+knitr::include_graphics("images/flowcharts/flowchart.009-cropped.png")
+```
+
+So for example, many such studies use regression modeling where the outcome variable is set to Y and the explanatory/predictor variable is X, much as you've started learning how to do in this chapter. However, Figure \@ref(fig:moderndive-figure-causal-graph) also includes a third variable with arrows pointing at both X and Y.
+
+* Z: Is a *confounding* variable that effects both X & Y, thus "confounding" their relationship.
+
+So as we said, alcohol will both cause people to be more likely to sleep with their shoes on as well as more likely to wake up with a headache. Thus when evaluating what causes one to wake up with a headache, its hard to tease out the effect of sleeping with shoes on versus just the alcohol. Thus our model needs to also use Z as an explanatory/predictor variable as well, in other words our doctor needs to take into account who had been drinking the night before. We'll start covering multiple regression models that allows us to incorporate more than one variable in the next chapter.
+
+Establishing causation is a tricky problem and frequently takes either carefully designed experiments or methods to control for the effects of potential confounding variables.  Both these approaches attempt either to remove all confounding variables or take them into account as best they can, and only focus on the behavior of an outcome variable in the presence of the levels of the other variable(s). Be careful as you read studies to make sure that the writers aren't falling into this fallacy of correlation implying causation.  If you spot one, you may want to send them a link to [Spurious Correlations](http://www.tylervigen.com/spurious-correlations).
 
 
 ### Best fitting line {#leastsquares}
@@ -1081,28 +1160,33 @@ We square the arrow lengths so that positive and negative deviations of the same
 For the regression line in the plot, the sum of the squared residuals is `r score_model %>% get_regression_points() %>% summarise(SSE = sum(residual^2)) %>% pull(SSE) %>% round(3)`. This is the lowest possible value of the sum of the squared residuals of all possible lines we could draw on this scatterplot? How do we know this? We can mathematically prove this fact, but this requires some calculus and linear algebra, so let's leave this proof for another course!
 
 
-### How does `get_regression_table()` work? {#underthehood}
+### `get_regression_x()` functions {#underthehood}
 
-Note that this subsection is optional!
+Note that this subsection is optional. What is going on behind the scenes with the `get_regression_table()` `get_regression_points()` from the `moderndive` package? Recall we introduced 
 
-What is going on behind the scenes with the `get_regression_table()` from the `moderndive` package? Recall in Subsection \@ref(model1table) we noted that these are *wrapper functions* that take other pre-existing functions and "wraps" them in a single function. This wrapper function leverages the
+1. In Subsection \@ref(model1table), the `get_regression_table()` function that returned a regression table.
+1. In Sebsection \@ref(#model1points), the `get_regression_points()` function that returned information on all $n$ points/observations invovled in a regression?
 
-* the `tidy()` function in the `broom` package and
-* the `clean_names()` function in the `janitor` package
+and that these were examples of *wrapper functions* that takes other pre-existing functions and "wraps" them in a single function. This way all the user needs to worry about is the input and the output format, and ignore what's "under the hood." In this subsection we "lift the hood" and see how the engine of these wrapper functions work.
 
-to generate clean looking outputs. Here is what the regression table from Subsection \@ref(model1table) looks like:
+First, the `get_regression_table()` wrapper function leverages the
+
+* the `tidy()` function in the [`broom` package](https://broom.tidyverse.org/) and
+* the `clean_names()` function in the [`janitor` package](https://github.com/sfirke/janitor)
+
+to generate tidy data frames with information about a regression model. Here is what the regression table from Subsection \@ref(model1table) looks like:
 
 ```{r, eval = FALSE}
 score_model <- lm(score ~ bty_avg, data = evals_small)
-get_regression_table(score_model, digits = 3)
+get_regression_table(score_model)
 ```
 ```{r, echo = FALSE}
 score_model <- lm(score ~ bty_avg, data = evals_small)
-get_regression_table(score_model, digits = 3) %>% 
+get_regression_table(score_model) %>% 
   knitr::kable()
 ```
 
-The main idea behind the `get_regression_table()` function is to hide you from the following code running behind the scenes, which we've found to be confusing to students in the past:
+The `get_regression_table()` function takes the above two functions that already existed in other R packages, uses them, and hides the details as seen below. This was on the editorial decision on our part as we felt the following code was unfortunately out of the reach for some new coders, so the following wrapper function was written so that users need only focus on the output.
 
 ```{r, eval = FALSE}
 library(broom)
@@ -1126,8 +1210,34 @@ score_model %>%
   knitr::kable()
 ```
 
-Note that the `mutate_if()` function is from the `dplyr` package and applies the `round()` function with 3 significant digits precision only to those variables that are numerical. But oof, the second code block is long and messy! We felt it appropriate to hide all this from you and give the function an easy-to-remember name: `get_regression_table()`.  
+Note that the `mutate_if()` function is from the `dplyr` package and applies the `round()` function with 3 significant digits precision only to those variables that are numerical. 
 
+Similary, the second `get_regression_points()` function is another wrapper function, but this time returning information about the points in a regression rather than the regression table. It uses the `augment()` function in the [`broom` package](https://broom.tidyverse.org/) instead of `tidy()` as with `get_regression_points()`. 
+
+```{r, eval = FALSE}
+library(broom)
+library(janitor)
+score_model %>% 
+  augment() %>% 
+  mutate_if(is.numeric, round, digits = 3) %>%
+  clean_names() %>% 
+  select(-c("se_fit", "hat", "sigma", "cooksd", "std_resid"))
+```
+```{r, echo = FALSE}
+library(broom)
+library(janitor)
+score_model %>% 
+  augment() %>% 
+  mutate_if(is.numeric, round, digits = 3) %>%
+  clean_names() %>% 
+  select(-c("se_fit", "hat", "sigma", "cooksd", "std_resid")) %>% 
+  slice(1:10) %>% 
+  knitr::kable()
+```
+
+In this case, it outputs only variables of interest to us as new regression modelers: the outcome variable $y$ (`score`), all explanatory/predictor variables (`bty_avg`), all resulting `fitted` values $\hat{y}$ used by applying the equation of the regression line to `bty_avg`, and the `resid`ual $y - \hat{y}$. 
+
+If you're even more curious, take a look at the source code for these functions on [GitHub](https://github.com/moderndive/moderndive/blob/master/R/regression_functions.R).
 
 
 ## Conclusion
