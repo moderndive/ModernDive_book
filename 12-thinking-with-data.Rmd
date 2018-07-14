@@ -205,7 +205,7 @@ If you repeat the above `summarize()` for `sqft_living`, you'll find a similar r
 
 We can in fact address this issue by using a log base 10 transformation, which we cover next. 
 
-### log10 transformations 
+### log10 transformations {#log10-transformations}
 
 At its simplest, `log10()` transformations returns base 10 *logarithms*. For example, since $1000 = 10^3$, `log10(1000)` returns `3`. To undo a log10-transformation, we raise 10 to this value. For example, to undo the previous log10-transformation and return the original value of 1000, we raise 10 to this value $10^{3}$ by running `10^(3) = 1000`. log-transformations allow us to focus on mutiplicative changes instead of additive ones, thereby emphasizing changes in "orders of magnitude." Let's illustrate this idea in Table \@ref(tab:log10-orders-of-magnitude) with examples of prices of consumer goods in US dollars. 
 
@@ -355,23 +355,90 @@ Which exploratory visualization of the interaction model is better, the one in F
 
 
 
+### Regression modeling {#house-prices-regression}
 
-### Regression modeling
+For now let's focus on the latter, interaction model we've visualized in Figure \@ref(fig:house-price-interaction-2) above. What are the 5 different slopes and intercepts for the condition = 1, condition = 2, ..., and condition = 5 lines in Figure \@ref(fig:house-price-interaction-2)? To determine these, we first need the values from the regression table:
+
 
 ```{r}
-price_parallel_slopes <- lm(log10_price ~ log10_size + condition, data = house_prices)
-get_regression_table(price_parallel_slopes)
-```
-
-
-
-
-```{r, max.print=1}
+# Fit regression model:
 price_interaction <- lm(log10_price ~ log10_size * condition, data = house_prices)
+# Get regression table:
 get_regression_table(price_interaction)
 ```
 
+Recall from Section \@ref(model4interactiontable) on how to interpret the outputs where there exists an *interaction term*, where in this case the "baseline for comparison" group for the categorical variable `condition` are the condition 1 houses. We'll write our answers as: 
 
+$$\widehat{\log10(\text{price})} = \hat{\beta}_0 + \hat{\beta}_{\text{size}} * \log10(\text{size})$$
+
+for all five condition levels separately:
+
+1. Condition 1: $\widehat{\log10(\text{price})} = 3.33 + 0.69 * \log10(\text{size})$
+1. Condition 2: $\widehat{\log10(\text{price})} = (3.33 + 0.047) + (0.69 - 0.024) * \log10(\text{size}) = 3.38 + 0.666 * \log10(\text{size})$
+1. Condition 3: $\widehat{\log10(\text{price})} = (3.33 - 0.367) + (0.69 + 0.133) * \log10(\text{size}) = 2.96 + 0.823 * \log10(\text{size})$
+1. Condition 4: $\widehat{\log10(\text{price})} = (3.33 - 0.398) + (0.69 + 0.146) * \log10(\text{size}) = 2.93 + 0.836 * \log10(\text{size})$
+1. Condition 5: $\widehat{\log10(\text{price})} = (3.33 - 0.883) + (0.69 + 0.31) * \log10(\text{size}) = 2.45 + 1 * \log10(\text{size})$
+
+These correspond to the regression lines in the exploratory visualization of the interaction model in Figure \@ref(fig:house-price-interaction-2) below: 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=16/2, fig.height=9/2}
+ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
+  geom_point(alpha = 0.1) +
+  labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+For homes of all 5 condition types, as the size of the house increases, the prices increases. This is what most would expect. However, the rate of increase of price with size is fastest for the homes with condition 3, 4, and 5 of 0.823, 0.836, and 1 respectively; these are the 3 most largest slopes out of the 5.
+
+
+### Inference for regression {#house-prices-inference-for-regression}
+
+Contributions via [pull request](http://happygitwithr.com/big-picture.html) to the [ModernDive GitHub repository](https://github.com/moderndive/moderndive_book) are welcome!
+
+
+### Making predictions {#house-prices-making-predictions}
+
+Say your are a realtor and someone calls you asking you how much their home will sell for. They tell you that it's in condition = 5 and is sized 1900 square feet. What do you tell them? We first make this prediction visually in Figure \@ref(fig:house-price-interaction-3). The predicted `log10_price` of this house is marked with a black dot: it is where the two following lines intersect:
+
+* The purple regression line for the condition = 5 homes and
+* The vertical dashed black line at `log10_size` equals 3.28, since our predictor variable is the log10-transformed square feet of living space and $\log10(1900) = 3.28$ .
+
+```{r house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.width=16/2, fig.height=9/2}
+new_house <- data_frame(log10_size = log10(1900), condition = factor(5)) %>% 
+  get_regression_points(price_interaction, newdata = .)
+
+ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
+  geom_point(alpha = 0.1) +
+  labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_vline(xintercept = log10(1900), linetype = "dashed", size = 1) +
+  geom_point(data = new_house, aes(y = log10_price_hat), col ="black", size = 3)
+```
+
+Eyeballing it, it seems the predicted `log10_price` seems to be around 5.72. Let's now obtain the an exact numerical value for the prediction using the values of the intercept and slope for the condition = 5 that we computed using the regression table output. We use the equation for the condition = 5 line, being sure to `log10()` the
+square footage first.
+
+```{r}
+2.45 + 1 * log10(1900)
+```
+
+This value is very close to our earlier visually made prediciton of 5.72. But wait! We were using the outcome variable `log10_price` as our outcome variable! So if we want a prediction in terms of `price` in dollar units, we need to un-log this by taking a power of 10 as described in Section \@ref(log10-transformations).
+
+```{r}
+10^(2.45 + 1 * log10(1900))
+```
+
+So we our predicted price for this home of condition 5 and size 1900 square feet is `r 10^(2.45 + 1*log10(1900)) %>% dollar()`.
+
+
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the regression modeling in Subsection \@ref(house-prices-regression), intepreting the inference for regression in Subsection \@ref(house-prices-inference-for-regression), and the prediction making you just did on the house of condition 5 and size 1900 square feet in Subsection \@ref(house-prices-making-predictions), but using the parallel slopes model you visualized in Figure \@ref(fig:house-price-parallel-slopes). Hint: it's `r 10^5.72 %>% dollar()`!
+
+```{block, type='learncheck', purl=FALSE}
+```
 
 
 
