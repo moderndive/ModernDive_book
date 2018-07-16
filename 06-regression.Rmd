@@ -153,19 +153,19 @@ Another way to look at the raw values is using the `glimpse()` function, which g
 glimpse(evals_small)
 ```
 
-Since both the outcome variable `score` and the explanatory variable `bty_avg` are numerical, we can compute summary statistics about them such as the mean and median. Let’s take `evals_small`, then select only the two variables of interest for now, and pipe them into the `summary()` command. For each of these two variables, it returns
+Since both the outcome variable `score` and the explanatory variable `bty_avg` are numerical, we can compute summary statistics about them such as the mean and median. Let’s take `evals_small`, then select only the two variables of interest for now, and pipe them into the `summarize()` command. For each of these two variables, let's compute the 
 
 - the minimum (smallest) value, 
 - the first quartile, 
 - the median, 
 - the mean (average), 
-- the third quartile, and 
-- the maximum (largest) value. 
+
 
 ```{r}
+library(skimr)
 evals_small %>% 
   select(score, bty_avg) %>% 
-  summary()
+  skim()
 ```
 
 We get an idea of how the values in both variables are distributed. For example, the mean teaching score was 4.17 out of 5 whereas the mean beauty score was 4.42 out of 10. Furthermore, the middle 50% of teaching scores were between 3.80 and 4.6 (the first and third quartiles) while the middle 50% of beauty scores were between 3.17 and 5.5 out of 10. 
@@ -255,10 +255,8 @@ Observe the following:
 
 Before we continue, we bring to light an important fact about this dataset: it suffers from *overplotting*. Recall from the data visualization Subsection \@ref(overplotting) that overplotting occurs when several points are stacked directly on top of each other thereby obscuring the number of points. For example, let's focus on the 6 points in the top-right of the plot with a beauty score of around 8 out of 10: are there truly only 6 points, or are there many more just stacked on top of each other? You can think of these as *ties*. Let's break up these ties with a little random "jitter" added to the points in Figure \@ref(fig:numxplot2). 
 
-```{r, echo=FALSE}
+```{r numxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin: Jittered"}
 set.seed(76)
-```
-```{r numxplot2, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin: Jittered"}
 ggplot(evals_small, aes(x = bty_avg, y = score)) +
   geom_jitter() +
   labs(x = "Beauty Score", y = "Teaching Score", 
@@ -420,7 +418,7 @@ The `get_regression_table()` from the `moderndive` is an example of what's known
 knitr::include_graphics("images/flowcharts/flowchart.011-cropped.png")
 ```
 
-So all you need to worry about is the what the inputs look like and what the outputs look like; you the details "under the hood of the car." In our regression modeling example, the `get_regression_table()` has
+So all you need to worry about is the what the inputs look like and what the outputs look like; you leave all the other details "under the hood of the car." In our regression modeling example, the `get_regression_table()` has
 
 * Input: A saved `lm()` linear regression
 * Output: A data frame with information on the intercept and slope of the regression line. 
@@ -803,7 +801,7 @@ What can you say about the differences in GDP per capita between continents base
 
 ### Linear regression {#model2table}
 
-In Subsection \@ref(model1table) we introduced *simple* linear regression, which involves modeling the relationship between a numerical outcome variable $y$ as a function of a numerical explanatory variable $x$, in our life expectancy example, we now have a categorical explanatory variable $x$ `continent`. While we still can fit a regression model, given our categorical explanatory variable we no longer have a concept of a "best-fitting" line, but differences relative to a baseline for comparison.
+In Subsection \@ref(model1table) we introduced *simple* linear regression, which involves modeling the relationship between a numerical outcome variable $y$ as a function of a numerical explanatory variable $x$, in our life expectancy example, we now have a categorical explanatory variable $x$ `continent`. While we still can fit a regression model, given our categorical explanatory variable we no longer have a concept of a "best-fitting" line, but rather "differences relative to a baseline for comparison."
 
 Before we fit our regression model, let's create a table similar to Table \@ref(tab:catxplot0), but
 
@@ -844,25 +842,90 @@ get_regression_table(lifeExp_model) %>%
   )
 ```
 
-Just as before, we have the `term` and `estimates` columns of interest, but unlike before, we now have 5 rows corresponding to 5 outputs in our table: an intercept like before, but also `continentAmericas`, `continentAsia`, `continentEurope`, and `continentOceania`. What are these values?
 
-1. `intercept = 54.8` corresponds to the mean life expectancy for Africa. This mean life expectancy is treated as a baseline for comparison for the other continents.
-1. `continentAmericas = 18.8` is the difference in mean life expectancies of the
-Americas minus Africa. Note that $18.80 = 73.6 - 54.8$ is the 2nd "mean vs Africa"
-value in Table \@ref(tab:continent-mean-life-expectancies).
-1. `continentAmericas = 15.9` is the difference in mean life expectancy of Asia 
-minus Africa. Note that $15.9 = 70.7 - 54.8$ is the 2nd "mean vs Africa"
-value in Table \@ref(tab:continent-mean-life-expectancies).
-1. `continentEurope = 22.8` is the difference in mean life expectancy of Europe 
-minus Africa. Note that $22.8 = 77.6 - 54.8$ is the 3rd "mean vs Africa"
-value in Table \@ref(tab:continent-mean-life-expectancies).
-1. `continentOceania = 25.9` is the difference in mean life expectancy of Oceania
-minus Africa. Note that $25.9 = 80.7 - 54.8$ is the 3rd "mean vs Africa"
-value in Table \@ref(tab:continent-mean-life-expectancies).
+Just as before, we have the `term` and `estimates` columns of interest, but unlike before, we now have 5 rows corresponding to 5 outputs in our table: an intercept like before, but also `continentAmericas`, `continentAsia`, `continentEurope`, and `continentOceania`. What are these values? First, we must describe the equation for fitted value $\widehat{y}$, which is a little more complicated when the $x$ explanatory variable is categorical:
+
+$$
+\begin{align}
+\widehat{\text{life exp}} &= b_0 + b_{\text{Amer}}\cdot\mathbb{1}_{\mbox{Amer}}(x) + b_{\text{Asia}}\cdot\mathbb{1}_{\mbox{Asia}}(x)
++ b_{\text{Euro}}\cdot\mathbb{1}_{\mbox{Euro}}(x) + b_{\text{Ocean}}\cdot\mathbb{1}_{\mbox{Ocean}}(x)\\
+&= 54.8 + 18.8\cdot\mathbb{1}_{\mbox{Amer}}(x) + 15.9\cdot\mathbb{1}_{\mbox{Asia}}(x)
++ 22.8\cdot\mathbb{1}_{\mbox{Euro}}(x) + 25.9\cdot\mathbb{1}_{\mbox{Ocean}}(x)
+\end{align}
+$$ 
+
+Let's break this down. First, $\mathbb{1}_{A}(x)$ is what's known in mathematics as an "indicator function" that takes one of two possible values:
+
+$$
+\mathbb{1}_{A}(x) = \left\{
+\begin{array}{ll}
+1 & \text{if } x \text{ is in } A \\
+0 & \text{if } \text{otherwise} \end{array}
+\right.
+$$
+
+In a statistical modeling context this is also known as a "dummy variable". In our case, let's consider the first such indicator variable:
+
+$$
+\mathbb{1}_{\mbox{Amer}}(x) = \left\{
+\begin{array}{ll}
+1 & \text{if } \text{country } x \text{ is in the Americas} \\
+0 & \text{otherwise}\end{array}
+\right.
+$$
+
+Now let's intepret the terms in the estimate column of the regression table. First $b_0 =$ `intercept = 54.8` corresponds to the mean life expectancy for countries in Africa, since for country $x$ in Africa we have the following equation:
+
+$$
+\begin{align}
+\widehat{\text{life exp}} &= b_0 + b_{\text{Amer}}\cdot\mathbb{1}_{\mbox{Amer}}(x) + b_{\text{Asia}}\cdot\mathbb{1}_{\mbox{Asia}}(x)
++ b_{\text{Euro}}\cdot\mathbb{1}_{\mbox{Euro}}(x) + b_{\text{Ocean}}\cdot\mathbb{1}_{\mbox{Ocean}}(x)\\
+&= 54.8 + 18.8\cdot\mathbb{1}_{\mbox{Amer}}(x) + 15.9\cdot\mathbb{1}_{\mbox{Asia}}(x)
++ 22.8\cdot\mathbb{1}_{\mbox{Euro}}(x) + 25.9\cdot\mathbb{1}_{\mbox{Ocean}}(x)\\
+&= 54.8 + 18.8\cdot 0 + 15.9\cdot 0 + 22.8\cdot 0 + 25.9\cdot 0\\
+&= 54.8
+\end{align}
+$$
+
+i.e. All four of the indicator variables are equal to 0. Recall we stated earlier that we would treat Africa as the baseline for comparison group. Furthemore, this value corresponds to the group mean life expectancy for all African countries in Table \@ref(tab:continent-mean-life-expectancies).
+
+Next, $b_{\text{Amer}}$ = `continentAmericas = 18.8` is the difference in mean life expectancies of countries in the Americas relative to Africa, or in other words, on average countries in the Americas had life expectancy 18.8 years greater. The fitted value yielded by this equation is:
+
+$$
+\begin{align}
+\widehat{\text{life exp}} &= b_0 + b_{\text{Amer}}\cdot\mathbb{1}_{\mbox{Amer}}(x) + b_{\text{Asia}}\cdot\mathbb{1}_{\mbox{Asia}}(x)
++ b_{\text{Euro}}\cdot\mathbb{1}_{\mbox{Euro}}(x) + b_{\text{Ocean}}\cdot\mathbb{1}_{\mbox{Ocean}}(x)\\
+&= 54.8 + 18.8\cdot\mathbb{1}_{\mbox{Amer}}(x) + 15.9\cdot\mathbb{1}_{\mbox{Asia}}(x)
++ 22.8\cdot\mathbb{1}_{\mbox{Euro}}(x) + 25.9\cdot\mathbb{1}_{\mbox{Ocean}}(x)\\
+&= 54.8 + 18.8\cdot 1 + 15.9\cdot 0 + 22.8\cdot 0 + 25.9\cdot 0\\
+&= 54.8 + 18.8\\
+&= 72.9
+\end{align}
+$$
+
+i.e. in this case, only the indicator function $\mathbb{1}_{\mbox{Amer}}(x)$ is equal to 1, but all others are 0. Recall that 72.9 corresponds to the group mean life expectancy for all countries in the Americas in Table \@ref(tab:continent-mean-life-expectancies).
+
+Similarly, $b_{\text{Asia}}$ = `continentAsia = 15.9` is the difference in mean life expectancies of Asian countries relative to Africa countries, or in other words, on average countries in the Asia had life expectancy 18.8 years greater than Africa. The fitted value yielded by this equation is:
+
+$$
+\begin{align}
+\widehat{\text{life exp}} &= b_0 + b_{\text{Amer}}\cdot\mathbb{1}_{\mbox{Amer}}(x) + b_{\text{Asia}}\cdot\mathbb{1}_{\mbox{Asia}}(x)
++ b_{\text{Euro}}\cdot\mathbb{1}_{\mbox{Euro}}(x) + b_{\text{Ocean}}\cdot\mathbb{1}_{\mbox{Ocean}}(x)\\
+&= 54.8 + 18.8\cdot\mathbb{1}_{\mbox{Amer}}(x) + 15.9\cdot\mathbb{1}_{\mbox{Asia}}(x)
++ 22.8\cdot\mathbb{1}_{\mbox{Euro}}(x) + 25.9\cdot\mathbb{1}_{\mbox{Ocean}}(x)\\
+&= 54.8 + 18.8\cdot 0 + 15.9\cdot 1 + 22.8\cdot 0 + 25.9\cdot 0\\
+&= 54.8 + 15.9\\
+&= 70.7
+\end{align}
+$$
+
+i.e. in this case, only the indicator function $\mathbb{1}_{\mbox{Asia}}(x)$ is equal to 1, but all others are 0. Recall that 70.7 corresponds to the group mean life expectancy for all countries in Asia in Table \@ref(tab:continent-mean-life-expectancies). The same logic applies to $b_{\text{Euro}} = 22.8$ and $b_{\text{Ocean}} = 25.9$; they correspond to the "offset" in mean life expectancy for countries in Europe and Oceania, relative to the mean life expectancy of the baseline group for comparison of African countries.
 
 Let's generalize this idea a bit. If we fit a linear regression model using a categorical explanatory variable $x$ that has $k$ levels, a regression model will return an intercept and $k - 1$ "slope" coefficients. When $x$ is a numerical explanatory variable the interpretation is of a "slope" coefficient, but when $x$ is categorical the meaning is a little trickier. They are *offsets* relative to the baseline. 
 
 In our case, since there are $k = 5$ continents, the regression model returns an intercept corresponding to the baseline for comparison Africa and $k - 1 = 4$ slope coefficients corresponding to the Americas, Asia, Europe, and Oceania. Africa was chosen as the baseline by R for no other reason than it is first alphabetically of the 5 continents. You can manually specify which continent to use as baseline instead of the default choice of whichever comes first alphabetically, but we leave that to a more advanced course. (The `forcats` package is particularly nice for doing this and we encourage you to explore using it.)
+
+
 
 ```{block, type='learncheck', purl=FALSE}
 **_Learning check_**
