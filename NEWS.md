@@ -6,7 +6,7 @@
 
 ## Content changes
 
-* Reorganized chapter sequencing according to flowchart at top of [Section 1.1](http://moderndive.com/index.html#intro-for-students)
+* Reorganized chapter sequencing according to flowchart at top of [Section 1.1](https://moderndive.com/index.html#intro-for-students)
 * Chapter 2 - Getting Started: Added more explanation on R packages, including analogy for `install.packages()` and `library()` (akin to downloading apps onto phone)
 * Added "Data Modeling" portion to book
     + Chapter 6 - Basic regression: one numerical explanatory variable, correlation, one categorical explanatory variable)
@@ -20,7 +20,7 @@
 
 ## Other changes
 
-- Development version of book now available at <http://moderndive.netlify.com/>; deployed via travis-ci + netlify. 
+- Development version of book now available at <https://moderndive.netlify.com/>; deployed via travis-ci + netlify. 
 - Added wide ModernDive logo to top of each chapter and `logos` folder
 - Added favicon (icon in browser tab)
 - Moved home GitHub repository from <https://github.com/ismayc/moderndiver-book/> to <https://github.com/moderndive/moderndive_book>
@@ -53,7 +53,7 @@
 
 ## Technical changes
 
-* Book is now hosted on [ModernDive.com](http://moderndive.com/)
+* Book is now hosted on [ModernDive.com](https://moderndive.com/)
 * Development version now on original ModernDive site [https://ismayc.github.io/moderndiver-book/](https://ismayc.github.io/moderndiver-book/)
 * Added links to digital copies and source code of all past versions of ModernDive in Chapter 1.
 * Cut build/compilation time of book from ~20 minutes to ~1 minute
