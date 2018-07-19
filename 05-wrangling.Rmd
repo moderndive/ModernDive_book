@@ -32,7 +32,7 @@ knit_engines$set(asis = function(options) {
 # This controls which LC solutions to show. Options for solutions_shown: "ALL"
 # (to show all solutions), or subsets of c('5-1', '5-2','5-3', '5-4', '5-5', '5-6'), including
 # the null vector c('') to show no solutions.
-solutions_shown <- c('5-1', '5-2', '5-3', '5-4', '5-5', '5-6')
+solutions_shown <- c('5-1', '5-2', '5-3', '5-4', '5-5', '5-6', '5-7')
 show_solutions <- function(section){
   return(solutions_shown == "ALL" | section %in% solutions_shown)
   }
@@ -52,6 +52,8 @@ We can simply specify what variable/column we would like on one axis, (if applic
 
 Lastly, in a few spots in Chapter \@ref(viz) and Chapter \@ref(tidy), we hinted at some ways to summarize and wrangle data to suit your needs, using the `filter()` and `inner_join()` functions.  This chapter expands on these functions by giving a variety of examples using what we term the *Five Main Verbs* (5MV) in the `dplyr` package [@R-dplyr].  
 
+
+
 ### Needed packages {-}
 
 Let's load all the packages needed for this chapter (this assumes you've already installed them). If needed, read Section \@ref(packages) for information on how to install and load R packages.
@@ -65,8 +67,23 @@ library(nycflights13)
 ```{r message=FALSE, warning=FALSE, echo=FALSE, purl=FALSE}
 # Packages needed internally, but not in text.
 library(knitr)
+library(readr)
 ```
 
+
+### DataCamp {-}
+
+Our approach to introducing data wrangling tools from the `dplyr` package is very similar to the approach taken in [David Robinson's](https://twitter.com/drob) DataCamp course "Introduction to the Tidyverse," a course targeted at people new to R and the tidyverse. If you're interested in complementing your learning below in an interactive online environment, click on the image below to access the course. The relevant chapters are Chapter 1 on "Data wrangling" and Chapter 3 on "Grouping and summarizing".
+
+<center>
+<a target="_blank" class="page-link" href="https://www.datacamp.com/courses/introduction-to-the-tidyverse"><img src="images/datacamp_intro_to_tidyverse.png" alt="Drawing" style="height: 150px;"/></a>
+</center>
+
+While not required for this book, if you would like a quick peek at more powerful tools to explore, tame, tidy, and transform data, we suggest you take [Alison Hill's](https://twitter.com/apreshill) DataCamp course "Working with Data in the Tidyverse," Click on the image below to access the course. The relevant chapter is Chapter 3 "Tidy your data."
+
+<center>
+<a target="_blank" class="page-link" href="https://www.datacamp.com/courses/working-with-data-in-the-tidyverse"><img src="images/datacamp_working_with_data.png" alt="Drawing" style="height: 150px;"/></a>
+</center>
 
 
 
@@ -236,7 +253,7 @@ summary_temp <- weather %>%
 kable(summary_temp)
 ```
 
-It is not good practice to include a `na.rm = TRUE` in your summary commands by default; you should attempt to run them without this argument.  This is because removing missing data can have an impact on your analyses. In fact, an entire branch of the field of statistics deals with missing data. The take away point is that `na.rm = TRUE` should only be used after you become aware of the implications of its use (see the Learning Checks below for an example).
+It is not good practice to include a `na.rm = TRUE` in your summary commands by default; you should attempt to run code first without this argument as this will alert you to the presence of missing data. Only after you've identified where missing values occur and have thought about the potential causes of this missing should you consider using `na.rm = TRUE`. In the upcoming Learning Checks we'll consider the possible ramifications of blindly sweeping rows with missing values under the rug. 
 
 <!--
 If we'd like to access either of these values directly we can use the `$` to specify a column in a data frame. For example:
@@ -389,7 +406,9 @@ by_monthly_origin <- flights %>%
 by_monthly_origin
 ```
 
-In `by_monthly_origin` the `month` column is now first and the rows are sorted by `month` instead of origin. If you compare the values of `count` in `by_origin_monthly` and `by_monthly_origin` using the `View()` function, you'll see that the values are actually the same, just presented in a different order. Second, why do we `group_by(origin, month)` and not `group_by(origin)` and then `group_by(month)`? Let's investigate:
+In `by_monthly_origin` the `month` column is now first and the rows are sorted by `month` instead of origin. If you compare the values of `count` in `by_origin_monthly` and `by_monthly_origin` using the `View()` function, you'll see that the values are actually the same, just presented in a different order. 
+
+Second, why do we `group_by(origin, month)` and not `group_by(origin)` and then `group_by(month)`? Let's investigate:
 
 ```{r}
 by_origin_monthly_incorrect <- flights %>% 
@@ -536,6 +555,16 @@ flights <- flights %>%
   mutate(gain = dep_delay - arr_delay)
 ```
 
+Let's take a look at `dep_delay`, `arr_delay`, and the resulting `gain` variables for the first 5 rows in our new `flights` data frame:
+
+```{r, echo=FALSE}
+flights %>% 
+  select(dep_delay, arr_delay, gain) %>% 
+  slice(1:5)
+```
+
+The flight in the first row departed 2 minutes late but arrived 11 minutes late, so its "gained time in the air" is actually a loss of 9 minutes, hence its `gain` is `-9`. Contrast this to the flight in the fourth row which departed a minute early (`dep_delay` of `-1`) but arrived 18 minutes early (`arr_delay` of `-18`), so its "gained time in the air" is 17 minutes, hence its `gain` is `+17`.
+
 Why did we overwrite `flights` instead of assigning the resulting data frame to a new object, like `flights_with_gain`? As a rough rule of thumb, as long as you are not losing information that you might need later, it's acceptable practice to overwrite data frames.  However, if you overwrite existing variables and/or change the observational units, recovering the original information might prove difficult. In this case, it might make sense to create a new data object.
 
 Let's look at summary measures of this `gain` variable and even plot it in the form of a histogram:
@@ -657,7 +686,7 @@ freq_dest %>%
 
 ## Joining data frames {#joins}
 
-Another common task is joining/merging two different datasets. For example, in the `flights` data, the variable `carrier` lists the carrier code for the different flights. While `"UA"` and `"AA"` might be somewhat easy to guess for some (United and American Airlines), what are "VX", "HA", and "B6"? This information is provided in a separate data frame `airlines`.
+Another common task is joining AKA merging two different datasets. For example, in the `flights` data, the variable `carrier` lists the carrier code for the different flights. While `"UA"` and `"AA"` might be somewhat easy to guess for some (United and American Airlines), what are "VX", "HA", and "B6"? This information is provided in a separate data frame `airlines`.
 
 ```{r eval=FALSE}
 View(airlines)
@@ -665,13 +694,13 @@ View(airlines)
 
 We see that in `airports`, `carrier` is the carrier code while `name` is the full name of the airline. Using this table, we can see that "VX", "HA", and "B6" correspond to Virgin America, Hawaiian Airlines, and JetBlue respectively. However, will we have to continually look up the carrier's name for each flight in the `airlines` dataset?  No! Instead of having to  do this manually, we can have R automatically do the "looking up" for us.  
 
-Note that the values in the variable `carrier` in `flights` match the values in the variable `carrier` in `airlines`. In this case, we can use the variable `carrier` as a *key variable* to join/merge/match the two data frames by. Hadley and Garrett [@rds2016] created the following diagram to help us understand how the different datasets are linked:
+Note that the values in the variable `carrier` in `flights` match the values in the variable `carrier` in `airlines`. In this case, we can use the variable `carrier` as a *key variable* to join/merge/match the two data frames by. Key variables are almost always identification variables that uniquely identify the observational units as we saw back in Subsetion \@ref(identification-vs-measurement) on identification vs measurement variables. This ensures that rows in both data frames are appropriate matched during the join. Hadley and Garrett [@rds2016] created the following diagram to help us understand how the different datasets are linked by various key variables:
 
 ```{r reldiagram, echo=FALSE, fig.cap="Data relationships in nycflights13 from R for Data Science", purl=FALSE}
 knitr::include_graphics("images/relational-nycflights.png")
 ```
 
-### Joining by key variables
+### Joining by "key" variables
 
 In both `flights` and `airlines`, the key variable we want to join/merge/match the two data frames with has the same name in both datasets: `carriers`. We make use of the `inner_join()` function to join by the variable `carrier`.
 
@@ -692,7 +721,7 @@ knitr::include_graphics("images/join-inner.png")
 
 There are more complex joins available, but the `inner_join` will solve nearly all of the problems you'll face in our experience.
 
-### Joining by key variables with different names
+### Joining by "key" variables with different names
 
 Say instead, you are interested in all the destinations of flights from NYC in 2013 and ask yourself:
 
@@ -720,17 +749,33 @@ flights %>%
 
 Let's construct the sequence of commands that computes the number of flights from NYC to each destination, but also includes information about each destination airport:
 
-```{r, eval=FALSE}
+```{r}
 named_dests <- flights %>%
   group_by(dest) %>%
   summarize(num_flights = n()) %>%
   arrange(desc(num_flights)) %>%
   inner_join(airports, by = c("dest" = "faa")) %>%
   rename(airport_name = name)
-View(named_dests)
+named_dests
 ```
 
 In case you didn't know, `"ORD"` is the airport code of Chicago O'Hare airport and `"FLL"` is the main airport in Fort Lauderdale, Florida, which we can now see in our `named_dests` data frame.
+
+### Joining by multiple "key" variables
+
+Say instead we are in a situation where we need to join by multiple varibles. For example, in Figure \@ref(fig:reldiagram) above we see that in order to join the `flights` and `weather` data frames, we need more than one key variable: `year`, `month`, `day`, `hour`, and `origin`. This is because the combination of these 5 variables act to uniquely identify each observational unit in the `weather` data frame: hourly weather recordings at each of the 3 NYC airports.
+
+We achieve this by specifying a vector of key variables to join by using the `c()` concatenate function. Note the individual variables need to be wrapped in quotation marks.
+
+```{r}
+flights_weather_joined <- flights %>%
+  inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
+flights_weather_joined
+```
+
+
+
+
 
 
 ```{block lc-join, type='learncheck', purl=FALSE}
@@ -763,7 +808,7 @@ This question is subjective! What surprises me is the high number of flights to 
 
 <!--Subsection on Other Verbs -->
 
-## Optional: Other verbs {#other-verbs}
+## Other verbs {#other-verbs}
 
 On top of the following examples of other verbs, if you'd like to see more examples on using `dplyr`, the 5MV, and `%>%` with the `nycflights13` dataset, check out [Chapter 5](http://r4ds.had.co.nz/transform.html) of Hadley and Garrett's book [@rds2016].
 
@@ -786,7 +831,9 @@ flights %>%
   select(carrier, flight)
 ```
 
-Another one of these variables is `year`. If you remember the original description of the `flights` data frame (or by running `?flights`), you'll remember that this data correspond to flights in 2013 departing New York City.  The `year` variable isn't really a variable here in that it doesn't vary... `flights` actually comes from a larger dataset that covers many years.  We may want to remove the `year` variable from our dataset since it won't be helpful for analysis in this case. We can deselect `year` by using the `-` sign:
+This function makes navigating datasets with a very large number of variables easier for humans by restricting consideration to only those of interest, like `carrier` and `flight` above. So for example, this might make viewing the dataset using the `View()` spreadsheet viewer more digestible. However, as far as the computer is concerned it doesn't care how many variables additional variables are in the dataset in question, so long as `carrier` and `flight` are included.
+
+Another example involves the variable `year`. If you remember the original description of the `flights` data frame (or by running `?flights`), you'll remember that this data correspond to flights in 2013 departing New York City.  The `year` variable isn't really a variable here in that it doesn't vary... `flights` actually comes from a larger dataset that covers many years.  We may want to remove the `year` variable from our dataset since it won't be helpful for analysis in this case. We can deselect `year` by using the `-` sign:
 
 ```{r, eval=FALSE}
 flights_no_year <- flights %>% 
@@ -954,6 +1001,122 @@ flights %>%
 <!--Subsection on Conclusion -->
 
 ## Conclusion
+
+### Putting it all together: Available seat miles
+
+Let's recap the Five Main Verbs (5MV) and others in Table \@ref(tab:wrangle-summary-table) summarizing their differences. Using these verbs and the pipe `%>%` operator from Section \@ref(piping), you'll be able to write easily legible code to perform almost all the data wrangling necessary for the rest of this book. 
+
+```{r wrangle-summary-table, echo=FALSE, message=FALSE}
+# Original at https://docs.google.com/spreadsheets/d/1nRkXfYMQiTj79c08xQPY0zkoJSpde3NC1w6DRhsWCss/edit#gid=0
+read_csv("data/ch5_summary_table - Sheet1.csv", na = "") %>% 
+  rename_(" " = "X1") %>% 
+  kable(
+    caption = "Summary of data wrangling verbs", 
+    booktabs = TRUE
+  )
+```
+
+Let's now put your newly acquired data wrangling skills to the test! An airline industry measure of a passenger airline's capacity is the [available seat miles](https://en.wikipedia.org/wiki/Available_seat_miles), which is equal to the number of seats available multiplied by the number of miles or kilometres flown. So for example say an airline had 2 flights using a plane with 10 seats that flew 500 miles and 3 flights using a plane with 20 seats that flew 1000 miles, the available seat miles would be 2 $\times$ 10 $\times$ 500 $+$ 3 $\times$ 20 $\times$ 1000 = 70,000 seat miles.
+
+```{block lc-asm, type='learncheck', purl=FALSE}
+**_Learning check_** 
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Using the datasets included in the `nycflights13` package, compute the available seat miles for each airline sorted in descending order. After completing all the necessary data wrangling steps, the resulting data frame should have 16 rows (one for each airline) and 2 columns (airline name and available seat miles). Here are some hints:
+
+1. **Crucial**: Unless you are very confident in what you are doing, it is worthwhile to not starting coding right away, but rather first sketch out on paper all the necessary data wrangling steps not using exact code, but rather high-level *pseudocode* that is informal yet detailed enough to articulate what you are doing. This way you won't confuse *what* you are trying to do (the algorithm) with *how* you are going to do it (writing `dplyr` code). 
+1. Take a close look at all the datasets using the `View()` function: `flights`, `weather`, `planes`, `airports`, and `airlines` to identify which variables are necessary to compute available seat miles.
+1. Figure \@ref(fig:reldiagram) above showing how the various datasets can be joined will also be useful. 
+1. Consider the data wrangling verbs in Table \@ref(tab:wrangle-summary-table) as your toolbox!
+
+```{asis lc5-7solutions, include=show_solutions('5-7')}
+**Learning Check Solutions**  
+
+**`r paste0("(LC", chap, ".", (lc), ")")`** Here are some examples of student-written [pseudocode](https://twitter.com/rudeboybert/status/964181298691629056). Based on our own pseudocode, let's first display the entire solution.
+```
+```{r lc5-71solutions-2, include=show_solutions('5-7')}
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  mutate(ASM = seats * distance) %>% 
+  group_by(carrier) %>% 
+  summarize(ASM = sum(ASM, na.rm = TRUE)) %>% 
+  arrange(desc(ASM))
+```
+```{asis lc5-7solutions-3, include=show_solutions('5-7')}
+Let's now break this down step-by-step. To compute the available seat miles for a given flight, we need the `distance` variable from the `flights` data frame and the `seats` variable from the `planes` data frame, necessitating a join by the key variable `tailnum` as illustrated in Figure \@ref(fig:reldiagram). To keep the resulting data frame easy to view, we'll `select()` only these two variables and `carrier`:
+```
+```{r lc5-71solutions-4, include=show_solutions('5-7')}
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance)
+```
+```{asis lc5-7solutions-5, include=show_solutions('5-7')}
+Now for each flight we can compute the available seat miles `ASM` by multiplying the number of seats by the distance via a `mutate()`:
+```
+```{r lc5-71solutions-6, include=show_solutions('5-7')}
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  # Added:
+  mutate(ASM = seats * distance)
+```
+```{asis lc5-7solutions-7, include=show_solutions('5-7')}
+Next we want to sum the `ASM` for each carrier. We achieve this by first grouping by `carrier` and then summarizing using the `sum()` function:
+```
+```{r lc5-71solutions-8, include=show_solutions('5-7')}
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  mutate(ASM = seats * distance) %>% 
+  # Added:
+  group_by(carrier) %>% 
+  summarize(ASM = sum(ASM))
+```
+```{asis lc5-7solutions-9, include=show_solutions('5-7')}
+However, because for certain carriers certain flights have missing `NA` values, the resulting table also returns `NA`'s. We can eliminate these by adding a `na.rm = TRUE` argument to `sum()`, telling R that we want to remove the `NA`'s in the sum. We saw this in Section \ref(summarize):
+```
+```{r lc5-71solutions-10, include=show_solutions('5-7')}
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  mutate(ASM = seats * distance) %>% 
+  group_by(carrier) %>% 
+  # Modified:
+  summarize(ASM = sum(ASM, na.rm = TRUE))
+```
+```{asis lc5-7solutions-11, include=show_solutions('5-7')}
+Finally, we `arrange()` the data in `desc()`ending order of `ASM`.
+```
+```{r lc5-71solutions-12, include=show_solutions('5-7')}
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  mutate(ASM = seats * distance) %>% 
+  group_by(carrier) %>% 
+  summarize(ASM = sum(ASM, na.rm = TRUE)) %>% 
+  # Added:
+  arrange(desc(ASM))
+```
+```{asis lc5-7solutions-13, include=show_solutions('5-7')}
+While the above data frame is correct, the IATA `carrier` code is not always useful. For example, what carrier is `WN`? We can address this by joining with the `airlines` dataset using `carrier` is the key variable. While this step is not absolutely required, it goes a long way to making the table easier to make sense of. It is important to be empathetic with the ultimate consumers of your presented data!
+```
+```{r lc5-71solutions-14, include=show_solutions('5-7')}
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  mutate(ASM = seats * distance) %>% 
+  group_by(carrier) %>% 
+  summarize(ASM = sum(ASM, na.rm = TRUE)) %>% 
+  arrange(desc(ASM)) %>% 
+  # Added:
+  inner_join(airlines, by = "carrier")
+```
+
+
+```{block, type='learncheck', purl=FALSE}
+```
+
 
 ### Review questions
 
