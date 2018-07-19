@@ -7,6 +7,7 @@ library(dplyr)
 # Packages needed internally, but not in text.
 library(gapminder)
 library(knitr)
+library(readr)
 
 ## ---- echo=FALSE---------------------------------------------------------
 gapminder_2007 <- gapminder %>% 
@@ -54,7 +55,7 @@ all_alaska_flights <- flights %>%
 
 ## **Learning Check Solutions**
 
-## ----noalpha, fig.cap="Arrival Delays vs Departure Delays for Alaska Airlines flights from NYC in 2013"----
+## ----noalpha, fig.cap="Arrival Delays vs Departure Delays for Alaska Airlines flights from NYC in 2013", message=TRUE----
 ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point()
 
@@ -70,6 +71,27 @@ ggplot(data = all_alaska_flights, mapping = aes(x = dep_time, y = dep_delay)) +
 ## ----alpha, fig.cap="Delay scatterplot with alpha=0.2"-------------------
 ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point(alpha = 0.2)
+
+## ----jitter-example-df, echo=FALSE---------------------------------------
+jitter_example <- data_frame(
+  x = c(0, 0, 0, 0),
+  y = c(0, 0, 0, 0)
+)
+
+## ----jitter-example-df-01------------------------------------------------
+jitter_example
+
+## ----jitter-example-plot-1, fig.cap="Regular scatterplot of jitter example data", echo=FALSE----
+ggplot(data = jitter_example, mapping = aes(x = x, y = y)) + 
+  geom_point() +
+  coord_cartesian(xlim = c(-0.025, 0.025), ylim = c(-0.025, 0.025)) + 
+  labs(title = "Regular scatterplot")
+
+## ----jitter-example-plot-2, fig.cap="Jittered scatterplot of jitter example data", echo=FALSE----
+ggplot(data = jitter_example, mapping = aes(x = x, y = y)) + 
+  geom_jitter(width = 0.01, height = 0.01) +
+  coord_cartesian(xlim = c(-0.025, 0.025), ylim = c(-0.025, 0.025)) + 
+  labs(title = "Jittered scatterplot")
 
 ## ----jitter, fig.cap="Jittered delay scatterplot"------------------------
 ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
@@ -285,6 +307,15 @@ ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
   facet_wrap(~ name, ncol = 1)
 
 ## **Learning Check Solutions**
+
+## ----viz-summary-table, echo=FALSE, message=FALSE------------------------
+# Original at https://docs.google.com/spreadsheets/d/1vzqlFiT6qm5wzy_L_0nL7EWAd6jiUZmLSCFhDhztDSg/edit#gid=0
+read_csv("data/ch3_summary_table - Sheet1.csv", na = "") %>% 
+  rename_(" " = "X1") %>% 
+  kable(
+    caption = "Summary of 5NG", 
+    booktabs = TRUE
+  )
 
 ## ----viz-map, echo=FALSE, fig.cap="Mind map for Data Visualization", out.width="200%"----
 #library(knitr)

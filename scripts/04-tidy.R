@@ -23,7 +23,7 @@ knit_engines$set(asis = function(options) {
 # This controls which LC solutions to show. Options for solutions_shown: "ALL"
 # (to show all solutions), or subsets of c('4-4', '4-5'), including the
 # null vector c('') to show no solutions.
-solutions_shown <- c('4-1', '4-2', '4-3')
+solutions_shown <- c('4-1', '4-2', '4-3', '4-4')
 show_solutions <- function(section){
   return(solutions_shown == "ALL" | section %in% solutions_shown)
   }
@@ -38,6 +38,8 @@ library(readr)
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
+library(fivethirtyeight)
+library(stringr)
 
 ## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from http://r4ds.had.co.nz/tidy-data.html"----
 knitr::include_graphics("images/tidy-1.png")
@@ -86,6 +88,32 @@ stocks %>%
     booktabs = TRUE
   )
 
+## **_Learning check_**
+
+## ----echo=FALSE----------------------------------------------------------
+drinks_sub <- drinks %>%
+  select(-total_litres_of_pure_alcohol) %>% 
+  filter(country %in% c("USA", "Canada", "South Korea"))
+drinks_sub_tidy <- drinks_sub %>%
+  gather(type, servings, -c(country)) %>%
+  mutate(
+    type = str_sub(type, start=1, end=-10)
+  ) %>%
+  arrange(country, type) %>% 
+  rename(`alcohol type` = type)
+drinks_sub
+
+## **Learning Check Solutions**
+
+## ----lc4-1solutions-2, include=show_solutions('4-1'), echo=FALSE---------
+drinks_sub_tidy
+
+## Note that how the rows are sorted is inconsequential in whether or not the data frame is in tidy format. In other words, the following data frame sorted by alcohol type instead of country is equally in tidy format.
+
+## ----lc4-1solutions-4, include=show_solutions('4-1'), echo=FALSE---------
+drinks_sub_tidy %>% 
+  arrange(`alcohol type`)
+
 ## ------------------------------------------------------------------------
 glimpse(airports)
 
@@ -94,6 +122,7 @@ glimpse(airports)
 ## **Learning Check Solutions**
 
 ## ----message=FALSE, eval=FALSE-------------------------------------------
+## library(readr)
 ## dem_score <- read_csv("http://ismayc.github.io/dem_score.csv")
 ## dem_score
 
@@ -128,7 +157,26 @@ ggplot(data = guat_tidy, mapping = aes(x = parse_number(year), y = democracy_sco
 
 ## **Learning Check Solutions**
 
-## `dem_tidy <- gather(data = dem_score, key = year, value = democracy_score, - country)`
+## ----lc4-3solutions-2, include=show_solutions('4-3')---------------------
+dem_score_tidy <- gather(data = dem_score, key = year, value = democracy_score, - country)
+
+## Let's now compare the `dem_score` and `dem_score_tidy`. `dem_score` has democracy score information for each year in columns, whereas in `dem_score_tidy` there are explicit variables `year` and `democracy_score`. While both representations of the data contain the same information, we can only use `ggplot()` to create plots using the `dem_score_tidy` data frame.
+
+## ----lc4-3solutions-4, include=show_solutions('4-3')---------------------
+dem_score
+dem_score_tidy
+
+## **`r paste0("(LC", chap, ".", (lc - 1), ")")`** The code is similar
+
+## ----lc4-3solutions-6, include=show_solutions('4-3'), echo=show_solutions('4-3'), message=FALSE, warning=FALSE----
+life_expectancy <- read_csv('http://ismayc.github.io/le_mess.csv')
+life_expectancy_tidy <- gather(data = life_expectancy, key = year, value = life_expectancy, -country)
+
+## We observe the same construct structure with respect to `year` in `life_expectancy` vs `life_expectancy_tidy` as we did in `dem_score` vs `dem_score_tidy`:
+
+## ----lc4-3solutions-8, lc4-2solutions-4, include=show_solutions('4-3')----
+life_expectancy
+life_expectancy_tidy
 
 ## ----message=FALSE-------------------------------------------------------
 library(dplyr)

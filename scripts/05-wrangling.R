@@ -101,6 +101,11 @@ by_origin_monthly_incorrect
 flights <- flights %>% 
   mutate(gain = dep_delay - arr_delay)
 
+## ---- echo=FALSE---------------------------------------------------------
+flights %>% 
+  select(dep_delay, arr_delay, gain) %>% 
+  slice(1:5)
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## gain_summary <- flights %>%
 ##   summarize(
@@ -171,14 +176,19 @@ freq_dest %>%
 ## flights %>%
 ##   inner_join(airports, by = c("dest" = "faa"))
 
-## ---- eval=FALSE---------------------------------------------------------
-## named_dests <- flights %>%
-##   group_by(dest) %>%
-##   summarize(num_flights = n()) %>%
-##   arrange(desc(num_flights)) %>%
-##   inner_join(airports, by = c("dest" = "faa")) %>%
-##   rename(airport_name = name)
-## View(named_dests)
+## ------------------------------------------------------------------------
+named_dests <- flights %>%
+  group_by(dest) %>%
+  summarize(num_flights = n()) %>%
+  arrange(desc(num_flights)) %>%
+  inner_join(airports, by = c("dest" = "faa")) %>%
+  rename(airport_name = name)
+named_dests
+
+## ------------------------------------------------------------------------
+flights_weather_joined <- flights %>%
+  inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
+flights_weather_joined
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## glimpse(flights)
@@ -240,4 +250,87 @@ freq_dest %>%
 ##   arrange(desc(num_flights)) %>%
 ##   top_n(n = 10)
 ## View(ten_freq_dests)
+
+## ----wrangle-summary-table, echo=FALSE, message=FALSE--------------------
+# Original at https://docs.google.com/spreadsheets/d/1nRkXfYMQiTj79c08xQPY0zkoJSpde3NC1w6DRhsWCss/edit#gid=0
+read_csv("data/ch5_summary_table - Sheet1.csv", na = "") %>% 
+  rename_(" " = "X1") %>% 
+  kable(
+    caption = "Summary of data wrangling verbs", 
+    booktabs = TRUE
+  )
+
+## **Learning Check Solutions**
+
+## ----lc5-71solutions-2, include=show_solutions('5-7')--------------------
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  mutate(ASM = seats * distance) %>% 
+  group_by(carrier) %>% 
+  summarize(ASM = sum(ASM, na.rm = TRUE)) %>% 
+  arrange(desc(ASM))
+
+## Let's now break this down step-by-step. To compute the available seat miles for a given flight, we need the `distance` variable from the `flights` data frame and the `seats` variable from the `planes` data frame, necessitating a join by the key variable `tailnum` as illustrated in Figure \@ref(fig:reldiagram). To keep the resulting data frame easy to view, we'll `select()` only these two variables and `carrier`:
+
+## ----lc5-71solutions-4, include=show_solutions('5-7')--------------------
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance)
+
+## Now for each flight we can compute the available seat miles `ASM` by multiplying the number of seats by the distance via a `mutate()`:
+
+## ----lc5-71solutions-6, include=show_solutions('5-7')--------------------
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  # Added:
+  mutate(ASM = seats * distance)
+
+## Next we want to sum the `ASM` for each carrier. We achieve this by first grouping by `carrier` and then summarizing using the `sum()` function:
+
+## ----lc5-71solutions-8, include=show_solutions('5-7')--------------------
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  mutate(ASM = seats * distance) %>% 
+  # Added:
+  group_by(carrier) %>% 
+  summarize(ASM = sum(ASM))
+
+## However, because for certain carriers certain flights have missing `NA` values, the resulting table also returns `NA`'s. We can eliminate these by adding a `na.rm = TRUE` argument to `sum()`, telling R that we want to remove the `NA`'s in the sum. We saw this in Section \ref(summarize):
+
+## ----lc5-71solutions-10, include=show_solutions('5-7')-------------------
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  mutate(ASM = seats * distance) %>% 
+  group_by(carrier) %>% 
+  # Modified:
+  summarize(ASM = sum(ASM, na.rm = TRUE))
+
+## Finally, we `arrange()` the data in `desc()`ending order of `ASM`.
+
+## ----lc5-71solutions-12, include=show_solutions('5-7')-------------------
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  mutate(ASM = seats * distance) %>% 
+  group_by(carrier) %>% 
+  summarize(ASM = sum(ASM, na.rm = TRUE)) %>% 
+  # Added:
+  arrange(desc(ASM))
+
+## While the above data frame is correct, the IATA `carrier` code is not always useful. For example, what carrier is `WN`? We can address this by joining with the `airlines` dataset using `carrier` is the key variable. While this step is not absolutely required, it goes a long way to making the table easier to make sense of. It is important to be empathetic with the ultimate consumers of your presented data!
+
+## ----lc5-71solutions-14, include=show_solutions('5-7')-------------------
+flights %>% 
+  inner_join(planes, by = "tailnum") %>% 
+  select(carrier, seats, distance) %>% 
+  mutate(ASM = seats * distance) %>% 
+  group_by(carrier) %>% 
+  summarize(ASM = sum(ASM, na.rm = TRUE)) %>% 
+  arrange(desc(ASM)) %>% 
+  # Added:
+  inner_join(airlines, by = "carrier")
 

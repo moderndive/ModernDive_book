@@ -2,41 +2,38 @@
 library(dplyr)
 library(ggplot2)
 library(moderndive)
-# For loading CSV files:
-library(readr)
 
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
 library(patchwork)
-
 set.seed(79)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## library(readr)
-## tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv")
+## tactile_prop_red
 ## View(tactile_prop_red)
 
 ## ----tactile-prop-red, echo=FALSE, message=FALSE, warning=FALSE----------
-tactile_prop_red <- read_csv("https://rudeboybert.github.io/STAT135/static/sampling_red_balls.csv")
 tactile_prop_red %>% 
   kable(
     digits = 2,
-    caption = "33 sample proportions based on 33 tactile samples of size n = 50", 
+    caption = "33 sample proportions based on 33 tactile samples with n = 50", 
     booktabs = TRUE
   )
 
 ## ----eval=FALSE----------------------------------------------------------
 ## ggplot(tactile_prop_red, aes(x = prop_red)) +
 ##   geom_histogram(binwidth = 0.05, color = "white") +
-##   labs(x = "Sample proportion red based on n = 50") +
-##   ggtitle("Histogram of 33 sample proportions based on 33 tactile samples of size n=50")
+##   labs(x = "Sample proportion red based on n = 50", title = "Sampling distribution of p-hat")
 
-## ----samplingdistribution-tactile, echo=FALSE, fig.cap="Histogram of 33 sample proportions based on 33 tactile samples of size n=50"----
+## ----samplingdistribution-tactile, echo=FALSE, fig.cap="Sampling distribution of 33 sample proportions based on 33 tactile samples with n=50"----
 tactile_histogram <- ggplot(tactile_prop_red, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, color = "white")
 tactile_histogram + 
-    labs(x = "Sample proportion red based on n = 50", title = "Histogram of 33 sample proportions based on 33 tactile samples of size n=50") 
+    labs(
+      x = expression(paste("Sample proportion red ", hat(p), " based on n = 50")), 
+      title = expression(paste("Sampling distribution of ", hat(p)))
+      )
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## tactile_prop_red %>%
@@ -107,27 +104,36 @@ virtual_prop_red <- virtual_samples %>%
 virtual_prop_red %>% 
   kable(
     digits = 2,
-    caption = "33 sample proportions red based on 33 virtual samples of size n=50", 
+    caption = "33 sample proportions red based on 33 virtual samples with n=50", 
     booktabs = TRUE
   )
 
 ## ---- eval = FALSE-------------------------------------------------------
 ## ggplot(virtual_prop_red, aes(x = prop_red)) +
 ##   geom_histogram(binwidth = 0.05, color = "white") +
-##   labs(x = "Sample proportion red based on n = 50") +
-##   ggtitle("Histogram of 33 sample proportions based on 33 virtual samples of size n=50")
+##   labs(x = "Sample proportion red based on n = 50", title = "Sampling distribution of p-hat")
 
-## ----samplingdistribution-virtual, echo=FALSE, fig.cap="Histogram of 33 sample proportions red based on 33 virtual samples of size n=50"----
+## ----samplingdistribution-virtual, echo=FALSE, fig.cap="Sampling distribution of 33 sample proportions based on 33 virtual samples with n=50"----
 virtual_histogram <- ggplot(virtual_prop_red, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, color = "white")
 virtual_histogram +
-  labs(x = "Sample proportion red based on n = 50", title = "Histogram of 33 sample proportions based on 33 virtual samples of size n=50") 
+    labs(
+      x = expression(paste("Sample proportion red ", hat(p), " based on n = 50")), 
+      title = expression(paste("Sampling distribution of ", hat(p)))
+      )
 
-## ---- echo=FALSE---------------------------------------------------------
+## ----tactile-vs-virtual, echo=FALSE, fig.cap="Comparison of sampling distributions based on 33 tactile & virtual samples with n=50"----
 tactile_histogram <- tactile_histogram +
-  labs(x = "Sample proportion red based on n = 50", title = "Tactile sampling distribution")
+  labs(
+    x = expression(paste("Sample proportion red ", hat(p), " based on n = 50")), 
+    title = "Sampling distribution: Tactile"
+    )
 virtual_histogram <- virtual_histogram +
-  labs(x = "Sample proportion red based on n = 50", title = "Virtual sampling distribution")
+  labs(
+    x = expression(paste("Sample proportion red ", hat(p), " based on n = 50")), 
+    title = "Sampling distribution: Virtual"
+    )
+# using patchwork package for ggplot compositions
 tactile_histogram + virtual_histogram
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -155,10 +161,9 @@ virtual_prop_red <- virtual_samples %>%
 ## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(virtual_prop_red, aes(x = prop_red)) +
 ##   geom_histogram(binwidth = 0.05, color = "white") +
-##   labs(x = "Sample proportion red based on n = 50") +
-##   ggtitle("Histogram of 1000 sample proportions from 1000 virtual samples of size n=50")
+##   labs(x = "Sample proportion red based on n = 50", title = "Sampling distribution of p-hat")
 
-## ---- echo=FALSE---------------------------------------------------------
+## ----samplingdistribution-virtual-1000, echo=FALSE, fig.cap="Sampling distribution of 1000 sample proportions based on 1000 tactile samples with n=50"----
 virtual_prop_red <- virtual_samples %>% 
   group_by(replicate) %>% 
   summarize(red = sum(color == "red")) %>% 
@@ -166,7 +171,14 @@ virtual_prop_red <- virtual_samples %>%
 
 ggplot(virtual_prop_red, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, color = "white") +
-  labs(x = "Sample proportion red based on n = 50", title = "Histogram of 1000 sample proportions from 1000 virtual samples of size n=50") 
+    labs(
+      x = expression(paste("Sample proportion red ", hat(p), " based on n = 50")), 
+      title = expression(paste("Sampling distribution of ", hat(p)))
+      )
+
+## ------------------------------------------------------------------------
+virtual_prop_red %>% 
+  summarize(SE = sd(prop_red))
 
 ## ------------------------------------------------------------------------
 virtual_samples_50 <- bowl %>% 
