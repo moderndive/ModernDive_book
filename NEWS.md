@@ -3,9 +3,49 @@
 
 ## Content changes
 
-- Updated links to free DataCamp course in Visualization and Data Wrangling chapters
+* Introduction: Added section on correspondence of chapters to various DataCamp courses. Furthermore, links to relevant DataCamp course are included at the outset of each chapter.
+* Chapter 3 - Data visualization:
+    + Added simplified `geom_jitter()` example
+    + More explanations for how whiskers and outliers are constructed in `geom_boxplots`
+    + Added summary of table of all 5 named graphs
+* Chapter 4 - Tidy data:
+    + Added section on importing Excel data via RStudio
+    + Added example of tidy vs non-tidy: `fivethirtyeight::drinks`
+* Chapter 5 - Data wrangling:
+    + Added computing [available seat miles](https://en.wikipedia.org/wiki/Available_seat_miles) data wrangling case study
+    + Abandoned "5 Main Verbs" 5MV notion
+    + Added `_join()` and `group_by()` multiple variables
+* Chapter 6 - Basic regression:
+    + Clarified explanations of indicator/dummy variables when using categorical variable in regression. 
+    + Expanded "Correlation is not necessarily causation" subsection with example of "does sleeping with shoes on cause headaches?" including [causal diagram](https://github.com/moderndive/moderndive_book/blob/master/images/flowcharts/flowchart.009-cropped.png)
+    + Introduced concept of a "wrapper function" when introducing `moderndive::get_regression_table()` function
+    + Replaced all `base::summary()` with `skimr::skim()` for quick numerical summaries
+* Chapter 7 - Multiple regression:
+    + Changed all "everything else being equal" interpretation statements with "taking into account/controlling for all other variables in our model"
+* Chapter 8 - Sampling:
+    + Significantly cleaned up sampling terminology and definitions and made more clear that we are **sampling for inference**
+    + Cleaned up section and subsection structure to be much cleaner:
+        1. Tactile sampling simulation
+        1. Virtual sampling simulation
+        1. In real-life sampling: Introduced example of 2013 Obama approval rating poll and then tie everything with [sampling bowl](https://github.com/moderndive/moderndive_book/blob/master/images/sampling_bowl.jpeg).
+* Chapter 9 - Confidence intervals **Major overhaul**
+    + [`infer` package](http://infer.netlify.com/) now being ready for prime-time, we made first pass at incoporation into book.
+* Chapter 10 - Hypothesis testing **Major overhaul**
+    + [`infer` package](http://infer.netlify.com/) now being ready for prime-time, we made first pass at incoporation into book.
+    + Added discussion on Allan Downey's ["There is only one test"](http://allendowney.blogspot.com/2016/06/there-is-still-only-one-test.html) ideas
+* Chapter 12 - Thinking with data **Major overhaul**
+    + Added case study of [Seattle house prices](https://www.kaggle.com/harlfoxem/housesalesprediction) dataset from Kaggle, which is now available in `house_prices` dataframe in `moderndive` package. 
+        1. Chapters 3 and 4 from new ["Modeling with Data in the Tidyverse"](https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse) DataCamp course by Albert Y. Kim are based on this analysis
+        1. Includes a discussion on the importance of `log10`-transformations
+        1. Introduces modeling/regression for prediction: predicting house prices
+    + Laid outline for "effective data storytelling" using `fivethirtyeight` data and added one small example using US births data
+    + At the beginning of chapter, we now come full circle and revisit the discussion on the ModernDive [flowchart](https://github.com/moderndive/moderndive_book/blob/master/images/flowcharts/flowchart/flowchart.002.png) in the introduction.
+
+
 
 ## Other changes
+
+* Updated `moderndive` package on CRAN to 0.2.0. See [`NEWS.md`](https://github.com/moderndive/moderndive/releases)
 
  
 
