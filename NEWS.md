@@ -1,6 +1,6 @@
 # ModernDive 0.4.0
 
-Some highlights:
+## Highlights
 
 1. [`infer` package](http://infer.netlify.com/) is ready for prime-time! Thus we made a first pass at incorporating it into the book in Chapters 9 and 10 on confidence intervals and hypothesis testing!
 1. Chapter 12 on "Thinking with Data" now includes a case study using the [Seattle house prices](https://www.kaggle.com/harlfoxem/housesalesprediction) dataset on Kaggle.com. Chapters 3 and 4 from new ["Modeling with Data in the Tidyverse"](https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse) DataCamp course by Albert Y. Kim are based on this analysis!
@@ -8,7 +8,7 @@ Some highlights:
 1. We significantly cleaned up Chapter 8 on sampling! In particular adding an [2013 Obama approval rating poll](https://www.npr.org/sections/itsallpolitics/2013/12/04/248793753/poll-support-for-obama-among-young-americans-eroding) to tie in with our sampling bowl exercise and making it very clear that ultimately we are performing **(statistical) inference via sampling**.
 
 
-## Content changes
+## All content changes
 
 * Introduction: Added section on correspondence of chapters to various DataCamp courses. Furthermore, links to relevant DataCamp course are included at the outset of each chapter.
 * Chapter 3 - Data visualization:
