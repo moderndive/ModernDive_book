@@ -61,12 +61,12 @@ glimpse(house_prices)
 ## ---- eval=FALSE, message=FALSE, warning=FALSE---------------------------
 ## # Histogram of house price:
 ## ggplot(house_prices, aes(x = price)) +
-##   geom_histogram() +
+##   geom_histogram(color = "white") +
 ##   labs(x = "price (USD)", title = "House price")
 ## 
 ## # Histogram of sqft_living:
 ## ggplot(house_prices, aes(x = sqft_living)) +
-##   geom_histogram() +
+##   geom_histogram(color = "white") +
 ##   labs(x = "living space (square feet)", title = "House size")
 ## 
 ## # Barplot of condition:
@@ -77,10 +77,10 @@ glimpse(house_prices)
 ## ----house-prices-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Exploratory visualizations of Seattle house prices data", fig.width=16/2, fig.height=9/2.5----
 library(patchwork)
 p1 <- ggplot(house_prices, aes(x = price)) +
-  geom_histogram() +
+  geom_histogram(color = "white") +
   labs(x = "price (USD)", title = "House price")
 p2 <- ggplot(house_prices, aes(x = sqft_living)) +
-  geom_histogram() +
+  geom_histogram(color = "white") +
   labs(x = "living space (square feet)", title = "House size")
 p3 <- ggplot(house_prices, aes(x = condition)) +
   geom_bar() +
@@ -128,42 +128,42 @@ house_prices %>%
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Before:
 ## ggplot(house_prices, aes(x = price)) +
-##   geom_histogram() +
+##   geom_histogram(color = "white") +
 ##   labs(x = "price (USD)", title = "House price: Before")
 ## 
 ## # After:
 ## ggplot(house_prices, aes(x = log10_price)) +
-##   geom_histogram() +
+##   geom_histogram(color = "white") +
 ##   labs(x = "log10 price (USD)", title = "House price: After")
 
 ## ----log10-price-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House price before and after log10-transformation", fig.width=16/2, fig.height=9/2----
 library(patchwork)
 p1 <- ggplot(house_prices, aes(x = price)) +
-  geom_histogram() +
+  geom_histogram(color = "white") +
   labs(x = "price (USD)", title = "House price: Before")
 p2 <- ggplot(house_prices, aes(x = log10_price)) +
-  geom_histogram() +
+  geom_histogram(color = "white") +
   labs(x = "log10 price (USD)", title = "House price: After")
 p1 + p2
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Before:
 ## ggplot(house_prices, aes(x = sqft_living)) +
-##   geom_histogram() +
+##   geom_histogram(color = "white") +
 ##   labs(x = "living space (square feet)", title = "House size: Before")
 ## 
 ## # After:
 ## ggplot(house_prices, aes(x = log10_size)) +
-##   geom_histogram() +
+##   geom_histogram(color = "white") +
 ##   labs(x = "log10 living space (square feet)", title = "House size: After")
 
 ## ----log10-size-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House size before and after log10-transformation", fig.width=16/2, fig.height=9/2----
 library(patchwork)
 p1 <- ggplot(house_prices, aes(x = sqft_living)) +
-  geom_histogram() +
+  geom_histogram(color = "white") +
   labs(x = "living space (square feet)", title = "House size: Before")
 p2 <- ggplot(house_prices, aes(x = log10_size)) +
-  geom_histogram() +
+  geom_histogram(color = "white") +
   labs(x = "log10 living space (square feet)", title = "House size: After")
 p1 + p2
 
@@ -197,13 +197,7 @@ price_interaction <- lm(log10_price ~ log10_size * condition, data = house_price
 # Get regression table:
 get_regression_table(price_interaction)
 
-## ---- echo=FALSE, message=FALSE, warning=FALSE, fig.width=16/2, fig.height=9/2----
-ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
-  geom_point(alpha = 0.1) +
-  labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
-  geom_smooth(method = "lm", se = FALSE)
-
-## ----house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.width=16/2, fig.height=9/2----
+## ----house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction model with prediction", fig.width=16/2, fig.height=9/2----
 new_house <- data_frame(log10_size = log10(1900), condition = factor(5)) %>% 
   get_regression_points(price_interaction, newdata = .)
 

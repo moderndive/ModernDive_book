@@ -3,6 +3,7 @@ library(ggplot2)
 library(dplyr)
 library(moderndive)
 library(ISLR)
+library(skimr)
 
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 # Packages needed internally, but not in text:
@@ -13,7 +14,6 @@ library(gridExtra)
 
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(ISLR)
-data("Credit")
 Credit <- Credit %>%
   select(Balance, Limit, Income, Rating, Age)
 
@@ -35,7 +35,7 @@ glimpse(Credit)
 ## ------------------------------------------------------------------------
 Credit %>% 
   select(Balance, Limit, Income) %>% 
-  summary()
+  skim()
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## Credit %>%
@@ -209,14 +209,14 @@ ggplot(regression_points, aes(x = residual)) +
   labs(x = "Residual")
 
 ## ------------------------------------------------------------------------
-evals_less <- evals %>%
+evals_ch7 <- evals %>%
   select(score, age, gender)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## View(evals_less)
+## View(evals_ch7)
 
 ## ----model4-data-preview, echo=FALSE-------------------------------------
-evals_less %>%
+evals_ch7 %>%
   sample_n(5) %>%
   knitr::kable(
     digits = 3,
@@ -225,24 +225,25 @@ evals_less %>%
   )
 
 ## ------------------------------------------------------------------------
-summary(evals_less)
+evals_ch7 %>% 
+  skim()
 
 ## ------------------------------------------------------------------------
-evals_less %>% 
+evals_ch7 %>% 
   get_correlation(formula = score ~ age)
 
 ## ----numxcatxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin split by gender (jittered)"----
-ggplot(evals_less, aes(x = age, y = score, color = gender)) +
+ggplot(evals_ch7, aes(x = age, y = score, color = gender)) +
   geom_jitter() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
   geom_smooth(method = "lm", se = FALSE)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## score_model_2 <- lm(score ~ age + gender, data = evals_less)
+## score_model_2 <- lm(score ~ age + gender, data = evals_ch7)
 ## get_regression_table(score_model_2)
 
 ## ---- echo=FALSE---------------------------------------------------------
-score_model_2 <- lm(score ~ age + gender, data = evals_less)
+score_model_2 <- lm(score ~ age + gender, data = evals_ch7)
 get_regression_table(score_model_2) %>% 
   knitr::kable(
     digits = 3,
@@ -251,10 +252,10 @@ get_regression_table(score_model_2) %>%
   )
 
 ## ----numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin by gender: same slope"----
-coeff <- lm(score ~ age + gender, data = evals_less) %>% 
+coeff <- lm(score ~ age + gender, data = evals_ch7) %>% 
   coef() %>%
   as.numeric()
-slopes <- evals_less %>%
+slopes <- evals_ch7 %>%
   group_by(gender) %>%
   summarise(min = min(age), max = max(age)) %>%
   mutate(intercept = coeff[1]) %>%
@@ -262,17 +263,17 @@ slopes <- evals_less %>%
   gather(point, age, -c(gender, intercept)) %>%
   mutate(y_hat = intercept + age * coeff[2])
 
-ggplot(evals_less, aes(x = age, y = score, col = gender)) +
+ggplot(evals_ch7, aes(x = age, y = score, col = gender)) +
   geom_jitter() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
   geom_line(data = slopes, aes(y = y_hat), size = 1)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## score_model_interaction <- lm(score ~ age * gender, data = evals_less)
+## score_model_interaction <- lm(score ~ age * gender, data = evals_ch7)
 ## get_regression_table(score_model_interaction)
 
 ## ---- echo=FALSE---------------------------------------------------------
-score_model_interaction <- lm(score ~ age * gender, data = evals_less)
+score_model_interaction <- lm(score ~ age * gender, data = evals_ch7)
 get_regression_table(score_model_interaction) %>% 
   knitr::kable(
     digits = 3,

@@ -123,14 +123,10 @@ glimpse(airports)
 
 ## ----message=FALSE, eval=FALSE-------------------------------------------
 ## library(readr)
-## dem_score <- read_csv("http://ismayc.github.io/dem_score.csv")
+## dem_score <- read_csv("https://moderndive.com/data/dem_score.csv")
 ## dem_score
 
 ## ----message=FALSE, echo=FALSE-------------------------------------------
-if(!file.exists("data/dem_score.csv")){
-  download.file(url = "http://ismayc.github.io/dem_score.csv", 
-                destfile = "data/dem_score.csv")
-}
 dem_score <- read_csv("data/dem_score.csv")
 dem_score
 
@@ -169,7 +165,7 @@ dem_score_tidy
 ## **`r paste0("(LC", chap, ".", (lc - 1), ")")`** The code is similar
 
 ## ----lc4-3solutions-6, include=show_solutions('4-3'), echo=show_solutions('4-3'), message=FALSE, warning=FALSE----
-life_expectancy <- read_csv('http://ismayc.github.io/le_mess.csv')
+life_expectancy <- read_csv('https://moderndive.com/data/le_mess.csv')
 life_expectancy_tidy <- gather(data = life_expectancy, key = year, value = life_expectancy, -country)
 
 ## We observe the same construct structure with respect to `year` in `life_expectancy` vs `life_expectancy_tidy` as we did in `dem_score` vs `dem_score_tidy`:
