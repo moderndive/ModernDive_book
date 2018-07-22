@@ -1,5 +1,7 @@
-if(!dir.exists("docs/scripts"))
+if(!dir.exists("docs/scripts")){
+  dir.create("docs")
   dir.create("docs/scripts")
+}
 
 # Note order matters here:
 chapter_titles <- c("getting-started",
