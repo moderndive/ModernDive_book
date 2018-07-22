@@ -23,7 +23,7 @@ knit_engines$set(asis = function(options) {
 # This controls which LC solutions to show. Options for solutions_shown: "ALL"
 # (to show all solutions), or subsets of c('11-1', '11-2'), including the
 # null vector c('') to show no solutions.
-solutions_shown <- c('11-1')
+solutions_shown <- c('')
 show_solutions <- function(section){
   return(solutions_shown == "ALL" | section %in% solutions_shown)
   }
