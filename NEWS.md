@@ -40,6 +40,8 @@
 * **Major overhaul**: Chapter 10 - Hypothesis testing
     + [`infer` package](http://infer.netlify.com/) now being ready for prime-time, we made first pass at incorporation into book.
     + Added discussion on Allan Downey's ["There is only one test"](http://allendowney.blogspot.com/2016/06/there-is-still-only-one-test.html) ideas
+* Chapter 11 - Inference for Regression
+    + Added a simple linear regression example using the `infer` package    
 * **Major overhaul**: Chapter 12 - Thinking with data
     + Added case study of [Seattle house prices](https://www.kaggle.com/harlfoxem/housesalesprediction) dataset from Kaggle, which is now available in `house_prices` dataframe in `moderndive` package. 
         1. Chapters 3 and 4 from new ["Modeling with Data in the Tidyverse"](https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse) DataCamp course are based on this analysis
