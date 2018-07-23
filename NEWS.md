@@ -4,12 +4,60 @@
 
 # ModernDive 0.4.0
 
+## Highlights
 
-## Content changes
+1. The [`infer` package](http://infer.netlify.com/) is ready for prime-time! Thus we made a first pass at incorporating it into the book in Chapters 9 and 10 on confidence intervals and hypothesis testing!
+1. Chapter 12 on "Thinking with Data" now includes a case study using the [Seattle house prices](https://www.kaggle.com/harlfoxem/housesalesprediction) dataset on Kaggle.com. Chapters 3 and 4 from new ["Modeling with Data in the Tidyverse"](https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse) DataCamp course by Albert Y. Kim are based on this analysis!
+1. Speaking of DataCamp, we point readers to [various DataCamp courses](https://moderndive.netlify.com/index.html#datacamp) that directly align with various chapters in the book!
+1. We significantly cleaned up Chapter 8 on sampling! In particular: adding a [2013 Obama approval rating poll](https://www.npr.org/sections/itsallpolitics/2013/12/04/248793753/poll-support-for-obama-among-young-americans-eroding) example to tie in with our sampling bowl tactile and virtual simulations and making it very clear that ultimately we are performing statistical **inference via sampling**.
 
-- Updated links to free DataCamp course in Visualization and Data Wrangling chapters
+
+## All content changes
+
+* Introduction: Added section on correspondence of chapters to various DataCamp courses. Furthermore, links to relevant DataCamp course are included at the outset of each chapter.
+* Chapter 3 - Data visualization:
+    + Added simplified `geom_jitter()` example
+    + More explanations for how whiskers and outliers are constructed in `geom_boxplots`
+    + Added summary of table of all 5 named graphs
+* Chapter 4 - Tidy data:
+    + Added section on importing Excel data via RStudio
+    + Added example of tidy vs non-tidy: `fivethirtyeight::drinks`
+* Chapter 5 - Data wrangling:
+    + Added computing [available seat miles](https://en.wikipedia.org/wiki/Available_seat_miles) data wrangling case study
+    + Abandoned "5 Main Verbs" 5MV notion
+    + Added `_join()` and `group_by()` multiple variables
+* Chapter 6 - Basic regression:
+    + Clarified explanations of indicator/dummy variables when using categorical variable in regression. 
+    + Expanded "Correlation is not necessarily causation" subsection with example of "does sleeping with shoes on cause headaches?" including [causal diagram](https://github.com/moderndive/moderndive_book/blob/master/images/flowcharts/flowchart.009-cropped.png)
+    + Introduced concept of a "wrapper function" when introducing `moderndive::get_regression_table()` function
+    + Replaced all `base::summary()` with `skimr::skim()` for quick numerical summaries
+* Chapter 7 - Multiple regression:
+    + Changed all "everything else being equal" interpretation statements with "taking into account/controlling for all other variables in our model"
+* Chapter 8 - Sampling:
+    + Significantly cleaned up sampling terminology and definitions and made more clear that we are **sampling for inference**
+    + Cleaned up section and subsection structure to be much cleaner:
+        1. Tactile sampling simulation
+        1. Virtual sampling simulation
+        1. In real-life sampling: Introduced example of 2013 Obama approval rating poll and then tie everything with [sampling bowl](https://github.com/moderndive/moderndive_book/blob/master/images/sampling_bowl.jpeg).
+* **Major overhaul**: Chapter 9 - Confidence intervals
+    + [`infer` package](http://infer.netlify.com/) now being ready for prime-time, we made first pass at incorporation into book.
+* **Major overhaul**: Chapter 10 - Hypothesis testing
+    + [`infer` package](http://infer.netlify.com/) now being ready for prime-time, we made first pass at incorporation into book.
+    + Added discussion on Allan Downey's ["There is only one test"](http://allendowney.blogspot.com/2016/06/there-is-still-only-one-test.html) ideas
+* Chapter 11 - Inference for Regression
+    + Added a simple linear regression example using the `infer` package    
+* **Major overhaul**: Chapter 12 - Thinking with data
+    + Added case study of [Seattle house prices](https://www.kaggle.com/harlfoxem/housesalesprediction) dataset from Kaggle, which is now available in `house_prices` dataframe in `moderndive` package. 
+        1. Chapters 3 and 4 from new ["Modeling with Data in the Tidyverse"](https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse) DataCamp course are based on this analysis
+        1. Includes a discussion on the importance of `log10`-transformations
+        1. Introduces modeling/regression for prediction: predicting house prices
+    + Laid outline for "effective data storytelling" using `fivethirtyeight` data and added one small example using US births data
+    + At the beginning of chapter, we now come full circle and revisit the discussion on the ModernDive [flowchart](https://github.com/moderndive/moderndive_book/blob/master/images/flowcharts/flowchart/flowchart.002.png) in the introduction.
+
 
 ## Other changes
+
+* Updated `moderndive` package on CRAN to 0.2.0. See [`NEWS.md`](https://github.com/moderndive/moderndive/releases)
 
  
 
@@ -23,7 +71,7 @@
 * Added "Data Modeling" portion to book
     + Chapter 6 - Basic regression: one numerical explanatory variable, correlation, one categorical explanatory variable)
     + Chapter 7 - Multiple regression: two numerical explanatory variables, one numerical and one categorical, interaction effects, Simpson's Paradox
-    + Uses new [`moderndive`](https://moderndive.github.io/moderndive/) package, which includes `get_regression_table()` and `get_regression_points()` wrapper functions to simplify outputing of clean regression tables and observed/fitted values + resisuals
+    + Uses new [`moderndive`](https://moderndive.github.io/moderndive/) package, which includes `get_regression_table()` and `get_regression_points()` wrapper functions to simplify outputting of clean regression tables and observed/fitted values + residuals
 * Added "statistical inference" portion to book
     + Added Chapter 8 - Sampling (still under construction) using [sampling bowl](https://github.com/moderndive/moderndive/blob/master/data-raw/sampling_bowl.jpeg)
     + Chapters 9 and 10 on confidence intervals and hypothesis testing have not yet been updated, as we were awaiting the now launched package: [`infer`: A tidyverse-friendly R package fo statistical inference](https://github.com/andrewpbray/infer)
@@ -46,12 +94,12 @@
 * Incorporated feedback from consultations with Prof. Yana Weinstein, cognitive psychological scientist and co-founder of [The Learning Scientists](http://www.learningscientists.org/yana-weinstein/).
 * Restructured/revamped chapters
     + **Chapter 1: Introduction**
-        + Friendlier introduction targetted to students is first thing users see. Followed then by introduction  for instructors, ways to connect/contribute, and technical details.
+        + Friendlier introduction targeted to students is first thing users see. Followed then by introduction  for instructors, ways to connect/contribute, and technical details.
         + Added links to example student projects from two courses that have previously used ModernDive:
             + Middlebury College [MATH 116 Introduction to Statistical and Data Sciences](https://rudeboybert.github.io/MATH116/PS/final_project/final_project_outline.html#past_examples) using student collected data.
             + Pacific University [SOC 301 Social Statistics](https://ismayc.github.io/soc301_s2017/group-projects/index.html) using data from the [fivethirtyeight R package](https://cran.r-project.org/web/packages/fivethirtyeight/vignettes/fivethirtyeight.html)
     + **Chapter 2: Getting Started** New chapter added meant for new R users/coders, including
-        + Discusions on R vs RStudio and how to install both (with support videos)
+        + Discussions on R vs RStudio and how to install both (with support videos)
         + A "How do I code in R?" section with links to [DataCamp.com](https://www.datacamp.com/) courses that covers the console, data types, vectors, factors, data frames, boolean operators, functions etc
         + Thorough discussion on R packages
         + An end-to-end starter example analysis of the data frames in the `nycflights13` package using the console, `View()`, `glimpse()` etc.
