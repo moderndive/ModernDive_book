@@ -228,7 +228,7 @@ HTMLWidgets.widget({
         }
         
         // create the dygraph and add it to it's group (if any)
-        dygraph = new Dygraph(el, attrs.file, attrs);
+        dygraph = thiz.dygraph = new Dygraph(el, attrs.file, attrs);
         dygraph.userDateWindow = attrs.dateWindow;
         if (x.group != null)
           groups[x.group].push(dygraph);
@@ -777,7 +777,7 @@ HTMLWidgets.widget({
       },
       
       // export dygraph so other code can get a hold of it
-      dygraph: dygraph
+      dygraph: null
     
     };
   },
