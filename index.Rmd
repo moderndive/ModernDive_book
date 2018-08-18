@@ -1,13 +1,20 @@
 --- 
-title: "An Introduction to Statistical and Data Sciences via R"
+title: "Statistical Inference via Data Science in R"
 author: "Chester Ismay and Albert Y. Kim"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 site: bookdown::bookdown_site
-documentclass: book
+documentclass: krantz
 bibliography: [bib/books.bib, bib/packages.bib, bib/articles.bib]
 biblio-style: apalike
-link-citations: no
+fontsize: 12pt
+monofont: "Source Code Pro"
+monofontoptions: "Scale=0.7"
+link-citations: yes
+colorlinks: yes
+lot: yes
+lof: yes
 github-repo: moderndive/moderndive_book
+graphics: yes
 description: "An open-source and fully-reproducible electronic textbook bridging the gap between traditional introductory statistics and data science courses."
 cover-image: "images/logos/book_cover.png"
 url: 'https\://moderndive.com/'
@@ -15,7 +22,7 @@ apple-touch-icon: "images/logos/favicons/apple-touch-icon.png"
 favicon: "images/logos/favicons/favicon.ico"
 ---
 
-
+\mainmatter
 
 ```{r set-options, include=FALSE}
 # Current version information: Date here should match the date in the YAML above.
@@ -28,7 +35,11 @@ latest_release_version <- "0.4.0"
 latest_release_date <- "July 21, 2018"
 
 # Set output options
-options(width = 80, digits = 7, bookdown.clean_book = TRUE)
+if(knitr:::is_html_output())
+  options(width = 80)
+if(knitr:::is_latex_output())
+  options(width = 65)
+options(digits = 7, bookdown.clean_book = TRUE, knitr.kable.NA = 'NA')
 knitr::opts_chunk$set(
   tidy = FALSE, 
   out.width='\\textwidth', 
@@ -46,7 +57,7 @@ needed_CRAN_pkgs <- c(
   "infer", "moderndive",
   
   # Internally used packages:
-  "webshot", "tufte", "mvtnorm", "remotes", "devtools", "dygraphs", "gridExtra" 
+  "webshot", "mvtnorm", "remotes", "devtools", "dygraphs", "gridExtra", "kableExtra"
   )
 new_pkgs <- needed_CRAN_pkgs[!(needed_CRAN_pkgs %in% installed.packages())]
 if(length(new_pkgs)) {
@@ -55,7 +66,7 @@ if(length(new_pkgs)) {
 
 # GitHub packages needed
 if(!"patchwork" %in% installed.packages()){
-  # patchwork as of 2018/7/20 needs dev version of ggplot2:
+  # patchwork as of 2018-07-20 needs dev version of ggplot2:
   devtools::install_github("tidyverse/ggplot2")
   devtools::install_github("thomasp85/patchwork")
 }
@@ -69,7 +80,7 @@ knitr::write_bib(
   c(.packages(), "bookdown", "knitr", "rmarkdown", "nycflights13",
   "ggplot2", "webshot", "dygraphs", "dplyr",
   "ggplot2movies", "fivethirtyeight", "tibble", "readr", "tidyr",
-  "janitor", "infer", "skimr"
+  "janitor", "infer", "skimr", "kableExtra"
   ),
   "bib/packages.bib"
   )
@@ -98,6 +109,9 @@ file.copy("data/offshore.csv", "docs/data/offshore.csv", overwrite = TRUE)
 file.copy("data/cleSac.txt", "docs/data/cleSac.txt", overwrite = TRUE)
 file.copy("data/zinc_tidy.csv", "docs/data/zinc_tidy.csv", overwrite = TRUE)
 
+# Make sure all images copy to docs folder
+dir.create("docs/images")
+system("cp -r images/* docs/images/")
 # Copy previous_versions/ to docs/previous_versions/
 # Should switch to use purrr here at some point
 dir.create("docs/previous_versions/")
@@ -106,6 +120,35 @@ system("cp -r previous_versions/* docs/previous_versions/")
 # For some reason logo needs to be done separately.
 # Loaded in _includes/logo.html
 file.copy("images/logos/wide_format.png", "docs/wide_format.png", overwrite = TRUE)
+```
+
+
+```{r images, include=FALSE}
+include_image <- function(path,                           
+                          html_opts = "width=45%", 
+                          latex_opts = html_opts,
+                          alt_text = ""){
+  if(knitr:::is_html_output()){
+    glue::glue("![{alt_text}]({path}){{ {html_opts} }}")
+  } else if(knitr:::is_latex_output()){
+    glue::glue("![{alt_text}]({path}){{ {latex_opts} }}")    
+  }
+}
+
+image_link <- function(path,
+                       link,
+                       html_opts = "height: 200px;",
+                       latex_opts = "width=0.2\\textwidth",
+                       alt_text = ""){
+  if(knitr:::is_html_output()){
+    glue::glue('
+      <a target="_blank" class="page-link" href="{link}"><img src="{path}" style="{html_opts}"/></a>')
+  }
+  else if(knitr:::is_latex_output()){
+    glue::glue('\\href{{{link}}}{{\\includegraphics[{latex_opts}]{{{path}}}}}')
+  }
+  
+}
 ```
 
 
@@ -132,11 +175,16 @@ This is a previous version (v`r version`) of ModernDive and may be out of date. 
 
 
 
+<!-- https://cran.r-project.org/Rlogo.svg -->
+<!-- https://www.rstudio.com/wp-content/uploads/2014/07/RStudio-Logo-Blue-Gradient.png -->
 
+`r include_image("images/Rlogo.png", html_opts = "height=150px", latex_opts = "height=20%")`        \hfill &emsp; &emsp; &emsp; &emsp; `r include_image("images/RStudio-Logo-Blue-Gradient.png")`
 
-<img src="https://cran.r-project.org/Rlogo.svg" alt="Drawing" style="height: 150px;"/>
+<!--
+<img src="images/Rlogo.svg" style="height: 150px;"/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<img src="https://www.rstudio.com/wp-content/uploads/2014/07/RStudio-Logo-Blue-Gradient.png" alt="Drawing" style="height: 150px;"/>
+<img src="images/RStudio-Logo-Blue-Gradient.png" style="height: 150px;"/>
+-->
 
 **Help! I'm new to R and RStudio and I need to learn about them! However, I'm completely new to coding! What do I do?** If you're asking yourself this question, then you've come to the right place! Start with our [Introduction for Students](#sec:intro-for-students).
 
@@ -305,7 +353,7 @@ Here are some principles and beliefs we kept in mind while writing this text. If
 
 ## DataCamp {#datacamp}
 
-![](images/datacamp.png)
+`r include_image("images/datacamp.png", "width=100%", alt_text = "DataCamp logo")`
 
 DataCamp is a browser-based interactive platform for learning data science, offering courses on a wide array of courses on data science, analytics, statistics, machine learning, and artificial intelligence, where each course is a combination of lectures and exercises that offer immediate feedback.
 
@@ -313,14 +361,17 @@ The following chapters of ModernDive roughly map to the following closely-integr
 
 Click on the image for each course to access its webpage on [datacamp.com](https://www.datacamp.com/home). Instructors at accredited universities can sign their class up for a free academic licence at [DataCamp For The Classroom](https://www.datacamp.com/groups/education), giving their students access to all premium courses for 6 months for free.
 
+
+
+
 | Chapter | Topic | DataCamp Courses   
 | :-------------------------|:-------------------------|:-------------------------
-| 2 | Basic R programming concepts | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/free-introduction-to-r"><img src="images/datacamp_intro_to_R.png" alt="Drawing" style="height: 150px;"/></a> <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/intermediate-r"><img src="images/datacamp_intermediate_R.png" alt="Drawing" style="height: 150px;"/></a>
-| 3 & 5 | Introductory data visualization and wrangling | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/introduction-to-the-tidyverse"><img src="images/datacamp_intro_to_tidyverse.png" alt="Drawing" style="height: 150px;"/></a>
-| 4 & 5 | Data "tidying" and intermediate data wrangling | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/working-with-data-in-the-tidyverse"><img src="images/datacamp_working_with_data.png" alt="Drawing" style="height: 150px;"/></a>
-| 6 & 7 | Data modelling, basic regression, and multiple regression | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse"><img src="images/datacamp_intro_to_modeling.png" alt="Drawing" style="height: 150px;"/></a>
-| 9 & 10 | Statistical inference: confidence intervals and hypothesis testing | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/inference-for-numerical-data"><img src="images/datacamp_inference_for_numerical_data.png" alt="Drawing" style="height: 150px;"/></a> <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/inference-for-categorical-data"><img src="images/datacamp_inference_for_categorical_data.png" alt="Drawing" style="height: 150px;"/></a>
-| 11 | Inference for regression | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/inference-for-linear-regression"><img src="images/datacamp_inference_for_regression.png" alt="Drawing" style="height: 150px;"/></a> 
+| 2 | Basic R programming concepts | `r image_link(path = "images/datacamp_intro_to_R.png", link = "https://www.datacamp.com/courses/free-introduction-to-r", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth")` `r image_link(path = "images/datacamp_intermediate_R.png", link = "https://www.datacamp.com/courses/intermediate-r", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth")`
+| 3 & 5 | Introductory data visualization and wrangling | `r image_link(path = "images/datacamp_intro_to_tidyverse.png", link = "https://www.datacamp.com/courses/introduction-to-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth")`
+| 4 & 5 | Data "tidying" and intermediate data wrangling | `r image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth")`
+| 6 & 7 | Data modeling, basic regression, and multiple regression | `r image_link(path = "images/datacamp_intro_to_modeling.png", link = "https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth")`
+| 9 & 10 | Statistical inference: confidence intervals and hypothesis testing | `r image_link(path = "images/datacamp_inference_for_numerical_data.png", link = "https://www.datacamp.com/courses/inference-for-numerical-data", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth")` `r image_link(path = "images/datacamp_inference_for_categorical_data.png", link = "https://www.datacamp.com/courses/inference-for-categorical-data", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth")`
+| 11 | Inference for regression | `r image_link(path = "images/datacamp_inference_for_regression.png", link = "https://www.datacamp.com/courses/inference-for-linear-regression", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth")`
 
 
 
@@ -339,7 +390,7 @@ If you would like to contribute to ModernDive, there are many ways! Let's all wo
 * Please let us know if you find any errors, typos, or areas from improvement on our [GitHub issues](https://github.com/moderndive/moderndive_book/issues) page.
 * If you are familiar with GitHub and would like to contribute more, please see Section \@ref(sec:about-book) below.
 
-The authors would like to thank [Nina Sonneborn](https://github.com/nsonneborn), [Kristin Bott](https://twitter.com/rhobott?lang=en), and the participants of our [USCOTS 2017 workshop](https://www.causeweb.org/cause/uscots/uscots17/workshop/3) for their feedback and suggestions.  A special thanks goes to Prof. Yana Weinstein, cognitive psychological scientist and co-founder of [The Learning Scientists](http://www.learningscientists.org/yana-weinstein/), for her extensive contributions.
+The authors would like to thank [Nina Sonneborn](https://github.com/nsonneborn), [Kristin Bott](https://twitter.com/rhobott?lang=en), and the participants of our [USCOTS 2017 workshop](https://www.causeweb.org/cause/uscots/uscots17/workshop/3) for their feedback and suggestions.  A special thanks goes to Dr. Yana Weinstein, cognitive psychological scientist and co-founder of [The Learning Scientists](http://www.learningscientists.org/yana-weinstein/), for her extensive contributions.
 
 
 
@@ -378,11 +429,13 @@ Who we are!
 
 Chester Ismay           |  Albert Y. Kim
 :-------------------------:|:-------------------------:
-<img src="images/ismay.jpeg" alt="Drawing" style="height: 200px;"/>  |  <img src="images/kim.jpeg" alt="Drawing" style="height: 200px;"/>
+`r include_image(path = "images/ismay.png", html_opts = "height=200px", latex_opts = "width=40%")` | `r include_image(path = "images/kim.png", html_opts = "height=200px", latex_opts = "width=40%")`
+
+<!-- <img src="images/ismay.jpeg" alt="Drawing" style="height: 200px;"/>  |  <img src="images/kim.jpeg" alt="Drawing" style="height: 200px;"/> -->
 
 * Chester Ismay: Senior Curriculum Lead - DataCamp, Portland, OR, USA.
     + Email: [chester.ismay@gmail.com](mailto:chester.ismay@gmail.com)
-    + Webpage: <http://ismayc.github.io/>
+    + Webpage: <http://chester.rbind.io/>
     + Twitter: [old_man_chester](https://twitter.com/old_man_chester)
     + GitHub: <https://github.com/ismayc>
 * Albert Y. Kim: Assistant Professor of Statistical & Data Sciences - Smith College, Northampton, MA, USA.
@@ -401,5 +454,6 @@ Chester Ismay           |  Albert Y. Kim
 ```{r colophon, echo=FALSE, eval=FALSE}
 knitr::kable(devtools::session_info(needed_pkgs)$packages, 
              booktabs = TRUE,
-             longtable = TRUE)
+             longtable = TRUE) %>% 
+  kableExtra::kable_styling(font_size = 10)
 ```
