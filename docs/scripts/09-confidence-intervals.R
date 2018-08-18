@@ -1,12 +1,15 @@
-## ----inference-summary-table, echo=FALSE, message=FALSE------------------
+## ----summarytable-prep, echo=FALSE, message=FALSE------------------------
 # Original at https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 library(dplyr)
 library(readr)
-read_csv("data/ch9_summary_table - Sheet1.csv", na = "") %>% 
-  kable(
-    caption = "Scenarios of sampling for inference", 
-    booktabs = TRUE
-  )
+
+## ----summarytable, echo=FALSE--------------------------------------------
+inf_summary_table <- read_csv("data/ch9_summary_table - Sheet1.csv", na = "") 
+kable(inf_summary_table,
+      caption = "Scenarios of sampling for inference", 
+      booktabs = TRUE
+) %>% 
+  kable_styling(font_size = 10)
 
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(dplyr)
@@ -18,6 +21,13 @@ library(infer)
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
+library(kableExtra)
+
+## ---- echo=FALSE, results='asis'-----------------------------------------
+image_link(path = "images/datacamp_inference_for_numerical_data.png", link = "https://www.datacamp.com/courses/inference-for-numerical-data")
+
+## ---- echo=FALSE, results='asis'-----------------------------------------
+image_link(path = "images/datacamp_inference_for_categorical_data.png", link = "https://www.datacamp.com/courses/inference-for-categorical-data", html_opts = "height: 150px;")
 
 ## ----include=FALSE-------------------------------------------------------
 set.seed(2018)
@@ -391,7 +401,8 @@ conf_ints %>%
     digits = 3,
     caption = "33 confidence intervals from 33 tactile samples of size n=50", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = 10)
 
 ## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals based on 33 tactile samples of size n=50", fig.height=6----
 groups <- conf_ints$group

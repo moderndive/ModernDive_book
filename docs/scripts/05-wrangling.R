@@ -3,6 +3,12 @@ library(dplyr)
 library(ggplot2)
 library(nycflights13)
 
+## ---- echo=FALSE, results='asis'-----------------------------------------
+image_link(path = "images/datacamp_intro_to_tidyverse.png", link = "https://www.datacamp.com/courses/introduction-to-the-tidyverse", html_opts = "height: 150px;")
+
+## ---- echo=FALSE, results='asis'-----------------------------------------
+image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;")
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## portland_flights <- flights %>%
 ##   filter(dest == "PDX")
@@ -20,23 +26,29 @@ library(nycflights13)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## summary_temp <- weather %>%
-##   summarize(mean = mean(temp), std_dev = sd(temp))
+##   summarize(mean = mean(temp),
+##             std_dev = sd(temp))
 ## summary_temp
 
 ## ---- echo=FALSE---------------------------------------------------------
 summary_temp <- weather %>% 
-  summarize(mean = mean(temp), std_dev = sd(temp))
-kable(summary_temp)
+  summarize(mean = mean(temp), 
+            std_dev = sd(temp))
+kable(summary_temp) %>% 
+  kable_styling(font_size = 10)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## summary_temp <- weather %>%
-##   summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
+##   summarize(mean = mean(temp, na.rm = TRUE),
+##             std_dev = sd(temp, na.rm = TRUE))
 ## summary_temp
 
 ## ---- echo=FALSE---------------------------------------------------------
 summary_temp <- weather %>% 
-  summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
-kable(summary_temp)
+  summarize(mean = mean(temp, na.rm = TRUE), 
+            std_dev = sd(temp, na.rm = TRUE))
+kable(summary_temp) %>% 
+  kable_styling(font_size = 10)
 
 ## ------------------------------------------------------------------------
 #summary_temp$mean
@@ -58,7 +70,8 @@ summary_monthly_temp <- weather %>%
   group_by(month) %>% 
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))
-kable(summary_monthly_temp)
+kable(summary_monthly_temp) %>% 
+  kable_styling(font_size = 10)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## by_origin <- flights %>%
@@ -70,7 +83,8 @@ kable(summary_monthly_temp)
 by_origin <- flights %>% 
   group_by(origin) %>% 
   summarize(count = n())
-kable(by_origin)
+kable(by_origin) %>% 
+  kable_styling(font_size = 10)
 
 ## ------------------------------------------------------------------------
 by_origin_monthly <- flights %>% 
@@ -132,7 +146,8 @@ gain_summary <- flights %>%
     sd = sd(gain, na.rm = TRUE),
     missing = sum(is.na(gain))
   )
-kable(gain_summary)
+kable(gain_summary) %>% 
+  kable_styling(font_size = 10)
 
 ## ----message=FALSE, fig.cap="Histogram of gain variable"-----------------
 ggplot(data = flights, mapping = aes(x = gain)) +
@@ -187,7 +202,8 @@ named_dests
 
 ## ------------------------------------------------------------------------
 flights_weather_joined <- flights %>%
-  inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
+  inner_join(weather, 
+             by = c("year", "month", "day", "hour", "origin"))
 flights_weather_joined
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -258,7 +274,8 @@ read_csv("data/ch5_summary_table - Sheet1.csv", na = "") %>%
   kable(
     caption = "Summary of data wrangling verbs", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = 10)
 
 ## **Learning Check Solutions**
 
@@ -333,4 +350,7 @@ flights %>%
   arrange(desc(ASM)) %>% 
   # Added:
   inner_join(airlines, by = "carrier")
+
+## ----echo=FALSE, fig.cap="ModernDive flowchart - On to Part II!", fig.align='center'----
+knitr::include_graphics("images/flowcharts/flowchart/flowchart.005.png")
 

@@ -37,6 +37,10 @@ library(infer)
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
+library(kableExtra)
+
+## ---- echo=FALSE, results='asis'-----------------------------------------
+image_link(path = "images/datacamp_inference_for_regression.png", link = "https://www.datacamp.com/courses/inference-for-linear-regression", html_opts = "height: 150px;")
 
 ## ------------------------------------------------------------------------
 evals %>% 
@@ -156,7 +160,8 @@ get_regression_table(score_model_2) %>%
     digits = 3,
     caption = "Model 1: Regression table with no interaction effect included", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = 10)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## score_model_3 <- lm(score ~ age * gender, data = evals_multiple)
@@ -169,5 +174,6 @@ get_regression_table(score_model_3) %>%
     digits = 3,
     caption = "Model 2: Regression table with interaction effect included", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = 10)
 

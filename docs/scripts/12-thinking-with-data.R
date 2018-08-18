@@ -9,6 +9,7 @@ knitr::opts_chunk$set(
   tidy = FALSE, 
   out.width = '\\textwidth'
   )
+options(scipen = 99, digits = 3)
 
 # This bit of code is a bug fix on asis blocks, which we use to show/not show LC
 # solutions, which are written like markdown text. In theory, it shouldn't be
@@ -45,6 +46,9 @@ library(fivethirtyeight)
 library(knitr)
 library(patchwork)
 library(scales)
+
+## ---- echo=FALSE, results='asis'-----------------------------------------
+image_link(path = "images/datacamp_intro_to_modeling.png", link = "https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse")
 
 ## ----warning=FALSE, message=FALSE----------------------------------------
 library(ggplot2)
@@ -96,7 +100,7 @@ house_prices %>%
     IQR_price = IQR(price)
   )
 
-## ----log10-orders-of-magnitude, echo=FALSE-------------------------------
+## ----logten, echo=FALSE--------------------------------------------------
 data_frame(Price = c(1,10,100,1000,10000,100000,1000000)) %>% 
   mutate(
     `log10(Price)` = log10(Price),
@@ -107,7 +111,8 @@ data_frame(Price = c(1,10,100,1000,10000,100000,1000000)) %>%
   kable(
     caption = "log10-transformated prices, orders of magnitude, and examples", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = 10)
 
 ## ------------------------------------------------------------------------
 house_prices <- house_prices %>%
