@@ -7,7 +7,11 @@ library(dplyr)
 # Packages needed internally, but not in text.
 library(gapminder)
 library(knitr)
+library(kableExtra)
 library(readr)
+
+## ---- echo=FALSE, results='asis'-----------------------------------------
+image_link(path = "images/datacamp_intro_to_tidyverse.png", link = "https://www.datacamp.com/courses/introduction-to-the-tidyverse", html_opts = "height: 150px;")
 
 ## ---- echo=FALSE---------------------------------------------------------
 gapminder_2007 <- gapminder %>% 
@@ -28,7 +32,8 @@ gapminder_2007 %>%
     digits=2,
     caption = "Gapminder 2007 Data: First 6 of 142 countries", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = 10)
 
 ## ----gapminder, echo=FALSE, fig.cap="Life Expectancy over GDP per Capita in 2007"----
 ggplot(data = gapminder_2007, mapping = aes(x=`GDP per Capita`, y=`Life Expectancy`, size=Population, col=Continent)) +
@@ -45,7 +50,8 @@ map %>%
   kable(
     caption = "Summary of Grammar of Graphics for this plot", 
     booktabs = TRUE
-    )
+    ) %>% 
+  kable_styling(font_size = 10)
 
 ## **_Review questions_**
 
@@ -56,11 +62,13 @@ all_alaska_flights <- flights %>%
 ## **Learning Check Solutions**
 
 ## ----noalpha, fig.cap="Arrival Delays vs Departure Delays for Alaska Airlines flights from NYC in 2013", message=TRUE----
-ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
+ggplot(data = all_alaska_flights, 
+       mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point()
 
 ## ----nolayers, fig.cap="Plot with No Layers"-----------------------------
-ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
+ggplot(data = all_alaska_flights, 
+       mapping = aes(x = dep_delay, y = arr_delay))
 
 ## **Learning Check Solutions**
 
@@ -69,7 +77,8 @@ ggplot(data = all_alaska_flights, mapping = aes(x = dep_time, y = dep_delay)) +
   geom_point()
 
 ## ----alpha, fig.cap="Delay scatterplot with alpha=0.2"-------------------
-ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
+ggplot(data = all_alaska_flights, 
+       mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point(alpha = 0.2)
 
 ## ----jitter-example-df, echo=FALSE---------------------------------------
@@ -94,11 +103,13 @@ ggplot(data = jitter_example, mapping = aes(x = x, y = y)) +
   labs(title = "Jittered scatterplot")
 
 ## ----jitter, fig.cap="Jittered delay scatterplot"------------------------
-ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
+ggplot(data = all_alaska_flights, 
+       mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_jitter(width = 30, height = 30)
 
 ## ---- eval = FALSE-------------------------------------------------------
-## ggplot(data = all_alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
+## ggplot(data = all_alaska_flights,
+##        mapping = aes(x = dep_delay, y = arr_delay)) +
 ##   geom_jitter(width = 30, height = 30)
 ## ggplot(all_alaska_flights, aes(x = dep_delay, y = arr_delay)) +
 ##   geom_jitter(width = 30, height = 30)
@@ -112,7 +123,8 @@ early_january_weather <- weather %>%
 ## **Learning Check Solutions**
 
 ## ----hourlytemp, fig.cap="Hourly Temperature in Newark for January 1-15, 2013"----
-ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = temp)) +
+ggplot(data = early_january_weather, 
+       mapping = aes(x = time_hour, y = temp)) +
   geom_line()
 
 ## **Learning Check Solutions**
@@ -201,7 +213,8 @@ weather %>%
   group_by(month) %>%
   summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
   arrange(desc(IQR)) %>%
-  kable()
+  kable() %>% 
+  kable_styling(font_size = 10)
 
 ## **`r paste0("(LC", chap, ".", (lc - 1), ")")`: We looked at the distribution of a numerical variable over a categorical variable here with this boxplot. Why can't we look at the distribution of one numerical variable over the distribution of another numerical variable? Say, temperature across pressure, for example?**
 
@@ -220,7 +233,8 @@ kable(
     digits=2,
     caption = "Fruits", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = 10)
 
 ## ----fruitscounted, echo=FALSE-------------------------------------------
 kable(
@@ -228,7 +242,8 @@ kable(
     digits=2,
     caption = "Fruits (Pre-Counted)", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = 10)
 
 ## ----geombar, fig.cap="Barplot when counts are not pre-counted", fig.height=2.5----
 ggplot(data = fruits, mapping = aes(x = fruit)) +
@@ -238,7 +253,7 @@ ggplot(data = fruits, mapping = aes(x = fruit)) +
 ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
-## ----flightsbar, fig.cap="Number of flights departing NYC in 2013 by airline using geom_bar", fig.height=2.5----
+## ----flightsbar, fig.cap='(ref:geombar)', fig.height=2.5-----------------
 ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
 
@@ -246,7 +261,8 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 ## airlines
 
 ## ---- echo=FALSE---------------------------------------------------------
-kable(airlines)
+kable(airlines) %>% 
+  kable_styling(font_size = 10)
 
 ## ----message=FALSE, eval=FALSE-------------------------------------------
 ## flights_table <- flights %>%
@@ -258,9 +274,10 @@ kable(airlines)
 flights_table <- flights %>% 
   group_by(carrier) %>% 
   summarize(number = n())
-kable(flights_table)
+kable(flights_table) %>% 
+  kable_styling(font_size = 10)
 
-## ----flightscol, fig.cap="Number of flights departing NYC in 2013 by airline using geom_col", fig.height=2.5----
+## ----flightscol, fig.cap='(ref:geomcol)', fig.height=2.5-----------------
 ggplot(data = flights_table, mapping = aes(x = carrier, y = number)) +
   geom_col()
 
@@ -286,23 +303,27 @@ flights_namedports <- flights %>%
   inner_join(airports, by = c("origin" = "faa"))
 
 ## ---- fig.cap="Stacked barplot comparing the number of flights by carrier and airport", fig.height=3.5----
-ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
+ggplot(data = flights_namedports, 
+       mapping = aes(x = carrier, fill = name)) +
   geom_bar()
 
 ## ---- eval=FALSE---------------------------------------------------------
-## ggplot(data = flights_namedports, mapping = aes(x = carrier), fill = name) +
+## ggplot(data = flights_namedports,
+##        mapping = aes(x = carrier), fill = name) +
 ##   geom_bar()
 
 ## **Learning Check Solutions**
 
 ## ---- fig.cap="Side-by-side AKA dodged barplot comparing the number of flights by carrier and airport", fig.height=5----
-ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
+ggplot(data = flights_namedports, 
+       mapping = aes(x = carrier, fill = name)) +
   geom_bar(position = "dodge")
 
 ## **Learning Check Solutions**
 
 ## ----facet-bar-vert, fig.cap="Faceted barplot comparing the number of flights by carrier and airport", fig.height=7.5----
-ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
+ggplot(data = flights_namedports, 
+       mapping = aes(x = carrier, fill = name)) +
   geom_bar() +
   facet_wrap(~ name, ncol = 1)
 
@@ -310,12 +331,14 @@ ggplot(data = flights_namedports, mapping = aes(x = carrier, fill = name)) +
 
 ## ----viz-summary-table, echo=FALSE, message=FALSE------------------------
 # Original at https://docs.google.com/spreadsheets/d/1vzqlFiT6qm5wzy_L_0nL7EWAd6jiUZmLSCFhDhztDSg/edit#gid=0
+# New lines added for clarity in PDF
 read_csv("data/ch3_summary_table - Sheet1.csv", na = "") %>% 
   rename_(" " = "X1") %>% 
   kable(
     caption = "Summary of 5NG", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = 10)
 
 ## ----viz-map, echo=FALSE, fig.cap="Mind map for Data Visualization", out.width="200%"----
 #library(knitr)

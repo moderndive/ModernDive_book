@@ -39,8 +39,12 @@ library(readr)
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
+library(kableExtra)
 library(fivethirtyeight)
 library(stringr)
+
+## ---- echo=FALSE, results='asis'-----------------------------------------
+image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.5\\textwidth")
 
 ## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from http://r4ds.had.co.nz/tidy-data.html"----
 knitr::include_graphics("images/tidy-1.png")
@@ -58,7 +62,8 @@ stocks %>%
     digits = 2,
     caption = "Stock Prices (Non-Tidy Format)", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = 10)
 
 ## ----echo=FALSE----------------------------------------------------------
 stocks_tidy <- stocks %>% 
@@ -73,7 +78,8 @@ stocks_tidy %>%
     digits = 2,
     caption = "Stock Prices (Tidy Format)", 
     booktabs = TRUE
-  ) 
+  ) %>% 
+  kable_styling(font_size = 10)
 
 ## ----echo=FALSE----------------------------------------------------------
 stocks <- data_frame(
@@ -87,7 +93,8 @@ stocks %>%
     digits = 2,
     caption = "Date, Boeing Price, Weather Data", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = 10)
 
 ## **_Learning check_**
 
@@ -144,11 +151,14 @@ guat_tidy <- gather(data = guat_dem,
 guat_tidy
 
 ## ----errors=TRUE---------------------------------------------------------
-ggplot(data = guat_tidy, mapping = aes(x = year, y = democracy_score)) +
+ggplot(data = guat_tidy, 
+       mapping = aes(x = year, y = democracy_score)) +
   geom_line()
 
 ## ----guatline, fig.cap="Guatemala's democracy score ratings from 1952 to 1992"----
-ggplot(data = guat_tidy, mapping = aes(x = parse_number(year), y = democracy_score)) +
+ggplot(data = guat_tidy, 
+       mapping = aes(x = parse_number(year), 
+                     y = democracy_score)) +
   geom_line() +
   labs(x = "year")
 
@@ -165,9 +175,9 @@ dem_score_tidy
 
 ## **`r paste0("(LC", chap, ".", (lc - 1), ")")`** The code is similar
 
-## ----lc4-3solutions-6, include=show_solutions('4-3'), echo=show_solutions('4-3'), message=FALSE, warning=FALSE----
-life_expectancy <- read_csv('https://moderndive.com/data/le_mess.csv')
-life_expectancy_tidy <- gather(data = life_expectancy, key = year, value = life_expectancy, -country)
+## ----lc4-3solutions-6, eval=FALSE,include=show_solutions('4-3'), echo=show_solutions('4-3')----
+## life_expectancy <- read_csv('https://moderndive.com/data/le_mess.csv')
+## life_expectancy_tidy <- gather(data = life_expectancy, key = year, value = life_expectancy, -country)
 
 ## We observe the same construct structure with respect to `year` in `life_expectancy` vs `life_expectancy_tidy` as we did in `dem_score` vs `dem_score_tidy`:
 
