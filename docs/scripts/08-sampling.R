@@ -17,10 +17,11 @@ set.seed(79)
 ## ----tactilered, echo=FALSE----------------------------------------------
 kable(tactile_prop_red,
       digits = 3,
-      caption = "33 sample proportions based on 33 tactile samples with n = 50", 
+      caption = "\\label{tab:tactilered}33 sample proportions based on 33 tactile samples with n = 50", 
       booktabs = TRUE
 ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----eval=FALSE----------------------------------------------------------
 ## ggplot(tactile_prop_red, aes(x = prop_red)) +
@@ -46,7 +47,8 @@ summary_stats <- tactile_prop_red %>%
   summarize(mean = mean(prop_red), sd = sd(prop_red))
 summary_stats %>% 
   kable(digits = 3) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 bowl
@@ -67,7 +69,8 @@ virtual_shovel %>%
     caption = "First 10 sampled balls of 50 in virtual sample",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## virtual_shovel %>%
@@ -83,7 +86,8 @@ virtual_shovel %>%
     caption = "Count and proportion red in single virtual sample of size n = 50",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## virtual_samples <- bowl %>%
@@ -112,14 +116,17 @@ virtual_prop_red %>%
   kable(
     digits = 3,
     caption = "33 sample proportions red based on 33 virtual samples with n=50", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    longtable = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position", "repeat_header"))
 
 ## ---- eval = FALSE-------------------------------------------------------
 ## ggplot(virtual_prop_red, aes(x = prop_red)) +
 ##   geom_histogram(binwidth = 0.05, color = "white") +
-##   labs(x = "Sample proportion red based on n = 50", title = "Sampling distribution of p-hat")
+##   labs(x = "Sample proportion red based on n = 50",
+##        title = "Sampling distribution of p-hat")
 
 ## ----samplingdistribution-virtual, echo=FALSE, fig.cap="Sampling distribution of 33 sample proportions based on 33 virtual samples with n=50"----
 virtual_histogram <- ggplot(virtual_prop_red, aes(x = prop_red)) +
@@ -169,7 +176,8 @@ virtual_prop_red <- virtual_samples %>%
 ## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(virtual_prop_red, aes(x = prop_red)) +
 ##   geom_histogram(binwidth = 0.05, color = "white") +
-##   labs(x = "Sample proportion red based on n = 50", title = "Sampling distribution of p-hat")
+##   labs(x = "Sample proportion red based on n = 50",
+##        title = "Sampling distribution of p-hat")
 
 ## ----samplingdistribution-virtual-1000, echo=FALSE, fig.cap="Sampling distribution of 1000 sample proportions based on 1000 tactile samples with n=50"----
 virtual_prop_red <- virtual_samples %>% 
@@ -252,9 +260,10 @@ kable(count_virtual_prop,
       caption = "Comparing the SE for different n", 
       booktabs = TRUE
 ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
-## ----comparing-sampling-distributions, echo = FALSE, fig.cap="Comparing sampling distributions of p-hat for different sample sizes n"----
+## ----comparing-sampling-distributions, echo=FALSE, fig.cap="Comparing sampling distributions of p-hat for different sample sizes n"----
 ggplot(virtual_prop, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, color = "white") +
   labs(x = "Sample proportion red", title = "Comparing sampling distributions of p-hat for different sample sizes n") +

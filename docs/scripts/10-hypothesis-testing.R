@@ -10,12 +10,6 @@ library(broom)
 # Packages needed internally, but not in text.
 library(knitr)
 
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/datacamp_inference_for_numerical_data.png", link = "https://www.datacamp.com/courses/inference-for-numerical-data", html_opts = "height: 150px;", latex_opts = "width=0.5\\textwidth")`
-
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/datacamp_inference_for_categorical_data.png", link = "https://www.datacamp.com/courses/inference-for-categorical-data", html_opts = "height: 150px;", latex_opts = "width=0.5\\textwidth")`
-
 ## ------------------------------------------------------------------------
 bos_sfo <- flights %>% 
   na.omit() %>% 

@@ -10,9 +10,6 @@ library(knitr)
 library(kableExtra)
 library(readr)
 
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/datacamp_intro_to_tidyverse.png", link = "https://www.datacamp.com/courses/introduction-to-the-tidyverse", html_opts = "height: 150px;")
-
 ## ---- echo=FALSE---------------------------------------------------------
 gapminder_2007 <- gapminder %>% 
   filter(year == 2007) %>% 
@@ -33,7 +30,8 @@ gapminder_2007 %>%
     caption = "Gapminder 2007 Data: First 6 of 142 countries", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----gapminder, echo=FALSE, fig.cap="Life Expectancy over GDP per Capita in 2007"----
 ggplot(data = gapminder_2007, mapping = aes(x=`GDP per Capita`, y=`Life Expectancy`, size=Population, col=Continent)) +
@@ -51,7 +49,8 @@ map %>%
     caption = "Summary of Grammar of Graphics for this plot", 
     booktabs = TRUE
     ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## **_Review questions_**
 
@@ -214,7 +213,8 @@ weather %>%
   summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
   arrange(desc(IQR)) %>%
   kable() %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## **`r paste0("(LC", chap, ".", (lc - 1), ")")`: We looked at the distribution of a numerical variable over a categorical variable here with this boxplot. Why can't we look at the distribution of one numerical variable over the distribution of another numerical variable? Say, temperature across pressure, for example?**
 
@@ -234,7 +234,8 @@ kable(
     caption = "Fruits", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----fruitscounted, echo=FALSE-------------------------------------------
 kable(
@@ -243,7 +244,8 @@ kable(
     caption = "Fruits (Pre-Counted)", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----geombar, fig.cap="Barplot when counts are not pre-counted", fig.height=2.5----
 ggplot(data = fruits, mapping = aes(x = fruit)) +
@@ -262,7 +264,8 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 ## ---- echo=FALSE---------------------------------------------------------
 kable(airlines) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----message=FALSE, eval=FALSE-------------------------------------------
 ## flights_table <- flights %>%
@@ -275,7 +278,8 @@ flights_table <- flights %>%
   group_by(carrier) %>% 
   summarize(number = n())
 kable(flights_table) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----flightscol, fig.cap='(ref:geomcol)', fig.height=2.5-----------------
 ggplot(data = flights_table, mapping = aes(x = carrier, y = number)) +
@@ -328,17 +332,6 @@ ggplot(data = flights_namedports,
   facet_wrap(~ name, ncol = 1)
 
 ## **Learning Check Solutions**
-
-## ----viz-summary-table, echo=FALSE, message=FALSE------------------------
-# Original at https://docs.google.com/spreadsheets/d/1vzqlFiT6qm5wzy_L_0nL7EWAd6jiUZmLSCFhDhztDSg/edit#gid=0
-# New lines added for clarity in PDF
-read_csv("data/ch3_summary_table - Sheet1.csv", na = "") %>% 
-  rename_(" " = "X1") %>% 
-  kable(
-    caption = "Summary of 5NG", 
-    booktabs = TRUE
-  ) %>% 
-  kable_styling(font_size = 10)
 
 ## ----viz-map, echo=FALSE, fig.cap="Mind map for Data Visualization", out.width="200%"----
 #library(knitr)

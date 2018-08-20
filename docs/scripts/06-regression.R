@@ -16,9 +16,6 @@ library(janitor)
 library(patchwork)
 library(kableExtra)
 
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.5\\textwidth")
-
 ## ------------------------------------------------------------------------
 evals_ch6 <- evals %>%
   select(score, bty_avg, age)
@@ -36,7 +33,8 @@ evals_ch6 %>%
     caption = "Random sample of 5 instructors",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 glimpse(evals_ch6)
@@ -159,7 +157,8 @@ get_regression_table(score_model) %>%
     caption = "Linear regression table",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----moderndive-figure-wrapper, echo=FALSE, fig.align='center', fig.cap="The concept of a 'wrapper' function."----
 knitr::include_graphics("images/flowcharts/flowchart.011-cropped.png")
@@ -180,7 +179,8 @@ evals_ch6 %>%
     caption = "Data for 21st instructor",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- echo=FALSE---------------------------------------------------------
 set.seed(76)
@@ -287,7 +287,8 @@ gapminder2007 %>%
     caption = "Random sample of 5 countries",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 glimpse(gapminder2007)
@@ -353,7 +354,8 @@ gapminder2007 %>%
     caption = "Mean life expectancy by continent",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
@@ -371,7 +373,8 @@ get_regression_table(lifeExp_model) %>%
     caption = "Linear regression table",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- echo=FALSE---------------------------------------------------------
 gapminder2007 %>%
@@ -381,7 +384,8 @@ gapminder2007 %>%
     caption = "First 10 out of 142 countries",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## regression_points <- get_regression_points(lifeExp_model)
@@ -396,7 +400,8 @@ regression_points %>%
     caption = "Regression points (First 10 out of 142 countries)",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----catxplot7, warning=FALSE, fig.cap="Plot of residuals over continent"----
 ggplot(regression_points, aes(x = continent, y = residual)) +
@@ -419,7 +424,8 @@ gapminder2007 %>%
     caption = "Countries in Asia with shortest life expectancy",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----catxplot8, warning=FALSE, fig.cap="Histogram of residuals"----------
 ggplot(regression_points, aes(x = residual)) +
@@ -523,7 +529,8 @@ best_fit_plot
 score_model <- lm(score ~ bty_avg, data = evals_ch6)
 get_regression_table(score_model) %>% 
   knitr::kable() %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval = FALSE-------------------------------------------------------
 ## library(broom)
@@ -545,7 +552,8 @@ score_model %>%
   rename(lower_ci = conf_low,
          upper_ci = conf_high) %>% 
   knitr::kable() %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval = FALSE-------------------------------------------------------
 ## library(broom)
@@ -566,5 +574,6 @@ score_model %>%
   select(-c("se_fit", "hat", "sigma", "cooksd", "std_resid")) %>% 
   slice(1:10) %>% 
   knitr::kable() %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
