@@ -3,12 +3,6 @@ library(dplyr)
 library(ggplot2)
 library(nycflights13)
 
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/datacamp_intro_to_tidyverse.png", link = "https://www.datacamp.com/courses/introduction-to-the-tidyverse", html_opts = "height: 150px;")
-
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;")
-
 ## ---- eval=FALSE---------------------------------------------------------
 ## portland_flights <- flights %>%
 ##   filter(dest == "PDX")
@@ -35,7 +29,8 @@ summary_temp <- weather %>%
   summarize(mean = mean(temp), 
             std_dev = sd(temp))
 kable(summary_temp) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## summary_temp <- weather %>%
@@ -48,7 +43,8 @@ summary_temp <- weather %>%
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))
 kable(summary_temp) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 #summary_temp$mean
@@ -71,7 +67,8 @@ summary_monthly_temp <- weather %>%
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))
 kable(summary_monthly_temp) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## by_origin <- flights %>%
@@ -84,7 +81,8 @@ by_origin <- flights %>%
   group_by(origin) %>% 
   summarize(count = n())
 kable(by_origin) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 by_origin_monthly <- flights %>% 
@@ -147,7 +145,8 @@ gain_summary <- flights %>%
     missing = sum(is.na(gain))
   )
 kable(gain_summary) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----message=FALSE, fig.cap="Histogram of gain variable"-----------------
 ggplot(data = flights, mapping = aes(x = gain)) +
@@ -275,7 +274,9 @@ read_csv("data/ch5_summary_table - Sheet1.csv", na = "") %>%
     caption = "Summary of data wrangling verbs", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+   kable_styling(font_size = 10, 
+                 latex_options = c("HOLD_position")) %>%
+   column_spec(2, width = "3.5in")
 
 ## **Learning Check Solutions**
 

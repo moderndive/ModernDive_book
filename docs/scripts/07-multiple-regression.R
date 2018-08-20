@@ -14,7 +14,7 @@ library(forcats)
 library(gridExtra)
 
 ## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;")
+image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.3\\textwidth")
 
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(ISLR)
@@ -32,7 +32,8 @@ Credit %>%
     caption = "Random sample of 5 credit card holders",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 glimpse(Credit)
@@ -62,7 +63,8 @@ Credit %>%
     caption = "Correlations between credit card balance, credit limit, and income", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(Credit, aes(x = Limit, y = Balance)) +
@@ -90,9 +92,6 @@ model3_balance_vs_income_plot <- ggplot(Credit, aes(x = Income, y = Balance)) +
   geom_smooth(method = "lm", se = FALSE) +
   scale_y_continuous(limits = c(0, NA))
 grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)
-
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/credit_card_balance_3D_scatterplot.png", link = "https://assets.datacamp.com/production/repositories/1575/datasets/f369dc94041e88effd5ed66512978f8cdfd33801/03-01-slides-interactive_3D_scatterplot_regression_plane.html", html_opts = "width=200%", alt_text = "3D scatterplot")
 
 ## ---- eval=FALSE, echo=FALSE---------------------------------------------
 ## # Save as 798 x 562 images/credit_card_balance_3D_scatterplot.png
@@ -179,7 +178,8 @@ get_regression_table(Balance_model) %>%
     caption = "Multiple regression table", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## regression_points <- get_regression_points(Balance_model)
@@ -195,7 +195,8 @@ regression_points %>%
     caption = "Regression points (first 5 rows of 400)",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(regression_points, aes(x = Limit, y = residual)) +
@@ -241,7 +242,8 @@ evals_ch7 %>%
     caption = "Random sample of 5 instructors",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 evals_ch7 %>% 
@@ -269,7 +271,8 @@ get_regression_table(score_model_2) %>%
     caption = "Regression table", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin by gender: same slope"----
 coeff <- lm(score ~ age + gender, data = evals_ch7) %>% 
@@ -300,7 +303,8 @@ get_regression_table(score_model_interaction) %>%
     caption = "Regression table", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- echo=FALSE---------------------------------------------------------
 data_frame(
@@ -312,7 +316,8 @@ data_frame(
     caption = "Comparison of male and female intercepts and age slopes", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## regression_points <- get_regression_points(score_model_interaction)
@@ -328,7 +333,8 @@ regression_points %>%
     caption = "Regression points (first 5 rows of 463)",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----residual1, warning=FALSE, fig.cap="Interaction model histogram of residuals"----
 ggplot(regression_points, aes(x = residual)) +
@@ -363,7 +369,8 @@ Credit %>%
     caption = "Correlation between income (in dollars) and credit card balance", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
 grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)

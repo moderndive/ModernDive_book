@@ -39,9 +39,6 @@ library(infer)
 library(knitr)
 library(kableExtra)
 
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/datacamp_inference_for_regression.png", link = "https://www.datacamp.com/courses/inference-for-linear-regression", html_opts = "height: 150px;")
-
 ## ------------------------------------------------------------------------
 evals %>% 
   specify(score ~ bty_avg)
@@ -153,7 +150,7 @@ ggplot(evals_multiple, aes(x = age, y = score, col = gender)) +
 ## score_model_2 <- lm(score ~ age + gender, data = evals_multiple)
 ## get_regression_table(score_model_2)
 
-## ---- echo=FALSE---------------------------------------------------------
+## ----modelmultireg, echo=FALSE-------------------------------------------
 score_model_2 <- lm(score ~ age + gender, data = evals_multiple)
 get_regression_table(score_model_2) %>% 
   knitr::kable(
@@ -161,7 +158,8 @@ get_regression_table(score_model_2) %>%
     caption = "Model 1: Regression table with no interaction effect included", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## score_model_3 <- lm(score ~ age * gender, data = evals_multiple)
@@ -175,5 +173,6 @@ get_regression_table(score_model_3) %>%
     caption = "Model 2: Regression table with interaction effect included", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 

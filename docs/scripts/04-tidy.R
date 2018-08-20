@@ -43,9 +43,6 @@ library(kableExtra)
 library(fivethirtyeight)
 library(stringr)
 
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.5\\textwidth")
-
 ## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from http://r4ds.had.co.nz/tidy-data.html"----
 knitr::include_graphics("images/tidy-1.png")
 
@@ -63,7 +60,8 @@ stocks %>%
     caption = "Stock Prices (Non-Tidy Format)", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----echo=FALSE----------------------------------------------------------
 stocks_tidy <- stocks %>% 
@@ -79,7 +77,8 @@ stocks_tidy %>%
     caption = "Stock Prices (Tidy Format)", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## ----echo=FALSE----------------------------------------------------------
 stocks <- data_frame(
@@ -94,7 +93,8 @@ stocks %>%
     caption = "Date, Boeing Price, Weather Data", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10)
+  kable_styling(font_size = 10, 
+                latex_options = c("HOLD_position"))
 
 ## **_Learning check_**
 
