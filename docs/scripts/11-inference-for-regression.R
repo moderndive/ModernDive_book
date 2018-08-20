@@ -158,7 +158,7 @@ get_regression_table(score_model_2) %>%
     caption = "Model 1: Regression table with no interaction effect included", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -173,6 +173,6 @@ get_regression_table(score_model_3) %>%
     caption = "Model 2: Regression table with interaction effect included", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("HOLD_position"))
 
