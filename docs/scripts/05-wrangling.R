@@ -10,7 +10,9 @@ library(nycflights13)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## btv_sea_flights_fall <- flights %>%
-##   filter(origin == "JFK", (dest == "BTV" | dest == "SEA"), month >= 10)
+##   filter(origin == "JFK",
+##          dest == "BTV" | dest == "SEA",
+##          month >= 10)
 ## View(btv_sea_flights_fall)
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -25,11 +27,12 @@ library(nycflights13)
 ## summary_temp
 
 ## ---- echo=FALSE---------------------------------------------------------
+options(knitr.kable.NA = '')
 summary_temp <- weather %>% 
   summarize(mean = mean(temp), 
             std_dev = sd(temp))
 kable(summary_temp) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -43,7 +46,7 @@ summary_temp <- weather %>%
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))
 kable(summary_temp) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
@@ -67,7 +70,7 @@ summary_monthly_temp <- weather %>%
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))
 kable(summary_monthly_temp) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -81,7 +84,7 @@ by_origin <- flights %>%
   group_by(origin) %>% 
   summarize(count = n())
 kable(by_origin) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
@@ -145,7 +148,7 @@ gain_summary <- flights %>%
     missing = sum(is.na(gain))
   )
 kable(gain_summary) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("HOLD_position"))
 
 ## ----message=FALSE, fig.cap="Histogram of gain variable"-----------------
@@ -274,9 +277,10 @@ read_csv("data/ch5_summary_table - Sheet1.csv", na = "") %>%
     caption = "Summary of data wrangling verbs", 
     booktabs = TRUE
   ) %>% 
-   kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                  latex_options = c("HOLD_position")) %>%
-   column_spec(2, width = "3.5in")
+   column_spec(2, width = "0.9in") %>% 
+   column_spec(3, width = "3.3in")
 
 ## **Learning Check Solutions**
 

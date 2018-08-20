@@ -30,7 +30,7 @@ gapminder_2007 %>%
     caption = "Gapminder 2007 Data: First 6 of 142 countries", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ----gapminder, echo=FALSE, fig.cap="Life Expectancy over GDP per Capita in 2007"----
@@ -49,7 +49,7 @@ map %>%
     caption = "Summary of Grammar of Graphics for this plot", 
     booktabs = TRUE
     ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## **_Review questions_**
@@ -213,7 +213,7 @@ weather %>%
   summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
   arrange(desc(IQR)) %>%
   kable() %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## **`r paste0("(LC", chap, ".", (lc - 1), ")")`: We looked at the distribution of a numerical variable over a categorical variable here with this boxplot. Why can't we look at the distribution of one numerical variable over the distribution of another numerical variable? Say, temperature across pressure, for example?**
@@ -234,7 +234,7 @@ kable(
     caption = "Fruits", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ----fruitscounted, echo=FALSE-------------------------------------------
@@ -244,7 +244,7 @@ kable(
     caption = "Fruits (Pre-Counted)", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ----geombar, fig.cap="Barplot when counts are not pre-counted", fig.height=2.5----
@@ -264,7 +264,7 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 ## ---- echo=FALSE---------------------------------------------------------
 kable(airlines) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ----message=FALSE, eval=FALSE-------------------------------------------
@@ -278,7 +278,7 @@ flights_table <- flights %>%
   group_by(carrier) %>% 
   summarize(number = n())
 kable(flights_table) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ----flightscol, fig.cap='(ref:geomcol)', fig.height=2.5-----------------

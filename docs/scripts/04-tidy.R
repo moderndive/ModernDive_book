@@ -60,7 +60,7 @@ stocks %>%
     caption = "Stock Prices (Non-Tidy Format)", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ----echo=FALSE----------------------------------------------------------
@@ -77,7 +77,7 @@ stocks_tidy %>%
     caption = "Stock Prices (Tidy Format)", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ----echo=FALSE----------------------------------------------------------
@@ -93,7 +93,7 @@ stocks %>%
     caption = "Date, Boeing Price, Weather Data", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("HOLD_position"))
 
 ## **_Learning check_**
@@ -187,7 +187,9 @@ life_expectancy_tidy
 
 ## ----message=FALSE-------------------------------------------------------
 library(dplyr)
-joined_flights <- inner_join(x = flights, y = airlines, by = "carrier")
+joined_flights <- inner_join(x = flights, 
+                             y = airlines, 
+                             by = "carrier")
 
 ## ----eval=FALSE----------------------------------------------------------
 ## View(joined_flights)

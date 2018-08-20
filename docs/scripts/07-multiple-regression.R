@@ -32,7 +32,7 @@ Credit %>%
     caption = "Random sample of 5 credit card holders",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
@@ -63,7 +63,7 @@ Credit %>%
     caption = "Correlations between credit card balance, credit limit, and income", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -178,7 +178,7 @@ get_regression_table(Balance_model) %>%
     caption = "Multiple regression table", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -195,7 +195,7 @@ regression_points %>%
     caption = "Regression points (first 5 rows of 400)",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -242,7 +242,7 @@ evals_ch7 %>%
     caption = "Random sample of 5 instructors",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
@@ -271,7 +271,7 @@ get_regression_table(score_model_2) %>%
     caption = "Regression table", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ----numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin by gender: same slope"----
@@ -303,7 +303,7 @@ get_regression_table(score_model_interaction) %>%
     caption = "Regression table", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ---- echo=FALSE---------------------------------------------------------
@@ -316,7 +316,7 @@ data_frame(
     caption = "Comparison of male and female intercepts and age slopes", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -333,7 +333,7 @@ regression_points %>%
     caption = "Regression points (first 5 rows of 463)",
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ----residual1, warning=FALSE, fig.cap="Interaction model histogram of residuals"----
@@ -369,7 +369,7 @@ Credit %>%
     caption = "Correlation between income (in dollars) and credit card balance", 
     booktabs = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----

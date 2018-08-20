@@ -10,8 +10,9 @@ read_csv("data/ch9_summary_table - Sheet1.csv", na = "") %>%
     booktabs = TRUE,
     escape = FALSE
   ) %>% 
-  kable_styling(font_size = 10, 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position")) %>%
+  column_spec(1, width = "0.5in") %>% 
   column_spec(2, width = "0.7in") %>%
   column_spec(3, width = "1in") %>%
   column_spec(4, width = "0.7in") %>% 
@@ -400,10 +401,12 @@ conf_ints %>%
   kable(
     digits = 3,
     caption = "33 confidence intervals from 33 tactile samples of size n=50", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    longtable = TRUE
   ) %>% 
-  kable_styling(font_size = 10, 
-                latex_options = c("HOLD_position"))
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position", "repeat_header", 
+                                  "scale_down"))
 
 ## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals based on 33 tactile samples of size n=50", fig.height=6----
 groups <- conf_ints$group
