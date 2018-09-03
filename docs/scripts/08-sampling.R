@@ -15,8 +15,7 @@ set.seed(79)
 ## View(tactile_prop_red)
 
 ## ----tactilered, echo=FALSE----------------------------------------------
-tactilepropred <- tactile_prop_red
-kable(tactilepropred,
+kable(tactile_prop_red,
       digits = 3,
       caption = "33 sample proportions based on 33 tactile samples with n = 50", 
       booktabs = TRUE,
