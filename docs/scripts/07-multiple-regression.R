@@ -1,9 +1,16 @@
-## ---- message=FALSE, warning=FALSE---------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
+## library(ggplot2)
+## library(dplyr)
+## library(moderndive)
+## library(ISLR)
+## library(skimr)
+
+## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 library(ggplot2)
 library(dplyr)
 library(moderndive)
 library(ISLR)
-library(skimr)
+# library(skimr) (Causes problems with table linking)
 
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 # Packages needed internally, but not in text:
@@ -38,10 +45,15 @@ Credit %>%
 ## ------------------------------------------------------------------------
 glimpse(Credit)
 
-## ------------------------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
+## Credit %>%
+##   select(Balance, Limit, Income) %>%
+##   skim()
+
+## ----echo=FALSE----------------------------------------------------------
 Credit %>% 
   select(Balance, Limit, Income) %>% 
-  skim()
+  skimr::skim()
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## Credit %>%
@@ -245,9 +257,13 @@ evals_ch7 %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
-## ------------------------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
+## evals_ch7 %>%
+##   skim()
+
+## ----echo=FALSE----------------------------------------------------------
 evals_ch7 %>% 
-  skim()
+  skimr::skim()
 
 ## ------------------------------------------------------------------------
 evals_ch7 %>% 
