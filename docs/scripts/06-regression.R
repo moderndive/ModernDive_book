@@ -1,9 +1,16 @@
-## ---- message=FALSE, warning=FALSE---------------------------------------
+## ----eval=FALSE----------------------------------------------------------
+## library(ggplot2)
+## library(dplyr)
+## library(moderndive)
+## library(gapminder)
+## library(skimr)
+
+## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 library(ggplot2)
 library(dplyr)
 library(moderndive)
 library(gapminder)
-library(skimr)
+# library(skimr) (Causes problems with table linking)
 
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 # Packages needed internally, but not in text.
@@ -47,7 +54,7 @@ glimpse(evals_ch6)
 ## ----echo=FALSE, results='asis'------------------------------------------
 evals_ch6 %>% 
   select(score, bty_avg) %>% 
-  skim() %>% 
+  skimr::skim() %>% 
   skimr::kable()
 
 ## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients"----
@@ -293,10 +300,15 @@ gapminder2007 %>%
 ## ------------------------------------------------------------------------
 glimpse(gapminder2007)
 
-## ------------------------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
+## gapminder2007 %>%
+##   select(continent, lifeExp) %>%
+##   skim()
+
+## ---- echo=FALSE---------------------------------------------------------
 gapminder2007 %>% 
   select(continent, lifeExp) %>% 
-  skim()
+  skimr::skim()
 
 ## ---- echo=FALSE---------------------------------------------------------
 lifeExp_worldwide <- gapminder2007 %>%
@@ -353,8 +365,8 @@ gapminder2007 %>%
     digits = 3,
     caption = "Mean life expectancy by continent",
     booktabs = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
+  ) %>%
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
