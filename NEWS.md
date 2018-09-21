@@ -1,5 +1,6 @@
 # ModernDive 0.4.0.9000
 
+* Added Learning Check solutions section to Appendix
 
 
 # ModernDive 0.4.0
