@@ -1,0 +1,1089 @@
+# Confidence Intervals {#confidence-intervals}
+    
+```{r setup_ci, include=FALSE, purl=FALSE}
+chap <- 9
+lc <- 0
+rq <- 0
+# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
+# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
+knitr::opts_chunk$set(
+  tidy = FALSE, 
+  out.width = '\\textwidth', 
+  fig.height = 4,
+  warning = FALSE
+  )
+options(scipen = 99, digits = 3)
+
+# This bit of code is a bug fix on asis blocks, which we use to show/not show LC
+# solutions, which are written like markdown text. In theory, it shouldn't be
+# necessary for knitr versions <=1.11.6, but I've found I still need to for
+# everything to knit properly in asis blocks. More info here: 
+# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
+library(knitr)
+
+knit_engines$set(asis = function(options) {
+  if (options$echo && options$eval) knit_child(text = options$code)
+})
+
+# This controls which LC solutions to show. Options for solutions_shown: "ALL"
+# (to show all solutions), or subsets of c('3-1', '3-2','3-3'), including the
+# null vector c('') to show no solutions.
+solutions_shown <- c("")
+show_solutions <- function(section){
+  return(solutions_shown == "ALL" | section %in% solutions_shown)
+  }
+```
+
+In Chapter \@ref(sampling), we explored the process of sampling from a representative sample to build a sampling distribution. The motivation there was to use multiple samples from the same population to visualize and attempt to understand the variability in the statistic from one sample to another. Furthermore, recall our concepts and terminology related to sampling from the beginning of Chapter \@ref(sampling):
+
+Generally speaking, we learned that if the sampling of a sample of size $n$ is done at *random*, then the resulting sample is *unbiased* and *representative* of the *population*, thus any result based on the sample can *generalize* to the population, and hence the **point estimate/sample statistic** computed from this sample is a "good guess" of the unknown population parameter of interest
+
+Specific to the bowl, we learned that if we properly mix the balls first thereby ensuring the randomness of samples extracted using the shovel with $n=50$ slots, then the contents of the shovel will "look like" the contents of the bowl, thus any results based on the sample of $n=50$ balls can generalize to the large bowl of $N=2400$ balls, and hence the sample proportion red $\widehat{p}$ of the $n=50$ balls in the shovel is a "good guess" of the true population proportion red $p$ of the $N=2400$ balls in the bowl.
+
+We emphasize that we used a point estimate/sample statistic, in this case the sample proportion $\widehat{p}$, to estimate the unknown value of the population parameter, in this case the population proportion $p$. In other words, we are using the sample to **infer** about the population.
+
+We can however consider inferential situations other than just those involving proportions. We present a wide array of such scenarios in Table \@ref(tab:summarytable). In all 7 cases, the point estimate/sample statistic *estimates* the unknown population parameter. It does so by computing summary statistics based on a sample of size $n$. 
+
+```{r summarytable-prep, echo=FALSE, message=FALSE}
+# Original at https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
+library(dplyr)
+library(readr)
+```
+
+```{r summarytable, echo=FALSE}
+read_csv("data/ch9_summary_table - Sheet1.csv", na = "") %>% 
+  kable(
+    caption = "\\label{tab:summarytable}Scenarios of sampling for inference", 
+    booktabs = TRUE,
+    escape = FALSE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position")) %>%
+  column_spec(1, width = "0.5in") %>% 
+  column_spec(2, width = "0.7in") %>%
+  column_spec(3, width = "1in") %>%
+  column_spec(4, width = "1.1in") %>% 
+  column_spec(5, width = "1in")
+```
+
+We'll cover the first four scenarios in this chapter on confidence intervals and the following one on hypothesis testing:
+
+* Scenario 2 about means. Ex: the average age of pennies.
+* Scenario 3 about differences in proportions between two groups. Ex: the difference in high school completion rates for Canadians vs non-Canadians. We call this a situation of *two-sample* inference.
+* Scenario 4 is similar to 3, but its about the means of two groups. Ex: the difference in average test scores for the morning section of a class versus the afternoon section of a class. This another situation of *two-sample* inference.
+
+In contrast to these, Scenario 5 involves a measure of spread: the standard deviation. Does the spread/variability of a sample match the spread/variability of the population? However, we leave this topic for a more intermediate course on statistical inference. 
+
+In Chapter \@ref(inference-for-regression) on inference for regression, we'll cover Scenarios 6 & 7 about the regression line. In particular we'll see that the fitted regression line from Chapter \@ref(regression) on basic regression, $\widehat{y} = b_0 + b_1 \cdot x$, is in fact an estimate of some true population regression line $y = \beta_0 + \beta+1 \cdot x$ based on a sample of $n$ pairs of points $(x, y)$. Ex: Recall our sample of $n=463$ instructors at the UT Austin from the `evals` data set in Chapter \@ref(regression). Based on the results of the fitted regression model of teaching score with beauty score as an explanatory/predictor variable, what can we say about this relationship for *all* instructors, not just those at the UT Austin?
+
+In most cases, we don't have the population values as we did with the `bowl` of balls. We only have a single sample of data from a larger population. We'd like to be able to make some reasonable guesses about population parameters using that single sample to create a range of plausible values for a population parameter. This range of plausible values is known as a **confidence interval** and will be the focus of this chapter. And how do we use a single sample to get some idea of how other samples might vary in terms of their statistic values? One common way this is done is via a process known as **bootstrapping** that will be the focus of the beginning sections of this chapter.
+
+
+
+
+### Needed packages {-}
+
+Let's load all the packages needed for this chapter (this assumes you've already installed them). If needed, read Section \@ref(packages) for information on how to install and load R packages.
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(janitor)
+library(moderndive)
+library(infer)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+# Packages needed internally, but not in text.
+library(knitr)
+library(kableExtra)
+```
+
+### DataCamp {-}
+
+Our approach of using data science tools to understand the first major component of statistical inference, confidence intervals, uses the same tools as in [Mine Cetinkaya-Rundel](https://twitter.com/minebocek) and [Andrew Bray's](https://twitter.com/crite) DataCamp courses "Inference for Numerical Data" and "Inference for Categorical Data." If you're interested in complementing your learning below in an interactive online environment, click on the images below to access the courses. 
+
+```{r, echo=FALSE, results='asis', purl=FALSE}
+image_link(path = "images/datacamp_inference_for_numerical_data.png", link = "https://www.datacamp.com/courses/inference-for-numerical-data", html_opts = "height: 150px;", latex_opts = "width=0.3\\textwidth")
+```
+```{r, echo=FALSE, results='asis', purl=FALSE}
+image_link(path = "images/datacamp_inference_for_categorical_data.png", link = "https://www.datacamp.com/courses/inference-for-categorical-data", html_opts = "height: 150px;", latex_opts = "width=0.3\\textwidth")
+```
+
+
+## Bootstrapping
+
+### Data explanation
+
+The `moderndive` package contains a sample of 40 pennies collected and minted in the United States. Let's explore this sample data first:
+
+```{r include=FALSE}
+set.seed(2018)
+pennies_sample <- pennies %>% sample_n(40)
+```
+
+```{r}
+pennies_sample
+```
+
+The `pennies_sample` data frame has rows corresponding to a single penny with two variables:
+
+- `year` of minting as shown on the penny and
+- `age_in_2011` giving the years the penny had been in circulation from 2011 as an integer, e.g. 15, 2, etc.
+
+Suppose we are interested in understanding some properties of the mean age of **all** US pennies from this data collected in 2011. How might we go about that? Let's begin by understanding some of the properties of `pennies_sample` using data wrangling from Chapter \@ref(wrangling) and data visualization from Chapter \@ref(viz).
+
+### Exploratory data analysis
+
+First, let's visualize the values in this sample as a histogram:
+
+```{r}
+ggplot(pennies_sample, aes(x = age_in_2011)) +
+  geom_histogram(bins = 10, color = "white")
+```
+
+We see a roughly symmetric distribution here that has quite a few values near 20 years in age with only a few larger than 40 years or smaller than 5 years. If `pennies_sample` is a representative sample from the population, we'd expect the age of all US pennies collected in 2011 to have a similar shape, a similar spread, and similar measures of central tendency like the mean.
+
+So where does the mean value fall for this sample? This point will be known as our **point estimate** and provides us with a single number that could serve as the guess to what the true population mean age might be. Recall how to find this using the `dplyr` package:
+
+```{r}
+x_bar <- pennies_sample %>% 
+  summarize(stat = mean(age_in_2011))
+x_bar
+```
+
+We've denoted this *sample mean* as $\bar{x}$, which is the standard symbol for denoting the mean of a sample. Our point estimate is, thus, $\bar{x} = `r round(x_bar[[1, 1]], 1)`$. Note that this is just one sample though providing just one guess at the population mean. What if we'd like to have another guess?
+
+This should all sound similar to what we did in Chapter \@ref(sampling). There instead of collecting just a single scoop of balls we had many different students use the shovel to scoop different samples of red and white balls. We then calculated a sample statistic (the sample proportion) from each sample. But, we don't have a population to pull from here with the pennies. We only have this one sample.
+
+The process of **bootstrapping** allows us to use a single sample to generate many different samples that will act as our way of approximating a sampling distribution using a created **bootstrap distribution** instead. We will pull ourselves up from our bootstraps using a single sample (`pennies_sample`) to get an idea of the grander sampling distribution.
+
+### The Bootstrapping Process {#bootstrap-process}
+
+Bootstrapping uses a process of sampling **with replacement** from our original sample to create new **bootstrap samples** of the *same* size as our original sample. We can again make use of the `rep_sample_n()` function to explore what one such bootstrap sample would look like. Remember that we are randomly sampling from the original sample here with replacement and that we always use the same sample size for the bootstrap samples as the size of the original sample (`pennies_sample`).
+
+```{r include=FALSE}
+set.seed(201)
+```
+
+```{r}
+bootstrap_sample1 <- pennies_sample %>% 
+  rep_sample_n(size = 40, replace = TRUE, reps = 1)
+bootstrap_sample1
+```
+
+Let's visualize what this new bootstrap sample looks like:
+
+```{r}
+ggplot(bootstrap_sample1, aes(x = age_in_2011)) +
+  geom_histogram(bins = 10, color = "white")
+```
+
+We now have another sample from what we could assume comes from the population of interest. We can similarly calculate the sample mean of this bootstrap sample, called a **bootstrap statistic**.
+
+```{r}
+bootstrap_sample1 %>% 
+  summarize(stat = mean(age_in_2011))
+```
+
+We can see that this sample mean is smaller than the `x_bar` value we calculated earlier for the `pennies_sample` data. We'll come back to analyzing the different bootstrap statistic values shortly.
+
+Let's recap what was done to get to this bootstrap sample using a tactile explanation:
+
+1. First, pretend that each of the 40 values of `age_in_2011` in `pennies_sample` were written on a small piece of paper. Recall that these values were 6, 30, 34, 19, 6, etc.
+2. Now, put the 40 small pieces of paper into a receptacle such as a baseball cap.
+3. Shake up the pieces of paper.
+4. Draw "at random" from the cap to select one piece of paper.
+5. Write down the value on this piece of paper. Say that it is 28.
+6. Now, place this piece of paper containing 28 back into the cap.
+7. Draw "at random" again from the cap to select a piece of paper. Note that this is the *sampling with replacement* part since you may draw 28 again.
+8. Repeat this process until you have drawn 40 pieces of paper and written down the values on these 40 pieces of paper. Completing this repetition produces ONE bootstrap sample.
+
+If you look at the values in `bootstrap_sample1`, you can see how this process plays out. We originally drew 28, then we drew 11, then 7, and so on. Of course, we didn't actually use pieces of paper and a cap here. We just had the computer perform this process for us to produce `bootstrap_sample1` using `rep_sample_n()` with `replace = TRUE` set.
+
+The process of *sampling with replacement* is how we can use the original sample to take a guess as to what other values in the population may be. Sometimes in these bootstrap samples, we will select lots of larger values from the original sample, sometimes we will select lots of smaller values, and most frequently we will select values that are near the center of the sample. Let's explore what the distribution of values of `age_in_2011` for six different bootstrap samples looks like to further understand this variability.
+
+```{r}
+six_bootstrap_samples <- pennies_sample %>% 
+  rep_sample_n(size = 40, replace = TRUE, reps = 6)
+```
+
+```{r}
+ggplot(six_bootstrap_samples, aes(x = age_in_2011)) +
+  geom_histogram(bins = 10, color = "white") +
+  facet_wrap(~ replicate)
+```
+
+We can also look at the six different means using `dplyr` syntax:
+
+```{r}
+six_bootstrap_samples %>% 
+  group_by(replicate) %>% 
+  summarize(stat = mean(age_in_2011))
+```
+
+Instead of doing this six times, we could do it 1000 times and then look at the distribution of `stat` across all 1000 of the `replicate`s. This sets the stage for the `infer` R package [@R-infer] that was created to help users perform statistical inference such as confidence intervals and hypothesis tests using verbs similar to what you've seen with `dplyr`. We'll walk through setting up each of the `infer` verbs for confidence intervals using this `pennies_sample` example, while also explaining the purpose of the verbs in a general framework.
+
+## The infer package for statistical inference
+
+The `infer` package makes great use of the `%>%` to create a pipeline for statistical inference. The goal of the package is to provide a way for its users to explain the computational process of confidence intervals and hypothesis tests using the code as a guide. The verbs build in order here, so you'll want to start with `specify()` and then continue through the others as needed.
+
+### Specify variables
+
+```{r fig.align='center', echo=FALSE}
+knitr::include_graphics("images/flowcharts/infer/specify.png")
+```
+
+
+The `specify()` function is used primarily to choose which variables will be the focus of the statistical inference. In addition, a setting of which variable will act as the `explanatory` and which acts as the `response` variable is done here. For proportion problems to those in Chapter \@ref(sampling), we can also give which of the different levels we would like to have as a `success`. We'll see further examples of these options in this chapter, Chapter \@ref(hypothesis-testing), and in Appendix \@ref(appendixB).
+
+To begin to create a confidence interval for the population mean age of US pennies in 2011, we start by using `specify()` to choose which variable in our `pennies_sample` data we'd like to work with. This can be done in one of two ways:
+
+1. Using the `response` argument:
+
+```{r}
+pennies_sample %>% 
+  specify(response = age_in_2011)
+```
+
+2. Using `formula` notation:
+
+```{r}
+pennies_sample %>% 
+  specify(formula = age_in_2011 ~ NULL)
+```
+
+Note that the formula notation uses the common R methodology to include the response $y$ variable on the left of the `~` and the explanatory $x$ variable on the right of the "tilde." Recall that you used this notation frequently with the `lm()` function in Chapters \@ref(regression) and \@ref(multiple-regression) when fitting regression models. Either notation works just fine, but a preference is usually given here for the `formula` notation to further build on the ideas from earlier chapters.
+
+### Generate replicates
+
+```{r fig.align='center', echo=FALSE}
+knitr::include_graphics("images/flowcharts/infer/generate.png")
+```
+
+After `specify()`ing the variables we'd like in our inferential analysis, we next feed that into the `generate()` verb. The `generate()` verb's main argument is `reps`, which is used to give how many different repetitions one would like to perform. Another argument here is `type`, which is automatically determined by the kinds of variables passed into `specify()`. We can also be explicit and set this `type` to be `type = "bootstrap"`. This `type` argument will be further used in hypothesis testing in Chapter \@ref(hypothesis-testing) as well. Make sure to check out `?generate` to see the options here and use the `?` operator to better understand other verbs as well.
+
+Let's `generate()` 1000 bootstrap samples:
+
+```{r}
+thousand_bootstrap_samples <- pennies_sample %>% 
+  specify(response = age_in_2011) %>% 
+  generate(reps = 1000)
+```
+
+We can use the `dplyr` `count()` function to help us understand what the `thousand_bootstrap_samples` data frame looks like:
+
+```{r}
+thousand_bootstrap_samples %>% count(replicate)
+```
+
+Notice that each `replicate` has 40 entries here. Now that we have 1000 different bootstrap samples, our next step is to `calculate` the bootstrap statistics for each sample.
+
+### Calculate summary statistics
+
+```{r fig.align='center', echo=FALSE}
+knitr::include_graphics("images/flowcharts/infer/calculate.png")
+```
+
+After `generate()`ing many different samples, we next want to condense those samples down into a single statistic for each `replicate`d sample. As seen in the diagram, the `calculate()` function is helpful here.
+
+As we did at the beginning of this chapter, we now want to calculate the mean `age_in_2011` for each bootstrap sample. To do so, we use the `stat` argument and set it to `"mean"` below. The `stat` argument has a variety of different options here and we will see further examples of this throughout the remaining chapters. 
+
+```{r}
+bootstrap_distribution <- pennies_sample %>% 
+  specify(response = age_in_2011) %>% 
+  generate(reps = 1000) %>% 
+  calculate(stat = "mean")
+bootstrap_distribution
+```
+
+We see that the resulting data has 1000 rows and 2 columns corresponding to the 1000 replicates and the mean for each bootstrap sample.
+
+#### Observed statistic / point estimate calculations {-}
+
+Just as `group_by() %>% summarize()` produces a useful workflow in `dplyr`, we can also use `specify() %>% calculate()` to compute summary measures on our original sample data. It's often helpful both in confidence interval calculations, but also in hypothesis testing to identify what the corresponding statistic is in the original data. For our example on penny age, we computed above a value of `x_bar` using the `summarize()` verb in `dplyr`:
+
+```{r}
+pennies_sample %>% 
+  summarize(stat = mean(age_in_2011))
+```
+
+This can also be done by skipping the `generate()` step in the pipeline feeding `specify()` directly into `calculate()`:
+
+```{r}
+pennies_sample %>% 
+  specify(response = age_in_2011) %>% 
+  calculate(stat = "mean")
+```
+
+This shortcut will be particularly useful when the calculation of the observed statistic is tricky to do using `dplyr` alone. This is particularly the case when working with more than one variable as will be seen in Chapter \@ref(hypothesis-testing).
+
+### Visualize the results
+
+```{r fig.align='center', echo=FALSE}
+knitr::include_graphics("images/flowcharts/infer/visualize.png")
+```
+
+The `visualize()` verb provides a simple way to view the bootstrap distribution as a histogram of the `stat` variable values. It has many other arguments that one can use as well including the shading of the histogram values corresponding to the confidence interval values.
+
+```{r}
+bootstrap_distribution %>% visualize()
+```
+
+The shape of this resulting distribution may look familiar to you.  It resembles the well-known normal (bell-shaped) curve.
+
+The following diagram recaps the `infer` pipeline for creating a bootstrap distribution.
+
+```{r echo=FALSE, purl=FALSE}
+knitr::include_graphics("images/flowcharts/infer/ci_diagram.png")
+```
+
+
+## Now to confidence intervals
+
+**Definition: Confidence Interval**
+
+A *confidence interval* gives a range of plausible values for a parameter.  It depends on a specified _confidence level_ with higher confidence levels corresponding to wider confidence intervals and lower confidence levels corresponding to narrower confidence intervals. Common confidence levels include 90%, 95%, and 99%.
+
+Usually we don't just begin sections with a definition, but *confidence intervals* are simple to define and play an important role in the sciences and any field that uses data. You can think of a confidence interval as playing the role of a net when fishing. Instead of just trying to catch a fish with a single spear (estimating an unknown parameter by using a single point estimate/statistic), we can use a net to try to provide a range of possible locations for the fish (use a range of possible values based around our statistic to make a plausible guess as to the location of the parameter).
+
+The bootstrapping process will provide bootstrap statistics that have a bootstrap distribution with center at (or extremely close to) the mean of the original sample. This can be seen by giving the observed statistic `obs_stat` argument the value of the point estimate `x_bar`.
+
+```{r}
+bootstrap_distribution %>% visualize(obs_stat = x_bar)
+```
+
+We can also compute the mean of the bootstrap distribution of means to see how it compares to `x_bar`:
+
+```{r}
+bootstrap_distribution %>% 
+  summarize(mean_of_means = mean(stat))
+```
+
+In this case, we can see that the bootstrap distribution provides us a guess as to what the variability in different sample means may look like only using the original sample as our guide. We can quantify this variability in the form of a 95% confidence interval in a couple different ways.
+
+### The percentile method {#percentile-method}
+
+One way to calculate a range of plausible values for the unknown mean age of coins in 2011 is to use the middle 95% of the `bootstrap_distribution` to determine our endpoints. Our endpoints are thus at the 2.5^th^ and 97.5^th^ percentiles. This can be done with `infer` using the `get_ci()` function. (You can also use the `conf_int()` or `get_confidence_interval()` functions here as they are aliases that work the exact same way.)
+
+```{r}
+bootstrap_distribution %>% 
+  get_ci(level = 0.95, type = "percentile")
+```
+
+These options are the default values for `level` and `type` so we can also just do:
+
+```{r}
+percentile_ci <- bootstrap_distribution %>% 
+  get_ci()
+percentile_ci
+```
+
+Using the percentile method, our range of plausible values for the mean age of US pennies in circulation in 2011 is `r percentile_ci[["2.5%"]]` years to `r percentile_ci[["97.5%"]]` years. We can use the `visualize()` function to view this using the `endpoints` and `direction` arguments, setting `direction` to `"between"` (between the values) and `endpoints` to be those stored with name `percentile_ci`.
+
+```{r}
+bootstrap_distribution %>% 
+  visualize(endpoints = percentile_ci, direction = "between")
+```
+
+You can see that 95% of the data stored in the `stat` variable in `bootstrap_distribution` falls between the two endpoints with 2.5% to the left outside of the shading and 2.5% to the right outside of the shading. The cut-off points that provide our range are shown with the darker lines.
+
+### The standard error method
+
+If the bootstrap distribution is close to symmetric and bell-shaped, we can also use a shortcut formula for determining the lower and upper endpoints of the confidence interval. This is done by using the formula $\bar{x} \pm (multiplier * SE),$ where $\bar{x}$ is our original sample mean and $SE$ stands for **standard error** and corresponds to the standard deviation of the bootstrap distribution.  The value of $multiplier$ here is the appropriate percentile of the standard normal distribution. 
+
+These are automatically calculated when `level` is provided with `level = 0.95` being the default. (95% of the values in a standard normal distribution fall within 1.96 standard deviations of the mean, so $multiplier = 1.96$ for `level = 0.95`, for example.)  As mentioned, this formula assumes that the bootstrap distribution is symmetric and bell-shaped. This is often the case with bootstrap distributions, especially those in which the original distribution of the sample is not highly skewed.
+
+**Definition: standard error**
+
+The *standard error* is the standard deviation of the sampling distribution. 
+
+The variability of the sampling distribution may be approximated by the variability of the bootstrap distribution. Traditional theory-based methodologies for inference also have formulas for standard errors, assuming some conditions are met.
+
+This $\bar{x} \pm (multiplier * SE)$ formula is implemented in the `get_ci()` function as shown with our pennies problem using the bootstrap distribution's variability as an approximation for the sampling distribution's variability. We'll see more on this approximation shortly.
+
+Note that the center of the confidence interval (the `point_estimate`) must be provided for the standard error confidence interval.
+
+```{r eval=FALSE}
+standard_error_ci <- bootstrap_distribution %>% 
+  get_ci(type = "se", point_estimate = x_bar)
+standard_error_ci
+```
+
+```{r echo=FALSE}
+standard_error_ci <- bootstrap_distribution %>% 
+  get_ci(type = "se", point_estimate = x_bar)
+round(standard_error_ci, 2)
+```
+
+```{r}
+bootstrap_distribution %>% 
+  visualize(endpoints = standard_error_ci, direction = "between")
+```
+
+We see that both methods produce nearly identical confidence intervals with the percentile method being $[`r round(percentile_ci[["2.5%"]], 2)`, `r round(percentile_ci[["97.5%"]], 2)`]$ and the standard error method being $[`r round(standard_error_ci[["lower"]], 2)`, `r round(standard_error_ci[["upper"]],2)`]$.
+
+## Comparing bootstrap and sampling distributions
+
+To help build up the idea of a confidence interval, we weren't completely honest in our initial discussion. The `pennies_sample` data frame represents a sample from a larger number of pennies stored as `pennies` in the `moderndive` package. The `pennies` data frame (also in the `moderndive` package) contains 800 rows of data and two columns pertaining to the same variables as `pennies_sample`. Let's begin by understanding some of the properties of the `age_by_2011` variable in the `pennies` data frame.
+
+```{r}
+ggplot(pennies, aes(x = age_in_2011)) +
+  geom_histogram(bins = 10, color = "white")
+```
+
+```{r}
+pennies %>% 
+  summarize(mean_age = mean(age_in_2011),
+            median_age = median(age_in_2011))
+```
+
+We see that `pennies` is slightly right-skewed with the mean being pulled towards the upper outliers. Recall that `pennies_sample` was more symmetric than `pennies`. In fact, it actually exhibited some left-skew as we compare the mean and median values.
+
+```{r}
+ggplot(pennies_sample, aes(x = age_in_2011)) +
+  geom_histogram(bins = 10, color = "white")
+```
+
+```{r}
+pennies_sample %>% 
+  summarize(mean_age = mean(age_in_2011),
+            median_age = median(age_in_2011))
+```
+
+#### Sampling distribution {-}
+
+Let's assume that `pennies` represents our population of interest. We can then create a sampling distribution for the population mean age of pennies, denoted by the Greek letter $\mu$, using the `rep_sample_n()` function seen in Chapter \@ref(sampling). First we will create 1000 samples from the `pennies` data frame.
+
+```{r}
+thousand_samples <- pennies %>% 
+  rep_sample_n(size = 40, reps = 1000, replace = FALSE)
+```
+
+When creating a sampling distribution, we do not replace the items when we create each sample. This is in contrast to the bootstrap distribution. It's important to remember that the sampling distribution is sampling **without** replacement from the population to better understand sample-to-sample variability, whereas the bootstrap distribution is sampling **with** replacement from our original sample to better understand potential sample-to-sample variability.
+
+After sampling from `pennies` 1000 times, we next want to compute the mean age for each of the 1000 samples:
+
+```{r}
+sampling_distribution <- thousand_samples %>% 
+  group_by(replicate) %>% 
+  summarize(stat = mean(age_in_2011))
+```
+
+We could use `ggplot()` with `geom_histogram()` again, but since we've named our column in `summarize()` to be `stat`, we can also use the shortcut `visualize()` function in `infer` and also specify the number of bins and also fill the bars with a different color such as `"salmon"`. This will be done to help remember that `"salmon"` corresponds to "sampling distribution".
+
+```{r, fig.cap="Sampling distribution for n=40 samples of pennies"}
+sampling_distribution %>% 
+  visualize(bins = 10, fill = "salmon")
+```
+
+We can also examine the variability in this sampling distribution by calculating the standard deviation of the `stat` column. Remember that the standard deviation of the sampling distribution is the **standard error**, frequently denoted as `se`.
+
+```{r}
+sampling_distribution %>% 
+  summarize(se = sd(stat))
+```
+
+
+#### Bootstrap distribution {-}
+
+Let's now see how the shape of the bootstrap distribution compares to that of the sampling distribution. We'll shade the bootstrap distribution blue to further assist with remembering which is which.
+
+```{r}
+bootstrap_distribution %>% 
+  visualize(bins = 10, fill = "blue")
+```
+
+```{r}
+bootstrap_distribution %>% 
+  summarize(se = sd(stat))
+```
+
+Notice that while the standard deviations are similar, the center of the sampling distribution and the bootstrap distribution differ:
+
+```{r}
+sampling_distribution %>% 
+  summarize(mean_of_sampling_means = mean(stat))
+```
+
+```{r}
+bootstrap_distribution %>% 
+  summarize(mean_of_bootstrap_means = mean(stat))
+```
+
+Since the bootstrap distribution is centered at the original sample mean, it doesn't necessarily provide a good estimate of the overall population mean $\mu$. Let's calculate the mean of `age_in_2011` for the `pennies` data frame to see how it compares to the mean of the sampling distribution and the mean of the bootstrap distribution.
+
+```{r}
+pennies %>% 
+  summarize(overall_mean = mean(age_in_2011))
+```
+
+```{r include=FALSE}
+pennies_mu <- pennies %>% 
+  summarize(overall_mean = mean(age_in_2011)) %>% 
+  pull()
+```
+
+
+Notice that this value matches up well with the mean of the sampling distribution. This is actually an artifact of the Central Limit Theorem introduced in Chapter \@ref(sampling). The mean of the sampling distribution is expected to be the mean of the overall population.
+
+The unfortunate fact though is that we don't know the population mean in nearly all circumstances. The motivation of presenting it here was to show that the theory behind the Central Limit Theorem works using the tools you've worked with so far using the `ggplot2`, `dplyr`, `moderndive`, and `infer` packages.
+
+If we aren't able to use the sample mean as a good guess for the population mean, how should we best go about estimating what the population mean may be if we can only select samples from the population. We've now come full circle and can discuss the underpinnings of the confidence interval and ways to interpret it.
+
+## Interpreting the confidence interval
+
+As shown above in Subsection \@ref(percentile-method), one range of plausible values for the population mean age of pennies in 2011, denoted by $\mu$, is $[`r round(percentile_ci[["2.5%"]], 2)`, `r round(percentile_ci[["97.5%"]], 2)`]$. Recall that this confidence interval is based on bootstrapping using `pennies_sample`. Note that the mean of `pennies` (`r pennies_mu`) does fall in this confidence interval. If we had a different sample of size 40 and constructed a confidence interval using the same method, would we be guaranteed that it contained the population parameter value as well? Let's try it out:
+
+```{r}
+pennies_sample2 <- pennies %>% 
+  sample_n(size = 40)
+```
+
+Note the use of the `sample_n()` function in the `dplyr` package here. This does the same thing as `rep_sample_n(reps = 1)` but omits the extra `replicate` column.
+
+We next create an `infer` pipeline to generate a percentile-based 95% confidence interval for $\mu$:
+
+```{r}
+percentile_ci2 <- pennies_sample2 %>% 
+  specify(formula = age_in_2011 ~ NULL) %>% 
+  generate(reps = 1000) %>% 
+  calculate(stat = "mean") %>% 
+  get_ci()
+percentile_ci2
+```
+
+This new confidence interval also contains the value of $\mu$. Let's further investigate by repeating this process 100 times to get 100 different confidence intervals derived from 100 different samples of `pennies`. Each sample will have size of 40 just as the original sample. We will plot each of these confidence intervals as horizontal lines. We will also show a line corresponding to the known population value of `r pennies_mu` years.
+
+```{r echo=FALSE}
+set.seed(201)
+
+pennies_samples <- pennies %>% 
+  rep_sample_n(size = 40, reps = 100, replace = FALSE)
+
+nested_pennies <- pennies_samples %>% 
+  group_by(replicate) %>% 
+  tidyr::nest()
+
+infer_pipeline <- function(entry){
+  entry %>% 
+    specify(formula = age_in_2011 ~ NULL) %>% 
+    generate(reps = 1000) %>% 
+    calculate(stat = "mean") %>% 
+    get_ci()
+}
+
+if(!file.exists("rds/pennies_cis.rds")){
+  pennies_cis <- nested_pennies %>% 
+    mutate(percentile_ci = purrr::map(data, infer_pipeline)) %>% 
+    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$age_in_2011)))
+  saveRDS(object = pennies_cis, "rds/pennies_cis.rds")
+} else {
+  pennies_cis <- readRDS("rds/pennies_cis.rds")
+}
+
+perc_cis <- pennies_cis %>% 
+  tidyr::unnest(percentile_ci) %>% 
+  rename(lower = `2.5%`, upper = `97.5%`) %>% 
+  mutate(captured = lower <= pennies_mu & pennies_mu <= upper)
+
+ggplot(perc_cis) +
+  geom_point(aes(x = point_estimate, y = replicate, color = captured)) +
+  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, 
+                   color = captured)) +
+  labs(
+    x = expression("Age in 2011 (Years)"),
+    y = "Replicate ID",
+    title = expression(paste("95% percentile-based confidence intervals for ", 
+                             mu, sep = ""))
+  ) +
+  scale_color_manual(values = c("blue", "orange")) + 
+  geom_vline(xintercept = pennies_mu, color = "red") 
+```
+
+Of the 100 confidence intervals based on samples of size $n = 40$, `r sum(perc_cis[["captured"]])` of them captured the population mean $\mu = `r pennies_mu`$, whereas `r 100 - sum(perc_cis[["captured"]])` of them did not include it. If we repeated this process of building confidence intervals more times with more samples, we'd expect 95% of them to contain the population mean. In other words, the procedure we have used to generate confidence intervals is "95% reliable" in that we can expect it to include the true population parameter 95% of the time if the process is repeated.
+
+To further accentuate this point, let's perform a similar procedure using 90% confidence intervals instead. This time we will use the standard error method instead of the percentile method for computing the confidence intervals.
+
+```{r echo=FALSE}
+set.seed(2019)
+
+pennies_samples2 <- pennies %>% 
+  rep_sample_n(size = 40, reps = 100, replace = FALSE)
+
+nested_pennies2 <- pennies_samples2 %>% 
+  group_by(replicate) %>% 
+  tidyr::nest() %>% 
+  mutate(sample_mean = purrr::map_dbl(data, ~mean(.x$age_in_2011)))
+
+bootstrap_pipeline <- function(entry){
+  entry %>% 
+    specify(formula = age_in_2011 ~ NULL) %>% 
+    generate(reps = 1000) %>% 
+    calculate(stat = "mean")
+}
+
+if(!file.exists("rds/pennies_se_cis.rds")){
+  pennies_se_cis <- nested_pennies2 %>% 
+    mutate(bootstraps = purrr::map(data, bootstrap_pipeline)) %>% 
+    group_by(replicate) %>% 
+    mutate(se_ci = purrr::map(bootstraps, get_ci, type = "se",
+                              level = 0.9,
+                              point_estimate = sample_mean))
+  saveRDS(object = pennies_se_cis, "rds/pennies_se_cis.rds")
+} else {
+  pennies_se_cis <- readRDS("rds/pennies_se_cis.rds")
+}
+
+se_cis <- pennies_se_cis %>% 
+  tidyr::unnest(se_ci) %>% 
+  mutate(captured = lower <= pennies_mu & pennies_mu <= upper)
+
+ggplot(se_cis) +
+  geom_point(aes(x = sample_mean, y = replicate, color = captured)) +
+  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, 
+                   color = captured)) +
+  labs(
+    x = expression("Age in 2011 (Years)"),
+    y = "Replicate ID",
+    title = expression(paste(
+      "90% standard error-based confidence intervals for ", mu, sep = "")
+      )
+  ) +
+  scale_color_manual(values = c("blue", "orange")) + 
+  geom_vline(xintercept = pennies_mu, color = "red") 
+```
+
+Of the 100 confidence intervals based on samples of size $n = 40$, `r sum(se_cis[["captured"]])` of them captured the population mean $\mu = `r pennies_mu`$, whereas `r 100 - sum(se_cis[["captured"]])` of them did not include it. Repeating this process for more samples would result in us getting closer and closer to 90% of the confidence intervals including the true value. It is common to say while interpreting a confidence interval to be "95% confident" or "90% confident" that the true value falls within the range of the specified confidence interval. We will use this "confident" language throughout the rest of this chapter, but remember that it has more to do with a measure of reliability of the building process.
+
+#### Back to our pennies example {-}
+
+After this elaboration on what the level corresponds to in a confidence interval, let's conclude by providing an interpretation of the original confidence interval result we found in Subsection \@ref(percentile-method).
+
+**Interpretation:** We are 95% confident that the true mean age of pennies in circulation in 2011 is between `r percentile_ci[["2.5%"]]` and `r percentile_ci[["97.5%"]]` years. This level of confidence is based on the percentile-based method including the true mean 95% of the time if many different samples (not just the one we used) were collected and confidence intervals were created.
+
+## EXAMPLE: One proportion {#one-prop-ci}
+
+Let's revisit our exercise of trying to estimate the proportion of red balls in the bowl from Chapter \@ref(sampling). We are now interested in determining a confidence interval for population parameter $p$, the proportion of balls that are red out of the total $N = 2400$ red and white balls. 
+
+We will use the first sample reported from Ilyas and Yohan in Subsection \@ref(student-shovels) for our point estimate. They observed 21 red balls out of the 50 in their shovel. This data is stored in the `tactile_shovel1` data frame in the `moderndive` package.
+
+<!-- Need to include this in the pkg! -->
+
+```{r include=FALSE}
+color <- c(rep("red", 21), rep("white", 50 - 21)) %>% 
+  sample()
+tactile_shovel1 <- tibble::tibble(color)
+```
+
+
+```{r}
+tactile_shovel1
+```
+
+### Observed Statistic
+
+To compute the proportion that are red in this data we can use the `specify() %>% calculate()` workflow. Note the use of the `success` argument here to clarify which of the two colors `"red"` or `"white"` we are interested in.
+
+```{r}
+p_hat <- tactile_shovel1 %>% 
+  specify(formula = color ~ NULL, success = "red") %>% 
+  calculate(stat = "prop")
+p_hat
+```
+
+### Bootstrap distribution
+
+Next we want to calculate many different bootstrap samples and their corresponding bootstrap statistic (the proportion of red balls). We've done 1000 in the past, but let's go up to 10,000 now to better see the resulting distribution. Recall that this is done by including a `generate()` function call in the middle of our pipeline:
+
+```{r eval=FALSE}
+tactile_shovel1 %>% 
+  specify(formula = color ~ NULL, success = "red") %>% 
+  generate(reps = 10000)
+```
+
+```{r echo=FALSE}
+set.seed(2018)
+gen <- tactile_shovel1 %>% 
+  specify(formula = color ~ NULL, success = "red") %>% 
+  generate(reps = 10000)
+```
+
+This results in 50 rows for each of the 10,000 replicates. Lastly, we finish the infer pipeline by adding back in the `calculate()` step.
+
+```{r eval=FALSE}
+bootstrap_props <- tactile_shovel1 %>% 
+  specify(formula = color ~ NULL, success = "red") %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "prop")
+```
+
+```{r echo=FALSE}
+bootstrap_props <- gen %>% 
+  calculate(stat = "prop")
+```
+
+
+Let's `visualize()` what the resulting bootstrap distribution looks like as a histogram. We've adjusted the number of bins here as well to better see the resulting shape.
+
+```{r}
+bootstrap_props %>% visualize(bins = 25)
+```
+
+We see that the resulting distribution is symmetric and bell-shaped so it doesn't much matter which confidence interval method we choose. Let's use the standard error method to create a 95% confidence interval.
+
+```{r}
+standard_error_ci <- bootstrap_props %>% 
+  get_ci(type = "se", level = 0.95, point_estimate = p_hat)
+standard_error_ci
+```
+
+```{r}
+bootstrap_props %>% 
+  visualize(bins = 25, endpoints = standard_error_ci)
+```
+
+We are 95% confident that the true proportion of red balls in the bowl is between `r standard_error_ci[["lower"]]` and `r standard_error_ci[["higher"]]` years. This level of confidence is based on the standard error-based method including the true proportion 95% of the time if many different samples (not just the one we used) were collected and confidence intervals were created.
+
+### Theory-based confidence intervals
+
+When the bootstrap distribution has the nice symmetric, bell shape that we saw in the red balls example above, we can also use a formula to quantify the standard error. This provides another way to compute a confidence interval, but is a little more tedious and mathematical. The steps are outlined below. We've also shown how we can use the confidence interval (CI) interpretation in this case as well to support your understanding of this tricky concept.
+
+#### Procedure for building a theory-based CI for $p$ {-}
+
+To construct a theory-based confidence interval for $p$, the unknown true population proportion we
+
+1. Collect a sample of size $n$
+1. Compute $\widehat{p}$
+1. Compute the standard error $$\text{SE} = \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$$
+1. Compute the margin of error $$\text{MoE} = 1.96 \cdot \text{SE} =  1.96 \cdot \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$$
+1. Compute both end points of the confidence interval:
+    + The lower end point `lower_ci`: $$\widehat{p} - \text{MoE} = \widehat{p} - 1.96 \cdot \text{SE} = \widehat{p} - 1.96 \cdot \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$$
+    + The upper end point `upper_ci`: $$\widehat{p} + \text{MoE} = \widehat{p} + 1.96 \cdot \text{SE} = \widehat{p} + 1.96 \cdot \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$$
+1. Alternatively, you can succinctly summarize a 95% confidence interval for $p$ using the $\pm$ symbol:
+
+$$
+\widehat{p} \pm \text{MoE} = \widehat{p} \pm 1.96 \cdot \text{SE} = \widehat{p} \pm 1.96 \cdot \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}
+$$
+
+
+#### Confidence intervals based on 33 tactile samples {-}
+
+Let's load the tactile sampling data for the 33 groups from Chapter \@ref(sampling). Recall this data was saved in the `tactile_prop_red` data frame included in the `moderndive` package. 
+
+<!-- Load tactile_prop_red into moderndive package too -->
+
+```{r, eval=FALSE, message=FALSE, warning=FALSE}
+tactile_prop_red
+```
+
+Let's now apply the above procedure for constructing confidence intervals for $p$ using the data saved in `tactile_prop_red` by adding/modifying new columns using the `dplyr` package data wrangling tools seen in Chapter \@ref(wrangling):
+
+1. Rename `prop_red` to `p_hat`, the official name of the sample proportion
+1. Make explicit the sample size `n` of $n=50$
+1. the standard error `SE`
+2. the margin of error `MoE`
+3. the left endpoint of the confidence interval `lower_ci`
+4. the right endpoint of the confidence interval `upper_ci`
+
+```{r, eval=FALSE, message=FALSE, warning=FALSE}
+conf_ints <- tactile_prop_red %>% 
+  rename(p_hat = prop_red) %>% 
+  mutate(
+    n = 50,
+    SE = sqrt(p_hat * (1 - p_hat) / n),
+    MoE = 1.96 * SE,
+    lower_ci = p_hat - MoE,
+    upper_ci = p_hat + MoE
+  )
+conf_ints
+```
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+conf_ints <- tactile_prop_red %>% 
+  rename(p_hat = prop_red) %>% 
+  select(-replicate) %>% 
+  mutate(
+    n = 50, 
+    SE = sqrt(p_hat*(1-p_hat)/n),
+    MoE = 1.96*SE,
+    lower_ci = p_hat - MoE,
+    upper_ci = p_hat + MoE,
+    y = seq_len(n())
+  )
+conf_ints %>% 
+  select(-y) %>% 
+  kable(
+    digits = 3,
+    caption = "33 confidence intervals from 33 tactile samples of size n=50", 
+    booktabs = TRUE,
+    longtable = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position", "repeat_header", 
+                                  "scale_down"))
+```
+
+Let's plot:
+
+1. These 33 confidence intervals for $p$: from `lower_ci` to `upper_ci`
+1. The true population proportion $p = 900 / 2400 = 0.375$ with a red vertical line
+
+```{r tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals based on 33 tactile samples of size n=50", fig.height=6}
+groups <- conf_ints$group
+conf_ints %>%
+  mutate(p = 900 / 2400,
+         captured = lower_ci <= p & p <= upper_ci) %>%
+  ggplot() +
+  geom_point(aes(x = p_hat, y = y, col = captured)) +
+  geom_vline(xintercept = 900 / 2400, col = "red") +
+  geom_segment(aes(
+    y = y,
+    yend = y,
+    x = lower_ci,
+    xend = upper_ci,
+    col = captured
+  )) +
+  scale_y_continuous(breaks = 1:33, labels = groups) +
+  labs(x = expression("Proportion red"),
+       y = "",
+       title = expression(paste("95% confidence intervals for ", p, 
+                                sep = ""))) +
+  scale_color_manual(values = c("blue", "orange")) 
+```
+
+We see that:
+
+* In 31 cases, the confidence intervals "capture" the true $p = 900 / 2400 = 0.375$
+* In 2 cases, the confidence intervals do not "capture" the true $p = 900 / 2400 = 0.375$
+
+Thus, the confidence intervals capture the true proportion $31 / 33 = `r 31 / 33 * 100`% of the time using this theory-based methodology.
+
+#### Confidence intervals based on 100 virtual samples {-}
+
+Let's say however, we repeated the above 100 times, not tactilely, but virtually. Let's do this only 100 times instead of 1000 like we did before so that the results can fit on the screen. Again, the steps for compute a 95% confidence interval for $p$ are:
+
+1. Collect a sample of size $n = 50$ as we did in Chapter \@ref(sampling)
+1. Compute $\widehat{p}$: the sample proportion red of these $n=50$ balls
+1. Compute the standard error $\text{SE} = \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
+1. Compute the margin of error $\text{MoE} = 1.96 \cdot \text{SE} =  1.96 \cdot \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
+1. Compute both end points of the confidence interval:
+    + `lower_ci`: $\widehat{p} - \text{MoE} = \widehat{p} - 1.96 \cdot \text{SE} = \widehat{p} - 1.96 \cdot \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
+    + `upper_ci`: $\widehat{p} + \text{MoE} = \widehat{p} + 1.96 \cdot \text{SE} = \widehat{p} +1.96 \cdot \sqrt{\frac{\widehat{p}(1-\widehat{p})}{n}}$
+
+Run the following three steps, being sure to `View()` the resulting data frame after each step so you can convince yourself of what's going on:
+
+```{r}
+# First: Take 100 virtual samples of n=50 balls
+virtual_samples <- bowl %>% 
+  rep_sample_n(size = 50, reps = 100)
+
+# Second: For each virtual sample compute the proportion red
+virtual_prop_red <- virtual_samples %>% 
+  group_by(replicate) %>% 
+  summarize(red = sum(color == "red")) %>% 
+  mutate(prop_red = red / 50)
+
+# Third: Compute the 95% confidence interval as above
+virtual_prop_red <- virtual_prop_red %>% 
+  rename(p_hat = prop_red) %>% 
+  mutate(
+    n = 50,
+    SE = sqrt(p_hat*(1-p_hat)/n),
+    MoE = 1.96 * SE,
+    lower_ci = p_hat - MoE,
+    upper_ci = p_hat + MoE
+  )
+```
+
+Here are the results:
+
+```{r virtual-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"}
+set.seed(79)
+
+virtual_samples <- bowl %>% 
+  rep_sample_n(size = 50, reps = 100)
+
+# Second: For each virtual sample compute the proportion red
+virtual_prop_red <- virtual_samples %>% 
+  group_by(replicate) %>% 
+  summarize(red = sum(color == "red")) %>% 
+  mutate(prop_red = red / 50)
+
+# Third: Compute the 95% confidence interval as above
+virtual_prop_red <- virtual_prop_red %>% 
+  rename(p_hat = prop_red) %>% 
+  mutate(
+    n = 50,
+    SE = sqrt(p_hat * (1 - p_hat) / n),
+    MoE = 1.96 * SE,
+    lower_ci = p_hat - MoE,
+    upper_ci = p_hat + MoE
+  ) %>% 
+  mutate(
+    y = seq_len(n()),
+    p = 900 / 2400,
+    captured = lower_ci <= p & p <= upper_ci
+  )
+
+ggplot(virtual_prop_red) +
+  geom_point(aes(x = p_hat, y = y, color = captured)) +
+  geom_segment(aes(y = y, yend = y, x = lower_ci, xend = upper_ci, 
+                   color = captured)) +
+  labs(
+    x = expression("Proportion red"),
+    y = "Replicate ID",
+    title = expression(paste("95% confidence intervals for ", p, sep = ""))
+  ) +
+  scale_color_manual(values = c("blue", "orange")) + 
+  geom_vline(xintercept = 900 / 2400, color = "red") 
+```
+
+We see that of our 100 confidence intervals based on samples of size $n=50$, `r sum(virtual_prop_red[["captured"]])` of them captured the true $p = 900/2400$, whereas `r 100 - sum(virtual_prop_red[["captured"]])` of them missed. As we create more and more confidence intervals based on more and more samples, about 95% of these intervals will capture. In other words our procedure is "95% reliable." 
+
+Theoretical methods like this have largely been used in the past since we didn't have the computing power to perform the simulation-based methods such as bootstrapping. They are still commonly used though and if the normality assumptions are met, they can provide a nice option for finding confidence intervals and performing hypothesis tests as we will see in Chapter \@ref(hypothesis-testing).
+
+## EXAMPLE: Comparing two proportions
+
+If you see someone else yawn, are you more likely to yawn? In an [episode](http://www.discovery.com/tv-shows/mythbusters/mythbusters-database/yawning-contagious/) of the show *Mythbusters*, they tested the myth that yawning is contagious. The snippet from the show is available to view in the United States on the Discovery Network website [here](https://www.discovery.com/tv-shows/mythbusters/videos/is-yawning-contagious). More information about the episode is also available on IMDb [here](https://www.imdb.com/title/tt0768479/).
+
+Fifty adults who thought they were being considered for an appearance on the show were interviewed by a show recruiter ("confederate") who either yawned or did not. Participants then sat by themselves in a large van and were asked to wait. While in the van, the Mythbusters watched via hidden camera to see if the unaware participants yawned. The data frame containing the results is available at `mythbusters_yawn` in the `moderndive` package. Let's check it out.
+
+```{r}
+mythbusters_yawn
+```
+
+- The participant ID is stored in the `subj` variable with values of 1 to 50.
+- The `group` variable is either `"seed"` for when a confederate was trying to influence the participant or `"control"` if a confederate did not interact with the participant.
+- The `yawn` variable is either `"yes"` if the participant yawned or `"no"` if the participant did not yawn.
+
+We can use the `janitor` package to get a glimpse into this data in a table format:
+
+```{r}
+mythbusters_yawn %>% 
+  tabyl(group, yawn) %>% 
+  adorn_percentages() %>% 
+  adorn_pct_formatting() %>% 
+  # To show original counts
+  adorn_ns()
+```
+
+We are interested in comparing the proportion of those that yawned after seeing a seed versus those that yawned with no seed interaction. We'd like to see if the difference between these two proportions is significantly larger than 0. If so, we'd have evidence to support the claim that yawning is contagious based on this study.
+
+In looking over this problem, we can make note of some important details to include in our `infer` pipeline:
+
+- We are calling a `success` having a `yawn` value of `"yes"`.
+- Our response variable will always correspond to the variable used in the `success` so the response variable is `yawn`.
+- The explanatory variable is the other variable of interest here: `group`.
+
+To summarize, we are looking to see the examine the relationship between yawning and whether or not the participant saw a seed yawn or not.
+
+### Compute the point estimate
+
+```{r error=TRUE}
+mythbusters_yawn %>% 
+  specify(formula = yawn ~ group)
+```
+
+Note that the `success` argument must be specified in situations such as this where the response variable has only two levels.
+
+```{r}
+mythbusters_yawn %>% 
+  specify(formula = yawn ~ group, success = "yes")
+```
+
+We next want to calculate the statistic of interest for our sample. This corresponds to the difference in the proportion of successes.
+
+```{r error=TRUE}
+mythbusters_yawn %>% 
+  specify(formula = yawn ~ group, success = "yes") %>% 
+  calculate(stat = "diff in props")
+```
+
+We see another error here. To further check to make sure that R knows exactly what we are after, we need to provide the `order` in which R should subtract these proportions of successes. As the error message states, we'll want to put `"seed"` first after `c()` and then `"control"`: `order = c("seed", "control")`. Our point estimate is thus calculated:
+
+```{r error=TRUE}
+obs_diff <- mythbusters_yawn %>% 
+  specify(formula = yawn ~ group, success = "yes") %>% 
+  calculate(stat = "diff in props", order = c("seed", "control"))
+obs_diff
+```
+
+This value represents the proportion of those that yawned after seeing a seed yawn (0.2941) minus the proportion of those that yawned with not seeing a seed (0.25).
+
+### Bootstrap distribution
+
+Our next step in building a confidence interval is to create a bootstrap distribution of statistics (differences in proportions of successes). We saw how it works with both a single variable in computing bootstrap means in Subsection \@ref(bootstrap-process) and in computing bootstrap proportions in Section \@ref(one-prop-ci), but we haven't yet worked with bootstrapping involving multiple variables though. 
+
+In the `infer` package, bootstrapping with multiple variables means that each **row** is potentially resampled. Let's investigate this by looking at the first few rows of `mythbusters_yawn`:
+
+```{r}
+head(mythbusters_yawn)
+```
+
+When we bootstrap this data, we are potentially pulling the subject's readings multiple times. Thus, we could see the entries of `"seed"` for `group` and `"no"` for `yawn` together in a new row in a bootstrap sample. This is further seen by exploring the `sample_n()` function in `dplyr` on this smaller 6 row data frame comprised of `head(mythbusters_yawn)`. The `sample_n()` function can perform this bootstrapping procedure and is similar to the `rep_sample_n()` function in `infer`, except that it is not `rep`eated but rather only performs one sample with or without replacement.
+
+```{r}
+set.seed(2019)
+```
+
+```{r}
+head(mythbusters_yawn) %>% 
+  sample_n(size = 6, replace = TRUE)
+```
+
+We can see that in this bootstrap sample generated from the first six rows of `mythbusters_yawn`, we have some rows repeated. The same is true when we perform the `generate()` step in `infer` as done below.
+
+
+```{r}
+bootstrap_distribution <- mythbusters_yawn %>% 
+  specify(formula = yawn ~ group, success = "yes") %>% 
+  generate(reps = 1000) %>% 
+  calculate(stat = "diff in props", order = c("seed", "control"))
+```
+
+```{r}
+bootstrap_distribution %>% visualize(bins = 20)
+```
+
+This distribution is roughly symmetric and bell-shaped but isn't quite there. Let's use the percentile-based method to compute a 95% confidence interval for the true difference in the proportion of those that yawn with and without a seed presented. The arguments are explicitly listed here but remember they are the defaults and simply `get_ci()` can be used.
+
+```{r}
+bootstrap_distribution %>% 
+  get_ci(type = "percentile", level = 0.95)
+```
+
+```{r include=FALSE}
+bootstrap_distribution %>% 
+  get_ci(type = "percentile", level = 0.95) -> myth_ci
+```
+
+
+The confidence interval shown here includes the value of 0. We'll see in Chapter \@ref(hypothesis-testing) further what this means in terms of this difference being statistically significant or not, but let's examine a bit here first. The range of plausible values for the difference in the proportion of that that yawned with and without a seed is between `r myth_ci[["2.5%"]]` and `r myth_ci[["97.5%"]]`. 
+
+Therefore, we are not sure which proportion is larger. Some of the bootstrap statistics showed the proportion without a seed to be higher and others showed the proportion with a seed to be higher. If the confidence interval was entirely above zero, we would be relatively sure (about "95% confident") that the seed group had a higher proportion of yawning than the control group.
+
+Note that this all relates to the importance of denoting the `order` argument in the `calculate()` function. Since we specified `"seed"` and then `"control"` positive values for the statistic correspond to the `"seed"` proportion being higher, whereas negative values correspond to the `"control"` group being higher.
+
+We, therefore, have evidence via this confidence interval suggesting that the conclusion from the Mythbusters show that "yawning is contagious" being "confirmed" is not statistically appropriate.
+
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+Practice problems to come soon!
+
+```{block, type='learncheck', purl=FALSE}
+```
+
+
+
+## Conclusion
+
+### What's to come?
+
+This chapter introduced the notions of bootstrapping and confidence intervals as ways to build intuition about population parameters using only the original sample information. We also concluded with a glimpse into statistical significance and we'll dig much further into this in Chapter \@ref(hypothesis-testing) up next!
+
+### Script of R code
+
+An R script file of all R code used in this chapter is available [here](scripts/09-confidence-intervals.R).
+  

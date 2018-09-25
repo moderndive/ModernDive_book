@@ -1,0 +1,383 @@
+# (PART) Data Exploration {-} 
+
+# Tidy Data {#tidy}
+
+<script src=https://cdn.datacamp.com/datacamp-light-latest.min.js></script>
+
+In this chapter, we'll discuss the importance of tidy data.  You may think that this means just having your data in a spreadsheet, but you'll see that it is actually more specific than that.  Data actually comes to us in a variety of formats from pictures to text to just numbers.  We'll focus on datasets that can be stored in a spreadsheet throughout this book as that is the most common way data is collected in the sciences.
+
+Having tidy data will allow us to more easily create data visualizations as we will see in Chapter \@ref(viz).  It will also help us with wrangling data in Chapter \@ref(manip) and in all subsequent chapters when we discuss statistical inference.  You may not necessarily understand the importance for **tidy data** immediately but it will become more and more apparent as we proceed through the book.
+
+```{r setup_tidy, include=FALSE}
+chap <- 3
+lc <- 0
+rq <- 0
+# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
+# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
+knitr::opts_chunk$set(tidy = FALSE, out.width = '\\textwidth')
+```
+
+
+
+### Needed packages {-}
+
+At the beginning of this and all subsequent chapters, we'll always have a list of packages you should have installed and loaded. In particular we load the `nycflights13` package which we'll discuss shortly and the `dplyr` package for data wrangling, the subject of Chapter \@ref(manip).  We also load the `tibble` package here, which contains the useful `glimpse` function.
+
+```{r warning=FALSE, message=FALSE}
+library(nycflights13)
+library(dplyr)
+library(tibble)
+```
+
+<!--Subsection on Tidy Data -->
+
+## What is tidy data?
+
+You have surely heard the word "tidy" in your life:
+
+- "Tidy up your room!"
+- "Please write your homework in a tidy way so that it is easier to grade and to provide feedback."
+- Marie Kondo's best-selling book [_The Life-Changing Magic of Tidying Up: The Japanese Art of Decluttering and Organizing_](https://www.amazon.com/Life-Changing-Magic-Tidying-Decluttering-Organizing/dp/1607747308/ref=sr_1_1?ie=UTF8&qid=1469400636&sr=8-1&keywords=tidying+up)
+- "I am not by any stretch of the imagination a tidy person, and the piles of unread books on the coffee table and by my bed have a plaintive, pleading quality to me - 'Read me, please!'" - Linda Grant
+
+So what does it mean for your data to be **tidy**?  Put simply, it means that your data is organized.  But it's more than just that.  It means that your data follows the same standard format making it easy for others to find elements of your data, to wrangle and transform your data, and, for our purposes, continuing with the common theme:  it makes it easier to visualize your data and the relationships between different variables in your data.
+
+We will follow Hadley Wickham's definition of **tidy data** here [@tidy]:
+
+> A dataset is a collection of values, usually either numbers (if quantitative) or strings (if
+qualitative). Values are organised in two ways. Every value belongs to a variable and an
+observation. A variable contains all values that measure the same underlying attribute (like
+height, temperature, duration) across units. An observation contains all values measured on
+the same unit (like a person, or a day, or a race) across attributes.
+
+> Tidy data is a standard way of mapping the meaning of a dataset to its structure. A dataset is
+messy or tidy depending on how rows, columns and tables are matched up with observations,
+variables and types. In **tidy data**:
+
+> 1. Each variable forms a column.
+> 2. Each observation forms a row.
+> 3. Each type of observational unit forms a table.
+
+```{r tidyfig, echo=FALSE, fig.cap="Tidy data graphic from http://r4ds.had.co.nz/tidy-data.html"}
+knitr::include_graphics("images/tidy-1.png")
+```
+
+Reading over this definition, you can begin to think about datasets that won't follow this nice format. This format of data is also known as "long" format.
+
+```{block lc3-1, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Give an example dataset that doesn't follow this format.
+
++ What features of this dataset might make it difficult to visualize?  
++ How could the dataset be tweaked to make it **tidy**?
+  
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  Say the following table are stock prices, how would you make this tidy?  
+  
+```{r echo=FALSE}
+library(dplyr)
+data.frame(
+  Date = as.Date('2009-01-01') + 0:4,
+  Boeing = paste("$", c("173.55", "172.61", "173.86", "170.77", "174.29"), sep=""),
+  Amazon = paste("$", c("174.90", "171.42", "171.58", "173.89", "170.16"), sep=""),
+  Google = paste("$", c("174.34", "170.04", "173.65", "174.87", "172.19") ,sep="")
+) %>% 
+knitr::kable() %>% 
+  kable_styling(font_size = 10)
+```
+
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+    
+
+
+
+
+<!--Subsection on nycflights13 -->
+
+## Datasets in the  `nycflights13` package
+
+We likely have all flown on airplanes or know someone that has. Air travel has become an ever-present aspect of our daily lives.  If you live in or are visiting a relatively large city and you walk around that city's airport, you see gates showing flight information from many different airlines.  And you will frequently see that some flights are delayed because of a variety of conditions.  Are there ways that we can avoid having to deal with these flight delays?  
+
+We'd all like to arrive at our destinations on time whenever possible. (Unless you secretly love hanging out at airports.  If you are one of these people, pretend for the moment that you are very much anticipating being at your final destination.)  Throughout this book, we're going to analyze data related to flights contained in the `nycflights13` package we loaded earlier [@R-nycflights13]. Specifically, this package contains information about all flights that departed from NYC
+(e.g. EWR, JFK and LGA) in 2013 in 5 datasets: 
+
+* `flights`: information on all 336,776 flights
+* `weather`: hourly meterological data for each airport
+* `planes`: construction information about each plane
+* `airports`: airport names and locations
+* `airlines`: translation between two letter carrier codes and names
+
+We will begin by loading in the `flights` dataset and getting an idea of its structure. Run the following in your console
+
+```{r load_flights}
+flights
+```
+
+This line of code loads in the `flights` dataset that is stored in the `nycflights13` package.  This dataset and most others presented in this book will be in the "data frame" format in R.  Data frames are essentially spreadsheets and allow us to look at collections of variables that are tightly coupled together.  
+
+The best way to get a feel for a data frame is to use the `View` function in RStudio.  This command will be given throughout the book as a reminder, but the actual output will be hidden.  Run `View(flights)` in R and look over this data frame. You should slowly get into the habit of always `View`ing any data frames that come your way.
+
+```{block lc3-2, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What does any *ONE* row in this `flights` dataset refer to?
+
+- A. Data on an airline 
+- B. Data on a flight
+- C. Data on an airport
+- D. Data on multiple flights
+
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+By running `View(flights)`, we see the different **variables** listed in the columns and we see that there are different types of variables.  Some of the variables like `distance`, `day`, and `arr_delay` are what we will call **quantitative** variables.  These variables vary in a numerical way.  Other variables here are **categorical**.
+
+Note that if you look in the leftmost column of the `View(flights)` output, you will see a column of numbers.  These are the row numbers of the dataset.  If you glance across a row with the same number, say row 5, you can get an idea of what each row corresponds to.  In other words, this will allow you to identify what object is being referred to in a given row.  This is often called the **observational unit**.  The **observational unit** in this example is an individual flight departing New York City in 2013.  You can identify the observational unit by determining what the **thing** is that is being measured in each of the variables.
+
+**Note**:  Frequently the first thing you should do when given a dataset is to 
+
+- identify the observational unit, 
+- specify the variables, and 
+- give the types of variables you are presented with.
+
+The `glimpse()` command in the `tibble` package provides us with much of the above information and more:
+
+```{r}
+glimpse(flights)
+```
+
+
+```{block lc3-3, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are some examples in this dataset of **categorical** variables?  What makes them different than **quantitative** variables?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What does `int`, `dbl`, and `chr` mean in the output above?  If you need a hint, you might want to run `str(flights)` instead.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How many different columns are in this dataset?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How many different rows are in this dataset?
+
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+We see that `glimpse` will give you the first few entries of each variable in a row after the variable.  In addition, the type of the variable is given immediately after each variable's name inside `< >`.  Here, `int` and `num` refer to quantitative variables.  In contrast, `chr` refers to categorical variables.  One more type of variable is given here with the `time_hour` variable: **dttm**.  As you may suspect, this variable corresponds to a specific date and time of day.
+
+Another nice feature of R is the help system.  You can get help in R by simply entering a question mark before the name of a function or an object and you will be presented with a page showing the documentation.  Since `glimpse` is a function defined in the `tibble` package, you can further emphasize that you'd like to look at the help for that specific `glimpse` function by adding the two columns between the package name and the function.  Note that these output help files is omitted here but the `flights` help can be accessed [here](https://cran.r-project.org/web/packages/nycflights13/nycflights13.pdf) on page 3 of the PDF document.
+
+```{r eval=FALSE}
+?tibble::glimpse
+?flights
+```
+
+Another aspect of tidy data is a description of what each variable in the dataset represents.  This helps others to understand what your variable names mean and what they correspond to.  If we look at the output of `?flights`, we can see that a description of each variable by name is given.
+
+An important feature to **ALWAYS** include with your data is the appropriate units of measurement.  We'll see this further when we work with the `dep_delay` variable in Chapter \@ref(viz).  (It's in minutes, but you'd get some really strange interpretations if you thought it was in hours or seconds.  UNITS MATTER!)
+
+## How is `flights` tidy?
+
+We see that `flights` has a rectangular shape with each row corresponding to a different flight and each column corresponding to a characteristic of that flight.  This matches exactly with how Hadley Wickham defined tidy data:
+
+1. Each variable forms a column.
+2. Each observation forms a row.
+
+But what about the third property?
+
+> 3. Each type of observational unit forms a table.
+
+We identified earlier that the observational unit in the `flights` dataset is an individual flight.  And we have shown that this dataset consists of `r format(nrow(flights), big.mark = ",", scientific = FALSE, trim = TRUE)` flights with `r ncol(flights)` variables.  In other words, some rows of this dataset don't refer to a measurement on an airline or on an airport.  They specifically refer to characteristics/measurements on a given **flight** from New York City in 2013.  
+
+By contrast, also included in the `nycflights13` package are datasets with different observational units [@R-nycflights13]:
+
+- `weather`: hourly meteorological data for each airport
+- `planes`: construction information about each plane
+- `airports`: airport names and locations
+- `airlines`: translation between two letter carrier codes and names
+
+You may have been asking yourself what `carrier` refers to in the `glimpse(flights)` output above.  The `airlines` dataset provides a description of this with each airline being the observational unit:
+
+```{r}
+airlines
+```
+
+As can be seen here when you just enter the name of an object in R, by default it will print the contents of that object to the screen.  Be careful!  It's usually better to use the `View()` function in RStudio since larger objects may take awhile to print to the screen and it likely won't be helpful to you to have hundreds of lines outputted.
+
+
+```{block lc3-3b, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Run the following block of code in RStudio to load and view each of the four data frames in the `nycflights13` package.  Switch between the different tabs that have opened to view each of the four data frames.  Describe in two sentences for each data frame what stands out to you and what the most important features are of each.
+
+```{r eval=FALSE}
+View(weather)
+View(planes)
+View(airports)
+View(airlines)
+```
+
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+### Identification variables
+
+There is a subtle difference between the kinds of variables that you will encounter in data frames.  The `airports` data frame you worked with above contains data in these different kinds.  Let's pull them apart using the `glimpse` function:
+
+```{r}
+glimpse(airports)
+```
+
+The variables `faa` and `name` are what we will call *identification variables*.  They are mainly used to provide a name to the observational unit.  Here the observational unit is an airport and the `faa` gives the code provided by the FAA for that airport while the `name` variable gives the longer more natural name of the airport.  These ID variables differ from the other variables that are often called *measurement* or *characteristic* variables.  The remaining variables (aside from `faa` and `name`) are of this type in `airports`.  They don't uniquely identify the observational unit, but instead describe properties of the observational unit.  For organizational purposes, it is best practice to have your identification variables in the far leftmost columns of your data frame.
+
+
+```{block lc3-3c, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What properties of the observational unit do each of `lat`, `lon`, `alt`, `tz`, `dst`, and `tzone` describe for the `airports` data frame?  Note that you may want to use `?airports` to get more information or go to the reference manual for the `nycflights13` package [here](https://cran.r-project.org/web/packages/nycflights13/nycflights13.pdf).
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Provide the names of variables in a data frame with at least three variables in which one of them is an identification variable and the other two are not.  In other words, create your own tidy dataset that matches these conditions.
+
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+## Normal forms of data
+
+The datasets included in the `nycflights13` package are in a form that minimizes redundancy of data.  We will see that there are ways to _merge_ (or _join_) the different tables together easily.  We are capable of doing so because each of the tables have _keys_ in common to relate one to another.  This is an important property of **normal forms** of data.  The process of decomposing data frames into less redundant tables without losing information is called **normalization**.  More information is available on [Wikipedia](https://en.wikipedia.org/wiki/Database_normalization).
+
+We saw an example of this above with the `airlines` dataset.  While the `flights` data frame could also include a column with the names of the airlines instead of the carrier code, this would be repetitive since there is a unique mapping of the carrier code to the name of the airline/carrier. 
+
+Below an example is given showing how to **join** the `airlines` data frame together with the `flights` data frame by linking together the two datasets via a common **key** of `"carrier"`.  Note that this "joined" data frame is assigned to a new data frame called `joined_flights`. The **key** variable that we frequently join by is one of the *identification variables* mentioned above.
+
+```{r message=FALSE}
+library(dplyr)
+joined_flights <- inner_join(x = flights, y = airlines, by = "carrier")
+```
+
+```{r eval=FALSE}
+View(joined_flights)
+```
+
+If we `View` this dataset, we see a new variable has been created called `name`. (We will see in Subsection \@ref(rename) ways to change `name` to a more descriptive variable name.)  More discussion about joining data frames together will be given in Chapter \@ref(manip).  We will see there that the names of the columns to be linked need not match as they did here with `"carrier"`.
+
+
+```{block tidy_review, type='learncheck'}
+**_Learning check_**
+```
+
+ **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are common characteristics of "tidy" datasets?
+
+ **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What makes "tidy" datasets useful for organizing data?
+
+ **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How many variables are presented in the table below?  What does each row correspond to? (**Hint:** You may not be able to answer both of these questions immediately but take your best guess.)
+
+
+```{r echo=FALSE, message=FALSE}
+library(dplyr)
+library(knitr)
+library(kableExtra)
+students <- c(4, 6)
+faculty <- c(2, 3)
+kable(data_frame("students" = students, "faculty" = faculty)) %>% 
+  kable_styling(font_size = 10)
+```
+
+ **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** The confusion you may have encountered in LC3.13 is a common one those that work with data are commonly presented with.  This dataset is not tidy.  Actually, the dataset in LC3.13 has three variables not the two that were presented.  Make a guess as to what these variables are and present a tidy dataset instead of this untidy one given in LC3.13.
+
+ **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** The actual data presented in LC3.13 is given below in tidy data format:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+role <- c(rep("student", 10), rep("faculty", 5))
+sociology <- c(rep(TRUE, 4), rep(FALSE, 6), rep(TRUE, 2), rep(FALSE, 3))
+school_type <- c(rep("Public", 6), rep("Private", 4), rep("Public", 3), rep("Private", 2))
+kable(data_frame("role" = role, `Sociology?` = sociology,
+  `Type of School` = school_type)) %>% 
+  kable_styling(font_size = 10)
+```
+
+- What does each row correspond to?  
+- What are the different variables in this data frame?  
+- The `Sociology?` variable is known as a logical variable.  What types of values does a logical variable take on?
+
+ **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are some advantages of data in normal forms?  What are some disadvantages?
+
+```{block, type='review'}
+**_Review questions_**
+```
+
+Review questions have been designed using the `fivethirtyeight` R package [@R-fivethirtyeight] with links to the corresponding FiveThirtyEight.com articles in our free DataCamp course **Effective Data Storytelling using the `tidyverse`**.  The material in this chapter is covered in the **Tidy Data** chapter of the DataCamp course available [here](https://campus.datacamp.com/courses/effective-data-storytelling-using-the-tidyverse/tidy-data).
+
+The questions are also added below using [DataCamp Light](https://github.com/datacamp/datacamp-light) in the webpage version of the textbook.
+
+
+
+```{r, include=FALSE} 
+tutorial::go_interactive(greedy = FALSE) 
+```
+
+**`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`** Joining data frames
+
+The `police_locals` data frame from the `fivethirtyeight` R package can be viewed as an interactive table [here](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/police_locals.html).  There has been
+much discussion about the political divide that exists in the US.  A separate data frame has been
+loaded with the name `ideology` that lists cities, their state, and the political ideology of the
+state.  Created somewhat naively, a description of this `state_ideology` variable follows.
+
+`state_ideology`:  For each city in the dataset, a look-up of the state the city resides in and
+the results of the 2016 Presidential election were given.  If Clinton won the state in 2016,
+`"Liberal"` is the value for `state_ideology`.  If Trump won the state in 2016, `"Conservative"`
+is the value for `state_ideology`.  An interactive table of the `ideology` data frame is  [here](https://ismayc.github.io/Effective-Data-Storytelling-using-the-tidyverse/ideology.html).
+
+- Use the `inner_join` function in the `dplyr` package to add the `state` and `state_ideology` 
+columns to the `police_locals` data frame where the key variable is `city` in both data frames.  (Note the
+use of `library(dplyr)` here.  You will always need to load the package first if you would like
+to use the functions inside it.)
+- Recall that the main arguments to `inner_join` are `x`, `y`, and `by`.  `x` corresponds to the data frame you would like to add columns to.  `y` corresponds to the data frame you'd like to add columns from.  `by` corresponds to the name (or names) of the key vectors that you'd like to join the two data frames together by.  Note that the names of the variables for `by` must be inside quotation marks.
+- Assign the name `police_join` to this expanded data frame.
+
+```{r ex="joining-data-frames", type="pre-exercise-code", tut=TRUE}
+library(fivethirtyeight)
+library(readr)
+ideology <- read_csv("https://moderndive.com/data/ideology.csv")
+```
+
+```{r ex="joining-data-frames", type="sample-code", eval=FALSE, tut=TRUE}
+library(dplyr)
+# Join police_locals with ideology by city
+# Provide police_join as the name
+police_join <- inner_join(x =  ,
+                          y =  ,
+                          by = " ")
+```
+
+```{r ex="joining-data-frames", type="solution", tut=TRUE}
+library(dplyr)
+# Join police_locals with ideology by city
+# Provide police_join as the name
+police_join <- inner_join(x = police_locals, y = ideology, by = "city")
+```
+
+```{r ex="joining-data-frames", type="sct", tut=TRUE}
+library(testwhat)
+test_object("police_join")
+test_error()
+test_function("inner_join", args = "x")
+test_function("inner_join", args = "y")
+test_function("inner_join", args = "by")
+success_msg("Good work! <br><br> THINK ABOUT IT:  How does linking these two datasets together help in analyzing the relationship between `state_ideology` and percentage of police officers residing in the cities they serve by race?")
+```
+
+
+## What's to come?
+
+In Chapter \@ref(viz), we will further explore the distribution of a variable in a related dataset to `flights`:  the `temp` variable in the `weather` dataset.  We'll be interested in understanding how this variable varies in relation to the values of other variables in the dataset.  We will see that visualization is often a powerful tool in helping us see what is going on in a dataset.  It will be a useful way to expand on the `glimpse` function we have seen here for tidy data.
+

@@ -1,0 +1,94 @@
+# Reach for the Stars {#appendixC}
+
+## Needed packages {-}
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(dygraphs)
+library(nycflights13)
+```
+
+## Sorted barplots
+
+Building upon the example in Section \@ref(geombar):
+
+```{r}
+flights_table <- table(flights$carrier)
+flights_table
+```
+
+```{r include=FALSE}
+#library(dplyr)
+#carrier_counts <- flights %>% count(carrier)
+#carrier_counts
+```
+
+We can sort this table from highest to lowest counts by using the `sort` function:
+
+```{r}
+sorted_flights <- sort(flights_table, decreasing = TRUE)
+names(sorted_flights)
+```
+
+```{r include=FALSE}
+#carrier_counts <- carrier_counts %>%
+#  arrange(desc(n))
+```
+
+It is often preferred for barplots to be ordered corresponding to the heights of the bars.  This allows the reader to more easily compare the ordering of different airlines in terms of departed flights [@robbins2013].  We can also much more easily answer questions like "How many airlines have more departing flights than Southwest Airlines?".
+
+We can use the sorted table giving the number of flights defined as `sorted_flights` to **reorder** the `carrier`.
+
+```{r, fig.cap="Number of flights departing NYC in 2013 by airline - Descending numbers"}
+ggplot(data = flights, mapping = aes(x = carrier)) +
+  geom_bar() +
+  scale_x_discrete(limits = names(sorted_flights))
+```
+
+```{r include=FALSE}
+#ggplot(data = carrier_counts, mapping = aes(x = carrier, y = n)) +
+#  geom_bar(stat = "identity") + 
+#  scale_x_discrete(limits = carrier)
+```
+
+The last addition here specifies the values of the horizontal `x` axis on a discrete scale to correspond to those given by the entries of `sorted_flights`.  
+
+## Interactive graphics
+
+
+### Interactive linegraphs
+
+Another useful tool for viewing linegraphs such as this is the `dygraph` function in the `dygraphs` package in combination with the `dyRangeSelector` function.  This allows us to zoom in on a selected range and get an interactive plot for us to work with:
+
+```{r warning=FALSE, out.width="100%"}
+library(dygraphs)
+flights_day <- mutate(flights, date = as.Date(time_hour))
+flights_summarized <- flights_day %>% 
+  group_by(date) %>%
+  summarize(median_arr_delay = median(arr_delay, na.rm = TRUE))
+rownames(flights_summarized) <- flights_summarized$date
+flights_summarized <- select(flights_summarized, -date)
+dyRangeSelector(dygraph(flights_summarized))
+```
+
+<br>
+
+The syntax here is a little different than what we have covered so far.  The `dygraph` function is expecting for the dates to be given as the `rownames` of the object.  We then remove the `date` variable from the `flights_summarized` data frame since it is accounted for in the `rownames`.  Lastly, we run the `dygraph` function on the new data frame that only contains the median arrival delay as a column and then provide the ability to have a selector to zoom in on the interactive plot via `dyRangeSelector`.  (Note that this plot will only be interactive in the HTML version of this book.)
+
+<!--
+**`paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Use the interactive linegraph to determine the highest median arrival delay for flights from NYC in 2013.  What date was it and what do you think contributed to it?
+
+
+** ** What are three specific questions that can be more easily answered by looking at Figure 4.6 instead of Figure 4.5?
+
+- Changing the labels of a plot (x-axis, y-axis)
+- stat = "identity" for aggregated data and barplots
+- Changing the theme for ggplots (`ggthemes` package too)
+- Adding `code_folding` and `code_download` to YAML
+- `kable` function from `knitr`
+- Reading in data from files in different formats - Getting Used to R book reference
+- Reshaping the data with `tidyr`
+
+-->

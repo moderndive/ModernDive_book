@@ -1,0 +1,330 @@
+# Inference for Regression {#inference-for-regression}
+
+
+```{r setup_inference_regression, include=FALSE}
+chap <- 11
+lc <- 0
+rq <- 0
+# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
+# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
+
+knitr::opts_chunk$set(
+  tidy = FALSE, 
+  out.width = '\\textwidth'
+  )
+
+# This bit of code is a bug fix on asis blocks, which we use to show/not show LC
+# solutions, which are written like markdown text. In theory, it shouldn't be
+# necessary for knitr versions <=1.11.6, but I've found I still need to for
+# everything to knit properly in asis blocks. More info here: 
+# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
+library(knitr)
+knit_engines$set(asis = function(options) {
+  if (options$echo && options$eval) knit_child(text = options$code)
+})
+
+# This controls which LC solutions to show. Options for solutions_shown: "ALL"
+# (to show all solutions), or subsets of c('11-1', '11-2'), including the
+# null vector c('') to show no solutions.
+solutions_shown <- c('')
+show_solutions <- function(section){
+  return(solutions_shown == "ALL" | section %in% solutions_shown)
+  }
+```
+
+---
+
+```{block, type='learncheck', purl=FALSE}
+**Note: This chapter is still under construction. If you would like to contribute, please check us out on GitHub at <https://github.com/moderndive/moderndive_book>.**
+
+<center> 
+/begin{center}
+`r include_image(path = "images/sign-2408065_1920.png", html_opts="height=100px",
+  latex_opts = "width=20%")`
+/end{center}
+</center>
+```
+
+---
+
+
+### Needed packages {-}
+
+Let's load all the packages needed for this chapter (this assumes you've already installed them). Read Section \@ref(packages) for information on how to install and load R packages.
+
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(moderndive)
+library(infer)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+# Packages needed internally, but not in text.
+library(knitr)
+library(kableExtra)
+```
+
+### DataCamp {-}
+
+Our approach of understanding both the statistical and practical significance of any regression results, is aligned with the approach taken in [Jo Hardin's](https://twitter.com/jo_hardin47) DataCamp course "Inference for Regression." If you're interested in complementing your learning below in an interactive online environment, click on the image below to access the course. 
+
+```{r, echo=FALSE, results='asis', purl=FALSE}
+image_link(path = "images/datacamp_inference_for_regression.png", link = "https://www.datacamp.com/courses/inference-for-linear-regression", html_opts = "height: 150px;", latex_opts = "width=0.3\\textwidth")
+```
+
+
+
+## Simulation-based Inference for Regression
+
+We can also use the concept of permuting to determine the standard error of our null distribution and conduct a hypothesis test for a population slope. Let's go back to our example on teacher evaluations Chapters \@ref(regression) and \@ref(multiple-regression).  We'll begin in the basic regression setting to test to see if we have evidence that a statistically significant *positive* relationship exists between teaching and beauty scores for the University of Texas professors. As we did in Chapter \@ref(regression), teaching `score` will act as our outcome variable and `bty_avg` will be our explanatory variable. We will set up this hypothesis testing process as we have each before via the "There is Only One Test" diagram in Figure \@ref(fig:htdowney) using the `infer` package.
+
+### Data
+
+Our data is stored in `evals` and we are focused on the measurements of the `score` and `bty_avg` variables there. Note that we don't choose a subset of variables here since we will `specify()` the variables of interest using `infer`.
+
+```{r}
+evals %>% 
+  specify(score ~ bty_avg)
+```
+
+### Test statistic $\delta$
+
+Our test statistic here is the sample slope coefficient that we denote with $b_1$.
+
+### Observed effect $\delta^*$
+
+We can use the `specify() %>% calculate()` shortcut here to determine the slope value seen in our observed data:
+
+```{r}
+slope_obs <- evals %>% 
+  specify(score ~ bty_avg) %>% 
+  calculate(stat = "slope")
+```
+
+The calculated slope value from our observed sample is $b_1 = `r pull(slope_obs)`$.
+
+### Model of $H_0$
+
+We are looking to see if a positive relationship exists so $H_A: \beta_1 > 0$.  Our null hypothesis is always in terms of equality so we have $H_0: \beta_1 = 0$. In other words, when we assume the null hypothesis is true, we are assuming there is NOT a linear relationship between teaching and beauty scores for University of Texas professors.
+
+### Simulated data
+
+Now to simulate the null hypothesis being true and recreating how our sample was created, we need to think about what it means for $\beta_1$ to be zero. If $\beta_1 = 0$, we said above that there is no relationship between the teaching and beauty scores. If there is no relationship, then any one of the teaching score values could have just as likely occurred with any of the other beauty score values instead of the one that it actually did fall with. We, therefore, have another example of permuting in our simulating of data under the null hypothesis.
+
+**Tactile simulation**
+
+We could use a deck of `r nrow(evals) * 2` note cards to create a tactile simulation of this permuting process. We would write the `r nrow(evals)` different values of beauty scores on each of the `r nrow(evals)` cards, one per card. We would then do the same thing for the `r nrow(evals)` teaching scores putting them on one per card.
+
+Next, we would lay out each of the `r nrow(evals)` beauty score cards and we would shuffle the teaching score deck. Then, after shuffling the deck well, we would disperse the cards one per each one of the beauty score cards. We would then enter these new values in for teaching score and compute a sample slope based on this permuting. We could repeat this process many times, keeping track of our sample slope after each shuffle.
+
+### Distribution of $\delta$ under $H_0$
+
+We can build our null distribution in much the same way we did in Chapter \@ref(hypothesis-testing) using the `generate()` and `calculate()` functions. Note also the addition of the `hypothesize()` function, which lets `generate()` know to perform the permuting instead of bootstrapping. 
+
+```{r eval=FALSE}
+null_slope_distn <- evals %>% 
+  specify(score ~ bty_avg) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "slope")
+```
+
+```{r echo=FALSE}
+if(!file.exists("rds/null_slope_distn.rds")){
+  null_slope_distn <- evals %>% 
+    specify(score ~ bty_avg) %>%
+    hypothesize(null = "independence") %>% 
+    generate(reps = 10000) %>% 
+    calculate(stat = "slope")
+   saveRDS(object = null_slope_distn, 
+           "rds/null_slope_distn.rds")
+} else {
+   null_slope_distn <- readRDS("rds/null_slope_distn.rds")
+}
+```
+
+```{r}
+null_slope_distn %>% 
+  visualize(obs_stat = slope_obs, direction = "greater")
+```
+
+In viewing the distribution above with shading to the right of our observed slope value of `r pull(slope_obs)`, we can see that we expect the p-value to be quite small. Let's calculate it next using a similar syntax to what was done with `visualize()`.
+
+### The p-value
+
+```{r fig.cap="Shaded histogram to show p-value"}
+null_slope_distn %>% 
+  get_pvalue(obs_stat = slope_obs, direction = "greater")
+```
+
+Since `r pull(slope_obs)` falls far to the right of this plot beyond where any of the histogram bins have data, we can say that we have a $p$-value of 0.  We, thus, have evidence to reject the null hypothesis in support of there being a positive association between the beauty score and teaching score of University of Texas faculty members.
+
+
+```{block lc9-5, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the inference above but this time for the correlation coefficient instead of the slope. Note the implementation of `stat = "correlation"` in the `calculate()` function of the `infer` package.
+
+```{block, type='learncheck', purl=FALSE}
+```
+
+## Bootstrapping for the regression slope
+
+With the p-value calculated as 0 in the hypothesis test above, we can next determine just how strong of a positive slope value we might expect between the variables of teaching `score` and beauty score (`bty_avg`) for University of Texas faculty. Recall the `infer` pipeline above to compute the null distribution. Recall that this assumes the null hypothesis is true that there is no relationship between teaching score and beauty score using the `hypothesize()` function.
+
+```{r eval=FALSE}
+null_slope_distn <- evals %>% 
+  specify(score ~ bty_avg) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 10000, type = "permute") %>% 
+  calculate(stat = "slope")
+```
+
+To further reinforce the process being done in the pipeline, we've added the `type` argument to `generate()`. This is automatically added based on the entries for `specify()` and `hypothesize()` but it provides a useful way to check to make sure `generate()` is created the samples in the desired way. In this case, we `permute`d the values of one variable across the values of the other 10,000 times and `calculate`d a `"slope"` coefficient for each of these 10,000 `generate`d samples.
+
+If instead we'd like to get a range of plausible values for the true slope value, we can use the process of bootstrapping:
+
+```{r echo=FALSE}
+bootstrap_slope_distn <- evals %>% 
+  specify(score ~ bty_avg) %>%
+  generate(reps = 10000, type = "bootstrap") %>% 
+  calculate(stat = "slope")
+```
+
+
+```{r echo=FALSE}
+if(!file.exists("rds/bootstrap_slope_distn.rds")){
+  bootstrap_slope_distn <- evals %>% 
+    specify(score ~ bty_avg) %>%
+    generate(reps = 10000, type = "bootstrap") %>% 
+    calculate(stat = "slope")
+  saveRDS(object = bootstrap_slope_distn, 
+           "rds/bootstrap_slope_distn.rds")
+} else {
+  bootstrap_slope_distn <- readRDS("rds/bootstrap_slope_distn.rds")
+}
+```
+
+```{r}
+bootstrap_slope_distn %>% visualize()
+```
+
+Next we can use the `get_ci()` function to determine the confidence interval. Let's do this in two different ways obtaining 99% confidence intervals. Remember that these denote a range of plausible values for an unknown true population slope parameter regressing teaching score on beauty score.
+
+```{r}
+percentile_slope_ci <- bootstrap_slope_distn %>% 
+  get_ci(level = 0.99, type = "percentile")
+percentile_slope_ci
+```
+
+```{r}
+se_slope_ci <- bootstrap_slope_distn %>% 
+  get_ci(level = 0.99, type = "se", point_estimate = slope_obs)
+se_slope_ci
+```
+
+With the bootstrap distribution being close to symmetric, it makes sense that the two resulting confidence intervals are similar.
+
+<!-- It's all you, Bert! Not sure if we want to cover more about the t distribution here as well or how we should transition from simulation-based to theory-based for the multiple regression part? -->
+
+## Inference for multiple regression
+
+### Refresher: Professor evaluations data
+
+Let's revisit the professor evaluations data that we analyzed using multiple regression with one numerical and one categorical predictor. In particular
+
+* $y$: outcome variable of instructor evaluation `score`
+* predictor variables
+    + $x_1$: numerical explanatory/predictor variable of `age`
+    + $x_2$: categorical explanatory/predictor variable of `gender`
+
+```{r, echo=FALSE}
+library(tidyr)
+```
+    
+```{r}
+library(ggplot2)
+library(dplyr)
+library(moderndive)
+
+evals_multiple <- evals %>%
+  select(score, ethnicity, gender, language, age, bty_avg, rank)
+```
+
+First, recall that we had two competing potential models to explain professors'
+teaching scores:
+
+1. Model 1: No interaction term. i.e. both male and female profs have the same slope describing the associated effect of age on teaching score
+1. Model 2: Includes an interaction term. i.e. we allow for male and female profs to have different slopes describing the associated effect of age on teaching score
+
+### Refresher: Visualizations
+
+Recall the plots we made for both these models:
+
+```{r model1, echo=FALSE, warning=FALSE, fig.cap="Model 1: no interaction effect included"}
+coeff <- lm(score ~ age + gender, data = evals_multiple) %>% coef() %>% as.numeric()
+slopes <- evals_multiple %>%
+  group_by(gender) %>%
+  summarise(min = min(age), max = max(age)) %>%
+  mutate(intercept = coeff[1]) %>%
+  mutate(intercept = ifelse(gender == "male", intercept + coeff[3], intercept)) %>%
+  gather(point, age, -c(gender, intercept)) %>%
+  mutate(y_hat = intercept + age * coeff[2])
+  
+  ggplot(evals_multiple, aes(x = age, y = score, col = gender)) +
+  geom_jitter() +
+  labs(x = "Age", y = "Teaching Score", color = "Gender") +
+  geom_line(data = slopes, aes(y = y_hat), size = 1)
+```
+
+```{r model2, echo=FALSE, warning=FALSE, fig.cap="Model 2: interaction effect included"}
+ggplot(evals_multiple, aes(x = age, y = score, col = gender)) +
+  geom_jitter() +
+  labs(x = "Age", y = "Teaching Score", color = "Gender") +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+### Refresher: Regression tables
+
+Last, let's recall the regressions we fit. First, the regression with no 
+interaction effect: note the use of `+` in the formula in Table \@ref(tab:modelmultireg).
+
+```{r, eval=FALSE}
+score_model_2 <- lm(score ~ age + gender, data = evals_multiple)
+get_regression_table(score_model_2)
+```
+```{r modelmultireg, echo=FALSE}
+score_model_2 <- lm(score ~ age + gender, data = evals_multiple)
+get_regression_table(score_model_2) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Model 1: Regression table with no interaction effect included", 
+    booktabs = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
+```
+
+Second, the regression with an interaction effect: note the use of `*` in the formula.
+
+```{r, eval=FALSE}
+score_model_3 <- lm(score ~ age * gender, data = evals_multiple)
+get_regression_table(score_model_3)
+```
+```{r, echo=FALSE}
+score_model_3 <- lm(score ~ age * gender, data = evals_multiple)
+get_regression_table(score_model_3) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Model 2: Regression table with interaction effect included", 
+    booktabs = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
+                latex_options = c("HOLD_position"))
+```
+
+### Script of R code
+
+An R script file of all R code used in this chapter is available [here](scripts/11-inference-for-regression.R).
