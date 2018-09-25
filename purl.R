@@ -3,6 +3,12 @@ if(!dir.exists("docs/scripts")){
   dir.create("docs/scripts")
 }
 
+# For Chapter 5
+solutions_shown <- c('')
+show_solutions <- function(section){
+  return(solutions_shown == "ALL" | section %in% solutions_shown)
+}
+
 # Note order matters here:
 chapter_titles <- c("getting-started",
                     "visualization",

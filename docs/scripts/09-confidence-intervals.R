@@ -1,12 +1,22 @@
-## ----inference-summary-table, echo=FALSE, message=FALSE------------------
+## ----summarytable-prep, echo=FALSE, message=FALSE------------------------
 # Original at https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 library(dplyr)
 library(readr)
+
+## ----summarytable, echo=FALSE--------------------------------------------
 read_csv("data/ch9_summary_table - Sheet1.csv", na = "") %>% 
   kable(
-    caption = "Scenarios of sampling for inference", 
-    booktabs = TRUE
-  )
+    caption = "\\label{tab:summarytable}Scenarios of sampling for inference", 
+    booktabs = TRUE,
+    escape = FALSE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position")) %>%
+  column_spec(1, width = "0.5in") %>% 
+  column_spec(2, width = "0.7in") %>%
+  column_spec(3, width = "1in") %>%
+  column_spec(4, width = "1.1in") %>% 
+  column_spec(5, width = "1in")
 
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(dplyr)
@@ -18,6 +28,7 @@ library(infer)
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
+library(kableExtra)
 
 ## ----include=FALSE-------------------------------------------------------
 set.seed(2018)
@@ -390,8 +401,12 @@ conf_ints %>%
   kable(
     digits = 3,
     caption = "33 confidence intervals from 33 tactile samples of size n=50", 
-    booktabs = TRUE
-  )
+    booktabs = TRUE,
+    longtable = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position", "repeat_header", 
+                                  "scale_down"))
 
 ## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals based on 33 tactile samples of size n=50", fig.height=6----
 groups <- conf_ints$group

@@ -36,6 +36,9 @@ glimpse(flights)
 ## ----eval=FALSE----------------------------------------------------------
 ## ?flights
 
+## ----echo=FALSE, fig.cap="ModernDive flowchart", out.width='110%', fig.align='center'----
+knitr::include_graphics("images/flowcharts/flowchart/flowchart.004.png")
+
 ## ---- echo=FALSE, warning=FALSE, message=FALSE, results='hide'-----------
 # needed_pkgs <- c("nycflights13", "tibble", "dplyr", "ggplot2", "knitr", 
 #   "okcupiddata", "dygraphs", "rmarkdown", "mosaic", 

@@ -1,16 +1,27 @@
-## ---- message=FALSE, warning=FALSE---------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
+## library(ggplot2)
+## library(dplyr)
+## library(moderndive)
+## library(ISLR)
+## library(skimr)
+
+## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 library(ggplot2)
 library(dplyr)
 library(moderndive)
 library(ISLR)
-library(skimr)
+# library(skimr) (Causes problems with table linking)
 
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 # Packages needed internally, but not in text:
 library(mvtnorm)
+library(kableExtra)
 library(tidyr)
 library(forcats)
 library(gridExtra)
+
+## ---- echo=FALSE, results='asis'-----------------------------------------
+image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.3\\textwidth")
 
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(ISLR)
@@ -27,15 +38,22 @@ Credit %>%
     digits = 3,
     caption = "Random sample of 5 credit card holders",
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 glimpse(Credit)
 
-## ------------------------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
+## Credit %>%
+##   select(Balance, Limit, Income) %>%
+##   skim()
+
+## ----echo=FALSE----------------------------------------------------------
 Credit %>% 
   select(Balance, Limit, Income) %>% 
-  skim()
+  skimr::skim()
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## Credit %>%
@@ -56,7 +74,9 @@ Credit %>%
     digits = 3,
     caption = "Correlations between credit card balance, credit limit, and income", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(Credit, aes(x = Limit, y = Balance)) +
@@ -106,6 +126,9 @@ grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow =
 ##       zaxis = list(title = "y - Balance ($)")
 ##     )
 ##   )
+
+## ----echo=FALSE, fig.cap="Regression plane", fig.align='center'----------
+knitr::include_graphics("images/credit_card_balance_regression_plane.png")
 
 ## ---- eval=FALSE, echo=FALSE---------------------------------------------
 ## # Save as 798 x 562 images/credit_card_balance_regression_plane.png
@@ -166,7 +189,9 @@ get_regression_table(Balance_model) %>%
     digits = 3,
     caption = "Multiple regression table", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## regression_points <- get_regression_points(Balance_model)
@@ -181,16 +206,22 @@ regression_points %>%
     digits = 3,
     caption = "Regression points (first 5 rows of 400)",
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(regression_points, aes(x = Limit, y = residual)) +
 ##   geom_point() +
-##   labs(x = "Credit limit (in $)", y = "Residual", title = "Residuals vs credit limit")
+##   labs(x = "Credit limit (in $)",
+##        y = "Residual",
+##        title = "Residuals vs credit limit")
 ## 
 ## ggplot(regression_points, aes(x = Income, y = residual)) +
 ##   geom_point() +
-##   labs(x = "Income (in $1000)", y = "Residual", title = "Residuals vs income")
+##   labs(x = "Income (in $1000)",
+##        y = "Residual",
+##        title = "Residuals vs income")
 
 ## ---- echo=FALSE, fig.height=4, fig.cap="Residuals vs credit limit and income"----
 model3_residual_vs_limit_plot <- ggplot(regression_points, aes(x = Limit, y = residual)) +
@@ -222,11 +253,17 @@ evals_ch7 %>%
     digits = 3,
     caption = "Random sample of 5 instructors",
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
-## ------------------------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
+## evals_ch7 %>%
+##   skim()
+
+## ----echo=FALSE----------------------------------------------------------
 evals_ch7 %>% 
-  skim()
+  skimr::skim()
 
 ## ------------------------------------------------------------------------
 evals_ch7 %>% 
@@ -249,7 +286,9 @@ get_regression_table(score_model_2) %>%
     digits = 3,
     caption = "Regression table", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ----numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin by gender: same slope"----
 coeff <- lm(score ~ age + gender, data = evals_ch7) %>% 
@@ -279,7 +318,9 @@ get_regression_table(score_model_interaction) %>%
     digits = 3,
     caption = "Regression table", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ---- echo=FALSE---------------------------------------------------------
 data_frame(
@@ -290,7 +331,9 @@ data_frame(
   knitr::kable(
     caption = "Comparison of male and female intercepts and age slopes", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## regression_points <- get_regression_points(score_model_interaction)
@@ -305,7 +348,9 @@ regression_points %>%
     digits = 3,
     caption = "Regression points (first 5 rows of 463)",
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ----residual1, warning=FALSE, fig.cap="Interaction model histogram of residuals"----
 ggplot(regression_points, aes(x = residual)) +
@@ -337,9 +382,11 @@ Credit %>%
   cor() %>% 
   knitr::kable(
     digits = 3,
-    caption = "Correlation between income (in $) and credit card balance", 
+    caption = "Correlation between income (in dollars) and credit card balance", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
 grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)

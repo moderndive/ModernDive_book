@@ -10,7 +10,9 @@ library(nycflights13)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## btv_sea_flights_fall <- flights %>%
-##   filter(origin == "JFK", (dest == "BTV" | dest == "SEA"), month >= 10)
+##   filter(origin == "JFK",
+##          dest == "BTV" | dest == "SEA",
+##          month >= 10)
 ## View(btv_sea_flights_fall)
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -20,23 +22,32 @@ library(nycflights13)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## summary_temp <- weather %>%
-##   summarize(mean = mean(temp), std_dev = sd(temp))
+##   summarize(mean = mean(temp),
+##             std_dev = sd(temp))
 ## summary_temp
 
 ## ---- echo=FALSE---------------------------------------------------------
+options(knitr.kable.NA = '')
 summary_temp <- weather %>% 
-  summarize(mean = mean(temp), std_dev = sd(temp))
-kable(summary_temp)
+  summarize(mean = mean(temp), 
+            std_dev = sd(temp))
+kable(summary_temp) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## summary_temp <- weather %>%
-##   summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
+##   summarize(mean = mean(temp, na.rm = TRUE),
+##             std_dev = sd(temp, na.rm = TRUE))
 ## summary_temp
 
 ## ---- echo=FALSE---------------------------------------------------------
 summary_temp <- weather %>% 
-  summarize(mean = mean(temp, na.rm = TRUE), std_dev = sd(temp, na.rm = TRUE))
-kable(summary_temp)
+  summarize(mean = mean(temp, na.rm = TRUE), 
+            std_dev = sd(temp, na.rm = TRUE))
+kable(summary_temp) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 #summary_temp$mean
@@ -58,7 +69,9 @@ summary_monthly_temp <- weather %>%
   group_by(month) %>% 
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))
-kable(summary_monthly_temp)
+kable(summary_monthly_temp) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## by_origin <- flights %>%
@@ -70,7 +83,9 @@ kable(summary_monthly_temp)
 by_origin <- flights %>% 
   group_by(origin) %>% 
   summarize(count = n())
-kable(by_origin)
+kable(by_origin) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 by_origin_monthly <- flights %>% 
@@ -132,7 +147,9 @@ gain_summary <- flights %>%
     sd = sd(gain, na.rm = TRUE),
     missing = sum(is.na(gain))
   )
-kable(gain_summary)
+kable(gain_summary) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
+                latex_options = c("HOLD_position"))
 
 ## ----message=FALSE, fig.cap="Histogram of gain variable"-----------------
 ggplot(data = flights, mapping = aes(x = gain)) +
@@ -187,7 +204,8 @@ named_dests
 
 ## ------------------------------------------------------------------------
 flights_weather_joined <- flights %>%
-  inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
+  inner_join(weather, 
+             by = c("year", "month", "day", "hour", "origin"))
 flights_weather_joined
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -258,7 +276,11 @@ read_csv("data/ch5_summary_table - Sheet1.csv", na = "") %>%
   kable(
     caption = "Summary of data wrangling verbs", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                 latex_options = c("HOLD_position")) %>%
+   column_spec(2, width = "0.9in") %>% 
+   column_spec(3, width = "3.3in")
 
 ## **Learning Check Solutions**
 
@@ -333,4 +355,7 @@ flights %>%
   arrange(desc(ASM)) %>% 
   # Added:
   inner_join(airlines, by = "carrier")
+
+## ----echo=FALSE, fig.cap="ModernDive flowchart - On to Part II!", fig.align='center'----
+knitr::include_graphics("images/flowcharts/flowchart/flowchart.005.png")
 
