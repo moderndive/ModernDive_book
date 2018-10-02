@@ -21,19 +21,29 @@ library(nycflights13)
 ## View(not_BTV_SEA)
 
 ## ---- eval=FALSE---------------------------------------------------------
+## many_airports <- flights %>%
+##   filter(dest == "BTV" | dest == "SEA" | dest == "PDX" | dest == "SFO" | dest == "BDL")
+## View(many_airports)
+
+## ---- eval=FALSE---------------------------------------------------------
+## many_airports <- flights %>%
+##   filter(dest %in% c("BTV", "SEA", "PDX", "SFO", "BDL"))
+## View(many_airports)
+
+## ---- eval=FALSE---------------------------------------------------------
 ## summary_temp <- weather %>%
 ##   summarize(mean = mean(temp),
 ##             std_dev = sd(temp))
 ## summary_temp
 
-## ---- echo=FALSE---------------------------------------------------------
-options(knitr.kable.NA = '')
-summary_temp <- weather %>% 
-  summarize(mean = mean(temp), 
-            std_dev = sd(temp))
-kable(summary_temp) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
-                latex_options = c("HOLD_position"))
+## ---- echo=FALSE, eval=FALSE---------------------------------------------
+## options(knitr.kable.NA = '')
+## summary_temp <- weather %>%
+##   summarize(mean = mean(temp),
+##             std_dev = sd(temp))
+## kable(summary_temp) %>%
+##   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+##                 latex_options = c("HOLD_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## summary_temp <- weather %>%
