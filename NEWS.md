@@ -2,6 +2,7 @@
 
 * Added Learning Check solutions section to Appendix
 * Added PDF build
+* Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
 
 # ModernDive 0.4.0
 
