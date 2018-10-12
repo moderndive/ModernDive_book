@@ -32,8 +32,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <link rel="apple-touch-icon-precomposed" sizes="152x152" href="images/logos/favicons/apple-touch-icon.png">
   <link rel="shortcut icon" href="images/logos/favicons/favicon.ico" type="image/x-icon">
-
-<link rel="next" href="2-getting-started.html">
+<link rel="prev" href="3-viz.html">
+<link rel="next" href="5-wrangling.html">
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
@@ -531,353 +531,500 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <html>
 <img src='https://moderndive.com/wide_format.png' alt="ModernDive">
 </html>
-<div id="header">
-<h1 class="title">Statistical Inference via Data Science in R</h1>
-<p class="author"><em>Chester Ismay and Albert Y. Kim</em></p>
-<p class="date"><em>October 12, 2018</em></p>
+<div id="tidy" class="section level1">
+<h1><span class="header-section-number">Chapter 4</span> Tidy Data via tidyr</h1>
+<p>In Subsection <a href="2-getting-started.html#programming-concepts">2.2.1</a> we introduced the concept of a data frame: a rectangular spreadsheet-like representation of data in R where the rows correspond to observations and the columns correspond to variables describing each observation. In Section <a href="2-getting-started.html#nycflights13">2.4</a>, we started explorations of our first data frame <code>flights</code> included in the <code>nycflights13</code> package. In Chapter <a href="3-viz.html#viz">3</a> we made graphics using data contained in <code>flights</code> and other data frames.</p>
+<p>In this chapter, we extend some of these ideas by discussing a type of data formatting called “tidy” data. You will see that having data stored in “tidy” format is about more than what the colloquial definition of the term “tidy” might suggest of having your data “neatly organized” in a spreadsheet. Instead, we define the term “tidy” in a more rigorous fashion, outlining a set of rules by which data can be stored and the implications of these rules on analyses.</p>
+<p>Although knowledge of this type of data formatting was not necessary in our treatment of data visualization in Chapter <a href="3-viz.html#viz">3</a> since all the data was already in tidy format, we’ll see going forward that having tidy data will allow you to more easily create data visualizations in a wide range of settings. Furthermore, it will also help you with data wrangling in Chapter <a href="5-wrangling.html#wrangling">5</a> and in all subsequent chapters in this book when we cover regression and discuss statistical inference.</p>
+<div id="needed-packages-1" class="section level3 unnumbered">
+<h3>Needed packages</h3>
+<p>Let’s load all the packages needed for this chapter (this assumes you’ve already installed them). If needed, read Section <a href="2-getting-started.html#packages">2.3</a> for information on how to install and load R packages.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(dplyr)
+<span class="kw">library</span>(ggplot2)
+<span class="kw">library</span>(nycflights13)
+<span class="kw">library</span>(tidyr)
+<span class="kw">library</span>(readr)</code></pre></div>
 </div>
-<div id="intro" class="section level1">
-<h1><span class="header-section-number">Chapter 1</span> Introduction</h1>
+<div id="datacamp-1" class="section level3 unnumbered">
+<h3>DataCamp</h3>
+<p>Our approach to introducing the concept of “tidy” data is aligned with the approach taken in <a href="https://twitter.com/apreshill">Alison Hill’s</a> DataCamp course “Working with Data in the Tidyverse,” a course where students learn to work with data using tools from the tidyverse in R. If you’re interested in complementing your learning below in an interactive online environment, click on the image below to access the course. The relevant chapter is Chapter 3 “Tidy your data.”</p>
+<center>
+<a target="_blank" class="page-link" href="https://www.datacamp.com/courses/working-with-data-in-the-tidyverse"><img src="images/datacamp_working_with_data.png" style="height: 150px;"/></a>
+</center>
 <hr />
+<!--Subsection on Tidy Data -->
+</div>
+<div id="what-is-tidy-data" class="section level2">
+<h2><span class="header-section-number">4.1</span> What is tidy data?</h2>
+<p>You have surely heard the word “tidy” in your life:</p>
+<ul>
+<li>“Tidy up your room!”</li>
+<li>“Please write your homework in a tidy way so that it is easier to grade and to provide feedback.”</li>
+<li>Marie Kondo’s best-selling book <a href="https://www.amazon.com/Life-Changing-Magic-Tidying-Decluttering-Organizing/dp/1607747308/ref=sr_1_1?ie=UTF8&amp;qid=1469400636&amp;sr=8-1&amp;keywords=tidying+up"><em>The Life-Changing Magic of Tidying Up: The Japanese Art of Decluttering and Organizing</em></a></li>
+<li>“I am not by any stretch of the imagination a tidy person, and the piles of unread books on the coffee table and by my bed have a plaintive, pleading quality to me - ‘Read me, please!’” - Linda Grant</li>
+</ul>
+<p>What does it mean for your data to be “tidy”? Beyond just being organized, in the context of this book having “tidy” data means that your data follows a standardized format. This makes it easier for you and others to visualize your data, to wrangle/transform your data, and to model your data. We will follow Hadley Wickham’s definition of <em>tidy data</em> here <span class="citation">(Wickham <a href="#ref-tidy">2014</a>)</span>:</p>
+<blockquote>
+<p>A dataset is a collection of values, usually either numbers (if quantitative) or strings AKA text data (if qualitative). Values are organised in two ways. Every value belongs to a variable and an observation. A variable contains all values that measure the same underlying attribute (like height, temperature, duration) across units. An observation contains all values measured on the same unit (like a person, or a day, or a city) across attributes.</p>
+</blockquote>
+<blockquote>
+<p>Tidy data is a standard way of mapping the meaning of a dataset to its structure. A dataset is messy or tidy depending on how rows, columns and tables are matched up with observations, variables and types. In <em>tidy data</em>:</p>
+</blockquote>
+<blockquote>
+<ol style="list-style-type: decimal">
+<li>Each variable forms a column.</li>
+<li>Each observation forms a row.</li>
+<li>Each type of observational unit forms a table.</li>
+</ol>
+</blockquote>
+<div class="figure" style="text-align: center"><span id="fig:tidyfig"></span>
+<img src="images/tidy-1.png" alt="Tidy data graphic from http://r4ds.had.co.nz/tidy-data.html" width="\textwidth" />
+<p class="caption">
+FIGURE 4.1: Tidy data graphic from <a href="http://r4ds.had.co.nz/tidy-data.html" class="uri">http://r4ds.had.co.nz/tidy-data.html</a>
+</p>
+</div>
+<p>For example, say the following table consists of stock prices:</p>
+<table class="table" style="font-size: 16px; margin-left: auto; margin-right: auto;">
+<caption style="font-size: initial !important;">
+<span id="tab:unnamed-chunk-61">TABLE 4.1: </span>Stock Prices (Non-Tidy Format)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Date
+</th>
+<th style="text-align:left;">
+Boeing Stock Price
+</th>
+<th style="text-align:left;">
+Amazon Stock Price
+</th>
+<th style="text-align:left;">
+Google Stock Price
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+2009-01-01
+</td>
+<td style="text-align:left;">
+$173.55
+</td>
+<td style="text-align:left;">
+$174.90
+</td>
+<td style="text-align:left;">
+$174.34
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2009-01-02
+</td>
+<td style="text-align:left;">
+$172.61
+</td>
+<td style="text-align:left;">
+$171.42
+</td>
+<td style="text-align:left;">
+$170.04
+</td>
+</tr>
+</tbody>
+</table>
+<p>Although the data are neatly organized in a spreadsheet-type format, they are not in tidy format since there are three variables corresponding to three unique pieces of information (Date, Stock Name, and Stock Price), but there are not three columns. In tidy data format each variable should be its own column, as shown below. Notice that both tables present the same information, but in different formats.</p>
+<table class="table" style="font-size: 16px; margin-left: auto; margin-right: auto;">
+<caption style="font-size: initial !important;">
+<span id="tab:unnamed-chunk-62">TABLE 4.2: </span>Stock Prices (Tidy Format)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Date
+</th>
+<th style="text-align:left;">
+Stock Name
+</th>
+<th style="text-align:left;">
+Stock Price
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+2009-01-01
+</td>
+<td style="text-align:left;">
+Boeing
+</td>
+<td style="text-align:left;">
+$173.55
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2009-01-02
+</td>
+<td style="text-align:left;">
+Boeing
+</td>
+<td style="text-align:left;">
+$172.61
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2009-01-01
+</td>
+<td style="text-align:left;">
+Amazon
+</td>
+<td style="text-align:left;">
+$174.90
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2009-01-02
+</td>
+<td style="text-align:left;">
+Amazon
+</td>
+<td style="text-align:left;">
+$171.42
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2009-01-01
+</td>
+<td style="text-align:left;">
+Google
+</td>
+<td style="text-align:left;">
+$174.34
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2009-01-02
+</td>
+<td style="text-align:left;">
+Google
+</td>
+<td style="text-align:left;">
+$170.04
+</td>
+</tr>
+</tbody>
+</table>
+<p>However, consider the following table</p>
+<table class="table" style="font-size: 16px; margin-left: auto; margin-right: auto;">
+<caption style="font-size: initial !important;">
+<span id="tab:unnamed-chunk-63">TABLE 4.3: </span>Date, Boeing Price, Weather Data
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Date
+</th>
+<th style="text-align:left;">
+Boeing Price
+</th>
+<th style="text-align:left;">
+Weather
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+2009-01-01
+</td>
+<td style="text-align:left;">
+$173.55
+</td>
+<td style="text-align:left;">
+Sunny
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2009-01-02
+</td>
+<td style="text-align:left;">
+$172.61
+</td>
+<td style="text-align:left;">
+Overcast
+</td>
+</tr>
+</tbody>
+</table>
+<p>In this case, even though the variable “Boeing Price” occurs again, the data <em>is</em> tidy since there are three variables corresponding to three unique pieces of information (Date, Boeing stock price, and the weather that particular day).</p>
+<p>The non-tidy data format in the original table is also known as <a href="https://en.wikipedia.org/wiki/Wide_and_narrow_data">“wide”</a> format whereas the tidy data format in the second table is also known as <a href="https://en.wikipedia.org/wiki/Wide_and_narrow_data#Narrow">“long/narrow”</a> data format.</p>
+<p>In this book, we will work mostly with datasets that are already in tidy format even though a lot of the world’s data isn’t always in this nice format that the <code>tidyverse</code> gets its name from. Data that is in wide format can be converted to “tidy” format by using the <code>gather()</code> function in the <code>tidyr</code> package <span class="citation">(Wickham and Henry <a href="#ref-R-tidyr">2018</a>)</span> in the <code>tidyverse</code>; we’ll show an example of this in Section <a href="4-tidy.html#tidying">4.4</a>. For other examples of converting a dataset into “tidy” format, check out the different functions available for data tidying and a case study using data from the World Health Organization in <a href="http://r4ds.had.co.nz/tidy-data.html">R for Data Science</a> <span class="citation">(Grolemund and Wickham <a href="#ref-rds2016">2016</a>)</span>.</p>
 <div class="learncheck">
 <p>
-<strong>Note: This is the development version of ModernDive and is currently in the process of being edited. For the latest released version of ModernDive, please go to <a href="https://moderndive.com/">ModernDive.com</a>.</strong>
+<strong><em>Learning check</em></strong>
 </p>
 </div>
-<!--
-## Important Note
+<p><strong>(LC4.1)</strong> Consider the following data frame of average number of servings of beer, spirits, and wine consumption in three countries as reported in the FiveThirtyEight article <a href="https://fivethirtyeight.com/features/dear-mona-followup-where-do-people-drink-the-most-beer-wine-and-spirits/">Dear Mona Followup: Where Do People Drink The Most Beer, Wine And Spirits?</a></p>
+<pre><code># A tibble: 3 x 4
+  country     beer_servings spirit_servings wine_servings
+  &lt;chr&gt;               &lt;int&gt;           &lt;int&gt;         &lt;int&gt;
+1 Canada                240             122           100
+2 South Korea           140              16             9
+3 USA                   249             158            84</code></pre>
+<p>This data frame is not in tidy format. What would it look like if it were?</p>
+<div class="learncheck">
 
-This is a previous version (v0.4.0.9000) of ModernDive and may be out of date. For the current version of ModernDive, please go to [ModernDive.com](https://moderndive.com/). 
--->
+</div>
 <hr />
-<!-- https://cran.r-project.org/Rlogo.svg -->
-<!-- https://www.rstudio.com/wp-content/uploads/2014/07/RStudio-Logo-Blue-Gradient.png -->
-<p><img src="images/Rlogo.png" height="150" />         <img src="images/RStudio-Logo-Blue-Gradient.png" style="width:45.0%" /></p>
-<!--
-<img src="images/Rlogo.svg" style="height: 150px;"/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<img src="images/RStudio-Logo-Blue-Gradient.png" style="height: 150px;"/>
--->
-<p><strong>Help! I’m new to R and RStudio and I need to learn about them! However, I’m completely new to coding! What do I do?</strong> If you’re asking yourself this question, then you’ve come to the right place! Start with our <a href="index.html#sec:intro-for-students">Introduction for Students</a>.</p>
-<ul>
-<li><em>Are you an instructor hoping to use this book in your courses? Then click <a href="index.html#sec:intro-instructors">here</a> for more information on how to teach with this book.</em></li>
-<li><em>Are you looking to connect with and contribute to ModernDive? Then click <a href="index.html#sec:connect-contribute">here</a> for information on how.</em></li>
-<li><em>Are you curious about the publishing of this book? Then click <a href="index.html#sec:about-book">here</a> for more information on the open-source technology, in particular R Markdown and the bookdown package.</em></li>
-</ul>
-<p>This is version 0.4.0.9000 of ModernDive published on October 12, 2018. For previous versions of ModernDive, see Section <a href="index.html#sec:about-book">1.5</a>. While a PDF version of this book can be found <a href="https://github.com/moderndive/moderndive_book/raw/master/docs/ismaykim.pdf" target="_blank">here</a>, this is very much a work in progress with many things that still need to be fixed. We appreciate your patience.</p>
-<hr />
-<div id="sec:intro-for-students" class="section level2">
-<h2><span class="header-section-number">1.1</span> Introduction for students</h2>
-<p>This book assumes no prerequisites: no algebra, no calculus, and no prior programming/coding experience. This is intended to be a gentle introduction to the practice of analyzing data and answering questions using data the way data scientists, statisticians, data journalists, and other researchers would.</p>
-<p>In Figure <a href="index.html#fig:moderndive-figure">1.1</a> we present a flowchart of what you’ll cover in this book. You’ll first get started with data in Chapter <a href="2-getting-started.html#getting-started">2</a>, where you’ll learn about the difference between R and RStudio, start coding in R, understand what R packages are, and explore your first dataset: all domestic departure flights from a New York City airport in 2013. Then</p>
+</div>
+<div id="back-to-nycflights13" class="section level2">
+<h2><span class="header-section-number">4.2</span> Back to nycflights13</h2>
+<p>Recall the <code>nycflights13</code> package with data about all domestic flights departing from New York City in 2013 that we introduced in Section <a href="2-getting-started.html#nycflights13">2.4</a> and used extensively in Chapter <a href="3-viz.html#viz">3</a> to create visualizations. In particular, let’s revisit the <code>flights</code> data frame by running <code>View(flights)</code> in your console. We see that <code>flights</code> has a rectangular shape with each row corresponding to a different flight and each column corresponding to a characteristic of that flight. This matches exactly with how Hadley Wickham defined tidy data:</p>
 <ol style="list-style-type: decimal">
-<li><strong>Data science</strong>: You’ll assemble your data science toolbox using <code>tidyverse</code> packages. In particular:
-<ul>
-<li>Ch.<a href="3-viz.html#viz">3</a>: Visualizing data via the <code>ggplot2</code> package.</li>
-<li>Ch.<a href="4-tidy.html#tidy">4</a>: Understanding the concept of “tidy” data as a standardized data input format for all packages in the <code>tidyverse</code></li>
-<li>Ch.<a href="5-wrangling.html#wrangling">5</a>: Wrangling data via the <code>dplyr</code> package.</li>
-</ul></li>
-<li><strong>Data modeling</strong>: Using these data science tools and helper functions from the <code>moderndive</code> package, you’ll start performing data modeling. In particular:
-<ul>
-<li>Ch.<a href="6-regression.html#regression">6</a>: Constructing basic regression models.</li>
-<li>Ch.<a href="7-multiple-regression.html#multiple-regression">7</a>: Constructing multiple regression models.</li>
-</ul></li>
-<li><strong>Statistical inference</strong>: Once again using your newly acquired data science tools, we’ll unpack statistical inference using the <code>infer</code> package. In particular:
-<ul>
-<li>Ch.<a href="8-sampling.html#sampling">8</a>: Understanding the role that sampling variability plays in statistical inference using both tactile and virtual simulations of sampling from a “bowl” with an unknown proportion of red balls.</li>
-<li>Ch.<a href="9-confidence-intervals.html#confidence-intervals">9</a>: Building confidence intervals.</li>
-<li>Ch.<a href="10-hypothesis-testing.html#hypothesis-testing">10</a>: Conducting hypothesis tests.</li>
-</ul></li>
-<li><strong>Data modeling revisited</strong>: Armed with your new understanding of statistical inference, you’ll revisit and review the models you constructed in Ch.<a href="6-regression.html#regression">6</a> &amp; Ch.<a href="7-multiple-regression.html#multiple-regression">7</a>. In particular:
-<ul>
-<li>Ch.<a href="11-inference-for-regression.html#inference-for-regression">11</a>: Interpreting both the statistical and practice significance of the results of the models.</li>
-</ul></li>
+<li>Each variable forms a column.</li>
+<li>Each observation forms a row.</li>
 </ol>
-<p>We’ll end with a discussion on what it means to “think with data” in Chapter <a href="12-thinking-with-data.html#thinking-with-data">12</a> and present an example case study data analysis of house prices in Seattle.</p>
-<div class="figure" style="text-align: center"><span id="fig:moderndive-figure"></span>
-<img src="images/flowcharts/flowchart/flowchart.002.png" alt="ModernDive Flowchart" width="\textwidth" />
-<p class="caption">
-FIGURE 1.1: ModernDive Flowchart
+<p>But what about the third property?</p>
+<blockquote>
+<ol start="3" style="list-style-type: decimal">
+<li>Each type of observational unit forms a table.</li>
+</ol>
+</blockquote>
+<div id="observational-units" class="section level3">
+<h3><span class="header-section-number">4.2.1</span> Observational units</h3>
+<p>We identified earlier that the observational unit in the <code>flights</code> dataset is an individual flight. And we have shown that this dataset consists of 336,776 flights with 19 variables. In other words, rows of this dataset don’t refer to a measurement on an airline or on an airport; they refer to characteristics/measurements on a given flight from New York City in 2013.</p>
+<p>Also included in the <code>nycflights13</code> package are datasets with different observational units <span class="citation">(Wickham <a href="#ref-R-nycflights13">2018</a>)</span>:</p>
+<ul>
+<li><code>airlines</code>: translation between two letter IATA carrier codes and names (16 in total)</li>
+<li><code>planes</code>: construction information about each of 3,322 planes used</li>
+<li><code>weather</code>: hourly meteorological data (about 8705 observations) for each of the three NYC airports</li>
+<li><code>airports</code>: airport names and locations</li>
+</ul>
+<p>The organization of this data follows the third “tidy” data property: observations corresponding to the same observational unit should be saved in the same table/data frame.</p>
+<p>Another example involves a spreadsheet of all students enrolled in a university along with information about them, such as name, gender, and date of birth. Each row represents an individual student, which is the observational unit in question.</p>
+</div>
+<div id="identification-vs-measurement" class="section level3">
+<h3><span class="header-section-number">4.2.2</span> Identification vs measurement variables</h3>
+<p>There is a subtle difference between the kinds of variables that you will encounter in data frames: <em>measurement variables</em> and <em>identification variables</em>. The <code>airports</code> data frame you worked with above contains both these types of variables. Recall that in <code>airports</code> the observational unit is an airport, and thus each row corresponds to one particular airport. Let’s pull them apart using the <code>glimpse</code> function:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">glimpse</span>(airports)</code></pre></div>
+<pre><code>Observations: 1,458
+Variables: 8
+$ faa   &lt;chr&gt; &quot;04G&quot;, &quot;06A&quot;, &quot;06C&quot;, &quot;06N&quot;, &quot;09J&quot;, &quot;0A9&quot;, &quot;0G6&quot;, &quot;0G7&quot;, &quot;0P2&quot;...
+$ name  &lt;chr&gt; &quot;Lansdowne Airport&quot;, &quot;Moton Field Municipal Airport&quot;, &quot;Schaum...
+$ lat   &lt;dbl&gt; 41.13047, 32.46057, 41.98934, 41.43191, 31.07447, 36.37122, 4...
+$ lon   &lt;dbl&gt; -80.61958, -85.68003, -88.10124, -74.39156, -81.42778, -82.17...
+$ alt   &lt;int&gt; 1044, 264, 801, 523, 11, 1593, 730, 492, 1000, 108, 409, 875,...
+$ tz    &lt;dbl&gt; -5, -6, -6, -5, -5, -5, -5, -5, -5, -8, -5, -6, -5, -5, -5, -...
+$ dst   &lt;chr&gt; &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;U&quot;, &quot;A&quot;, &quot;A&quot;, &quot;U&quot;, &quot;...
+$ tzone &lt;chr&gt; &quot;America/New_York&quot;, &quot;America/Chicago&quot;, &quot;America/Chicago&quot;, &quot;Am...</code></pre>
+<p>The variables <code>faa</code> and <code>name</code> are what we will call <em>identification variables</em>: variables that uniquely identify each observational unit. They are mainly used to provide a unique name to each observational unit, thereby allowing us to uniquely identify them. <code>faa</code> gives the unique code provided by the FAA for that airport, while the <code>name</code> variable gives the longer more natural name of the airport. The remaining variables (<code>lat</code>, <code>lon</code>, <code>alt</code>, <code>tz</code>, <code>dst</code>, <code>tzone</code>) are often called <em>measurement</em> or <em>characteristic</em> variables: variables that describe properties of each observational unit, in other words each observation in each row. For example, <code>lat</code> and <code>long</code> describe the latitude and longitude of each airport.</p>
+<p>So in our above example of a spreadsheet of all students enrolled at a university, email address could be treated as an identical variable since it uniquely identifies each observational unit i.e. each student, while date of birth could not since it is possible (and highly probable) that two students share the same birthday.</p>
+<p>Furthermore, sometimes a single variable might not be enough to uniquely identify each observational unit: combinations of variables might be needed (see Learning Check below). While it is not an absolute rule, for organizational purposes it is considered good practice to have your identification variables in the far left-most columns of your data frame.</p>
+<div class="learncheck">
+<p>
+<strong><em>Learning check</em></strong>
 </p>
 </div>
-<div id="subsec:learning-goals" class="section level3">
-<h3><span class="header-section-number">1.1.1</span> What you will learn from this book</h3>
-<p>We hope that by the end of this book, you’ll have learned</p>
-<ol style="list-style-type: decimal">
-<li>How to use R to explore data.<br />
-</li>
-<li>How to answer statistical questions using tools like confidence intervals and hypothesis tests.</li>
-<li>How to effectively create “data stories” using these tools.</li>
-</ol>
-<p>What do we mean by data stories? We mean any analysis involving data that engages the reader in answering questions with careful visuals and thoughtful discussion, such as <a href="http://rpubs.com/ry_lisa_elana/chicago">How strong is the relationship between per capita income and crime in Chicago neighborhoods?</a> and <a href="https://ismayc.github.io/soc301_s2017/group_projects/group4.html">How many f**ks does Quentin Tarantino give (as measured by the amount of swearing in his films)?</a>. Further discussions on data stories can be found in this <a href="https://www.thinkwithgoogle.com/marketing-resources/data-measurement/tell-meaningful-stories-with-data/">Think With Google article</a>.</p>
-<p>For other examples of data stories constructed by students like yourselves, look at the final projects for two courses that have previously used ModernDive:</p>
-<ul>
-<li>Middlebury College <a href="https://rudeboybert.github.io/MATH116/PS/final_project/final_project_outline.html#past_examples">MATH 116 Introduction to Statistical and Data Sciences</a> using student collected data.</li>
-<li>Pacific University <a href="https://ismayc.github.io/soc301_s2017/group-projects/index.html">SOC 301 Social Statistics</a> using data from the <a href="https://cran.r-project.org/web/packages/fivethirtyeight/vignettes/fivethirtyeight.html">fivethirtyeight R package</a>.</li>
-</ul>
-<p>This book will help you develop your “data science toolbox”, including tools such as data visualization, data formatting, data wrangling, and data modeling using regression. With these tools, you’ll be able to perform the entirety of the “data/science pipeline” while building data communication skills (see Subsection <a href="index.html#subsec:pipeline">1.1.2</a> for more details).</p>
-<p>In particular, this book will lean heavily on data visualization. In today’s world, we are bombarded with graphics that attempt to convey ideas. We will explore what makes a good graphic and what the standard ways are to convey relationships with data. You’ll also see the use of visualization to introduce concepts like mean, median, standard deviation, distributions, etc. In general, we’ll use visualization as a way of building almost all of the ideas in this book.</p>
-<p>To impart the statistical lessons in this book, we have intentionally minimized the number of mathematical formulas used and instead have focused on developing a conceptual understanding via data visualization, statistical computing, and simulations. We hope this is a more intuitive experience than the way statistics has traditionally been taught in the past and how it is commonly perceived.</p>
-<p>Finally, you’ll learn the importance of literate programming. By this we mean you’ll learn how to write code that is useful not just for a computer to execute but also for readers to understand exactly what your analysis is doing and how you did it. This is part of a greater effort to encourage reproducible research (see Subsection <a href="index.html#subsec:reproducible">1.1.3</a> for more details). Hal Abelson coined the phrase that we will follow throughout this book:</p>
-<blockquote>
-<p>“Programs must be written for people to read, and only incidentally for machines to execute.”</p>
-</blockquote>
-<p>We understand that there may be challenging moments as you learn to program. Both of us continue to struggle and find ourselves often using web searches to find answers and reach out to colleagues for help. In the long run though, we all can solve problems faster and more elegantly via programming. We wrote this book as our way to help you get started and you should know that there is a huge community of R users that are always happy to help everyone along as well. This community exists in particular on the internet on various forums and websites such as <a href="https://stackoverflow.com/">stackoverflow.com</a>.</p>
+<p><strong>(LC4.2)</strong> What properties of the observational unit do each of <code>lat</code>, <code>lon</code>, <code>alt</code>, <code>tz</code>, <code>dst</code>, and <code>tzone</code> describe for the <code>airports</code> data frame? Note that you may want to use <code>?airports</code> to get more information.</p>
+<p><strong>(LC4.3)</strong> Provide the names of variables in a data frame with at least three variables in which one of them is an identification variable and the other two are not. In other words, create your own tidy dataset that matches these conditions.</p>
+<div class="learncheck">
+
 </div>
-<div id="subsec:pipeline" class="section level3">
-<h3><span class="header-section-number">1.1.2</span> Data/science pipeline</h3>
-<p>You may think of statistics as just being a bunch of numbers. We commonly hear the phrase “statistician” when listening to broadcasts of sporting events. Statistics (in particular, data analysis), in addition to describing numbers like with baseball batting averages, plays a vital role in all of the sciences. You’ll commonly hear the phrase “statistically significant” thrown around in the media. You’ll see articles that say “Science now shows that chocolate is good for you.” Underpinning these claims is data analysis. By the end of this book, you’ll be able to better understand whether these claims should be trusted or whether we should be wary. Inside data analysis are many sub-fields that we will discuss throughout this book (though not necessarily in this order):</p>
-<ul>
-<li>data collection</li>
-<li>data wrangling</li>
-<li>data visualization</li>
-<li>data modeling</li>
-<li>inference</li>
-<li>correlation and regression</li>
-<li>interpretation of results</li>
-<li>data communication/storytelling</li>
-</ul>
-<p>These sub-fields are summarized in what Grolemund and Wickham term the <a href="http://r4ds.had.co.nz/explore-intro.html">“Data/Science Pipeline”</a> in Figure <a href="index.html#fig:pipeline-figure">1.2</a>.</p>
-<div class="figure" style="text-align: center"><span id="fig:pipeline-figure"></span>
-<img src="images/tidy1.png" alt="Data/Science Pipeline" width="\textwidth" />
-<p class="caption">
-FIGURE 1.2: Data/Science Pipeline
-</p>
-</div>
-<p>We will begin by digging into the gray <strong>Understand</strong> portion of the cycle with data visualization, then with a discussion on what is meant by tidy data and data wrangling, and then conclude by talking about interpreting and discussing the results of our models via <strong>Communication</strong>. These steps are vital to any statistical analysis. But why should you care about statistics? “Why did they make me take this class?”</p>
-<p>There’s a reason so many fields require a statistics course. Scientific knowledge grows through an understanding of statistical significance and data analysis. You needn’t be intimidated by statistics. It’s not the beast that it used to be and, paired with computation, you’ll see how reproducible research in the sciences particularly increases scientific knowledge.</p>
-</div>
-<div id="subsec:reproducible" class="section level3">
-<h3><span class="header-section-number">1.1.3</span> Reproducible research</h3>
-<blockquote>
-<p>“The most important tool is the <em>mindset</em>, when starting, that the end product will be reproducible.” – Keith Baggerly</p>
-</blockquote>
-<p>Another goal of this book is to help readers understand the importance of reproducible analyses. The hope is to get readers into the habit of making their analyses reproducible from the very beginning. This means we’ll be trying to help you build new habits. This will take practice and be difficult at times. You’ll see just why it is so important for you to keep track of your code and well-document it to help yourself later and any potential collaborators as well.</p>
-<p>Copying and pasting results from one program into a word processor is not the way that efficient and effective scientific research is conducted. It’s much more important for time to be spent on data collection and data analysis and not on copying and pasting plots back and forth across a variety of programs.</p>
-<p>In a traditional analyses if an error was made with the original data, we’d need to step through the entire process again: recreate the plots and copy and paste all of the new plots and our statistical analysis into your document. This is error prone and a frustrating use of time. We’ll see how to use R Markdown to get away from this tedious activity so that we can spend more time doing science.</p>
-<blockquote>
-<p>“We are talking about <em>computational</em> reproducibility.” - Yihui Xie</p>
-</blockquote>
-<p>Reproducibility means a lot of things in terms of different scientific fields. Are experiments conducted in a way that another researcher could follow the steps and get similar results? In this book, we will focus on what is known as <strong>computational reproducibility</strong>. This refers to being able to pass all of one’s data analysis, data-sets, and conclusions to someone else and have them get exactly the same results on their machine. This allows for time to be spent interpreting results and considering assumptions instead of the more error prone way of starting from scratch or following a list of steps that may be different from machine to machine.</p>
-<!--
-Additionally, this book will focus on computational thinking, data thinking, and inferential thinking. We'll see throughout the book how these three modes of thinking can build effective ways to work with, to describe, and to convey statistical knowledge.  
--->
-</div>
-<div id="final-note-for-students" class="section level3">
-<h3><span class="header-section-number">1.1.4</span> Final note for students</h3>
-<p>At this point, if you are interested in instructor perspectives on this book, ways to contribute and collaborate, or the technical details of this book’s construction and publishing, then continue with the rest of the chapter below. Otherwise, let’s get started with R and RStudio in Chapter <a href="2-getting-started.html#getting-started">2</a>!</p>
 <hr />
 </div>
 </div>
-<div id="sec:intro-instructors" class="section level2">
-<h2><span class="header-section-number">1.2</span> Introduction for instructors</h2>
-<p>This book is inspired by the following books:</p>
+<div id="csv" class="section level2">
+<h2><span class="header-section-number">4.3</span> Importing spreadsheets into R</h2>
+<p>Up to this point, we’ve used data either stored inside of an R package or we’ve manually created the data such as the <code>fruits</code> and <code>fruits_counted</code> data in Subsection <a href="3-viz.html#geombar">3.8</a>. Another common way to get data into R is by reading in data from a spreadsheet file either on your computer or online. Spreadsheet data is often saved in one of two formats:</p>
 <ul>
-<li>“Mathematical Statistics with Resampling and R” <span class="citation">(Chihara and Hesterberg <a href="#ref-hester2011">2011</a>)</span>,</li>
-<li>“OpenIntro: Intro Stat with Randomization and Simulation” <span class="citation">(Diez, Barr, and Çetinkaya-Rundel <a href="#ref-isrs2014">2014</a>)</span>, and</li>
-<li>“R for Data Science” <span class="citation">(Grolemund and Wickham <a href="#ref-rds2016">2016</a>)</span>.</li>
+<li>A <em>Comma Separated Values</em> <code>.csv</code> file. You can think of a CSV file as a bare-bones spreadsheet where:
+<ul>
+<li>Each line in the file corresponds to one row of data/one observation.</li>
+<li>Values for each line are separated with commas. In other words, the values of different variables are separated by commas.</li>
+<li>The first line is often, but not always, a <em>header</em> row indicating the names of the columns/variables.</li>
+</ul></li>
+<li>An Excel <code>.xlsx</code> file. This format is based on Microsoft’s proprietary Excel software. As opposed to a bare-bones <code>.csv</code> files, <code>.xlsx</code> Excel files contain a lot of <em>metadata</em>, or put more simply, data about the data. Examples include the use of bold and italic fonts, colored cells, different column widths, and formula macros etc.</li>
 </ul>
-<p>The first book, while designed for upper-level undergraduates and graduate students, provides an excellent resource on how to use resampling to impart statistical concepts like sampling distributions using computation instead of large-sample approximations and other mathematical formulas. The last two books are free options to learning introductory statistics and data science, providing an alternative to the many traditionally expensive introductory statistics textbooks.</p>
-<p>When looking over the large number of introductory statistics textbooks that currently exist, we found that there wasn’t one that incorporated many newly developed R packages directly into the text, in particular the many packages included in the <a href="http://tidyverse.org/"><code>tidyverse</code></a> collection of packages, such as <code>ggplot2</code>, <code>dplyr</code>, <code>tidyr</code>, and <code>broom</code>. Additionally, there wasn’t an open-source and easily reproducible textbook available that exposed new learners all of three of the learning goals listed at the outset of Subsection <a href="index.html#subsec:learning-goals">1.1.1</a>.</p>
-<div id="who-is-this-book-for" class="section level3">
-<h3><span class="header-section-number">1.2.1</span> Who is this book for?</h3>
-<p>This book is intended for instructors of traditional introductory statistics classes using RStudio, either the desktop or server version, who would like to inject more data science topics into their syllabus. We assume that students taking the class will have no prior algebra, calculus, nor programming/coding experience.</p>
-<p>Here are some principles and beliefs we kept in mind while writing this text. If you agree with them, this might be the book for you.</p>
-<ol style="list-style-type: decimal">
-<li><strong>Blur the lines between lecture and lab</strong>
-<ul>
-<li>With increased availability and accessibility of laptops and open-source non-proprietary statistical software, the strict dichotomy between lab and lecture can be loosened.</li>
-<li>It’s much harder for students to understand the importance of using software if they only use it once a week or less. They forget the syntax in much the same way someone learning a foreign language forgets the rules. Frequent reinforcement is key.</li>
-</ul></li>
-<li><strong>Focus on the entire data/science research pipeline</strong>
-<ul>
-<li>We believe that the entirety of Grolemund and Wickham’s <a href="http://r4ds.had.co.nz/introduction.html">data/science pipeline</a> should be taught.</li>
-<li>We believe in <a href="https://arxiv.org/abs/1507.05346">“minimizing prerequisites to research”</a>: students should be answering questions with data as soon as possible.</li>
-</ul></li>
-<li><strong>It’s all about the data</strong>
-<ul>
-<li>We leverage R packages for rich, real, and realistic data-sets that at the same time are easy-to-load into R, such as the <code>nycflights13</code> and <code>fivethirtyeight</code> packages.</li>
-<li>We believe that <a href="http://escholarship.org/uc/item/84v3774z">data visualization is a gateway drug for statistics</a> and that the Grammar of Graphics as implemented in the <code>ggplot2</code> package is the best way to impart such lessons. However, we often hear: “You can’t teach <code>ggplot2</code> for data visualization in intro stats!” We, like <a href="http://varianceexplained.org/r/teach_ggplot2_to_beginners/">David Robinson</a>, are much more optimistic.</li>
-<li><code>dplyr</code> has made data wrangling much more <a href="http://chance.amstat.org/2015/04/setting-the-stage/">accessible</a> to novices, and hence much more interesting data-sets can be explored.</li>
-</ul></li>
-<li><strong>Use simulation/resampling to introduce statistical inference, not probability/mathematical formulas</strong>
-<ul>
-<li>Instead of using formulas, large-sample approximations, and probability tables, we teach statistical concepts using resampling-based inference.</li>
-<li>This allows for a de-emphasis of traditional probability topics, freeing up room in the syllabus for other topics.</li>
-</ul></li>
-<li><strong>Don’t fence off students from the computation pool, throw them in!</strong>
-<ul>
-<li>Computing skills are essential to working with data in the 21st century. Given this fact, we feel that to shield students from computing is to ultimately do them a disservice.</li>
-<li>We are not teaching a course on coding/programming per se, but rather just enough of the computational and algorithmic thinking necessary for data analysis.</li>
-</ul></li>
-<li><strong>Complete reproducibility and customizability</strong>
-<ul>
-<li>We are frustrated when textbooks give examples, but not the source code and the data itself. We give you the source code for all examples as well as the whole book!</li>
-<li>Ultimately the best textbook is one you’ve written yourself. You know best your audience, their background, and their priorities. You know best your own style and the types of examples and problems you like best. Customization is the ultimate end. For more about how to make this book your own, see <a href="#about-book">About this Book</a>.</li>
-</ul></li>
-</ol>
-<hr />
+<p><a href="https://www.google.com/sheets/about/">Google Sheets</a> allows you to download your data in both comma separated values <code>.csv</code> and Excel <code>.xlsx</code> formats: Go to the Google Sheets menu bar -&gt; File -&gt; Download as -&gt; Select “Microsoft Excel” or “Comma-separated values.”</p>
+<p>We’ll cover two methods for importing data in R: one using the R console and the other using RStudio’s graphical interface.</p>
+<div id="method-1-from-the-console" class="section level3">
+<h3><span class="header-section-number">4.3.1</span> Method 1: From the console</h3>
+<p>First, let’s download a <em>Comma Separated Values</em> (CSV) file of ratings of the level of democracy in different countries spanning 1952 to 1992: <a href="https://moderndive.com/data/dem_score.csv" class="uri">https://moderndive.com/data/dem_score.csv</a>. We use the <code>read_csv()</code> function from the <code>readr</code> package to read it off the web and then take a look.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(readr)
+dem_score &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;https://moderndive.com/data/dem_score.csv&quot;</span>)
+dem_score</code></pre></div>
+<pre><code># A tibble: 96 x 10
+   country    `1952` `1957` `1962` `1967` `1972` `1977` `1982` `1987` `1992`
+   &lt;chr&gt;       &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;
+ 1 Albania        -9     -9     -9     -9     -9     -9     -9     -9      5
+ 2 Argentina      -9     -1     -1     -9     -9     -9     -8      8      7
+ 3 Armenia        -9     -7     -7     -7     -7     -7     -7     -7      7
+ 4 Australia      10     10     10     10     10     10     10     10     10
+ 5 Austria        10     10     10     10     10     10     10     10     10
+ 6 Azerbaijan     -9     -7     -7     -7     -7     -7     -7     -7      1
+ 7 Belarus        -9     -7     -7     -7     -7     -7     -7     -7      7
+ 8 Belgium        10     10     10     10     10     10     10     10     10
+ 9 Bhutan        -10    -10    -10    -10    -10    -10    -10    -10    -10
+10 Bolivia        -4     -3     -3     -4     -7     -7      8      9      9
+# ... with 86 more rows</code></pre>
+<p>In this <code>dem_score</code> data frame, the minimum value of -10 corresponds to a highly autocratic nation whereas a value of 10 corresponds to a highly democratic nation. <!--Note also that backticks surround the different names of the columns here.  Variable names are not allowed to start with a number but this can be worked around by surrounding the column name in backticks.  Variable names also can't include spaces so if you'd like to refer to the variable **Stock Names** above, for example, you'll need to surround it in backticks: `` `Stock Names` ``.--></p>
 </div>
-</div>
-<div id="datacamp" class="section level2">
-<h2><span class="header-section-number">1.3</span> DataCamp</h2>
+<div id="method-2-using-rstudios-interface" class="section level3">
+<h3><span class="header-section-number">4.3.2</span> Method 2: Using RStudio’s interface</h3>
+<p>Let’s read in the same data saved in Excel format this time at <a href="https://moderndive.com/data/dem_score.xlsx" class="uri">https://moderndive.com/data/dem_score.xlsx</a>, but using RStudio’s graphical interface instead of via the R console. First download the Excel file, then go to the Files pane of RStudio -&gt; Navigate to the directory where your downloaded <code>dem_score.xlsx</code> is saved -&gt; Click on <code>dem_score.xlsx</code> -&gt; Click “Import Dataset…” -&gt; Click “Import Dataset…” At this point you should see an image like in</p>
 <div class="figure">
-<img src="images/datacamp.png" alt="DataCamp logo" style="width:100.0%" />
-<p class="caption">DataCamp logo</p>
-</div>
-<p>DataCamp is a browser-based interactive platform for learning data science, offering courses on a wide array of courses on data science, analytics, statistics, machine learning, and artificial intelligence, where each course is a combination of lectures and exercises that offer immediate feedback.</p>
-<p>The following chapters of ModernDive roughly map to the following closely-integrated DataCamp courses that use the same R tools and often even the same datasets. By no means is this an exhaustive list of possible DataCamp courses that are relevant to the topics in this book, we recommend these ones in particular to supplement your ModernDive experience.</p>
-<p>Click on the image for each course to access its webpage on <a href="https://www.datacamp.com/home">datacamp.com</a>. Instructors at accredited universities can sign their class up for a free academic licence at <a href="https://www.datacamp.com/groups/education">DataCamp For The Classroom</a>, giving their students access to all premium courses for 6 months for free.</p>
-<table>
-<colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="left">Chapter</th>
-<th align="left">Topic</th>
-<th align="left">DataCamp Courses</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">2</td>
-<td align="left">Basic R programming concepts</td>
-<td align="left"><a target="_blank" class="page-link" href="https://www.datacamp.com/courses/free-introduction-to-r"><img src="images/datacamp_intro_to_R.png" style="height: 150px;"/></a> <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/intermediate-r"><img src="images/datacamp_intermediate_R.png" style="height: 150px;"/></a></td>
-</tr>
-<tr class="even">
-<td align="left">3 &amp; 5</td>
-<td align="left">Introductory data visualization and wrangling</td>
-<td align="left"><a target="_blank" class="page-link" href="https://www.datacamp.com/courses/introduction-to-the-tidyverse"><img src="images/datacamp_intro_to_tidyverse.png" style="height: 150px;"/></a></td>
-</tr>
-<tr class="odd">
-<td align="left">4 &amp; 5</td>
-<td align="left">Data “tidying” and intermediate data wrangling</td>
-<td align="left"><a target="_blank" class="page-link" href="https://www.datacamp.com/courses/working-with-data-in-the-tidyverse"><img src="images/datacamp_working_with_data.png" style="height: 150px;"/></a></td>
-</tr>
-<tr class="even">
-<td align="left">6 &amp; 7</td>
-<td align="left">Data modeling, basic regression, and multiple regression</td>
-<td align="left"><a target="_blank" class="page-link" href="https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse"><img src="images/datacamp_intro_to_modeling.png" style="height: 150px;"/></a></td>
-</tr>
-<tr class="odd">
-<td align="left">9 &amp; 10</td>
-<td align="left">Statistical inference: confidence intervals and hypothesis testing</td>
-<td align="left"><a target="_blank" class="page-link" href="https://www.datacamp.com/courses/inference-for-numerical-data"><img src="images/datacamp_inference_for_numerical_data.png" style="height: 150px;"/></a> <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/inference-for-categorical-data"><img src="images/datacamp_inference_for_categorical_data.png" style="height: 150px;"/></a></td>
-</tr>
-<tr class="even">
-<td align="left">11</td>
-<td align="left">Inference for regression</td>
-<td align="left"><a target="_blank" class="page-link" href="https://www.datacamp.com/courses/inference-for-linear-regression"><img src="images/datacamp_inference_for_regression.png" style="height: 150px;"/></a></td>
-</tr>
-</tbody>
-</table>
-<hr />
-</div>
-<div id="sec:connect-contribute" class="section level2">
-<h2><span class="header-section-number">1.4</span> Connect and contribute</h2>
-<p>If you would like to connect with ModernDive, check out the following links:</p>
-<ul>
-<li>If you would like to receive periodic updates about ModernDive (roughly every 3 months), please sign up for our <a href="http://eepurl.com/cBkItf">mailing list</a>.</li>
-<li>Contact Albert at <a href="mailto:albert.ys.kim@gmail.com">albert.ys.kim@gmail.com</a> and Chester at <a href="mailto:chester.ismay@gmail.com">chester.ismay@gmail.com</a>.</li>
-<li>We’re on Twitter at <a href="https://twitter.com/ModernDive">ModernDive</a>.</li>
-</ul>
-<p>If you would like to contribute to ModernDive, there are many ways! Let’s all work together to make this book as great as possible for as many students and instructors as possible!</p>
-<ul>
-<li>Please let us know if you find any errors, typos, or areas from improvement on our <a href="https://github.com/moderndive/moderndive_book/issues">GitHub issues</a> page.</li>
-<li>If you are familiar with GitHub and would like to contribute more, please see Section <a href="index.html#sec:about-book">1.5</a> below.</li>
-</ul>
-<p>For example, we thank</p>
-<ul>
-<li><a href="https://twitter.com/andrewheiss">Dr Andrew Heiss</a> for contributing Subsection 2.2.3 on “Errors, warnings, and messages”.</li>
-</ul>
-<p>The authors would like to thank <a href="https://github.com/nsonneborn">Nina Sonneborn</a>, <a href="https://twitter.com/rhobott?lang=en">Kristin Bott</a>, and the participants of our <a href="https://www.causeweb.org/cause/uscots/uscots17/workshop/3">USCOTS 2017 workshop</a> for their feedback and suggestions. A special thanks goes to Dr. Yana Weinstein, cognitive psychological scientist and co-founder of <a href="http://www.learningscientists.org/yana-weinstein/">The Learning Scientists</a>, for her extensive contributions.</p>
-<hr />
-</div>
-<div id="sec:about-book" class="section level2">
-<h2><span class="header-section-number">1.5</span> About this book</h2>
-<p>This book was written using RStudio’s <a href="https://bookdown.org/">bookdown</a> package by Yihui Xie <span class="citation">(Xie <a href="#ref-R-bookdown">2018</a>)</span>. This package simplifies the publishing of books by having all content written in <a href="http://rmarkdown.rstudio.com/html_document_format.html">R Markdown</a>. The bookdown/R Markdown source code for all versions of ModernDive is available on GitHub:</p>
-<ul>
-<li><strong>Latest published version</strong> The most up-to-date release:
-<ul>
-<li>Version 0.4.0 released on July 21, 2018 (<a href="https://github.com/moderndive/moderndive_book/releases/tag/v0.4.0">source code</a>).</li>
-<li>Available at <a href="https://moderndive.com/">ModernDive.com</a></li>
-</ul></li>
-<li><strong>Development version</strong> The working copy of the next version which is currently being edited:
-<ul>
-<li>Preview of development version is available at <a href="https://moderndive.netlify.com/" class="uri">https://moderndive.netlify.com/</a></li>
-<li>Source code: Available on ModernDive’s <a href="https://github.com/moderndive/moderndive_book">GitHub repository page</a></li>
-</ul></li>
-<li><strong>Previous versions</strong> Older versions that may be out of date:
-<ul>
-<li><a href="previous_versions/v0.3.0/index.html">Version 0.3.0</a> released on February 3, 2018 (<a href="https://github.com/moderndive/moderndive_book/releases/tag/v0.3.0">source code</a>)</li>
-<li><a href="previous_versions/v0.2.0/index.html">Version 0.2.0</a> released on August 02, 2017 (<a href="https://github.com/moderndive/moderndive_book/releases/tag/v0.2.0">source code</a>)</li>
-<li><a href="previous_versions/v0.1.3/index.html">Version 0.1.3</a> released on February 09, 2017 (<a href="https://github.com/moderndive/moderndive_book/releases/tag/v0.1.3">source code</a>)</li>
-<li><a href="previous_versions/v0.1.2/index.html">Version 0.1.2</a> released on January 22, 2017 (<a href="https://github.com/moderndive/moderndive_book/releases/tag/v0.1.2">source code</a>)</li>
-</ul></li>
-</ul>
-<p>Could this be a new paradigm for textbooks? Instead of the traditional model of textbook companies publishing updated <em>editions</em> of the textbook every few years, we apply a software design influenced model of publishing more easily updated <em>versions</em>. We can then leverage open-source communities of instructors and developers for ideas, tools, resources, and feedback. As such, we welcome your pull requests.</p>
-<p>Finally, feel free to modify the book as you wish for your own needs, but please list the authors at the top of <code>index.Rmd</code> as “Chester Ismay, Albert Y. Kim, and YOU!”</p>
-<hr />
-</div>
-<div id="sec:about-authors" class="section level2">
-<h2><span class="header-section-number">1.6</span> About the authors</h2>
-<p>Who we are!</p>
-<table>
-<thead>
-<tr class="header">
-<th align="center">Chester Ismay</th>
-<th align="center">Albert Y. Kim</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="center"><img src="images/ismay.png" height="200" /></td>
-<td align="center"><img src="images/kim.png" height="200" /></td>
-</tr>
-</tbody>
-</table>
-<!-- <img src="images/ismay.jpeg" alt="Drawing" style="height: 200px;"/>  |  <img src="images/kim.jpeg" alt="Drawing" style="height: 200px;"/> -->
-<ul>
-<li>Chester Ismay: Senior Curriculum Lead - DataCamp, Portland, OR, USA.
-<ul>
-<li>Email: <a href="mailto:chester.ismay@gmail.com">chester.ismay@gmail.com</a></li>
-<li>Webpage: <a href="http://chester.rbind.io/" class="uri">http://chester.rbind.io/</a></li>
-<li>Twitter: <a href="https://twitter.com/old_man_chester">old_man_chester</a></li>
-<li>GitHub: <a href="https://github.com/ismayc" class="uri">https://github.com/ismayc</a></li>
-</ul></li>
-<li>Albert Y. Kim: Assistant Professor of Statistical &amp; Data Sciences - Smith College, Northampton, MA, USA.
-<ul>
-<li>Email: <a href="mailto:albert.ys.kim@gmail.com">albert.ys.kim@gmail.com</a></li>
-<li>Webpage: <a href="http://rudeboybert.rbind.io/" class="uri">http://rudeboybert.rbind.io/</a></li>
-<li>Twitter: <a href="https://twitter.com/rudeboybert">rudeboybert</a></li>
-<li>GitHub: <a href="https://github.com/rudeboybert" class="uri">https://github.com/rudeboybert</a></li>
-</ul></li>
-</ul>
-<!--
-### Colophon 
+<img src="images/read_excel.png" />
 
-* ModernDive is written using the CC0 1.0 Universal License; more information on this license is available [here](https://creativecommons.org/publicdomain/zero/1.0/).
-* ModernDive uses the following versions of R packages (and their dependent packages):
--->
+</div>
+<p>After clicking on the “Import” button on the bottom right RStudio save this spreadsheet’s data in a data frame called <code>dem_score</code> and display its contents in the spreadsheet viewer. Furthermore you’ll see the code that read in your data in the console; you can copy and paste this code to reload your data again later instead of repeating the above manual process.</p>
+<hr />
+</div>
+</div>
+<div id="tidying" class="section level2">
+<h2><span class="header-section-number">4.4</span> Converting to “tidy” data format</h2>
+<p>In this Section, we’ll show you how to convert a dataset that isn’t in “tidy” format i.e. “wide” format, to a dataset that is in “tidy” format i.e. “long/narrow” format. Let’s use the <code>dem_score</code> data frame we loaded from a spreadsheet in the previous Section but focus on only data corresponding to the country of Guatemala.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">guat_dem &lt;-<span class="st"> </span>dem_score <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(country <span class="op">==</span><span class="st"> &quot;Guatemala&quot;</span>)
+guat_dem</code></pre></div>
+<pre><code># A tibble: 1 x 10
+  country   `1952` `1957` `1962` `1967` `1972` `1977` `1982` `1987` `1992`
+  &lt;chr&gt;      &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;
+1 Guatemala      2     -6     -5      3      1     -3     -7      3      3</code></pre>
+<p>Now let’s produce a plot showing how the democracy scores have changed over the 40 years from 1952 to 1992 for Guatemala. Let’s start by laying out how we would map our aesthetics to variables in the data frame:</p>
+<ul>
+<li>The <code>data</code> frame is <code>guat_dem</code> by setting <code>data = guat_dem</code></li>
+</ul>
+<p>What are the names of the variables to plot? We’d like to see how the democracy score has changed over the years. Now we are stuck in a predicament. We see that we have a variable named <code>country</code> but its only value is <code>&quot;Guatemala&quot;</code>. We have other variables denoted by different year values. Unfortunately, we’ve run into a dataset that is not in the appropriate format to apply the Grammar of Graphics and <code>ggplot2</code>. Remember that <code>ggplot2</code> is a package in the <code>tidyverse</code> and, thus, needs data to be in a tidy format. We’d like to finish off our mapping of aesthetics to variables by doing something like</p>
+<ul>
+<li>The <code>aes</code>thetic mapping is set by <code>aes(x = year, y = democracy_score)</code></li>
+</ul>
+<p>but this is not possible with our wide-formatted data. We need to take the values of the current column names in <code>guat_dem</code> (aside from <code>country</code>) and convert them into a new variable that will act as a key called <code>year</code>. Then, we’d like to take the numbers on the inside of the table and turn them into a column that will act as values called <code>democracy_score</code>. Our resulting data frame will have three columns: <code>country</code>, <code>year</code>, and <code>democracy_score</code>.</p>
+<p>The <code>gather()</code> function in the <code>tidyr</code> package can complete this task for us. The first argument to <code>gather()</code>, just as with <code>ggplot2()</code>, is the <code>data</code> argument where we specify which data frame we would like to tidy. The next two arguments to <code>gather()</code> are <code>key</code> and <code>value</code>, which specify what we’d like to call the new columns that convert our wide data into long format. Lastly, we include a specification for variables we’d like to NOT include in this tidying process using a <code>-</code>.</p>
+<!-- Should we include a mention of also including all the variables you'd like to include? I rarely do this and use the negation instead. -->
+<!-- I like not teaching the pipe here since the data argument is the same as what they are used to with ggplot2 -->
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">guat_tidy &lt;-<span class="st"> </span><span class="kw">gather</span>(<span class="dt">data =</span> guat_dem, 
+                    <span class="dt">key =</span> year,
+                    <span class="dt">value =</span> democracy_score,
+                    <span class="op">-</span><span class="st"> </span>country) 
+guat_tidy</code></pre></div>
+<pre><code># A tibble: 9 x 3
+  country   year  democracy_score
+  &lt;chr&gt;     &lt;chr&gt;           &lt;int&gt;
+1 Guatemala 1952                2
+2 Guatemala 1957               -6
+3 Guatemala 1962               -5
+4 Guatemala 1967                3
+5 Guatemala 1972                1
+6 Guatemala 1977               -3
+7 Guatemala 1982               -7
+8 Guatemala 1987                3
+9 Guatemala 1992                3</code></pre>
+<p>We can now create the plot to show how the democracy score of Guatemala changed from 1952 to 1992 using a linegraph and <code>ggplot2</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(<span class="dt">data =</span> guat_tidy, 
+       <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> year, <span class="dt">y =</span> democracy_score)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_line</span>()</code></pre></div>
+<pre><code>geom_path: Each group consists of only one observation. Do you need to adjust
+the group aesthetic?</code></pre>
+<p><img src="ismaykim_files/figure-html/unnamed-chunk-73-1.png" width="\textwidth" style="display: block; margin: auto;" /></p>
+<!-- Arg, this is really annoying that gather() doesn't see that these are all numbers.  Do you know a way around this? I usually just go mutate(year = as.numeric(year) but they don't know mutate() yet. -->
+<p>Observe that the <code>year</code> variable in <code>guat_tidy</code> is stored as a character vector since we had to circumvent the naming rules in R by adding backticks around the different year columns in <code>guat_dem</code>. This is leading to <code>ggplot</code> not knowing exactly how to plot a line using a categorical variable. We can fix this by using the <code>parse_number()</code> function in the <code>readr</code> package and then specify the horizontal axis label to be <code>&quot;year&quot;</code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(<span class="dt">data =</span> guat_tidy, 
+       <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">x =</span> <span class="kw">parse_number</span>(year), 
+                     <span class="dt">y =</span> democracy_score)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&quot;year&quot;</span>)</code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:guatline"></span>
+<img src="ismaykim_files/figure-html/guatline-1.png" alt="Guatemala's democracy score ratings from 1952 to 1992" width="\textwidth" />
+<p class="caption">
+FIGURE 4.2: Guatemala’s democracy score ratings from 1952 to 1992
+</p>
+</div>
+<p>We’ll see in Chapter <a href="5-wrangling.html#wrangling">5</a> how we could use the <code>mutate()</code> function to change <code>year</code> to be a numeric variable instead after we have done our tidying. Notice now that the mappings of aesthetics to variables make sense in Figure <a href="4-tidy.html#fig:guatline">4.2</a>:</p>
+<ul>
+<li>The <code>data</code> frame is <code>guat_tidy</code> by setting <code>data = dem_score</code></li>
+<li>The <code>x</code> <code>aes</code>thetic is mapped to <code>year</code></li>
+<li>The <code>y</code> <code>aes</code>thetic is mapped to <code>democracy_score</code></li>
+<li>The <code>geom_</code>etry chosen is <code>line</code></li>
+</ul>
+<div class="learncheck">
+<p>
+<strong><em>Learning check</em></strong>
+</p>
+</div>
+<p><strong>(LC4.4)</strong> Convert the <code>dem_score</code> data frame into a tidy data frame and assign the name of <code>dem_score_tidy</code> to the resulting long-formatted data frame.</p>
+<p><strong>(LC4.5)</strong> Read in the life expectancy data stored at <a href="https://moderndive.com/data/le_mess.csv" class="uri">https://moderndive.com/data/le_mess.csv</a> and convert it to a tidy data frame.</p>
+<div class="learncheck">
 
+</div>
+<hr />
+</div>
+<div id="optional-normal-forms-of-data" class="section level2">
+<h2><span class="header-section-number">4.5</span> Optional: Normal forms of data</h2>
+<p>The datasets included in the <code>nycflights13</code> package are in a form that minimizes redundancy of data. We will see that there are ways to <em>merge</em> (or <em>join</em>) the different tables together easily. We are capable of doing so because each of the tables have <em>keys</em> in common to relate one to another. This is an important property of <strong>normal forms</strong> of data. The process of decomposing data frames into less redundant tables without losing information is called <strong>normalization</strong>. More information is available on <a href="https://en.wikipedia.org/wiki/Database_normalization">Wikipedia</a>.</p>
+<p>We saw an example of this above with the <code>airlines</code> dataset. While the <code>flights</code> data frame could also include a column with the names of the airlines instead of the carrier code, this would be repetitive since there is a unique mapping of the carrier code to the name of the airline/carrier.</p>
+<p>Below an example is given showing how to <strong>join</strong> the <code>airlines</code> data frame together with the <code>flights</code> data frame by linking together the two datasets via a common <strong>key</strong> of <code>&quot;carrier&quot;</code>. Note that this “joined” data frame is assigned to a new data frame called <code>joined_flights</code>. The <strong>key</strong> variable that we frequently join by is one of the <em>identification variables</em> mentioned above.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(dplyr)
+joined_flights &lt;-<span class="st"> </span><span class="kw">inner_join</span>(<span class="dt">x =</span> flights, 
+                             <span class="dt">y =</span> airlines, 
+                             <span class="dt">by =</span> <span class="st">&quot;carrier&quot;</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">View</span>(joined_flights)</code></pre></div>
+<p>If we <code>View</code> this dataset, we see a new variable has been created called <code>name</code>. (We will see in Subsection <a href="5-wrangling.html#rename">5.9.2</a> ways to change <code>name</code> to a more descriptive variable name.) More discussion about joining data frames together will be given in Chapter <a href="5-wrangling.html#wrangling">5</a>. We will see there that the names of the columns to be linked need not match as they did here with <code>&quot;carrier&quot;</code>.</p>
+<div class="learncheck">
+<p>
+<strong><em>Learning check</em></strong>
+</p>
+</div>
+<p><strong>(LC4.6)</strong> What are common characteristics of “tidy” datasets?</p>
+<p><strong>(LC4.7)</strong> What makes “tidy” datasets useful for organizing data?</p>
+<p><strong>(LC4.8)</strong> What are some advantages of data in normal forms? What are some disadvantages?</p>
+<div class="learncheck">
+
+</div>
+<hr />
+</div>
+<div id="conclusion-2" class="section level2">
+<h2><span class="header-section-number">4.6</span> Conclusion</h2>
+<div id="review-questions-1" class="section level3">
+<h3><span class="header-section-number">4.6.1</span> Review questions</h3>
+<!-- Need to include an exercise in the DataCamp course on using gather() to turn the `police_locals` data frame into a tidy data frame. -->
+<p>Review questions have been designed using the <code>fivethirtyeight</code> R package <span class="citation">(Kim, Ismay, and Chunn <a href="#ref-R-fivethirtyeight">2018</a>)</span> with links to the corresponding FiveThirtyEight.com articles in our free DataCamp course <strong>Effective Data Storytelling using the <code>tidyverse</code></strong>. The material in this chapter is covered in the <strong>Tidy Data</strong> chapter of the DataCamp course available <a href="https://campus.datacamp.com/courses/effective-data-storytelling-using-the-tidyverse/tidy-data">here</a>.</p>
+</div>
+<div id="whats-to-come-2" class="section level3">
+<h3><span class="header-section-number">4.6.2</span> What’s to come?</h3>
+<p>In Chapter <a href="5-wrangling.html#wrangling">5</a>, we’ll further explore data in tidy format by grouping our data, creating summaries based on those groupings, filtering our data to match conditions, and performing other wranglings with our data including defining new columns/variables. These data wrangling procedures will go hand-in-hand with the data visualizations you’ve produced in Chapter <a href="3-viz.html#viz">3</a>.</p>
+</div>
+<div id="script-of-r-code-1" class="section level3">
+<h3><span class="header-section-number">4.6.3</span> Script of R code</h3>
+<p>An R script file of all R code used in this chapter is available <a href="scripts/04-tidy.R">here</a>.</p>
+
+</div>
 </div>
 </div>
 <h3>References</h3>
 <div id="refs" class="references">
-<div id="ref-hester2011">
-<p>Chihara, Laura M., and Tim C. Hesterberg. 2011. <em>Mathematical Statistics with Resampling and R</em>. Hoboken, NJ: John Wiley; Sons. <a href="https://sites.google.com/site/chiharahesterberg/home" class="uri">https://sites.google.com/site/chiharahesterberg/home</a>.</p>
+<div id="ref-tidy">
+<p>Wickham, Hadley. 2014. “Tidy Data.” <em>Journal of Statistical Software</em> Volume 59 (Issue 10). <a href="https://www.jstatsoft.org/index.php/jss/article/view/v059i10/v59i10.pdf" class="uri">https://www.jstatsoft.org/index.php/jss/article/view/v059i10/v59i10.pdf</a>.</p>
 </div>
-<div id="ref-isrs2014">
-<p>Diez, David M, Christopher D Barr, and Mine Çetinkaya-Rundel. 2014. <em>Introductory Statistics with Randomization and Simulation</em>. First Edition. <a href="https://www.openintro.org/stat/textbook.php?stat_book=isrs" class="uri">https://www.openintro.org/stat/textbook.php?stat_book=isrs</a>.</p>
+<div id="ref-R-tidyr">
+<p>Wickham, Hadley, and Lionel Henry. 2018. <em>Tidyr: Easily Tidy Data with ’Spread()’ and ’Gather()’ Functions</em>. <a href="https://CRAN.R-project.org/package=tidyr" class="uri">https://CRAN.R-project.org/package=tidyr</a>.</p>
 </div>
 <div id="ref-rds2016">
 <p>Grolemund, Garrett, and Hadley Wickham. 2016. <em>R for Data Science</em>. <a href="http://r4ds.had.co.nz/" class="uri">http://r4ds.had.co.nz/</a>.</p>
 </div>
-<div id="ref-R-bookdown">
-<p>Xie, Yihui. 2018. <em>Bookdown: Authoring Books and Technical Documents with R Markdown</em>. <a href="https://github.com/rstudio/bookdown" class="uri">https://github.com/rstudio/bookdown</a>.</p>
+<div id="ref-R-nycflights13">
+<p>Wickham, Hadley. 2018. <em>Nycflights13: Flights That Departed Nyc in 2013</em>. <a href="https://CRAN.R-project.org/package=nycflights13" class="uri">https://CRAN.R-project.org/package=nycflights13</a>.</p>
+</div>
+<div id="ref-R-fivethirtyeight">
+<p>Kim, Albert Y., Chester Ismay, and Jennifer Chunn. 2018. <em>Fivethirtyeight: Data and Code Behind the Stories and Interactives at ’Fivethirtyeight’</em>. <a href="https://CRAN.R-project.org/package=fivethirtyeight" class="uri">https://CRAN.R-project.org/package=fivethirtyeight</a>.</p>
 </div>
 </div>
             </section>
@@ -885,8 +1032,8 @@ Additionally, this book will focus on computational thinking, data thinking, and
           </div>
         </div>
       </div>
-
-<a href="2-getting-started.html" class="navigation navigation-next navigation-unique" aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="3-viz.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="5-wrangling.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
@@ -916,7 +1063,7 @@ gitbook.start({
 "size": 2
 },
 "edit": {
-"link": "https://github.com/moderndive/moderndive_book/edit/master/index.Rmd",
+"link": "https://github.com/moderndive/moderndive_book/edit/master/04-tidy.Rmd",
 "text": "Edit"
 },
 "download": null,
