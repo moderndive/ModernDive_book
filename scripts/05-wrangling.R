@@ -104,12 +104,6 @@ by_origin_monthly <- flights %>%
 by_origin_monthly
 
 ## ------------------------------------------------------------------------
-by_monthly_origin <- flights %>% 
-  group_by(month, origin) %>% 
-  summarize(count = n())
-by_monthly_origin
-
-## ------------------------------------------------------------------------
 by_origin_monthly_incorrect <- flights %>% 
   group_by(origin) %>% 
   group_by(month) %>% 
