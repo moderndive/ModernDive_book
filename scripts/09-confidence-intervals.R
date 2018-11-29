@@ -35,7 +35,8 @@ library(infer)
 
 ## ----include=FALSE-------------------------------------------------------
 set.seed(2018)
-pennies_sample <- pennies %>% sample_n(40)
+pennies_sample <- pennies %>% 
+  sample_n(40)
 
 ## ------------------------------------------------------------------------
 pennies_sample
@@ -99,7 +100,8 @@ thousand_bootstrap_samples <- pennies_sample %>%
   generate(reps = 1000)
 
 ## ------------------------------------------------------------------------
-thousand_bootstrap_samples %>% count(replicate)
+thousand_bootstrap_samples %>% 
+  count(replicate)
 
 ## ----fig.align='center', echo=FALSE--------------------------------------
 knitr::include_graphics("images/flowcharts/infer/calculate.png")
@@ -124,10 +126,12 @@ pennies_sample %>%
 knitr::include_graphics("images/flowcharts/infer/visualize.png")
 
 ## ------------------------------------------------------------------------
-bootstrap_distribution %>% visualize()
+bootstrap_distribution %>% 
+  visualize()
 
 ## ------------------------------------------------------------------------
-bootstrap_distribution %>% visualize(obs_stat = x_bar)
+bootstrap_distribution %>% 
+  visualize(obs_stat = x_bar)
 
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
@@ -175,8 +179,7 @@ ggplot(pennies_sample, aes(x = age_in_2011)) +
 
 ## ------------------------------------------------------------------------
 pennies_sample %>% 
-  summarize(mean_age = mean(age_in_2011),
-            median_age = median(age_in_2011))
+  summarize(mean_age = mean(age_in_2011), median_age = median(age_in_2011))
 
 ## ------------------------------------------------------------------------
 thousand_samples <- pennies %>% 
@@ -188,8 +191,8 @@ sampling_distribution <- thousand_samples %>%
   summarize(stat = mean(age_in_2011))
 
 ## ---- fig.cap="Sampling distribution for n=40 samples of pennies"--------
-sampling_distribution %>% 
-  visualize(bins = 10, fill = "salmon")
+ggplot(sampling_distribution, aes(x = stat)) +
+  geom_histogram(bins = 10, fill = "salmon", color = "white")
 
 ## ------------------------------------------------------------------------
 sampling_distribution %>% 
@@ -361,7 +364,8 @@ bootstrap_props <- gen %>%
   calculate(stat = "prop")
 
 ## ------------------------------------------------------------------------
-bootstrap_props %>% visualize(bins = 25)
+bootstrap_props %>% 
+  visualize(bins = 25)
 
 ## ------------------------------------------------------------------------
 standard_error_ci <- bootstrap_props %>% 
@@ -542,13 +546,14 @@ bootstrap_distribution <- mythbusters_yawn %>%
   calculate(stat = "diff in props", order = c("seed", "control"))
 
 ## ------------------------------------------------------------------------
-bootstrap_distribution %>% visualize(bins = 20)
+bootstrap_distribution %>% 
+  visualize(bins = 20)
 
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   get_ci(type = "percentile", level = 0.95)
 
 ## ----include=FALSE-------------------------------------------------------
-bootstrap_distribution %>% 
-  get_ci(type = "percentile", level = 0.95) -> myth_ci
+myth_ci <- bootstrap_distribution %>% 
+  get_ci(type = "percentile", level = 0.95)
 
