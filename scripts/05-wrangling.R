@@ -274,17 +274,20 @@ flights_weather_joined
 ## View(ten_freq_dests)
 
 ## ----wrangle-summary-table, echo=FALSE, message=FALSE--------------------
-# Original at https://docs.google.com/spreadsheets/d/1nRkXfYMQiTj79c08xQPY0zkoJSpde3NC1w6DRhsWCss/edit#gid=0
-read_csv("data/ch5_summary_table - Sheet1.csv", na = "") %>% 
+# The following Google Doc is published to CSV and loaded below using read_csv() below:
+# https://docs.google.com/spreadsheets/d/1nRkXfYMQiTj79c08xQPY0zkoJSpde3NC1w6DRhsWCss/edit#gid=0
+
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vRgwl1lugQA6zxzfB6_0hM5vBjXkU7cbUVYYXLcWeaRJ9HmvNXyCjzJCgiGW8HCe1kvjLCGYHf-BvYL/pub?gid=0&single=true&output=csv" %>% 
+  read_csv(na = "") %>% 
   rename_(" " = "X1") %>% 
   kable(
     caption = "Summary of data wrangling verbs", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                 latex_options = c("HOLD_position")) %>%
-   column_spec(2, width = "0.9in") %>% 
-   column_spec(3, width = "3.3in")
+                latex_options = c("HOLD_position")) %>%
+  column_spec(2, width = "0.9in") %>% 
+  column_spec(3, width = "3.3in")
 
 ## ----echo=FALSE, fig.cap="ModernDive flowchart - On to Part II!", fig.align='center'----
 knitr::include_graphics("images/flowcharts/flowchart/flowchart.005.png")

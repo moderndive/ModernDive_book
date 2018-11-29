@@ -1,10 +1,18 @@
 ## ----summarytable-prep, echo=FALSE, message=FALSE------------------------
-# Original at https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 library(dplyr)
 library(readr)
 
-## ----summarytable, echo=FALSE--------------------------------------------
-read_csv("data/ch9_summary_table - Sheet1.csv", na = "") %>% 
+## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
+# Packages needed internally, but not in text.
+library(knitr)
+library(kableExtra)
+
+## ----summarytable, echo=FALSE, message=FALSE-----------------------------
+# The following Google Doc is published to CSV and loaded below using read_csv() below:
+# https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
+
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+  read_csv(na = "") %>% 
   kable(
     caption = "\\label{tab:summarytable}Scenarios of sampling for inference", 
     booktabs = TRUE,
@@ -24,11 +32,6 @@ library(ggplot2)
 library(janitor)
 library(moderndive)
 library(infer)
-
-## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
-# Packages needed internally, but not in text.
-library(knitr)
-library(kableExtra)
 
 ## ----include=FALSE-------------------------------------------------------
 set.seed(2018)
