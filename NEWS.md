@@ -8,6 +8,12 @@
 
 * Chapter 2 - Getting Started
     + Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
+* Chapter 6 - Basic regression:
+    + Moved residual analysis to Chapter 11
+* Chapter 7 - Multiple regression:
+    + Moved residual analysis to Chapter 11
+* Chapter 11 - Inference for regression:
+    + Moved residual analysis from Chapter 6 & 7 here
 * Moved all Learning Check solutions to a single Appendix
 
 ## Other changes
