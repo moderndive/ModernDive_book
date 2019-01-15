@@ -5,23 +5,57 @@
 Major refactoring of Chapters 8 - 11 as follows:
 
 * Chapter 8 - Sampling
-    1. Introduction to sampling
-        a) Concepts related to sampling
-        b) Inference via sampling
+    1. Sampling simulations
+        a) Sampling exercise
+        b) Simuations
     2. Tactile sampling simulation
-        a) Using the shovel once
-        b) Using the shovel 33 times
+        a) Using shovel once
+        b) Using shovel 33 times
     3. Virtual sampling simulation
-        a) Using the shovel once
+        a) Using shovel once
         b) Using shovel 33 times
         c) Using shovel 1000 times
         d) Using different shovels
-    4. In real-life sampling: Polls
-    5. Conclusion
-        a) Central Limit Theorem
-        b) What’s to come?
-        c) Script of R code
-* Chapter 9 - Confidence Intervals
+    4. Theoretical sampling simulation
+        a) Using shovel "infinity" times
+        b) Central Limit Theorem
+    5. Big Picture
+        a) Sampling in real-life: Polls
+        b) Terminology related to sampling
+        c) Statistical definitions (sampling distribution and SE)
+        d) Closing notes: "What’s to come?" and "Script of R code"
+* Chapter 10 - Resampling 
+    1. What can we do with only one sample?
+    2. Tactile resampling simulation
+        a) Resampling 33 times
+    3. Virtual resampling simulation
+        a) Resampling once
+        a) Resampling 33 times
+        a) Resampling 1000 times
+    4. Theoretical resampling simulation
+        a) Resampling "infinity" times
+        a) "Bootstrap" method
+    5. Does the "bootstrap" method work? 
+    6. `infer` package
+        a) Define verb framework: `specify()` variables `%>%` `generate()` replicates `%>%` `summarize()` each replicate `%>%` `visualize()` the results  
+        b) Draw links with `dplyr` package
+* Chapter 11 - Confidence Intervals
+    1. Confidence interval construction
+        a) The percentile method. Vary 95%
+        b) The SE method
+    2. Confidence interval interpretation
+        a) Repeated sampling
+        a) What determines the width? Confidence level, sample size.
+        a) In practice: "We're 95% confident"
+    3. Case study 1: (one proportion)
+    4. Case study 2: (two proportions)
+    5. Big Picture
+        a) "There's a formula for that!" Theory-based confidence intervals
+        a) Comparing SE method bootstrap to theory-based confidence intervals
+        c) Bootstrap works for almost any point estimate!
+
+        
+    
     1. Bootstrapping
         a) Data explanation
         b) Exploratory data analysis
@@ -31,12 +65,9 @@ Major refactoring of Chapters 8 - 11 as follows:
         b) Generate replicates
         c) Calculate summary statistics
         d) Visualize the results
-    3. Now to confidence intervals
-        a) The percentile method
-        b) The standard error method
     4. Comparing bootstrap and sampling distributions
     5. Interpreting the confidence interval
-    6. Example: One proportion
+    6. Example: 
         a) Observed Statistic
         b) Bootstrap distribution
         c) Theory-based confidence intervals
