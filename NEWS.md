@@ -2,31 +2,106 @@
 
 ## Highlights
 
-Major refactoring of Chapters 8 - 11 as follows:
+### Major Refactoring of Inference Chapters of Book
+
+**Old**
+
+* Chapter 8 - Sampling
+    1. Introduction to sampling
+        a) Concepts related to sampling
+        b) Inference via sampling
+    2. Tactile sampling simulation
+        a) Using the shovel once
+        b) Using the shovel 33 times
+    3. Virtual sampling simulation
+        a) Using the shovel once
+        b) Using shovel 33 times
+        c) Using shovel 1000 times
+        d) Using different shovels
+    4. In real-life sampling: Polls
+    5. Conclusion
+        a) Central Limit Theorem
+        b) What’s to come?
+        c) Script of R code
+* Chapter 9 - Confidence Intervals
+    1. Bootstrapping
+        a) Data explanation
+        b) Exploratory data analysis
+        c) The Bootstrapping Process
+    2. The infer package for statistical inference
+        a) Specify variables
+        b) Generate replicates
+        c) Calculate summary statistics
+        d) Visualize the results
+    3. Now to confidence intervals
+        a) The percentile method
+        b) The standard error method
+    4. Comparing bootstrap and sampling distributions
+    5. Interpreting the confidence interval
+    6. Example: One proportion
+        a) Observed Statistic
+        b) Bootstrap distribution
+        c) Theory-based confidence intervals
+    7. Example: Comparing two proportions
+        a) Compute the point estimate
+        b) Bootstrap distribution
+    8. Conclusion
+        a) What’s to come?
+        b) Script of R code
+* Chapter 10 - Hypothesis Testing
+    1. When inference is not needed
+    2. Basics of hypothesis testing
+    3. Criminal trial analogy
+        a) Two possible conclusions
+    4. Types of errors in hypothesis testing
+        a) Logic of hypothesis testing
+    5. Statistical significance
+    6. Hypothesis testing with infer
+    7. Example: Comparing two means
+        a) 
+    8. Building theory-based methods using computation
+        a) Example: t-test for two independent samples
+        b) Conditions for t-test
+    9. Conclusion
+        a) Script of R code
+* Chapter 11 - Inference for Regression
+    1. Simulation-based Inference for Regression
+    1. Bootstrapping for the regression slope
+    1. Inference for multiple regression
+        a) Refresher: Professor evaluations data
+        b) Refresher: Visualizations
+        c) Refresher: Regression tables
+        d) Script of R code
+
+**New**
 
 * Chapter 8 - Sampling
     1. Sampling simulations
         a) Sampling exercise
-        b) Simuations
+        b) Idea of a simuation
     2. Tactile sampling simulation
         a) Using shovel once
-        b) Using shovel 33 times
+        b) Using shovel 33 times: what about 1000 times?
     3. Virtual sampling simulation
         a) Using shovel once
         b) Using shovel 33 times
         c) Using shovel 1000 times
-        d) Using different shovels
+        d) Using different shovels 1000 times
     4. Theoretical sampling simulation
         a) Using shovel "infinity" times
-        b) Central Limit Theorem
+        b) "There's theory for that!" Central Limit Theorem
     5. Big Picture
         a) Sampling in real-life: Polls
         b) Terminology related to sampling
-        c) Statistical definitions (sampling distribution and SE)
+        c) Statistical definitions : sampling distribution as a simulation and standard errors
         d) Closing notes: "What’s to come?" and "Script of R code"
 * Chapter 10 - Resampling 
-    1. What can we do with only one sample?
+    1. Concept of resampling
+        a) What to do when you have only one sample?
+        a) Resampling exercise
+        a) What is bootstrap resampling?
     2. Tactile resampling simulation
+        a) Resampling once
         a) Resampling 33 times
     3. Virtual resampling simulation
         a) Resampling once
@@ -34,11 +109,15 @@ Major refactoring of Chapters 8 - 11 as follows:
         a) Resampling 1000 times
     4. Theoretical resampling simulation
         a) Resampling "infinity" times
-        a) "Bootstrap" method
+        a) "There's theory for that!" This is proven to work!
     5. Does the "bootstrap" method work? 
-    6. `infer` package
-        a) Define verb framework: `specify()` variables `%>%` `generate()` replicates `%>%` `summarize()` each replicate `%>%` `visualize()` the results  
-        b) Draw links with `dplyr` package
+        a) Comparing a sampling distribution with a bootstrap distribution: In particular SE
+        a) "There's theory for that!" 
+    6. Big Picture
+        a) `infer` package
+        b) Define verb framework: `specify()` variables `%>%` `generate()` replicates `%>%` `summarize()` each replicate `%>%` `visualize()` the results  
+        c) Draw links with `dplyr` package
+        d) Closing notes: "What’s to come?" and "Script of R code"
 * Chapter 11 - Confidence Intervals
     1. Confidence interval construction
         a) The percentile method. Vary 95%
@@ -50,33 +129,11 @@ Major refactoring of Chapters 8 - 11 as follows:
     3. Case study 1: (one proportion)
     4. Case study 2: (two proportions)
     5. Big Picture
-        a) "There's a formula for that!" Theory-based confidence intervals
-        a) Comparing SE method bootstrap to theory-based confidence intervals
+        a) "There's theory for that!" Comparing SE method bootstrap to theory-based confidence intervals
         c) Bootstrap works for almost any point estimate!
-
-        
-    
-    1. Bootstrapping
-        a) Data explanation
-        b) Exploratory data analysis
-        c) The Bootstrapping Process
-    2. The infer package for statistical inference
-        a) Specify variables
-        b) Generate replicates
-        c) Calculate summary statistics
-        d) Visualize the results
-    4. Comparing bootstrap and sampling distributions
-    5. Interpreting the confidence interval
-    6. Example: 
-        a) Observed Statistic
-        b) Bootstrap distribution
-        c) Theory-based confidence intervals
-    7. Example: Comparing two proportions
-        a) Compute the point estimate
-        b) Bootstrap distribution
-    8. Conclusion
-        a) What’s to come?
-        b) Script of R code
+        d) Closing notes: "What’s to come?" and "Script of R code"
+* Chapter 12 - Hypothesis Testing
+* Chapter 13 - Inference for Regression
 
 
 ## All content changes
