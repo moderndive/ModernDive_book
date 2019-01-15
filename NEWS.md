@@ -2,6 +2,50 @@
 
 ## Highlights
 
+Major refactoring of Chapters 8 - 11 as follows:
+
+* Chapter 8 - Sampling
+    1. Introduction to sampling
+        a) Concepts related to sampling
+        b) Inference via sampling
+    2. Tactile sampling simulation
+        a) Using the shovel once
+        b) Using the shovel 33 times
+    3. Virtual sampling simulation
+        a) Using the shovel once
+        b) Using shovel 33 times
+        c) Using shovel 1000 times
+        d) Using different shovels
+    4. In real-life sampling: Polls
+    5. Conclusion
+        a) Central Limit Theorem
+        b) What’s to come?
+        c) Script of R code
+* Chapter 9 - Confidence Intervals
+    1. Bootstrapping
+        a) Data explanation
+        b) Exploratory data analysis
+        c) The Bootstrapping Process
+    2. The infer package for statistical inference
+        a) Specify variables
+        b) Generate replicates
+        c) Calculate summary statistics
+        d) Visualize the results
+    3. Now to confidence intervals
+        a) The percentile method
+        b) The standard error method
+    4. Comparing bootstrap and sampling distributions
+    5. Interpreting the confidence interval
+    6. Example: One proportion
+        a) Observed Statistic
+        b) Bootstrap distribution
+        c) Theory-based confidence intervals
+    7. Example: Comparing two proportions
+        a) Compute the point estimate
+        b) Bootstrap distribution
+    8. Conclusion
+        a) What’s to come?
+        b) Script of R code
 
 
 ## All content changes
