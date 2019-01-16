@@ -58,7 +58,18 @@
     5. Statistical significance
     6. Hypothesis testing with infer
     7. Example: Comparing two means
-        a) 
+        a) Randomization/permutation
+        b) Comparing action and romance movies
+        c) Sampling -> randomization
+        d) Data
+        e) Model of H0
+        f) Test statistic delta
+        g) Observed effect delta*
+        h) Simulated data
+        i) Distribution of delta under H0
+        j) The p-value
+        k) Corresponding confidence interval
+        l) Summary
     8. Building theory-based methods using computation
         a) Example: t-test for two independent samples
         b) Conditions for t-test
@@ -95,7 +106,7 @@
         b) Terminology related to sampling
         c) Statistical definitions : sampling distribution as a simulation and standard errors
         d) Closing notes: "What’s to come?" and "Script of R code"
-* Chapter 10 - Resampling 
+* Chapter 9 - Resampling 
     1. Concept of resampling
         a) What to do when you have only one sample?
         a) Resampling exercise
@@ -118,7 +129,7 @@
         b) Define verb framework: `specify()` variables `%>%` `generate()` replicates `%>%` `summarize()` each replicate `%>%` `visualize()` the results  
         c) Draw links with `dplyr` package
         d) Closing notes: "What’s to come?" and "Script of R code"
-* Chapter 11 - Confidence Intervals
+* Chapter 10 - Confidence Intervals
     1. Confidence interval construction
         a) The percentile method. Vary 95%
         b) The SE method
@@ -132,8 +143,8 @@
         a) "There's theory for that!" Comparing SE method bootstrap to theory-based confidence intervals
         c) Bootstrap works for almost any point estimate!
         d) Closing notes: "What’s to come?" and "Script of R code"
-* Chapter 12 - Hypothesis Testing
-* Chapter 13 - Inference for Regression
+* Chapter 11 - Hypothesis Testing
+* Chapter 12 - Inference for Regression
 
 
 ## All content changes
