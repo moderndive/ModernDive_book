@@ -92,7 +92,7 @@
         a) Question: What proportion of this bowl is red?
         b) Using shovel once
         c) Using shovel 33 times
-    1. Computer simulation
+    1. Computer simulation:
         a) What is a simulation? We just did a "tactile" one by hand, now let's do one using the the computer
         b) Using shovel once
         c) Using shovel 33 times
