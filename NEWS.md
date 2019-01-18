@@ -194,6 +194,7 @@
 
 ## All content changes
 
+* Changed title from "Statistical Inference via Data Science in R" to "Statistical Inference via Data Science: A moderndive into R and the tidyverse"
 * Chapter 2 - Getting Started
     + Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
 * Chapter 6 - Basic regression:
