@@ -84,67 +84,112 @@
         c) Refresher: Regression tables
         d) Script of R code
 
+
 **New**
 
 * Chapter 8 - Sampling
-    1. Sampling simulations
-        a) Sampling exercise
-        b) Idea of a simuation
-    2. Tactile sampling simulation
-        a) Using shovel once
-        b) Using shovel 33 times: what about 1000 times?
-    3. Virtual sampling simulation
-        a) Using shovel once
-        b) Using shovel 33 times
-        c) Using shovel 1000 times
-        d) Using different shovels 1000 times
-    4. Theoretical sampling simulation
-        a) Using shovel "infinity" times
-        b) "There's theory for that!" Central Limit Theorem
-    5. Big Picture
-        a) Sampling in real-life: Polls
-        b) Terminology related to sampling
-        c) Statistical definitions : sampling distribution as a simulation and standard errors
-        d) Closing notes: "What’s to come?" and "Script of R code"
-* Chapter 9 - Resampling 
-    1. Concept of resampling
-        a) What to do when you have only one sample?
-        a) Resampling exercise
-        a) What is bootstrap resampling?
-    2. Tactile resampling simulation
-        a) Resampling once
-        a) Resampling 33 times
-    3. Virtual resampling simulation
-        a) Resampling once
-        a) Resampling 33 times
-        a) Resampling 1000 times
-    4. Theoretical resampling simulation
-        a) Resampling "infinity" times
-        a) "There's theory for that!" This is proven to work!
-    5. Does the "bootstrap" method work? 
-        a) Comparing a sampling distribution with a bootstrap distribution: In particular SE
-        a) "There's theory for that!" 
-    6. Big Picture
-        a) `infer` package
-        b) Define verb framework: `specify()` variables `%>%` `generate()` replicates `%>%` `summarize()` each replicate `%>%` `visualize()` the results  
-        c) Draw links with `dplyr` package
-        d) Closing notes: "What’s to come?" and "Script of R code"
-* Chapter 10 - Confidence Intervals
-    1. Confidence interval construction
-        a) The percentile method. Vary 95%
-        b) The SE method
-    2. Confidence interval interpretation
-        a) Repeated sampling
-        a) What determines the width? Confidence level, sample size.
-        a) In practice: "We're 95% confident"
-    3. Case study 1: (one proportion)
-    4. Case study 2: (two proportions)
-    5. Big Picture
-        a) "There's theory for that!" Comparing SE method bootstrap to theory-based confidence intervals
-        c) Bootstrap works for almost any point estimate!
-        d) Closing notes: "What’s to come?" and "Script of R code"
+    1. Activity: Sampling from a bowl
+        a) Question: What proportion of this bowl is red?
+        b) Using shovel once
+        c) Using shovel 33 times
+    1. Computer simulation
+        a) What is a simulation? We just did a "tactile" one by hand, now let's do one using the the computer
+        b) Using shovel once
+        c) Using shovel 33 times
+        d) Using shovel 1000 times
+        e) Using different shovels
+    1. Goal: Study fluctuations due to sampling variation
+        a) You probably already knew: Bigger sample size means "better" guess.
+        b) Comparing shovels: Role of sample size
+    1. Framework: Sampling
+        a) Terminology for sampling (population, sample, point estimate, etc)
+        b) Statistical concepts: sampling distribution and standard error
+        c) Computer's random number generator
+    1. Interpretation: 
+        a) Visual display of differences
+    1. Case study: Obama poll 
+    1. Big picture: 
+        a) Table of inferential scenarios: Add bowl and obama poll (both p)
+        b) Why does this work? Theoretial result: CLT
+        c) There's a formula for that: SE formula that has sqrt(n) at the bottom
+        d) Appendix: Normal distribution discussion
+* Chapter 9 - Confidence Intervals
+    1. Activity: Working with a sample of pennies from the bank. Are they representative of all pennies in the US.
+        a) Question: What do I do when I only have one sample?
+        b) Resampling once (paper slips)
+        c) Resampling 33 times
+    1. Computer simulation: 
+        a) What is resampling?
+        b) Resampling once
+        c) Resampling 33 times
+        d) Resampling 1000 times
+    1. Goal: Generate an estimate that accounts for sampling variation
+        a) Constructing a confidence interval
+        b) Constructing a CI using percentile method
+        c) Constructing a CI using SE method
+    1. Framework: Boostrap resampling with replacement
+        a) What dplyr verbs did we use?
+        b) There is only one test framework
+        c) the infer package
+    1. Interpretation: 
+        a) 95% speaks to reliability of the process, not about an particular interval
+        b) What determines the width? Sample size, confidence levels (only int at population variance)
+    1. Case study: Comparing two proportions with Mythbusters data
+    1. Big picture: 
+        a) Does this even work? Comparing sampling and bootstrap distribution.
+        b) Table of inferential scenarios: Add pennies (mu) and Mythbusters (p1 - p2)
+        c) Why does this work? Theoretical result: Donsker's theorem. The empirical CDF converges to the population CDF. Bootstrap works for any point estimate
+        d) There's a formula for that! Margin of error using critical values z*
 * Chapter 11 - Hypothesis Testing
+    1. Activity: Shuffling resumes between male and female job applicants
+        a) Question: Are men and women rated for jobs differently?
+        b) Alternate universe: No difference
+        c) What about sampling variation?
+        d) What did we actually observe?
+        e) How likely is this result?
+    1. Computer simulation: 
+    1. Goal: Choose between two possible truths while accounting for sampling variation
+        a) Conducting a hypothesis test
+        b) Null hypothesis that's assumed
+        c) Null distribution of test statistics: A "alternate universe" distribution
+        d) Observed test statistics
+        e) Definition of p-value
+    1. Framework: Permutation test resampling w/o replacement
+        a) Revisit verb framework
+        b) There is only one test framework
+        c) the infer package
+    1. Interpretation: 
+        a) A yes/no-type decision: statistical significance via alpha
+        b) Types of errors: 2x2 table
+        c) Analogy of criminal justice system
+    1. Case study: Comparing two means with action vs romance movie data
+    1. Big picture: 
+        a) Problems with p-values: p-hacking, hard to understand, ASA statement
+        b) Comparison with confidence intervals. HT yields binary decision, but CI's yield plausible range of estimates. This is statistical vs practical significance
+        c) Table of inferential scenarios: Add action vs romance (mu1 - mu2)
+        d) Why does this work? Theoretical result: Neyman-Pearson lemma
+        e) There's a formula for that! t-test
 * Chapter 12 - Inference for Regression
+    1. Activity: Revisit simple linear regression
+        a) Question: Is there a significant relationship between teaching score and bty score above and beyond any evidence due to sampling variation.
+        b) Review exercise/re-run all code
+        c) Regression table
+    1. Computer simulation: 
+        a) Bootstraping the relationship
+        b) Permuting the relationship
+    1. Goal: Inferring about the population regression slope
+        a) 
+    1. Framework: 
+    1. Interpretation:
+        a) Values in table are given! No simulations necessary!
+        b) Conditions for inference: residual and partial residual plots
+    1. Case study: Mmultiple regression example from Ch 7.
+        a) 
+    1. Big picture: 
+        a) ANOVA = Regression with categorical variables
+        b) Table of inferential scenarios: Add TBD (beta1)
+        c) Why does this work? Theoretical result: Gauss-Markov Theorem
+        d) There's a formula for that! Fitted intercept and slope. SE of fitted intercept and slope. Note there is a sqrt(n) in denominator. 
 
 
 ## All content changes
