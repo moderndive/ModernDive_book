@@ -2,9 +2,9 @@
 
 ## Highlights
 
-### Major Refactoring of Inference Chapters of Book
+### Major refactoring of inference chapters of Book
 
-**Old**
+#### Old chapter structure
 
 * Chapter 8 - Sampling
     1. Introduction to sampling
@@ -85,7 +85,7 @@
         d) Script of R code
 
 
-**New**
+#### New chapter structure
 
 * Chapter 8 - Sampling
     1. Activity: Sampling from a bowl
