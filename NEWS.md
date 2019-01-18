@@ -7,6 +7,87 @@
 **Old**
 
 * Chapter 8 - Sampling
+    1. Introduction to sampling
+        a) Concepts related to sampling
+        b) Inference via sampling
+    2. Tactile sampling simulation
+        a) Using the shovel once
+        b) Using the shovel 33 times
+    3. Virtual sampling simulation
+        a) Using the shovel once
+        b) Using shovel 33 times
+        c) Using shovel 1000 times
+        d) Using different shovels
+    4. In real-life sampling: Polls
+    5. Conclusion
+        a) Central Limit Theorem
+        b) What’s to come?
+        c) Script of R code
+* Chapter 9 - Confidence Intervals
+    1. Bootstrapping
+        a) Data explanation
+        b) Exploratory data analysis
+        c) The Bootstrapping Process
+    2. The infer package for statistical inference
+        a) Specify variables
+        b) Generate replicates
+        c) Calculate summary statistics
+        d) Visualize the results
+    3. Now to confidence intervals
+        a) The percentile method
+        b) The standard error method
+    4. Comparing bootstrap and sampling distributions
+    5. Interpreting the confidence interval
+    6. Example: One proportion
+        a) Observed Statistic
+        b) Bootstrap distribution
+        c) Theory-based confidence intervals
+    7. Example: Comparing two proportions
+        a) Compute the point estimate
+        b) Bootstrap distribution
+    8. Conclusion
+        a) What’s to come?
+        b) Script of R code
+* Chapter 10 - Hypothesis Testing
+    1. When inference is not needed
+    2. Basics of hypothesis testing
+    3. Criminal trial analogy
+        a) Two possible conclusions
+    4. Types of errors in hypothesis testing
+        a) Logic of hypothesis testing
+    5. Statistical significance
+    6. Hypothesis testing with infer
+    7. Example: Comparing two means
+        a) Randomization/permutation
+        b) Comparing action and romance movies
+        c) Sampling -> randomization
+        d) Data
+        e) Model of H0
+        f) Test statistic delta
+        g) Observed effect delta*
+        h) Simulated data
+        i) Distribution of delta under H0
+        j) The p-value
+        k) Corresponding confidence interval
+        l) Summary
+    8. Building theory-based methods using computation
+        a) Example: t-test for two independent samples
+        b) Conditions for t-test
+    9. Conclusion
+        a) Script of R code
+* Chapter 11 - Inference for Regression
+    1. Simulation-based Inference for Regression
+    1. Bootstrapping for the regression slope
+    1. Inference for multiple regression
+        a) Refresher: Professor evaluations data
+        b) Refresher: Visualizations
+        c) Refresher: Regression tables
+        d) Script of R code
+
+
+**New**
+
+* Chapter 8 - Sampling
     1. Activity: Sampling from a bowl
         a) Question: What proportion of this bowl is red?
         b) Using shovel once
@@ -109,8 +190,6 @@
         b) Table of inferential scenarios: Add TBD (beta1)
         c) Why does this work? Theoretical result: Gauss-Markov Theorem
         d) There's a formula for that! Fitted intercept and slope. SE of fitted intercept and slope. Note there is a sqrt(n) in denominator. 
-
-
 
 
 ## All content changes
