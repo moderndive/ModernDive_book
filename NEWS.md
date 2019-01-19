@@ -88,13 +88,12 @@
 #### New chapter structure
 
 * Chapter 8 - Sampling
-    1. Sampling Activity
+    1. Sampling activity
         a) Question: What proportion of this bowl is red?
         b) Using shovel once
         c) Using shovel 33 times
     1. Computer simulation:
-        a) What is a simulation? We just did a "tactile" one by hand, now let's 
-        do one using the the computer
+        a) What is a simulation?
         b) Using shovel once
         c) Using shovel 33 times
         d) Using shovel 1000 times
@@ -114,20 +113,18 @@
         c) There's a formula for that: SE formula that has sqrt(n) at the bottom
         d) Appendix: Normal distribution discussion
 * Chapter 9 - Confidence Intervals
-    1. Activity: Working with a sample of pennies from the bank. Are they 
-    representative of all pennies in the US.
+    1. Pennies Activity
         a) Question: What do I do when I only have one sample?
         b) Resampling once (paper slips)
         c) Resampling 33 times
     1. Computer simulation: 
-        a) What is resampling?
         b) Resampling once
         c) Resampling 33 times
         d) Resampling 1000 times
     1. Goal: Generate an estimate that accounts for sampling variation
         a) Constructing a confidence interval
-        b) Constructing a CI using percentile method
-        c) Constructing a CI using SE method
+        b) Construction using percentile method
+        c) Construction using SE method
     1. Framework: Boostrap resampling with replacement
         a) What dplyr verbs did we use?
         b) There is only one test framework
@@ -137,11 +134,11 @@
         b) What determines the width? Sample size, confidence levels (only int at population variance)
     1. Case study: Comparing two proportions with Mythbusters data
     1. Big picture: 
-        a) Does this even work? Comparing sampling and bootstrap distribution.
-        b) Table of inferential scenarios: Add pennies (mu) and Mythbusters (p1 - p2)
-        c) Why does this work? Theoretical result: Donsker's theorem. The empirical CDF converges to the population CDF. Bootstrap works for any point estimate
+        a) Table of inferential scenarios: Add pennies (mu) and Mythbusters (p1 - p2)
+        b) Does this even work? Comparing sampling and bootstrap distribution.
+        c) Why does this work? Theoretical result: Donsker's theorem. 
         d) There's a formula for that! Margin of error using critical values z*
-* Chapter 11 - Hypothesis Testing
+* Chapter 10 - Hypothesis Testing
     1. Activity: Shuffling resumes between male and female job applicants
         a) Question: Are men and women rated for jobs differently?
         b) Alternate universe: No difference
@@ -166,11 +163,11 @@
     1. Case study: Comparing two means with action vs romance movie data
     1. Big picture: 
         a) Problems with p-values: p-hacking, hard to understand, ASA statement
-        b) Comparison with confidence intervals. HT yields binary decision, but CI's yield plausible range of estimates. This is statistical vs practical significance
+        b) Comparison with confidence intervals
         c) Table of inferential scenarios: Add action vs romance (mu1 - mu2)
         d) Why does this work? Theoretical result: Neyman-Pearson lemma
         e) There's a formula for that! t-test
-* Chapter 12 - Inference for Regression
+* Chapter 11 - Inference for Regression
     1. Activity: Revisit simple linear regression
         a) Question: Is there a significant relationship between teaching score and bty score above and beyond any evidence due to sampling variation.
         b) Review exercise/re-run all code
