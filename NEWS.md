@@ -88,12 +88,13 @@
 #### New chapter structure
 
 * Chapter 8 - Sampling
-    1. Activity: Sampling from a bowl
+    1. Sampling Activity
         a) Question: What proportion of this bowl is red?
         b) Using shovel once
         c) Using shovel 33 times
     1. Computer simulation:
-        a) What is a simulation? We just did a "tactile" one by hand, now let's do one using the the computer
+        a) What is a simulation? We just did a "tactile" one by hand, now let's 
+        do one using the the computer
         b) Using shovel once
         c) Using shovel 33 times
         d) Using shovel 1000 times
@@ -104,7 +105,6 @@
     1. Framework: Sampling
         a) Terminology for sampling (population, sample, point estimate, etc)
         b) Statistical concepts: sampling distribution and standard error
-        c) Computer's random number generator
     1. Interpretation: 
         a) Visual display of differences
     1. Case study: Obama poll 
@@ -114,7 +114,8 @@
         c) There's a formula for that: SE formula that has sqrt(n) at the bottom
         d) Appendix: Normal distribution discussion
 * Chapter 9 - Confidence Intervals
-    1. Activity: Working with a sample of pennies from the bank. Are they representative of all pennies in the US.
+    1. Activity: Working with a sample of pennies from the bank. Are they 
+    representative of all pennies in the US.
         a) Question: What do I do when I only have one sample?
         b) Resampling once (paper slips)
         c) Resampling 33 times
