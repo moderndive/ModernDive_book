@@ -13,31 +13,18 @@ knitr::opts_chunk$set(
   tidy = FALSE, 
   out.width = '\\textwidth', 
   fig.height = 4,
+  fig.align='center',
   warning = FALSE
   )
+
+options(scipen = 99, digits = 3)
 
 # In knitr::kable printing replace all NA's with blanks
 options(knitr.kable.NA = '')
 
-# This bit of code is a bug fix on asis blocks, which we use to show/not show LC
-# solutions, which are written like markdown text. In theory, it shouldn't be
-# necessary for knitr versions <=1.11.6, but I've found I still need to for
-# everything to knit properly in asis blocks. More info here: 
-# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
-library(knitr)
-knit_engines$set(asis = function(options) {
-  if (options$echo && options$eval) knit_child(text = options$code)
-})
-
-# This controls which LC solutions to show. Options for solutions_shown: "ALL"
-# (to show all solutions), or subsets of c('3-2', '3-3',
-# '3-4','3-5','3-6','3-7'), including the null vector c('') to show no
-# solutions.
-# solutions_shown <- c('3-1', '3-2', '3-3', '3-4', '3-5', '3-6' ,'3-7', '3-8', '3-9', '3-10', '3-11', '3-12', '3-13', '3-14')
-solutions_shown <- c('')
-show_solutions <- function(section){
-  return(solutions_shown == "ALL" | section %in% solutions_shown)
-  }
+# Set random number generator see value for replicable pseudorandomness. Why 76?
+# https://www.youtube.com/watch?v=xjJ7FheCkCU
+set.seed(76)
 ```
 
 We begin the development of your data science toolbox with data visualization. By visualizing our data, we gain valuable insights that we couldn't initially see from just looking at the raw data in spreadsheet form.  We will use the `ggplot2` package as it provides an easy way to customize your plots. `ggplot2` is rooted in the data visualization theory known as _The Grammar of Graphics_ [@wilkinson2005].
@@ -45,7 +32,6 @@ We begin the development of your data science toolbox with data visualization. B
 At the most basic level, graphics/plots/charts (we use these terms interchangeably in this book) provide a nice way for us to get a sense for how quantitative variables compare in terms of their center (where the values tend to be located) and their spread (how they vary around the center).  Graphics should be designed to emphasise the findings and insight you want your audience to understand.  This does however require a balancing act.  On the one hand, you want to highlight as many meaningful relationships and interesting findings as possible; on the other you don't want to include so many as to overwhelm your audience.  
 
 As we will see, plots/graphics also help us to identify patterns and outliers in our data.  We will see that a common extension of these ideas is to compare the *distribution* of one quantitative variable (i.e., what the spread of a variable looks like or how the variable is *distributed* in terms of its values) as we go across the levels of a different categorical variable.
-
 
 
 ### Needed packages {-}
@@ -66,20 +52,15 @@ library(kableExtra)
 library(readr)
 ```
 
-### DataCamp {-}
 
-Our approach to introducing data visualization via the Grammar of Graphics and the `ggplot2` package is very similar to the approach taken in [David Robinson's](https://twitter.com/drob) DataCamp course "Introduction to the Tidyverse," a course targeted at people new to R and the tidyverse. If you're interested in complementing your learning below in an interactive online environment, click on the image below to access the course. The relevant chapters of the course are Chapter 2 on "Data visualization" and Chapter 4 on "Types of visualizations."
 
-```{r, echo=FALSE, results='asis', purl=FALSE}
-image_link(path = "images/datacamp_intro_to_tidyverse.png", link = "https://www.datacamp.com/courses/introduction-to-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.3\\textwidth")
-```
-
+---
 
 
 
 ## The Grammar of Graphics {#grammarofgraphics}
 
-We begin with a discussion of a theoretical framework for data visualization known as the "The Grammar of Graphics," which serves as the basis for the `ggplot2` package.  Much like how we construct sentences in any language by using a linguistic grammar (nouns, verbs, subjects, objects, etc.), the theoretical framework given by Leland Wilkinson [@wilkinson2005] allows us to specify the components of a statistical graphic.
+We begin with a discussion of a theoretical framework for data visualization known as "The Grammar of Graphics," which serves as the foundation for the `ggplot2` package. Think of how we construct sentences in english to form sentences by combining different elements, like nouns, verbs, particles, subjects, objects, etc. However, we can't just combine these elements in any arbitrary order; we must do so following a set of rules known as a linguistic grammar. Similarly to a linguistic grammar, "The Grammar of Graphics" define a set of rules for contructing *statistical graphics* by combining different types of *layers*. This grammar was created by Leland Wilkinson [@wilkinson2005] and has been implemented in a variety of data visualization software including R. 
 
 ### Components of the Grammar
 
@@ -89,13 +70,13 @@ In short, the grammar tells us that:
 
 Specifically, we can break a graphic into the following three essential components:
 
-1. `data`: the data-set composed of variables that we map.
-1. `geom`: the geometric object in question. This refers to our type of objects we can observe in our plot. For example, points, lines, bars, etc.
+1. `data`: the data set composed of variables that we map.
+1. `geom`: the geometric object in question. This refers to the type of object we can observe in a plot. For example: points, lines, and bars.
 1. `aes`: aesthetic attributes of the geometric object. For example, x/y position, color, shape, and size.  Each assigned aesthetic attribute can be mapped to a variable in our data-set.
 
-Let's break down the grammar with an example.
+You might be wondering why we wrote the terms `data`, `geom`, and `aes` in a computer code type font. We'll see very shortly that we'll specify the elements of the grammar in R using these terms. However, let's first break down the grammar with an example.
 
-### Gapminder {#gapminder}
+### Gapminder data {#gapminder}
 
 ```{r, echo=FALSE}
 gapminder_2007 <- gapminder %>% 
@@ -110,9 +91,9 @@ gapminder_2007 <- gapminder %>%
   )
 ```
 
-In February 2006, a statistician named Hans Rosling gave a TED talk titled ["The best stats you've ever seen"](https://www.ted.com/talks/hans_rosling_shows_the_best_stats_you_ve_ever_seen) where he presented global economic, health, and development data from the website [gapminder.org](http://www.gapminder.org/tools/#_locale_id=en;&chart-type=bubbles). For example, from the `r nrow(gapminder)` countries included from 2007, consider only the first 6 countries when listed alphabetically:
+In February 2006, a statistician named Hans Rosling gave a TED talk titled ["The best stats you've ever seen"](https://www.ted.com/talks/hans_rosling_shows_the_best_stats_you_ve_ever_seen) where he presented global economic, health, and development data from the website [gapminder.org](http://www.gapminder.org/tools/#_locale_id=en;&chart-type=bubbles). For example, for the `r nrow(gapminder_2007)` countries included from 2007, let's consider only the first 6 countries when listed alphabetically in Table \@ref(tab:gapminder-2007).
 
-```{r, echo=FALSE}
+```{r gapminder-2007, echo=FALSE}
 gapminder_2007 %>% 
   head() %>% 
   kable(
@@ -127,16 +108,21 @@ gapminder_2007 %>%
 Each row in this table corresponds to a country in 2007. For each row, we have 5 columns:
 
 1. **Country**: Name of country.
-1. **Continent**: Which of the five continents the country is part of. (Note that `Americas` groups North and South America and that Antarctica is excluded here.)
+1. **Continent**: Which of the five continents the country is part of. (Note that "Americas" includes countries in both North and South America and that Antarctica is excluded.)
 1. **Life Expectancy**: Life expectancy in years.
 1. **Population**: Number of people living in the country.
 1. **GDP per Capita**: Gross domestic product (in US dollars).
 
-Now consider Figure \@ref(fig:gapminder), which plots this data for all `r nrow(gapminder_2007)` countries in the data frame. Note that R will deal with large numbers using scientific notation.  So in the legend for "Population", 1.25e+09 = $1.25 \times 10^{9}$ = 1,250,000,000 = 1.25 billion. 
+Now consider Figure \@ref(fig:gapminder), which plots this data for all `r nrow(gapminder_2007)` countries in the data.
+
+<!--
+Note that R will deal with large numbers using scientific notation.  So in the legend for "Population", 1.25e+09 is 1.25 $\times$ 10^9^ = 1,250,000,000 = 1.25 billion. 
+-->
 
 ```{r gapminder, echo=FALSE, fig.cap="Life Expectancy over GDP per Capita in 2007"}
 ggplot(data = gapminder_2007, mapping = aes(x=`GDP per Capita`, y=`Life Expectancy`, size=Population, col=Continent)) +
-  geom_point()
+  geom_point() +
+  labs(x = "GDP per capita", y = "Life expectancy")
 ```
 
 Let's view this plot through the grammar of graphics:
@@ -146,32 +132,31 @@ Let's view this plot through the grammar of graphics:
 1. The `data` variable **Population** gets mapped to the `size` `aes`thetic of the points.
 1. The `data` variable **Continent** gets mapped to the `color` `aes`thetic of the points.
 
-Recall that `data` here corresponds to each of the variables being in the same `data` frame and the "data variable" corresponds to a column in a data frame.
+We'll see shortly that `data` corresponds to the particular data frame where our data is saved and a "data variable" corresponds to a particular column in the data frame. Furthermore, the type of `geom`etric object considered in this plot are points. That being said, while in this example we are considering points, graphics are not limited to just points. Other plots involve lines while others involve bars. 
 
-While in this example we are considering one type of `geom`etric object (of type `point`), graphics are not limited to just points. Some plots involve lines while others involve bars. Let's summarize the three essential components of the grammar in a table:
+Let's summarize the three essential components of the Grammar in Table \@ref(tab:summary-table-gapminder).
 
-```{r, echo=FALSE}
-map <- data_frame(
+```{r summary-table-gapminder, echo=FALSE}
+data_frame(
   `data variable` = c("GDP per Capita", "Life Expectancy", "Population", "Continent"),
   aes = c("x", "y", "size", "color"),
   geom = c("point", "point", "point", "point")
-)
-
-map %>% 
+) %>% 
   kable(
     caption = "Summary of Grammar of Graphics for this plot", 
     booktabs = TRUE
-    ) %>% 
+  ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 ```
 
 ### Other components of the Grammar
 
-There are other components of the Grammar of Graphics we can control.  As you start to delve deeper into the Grammar of Graphics, you'll start to encounter these topics more and more often. In this book, we'll only work with the two other components below (The other components are left to a more advanced text such as [R for Data Science](http://r4ds.had.co.nz/data-visualisation.html#aesthetic-mappings) [@rds2016]):
+There are other components of the Grammar of Graphics we can control as well.  As you start to delve deeper into the Grammar of Graphics, you'll start to encounter these topics more frequently. In this book however, we'll keep things simple and only work with the two additional components listed below:
 
 - `facet`ing breaks up a plot into small multiples corresponding to the levels of another variable (Section \@ref(facets))
 - `position` adjustments for barplots (Section \@ref(geombar))
+
 <!--
 - `scales` that both
     + convert *data units* to *physical units* the computer can display. For example, apply a log-transformation on one of the axes to focus on multiplicative rather than additive changes.
@@ -180,43 +165,28 @@ There are other components of the Grammar of Graphics we can control.  As you st
 - `stat`istical transformations: this includes smoothing, binning values into a histogram, or no transformation at all (known as the `"identity"` transformation).
 -->
 
-In general, the Grammar of Graphics allows for a high degree of customization and also a consistent framework for easy updating/modification of plots.
+Other more complex components like `scales` and `coord`inate systems are left for a more advanced text such as [R for Data Science](http://r4ds.had.co.nz/data-visualisation.html#aesthetic-mappings) [@rds2016].  Generally speaking, the Grammar of Graphics allows for a high degree of customization of plots and also a consistent framework for easily updating and modifiying them.
 
 ### The ggplot2 package
 
-In this book, we will be using the `ggplot2` package for data visualization, which is an implementation of the Grammar of Graphics for R [@R-ggplot2]. You may have noticed that a lot of the previous text in this chapter is written in computer font. This is because the various components of the Grammar of Graphics are specified in the `ggplot` function, which expects at a bare minimum as arguments:
+In this book, we will be using the `ggplot2` package for data visualization, which is an implementation of the Grammar of Graphics for R [@R-ggplot2]. As we noted earlier, a lot of the previous section was written in a computer code type font. This is because the various components of the Grammar of Graphics are specified in the `ggplot()` function included in the `ggplot2` package, which expects at a minimum as arguments (i.e. inputs):
 
-* The data frame where the variables exist: the `data` argument
-* The mapping of the variables to aesthetic attributes: the `mapping` argument, which specifies the `aes`thetic attributes involved
+* The data frame where the variables exist: the `data` argument.
+* The mapping of the variables to aesthetic attributes: the `mapping` argument which specifies the `aes`thetic attributes involved.
 
-After we've specified these components, we then add *layers* to the plot using the `+` sign. The most essential layer to add to a plot is the specification of which type of `geom`etric object we want the plot to involve; e.g. points, lines, bars. Other layers we can add include the specification of the plot title, axes labels, facets, and visual themes for the plot.
+After we've specified these components, we then add *layers* to the plot using the `+` sign. The most essential layer to add to a plot is the layer that specifies which type of `geom`etric object we want the plot to involve: points, lines, bars, and others. Other layers we can add to a plot include layers specifying the plot title, axes labels, visual themes for the plots, and facets (which we'll see in Section \@ref(facets)).
 
 Let's now put the theory of the Grammar of Graphics into practice.
 
-<!--
-The plot given above is not a histogram, but the output does show us a bit of what is going on with `ggplot(data = weather, mapping = aes(x = temp))`.  It is producing a backdrop onto which we will "paint" elements.  We next proceed by adding a layer---hence, the use of the `+` symbol---to the plot to produce a histogram.  (Note also here that we don't have to specify the `data = ` and `mapping = ` text in our function calls.  This is covered in more detail in Chapter 5 of the "Getting Used to R, RStudio, and R Markdown" book [@usedtor2016]).
--->
-
-<!--
-```{block viz_review, type='review'}
-**_Review questions_**
-```
-**`paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
-- Have a variety of bad plots with data for the readers and have readers create better plots with `ggplot2`
-- Have sample datasets to work with from problem statements
-    + Identify the appropriate plot to address the questions of interest
-- Why is it important for barplots to start at zero?
--->
 
 
-
-
+---
 
 
 
 ## Five Named Graphs - The 5NG {#FiveNG}
 
-For our purposes, we will be limiting consideration to five different types of graphs.  We term these five named graphs the **5NG**:
+In order to keep things simple, we will only five different types of graphics in this book, each with a commonly given name.  We term these "five named graphs" the **5NG**:
 
 1. scatterplots
 1. linegraphs
@@ -224,17 +194,17 @@ For our purposes, we will be limiting consideration to five different types of g
 1. histograms
 1. barplots
 
-We will discuss some variations of these plots, but with this basic repertoire in your toolbox you can visualize a wide array of different data variable types. Note that certain plots are only appropriate for categorical/logical variables and others only for quantitative variables. You'll want to quiz yourself often as we go along on which plot makes sense a given a particular problem or data-set.
+We will discuss some variations of these plots, but with this basic repertoire of graphics in your toolbox you can visualize a wide array of different variable types. Note that certain plots are only appropriate for categorical variables and while others are only appropriate for quantitative variables. You'll want to quiz yourself often as we go along on which plot makes sense a given a particular problem or data set.
 
 
 
+---
 
 
 
-<!--Subsection on scatter plots-->
 ## 5NG#1: Scatterplots {#scatterplots}
 
-The simplest of the 5NG are *scatterplots* (also called bivariate plots); they allow you to investigate the relationship between two numerical variables. While you may already be familiar with this type of plot, let's view it through the lens of the Grammar of Graphics. Specifically, we will graphically investigate the relationship between the following two numerical variables in the `flights` data frame:
+The simplest of the 5NG are *scatterplots*, also called bivariate plots. They allow you to visualize the relationship between two numerical variables. While you may already be familiar with scatterplots, let's view them through the lens of the Grammar of Graphics. Specifically, we will visualize the relationship between the following two numerical variables in the `flights` data frame included in the `nycflights13` package:
 
 1. `dep_delay`: departure delay on the horizontal "x" axis and
 1. `arr_delay`: arrival delay on the vertical "y" axis
@@ -258,46 +228,45 @@ We'll see later in Chapter \@ref(wrangling) on data wrangling that this code use
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  Take a look at both the `flights` and `alaska_flights` data frames by running `View(flights)` and `View(alaska_flights)` in the console. In what respect do these data frames differ?
 
-```{asis lc-alaska_flights-solutions, include=show_solutions('3-1')}
-**Learning Check Solutions**  
-**`r paste0("(LC", chap, ".", (lc), ")")`**: `flights` contains all flight data, while `alaska_flights` contains only data from Alaskan carrier "AS". We can see that flights has `r nrow(flights)` rows while `alaska_flights` has only `r nrow(alaska_flights)`
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
 ### Scatterplots via geom_point {#geompoint}
 
-We proceed to create the scatterplot using the `ggplot()` function:
+Let's now go over the code that will create the desired scatterplot, keeping in mind our discussion on the Grammar of Graphics in Section \@ref(grammarofgraphics). We'll be using the `ggplot()` function included in the `ggplot2` package. 
 
-```{r noalpha, fig.cap="Arrival Delays vs Departure Delays for Alaska Airlines flights from NYC in 2013", message=TRUE}
-ggplot(data = alaska_flights, 
-       mapping = aes(x = dep_delay, y = arr_delay)) + 
+```{r, eval = FALSE}
+ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point()
 ```
 
-In Figure \@ref(fig:noalpha) we see that a positive relationship exists between `dep_delay` and `arr_delay`: as departure delays increase, arrival delays tend to also increase.  We also note that the majority of points fall near the point (0, 0).  There is a large mass of points clustered there. Furthermore after executing this code, R returns a warning message alerting us to the fact that 5 rows were ignored due to missing values. For 5 rows either the value for `dep_delay` or `arr_delay` or both were missing, and thus these rows were ignored in our plot.
+Let's break this down piece-by-piece:
 
-Let's go back to the `ggplot()` function call that created this visualization, keeping in mind our discussion in Section \@ref(grammarofgraphics):
-
-* Within the `ggplot()` function call, we specify two of the components of the grammar:
-    1. The `data` frame to be `alaska_flights` by setting `data = alaska_flights`
-    1. The `aes`thetic `mapping` by setting `aes(x = dep_delay, y = arr_delay)`. Specifically
+* Within the `ggplot()` function, we specify two of the components of the Grammar of Graphics as arguments (i.e. inputs):
+    1. The `data` frame to be `alaska_flights` by setting `data = alaska_flights`.
+    1. The `aes`thetic `mapping` by setting `aes(x = dep_delay, y = arr_delay)`. Specifically:
         * the variable `dep_delay` maps to the `x` position aesthetic
         * the variable `arr_delay` maps to the `y` position aesthetic
-* We add a layer to the `ggplot()` function call using the `+` sign. The layer in question specifies the third component of the grammar:  the `geom`etric object. In this case the geometric object are `point`s, set by specifying `geom_point()`.
+* We add a layer to the `ggplot()` function call using the `+` sign. The layer in question specifies the third component of the grammar:  the `geom`etric object. In this case the geometric object are points, set by specifying `geom_point()`.
 
-Some notes on layers:
+After running the above code in your console, you'll notice two outputs: a warning message and the graphic shown in Figure \@ref(fig:noalpha). Let's first unpack the warning message:
 
-* Note that the `+` sign comes at the end of lines, and not at the beginning.  You'll get an error in R if you put it at the beginning.
-* When adding layers to a plot, you are encouraged to hit *Return* on your keyboard after entering the `+` so that the code for each layer is on a new line.  As we add more and more layers to plots, you'll see this will greatly improve the legibility of your code.
-* To stress the importance of adding layers, in particular the layer specifying the `geom`etric object, consider Figure \@ref(fig:nolayers) where no layers are added. A not very useful plot!
-
-```{r nolayers, fig.cap="Plot with No Layers"}
-ggplot(data = alaska_flights, 
-       mapping = aes(x = dep_delay, y = arr_delay))
+```{r noalpha, fig.cap="Arrival Delays vs Departure Delays for Alaska Airlines flights from NYC in 2013", warning=TRUE, echo=FALSE}
+ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
+  geom_point()
 ```
 
+After running the above code, R returns a warning message alerting us to the fact that 5 rows were ignored due to missing values. For 5 rows either the value for `dep_delay` or `arr_delay` or both were missing, and thus these rows were ignored in our plot. Turning our attention to the resulting scatterplot in Figure \@ref(fig:noalpha), we see that a positive relationship exists between `dep_delay` and `arr_delay`: as departure delays increase, arrival delays tend to also increase.  We also note the large mass of points clustered near (0, 0).
+
+Before we continue, let's consider a few more notes on the layers in the above code that generated the scatterplot:
+
+* Note that the `+` sign comes at the end of lines, and not at the beginning.  You'll get an error in R if you put it at the beginning.
+* When adding layers to a plot, you are encouraged to start a new line after the `+` so that the code for each layer is on a new line.  As we add more and more layers to plots, you'll see this will greatly improve the legibility of your code.
+* To stress the importance of adding layers in particular the layer specifying the `geom`etric object, consider Figure \@ref(fig:nolayers) where no layers are added. A not very useful plot!
+
+```{r nolayers, fig.cap="Plot with No Layers"}
+ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
+```
 
 ```{block lc-scatterplots, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -313,55 +282,36 @@ ggplot(data = alaska_flights,
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Create a new scatterplot using different variables in the `alaska_flights` data frame by modifying the example above.
 
-```{asis lc-scatterplots-solutions, include=show_solutions('3-2')}
-**Learning Check Solutions**  
-**`r paste0("(LC", chap, ".", (lc - 4), ")")`**: The later a plane departs, typically the later it will arrive.
-
-**`r paste0("(LC", chap, ".", (lc - 3), ")")`**: An example in the `weather` dataset is `visibility`, which measure visibility in miles. As visibility increases, we would expect departure delays to decrease. 
-
-**`r paste0("(LC", chap, ".", (lc - 2), ")")`**: The point (0,0) means no delay in departure nor arrival. From the point of view of Alaska airlines, this means the flight was on time. It seems most flights are at least close to being on time.
-
-**`r paste0("(LC", chap, ".", (lc - 1), ")")`**: Different people will answer this one differently. One answer is most flights depart and arrive less than an hour late. 
-
-**`r paste0("(LC", chap, ".", (lc), ")")`**: Many possibilities for this one, see the plot below. Is there a pattern in departure delay depending on when the flight is scheduled to depart? Interestingly, there seems to be only two blocks of time where flights depart.  
-```
-
-``` {r, include=show_solutions('3-2'), echo=show_solutions('3-2')}
-ggplot(data = alaska_flights, mapping = aes(x = dep_time, y = dep_delay)) +
-  geom_point()
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
 ### Over-plotting {#overplotting}
 
-The large mass of points near (0, 0) in Figure \@ref(fig:noalpha) can cause some confusion.  This is the result of a phenomenon called *overplotting*.  As one may guess, this corresponds to values being plotted on top of each other _over_ and _over_ again.  It is often difficult to know just how many values are plotted in this way when looking at a basic scatterplot as we have here. There are two ways to address this issue:
+The large mass of points near (0, 0) in Figure \@ref(fig:noalpha) can cause some confusion as it is hard to tell the true number of points that are plotted.  This is the result of a phenomenon called *overplotting*.  As one may guess, this corresponds to values being plotted on top of each other _over_ and _over_ again.  It is often difficult to know just how many values are plotted in this way when looking at a basic scatterplot as we have here. There are two methods to address the issue of overplotting:
 
-1. By adjusting the transparency of the points via the `alpha` argument
-1. By jittering the points via `geom_jitter()`
+1. By adjusting the transparency of the points.
+1. By adding a little random "jitter", or random "nudges", to each of the points.
 
-The first way of relieving overplotting is by changing the `alpha` argument in `geom_point()` which controls the transparency of the points.  By default, this value is set to `1`.  We can change this to any value between `0` and `1` where `0` sets the points to be 100% transparent and `1` sets the points to be 100% opaque. Note how the following function call is identical to the one in Section \@ref(scatterplots), but with `alpha = 0.2` added to the `geom_point()`.
+**Method 1: Changing the transparency**
+
+The first way of addressing overplotting is by changing the transparency of the points by using the `alpha` argument in `geom_point()`.  By default, this value is set to `1`.  We can change this to any value between `0` and `1`, where `0` sets the points to be 100% transparent and `1` sets the points to be 100% opaque. Note how the following code is identical to the code in Section \@ref(scatterplots) that created the scatterplot with overplotting, but with `alpha = 0.2` added to the `geom_point()`:
 
 ```{r alpha, fig.cap="Delay scatterplot with alpha=0.2"}
-ggplot(data = alaska_flights, 
-       mapping = aes(x = dep_delay, y = arr_delay)) + 
+ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point(alpha = 0.2)
 ```
 
-The key feature to note in Figure \@ref(fig:alpha) is that the transparency of the points is cumulative: areas with a high-degree of overplotting are darker, whereas areas with a lower degree are less dark. 
+The key feature to note in Figure \@ref(fig:alpha) is that the transparency of the points is cumulative: areas with a high-degree of overplotting are darker, whereas areas with a lower degree are less dark. Note furthermore that there is no `aes()` surrounding `alpha = 0.2`.  This is because we are not mapping a variable to an aesthetic attribute, but rather merely changing the default setting of `alpha`. In fact, you'll receive an error if you try to change the second line above to read `geom_point(aes(alpha = 0.2))`.
 
-Note that there is no `aes()` surrounding `alpha = 0.2` here.  Since we are NOT mapping a variable to an aesthetic but instead are just changing a setting, we don't need to create a mapping with `aes()`.  In fact, you'll receive an error if you try to change the second line above to `geom_point(aes(alpha = 0.2))`.
+**Method 2: Jittering the points**
 
-The second way of relieving overplotting is to *jitter* the points a bit. In other words, we are going to add just a bit of random noise to the points to better see them and alleviate some of the overplotting.  You can think of "jittering" as shaking the points around a bit on the plot. Let's illustrate using a simple example first. Say we have a data frame `jitter_example` with 4 rows of identical value 0 for both `x` and `y`:
+The second way of addressing overplotting is by *jittering* all the points, in other words give each point a small nudge in a random direction. You can think of "jittering" as shaking the points around a bit on the plot. Let's illustrate using a simple example first. Say we have a data frame `jitter_example` with 4 rows of identical value 0 for both `x` and `y`:
 
 ```{r jitter-example-df, echo=FALSE}
 jitter_example <- data_frame(
   x = c(0, 0, 0, 0),
   y = c(0, 0, 0, 0)
 )
-```
-```{r jitter-example-df-01}
 jitter_example
 ```
 
@@ -374,7 +324,7 @@ ggplot(data = jitter_example, mapping = aes(x = x, y = y)) +
   labs(title = "Regular scatterplot")
 ```
 
-In Figure \@ref(fig:jitter-example-plot-2) we instead display a *jittered scatterplot*. Since each point is given a random "nudge", it is now plainly evident that there are four points. 
+In Figure \@ref(fig:jitter-example-plot-2) we instead display a *jittered scatterplot* where each point is given a random "nudge." It is now plainly evident that this plot involves four points. Keep in mind that jittering is strictly a visualization tool; even after creating a jittered scatterplot, the original values saved in `jitter_example` remain unchanged. 
 
 ```{r jitter-example-plot-2, fig.cap="Jittered scatterplot of jitter example data", echo=FALSE}
 ggplot(data = jitter_example, mapping = aes(x = x, y = y)) + 
@@ -383,27 +333,16 @@ ggplot(data = jitter_example, mapping = aes(x = x, y = y)) +
   labs(title = "Jittered scatterplot")
 ```
 
-To create a jittered scatterplot, instead of using `geom_point`, we use `geom_jitter`. To specify how much jitter to add, we adjust the `width` and `height` arguments.  This corresponds to how hard you'd like to shake the plot in units corresponding to those for both the horizontal and vertical variables (in this case, minutes). It is important to add just enough jitter to break any overlap in points, but not so much that we completely obscure the overall pattern in points. 
+To create a jittered scatterplot, instead of using `geom_point()`, we use `geom_jitter()`. To specify how much jitter to add, we adjust the `width` and `height` arguments.  This corresponds to how hard you'd like to shake the plot in units corresponding to those for both the horizontal and vertical variables (in this case minutes). 
 
 ```{r jitter, fig.cap="Jittered delay scatterplot"}
-ggplot(data = alaska_flights, 
-       mapping = aes(x = dep_delay, y = arr_delay)) + 
+ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_jitter(width = 30, height = 30)
 ```
 
-Observe how this function call is identical to the one in Subsection \@ref(geompoint), but with `geom_point()` replaced with `geom_jitter()`. Also, it is important to note that `geom_jitter()` is strictly a visualization tool and that does not alter the original values saved in `jitter_example`.
+Observe how the above code is identical to the code that created the scatterplot with overplotting in Subsection \@ref(geompoint), but with `geom_point()` replaced with `geom_jitter()`. 
 
-The plot in Figure \@ref(fig:jitter) helps us a little bit in getting a sense for the overplotting, but with a relatively large data-set like this one (`r nrow(alaska_flights)` flights), it can be argued that changing the transparency of the points by setting `alpha` proved more effective. 
-
-Furthermore, we'll see later on that the two following R commands will yield the exact same plot:
-
-```{r, eval = FALSE}
-ggplot(data = alaska_flights, 
-       mapping = aes(x = dep_delay, y = arr_delay)) + 
-  geom_jitter(width = 30, height = 30)
-```
-
-In other words you can drop the `data =` and `mapping =` if you keep the order of the two arguments the same. Since the `ggplot()` function is expecting its first argument `data` to be a data frame and its second argument to correspond to `mapping = `, you can omit both and you'll get the same plot.  As you get more and more practice, you'll likely find yourself not including the specification of the argument like this.  But for now to keep things straightforward let's make it a point to include the `data =` and `mapping =`. 
+The resulting plot in Figure \@ref(fig:jitter) helps us a little bit in getting a sense for the overplotting, but with a relatively large data set like this one (`r nrow(alaska_flights)` flights), it can be argued that changing the transparency of the points by setting `alpha` proved more effective. In terms of how much jitter one should add using the `width` and `height` arguments, it is important to add just enough jitter to break any overlap in points, but not so much that we completely alter the overall pattern in points. 
 
 ```{block lc-overplotting, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -413,35 +352,27 @@ In other words you can drop the `data =` and `mapping =` if you keep the order o
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** After viewing the Figure \@ref(fig:alpha) above, give an approximate range of arrival delays and departure delays that occur the most frequently.  How has that region changed compared to when you observed the same plot without the `alpha = 0.2` set in Figure \@ref(fig:noalpha)?
 
-```{asis lc-overplotting-solutions, include=show_solutions('3-3')}
-**Learning Check Solutions**  
-**`r paste0("(LC", chap, ".", (lc - 1), ")")`**: Why is setting the `alpha` argument value useful with scatterplots? What further information does it give you that a regular scatterplot cannot? *It thins out the points so we address overplotting. But more importantly it hints at the (statistical) **density** and **distribution** of the points: where are the points concentrated, where do they occur. We will see more about densities and distributions in Chapter 6 when we switch gears to statistical topics.*
-  
-**`r paste0("(LC", chap, ".", (lc), ")")`**: After viewing the Figure \@ref(fig:alpha) above, give a range of arrival delays and departure delays that occur most frequently?  How has that region changed compared to when you observed the same plot without the `alpha = 0.2` set in Figure \@ref(fig:noalpha)? *The lower plot suggests that most Alaska flights from NYC depart between 12 minutes early and on time and arrive between 50 minutes early and on time.*  
-
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
-<!--
-Maybe include a shading of the points by another variable example here for multivariate thinking?
--->
 
 ### Summary
 
-Scatterplots display the relationship between two numerical variables.  They are among the most commonly used plots because they can provide an immediate way to see the trend in one variable versus another.  However, if you try to create a scatterplot where either one of the two variables is not numerical, you will get strange results.  Be careful!
+Scatterplots display the relationship between two numerical variables.  They are among the most commonly used plots because they can provide an immediate way to see the trend in one variable versus another.  However, if you try to create a scatterplot where either one of the two variables is not numerical, you might get strange results.  Be careful! 
 
-With medium to large data-sets, you may need to play with either `geom_jitter()` or the `alpha` argument in order to get a good feel for relationships in your data.  This tweaking is often a fun part of data visualization since you'll have the chance to see different relationships come about as you make subtle changes to your plots.
+With medium to large data sets, you may need to play around with the different modifications one can make to a scatterplot. This tweaking is often a fun part of data visualization, since you'll have the chance to see different relationships come about as you make subtle changes to your plots.
 
+<!--
+2019/1/28 note: Add example here using size or color aesthetic?
+-->
 
-
+---
 
 
 
 ## 5NG#2: Linegraphs {#linegraphs}
 
-The next of the 5NG is a linegraph.  They are most frequently used when the x-axis represents time and the y-axis represents some other numerical variable; such plots are known as *time series*.  Time represents a variable that is connected together by each day following the previous day.  In other words, time has a natural ordering.  Linegraphs should be avoided when there is not a clear sequential ordering to the explanatory variable, i.e. the x-variable or the *predictor* variable. We'll illustrate linegraphs using another dataset from the `nycflight13` package, the `weather` data-set. 
+The next of the 5NG is a linegraph.  They are most frequently used when the x-axis represents time and the y-axis represents some other numerical variable; such plots are known as *time series* plots.  Time represents a variable that is connected together by each day following the previous day.  In other words, time has a natural ordering.  Linegraphs should be avoided when there is not a clear sequential ordering to the explanatory variable, i.e. the x-variable or the *predictor* variable. We'll illustrate linegraphs using another dataset from the `nycflight13` package, the `weather` data-set. 
 
 * Look over the `weather` data-set by typing `View(weather)` in the console. 
 * Run `?weather` to bring up the help file.
@@ -463,12 +394,6 @@ This is similar to the previous use of the `filter` command in Section \@ref(sca
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Take a look at both the `weather` and `early_january_weather` data frames by running `View(weather)` and `View(early_january_weather)` in the console. In what respect do these data frames differ?
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** `View()` the `flights` data frame again. Why does the `time_hour` variable uniquely identify the hour of the measurement whereas the `hour` variable does not? 
-
-```{asis lc-early_january_weather-solutions, include=show_solutions('3-4')}
-**Learning Check Solutions**  
-**`r paste0("(LC", chap, ".", (lc - 1), ")")`**: Take a look at both the `weather` and `early_january_weather` data frames by running `View(weather)` and `View(early_january_weather)` in the console. In what respect do these data frames differ? *The rows of `early_january_weather` are a subset of `weather`.*  
-**`r paste0("(LC", chap, ".", (lc), ")")`**: `View()` the `flights` data frame again. Why does the `time_hour` variable correctly identify the hour of the measurement whereas the `hour` variable does not? *Because to uniquely identify an hour, we need the `year`/`month`/`day`/`hour` sequence, whereas there are only 24 possible `hour`'s.*  
-```
 
 ```{block, type='learncheck', purl=FALSE}
 ```
@@ -504,18 +429,6 @@ Much as with the `ggplot()` call in Chapter \@ref(geompoint), we describe the co
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Plot a time series of a variable other than `temp` for Newark Airport in the first 15 days of January 2013.
 
-```{asis lc-linegraph-solutions, include=show_solutions('3-5')}
-**Learning Check Solutions**  
-**`r paste0("(LC", chap, ".", (lc - 2), ")")`**: Why should linegraphs be avoided when there is not a clear ordering of the horizontal axis? *Because lines suggest connectedness and ordering.*  
-**`r paste0("(LC", chap, ".", (lc - 1), ")")`**: Why are linegraphs frequently used when time is the explanatory variable? *Because time is sequential: subsequent observations are closely related to each other.*  
-**`r paste0("(LC", chap, ".", (lc), ")")`**: Plot a time series of a variable other than `temp` for Newark Airport in the first 15 days of January 2013. *Humidity is a good one to look at, since this very closely related to the cycles of a day.*  
-```
-
-```{r, include=show_solutions('3-5'), echo=show_solutions('3-5')}
-ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = humid)) +
-  geom_line()
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
@@ -525,6 +438,7 @@ Linegraphs, just like scatterplots, display the relationship between two numeric
 
 
 
+---
 
 
 
@@ -599,37 +513,6 @@ ggplot(data = weather, mapping = aes(x = temp)) +
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Is this data spread out greatly from the center or is it close?  Why?
 
-
-```{asis lc-histogram-solutions, include=show_solutions('3-7')}
-**Learning Check Solutions**  
-**`r paste0("(LC", chap, ".", (lc - 3), ")")`: What does changing the number of bins from 30 to 60 tell us about the distribution of temperatures?** The distribution doesn't change much. But by refining the bin width, we see that the temperature data has a high degree of accuracy. What do I mean by accuracy? Looking at the `temp` variabile by `View(weather)`, we see that the precision of each temperature recording is 2 decimal places.
-
-**`r paste0("(LC", chap, ".", (lc - 2), ")")`: Would you classify the distribution of temperatures as symmetric or skewed?** It is rather symmetric, i.e. there are no __long tails__ on only one side of the distribution
-
-**`r paste0("(LC", chap, ".", (lc - 1), ")")`: What would you guess is the "center" value in this distribution?  Why did you make that choice?** The center is around `r mean(weather$temp, na.rm=TRUE)`&deg;F. By running the `summary()` command, we see that the mean and median are very similar. In fact, when the distribution is symmetric the mean equals the median.
-
-**`r paste0("(LC", chap, ".", (lc), ")")`: Is this data spread out greatly from the center or is it close? Why?**
-
-This can only be answered relatively speaking! Let's pick things to be relative to Seattle, WA temperatures:
-
-![](images/temp.png)
-
-While, it appears that Seattle weather has a similar center of 55&deg;F, its
-temperatures are almost entirely between 35&deg;F and 75&deg;F for a range of
-about 40&deg;F. Seattle temperatures are much less spread out than New York i.e.
-much more consistent over the year. New York on the other hand has much colder
-days in the winter and much hotter days in the summer. Expressed differently,
-the middle 50% of values, as delineated by the interquartile range is 30&deg;F:
-```
-
-```{r, echo=show_solutions('3-7'), include=show_solutions('3-7'), message=FALSE, warning=FALSE}
-IQR(weather$temp, na.rm=TRUE)
-```
-
-```{r, echo=show_solutions('3-7'), include=show_solutions('3-7'), message=FALSE, warning=FALSE}
-summary(weather$temp)
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
@@ -639,6 +522,7 @@ Histograms, unlike scatterplots and linegraphs, present information on only a si
 
 
 
+---
 
 
 
@@ -671,34 +555,12 @@ As we might expect, the temperature tends to increase as summer approaches and t
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Does the `temp` variable in the `weather` data-set have a lot of variability?  Why do you say that?
 
-```{asis lc-facet-solutions, include=show_solutions('3-8')}
-**Learning Check Solutions**  
-**`r paste0("(LC", chap, ".", (lc - 3), ")")`: What other things do you notice about the faceted plot above? How does a faceted plot help us see relationships between two variables?** 
-  
-* Certain months have much more consistent weather (August in particular), while others have crazy variability like January and October, representing changes in the seasons.
-* Because we see `temp` recordings split by `month`, we are considering the relationship between these two variables. For example, for example for summer months, temperatures tend to be higher. 
-    
-**`r paste0("(LC", chap, ".", (lc - 2), ")")`: What do the numbers 1-12 correspond to in the plot above? What about 25, 50, 75, 100?**
-  
-* While month is technically a number between 1-12, we're viewing it as a categorical variable here. Specifically an **ordinal categorical** variable since there is a ordering to the categories
-* 25, 50, 75, 100 are temperatures
-
-**`r paste0("(LC", chap, ".", (lc - 1), ")")`: For which types of datasets would these types of faceted plots not work well in comparing relationships between variables? Give an example describing the variability of the variables and other important characteristics?** Having histograms split by day would not be great:
-
-* We'd have 365 facets to look at. Way to many.
-* We don't really care about day-to-day fluctuation in weather so much, but maybe more week-to-week variation. We'd like to focus on seasonal trends.
-
-**`r paste0("(LC", chap, ".", (lc), ")")`: Does the `temp` variable in the `weather` dataset have a lot of variability? Why do you say that?**
-Again, like in LC `r paste0("(LC", chap, ".", (lc-4), ")")`, this is a relative question. I would say yes, because in New York City, you have 4 clear seasons with different weather. Whereas in Seattle WA and Portland OR, you have two seasons: summer and rain!
-
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
 
 
-
+---
 
 
 
@@ -779,65 +641,6 @@ What the boxplot does is summarize the `r weather %>% filter(month == 11) %>% nr
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Boxplots provide a simple way to identify outliers.  Why may outliers be easier to identify when looking at a boxplot instead of a faceted histogram?
 
-```{asis lc-boxplot-solutions, include=show_solutions('3-9')}
-**Learning Check Solutions**  
-**`r paste0("(LC", chap, ".", (lc - 3), ")")`: What does the dot at the bottom of the plot for May correspond to? Explain what might have occurred in May to produce this point.**
-It appears to be an outlier. Let's revisit the use of the `filter` command to hone in on it. We want all data points where the `month` is 5 and `temp<25`
-```
-
-``` {r, include=show_solutions('3-9'), echo=show_solutions('3-9')}
-weather %>% 
-  filter(month==5 & temp < 25)
-```
-
-
-
-```{asis, include=show_solutions('3-9')}
-There appears to be only one hour and only at JFK that recorded 13.1 F (-10.5 C) in the month of May. This is probably a data entry mistake!
-Why wasn't the weather at least similar at EWR (Newark) and LGA (La Guardia)?
-
-**`r paste0("(LC", chap, ".", (lc - 2), ")")`: Which months have the highest variability in temperature? What reasons do you think this is?**
-We are now interested in the **spread** of the data. One measure some of you may have seen previously is the standard deviation. But in this plot we can read off the Interquartile Range (IQR):
-
-* The distance from the 1st to the 3rd quartiles i.e. the length of the boxes
-* You can also think of this as the spread of the **middle 50%** of the data
-
-Just from eyeballing it, it seems
-
-* November has the biggest IQR, i.e. the widest box, so has the most variation in temperature
-* August has the smallest IQR, i.e. the narrowest box, so is the most consistent temperature-wise
-
-Here's how we compute the exact IQR values for each month (we'll see this more in depth Chapter 5 of the text):
-
-1. `group` the observations by `month` then
-1. for each `group`, i.e. `month`, `summarize` it by applying the summary statistic function `IQR()`, while making sure to skip over missing data via `na.rm=TRUE` then
-1. `arrange` the table in `desc`ending order of `IQR`
-```
-
-```{r, echo=show_solutions('3-9'), eval=FALSE}
-weather %>%
-  group_by(month) %>%
-  summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
-  arrange(desc(IQR))
-```
-```{r, echo=FALSE, include=show_solutions('3-9')}
-weather %>%
-  group_by(month) %>%
-  summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
-  arrange(desc(IQR)) %>%
-  kable() %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
-```
-
-```{asis, include=show_solutions('3-9')}
-**`r paste0("(LC", chap, ".", (lc - 1), ")")`: We looked at the distribution of a numerical variable over a categorical variable here with this boxplot. Why can't we look at the distribution of one numerical variable over the distribution of another numerical variable? Say, temperature across pressure, for example?**
-Because we need a way to group many numerical observations together, say by grouping by month. For pressure, we have near unique values for pressure, i.e. no groups, so we can't make boxplots.
-
-**`r paste0("(LC", chap, ".", (lc), ")")`: Boxplots provide a simple way to identify outliers. Why may outliers be easier to identify when looking at a boxplot instead of a faceted histogram?**
-In a histogram, the bin corresponding to where an outlier lies may not by high enough for us to see. In a boxplot, they are explicitly labelled separately. 
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
@@ -847,6 +650,7 @@ Boxplots provide a way to compare and contrast the distribution of one quantitat
 
 
 
+---
 
 
 
@@ -986,17 +790,6 @@ ggplot(data = flights_table, mapping = aes(x = carrier, y = number)) +
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What was the seventh highest airline in terms of departed flights from NYC in 2013? How could we better present the table to get this answer quickly?
 
-
-```{asis lc-barplot-solutions, include=show_solutions('3-10')}
-**Learning Check Solutions**
-  
-* **`r paste0("(LC", chap, ".", (lc - 3), ")")`: Why are histograms inappropriate for visualizing categorical variables?** Histograms are for numerical variables i.e. the horizontal part of each histogram bar represents an interval, whereas for a categorical variable each bar represents only one level of the categorical variable.
-* **`r paste0("(LC", chap, ".", (lc - 2), ")")`: What is the difference between histograms and barplots?** See above.
-* **`r paste0("(LC", chap, ".", (lc - 1), ")")`: How many Envoy Air flights departed NYC in 2013?** Envoy Air is carrier code `MQ` and thus 26397 flights departed NYC in 2013.
-* **`r paste0("(LC", chap, ".", (lc), ")")`: What was the seventh highest airline in terms of departed flights from NYC in 2013? How could we better present the table to get this answer quickly?** What a pain! We'll see in Chapter 5 on Data Wrangling that applying `arrange(desc(n))` will sort this table in descending order of `n`!
-
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
@@ -1042,14 +835,6 @@ knitr::include_graphics("images/Pie-I-have-Eaten.jpg")
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why do you think people continue to use pie charts?
 
-```{asis lc-pie-charts-solutions, include=show_solutions('3-11')}
-**Learning Check Solutions**
-  
-* **`r paste0("(LC", chap, ".", (lc - 1), ")")`: Why should pie charts be avoided and replaced by barplots?** In our **opinion**, comparisons using horizontal lines are easier than comparing angles and areas of circles.
-* **`r paste0("(LC", chap, ".", (lc), ")")`: What is your opinion as to why pie charts continue to be used?** Legacy?
-
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
@@ -1091,14 +876,6 @@ ggplot(data = flights_namedports,
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What can you say, if anything, about the relationship between airline and airport in NYC in 2013 in regards to the number of departing flights?
 
-```{asis lc-barplot-two-var-solutions, include=show_solutions('3-12')}
-**Learning Check Solutions**
-  
-* **`r paste0("(LC", chap, ".", (lc - 1), ")")` What kinds of questions are not easily answered by looking at the above figure?** Because the red, green, and blue bars don't all start at 0 (only red does), it makes comparing counts hard.
-* **`r paste0("(LC", chap, ".", (lc), ")")` What can you say, if anything, about the relationship between airline and airport in NYC in 2013 in regards to the number of departing flights?** The different airlines prefer different airports. For example, United is mostly a Newark carrier and JetBlue is a JFK carrier. If airlines didn't prefer airports, each color would be roughly one third of each bar.}
-
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
@@ -1119,12 +896,6 @@ ggplot(data = flights_namedports,
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are the disadvantages of using a side-by-side (AKA dodged) barplot, in general?
 
-```{asis lc-barplot-stacked-solutions, include=show_solutions('3-13')}
-**Learning Check Solutions**
-  
-* **`r paste0("(LC", chap, ".", (lc - 1), ")")` Why might the side-by-side barplot be preferable to a stacked barplot in this case?** We can easily compare the different aiports for a given carrier using a single comparison line i.e. things are lined up
-* **`r paste0("(LC", chap, ".", (lc - 0), ")")` What are the disadvantages of using a side-by-side barplot, in general?** It is hard to get totals for each airline.
-```
 ```{block, type='learncheck', purl=FALSE}
 ```
 
@@ -1146,13 +917,6 @@ ggplot(data = flights_namedports,
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What information about the different carriers at different airports is more easily seen in the faceted barplot?
 
-```{asis lc-barplot-facet-solutions, include=show_solutions('3-14')}
-**Learning Check Solutions**  
-
-* **`r paste0("(LC", chap, ".", (lc - 1), ")")` Why is the faceted barplot preferred to the side-by-side and stacked barplots in this case?** Not that different than using side-by-side; depends on how you want to organize your presentation.
-* **`r paste0("(LC", chap, ".", (lc), ")")` What information about the different carriers at different airports is more easily seen in the faceted barplot?** Now we can also compare the different carriers **within** a particular airport easily too. For example, we can read off who the top carrier for each airport is easily using a single horizontal line.
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
@@ -1164,8 +928,31 @@ Barplots are the preferred way of displaying categorical variables.  They are ea
 
 
 
+---
+
+
 
 ## Conclusion
+
+### Argument specification
+
+As a final note for this section, run the two segments of code that involve scatterplots with `geom_point()`. First this:
+
+```{r, eval = FALSE}
+ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
+  geom_point()
+```
+
+then this:
+
+```{r, eval = FALSE}
+ggplot(alaska_flights, aes(x = dep_delay, y = arr_delay)) + 
+  geom_point()
+```
+
+In other words you can drop the `data =` and `mapping =` if you keep the order of the two arguments the same. Since the `ggplot()` function is expecting its first argument `data` to be a data frame and its second argument to correspond to `mapping = `, you can omit both and you'll still get the same plot.  As you get more and more practice, you'll likely find yourself not including the specification of the arguments.  But for now to keep things straightforward let's make it a point to include the `data =` and `mapping =`. 
+
+
 
 ### Putting it all together
 
@@ -1225,7 +1012,6 @@ Fix this later
 <!--
 In addition, we've created a mind map to help you remember which types of plots are most appropriate in a given situation by identifying the types of variables involved in the problem.  It is available [here](https://coggle.it/diagram/V_G2gzukTDoQ-aZt-) and below.
 -->
-
 
 
 ```{r viz-map, echo=FALSE, fig.cap="Mind map for Data Visualization", out.width="200%"}
