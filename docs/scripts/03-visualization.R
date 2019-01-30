@@ -22,7 +22,7 @@ gapminder_2007 <- gapminder %>%
     `GDP per Capita` = gdpPercap
   )
 
-## ---- echo=FALSE---------------------------------------------------------
+## ----gapminder-2007, echo=FALSE------------------------------------------
 gapminder_2007 %>% 
   head() %>% 
   kable(
@@ -35,49 +35,39 @@ gapminder_2007 %>%
 
 ## ----gapminder, echo=FALSE, fig.cap="Life Expectancy over GDP per Capita in 2007"----
 ggplot(data = gapminder_2007, mapping = aes(x=`GDP per Capita`, y=`Life Expectancy`, size=Population, col=Continent)) +
-  geom_point()
+  geom_point() +
+  labs(x = "GDP per capita", y = "Life expectancy")
 
-## ---- echo=FALSE---------------------------------------------------------
-map <- data_frame(
+## ----summary-table-gapminder, echo=FALSE---------------------------------
+data_frame(
   `data variable` = c("GDP per Capita", "Life Expectancy", "Population", "Continent"),
   aes = c("x", "y", "size", "color"),
   geom = c("point", "point", "point", "point")
-)
-
-map %>% 
+) %>% 
   kable(
     caption = "Summary of Grammar of Graphics for this plot", 
     booktabs = TRUE
-    ) %>% 
+  ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
-
-## **_Review questions_**
 
 ## ------------------------------------------------------------------------
 alaska_flights <- flights %>% 
   filter(carrier == "AS")
 
-## **Learning Check Solutions**
+## ---- eval = FALSE-------------------------------------------------------
+## ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
+##   geom_point()
 
-## ----noalpha, fig.cap="Arrival Delays vs Departure Delays for Alaska Airlines flights from NYC in 2013", message=TRUE----
-ggplot(data = alaska_flights, 
-       mapping = aes(x = dep_delay, y = arr_delay)) + 
+## ----noalpha, fig.cap="Arrival Delays vs Departure Delays for Alaska Airlines flights from NYC in 2013", warning=TRUE, echo=FALSE----
+ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point()
 
 ## ----nolayers, fig.cap="Plot with No Layers"-----------------------------
-ggplot(data = alaska_flights, 
-       mapping = aes(x = dep_delay, y = arr_delay))
-
-## **Learning Check Solutions**
-
-## ---- include=show_solutions('3-2'), echo=show_solutions('3-2')----------
-ggplot(data = alaska_flights, mapping = aes(x = dep_time, y = dep_delay)) +
-  geom_point()
+ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 ## ----alpha, fig.cap="Delay scatterplot with alpha=0.2"-------------------
-ggplot(data = alaska_flights, 
-       mapping = aes(x = dep_delay, y = arr_delay)) + 
+ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point(alpha = 0.2)
 
 ## ----jitter-example-df, echo=FALSE---------------------------------------
@@ -85,8 +75,6 @@ jitter_example <- data_frame(
   x = c(0, 0, 0, 0),
   y = c(0, 0, 0, 0)
 )
-
-## ----jitter-example-df-01------------------------------------------------
 jitter_example
 
 ## ----jitter-example-plot-1, fig.cap="Regular scatterplot of jitter example data", echo=FALSE----
@@ -102,32 +90,16 @@ ggplot(data = jitter_example, mapping = aes(x = x, y = y)) +
   labs(title = "Jittered scatterplot")
 
 ## ----jitter, fig.cap="Jittered delay scatterplot"------------------------
-ggplot(data = alaska_flights, 
-       mapping = aes(x = dep_delay, y = arr_delay)) + 
+ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_jitter(width = 30, height = 30)
-
-## ---- eval = FALSE-------------------------------------------------------
-## ggplot(data = alaska_flights,
-##        mapping = aes(x = dep_delay, y = arr_delay)) +
-##   geom_jitter(width = 30, height = 30)
-
-## **Learning Check Solutions**
 
 ## ------------------------------------------------------------------------
 early_january_weather <- weather %>% 
   filter(origin == "EWR" & month == 1 & day <= 15)
 
-## **Learning Check Solutions**
-
 ## ----hourlytemp, fig.cap="Hourly Temperature in Newark for January 1-15, 2013"----
 ggplot(data = early_january_weather, 
        mapping = aes(x = time_hour, y = temp)) +
-  geom_line()
-
-## **Learning Check Solutions**
-
-## ---- include=show_solutions('3-5'), echo=show_solutions('3-5')----------
-ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = humid)) +
   geom_line()
 
 ## ----echo=FALSE, fig.height=0.8, fig.cap="Plot of Hourly Temperature Recordings from NYC in 2013"----
@@ -154,20 +126,10 @@ ggplot(data = weather, mapping = aes(x = temp)) +
 ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(binwidth = 10, color = "white")
 
-## **Learning Check Solutions**
-
-## ---- echo=show_solutions('3-7'), include=show_solutions('3-7'), message=FALSE, warning=FALSE----
-IQR(weather$temp, na.rm=TRUE)
-
-## ---- echo=show_solutions('3-7'), include=show_solutions('3-7'), message=FALSE, warning=FALSE----
-summary(weather$temp)
-
 ## ----facethistogram, fig.cap="Faceted histogram"-------------------------
 ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(binwidth = 5, color = "white") +
   facet_wrap(~ month, nrow = 4)
-
-## **Learning Check Solutions**
 
 ## ----badbox, fig.cap="Invalid boxplot specification", fig.height=3.5-----
 ggplot(data = weather, mapping = aes(x = month, y = temp)) +
@@ -190,31 +152,6 @@ weather %>%
   ggplot(mapping = aes(x = factor(month), y = temp)) +
   geom_boxplot() +
   geom_jitter(width = 0.05, height = 0.5, alpha = 0.2)
-
-## **Learning Check Solutions**
-
-## ---- include=show_solutions('3-9'), echo=show_solutions('3-9')----------
-weather %>% 
-  filter(month==5 & temp < 25)
-
-## There appears to be only one hour and only at JFK that recorded 13.1 F (-10.5 C) in the month of May. This is probably a data entry mistake!
-
-## ---- echo=show_solutions('3-9'), eval=FALSE-----------------------------
-## weather %>%
-##   group_by(month) %>%
-##   summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
-##   arrange(desc(IQR))
-
-## ---- echo=FALSE, include=show_solutions('3-9')--------------------------
-weather %>%
-  group_by(month) %>%
-  summarize(IQR = IQR(temp, na.rm=TRUE)) %>%
-  arrange(desc(IQR)) %>%
-  kable() %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
-
-## **`r paste0("(LC", chap, ".", (lc - 1), ")")`: We looked at the distribution of a numerical variable over a categorical variable here with this boxplot. Why can't we look at the distribution of one numerical variable over the distribution of another numerical variable? Say, temperature across pressure, for example?**
 
 ## ------------------------------------------------------------------------
 fruits <- data_frame(
@@ -283,8 +220,6 @@ kable(flights_table) %>%
 ggplot(data = flights_table, mapping = aes(x = carrier, y = number)) +
   geom_col()
 
-## **Learning Check Solutions**
-
 ## ----carrierpie, echo=FALSE, fig.cap="The dreaded pie chart", fig.height=5----
 ggplot(flights, mapping = aes(x = factor(1), fill = carrier)) +
   geom_bar(width = 1) +
@@ -297,8 +232,6 @@ ggplot(flights, mapping = aes(x = factor(1), fill = carrier)) +
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank()) +
   guides(fill = guide_legend(keywidth = 0.8, keyheight = 0.8))
-
-## **Learning Check Solutions**
 
 ## ----message=FALSE-------------------------------------------------------
 flights_namedports <- flights %>% 
@@ -314,14 +247,10 @@ ggplot(data = flights_namedports,
 ##        mapping = aes(x = carrier), fill = name) +
 ##   geom_bar()
 
-## **Learning Check Solutions**
-
 ## ---- fig.cap="Side-by-side AKA dodged barplot comparing the number of flights by carrier and airport", fig.height=5----
 ggplot(data = flights_namedports, 
        mapping = aes(x = carrier, fill = name)) +
   geom_bar(position = "dodge")
-
-## **Learning Check Solutions**
 
 ## ----facet-bar-vert, fig.cap="Faceted barplot comparing the number of flights by carrier and airport", fig.height=7.5----
 ggplot(data = flights_namedports, 
@@ -329,7 +258,13 @@ ggplot(data = flights_namedports,
   geom_bar() +
   facet_wrap(~ name, ncol = 1)
 
-## **Learning Check Solutions**
+## ---- eval = FALSE-------------------------------------------------------
+## ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
+##   geom_point()
+
+## ---- eval = FALSE-------------------------------------------------------
+## ggplot(alaska_flights, aes(x = dep_delay, y = arr_delay)) +
+##   geom_point()
 
 ## ----viz-map, echo=FALSE, fig.cap="Mind map for Data Visualization", out.width="200%"----
 #library(knitr)

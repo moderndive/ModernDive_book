@@ -1,6 +1,6 @@
 gitbook.require(["gitbook", "lodash", "jQuery"], function(gitbook, _, $) {
     var index = null;
-    var $searchInput, $searchLabel, $searchForm;
+    var $searchInput, $searchForm;
     var $highlighted, hi = 0, hiOpts = { className: 'search-highlight' };
     var collapse = false;
 
@@ -92,7 +92,6 @@ gitbook.require(["gitbook", "lodash", "jQuery"], function(gitbook, _, $) {
     // Create search form
     function createForm(value) {
         if ($searchForm) $searchForm.remove();
-        if ($searchLabel) $searchLabel.remove();
         if ($searchInput) $searchInput.remove();
 
         $searchForm = $('<div>', {
@@ -100,22 +99,13 @@ gitbook.require(["gitbook", "lodash", "jQuery"], function(gitbook, _, $) {
             'role': 'search'
         });
 
-        $searchLabel = $('<label>', {
-            'for': 'search-box',
-            'aria-hidden': 'false',
-            'hidden': ''
-        });
-
         $searchInput = $('<input>', {
-            'id': 'search-box',
             'type': 'search',
             'class': 'form-control',
             'val': value,
             'placeholder': 'Type to search'
         });
 
-        $searchLabel.append("Type to search");
-        $searchLabel.appendTo($searchForm);
         $searchInput.appendTo($searchForm);
         $searchForm.prependTo(gitbook.state.$book.find('.book-summary'));
     }
