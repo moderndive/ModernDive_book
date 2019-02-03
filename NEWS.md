@@ -1,10 +1,8 @@
 # ModernDive 0.4.0.9000
 
-## Highlights
+## Major refactoring of inference chapters of Book
 
-### Major refactoring of inference chapters of Book
-
-#### Old chapter structure
+### Old chapter structure
 
 * Chapter 8 - Sampling
     1. Introduction to sampling
@@ -85,7 +83,7 @@
         d) Script of R code
 
 
-#### New chapter structure
+### New chapter structure
 
 * Chapter 8 - Sampling
     1. Activity: Sampling from a bowl
@@ -140,7 +138,7 @@
         b) Table of inferential scenarios: Add pennies (mu) and Mythbusters (p1 - p2)
         c) Why does this work? Theoretical result: Donsker's theorem. The empirical CDF converges to the population CDF. Bootstrap works for any point estimate
         d) There's a formula for that! Margin of error using critical values z*
-* Chapter 11 - Hypothesis Testing
+* Chapter 10 - Hypothesis Testing
     1. Activity: Shuffling resumes between male and female job applicants
         a) Question: Are men and women rated for jobs differently?
         b) Alternate universe: No difference
@@ -169,7 +167,7 @@
         c) Table of inferential scenarios: Add action vs romance (mu1 - mu2)
         d) Why does this work? Theoretical result: Neyman-Pearson lemma
         e) There's a formula for that! t-test
-* Chapter 12 - Inference for Regression
+* Chapter 11 - Inference for Regression
     1. Activity: Revisit simple linear regression
         a) Question: Is there a significant relationship between teaching score and bty score above and beyond any evidence due to sampling variation.
         b) Review exercise/re-run all code
