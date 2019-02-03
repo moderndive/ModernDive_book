@@ -7,26 +7,16 @@ rq <- 0
 
 knitr::opts_chunk$set(
   tidy = FALSE, 
-  out.width = '\\textwidth'
+  out.width = '\\textwidth', 
+  fig.height = 4,
+  warning = FALSE
   )
 
-# This bit of code is a bug fix on asis blocks, which we use to show/not show LC
-# solutions, which are written like markdown text. In theory, it shouldn't be
-# necessary for knitr versions <=1.11.6, but I've found I still need to for
-# everything to knit properly in asis blocks. More info here: 
-# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
-library(knitr)
-knit_engines$set(asis = function(options) {
-  if (options$echo && options$eval) knit_child(text = options$code)
-})
+options(scipen = 99, digits = 3)
 
-# This controls which LC solutions to show. Options for solutions_shown: "ALL"
-# (to show all solutions), or subsets of c('11-1', '11-2'), including the
-# null vector c('') to show no solutions.
-solutions_shown <- c('')
-show_solutions <- function(section){
-  return(solutions_shown == "ALL" | section %in% solutions_shown)
-  }
+# Set random number generator see value for replicable pseudorandomness. Why 76?
+# https://www.youtube.com/watch?v=xjJ7FheCkCU
+set.seed(76)
 
 ## ---- message=FALSE, warning=FALSE---------------------------------------
 library(ggplot2)
