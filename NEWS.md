@@ -204,16 +204,6 @@
 * Chapter 11 - Inference for regression:
     + Moved residual analysis from Chapter 6 & 7 here
 * Moved all Learning Check solutions to a single Appendix
-
-## Other changes
-
-* Added Learning Check solutions section to Appendix D
-* Added PDF build
-
-
-
-## All content changes
-
 * Chapter 3 - Data visualization:
     + Added simpler introductory `geom_histogram()` example
     + Added simpler introductory `geom_boxplot()` example
@@ -226,6 +216,12 @@
     + Added `fivethirtyeight::drinks` example of hitting the non-tidy wall, then using `tidyr::gather()`
     + Made Guatemala democracy score a case study.
     + Added discussion on what `tidyverse` package is.
+
+    
+## Other changes
+
+* Added Learning Check solutions section to Appendix D
+* Added PDF build
 
 
 
