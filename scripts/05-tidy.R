@@ -1,5 +1,5 @@
 ## ----setup_tidy, include=FALSE-------------------------------------------
-chap <- 4
+chap <- 5
 lc <- 0
 rq <- 0
 # **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
@@ -7,34 +7,28 @@ rq <- 0
 
 knitr::opts_chunk$set(
   tidy = FALSE, 
-  out.width = '\\textwidth'
+  out.width = '\\textwidth', 
+  fig.height = 4,
+  fig.align='center',
+  warning = FALSE
   )
 
-# This bit of code is a bug fix on asis blocks, which we use to show/not show LC
-# solutions, which are written like markdown text. In theory, it shouldn't be
-# necessary for knitr versions <=1.11.6, but I've found I still need to for
-# everything to knit properly in asis blocks. More info here: 
-# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
-library(knitr)
-knit_engines$set(asis = function(options) {
-  if (options$echo && options$eval) knit_child(text = options$code)
-})
+options(scipen = 99, digits = 3)
 
-# This controls which LC solutions to show. Options for solutions_shown: "ALL"
-# (to show all solutions), or subsets of c('4-4', '4-5'), including the
-# null vector c('') to show no solutions.
-# solutions_shown <- c('4-1', '4-2', '4-3', '4-4')
-solutions_shown <- c('')
-show_solutions <- function(section){
-  return(solutions_shown == "ALL" | section %in% solutions_shown)
-  }
+# In knitr::kable printing replace all NA's with blanks
+options(knitr.kable.NA = '')
+
+# Set random number generator see value for replicable pseudorandomness. Why 76?
+# https://www.youtube.com/watch?v=xjJ7FheCkCU
+set.seed(76)
 
 ## ----warning=FALSE, message=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
-library(nycflights13)
-library(tidyr)
 library(readr)
+library(tidyr)
+library(nycflights13)
+library(fivethirtyeight)
 
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
@@ -42,6 +36,35 @@ library(knitr)
 library(kableExtra)
 library(fivethirtyeight)
 library(stringr)
+
+## ----message=FALSE, eval=FALSE-------------------------------------------
+## library(readr)
+## dem_score <- read_csv("https://moderndive.com/data/dem_score.csv")
+## dem_score
+
+## ----message=FALSE, echo=FALSE-------------------------------------------
+dem_score <- read_csv("data/dem_score.csv")
+dem_score
+
+## ------------------------------------------------------------------------
+drinks
+
+## ------------------------------------------------------------------------
+drinks_smaller <- drinks %>% 
+  filter(country %in% c("USA", "China", "Italy", "Saudi Arabia")) %>% 
+  select(-total_litres_of_pure_alcohol) %>% 
+  rename(beer = beer_servings, spirit = spirit_servings, wine = wine_servings)
+drinks_smaller
+
+## ----drinks-smaller, fig.cap="Alcohol consumption in 4 countries.", fig.height=3.5, echo=FALSE----
+drinks_smaller_tidy <- drinks_smaller %>% 
+  gather(type, servings, -country)
+ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
+  geom_col(position = "dodge") +
+  labs(x = "country", y = "servings")
+
+## ------------------------------------------------------------------------
+drinks_smaller_tidy
 
 ## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from http://r4ds.had.co.nz/tidy-data.html"----
 knitr::include_graphics("images/tidy-1.png")
@@ -96,6 +119,18 @@ stocks %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("HOLD_position"))
 
+## ------------------------------------------------------------------------
+drinks_smaller
+
+## ------------------------------------------------------------------------
+drinks_smaller_tidy <- drinks_smaller %>% 
+  gather(key = type, value = servings, -country)
+drinks_smaller_tidy
+
+## ------------------------------------------------------------------------
+ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
+  geom_col(position = "dodge")
+
 ## **_Learning check_**
 
 ## ----echo=FALSE----------------------------------------------------------
@@ -111,32 +146,10 @@ drinks_sub_tidy <- drinks_sub %>%
   rename(`alcohol type` = type)
 drinks_sub
 
-## **Learning Check Solutions**
-
-## ----lc4-1solutions-2, include=show_solutions('4-1'), echo=FALSE---------
-drinks_sub_tidy
-
-## Note that how the rows are sorted is inconsequential in whether or not the data frame is in tidy format. In other words, the following data frame sorted by alcohol type instead of country is equally in tidy format.
-
-## ----lc4-1solutions-4, include=show_solutions('4-1'), echo=FALSE---------
-drinks_sub_tidy %>% 
-  arrange(`alcohol type`)
-
 ## ------------------------------------------------------------------------
 glimpse(airports)
 
 ## **_Learning check_**
-
-## **Learning Check Solutions**
-
-## ----message=FALSE, eval=FALSE-------------------------------------------
-## library(readr)
-## dem_score <- read_csv("https://moderndive.com/data/dem_score.csv")
-## dem_score
-
-## ----message=FALSE, echo=FALSE-------------------------------------------
-dem_score <- read_csv("data/dem_score.csv")
-dem_score
 
 ## ------------------------------------------------------------------------
 guat_dem <- dem_score %>% 
@@ -144,57 +157,49 @@ guat_dem <- dem_score %>%
 guat_dem
 
 ## ------------------------------------------------------------------------
-guat_tidy <- gather(data = guat_dem, 
-                    key = year,
-                    value = democracy_score,
-                    - country) 
+guat_tidy <- guat_dem %>% 
+  gather(key = year, value = democracy_score, -country) 
 guat_tidy
 
 ## ----errors=TRUE---------------------------------------------------------
-ggplot(data = guat_tidy, 
-       mapping = aes(x = year, y = democracy_score)) +
+ggplot(guat_tidy, aes(x = year, y = democracy_score)) +
   geom_line()
 
 ## ----guatline, fig.cap="Guatemala's democracy score ratings from 1952 to 1992"----
-ggplot(data = guat_tidy, 
-       mapping = aes(x = parse_number(year), 
-                     y = democracy_score)) +
+ggplot(guat_tidy, aes(x = parse_number(year), y = democracy_score)) +
   geom_line() +
   labs(x = "year")
 
-## **Learning Check Solutions**
+## ---- eval=FALSE---------------------------------------------------------
+## library(dplyr)
+## library(ggplot2)
+## library(readr)
+## library(tidyr)
 
-## ----lc4-3solutions-2, include=show_solutions('4-3')---------------------
-dem_score_tidy <- gather(data = dem_score, key = year, value = democracy_score, - country)
+## ---- eval=FALSE---------------------------------------------------------
+## library(tidyverse)
 
-## Let's now compare the `dem_score` and `dem_score_tidy`. `dem_score` has democracy score information for each year in columns, whereas in `dem_score_tidy` there are explicit variables `year` and `democracy_score`. While both representations of the data contain the same information, we can only use `ggplot()` to create plots using the `dem_score_tidy` data frame.
-
-## ----lc4-3solutions-4, include=show_solutions('4-3')---------------------
-dem_score
-dem_score_tidy
-
-## **`r paste0("(LC", chap, ".", (lc - 1), ")")`** The code is similar
-
-## ----lc4-3solutions-6, eval=FALSE,include=show_solutions('4-3'), echo=show_solutions('4-3')----
-## life_expectancy <- read_csv('https://moderndive.com/data/le_mess.csv')
-## life_expectancy_tidy <- gather(data = life_expectancy, key = year, value = life_expectancy, -country)
-
-## We observe the same construct structure with respect to `year` in `life_expectancy` vs `life_expectancy_tidy` as we did in `dem_score` vs `dem_score_tidy`:
-
-## ----lc4-3solutions-8, lc4-2solutions-4, include=show_solutions('4-3')----
-life_expectancy
-life_expectancy_tidy
+## ---- eval=FALSE---------------------------------------------------------
+## library(ggplot2)
+## library(dplyr)
+## library(tidyr)
+## library(readr)
+## library(purrr)
+## library(tibble)
+## library(stringr)
+## library(forcats)
 
 ## ----message=FALSE-------------------------------------------------------
-library(dplyr)
-joined_flights <- inner_join(x = flights, 
-                             y = airlines, 
-                             by = "carrier")
+joined_flights <- inner_join(x = flights, y = airlines, by = "carrier")
 
 ## ----eval=FALSE----------------------------------------------------------
 ## View(joined_flights)
 
 ## **_Learning check_**
 
-## **Learning Check Solutions**
+## ----import-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheat"-----
+include_graphics("images/import_cheatsheet-1.png")
+
+## ----echo=FALSE, fig.cap="ModernDive flowchart - On to Part II!", fig.align='center'----
+knitr::include_graphics("images/flowcharts/flowchart/flowchart.005.png")
 

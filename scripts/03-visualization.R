@@ -309,10 +309,16 @@ include_graphics("images/ggplot_cheatsheet-1.png")
 ## ---- eval=FALSE---------------------------------------------------------
 ## alaska_flights <- flights %>%
 ##   filter(carrier == "AS")
+## 
+## ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
+##   geom_point()
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## early_january_weather <- weather %>%
 ##   filter(origin == "EWR" & month == 1 & day <= 15)
+## 
+## ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = temp)) +
+##   geom_line()
 
 ## ----echo=FALSE, fig.cap="ModernDive flowchart", out.width='110%', fig.align='center'----
 # knitr::include_graphics("images/flowcharts/flowchart/flowchart.004.png")
