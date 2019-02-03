@@ -4,6 +4,17 @@
 * Added PDF build
 * Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
 
+
+
+## All content changes
+
+* Chapter 3 - Data visualization:
+    + Added simpler introductory `geom_histogram()` example
+    + Added simpler introductory `geom_boxplot()` example
+    + Started downweighting the amount of data wrangling previews included in this chapter, in particular `join`
+    + Cleaned up conclusion section
+
+
 # ModernDive 0.4.0
 
 ## Highlights
