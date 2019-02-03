@@ -1,6 +1,6 @@
 # ModernDive 0.4.0.9000
 
-## Major refactoring of inference chapters of Book
+## Major refactoring of inference chapters of book
 
 ### Old chapter structure
 
@@ -195,13 +195,6 @@
 * Changed title from "Statistical Inference via Data Science in R" to "Statistical Inference via Data Science: A moderndive into R and the tidyverse"
 * Chapter 2 - Getting Started
     + Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
-* Chapter 6 - Basic regression:
-    + Moved residual analysis to Chapter 11
-* Chapter 7 - Multiple regression:
-    + Moved residual analysis to Chapter 11
-* Chapter 11 - Inference for regression:
-    + Moved residual analysis from Chapter 6 & 7 here
-* Moved all Learning Check solutions to a single Appendix
 * Chapter 3 - Data visualization:
     + Added simpler introductory `geom_histogram()` example
     + Added simpler introductory `geom_boxplot()` example
@@ -214,11 +207,16 @@
     + Added `fivethirtyeight::drinks` example of hitting the non-tidy wall, then using `tidyr::gather()`
     + Made Guatemala democracy score a case study.
     + Added discussion on what `tidyverse` package is.
-
+* Chapter 6 - Basic regression:
+    + Moved residual analysis to Chapter 11
+* Chapter 7 - Multiple regression:
+    + Moved residual analysis to Chapter 11
+* Chapter 11 - Inference for regression:
+    + Moved residual analysis from Chapter 6 & 7 here
+* Moved all Learning Check solutions to Appendix D
     
 ## Other changes
 
-* Added Learning Check solutions section to Appendix D
 * Added PDF build
 
 
