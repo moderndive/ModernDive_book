@@ -19,6 +19,7 @@ library(kableExtra)
 library(tidyr)
 library(forcats)
 library(gridExtra)
+library(patchwork)
 
 ## ---- echo=FALSE, results='asis'-----------------------------------------
 image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.3\\textwidth")
@@ -103,7 +104,7 @@ model3_balance_vs_income_plot <- ggplot(Credit, aes(x = Income, y = Balance)) +
        title = "Balance vs income") +
   geom_smooth(method = "lm", se = FALSE) +
   scale_y_continuous(limits = c(0, NA))
-grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)
+model3_balance_vs_limit_plot + model3_balance_vs_income_plot
 
 ## ---- eval=FALSE, echo=FALSE---------------------------------------------
 ## # Save as 798 x 562 images/credit_card_balance_3D_scatterplot.png
@@ -232,7 +233,7 @@ model3_residual_vs_income_plot <- ggplot(regression_points, aes(x = Income, y = 
   geom_point() +
   labs(x = "Income (in $1000)", y = "Residual", 
        title = "Residuals vs income")
-grid.arrange(model3_residual_vs_limit_plot, model3_residual_vs_income_plot, nrow = 1)
+model3_residual_vs_limit_plot + model3_residual_vs_income_plot
 
 ## ----model3-residuals-hist, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
 ggplot(regression_points, aes(x = residual)) +
@@ -389,7 +390,7 @@ Credit %>%
                 latex_options = c("HOLD_position"))
 
 ## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
-grid.arrange(model3_balance_vs_limit_plot, model3_balance_vs_income_plot, nrow = 1)
+model3_balance_vs_limit_plot + model3_balance_vs_income_plot
 
 ## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and quartiles"----
 ggplot(Credit, aes(x = Limit)) +
@@ -409,7 +410,7 @@ Credit <- Credit %>%
 model3_balance_vs_income_plot <- ggplot(Credit, aes(x = Income, y = Balance)) +
   geom_point() +
   labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
-       title = "Balance vs income (overall)") +
+       title = "Balance vs income\n(overall)") +
   geom_smooth(method = "lm", se = FALSE) +
   scale_y_continuous(limits = c(0, NA))
 
@@ -417,12 +418,11 @@ model3_balance_vs_income_plot_colored <- ggplot(Credit, aes(x = Income, y = Bala
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
-       color = "Credit limit\nbracket", title = "Balance vs income (by bracket)") + 
+       color = "Credit limit\nbracket", title = "Balance vs income\n(colored by credit limit bracket)") + 
   theme(legend.position = "none") +
   scale_y_continuous(limits = c(0, NA))
   
-grid.arrange(model3_balance_vs_income_plot, model3_balance_vs_income_plot_colored, nrow = 1)
-#cowplot::plot_grid(model3_balance_vs_income_plot, model3_balance_vs_income_plot_colored, nrow = 1, rel_widths = c(2/5, 3/5))
+model3_balance_vs_income_plot + model3_balance_vs_income_plot_colored
 
 ## ---- 2numxplot5, echo=FALSE, warning=FALSE, fig.cap="Relationship between credit card balance and income for different credit limit brackets"----
 ggplot(Credit, aes(x = Income, y = Balance)) +
