@@ -1,6 +1,6 @@
 # ModernDive 0.4.0.9000
 
-* Added Learning Check solutions section to Appendix
+* Added Learning Check solutions section to Appendix D
 * Added PDF build
 * Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
 
@@ -13,8 +13,11 @@
     + Cleaned up conclusion section
 * Switched order of "Chap 4 Tidy Data" and "Chap 5 Data Wrangling": Data Wrangling now comes first
 * Chapter 4 - Data wrangling:
-* Chapter 5 - Renamed to "Importing and tidying data"
-    + Reordered chapters
+* Chapter 5 - Renamed to "Importing and tidy data"
+    + Reordered sections: importing then tidying
+    + Added `fivethirtyeight::drinks` example of hitting the non-tidy wall, then using `tidyr::gather()`
+    + Made Guatemala democracy score a case study.
+    + Added discussion on what `tidyverse` package is.
 
 
 
