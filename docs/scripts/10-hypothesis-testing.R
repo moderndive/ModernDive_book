@@ -10,6 +10,18 @@ library(broom)
 # Packages needed internally, but not in text.
 library(knitr)
 
+## ----message=FALSE, warning=FALSE----------------------------------------
+library(dplyr)
+library(ggplot2)
+library(infer)
+library(nycflights13)
+library(ggplot2movies)
+library(broom)
+
+## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
+# Packages needed internally, but not in text.
+library(knitr)
+
 ## ------------------------------------------------------------------------
 bos_sfo <- flights %>% 
   na.omit() %>% 

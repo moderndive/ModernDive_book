@@ -46,6 +46,26 @@ library(stringr)
 dem_score <- read_csv("data/dem_score.csv")
 dem_score
 
+## ------------------------------------------------------------------------
+drinks
+
+## ------------------------------------------------------------------------
+drinks_smaller <- drinks %>% 
+  filter(country %in% c("USA", "China", "Italy", "Saudi Arabia")) %>% 
+  select(-total_litres_of_pure_alcohol) %>% 
+  rename(beer = beer_servings, spirit = spirit_servings, wine = wine_servings)
+drinks_smaller
+
+## ----drinks-smaller, fig.cap="Alcohol consumption in 4 countries.", fig.height=3.5, echo=FALSE----
+drinks_smaller_tidy <- drinks_smaller %>% 
+  gather(type, servings, -country)
+ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
+  geom_col(position = "dodge") +
+  labs(x = "country", y = "servings")
+
+## ------------------------------------------------------------------------
+drinks_smaller_tidy
+
 ## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from http://r4ds.had.co.nz/tidy-data.html"----
 knitr::include_graphics("images/tidy-1.png")
 
@@ -99,6 +119,18 @@ stocks %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("HOLD_position"))
 
+## ------------------------------------------------------------------------
+drinks_smaller
+
+## ------------------------------------------------------------------------
+drinks_smaller_tidy <- drinks_smaller %>% 
+  gather(key = type, value = servings, -country)
+drinks_smaller_tidy
+
+## ------------------------------------------------------------------------
+ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
+  geom_col(position = "dodge")
+
 ## **_Learning check_**
 
 ## ----echo=FALSE----------------------------------------------------------
@@ -125,21 +157,16 @@ guat_dem <- dem_score %>%
 guat_dem
 
 ## ------------------------------------------------------------------------
-guat_tidy <- gather(data = guat_dem, 
-                    key = year,
-                    value = democracy_score,
-                    - country) 
+guat_tidy <- guat_dem %>% 
+  gather(key = year, value = democracy_score, -country) 
 guat_tidy
 
 ## ----errors=TRUE---------------------------------------------------------
-ggplot(data = guat_tidy, 
-       mapping = aes(x = year, y = democracy_score)) +
+ggplot(guat_tidy, aes(x = year, y = democracy_score)) +
   geom_line()
 
 ## ----guatline, fig.cap="Guatemala's democracy score ratings from 1952 to 1992"----
-ggplot(data = guat_tidy, 
-       mapping = aes(x = parse_number(year), 
-                     y = democracy_score)) +
+ggplot(guat_tidy, aes(x = parse_number(year), y = democracy_score)) +
   geom_line() +
   labs(x = "year")
 
@@ -149,18 +176,18 @@ ggplot(data = guat_tidy,
 ## library(readr)
 ## library(tidyr)
 
-## ---- eval=TRUE----------------------------------------------------------
-library(tidyverse)
+## ---- eval=FALSE---------------------------------------------------------
+## library(tidyverse)
 
-## ---- eval=TRUE----------------------------------------------------------
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-library(readr)
-library(purrr)
-library(tibble)
-library(stringr)
-library(forcats)
+## ---- eval=FALSE---------------------------------------------------------
+## library(ggplot2)
+## library(dplyr)
+## library(tidyr)
+## library(readr)
+## library(purrr)
+## library(tibble)
+## library(stringr)
+## library(forcats)
 
 ## ----message=FALSE-------------------------------------------------------
 joined_flights <- inner_join(x = flights, y = airlines, by = "carrier")
