@@ -1,8 +1,216 @@
 # ModernDive 0.4.0.9000
 
+## Highlights
+
+### Major refactoring of inference chapters of Book
+
+#### Old chapter structure
+
+* Chapter 8 - Sampling
+    1. Introduction to sampling
+        a) Concepts related to sampling
+        b) Inference via sampling
+    2. Tactile sampling simulation
+        a) Using the shovel once
+        b) Using the shovel 33 times
+    3. Virtual sampling simulation
+        a) Using the shovel once
+        b) Using shovel 33 times
+        c) Using shovel 1000 times
+        d) Using different shovels
+    4. In real-life sampling: Polls
+    5. Conclusion
+        a) Central Limit Theorem
+        b) What’s to come?
+        c) Script of R code
+* Chapter 9 - Confidence Intervals
+    1. Bootstrapping
+        a) Data explanation
+        b) Exploratory data analysis
+        c) The Bootstrapping Process
+    2. The infer package for statistical inference
+        a) Specify variables
+        b) Generate replicates
+        c) Calculate summary statistics
+        d) Visualize the results
+    3. Now to confidence intervals
+        a) The percentile method
+        b) The standard error method
+    4. Comparing bootstrap and sampling distributions
+    5. Interpreting the confidence interval
+    6. Example: One proportion
+        a) Observed Statistic
+        b) Bootstrap distribution
+        c) Theory-based confidence intervals
+    7. Example: Comparing two proportions
+        a) Compute the point estimate
+        b) Bootstrap distribution
+    8. Conclusion
+        a) What’s to come?
+        b) Script of R code
+* Chapter 10 - Hypothesis Testing
+    1. When inference is not needed
+    2. Basics of hypothesis testing
+    3. Criminal trial analogy
+        a) Two possible conclusions
+    4. Types of errors in hypothesis testing
+        a) Logic of hypothesis testing
+    5. Statistical significance
+    6. Hypothesis testing with infer
+    7. Example: Comparing two means
+        a) Randomization/permutation
+        b) Comparing action and romance movies
+        c) Sampling -> randomization
+        d) Data
+        e) Model of H0
+        f) Test statistic delta
+        g) Observed effect delta*
+        h) Simulated data
+        i) Distribution of delta under H0
+        j) The p-value
+        k) Corresponding confidence interval
+        l) Summary
+    8. Building theory-based methods using computation
+        a) Example: t-test for two independent samples
+        b) Conditions for t-test
+    9. Conclusion
+        a) Script of R code
+* Chapter 11 - Inference for Regression
+    1. Simulation-based Inference for Regression
+    1. Bootstrapping for the regression slope
+    1. Inference for multiple regression
+        a) Refresher: Professor evaluations data
+        b) Refresher: Visualizations
+        c) Refresher: Regression tables
+        d) Script of R code
+
+
+#### New chapter structure
+
+* Chapter 8 - Sampling
+    1. Activity: Sampling from a bowl
+        a) Question: What proportion of this bowl is red?
+        b) Using shovel once
+        c) Using shovel 33 times
+    1. Computer simulation:
+        a) What is a simulation? We just did a "tactile" one by hand, now let's do one using the the computer
+        b) Using shovel once
+        c) Using shovel 33 times
+        d) Using shovel 1000 times
+        e) Using different shovels
+    1. Goal: Study fluctuations due to sampling variation
+        a) You probably already knew: Bigger sample size means "better" guess.
+        b) Comparing shovels: Role of sample size
+    1. Framework: Sampling
+        a) Terminology for sampling (population, sample, point estimate, etc)
+        b) Statistical concepts: sampling distribution and standard error
+        c) Computer's random number generator
+    1. Interpretation: 
+        a) Visual display of differences
+    1. Case study: Obama poll 
+    1. Big picture: 
+        a) Table of inferential scenarios: Add bowl and obama poll (both p)
+        b) Why does this work? Theoretial result: CLT
+        c) There's a formula for that: SE formula that has sqrt(n) at the bottom
+        d) Appendix: Normal distribution discussion
+* Chapter 9 - Confidence Intervals
+    1. Activity: Working with a sample of pennies from the bank. Are they representative of all pennies in the US.
+        a) Question: What do I do when I only have one sample?
+        b) Resampling once (paper slips)
+        c) Resampling 33 times
+    1. Computer simulation: 
+        a) What is resampling?
+        b) Resampling once
+        c) Resampling 33 times
+        d) Resampling 1000 times
+    1. Goal: Generate an estimate that accounts for sampling variation
+        a) Constructing a confidence interval
+        b) Constructing a CI using percentile method
+        c) Constructing a CI using SE method
+    1. Framework: Boostrap resampling with replacement
+        a) What dplyr verbs did we use?
+        b) There is only one test framework
+        c) the infer package
+    1. Interpretation: 
+        a) 95% speaks to reliability of the process, not about an particular interval
+        b) What determines the width? Sample size, confidence levels (only int at population variance)
+    1. Case study: Comparing two proportions with Mythbusters data
+    1. Big picture: 
+        a) Does this even work? Comparing sampling and bootstrap distribution.
+        b) Table of inferential scenarios: Add pennies (mu) and Mythbusters (p1 - p2)
+        c) Why does this work? Theoretical result: Donsker's theorem. The empirical CDF converges to the population CDF. Bootstrap works for any point estimate
+        d) There's a formula for that! Margin of error using critical values z*
+* Chapter 11 - Hypothesis Testing
+    1. Activity: Shuffling resumes between male and female job applicants
+        a) Question: Are men and women rated for jobs differently?
+        b) Alternate universe: No difference
+        c) What about sampling variation?
+        d) What did we actually observe?
+        e) How likely is this result?
+    1. Computer simulation: 
+    1. Goal: Choose between two possible truths while accounting for sampling variation
+        a) Conducting a hypothesis test
+        b) Null hypothesis that's assumed
+        c) Null distribution of test statistics: A "alternate universe" distribution
+        d) Observed test statistics
+        e) Definition of p-value
+    1. Framework: Permutation test resampling w/o replacement
+        a) Revisit verb framework
+        b) There is only one test framework
+        c) the infer package
+    1. Interpretation: 
+        a) A yes/no-type decision: statistical significance via alpha
+        b) Types of errors: 2x2 table
+        c) Analogy of criminal justice system
+    1. Case study: Comparing two means with action vs romance movie data
+    1. Big picture: 
+        a) Problems with p-values: p-hacking, hard to understand, ASA statement
+        b) Comparison with confidence intervals. HT yields binary decision, but CI's yield plausible range of estimates. This is statistical vs practical significance
+        c) Table of inferential scenarios: Add action vs romance (mu1 - mu2)
+        d) Why does this work? Theoretical result: Neyman-Pearson lemma
+        e) There's a formula for that! t-test
+* Chapter 12 - Inference for Regression
+    1. Activity: Revisit simple linear regression
+        a) Question: Is there a significant relationship between teaching score and bty score above and beyond any evidence due to sampling variation.
+        b) Review exercise/re-run all code
+        c) Regression table
+    1. Computer simulation: 
+        a) Bootstraping the relationship
+        b) Permuting the relationship
+    1. Goal: Inferring about the population regression slope
+        a) 
+    1. Framework: 
+    1. Interpretation:
+        a) Values in table are given! No simulations necessary!
+        b) Conditions for inference: residual and partial residual plots
+    1. Case study: Mmultiple regression example from Ch 7.
+        a) 
+    1. Big picture: 
+        a) ANOVA = Regression with categorical variables
+        b) Table of inferential scenarios: Add TBD (beta1)
+        c) Why does this work? Theoretical result: Gauss-Markov Theorem
+        d) There's a formula for that! Fitted intercept and slope. SE of fitted intercept and slope. Note there is a sqrt(n) in denominator. 
+
+
+## All content changes
+
+* Changed title from "Statistical Inference via Data Science in R" to "Statistical Inference via Data Science: A moderndive into R and the tidyverse"
+* Chapter 2 - Getting Started
+    + Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
+* Chapter 6 - Basic regression:
+    + Moved residual analysis to Chapter 11
+* Chapter 7 - Multiple regression:
+    + Moved residual analysis to Chapter 11
+* Chapter 11 - Inference for regression:
+    + Moved residual analysis from Chapter 6 & 7 here
+* Moved all Learning Check solutions to a single Appendix
+
+## Other changes
+
 * Added Learning Check solutions section to Appendix D
 * Added PDF build
-* Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
+
+
 
 ## All content changes
 
@@ -33,7 +241,6 @@
 1. Chapter 12 on "Thinking with Data" now includes a case study using the [Seattle house prices](https://www.kaggle.com/harlfoxem/housesalesprediction) dataset on Kaggle.com. Chapters 3 and 4 from new ["Modeling with Data in the Tidyverse"](https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse) DataCamp course by Albert Y. Kim are based on this analysis!
 1. Speaking of DataCamp, we point readers to [various DataCamp courses](https://moderndive.netlify.com/index.html#datacamp) that directly align with various chapters in the book!
 1. We significantly cleaned up Chapter 8 on sampling! In particular: adding a [2013 Obama approval rating poll](https://www.npr.org/sections/itsallpolitics/2013/12/04/248793753/poll-support-for-obama-among-young-americans-eroding) example to tie in with our sampling bowl tactile and virtual simulations and making it very clear that ultimately we are performing statistical **inference via sampling**.
-
 
 ## All content changes
 
@@ -77,7 +284,6 @@
     + Laid outline for "effective data storytelling" using `fivethirtyeight` data and added one small example using US births data
     + At the beginning of chapter, we now come full circle and revisit the discussion on the ModernDive [flowchart](https://github.com/moderndive/moderndive_book/blob/master/images/flowcharts/flowchart/flowchart.002.png) in the introduction.
 
-
 ## Other changes
 
 * Updated `moderndive` package on CRAN to 0.2.0. See [`NEWS.md`](https://github.com/moderndive/moderndive/releases)
@@ -85,7 +291,6 @@
 
 
 ***
-
 
 
 # ModernDive 0.3.0
@@ -102,7 +307,6 @@
     + Added Chapter 8 - Sampling (still under construction) using [sampling bowl](https://github.com/moderndive/moderndive/blob/master/data-raw/sampling_bowl.jpeg)
     + Chapters 9 and 10 on confidence intervals and hypothesis testing have not yet been updated, as we were awaiting the now launched package: [`infer`: A tidyverse-friendly R package fo statistical inference](https://github.com/andrewpbray/infer)
     + Added Chapter 11 - Inference for regression (still under construction), where we'll revisit the regression models fit in Chapters 6 & 7
-
 
 ## Other changes
 
