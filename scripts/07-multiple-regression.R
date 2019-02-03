@@ -211,35 +211,6 @@ regression_points %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
-## ---- eval=FALSE---------------------------------------------------------
-## ggplot(regression_points, aes(x = Limit, y = residual)) +
-##   geom_point() +
-##   labs(x = "Credit limit (in $)",
-##        y = "Residual",
-##        title = "Residuals vs credit limit")
-## 
-## ggplot(regression_points, aes(x = Income, y = residual)) +
-##   geom_point() +
-##   labs(x = "Income (in $1000)",
-##        y = "Residual",
-##        title = "Residuals vs income")
-
-## ---- echo=FALSE, fig.height=4, fig.cap="Residuals vs credit limit and income"----
-model3_residual_vs_limit_plot <- ggplot(regression_points, aes(x = Limit, y = residual)) +
-  geom_point() +
-  labs(x = "Credit limit (in $)", y = "Residual", 
-       title = "Residuals vs credit limit")
-model3_residual_vs_income_plot <- ggplot(regression_points, aes(x = Income, y = residual)) +
-  geom_point() +
-  labs(x = "Income (in $1000)", y = "Residual", 
-       title = "Residuals vs income")
-model3_residual_vs_limit_plot + model3_residual_vs_income_plot
-
-## ----model3-residuals-hist, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
-ggplot(regression_points, aes(x = residual)) +
-  geom_histogram(color = "white") +
-  labs(x = "Residual")
-
 ## ------------------------------------------------------------------------
 evals_ch7 <- evals %>%
   select(score, age, gender)
@@ -352,19 +323,6 @@ regression_points %>%
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
-
-## ----residual1, warning=FALSE, fig.cap="Interaction model histogram of residuals"----
-ggplot(regression_points, aes(x = residual)) +
-  geom_histogram(binwidth = 0.25, color = "white") +
-  labs(x = "Residual") +
-  facet_wrap(~gender)
-
-## ----residual2, warning=FALSE, fig.cap="Interaction model residuals vs predictor"----
-ggplot(regression_points, aes(x = age, y = residual)) +
-  geom_point() +
-  labs(x = "age", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue", size = 1) +
-  facet_wrap(~ gender)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## library(ISLR)
