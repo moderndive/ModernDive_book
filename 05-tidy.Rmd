@@ -1,4 +1,4 @@
-# Tidy Data via tidyr {#tidy}
+# Importing & Tidying Data {#tidy}
 
 ```{r setup_tidy, include=FALSE}
 chap <- 5
@@ -25,9 +25,9 @@ options(knitr.kable.NA = '')
 set.seed(76)
 ```
 
-In Subsection \@ref(programming-concepts) we introduced the concept of a data frame: a rectangular spreadsheet-like representation of data in R where the rows correspond to observations and the columns correspond to variables describing each observation.  In Section \@ref(nycflights13), we started explorations of our first data frame `flights` included in the `nycflights13` package. In Chapter \@ref(viz) we made graphics using data contained in `flights` and other data frames. 
+In Subsection \@ref(programming-concepts) we introduced the concept of a data frame: a rectangular spreadsheet-like representation of data in R where the rows correspond to observations and the columns correspond to variables describing each observation.  In Section \@ref(nycflights13), we started exploring our first data frame: the `flights` data frame included in the `nycflights13` package. In Chapter \@ref(viz) we created visualizations based on the data included in `flights` and other data frames such as `weather`. In Chapter \@ref(wrangling), we learned how to wrangle data, in other words take existing data frames and transform and modify them to suit our desired analysis. 
 
-In this chapter, we extend some of these ideas by discussing a type of data formatting called "tidy" data. You will see that having data stored in "tidy" format is about more than what the colloquial definition of the term "tidy" might suggest of having your data "neatly organized" in a spreadsheet. Instead, we define the term "tidy" in a more rigorous fashion, outlining a set of rules by which data can be stored and the implications of these rules for analyses.
+In this final chapter of the "Data Science via the tidyverse" portion of the book, we extend some of these ideas by discussing a type of data formatting called "tidy" data. You will see that having data stored in "tidy" format is about more than what the colloquial definition of the term "tidy" might suggest of having your data "neatly organized" in a spreadsheet. Instead, we define the term "tidy" in a more rigorous fashion, outlining a set of rules by which data can be stored and the implications of these rules for analyses.
 
 Although knowledge of this type of data formatting was not necessary in our treatment of data visualization in Chapter \@ref(viz) since all the data was already in tidy format, we'll see going forward that having tidy data will allow you to more easily create data visualizations in a wide range of settings. Furthermore, it will also help you with data wrangling in Chapter \@ref(wrangling) and in all subsequent chapters in this book when we cover regression and discuss statistical inference.  
 
@@ -38,9 +38,10 @@ Let's load all the packages needed for this chapter (this assumes you've already
 ```{r warning=FALSE, message=FALSE}
 library(dplyr)
 library(ggplot2)
-library(nycflights13)
-library(tidyr)
 library(readr)
+library(tidyr)
+library(nycflights13)
+library(fivethirtyeight)
 ```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
@@ -57,7 +58,54 @@ library(stringr)
 
 
 
-## What is tidy data?
+## Importing data {#csv}
+
+Up to this point, we've used data either stored inside of an R package or we've manually created the data such as the `fruits` and `fruits_counted` data in Subsection \@ref(geombar). Another common way to get data into R is by reading in data from a spreadsheet file either on your computer or online.  Spreadsheet data is often saved in one of two formats:
+
+* A *Comma Separated Values* `.csv` file.  You can think of a CSV file as a bare-bones spreadsheet where:
+    + Each line in the file corresponds to one row of data/one observation.
+    + Values for each line are separated with commas. In other words, the values of different variables are separated by commas.
+    + The first line is often, but not always, a *header* row indicating the names of the columns/variables.
+* An Excel `.xlsx` file. This format is based on Microsoft's proprietary Excel software. As opposed to a bare-bones `.csv` files, `.xlsx` Excel files contain a lot of *metadata*, or put more simply, data about the data. Examples include the use of bold and italic fonts, colored cells, different column widths, and formula macros etc.
+
+[Google Sheets](https://www.google.com/sheets/about/) allows you to download your data in both comma separated values `.csv` and Excel `.xlsx` formats: Go to the Google Sheets menu bar -> File -> Download as -> Select "Microsoft Excel" or "Comma-separated values."
+
+We'll cover two methods for importing data in R: one using the R console and the other using RStudio's graphical interface. 
+
+
+### Importing via the console
+
+First, let's download a *Comma Separated Values* (CSV) file of ratings of the level of democracy in different countries spanning 1952 to 1992: <https://moderndive.com/data/dem_score.csv>. We use the `read_csv()` function from the `readr` package to read it off the web and then take a look.
+
+```{r message=FALSE, eval=FALSE}
+library(readr)
+dem_score <- read_csv("https://moderndive.com/data/dem_score.csv")
+dem_score
+```
+```{r message=FALSE, echo=FALSE}
+dem_score <- read_csv("data/dem_score.csv")
+dem_score
+```
+
+In this `dem_score` data frame, the minimum value of -10 corresponds to a highly autocratic nation whereas a value of 10 corresponds to a highly democratic nation.  <!--Note also that backticks surround the different names of the columns here.  Variable names are not allowed to start with a number but this can be worked around by surrounding the column name in backticks.  Variable names also can't include spaces so if you'd like to refer to the variable **Stock Names** above, for example, you'll need to surround it in backticks: `` `Stock Names` ``.-->
+
+### Importing via RStudio's interface
+
+Let's read in the same data saved in Excel format this time at <https://moderndive.com/data/dem_score.xlsx>, but using RStudio's graphical interface instead of via the R console. First download the Excel file, then go to the Files panel of RStudio -> Navigate to the directory where your downloaded `dem_score.xlsx` is saved -> Click on `dem_score.xlsx` -> Click "Import Dataset..." At this point you should see an image like in 
+
+![](images/read_excel.png)
+
+After clicking on the "Import" button on the bottom right RStudio save this spreadsheet's data in a data frame called `dem_score` and display its contents in the spreadsheet viewer. Furthermore you'll see the code that read in your data in the console; you can copy and paste this code to reload your data again later instead of repeating the above manual process.
+
+
+
+---
+
+
+
+## Tidying data
+
+### What is tidy data?
 
 You have surely heard the word "tidy" in your life:
 
@@ -184,7 +232,7 @@ This data frame is not in tidy format. What would it look like if it were?
 
 
 
-## Back to nycflights13
+### `nycflights13` package
 
 Recall the `nycflights13` package with data about all domestic flights departing from New York City in 2013 that we introduced in Section \@ref(nycflights13) and used extensively in Chapter \@ref(viz) to create visualizations. In particular, let's revisit the `flights` data frame by running `View(flights)` in your console. We see that `flights` has a rectangular shape with each row corresponding to a different flight and each column corresponding to a characteristic of that flight.  This matches exactly with how Hadley Wickham defined tidy data:
 
@@ -195,7 +243,7 @@ But what about the third property?
 
 > 3. Each type of observational unit forms a table.
 
-### Observational units
+**Observational units**:
 
 We identified earlier that the observational unit in the `flights` dataset is an individual flight.  And we have shown that this dataset consists of `r scales::comma(nrow(flights))` flights with `r ncol(flights)` variables.  In other words, rows of this dataset don't refer to a measurement on an airline or on an airport; they refer to characteristics/measurements on a given flight from New York City in 2013.
 
@@ -210,7 +258,7 @@ The organization of this data follows the third "tidy" data property: observatio
 
 Another example involves a spreadsheet of all students enrolled in a university along with information about them, such as name, gender, and date of birth. Each row represents an individual student, which is the observational unit in question.
 
-### Identification vs measurement variables {#identification-vs-measurement}
+**Identification vs measurement variables**:
 
 There is a subtle difference between the kinds of variables that you will encounter in data frames: *measurement variables* and *identification variables*.  The `airports` data frame you worked with above contains both these types of variables.  Recall that in `airports` the observational unit is an airport, and thus each row corresponds to one particular airport.  Let's pull them apart using the `glimpse` function:
 
@@ -236,49 +284,7 @@ Furthermore, sometimes a single variable might not be enough to uniquely identif
 ```
 
 
-
----
-
-
-
-## Importing spreadsheets into R {#csv}
-
-Up to this point, we've used data either stored inside of an R package or we've manually created the data such as the `fruits` and `fruits_counted` data in Subsection \@ref(geombar). Another common way to get data into R is by reading in data from a spreadsheet file either on your computer or online.  Spreadsheet data is often saved in one of two formats:
-
-* A *Comma Separated Values* `.csv` file.  You can think of a CSV file as a bare-bones spreadsheet where:
-    + Each line in the file corresponds to one row of data/one observation.
-    + Values for each line are separated with commas. In other words, the values of different variables are separated by commas.
-    + The first line is often, but not always, a *header* row indicating the names of the columns/variables.
-* An Excel `.xlsx` file. This format is based on Microsoft's proprietary Excel software. As opposed to a bare-bones `.csv` files, `.xlsx` Excel files contain a lot of *metadata*, or put more simply, data about the data. Examples include the use of bold and italic fonts, colored cells, different column widths, and formula macros etc.
-
-[Google Sheets](https://www.google.com/sheets/about/) allows you to download your data in both comma separated values `.csv` and Excel `.xlsx` formats: Go to the Google Sheets menu bar -> File -> Download as -> Select "Microsoft Excel" or "Comma-separated values."
-
-We'll cover two methods for importing data in R: one using the R console and the other using RStudio's graphical interface. 
-
-
-### Method 1: From the console
-
-First, let's download a *Comma Separated Values* (CSV) file of ratings of the level of democracy in different countries spanning 1952 to 1992: <https://moderndive.com/data/dem_score.csv>. We use the `read_csv()` function from the `readr` package to read it off the web and then take a look.
-
-```{r message=FALSE, eval=FALSE}
-library(readr)
-dem_score <- read_csv("https://moderndive.com/data/dem_score.csv")
-dem_score
-```
-```{r message=FALSE, echo=FALSE}
-dem_score <- read_csv("data/dem_score.csv")
-dem_score
-```
-
-In this `dem_score` data frame, the minimum value of -10 corresponds to a highly autocratic nation whereas a value of 10 corresponds to a highly democratic nation.  <!--Note also that backticks surround the different names of the columns here.  Variable names are not allowed to start with a number but this can be worked around by surrounding the column name in backticks.  Variable names also can't include spaces so if you'd like to refer to the variable **Stock Names** above, for example, you'll need to surround it in backticks: `` `Stock Names` ``.-->
-
-### Method 2: Using RStudio's interface
-
-Let's read in the same data saved in Excel format this time at <https://moderndive.com/data/dem_score.xlsx>, but using RStudio's graphical interface instead of via the R console. First download the Excel file, then go to the Files panel of RStudio -> Navigate to the directory where your downloaded `dem_score.xlsx` is saved -> Click on `dem_score.xlsx` -> Click "Import Dataset..." At this point you should see an image like in 
-
-![](images/read_excel.png)
-
-After clicking on the "Import" button on the bottom right RStudio save this spreadsheet's data in a data frame called `dem_score` and display its contents in the spreadsheet viewer. Furthermore you'll see the code that read in your data in the console; you can copy and paste this code to reload your data again later instead of repeating the above manual process.
+### Converting to "tidy" format
 
 
 
@@ -286,9 +292,9 @@ After clicking on the "Import" button on the bottom right RStudio save this spre
 
 
 
-## Converting to "tidy" data format {#tidying}
+## Case study: Democracy in Guatemala
 
-In this Section, we'll show you how to convert a dataset that isn't in "tidy" format i.e. "wide" format, to a dataset that is in "tidy" format i.e. "long/narrow" format. Let's use the `dem_score` data frame we loaded from a spreadsheet in the previous Section but focus on only data corresponding to the country of Guatemala.
+In this section, we'll show you how to convert a dataset that isn't in "tidy" format i.e. "wide" format, to a dataset that is in "tidy" format i.e. "long/narrow" format. Let's use the `dem_score` data frame we loaded from a spreadsheet in the previous Section but focus on only data corresponding to the country of Guatemala.
 
 ```{r }
 guat_dem <- dem_score %>% 
@@ -365,7 +371,45 @@ a tidy data frame and assign the name of `dem_score_tidy` to the resulting long-
 
 
 
-## Optional: Normal forms of data
+## Conclusion
+
+### `tidyverse` package
+
+Notice at the beginning of the Chapter we loaded the following four packages:
+
+```{r, eval=FALSE}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyr)
+```
+
+In fact, these are among the four of the most frequently used R packages for data science.
+
+The `tidyverse` umbrella package gets its name from the fact that all functions in all its constituent packages are designed to that all inputs/argument data frames are in "tidy" format and all output data frames are in "tidy" format as well. This acts as a standardization to make transitions between the various functions in these packages as seamless as possible. 
+
+So running this:
+
+```{r, eval=TRUE}
+library(tidyverse)
+```
+
+is the same as running this:
+
+```{r, eval=TRUE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(purrr)
+library(tibble)
+library(stringr)
+library(forcats)
+```
+
+
+
+### Optional: Normal forms of data
 
 The datasets included in the `nycflights13` package are in a form that minimizes redundancy of data.  We will see that there are ways to _merge_ (or _join_) the different tables together easily.  We are capable of doing so because each of the tables have _keys_ in common to relate one to another.  This is an important property of **normal forms** of data.  The process of decomposing data frames into less redundant tables without losing information is called **normalization**.  More information is available on [Wikipedia](https://en.wikipedia.org/wiki/Database_normalization).
 
@@ -374,17 +418,14 @@ We saw an example of this above with the `airlines` dataset.  While the `flights
 Below an example is given showing how to **join** the `airlines` data frame together with the `flights` data frame by linking together the two datasets via a common **key** of `"carrier"`.  Note that this "joined" data frame is assigned to a new data frame called `joined_flights`. The **key** variable that we frequently join by is one of the *identification variables* mentioned above.
 
 ```{r message=FALSE}
-library(dplyr)
-joined_flights <- inner_join(x = flights, 
-                             y = airlines, 
-                             by = "carrier")
+joined_flights <- inner_join(x = flights, y = airlines, by = "carrier")
 ```
 
 ```{r eval=FALSE}
 View(joined_flights)
 ```
 
-If we `View` this dataset, we see a new variable has been created called `name`. (We will see in Subsection \@ref(rename) ways to change `name` to a more descriptive variable name.)  More discussion about joining data frames together will be given in Chapter \@ref(wrangling).  We will see there that the names of the columns to be linked need not match as they did here with `"carrier"`.
+If we `View()` this dataset, we see a new variable has been created called `name`. (We will see in Subsection \@ref(rename) ways to change `name` to a more descriptive variable name.)  More discussion about joining data frames together will be given in Chapter \@ref(wrangling).  We will see there that the names of the columns to be linked need not match as they did here with `"carrier"`.
 
 ```{block tidy_review, type='learncheck'}
 **_Learning check_**
@@ -400,27 +441,30 @@ If we `View` this dataset, we see a new variable has been created called `name`.
 ```
 
 
+### Additional resources
 
----
+An R script file of all R code used in this chapter is available [here](scripts/04-tidy.R).
 
+If you want to learn more about using the `readr` and `tidyr` package, we suggest you that you check out RStudio's "Data Import" cheatsheet. You can access this cheatsheet by going to RStudio's [cheatsheet page](https://www.rstudio.com/resources/cheatsheets/) and searching for "Data Import Cheat Sheet".
 
+```{r import-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheat"}
+include_graphics("images/import_cheatsheet-1.png")
+```
+<!-- 
 
-## Conclusion
-
-### Review questions
-
-<!-- Need to include an exercise in the DataCamp course on using gather() to turn the `police_locals` data frame into a tidy data frame. -->
+Need to include an exercise in the DataCamp course on using gather() to turn the `police_locals` data frame into a tidy data frame.
 
 Review questions have been designed using the `fivethirtyeight` R package [@R-fivethirtyeight] with links to the corresponding FiveThirtyEight.com articles in our free DataCamp course **Effective Data Storytelling using the `tidyverse`**.  The material in this chapter is covered in the **Tidy Data** chapter of the DataCamp course available [here](https://campus.datacamp.com/courses/effective-data-storytelling-using-the-tidyverse/tidy-data).
 
+-->
+
+
+
 ### What's to come?
 
-Congratulations! We've completed the "data science" portion of this book! We'll now move to the "data modeling" portion in Chapters \@ref(regression) and \@ref(multiple-regression), where you'll leverage your data visualization and wrangling skills to model the *relationships* between different variables of datasets. However, we're going to leave "Inference for Regression" (Chapter \@ref(inference-for-regression)) until later.
+Congratulations! We've completed the "Data Science via the tidyverse" portion of this book! We'll now move to the "data modeling" portion in Chapters \@ref(regression) and \@ref(multiple-regression), where you'll leverage your data visualization and wrangling skills to model relationships between different variables in datasets. However, we're going to leave the Chapter \@ref(inference-for-regression) on "Inference for Regression" until after we've covered statistical inference.
 
 ```{r echo=FALSE, fig.cap="ModernDive flowchart - On to Part II!", fig.align='center'}
 knitr::include_graphics("images/flowcharts/flowchart/flowchart.005.png")
 ```
 
-### Script of R code
-
-An R script file of all R code used in this chapter is available [here](scripts/04-tidy.R).

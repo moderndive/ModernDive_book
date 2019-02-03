@@ -1,4 +1,4 @@
-# Data Wrangling via dplyr {#wrangling}
+# Data Wrangling {#wrangling}
 
 ```{r setup_wrangling, include=FALSE, purl=FALSE}
 chap <- 4
@@ -25,20 +25,36 @@ options(knitr.kable.NA = '')
 set.seed(76)
 ```
 
-Let's briefly recap where we have been so far and where we are headed.  In Chapter \@ref(tidy), we discussed what it means for data to be tidy.  We saw that this refers to observations corresponding to rows and variables being stored in columns (one variable for every column).  The entries in the data frame correspond to different combinations of observations (specific instances of observational units) and variables.  In the `flights` data frame, we saw that each row corresponds to a different flight leaving New York City.  In other words, the **observational unit** of the `flights` tidy data frame is a flight.  The variables are listed as columns, and for `flights` these columns include both quantitative variables like `dep_delay` and `distance` and also categorical variables like `carrier` and `origin`.  An entry in the table corresponds to a particular flight on a given day and a particular value of a given variable representing that flight.
+So far in our journey, we've seen how to look at data saved in data frames using the `glimpse()` and `View()` functions in Chapter \@ref(getting-started) on and how to create data visualizations using the `ggplot2` package in Chapter \@ref(viz). In particular we study what we term the "five named graphs" (5NG):
 
-Armed with this knowledge and looking back on Chapter \@ref(viz), we see that organizing data in this tidy way makes it easy for us to produce graphics, specifically a set of 5 common graphics we termed the *5 Named Graphics* (5NG):
+1. scatterplots via `geom_point()`
+1. linegraphs via `geom_line()`
+1. boxplots via `geom_boxplot()`
+1. histograms via `geom_histogram()`
+1. barplots via `geom_bar()` or `geom_col()`
 
-1. scatterplots
-1. linegraphs
-1. boxplots
-1. histograms
-1. barplots
+We created these visualization using the "Grammar of Graphics", which maps variables in a data frame to the aesthetic attributes of the above 5 `geom`etric objects. We can also control other aesthetic attributes of the geometric objects such as the size and color as seen in the Gapminder data example in Figure \@ref(fig:gapminder). 
 
-We can simply specify what variable/column we would like on one axis, (if applicable) what variable we'd like on the other axis, and what type of plot we'd like to make by specifying the `geom`etric object in question.  We can also vary aesthetic attributes of the geometric objects in question (points, lines, bar), such as the size and color, along the values of another variable in this tidy dataset. Recall the Gapminder example from Figure \@ref(fig:gapminder).
+Furthermore in Section \@ref(whats-to-come-3) we discussed that for two of our visualizations, we needed transformed/modified versions of existing data frames. Recall for example the scatterplot of departure and arrival delay *only* for Alaska Airlines flights. In order to create this visualization, we needed to first pare down the `flights` data frame to a new data frame `alaska_flights` consisting of only `carrier == AS` flights using the `filter()` function.
 
-Lastly, in a few spots in Chapter \@ref(viz) and Chapter \@ref(tidy), we hinted at some ways to summarize and wrangle data to suit your needs, using the `filter()` and `inner_join()` functions.  This chapter expands on these two functions and provides you with various new data wrangling tools from the `dplyr` package [@R-dplyr] for your data science toolbox. 
+```{r, eval=FALSE}
+alaska_flights <- flights %>% 
+  filter(carrier == "AS")
 
+ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
+  geom_point()
+```
+
+In this chapter, we'll introduce a series of functions from the `dplyr` package that will allow you to take a data frame and
+
+1. `filter()` its existing rows to only pick out a subset of them. For example, the `alaska_flights` data frame above.
+1. `summarize()` one of its columns/variables with a *summary statistic*. For example, the median and interquartile range of temperatures as we saw in Section \@ref(boxplots) on boxplots. 
+1. `group_by()` its rows. In other words assign different rows to be part of the same *group* and thus report summary statistics for each group separately. For example, perhaps you want not the overall average departure delay `dep_delay` for all three `origin` airports combined, but the average departure delay for each of the three `origin` airports separately.
+1. `mutate()` its existing columns/variables to create new ones. For example, convert hourly temperature recordings from &deg;F to &deg;C.
+1. `arrange()` its rows. For example, sort the rows of `weather` in ascending or descending order of `temp`.
+1. `join()` it with another data frame by matching along a "key" variable. In other words, merge these two data frames together.
+
+Notice how we used computer code type font to describe the actions we want to take on our data frames. This is because the `dplyr` package have intuitively verb-named functions that are easy to remember. We'll start by introducing the pipe operator `%>%`, which allows you to combine multiple data wrangling verb-named functions into a single sequential *chain* of actions.
 
 
 ### Needed packages {-}
@@ -64,15 +80,52 @@ library(readr)
 
 
 
-## The pipe `%>%` {#piping}
+## The pipe operator: `%>%` {#piping}
 
-Before we dig into data wrangling, let's first introduce the pipe operator (`%>%`). Just as the `+` sign was used to add layers to a plot created using `ggplot()`, the pipe operator allows us to chain together `dplyr` data wrangling functions. The pipe operator can be read as "*then*." The `%>%` operator allows us to go from one step in `dplyr` to the next easily so we can, for example:
+Before we dig into data wrangling, let's first introduce a very nifty tool that gets loaded along with the `dplyr` package: the pipe operator `%>%`. Let's say you would like to perform this sequence of operations in R:
 
-* `filter` our data frame to only focus on a few rows *then*
-* `group_by` another variable to create groups *then*
-* `summarize` this grouped data to calculate the mean for each level of the group.
+1. Take `x` *then*
+1. Use `x` as an input to a function `f()` *then*
+1. Use the output of `f(x)` as an input to a function `g()` *then*
+1. Use the output of `g(f(x))` as an input to a function `h()`
 
-The piping syntax will be our major focus throughout the rest of this book and you'll find that you'll quickly be addicted to the chaining with some practice.
+One way to achieve this sequence of operations is by using nesting parentheses as follows:
+
+```{r, eval = FALSE}
+h(g(f(x)))
+```
+
+In this case, the above code isn't so hard to read since we are applying only three functions: `f()`, then `g()`, then `h()`. However, you can imagine this can get progressively harder and harder to read as the number of functions applied in your sequence increases. This is where the pipe operator `%>%` (pronounced "then") comes in handy. `%>%` takes one output of one function and then "pipes" it to be the input of the next function. For example: you can obtain the same output as the above sequence of operations as follows:
+
+```{r, eval = FALSE}
+x %>% 
+  f() %>% 
+  g() %>% 
+  h()
+```
+
+You would read this above sequence as:
+
+1. Take `x` *then*
+1. Use this output as the input to the next function `f()` *then*
+1. Use this output as the input to the next function `g()` *then*
+1. Use this output as the input to the next function `h()`
+
+So while both approaches above would achieve the same goal, the latter is much more human-readable because you can read the sequence of operations line-by-line. But what are `x`, `f()`, `g()`, and `h()`?  Throughout this chapter on data wrangling:
+
+* The starting value `x` will be a data frame. For example: `flights`.
+* The sequence of functions, here `f()`, `g()`, and `h()`, will be a sequence of any number of the 6 data wrangling verb-named functions we listed in the introduction to this chapter. For example: `filter(carrier == "AS")`.
+* The result will the transformed/modified data frame that you want. For example: a data frame consisting of only the subset of rows in `flights` corresponding to Alaska Airlines flights.
+
+Much like when adding layers to a `ggplot()` using the `+` sign at the end of lines, you form a single *chain* of data wrangling operations by combining verb-named functions into a single sequence with pipe operators `%>%` at the end of lines. So continuing our example involving Alaska Airlines flights, we form a chain using the pipe operator `%>%` and save the resulting data frame in `alaska_flights`:
+
+```{r, eval=FALSE}
+alaska_flights <- flights %>% 
+  filter(carrier == "AS")
+```
+
+
+Keep in mind, there are many more advanced data wrangling functions than just the 6 listed in the introduction to this chapter; you'll see some examples of these near in Section \@ref(other-verbs). However, just with these 6 verb-named functions you'll be able to perform a broad array of data wrangling tasks. 
 
 
 
@@ -80,32 +133,13 @@ The piping syntax will be our major focus throughout the rest of this book and y
 
 
 
-## Data wrangling verbs {#verbs}
+## `filter` rows {#filter}
 
-The `d` in `dplyr` stands for data frames, so the functions in `dplyr` are built for working with objects of the data frame type. For now, we focus on the most commonly used functions that help wrangle and summarize data. A description of these verbs follows, with each section devoted to an example of that verb, or a combination of a few verbs, in action.
-
-1. `filter()`: Pick rows based on conditions about their values
-1. `summarize()`: Compute summary measures known as "summary statistics" of variables
-1. `group_by()`: Group rows of observations together
-1. `mutate()`: Create a new variable in the data frame by mutating existing ones
-1. `arrange()`: Arrange/sort the rows based on one or more variables
-1. `join()`: Join/merge two data frames by matching along a "key" variable. There are many different `join()`s available. Here, we will focus on the `inner_join()` function.
-
-All of the verbs are used similarly where you: take a data frame, pipe it using the `%>%` syntax into one of the verbs above followed by other arguments specifying which criteria you'd like the verb to work with in parentheses. Keep in mind, there are more advanced functions than just these five and you'll see some examples of this near the end of this chapter in \@ref(other-verbs), but with just the above verbs you'll be able to perform a broad array of data wrangling tasks.  
-
-
-
----
-
-
-
-## Filter observations using filter {#filter}
-
-```{r filter, echo=FALSE, fig.cap="Filter diagram from Data Wrangling with dplyr and tidyr cheatsheet", purl=FALSE}
+```{r filter, echo=FALSE, fig.cap="Diagram of ", purl=FALSE}
 knitr::include_graphics("images/filter.png")
 ```
 
-The `filter` function here works much like the "Filter" option in Microsoft Excel; it allows you to specify criteria about values of a variable in your dataset and then chooses only those rows that match that criteria.  We begin by focusing only on flights from New York City to Portland, Oregon.  The `dest` code (or airport code) for Portland, Oregon is `"PDX"`. Run the following and look at the resulting spreadsheet to ensure that only flights heading to Portland are chosen here:
+The `filter()` function here works much like the "Filter" option in Microsoft Excel; it allows you to specify criteria about values of a variable in your dataset and then chooses only those rows that match that criteria.  We begin by focusing only on flights from New York City to Portland, Oregon.  The `dest` code (or airport code) for Portland, Oregon is `"PDX"`. Run the following and look at the resulting spreadsheet to ensure that only flights heading to Portland are chosen here:
 
 ```{r, eval=FALSE}
 portland_flights <- flights %>% 
@@ -190,7 +224,7 @@ As a final note we point out that `filter()` should often be among the first ver
 
 
 
-## Summarize variables using summarize {#summarize}
+## `summarize` variables {#summarize}
 
 The next common task when working with data is to be able to summarize data: take a large number of values and summarize them with a single value. While this may seem like a very abstract idea, something as simple as the sum, the smallest value, and the largest values are all summaries of a large number of values.
 
@@ -299,7 +333,7 @@ summary_temp <- weather %>%
 
 
 
-## Group rows using group_by {#groupby}
+## `group_by` rows {#groupby}
 
 ```{r groupsummarize, echo=FALSE, fig.cap="Group by and summarize diagram from Data Wrangling with dplyr and tidyr cheatsheet", purl=FALSE}
 knitr::include_graphics("images/group_summary.png")
@@ -416,7 +450,7 @@ by_monthly_origin
 
 
 
-## Create new variables/change old variables using mutate {#mutate}
+## `mutate` existing variables {#mutate}
 
 ```{r select, echo=FALSE, fig.cap="Mutate diagram from Data Wrangling with dplyr and tidyr cheatsheet", purl=FALSE}
 knitr::include_graphics("images/mutate.png")
@@ -511,7 +545,7 @@ flights <- flights %>%
 
 
 
-## Reorder the data frame using arrange {#arrange}
+## `arrange` and sort rows {#arrange}
 
 One of the most common things people working with data would like to do is sort the data frames by a specific variable in a column.  Have you ever been asked to calculate a median by hand?  This requires you to put the data in order from smallest to highest in value.  The `dplyr` package has a function called `arrange` that we will use to sort/reorder our data according to the values of the specified variable.  This is often used after we have used the `group_by` and `summarize` functions as we will see.
 
@@ -544,7 +578,7 @@ freq_dest %>%
 
 
 
-## Joining data frames {#joins}
+## `join` data frames {#joins}
 
 Another common task is joining AKA merging two different datasets. For example, in the `flights` data, the variable `carrier` lists the carrier code for the different flights. While `"UA"` and `"AA"` might be somewhat easy to guess for some (United and American Airlines), what are "VX", "HA", and "B6"? This information is provided in a separate data frame `airlines`.
 
@@ -656,7 +690,7 @@ flights_weather_joined
 
 On top of the following examples of other verbs, if you'd like to see more examples on using `dplyr`, the data wrangling verbs we introduction in Section \@ref(verbs), and the pipe function `%>%` with the `nycflights13` dataset, check out [Chapter 5](http://r4ds.had.co.nz/transform.html) of Hadley and Garrett's book [@rds2016].
 
-### Select variables using select {#select}
+### `select` variables {#select}
 
 ```{r selectfig, echo=FALSE, fig.cap="Select diagram from Data Wrangling with dplyr and tidyr cheatsheet", purl=FALSE}
 knitr::include_graphics("images/select.png")
@@ -721,7 +755,7 @@ flights_time <- flights %>%
 flights_time
 ```
 
-### Rename variables using rename {#rename}
+### `rename` variables {#rename}
 
 Another useful function is `rename`, which as you may suspect renames one column to another name.  Suppose we wanted `dep_time` and `arr_time` to be `departure_time` and `arrival_time` instead in the `flights_time` data frame:
 
@@ -742,7 +776,7 @@ It's easy to forget if the new name comes before or after the equals sign.  I us
 Error: Unknown variables: departure_time, arrival_time.
 ```
 
-### Find the top number of values using top_n
+### Find `top_n` values of a variable
 
 We can also use the `top_n` function which automatically tells us the most frequent `num_flights`.  We specify the top 10 airports here:
 
@@ -795,7 +829,7 @@ View(ten_freq_dests)
 
 ## Conclusion
 
-### Putting it all together: Available seat miles
+### Summary table
 
 Let's recap a selection of verbs in Table \@ref(tab:wrangle-summary-table) summarizing their differences. Using these verbs and the pipe `%>%` operator from Section \@ref(piping), you'll be able to write easily legible code to perform almost all the data wrangling necessary for the rest of this book. 
 
@@ -816,13 +850,15 @@ Let's recap a selection of verbs in Table \@ref(tab:wrangle-summary-table) summa
   column_spec(3, width = "3.3in")
 ```
 
-Let's now put your newly acquired data wrangling skills to the test! An airline industry measure of a passenger airline's capacity is the [available seat miles](https://en.wikipedia.org/wiki/Available_seat_miles), which is equal to the number of seats available multiplied by the number of miles or kilometers flown. So for example say an airline had 2 flights using a plane with 10 seats that flew 500 miles and 3 flights using a plane with 20 seats that flew 1000 miles, the available seat miles would be 2 $\times$ 10 $\times$ 500 $+$ 3 $\times$ 20 $\times$ 1000 = 70,000 seat miles.
-
 ```{block lc-asm, type='learncheck', purl=FALSE}
 **_Learning check_** 
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Using the datasets included in the `nycflights13` package, compute the available seat miles for each airline sorted in descending order. After completing all the necessary data wrangling steps, the resulting data frame should have 16 rows (one for each airline) and 2 columns (airline name and available seat miles). Here are some hints:
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Let's now put your newly acquired data wrangling skills to the test! 
+
+An airline industry measure of a passenger airline's capacity is the [available seat miles](https://en.wikipedia.org/wiki/Available_seat_miles), which is equal to the number of seats available multiplied by the number of miles or kilometers flown summed over all flights. So for example say an airline had 2 flights using a plane with 10 seats that flew 500 miles and 3 flights using a plane with 20 seats that flew 1000 miles, the available seat miles would be 2 $\times$ 10 $\times$ 500 $+$ 3 $\times$ 20 $\times$ 1000 = 70,000 seat miles.
+
+Using the datasets included in the `nycflights13` package, compute the available seat miles for each airline sorted in descending order. After completing all the necessary data wrangling steps, the resulting data frame should have 16 rows (one for each airline) and 2 columns (airline name and available seat miles). Here are some hints:
 
 1. **Crucial**: Unless you are very confident in what you are doing, it is worthwhile to not starting coding right away, but rather first sketch out on paper all the necessary data wrangling steps not using exact code, but rather high-level *pseudocode* that is informal yet detailed enough to articulate what you are doing. This way you won't confuse *what* you are trying to do (the algorithm) with *how* you are going to do it (writing `dplyr` code). 
 1. Take a close look at all the datasets using the `View()` function: `flights`, `weather`, `planes`, `airports`, and `airlines` to identify which variables are necessary to compute available seat miles.
@@ -833,29 +869,31 @@ Let's now put your newly acquired data wrangling skills to the test! An airline 
 ```
 
 
-### Review questions
+### Additional resources
 
+An R script file of all R code used in this chapter is available [here](scripts/05-wrangling.R).
+
+If you want to further unlock the power of the `dplyr` package for data wrangling, we suggest you that you check out RStudio's "Data Transformation with dplyr" cheatsheet. This cheatsheet summarizes much more than what we've discussed in this chapter, in particular more-intermediate level and advanced data wrangling functions, while providing quick and easy to read visual descriptions.
+
+You can access this cheatsheet by going to the RStudio Menu Bar -> Help -> Cheatsheets -> "Data Transformation with dplyr":
+
+```{r dplyr-cheatsheet, echo=FALSE, fig.cap="Data Transformation with dplyr cheatsheat"}
+include_graphics("images/dplyr_cheatsheet-1.png")
+```
+
+<!--
 Review questions have been designed using the `fivethirtyeight` R package [@R-fivethirtyeight] with links to the corresponding FiveThirtyEight.com articles in our free DataCamp course **Effective Data Storytelling using the `tidyverse`**.  The material in this chapter is covered in the chapters of the DataCamp course available below:
 
 - [Filtering, Grouping, & Summarizing](https://campus.datacamp.com/courses/effective-data-storytelling-using-the-tidyverse-free/17585?ex=1)
 - [dplyr Review](https://campus.datacamp.com/courses/effective-data-storytelling-using-the-tidyverse-free/17586?ex=1)
+-->
+
+
 
 ### What's to come?
 
-In Chapter \@ref(tidy), we'll introduce the concept of "tidy data" and how it is used as a key data format for all the packages we use in this textbook.  You'll see that the concept appears to be simple, but actually can be a little challenging to decipher without careful practice. We'll also investigate how to import CSV (comma-separated value) files into R using the `readr` package. 
+So far in this book, we've explored, visualized, and wrangled data saved in data frames that are in spreadsheet-type format: rectangular with a certain number of rows corresponding to observations and a certain number of columns corresponding to variables describing the observations. We'll see in Chapter \@ref(tidy) that there are actually two ways to represent data in spreadsheet-type rectangular format: 1) "wide" format and 2) "tall/narrow" format also known in R circles as "tidy" format. While the distinction between "tidy" and non-"tidy" formatted data is very subtle, it has very large implications for whether or not we can use the `ggplot2` package for data visualization and the `dplyr` package for data wrangling. 
+
+Furthermore, we've only explored, visualized, and wrangled data saved within R packages. What if you have spreadsheet data saved in a Microsoft Excel, Google Sheets, or "Comma-Separated Values" (CSV) file that you would like to analyze? In Chapter \@ref(tidy), we'll show you how to import this data into R using the `readr` package. 
 
 
-### Resources
-
-As we saw with the RStudio cheatsheet on [data visualization](https://www.rstudio.com/wp-content/uploads/2016/11/ggplot2-cheatsheet-2.1.pdf), RStudio has also created a cheatsheet for data wrangling entitled ["Data Transformation with dplyr"](https://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf).
-
-<!--
-* By clicking [here](https://github.com/rstudio/cheatsheets/raw/master/source/pdfs/data-transformation-cheatsheet.pdf)
-(The RStudio interface has not been updated to include JUST the dplyr cheatsheet)
-
-We will focus only on the `dplyr` functions in this book, but you are encouraged to also explore `tidyr` if you are presented with data that is not in the tidy format that we have specified as the preferred option for our purposes.
--->
-
-### Script of R code
-
-An R script file of all R code used in this chapter is available [here](scripts/05-wrangling.R).
