@@ -51,35 +51,88 @@ library(knitr)
 
 
 
-## Résumés activity
+We saw some of the main concepts of hypothesis testing introduced in Chapters \@ref(sampling) and \@ref(confidence-intervals).  We will expand further on these ideas here and also provide a framework for understanding hypothesis tests in general. Instead of presenting you with lots of different formulas and scenarios, we hope to build a way to think about all hypothesis tests.  You can then adapt to different scenarios as needed down the road when you encounter different statistical situations.
 
-### Are men and women evaluated for jobs differently?
+The same can be said for confidence intervals.  There was one general framework that applies to all confidence intervals and we elaborated on this using the `infer` package pipeline in Chapter \@ref(confidence-intervals). The specifics may change slightly for each variation, but the important idea is to understand the general framework so that you can apply it to more specific problems. We believe that this approach is much better in the long-term than teaching you specific tests and confidence intervals rigorously.  You can find fully-worked out examples for five common hypothesis tests and their corresponding confidence intervals in Appendix \@ref(appendixB).  
 
-### An assumed alternate universe
+We recommend that you carefully review these examples as they also cover how the general frameworks apply to traditional normal-based methodologies like the $t$-test and normal-theory confidence intervals.  You'll see there that these methods are just approximations for the general computational frameworks, but require conditions to be met for their results to be valid.  The general frameworks using randomization, simulation, and bootstrapping do not hold the same sorts of restrictions and further advance computational thinking, which is one big reason for their emphasis throughout this textbook.
 
-### What about sampling variation?
+### Needed packages {-}
 
-### What did we actually observe?
+Let's load all the packages needed for this chapter (this assumes you've already installed them). If needed, read Section \@ref(packages) for information on how to install and load R packages.
 
-### How surprised are we?
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(infer)
+library(nycflights13)
+library(ggplot2movies)
+library(broom)
+```
 
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+# Packages needed internally, but not in text.
+library(knitr)
+```
+
+### DataCamp {-}
+
+Our approach of using data science tools to understand the second major component of statistical inference, hypothesis testing, uses the same tools as in [Mine Cetinkaya-Rundel](https://twitter.com/minebocek) and [Andrew Bray's](https://twitter.com/crite) DataCamp courses "Inference for Numerical Data" and "Inference for Categorical Data." If you're interested in complementing your learning below in an interactive online environment, click on the images below to access the courses. 
+
+```{r, echo=FALSE, results='asis', purl=FALSE}
+image_link(path = "images/datacamp_inference_for_numerical_data.png", link = "https://www.datacamp.com/courses/inference-for-numerical-data", html_opts = "height: 150px;", latex_opts = "width=0.3\\textwidth")
+```
+```{r, echo=FALSE, results='asis', purl=FALSE}
+image_link(path = "images/datacamp_inference_for_categorical_data.png", link = "https://www.datacamp.com/courses/inference-for-categorical-data", html_opts = "height: 150px;", latex_opts = "width=0.3\\textwidth")
+```
 
 
 ---
 
+## When inference is not needed
 
+Before we delve into hypothesis testing, it's good to remember that there are cases where you need not perform a rigorous statistical inference. An important and time-saving skill is to **ALWAYS** do exploratory data analysis using `dplyr` and `ggplot2` before thinking about running a hypothesis test. Let's look at such an example selecting a sample of flights traveling to Boston and to San Francisco from New York City in the `flights` data frame in the `nycflights13` package. (We will remove flights with missing data first using `na.omit` and then sample 100 flights going to each of the two airports.)
 
-## Computer simulation
+```{r}
+bos_sfo <- flights %>% 
+  na.omit() %>% 
+  filter(dest %in% c("BOS", "SFO")) %>% 
+  group_by(dest) %>% 
+  sample_n(100)
+```
 
+Suppose we were interested in seeing if the `air_time` to SFO in San Francisco was statistically greater than the `air_time` to BOS in Boston. As suggested, let's begin with some exploratory data analysis to get a sense for how the two variables of `air_time` and `dest` relate for these two destination airports:
 
+```{r}
+bos_sfo_summary <- bos_sfo %>% group_by(dest) %>% 
+  summarize(mean_time = mean(air_time),
+            sd_time = sd(air_time))
+bos_sfo_summary
+```
 
----
+Looking at these results, we can clearly see that SFO `air_time` is much larger than BOS `air_time`.  The standard deviation is also extremely informative here.
 
+```{block lc6-2b, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
 
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Could we make the same type of immediate conclusion that SFO had a statistically greater `air_time` if, say, its corresponding standard deviation was 200 minutes?  What about 100 minutes?  Explain.
 
-## Our goal
+```{block, type='learncheck', purl=FALSE}
+```
 
-Simply put: Choose between two possible truths while accounting for sampling variation.
+To further understand just how different the `air_time` variable is for BOS and SFO, let's look at a boxplot:
+
+```{r}
+ggplot(data = bos_sfo, mapping = aes(x = dest, y = air_time)) +
+  geom_boxplot()
+```
+
+Since there is no overlap at all, we can conclude that the `air_time` for San Francisco flights is statistically greater (at any level of significance) than the `air_time` for Boston flights.  This is a clear example of not needing to do anything more than some simple exploratory data analysis with descriptive statistics and data visualization to get an appropriate inferential conclusion.  This is one reason why you should **ALWAYS** investigate the sample data first using `dplyr` and `ggplot2` via exploratory data analysis. 
+  
+As you get more and more practice with hypothesis testing, you'll be better able to determine in many cases whether or not the results will be statistically significant. There are circumstances where it is difficult to tell, but you should always try to make a guess FIRST about significance after you have completed your data exploration and before you actually begin the inferential techniques.
+
+## Basics of hypothesis testing {#ht-basics}
 
 In a hypothesis test, we will use data from a sample to help us decide between two competing _hypotheses_ about a population.  We make these hypotheses more concrete by specifying them in terms of at least one _population parameter_ of interest.  We refer to the competing claims about the population as the **null hypothesis**, denoted by $H_0$, and the **alternative (or research) hypothesis**, denoted by $H_a$.  The roles of these two hypotheses are NOT interchangeable.  
 
@@ -89,66 +142,45 @@ In a hypothesis test, we will use data from a sample to help us decide between t
 
 Hypothesis testing brings about many weird and incorrect notions in the scientific community and society at large.  One reason for this is that statistics has traditionally been thought of as this magic box of algorithms and procedures to get to results and this has been readily apparent if you do a Google search of "flowchart statistics hypothesis tests."  There are so many different complex ways to determine which test is appropriate.  
 
-Before we hop into this framework, we will provide another way to think about hypothesis testing that may be useful.
-
-
-### Conducting a hypothesis test
-
-### Null hypothesis
-
-### Null distribution
-
-An "alternate universe" distribution
-
-### Observed test statistics
-
-### p-values
-
-
-
----
-
-
-
-## Resampling framework
-
-Permutation test resampling without replacement
-
-### The permutation test
-
-### "There is only one test"
-
 You'll see that we don't need to rely on these complicated series of assumptions and procedures to conduct a hypothesis test any longer.  These methods were introduced in a time when computers weren't powerful.  Your cellphone (in 2016) has more power than the computers that sent NASA astronauts to the moon after all.  We'll see that ALL hypothesis tests can be broken down into the following framework given by Allen Downey [here](http://allendowney.blogspot.com/2016/06/there-is-still-only-one-test.html):
 
 ```{r htdowney, echo=FALSE, fig.cap="Hypothesis Testing Framework", purl=FALSE}
 knitr::include_graphics("images/ht.png")
 ```
 
-### The `infer` package
-
-The "There is Only One Test" diagram mentioned in Section \@ref(ht-basics) was the inspiration for the `infer` pipeline that you saw for confidence intervals in Chapter \@ref(confidence-intervals). For hypothesis tests, we include one more verb into the pipeline: the `hypothesize()` verb. Its main argument is `null` which is either 
-
-- `"point"` for point hypotheses involving a single sample or
-- `"independence"` for testing for independence between two variables.
+Before we hop into this framework, we will provide another way to think about hypothesis testing that may be useful.
 
 
-```{r echo=FALSE, purl=FALSE}
-knitr::include_graphics("images/flowcharts/infer/ht.png")
-```
-
-We'll first explore the two variable case by comparing two means. Note the section headings here that refer to the "There is Only One Test" diagram. We will lay out the specifics for each problem using this framework and the `infer` pipeline together.
 
 
 
 ---
 
+## Criminal trial analogy {#trial}
 
+We can think of hypothesis testing in the same context as a criminal trial in the United States.  A criminal trial in the United States is a familiar situation in which a choice between two contradictory claims must be made. 
 
-## Interpretation
+1. The accuser of the crime must be judged either guilty or not guilty.  
 
-### Two possible outcomes
+2. Under the U.S. system of justice, the individual on trial is initially presumed not guilty.  
 
-A yes/no-type decision: statistical significance via alpha
+3. Only STRONG EVIDENCE to the contrary causes the not guilty claim to be rejected in favor of a guilty verdict. 
+
+4. The phrase "beyond a reasonable doubt" is often used to set the cutoff value for when enough evidence has been given to convict.
+
+Theoretically, we should never say "The person is innocent." but instead "There is not sufficient evidence to show that the person is guilty."
+
+Now let's compare that to how we look at a hypothesis test.
+
+1. The decision about the population parameter(s) must be judged to follow one of two hypotheses.
+	
+2. We initially assume that $H_0$ is true.
+	
+3. The null hypothesis $H_0$ will be rejected (in favor of $H_a$) only if the sample evidence strongly suggests that $H_0$ is false.  If the sample does not provide such evidence, $H_0$ will not be rejected.
+
+4.  The analogy to "beyond a reasonable doubt" in hypothesis testing is what is known as the **significance level**.  This will be set before conducting the hypothesis test and is denoted as $\alpha$.  Common values for $\alpha$ are 0.1, 0.01, and 0.05.
+
+### Two possible conclusions
 
 Therefore, we have two possible conclusions with hypothesis testing:
 
@@ -161,29 +193,13 @@ When you run a hypothesis test, you are the jury of the trial.  You decide wheth
 
 **Important note:** Therefore, DO NOT WRITE "Accept $H_0$" any time you conduct a hypothesis test.  Instead write "Fail to reject $H_0$."
 
-### Statistical significance
-
-The idea that sample results are more extreme than we would reasonably expect to see by random chance if the null hypothesis were true is the fundamental idea behind statistical hypothesis tests.  If data at least as extreme would be very unlikely if the null hypothesis were true, we say the data are **statistically significant**.  Statistically significant data provide convincing evidence against the null hypothesis in favor of the alternative, and allow us to generalize our sample results to the claim about the population.
-
-```{block lc7-1, type='learncheck', purl=FALSE}
-**_Learning check_**
-```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What is wrong about saying "The defendant is innocent." based on the US system of criminal trials?
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What is the purpose of hypothesis testing?
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What are some flaws with hypothesis testing?  How could we alleviate them?
-
-```{block, type='learncheck', purl=FALSE}
-```
 
 
 
-### Types of errors
 
-Types of errors: 2x2 table
+---
 
+## Types of errors in hypothesis testing
 
 Unfortunately, just as a jury or a judge can make an incorrect decision in regards to a criminal trial by reaching the wrong verdict, there is some chance we will reach the wrong conclusion via a hypothesis test about a population parameter.  As with criminal trials, this comes from the fact that we don't have complete information, but rather a sample from which to try to infer about a population.
 
@@ -230,26 +246,7 @@ So if we can set $\alpha$ to be whatever we want, why choose 0.05 instead of 0.0
 ```{block, type='learncheck', purl=FALSE}
 ```
 
-
-### Analogy: US criminal justice {#trial}
-
-We can think of hypothesis testing in the same context as a criminal trial in the United States.  A criminal trial in the United States is a familiar situation in which a choice between two contradictory claims must be made. 
-
-1. The accuser of the crime must be judged either guilty or not guilty.  
-2. Under the U.S. system of justice, the individual on trial is initially presumed not guilty.  
-3. Only STRONG EVIDENCE to the contrary causes the not guilty claim to be rejected in favor of a guilty verdict. 
-4. The phrase "beyond a reasonable doubt" is often used to set the cutoff value for when enough evidence has been given to convict.
-
-Theoretically, we should never say "The person is innocent." but instead "There is not sufficient evidence to show that the person is guilty."
-
-Now let's compare that to how we look at a hypothesis test.
-
-1. The decision about the population parameter(s) must be judged to follow one of two hypotheses.
-2. We initially assume that $H_0$ is true.
-3. The null hypothesis $H_0$ will be rejected (in favor of $H_a$) only if the sample evidence strongly suggests that $H_0$ is false.  If the sample does not provide such evidence, $H_0$ will not be rejected.
-4.  The analogy to "beyond a reasonable doubt" in hypothesis testing is what is known as the **significance level**.  This will be set before conducting the hypothesis test and is denoted as $\alpha$.  Common values for $\alpha$ are 0.1, 0.01, and 0.05.
-
-### Recap of hypothesis testing
+### Logic of hypothesis testing
 
 - Take a random sample (or samples) from a population (or multiple populations)
 - If the sample data are consistent with the null hypothesis, do not reject the null hypothesis.
@@ -257,22 +254,42 @@ Now let's compare that to how we look at a hypothesis test.
 
 
 
----
-
-
-
-## Case study: Surveys
-
-
-Countries in Africa A/B test
-
 
 
 ---
 
+## Statistical significance
+
+The idea that sample results are more extreme than we would reasonably expect to see by random chance if the null hypothesis were true is the fundamental idea behind statistical hypothesis tests.  If data at least as extreme would be very unlikely if the null hypothesis were true, we say the data are **statistically significant**.  Statistically significant data provide convincing evidence against the null hypothesis in favor of the alternative, and allow us to generalize our sample results to the claim about the population.
+
+```{block lc7-1, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What is wrong about saying "The defendant is innocent." based on the US system of criminal trials?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What is the purpose of hypothesis testing?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What are some flaws with hypothesis testing?  How could we alleviate them?
+
+```{block, type='learncheck', purl=FALSE}
+```
+
+## Hypothesis testing with infer
+
+The "There is Only One Test" diagram mentioned in Section \@ref(ht-basics) was the inspiration for the `infer` pipeline that you saw for confidence intervals in Chapter \@ref(confidence-intervals). For hypothesis tests, we include one more verb into the pipeline: the `hypothesize()` verb. Its main argument is `null` which is either 
+
+- `"point"` for point hypotheses involving a single sample or
+- `"independence"` for testing for independence between two variables.
 
 
-## Old case study: Comparing two means
+```{r echo=FALSE, purl=FALSE}
+knitr::include_graphics("images/flowcharts/infer/ht.png")
+```
+
+We'll first explore the two variable case by comparing two means. Note the section headings here that refer to the "There is Only One Test" diagram. We will lay out the specifics for each problem using this framework and the `infer` pipeline together.
+
+## Example: Comparing two means
 
 ### Randomization/permutation
 
@@ -556,74 +573,7 @@ pvalue
 
 We have around `r pull(pvalue) * 100`% of values as extreme or more extreme than our observed statistic in both directions. Assuming we are using a 5% significance level for $\alpha$, we have evidence supporting the conclusion that the mean rating for romance movies is different from that of action movies.  The next important idea is to better understand just how much higher of a mean rating can we expect the romance movies to have compared to that of action movies.
 
-
-
-
-
-
-
-
-
-
-
-
-
-### When inference is not needed
-
-Before we delve into hypothesis testing, it's good to remember that there are cases where you need not perform a rigorous statistical inference. An important and time-saving skill is to **ALWAYS** do exploratory data analysis using `dplyr` and `ggplot2` before thinking about running a hypothesis test. Let's look at such an example selecting a sample of flights traveling to Boston and to San Francisco from New York City in the `flights` data frame in the `nycflights13` package. (We will remove flights with missing data first using `na.omit` and then sample 100 flights going to each of the two airports.)
-
-```{r}
-bos_sfo <- flights %>% 
-  na.omit() %>% 
-  filter(dest %in% c("BOS", "SFO")) %>% 
-  group_by(dest) %>% 
-  sample_n(100)
-```
-
-Suppose we were interested in seeing if the `air_time` to SFO in San Francisco was statistically greater than the `air_time` to BOS in Boston. As suggested, let's begin with some exploratory data analysis to get a sense for how the two variables of `air_time` and `dest` relate for these two destination airports:
-
-```{r}
-bos_sfo_summary <- bos_sfo %>% group_by(dest) %>% 
-  summarize(mean_time = mean(air_time),
-            sd_time = sd(air_time))
-bos_sfo_summary
-```
-
-Looking at these results, we can clearly see that SFO `air_time` is much larger than BOS `air_time`.  The standard deviation is also extremely informative here.
-
-```{block lc6-2b, type='learncheck', purl=FALSE}
-**_Learning check_**
-```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Could we make the same type of immediate conclusion that SFO had a statistically greater `air_time` if, say, its corresponding standard deviation was 200 minutes?  What about 100 minutes?  Explain.
-
-```{block, type='learncheck', purl=FALSE}
-```
-
-To further understand just how different the `air_time` variable is for BOS and SFO, let's look at a boxplot:
-
-```{r}
-ggplot(data = bos_sfo, mapping = aes(x = dest, y = air_time)) +
-  geom_boxplot()
-```
-
-Since there is no overlap at all, we can conclude that the `air_time` for San Francisco flights is statistically greater (at any level of significance) than the `air_time` for Boston flights.  This is a clear example of not needing to do anything more than some simple exploratory data analysis with descriptive statistics and data visualization to get an appropriate inferential conclusion.  This is one reason why you should **ALWAYS** investigate the sample data first using `dplyr` and `ggplot2` via exploratory data analysis. 
-  
-As you get more and more practice with hypothesis testing, you'll be better able to determine in many cases whether or not the results will be statistically significant. There are circumstances where it is difficult to tell, but you should always try to make a guess FIRST about significance after you have completed your data exploration and before you actually begin the inferential techniques.
-
-
-
----
-
-
-
-## Conclusion
-
-### Table of inference scenarios
-### Comparison with confidence intervals
-
-statistical vs practical significance
-
+### Corresponding confidence interval
 
 One of the great things about the `infer` pipeline is that going between hypothesis tests and confidence intervals is incredibly simple. To create a null distribution, we ran
 
@@ -670,21 +620,38 @@ Thus, we can expect the true mean of Romance movies on IMDB to have a rating `r 
 ```{block, type='learncheck', purl=FALSE}
 ``` 
 
-### Issues with p-values
+### Summary
 
-p-hacking, hard to understand, ASA statement, why the letter p?
+To review, these are the steps one would take whenever you'd like to do a hypothesis test comparing
+values from the distributions of two groups:
+
+- Simulate many samples using a random process that matches the way
+the original data were collected and that _assumes the null hypothesis is
+true_. 
+
+- Collect the values of a sample statistic for each sample created using this random process to build
+a _null distribution_.
+
+- Assess the significance of the _original_ sample by determining where
+its sample statistic lies in the null distribution.
+
+- If the proportion of values as extreme or more extreme than the observed statistic in the randomization
+distribution is smaller than the pre-determined significance level $\alpha$, we reject $H_0$.  Otherwise,
+we fail to reject $H_0$.  (If no significance level is given, one can assume $\alpha = 0.05$.)
 
 
-### Theory: Neyman-Pearson lemma
 
 
-### Formulas: t-test {#theory-hypo}
+
+---
+
+## Building theory-based methods using computation {#theory-hypo}
 
 As a point of reference, we will now discuss the traditional theory-based way to conduct the hypothesis test for determining if there is a statistically significant difference in the sample mean rating of Action movies versus Romance movies.  This method and ones like it work very well when the assumptions are met in order to run the test.  They are based on probability models and distributions such as the normal and $t$-distributions.  
 
 These traditional methods have been used for many decades back to the time when researchers didn't have access to computers that could run 5000 simulations in a few seconds.  They had to base their methods on probability theory instead.  Many fields and researchers continue to use these methods and that is the biggest reason for their inclusion here.  It's important to remember that a $t$-test or a $z$-test is really just an approximation of what you have seen in this chapter already using simulation and randomization.  The focus here is on understanding how the shape of the $t$-curve comes about without digging big into the mathematical underpinnings.
 
-#### Example:  $t$-test for two independent samples
+### Example:  $t$-test for two independent samples
 
 What is commonly done in statistics is the process of normalization.  What this entails is calculating the mean and standard deviation of a variable.  Then you subtract the mean from each value of your variable and divide by the standard deviation.  The most common normalization is known as the $z$-score.  The formula for a $z$-score is $$Z = \frac{x - \mu}{\sigma},$$ where $x$ represent the value of a variable, $\mu$ represents the mean of the variable, and $\sigma$ represents the standard deviation of the variable.  Thus, if your variable has 10 elements, each one has a corresponding $z$-score that gives how many standard deviations away that value is from its mean.  $z$-scores are normally distributed with mean 0 and standard deviation 1.  They have the common, bell-shaped pattern seen below.
 
@@ -763,7 +730,7 @@ null_distribution_t %>%
 
 As we might have expected with this just being a standardization of the difference in means statistic that produced a small $p$-value, we also have a very small one here.
 
-#### Conditions for t-test
+### Conditions for t-test
 
 The `infer` package does not automatically check conditions for the theoretical methods to work and this warning was given when we used `method = "both"`. In order for the results of the $t$-test to be valid, three conditions must be met:
 
@@ -780,25 +747,7 @@ Condition 3:  This is met since there is no natural pairing of a movie in the Ac
 Since all three conditions are met, we can be reasonably certain that the theory-based test will match the results of the randomization-based test using shuffling.  Remember that theory-based tests can produce some incorrect results in these assumptions are not carefully checked.  The only assumption for randomization and computational-based methods is that the sample is selected at random.  They are our preference and we strongly believe they should be yours as well, but it's important to also see how the theory-based tests can be done and used as an approximation for the computational techniques until at least more researchers are using these techniques that utilize the power of computers.
 
 
-
-
-### Closing notes
-
-To review, these are the steps one would take whenever you'd like to do a hypothesis test comparing
-values from the distributions of two groups:
-
-- Simulate many samples using a random process that matches the way
-the original data were collected and that _assumes the null hypothesis is
-true_. 
-- Collect the values of a sample statistic for each sample created using this random process to build
-a _null distribution_.
-- Assess the significance of the _original_ sample by determining where
-its sample statistic lies in the null distribution.
-- If the proportion of values as extreme or more extreme than the observed statistic in the randomization
-distribution is smaller than the pre-determined significance level $\alpha$, we reject $H_0$.  Otherwise,
-we fail to reject $H_0$.  (If no significance level is given, one can assume $\alpha = 0.05$.)
-
-
+## Conclusion
 
 We conclude by showing the `infer` pipeline diagram. In Chapter \@ref(inference-for-regression), we'll come back to regression and see how the ideas covered in Chapter \@ref(confidence-intervals) and this chapter can help in understanding the significance of predictors in modeling.
 
@@ -806,32 +755,7 @@ We conclude by showing the `infer` pipeline diagram. In Chapter \@ref(inference-
 knitr::include_graphics("images/flowcharts/infer/ht_diagram.png")
 ```
 
+
+### Script of R code
+
 An R script file of all R code used in this chapter is available [here](scripts/10-hypothesis-testing.R).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
