@@ -1,7 +1,27 @@
+## ---- eval=FALSE---------------------------------------------------------
+## alaska_flights <- flights %>%
+##   filter(carrier == "AS")
+## 
+## ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
+##   geom_point()
+
 ## ---- message=FALSE------------------------------------------------------
 library(dplyr)
 library(ggplot2)
 library(nycflights13)
+
+## ---- eval = FALSE-------------------------------------------------------
+## h(g(f(x)))
+
+## ---- eval = FALSE-------------------------------------------------------
+## x %>%
+##   f() %>%
+##   g() %>%
+##   h()
+
+## ---- eval=FALSE---------------------------------------------------------
+## alaska_flights <- flights %>%
+##   filter(carrier == "AS")
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## portland_flights <- flights %>%
@@ -289,6 +309,6 @@ flights_weather_joined
   column_spec(2, width = "0.9in") %>% 
   column_spec(3, width = "3.3in")
 
-## ----echo=FALSE, fig.cap="ModernDive flowchart - On to Part II!", fig.align='center'----
-knitr::include_graphics("images/flowcharts/flowchart/flowchart.005.png")
+## ----dplyr-cheatsheet, echo=FALSE, fig.cap="Data Transformation with dplyr cheatsheat"----
+include_graphics("images/dplyr_cheatsheet-1.png")
 
