@@ -4,8 +4,6 @@
 * Added PDF build
 * Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
 
-
-
 ## All content changes
 
 * Chapter 3 - Data visualization:
@@ -13,6 +11,15 @@
     + Added simpler introductory `geom_boxplot()` example
     + Started downweighting the amount of data wrangling previews included in this chapter, in particular `join`
     + Cleaned up conclusion section
+* Switched order of "Chap 4 Tidy Data" and "Chap 5 Data Wrangling": Data Wrangling now comes first
+* Chapter 4 - Data wrangling:
+* Chapter 5 - Renamed to "Importing and tidying data"
+    + Reordered chapters
+
+
+
+***
+
 
 
 # ModernDive 0.4.0
@@ -72,7 +79,10 @@
 
 * Updated `moderndive` package on CRAN to 0.2.0. See [`NEWS.md`](https://github.com/moderndive/moderndive/releases)
 
- 
+
+
+***
+
 
 
 # ModernDive 0.3.0
@@ -97,6 +107,10 @@
 - Added wide ModernDive logo to top of each chapter and `logos` folder
 - Added favicon (icon in browser tab)
 - Moved home GitHub repository from <https://github.com/ismayc/moderndiver-book/> to <https://github.com/moderndive/moderndive_book>
+
+
+
+***
 
 
 
@@ -143,6 +157,10 @@
 
 
 
+***
+
+
+
 # ModernDive 0.1.3
 
 * Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/moderndive/moderndive_book/issues/2)
@@ -154,6 +172,10 @@
 
 
 
+***
+
+
+
 # ModernDive 0.1.2
 
 * Converted last updated in index.Rmd to inline instead of R chunk
@@ -161,6 +183,10 @@
 * Fixed broken links to script files at the end of Chapters 4-9
 * Added `purl=FALSE` to chunks that do not contain useful code to the reader
 * Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/moderndive/moderndive_book/issues/2)
+
+
+
+***
 
 
 
@@ -175,6 +201,10 @@
     + May be weird issue with `cache = TRUE` that incorrectly plotted values on 1/10^th^ the correct scale
     + Will need to keep an eye on it going forward
 * Fixed typo on Reach for the Stars chapter name
+
+
+
+***
 
 
 
