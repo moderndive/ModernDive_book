@@ -1,5 +1,10 @@
 This repository is administered by Chris Diaz & Arend Kuyper. Questions? Email chris-diaz@northwestern.edu.
 
+- In RStudio, create a new project. 
+- Select Version Control (Git). 
+- Git Repository URL: `https://github.com/nulib/moderndive_book.git`
+- Use the default directory name
+
 # ModernDive <img src="images/hex_blue_text.png" align="right" width=125 />
 
 [![Build Status](https://travis-ci.org/moderndive/moderndive_book.svg?branch=master)](https://travis-ci.org/moderndive/moderndive_book) Note: travis-ci currently deploys the developmental version of the book into the `gh-pages` branch of this repo, which is hosted via Netlify at [moderndive.netlify.com](https://moderndive.netlify.com).
