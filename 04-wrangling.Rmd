@@ -656,7 +656,7 @@ knitr::include_graphics("images/join-inner.png")
 
 
 
-### Different "key" variable names
+### Different "key" variable names {#diff-key}
 
 Say instead you are interested in the destinations of all domestic flights departing NYC in 2013 and ask yourself:
 
@@ -705,8 +705,7 @@ We achieve this by specifying a vector of key variables to join by using the `c(
 
 ```{r, eval=FALSE}
 flights_weather_joined <- flights %>%
-  inner_join(weather, 
-             by = c("year", "month", "day", "hour", "origin"))
+  inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
 View(flights_weather_joined)
 ```
 
@@ -757,22 +756,15 @@ flights %>%
 
 This function makes exploring data frames with a very large number of variables easier for humans to process by restricting consideration to only those we care about, like our example with `carrier` and `flight` above. This might make viewing the dataset using the `View()` spreadsheet viewer more digestible. However, as far as the computer is concerned, it doesn't care how many additional variables are in the data frame in question, so long as `carrier` and `flight` are included.
 
-<!--
-
-I am here!
-
--->
-
-
-Another example involves the variable `year`. If you remember the original description of the `flights` data frame (or by running `?flights`), you'll remember that this data correspond to flights in 2013 departing New York City.  The `year` variable isn't really a variable here in that it doesn't vary... `flights` actually comes from a larger dataset that covers many years.  We may want to remove the `year` variable from our dataset since it won't be helpful for analysis in this case. We can deselect `year` by using the `-` sign:
+Let's say instead you want to drop i.e deselect certain variables. For example, take the variable `year` in the `flights` data frame. This variable isn't quite a "variable" in the sense that all the values are `2013` i.e. it doesn't change. Say you want to remove the `year` variable from the data frame; we can deselect `year` by using the `-` sign:
 
 ```{r, eval=FALSE}
 flights_no_year <- flights %>% 
   select(-year)
-names(flights_no_year)
+glipmse(flights_no_year)
 ```
 
-Or we could specify a ranges of columns:
+Another way of selecting columns/variables is by specifying a range of columns:
 
 ```{r, eval=FALSE}
 flight_arr_times <- flights %>% 
@@ -780,15 +772,15 @@ flight_arr_times <- flights %>%
 flight_arr_times
 ```
 
-The `select` function can also be used to reorder columns in combination with the `everything` helper function.  Let's suppose we'd like the `hour`, `minute`, and `time_hour` variables, which appear at the end of the `flights` dataset, to actually appear immediately after the `day` variable:
+The `select()` function can also be used to reorder columns in combination with the `everything()` helper function.  Let's suppose we'd like the `hour`, `minute`, and `time_hour` variables, which appear at the end of the `flights` dataset, to appear immediately after the `year`, `month`, and `day` variables while keeping the rest of the variables. In the code below `everything()` picks up all remaining variables. 
 
 ```{r, eval=FALSE}
 flights_reorder <- flights %>% 
-  select(month:day, hour:time_hour, everything())
-names(flights_reorder)
+  select(year, month, day, hour, minute, time_hour, everything())
+glimpse(flights_reorder)
 ```
 
-in this case `everything()` picks up all remaining variables. Lastly, the helper functions `starts_with`, `ends_with`, and `contains` can be used to choose column names that match those conditions:
+Lastly, the helper functions `starts_with()`, `ends_with()`, and `contains()` can be used to select variables/column that match those conditions. For example:
 
 ```{r, eval=FALSE}
 flights_begin_a <- flights %>% 
@@ -810,35 +802,28 @@ flights_time
 
 ### `rename` variables {#rename}
 
-Another useful function is `rename`, which as you may suspect renames one column to another name.  Suppose we wanted `dep_time` and `arr_time` to be `departure_time` and `arrival_time` instead in the `flights_time` data frame:
+Another useful function is `rename()`, which as you may have guessed renames one column to another name.  Suppose we want `dep_time` and `arr_time` to be `departure_time` and `arrival_time` instead in the `flights_time` data frame:
 
 ```{r, eval=FALSE}
 flights_time_new <- flights %>% 
   select(contains("time")) %>% 
   rename(departure_time = dep_time,
          arrival_time = arr_time)
-names(flights_time)
+glimpse(flights_time)
 ```
 
-Note that in this case we used a single `=` sign with the `rename()`. Ex: `departure_time = dep_time`. This is because we are not testing for equality like we would using `==`, but instead we want to assign a new variable `departure_time` to have the same values as `dep_time` and then delete the variable `dep_time`.
-
-
-It's easy to forget if the new name comes before or after the equals sign.  I usually remember this as "New Before, Old After" or NBOA. You'll receive an error if you try to do it the other way:
-
-```
-Error: Unknown variables: departure_time, arrival_time.
-```
+Note that in this case we used a single `=` sign within the `rename()`, for example `departure_time = dep_time`. This is because we are not testing for equality like we would using `==`, but instead we want to assign a new variable `departure_time` to have the same values as `dep_time` and then delete the variable `dep_time`. It's easy to forget if the new name comes before or after the equals sign.  I usually remember this as "New Before, Old After" or NBOA. 
 
 ### `top_n` values of a variable
 
-We can also use the `top_n` function which automatically tells us the most frequent `num_flights`.  We specify the top 10 airports here:
+We can also return the top `n` values of a variable using the `top_n()` function. For example, we can return a data frame of the top 10 destination airports using the example from Section \@ref(diff-key). Observe that we set the number of values to return to `n = 10` and `wt = num_flights` to indicate that we want the rows of corresponding to the top 10 values of `num_flights`. See the help file for `top_n()` by running `?top_n` for more information. 
 
 ```{r, eval=FALSE}
 named_dests %>% 
   top_n(n = 10, wt = num_flights)
 ```
 
-We'll still need to arrange this by `num_flights` though:
+Lets's further `arrange()` these results in descending order of `num_flights`:
 
 ```{r, eval=FALSE}
 named_dests  %>% 
@@ -846,18 +831,6 @@ named_dests  %>%
   arrange(desc(num_flights))
 ```
 
-**Note:** Remember that I didn't pull the `n` and `wt` arguments out of thin air.  They can be found by using the `?` function on `top_n`.
-
-We can go one stop further and tie together the `group_by` and `summarize` functions we used to find the most frequent flights:
-
-```{r, eval=FALSE}
-ten_freq_dests <- flights %>%
-  group_by(dest) %>%
-  summarize(num_flights = n()) %>%
-  arrange(desc(num_flights)) %>%
-  top_n(n = 10) 
-View(ten_freq_dests)
-```
 
 ```{block lc-other-verbs, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -884,7 +857,7 @@ View(ten_freq_dests)
 
 ### Summary table
 
-Let's recap a selection of verbs in Table \@ref(tab:wrangle-summary-table) summarizing their differences. Using these verbs and the pipe `%>%` operator from Section \@ref(piping), you'll be able to write easily legible code to perform almost all the data wrangling necessary for the rest of this book. 
+Let's recap our data wrangling verbs in Table \@ref(tab:wrangle-summary-table). Using these verbs and the pipe `%>%` operator from Section \@ref(piping), you'll be able to write easily legible code to perform almost all the data wrangling necessary for the rest of this book. 
 
 ```{r wrangle-summary-table, echo=FALSE, message=FALSE}
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
@@ -892,15 +865,15 @@ Let's recap a selection of verbs in Table \@ref(tab:wrangle-summary-table) summa
 
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vRgwl1lugQA6zxzfB6_0hM5vBjXkU7cbUVYYXLcWeaRJ9HmvNXyCjzJCgiGW8HCe1kvjLCGYHf-BvYL/pub?gid=0&single=true&output=csv" %>% 
   read_csv(na = "") %>% 
-  rename_(" " = "X1") %>% 
+  select(-X1) %>% 
   kable(
     caption = "Summary of data wrangling verbs", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position")) %>%
-  column_spec(2, width = "0.9in") %>% 
-  column_spec(3, width = "3.3in")
+  column_spec(1, width = "0.9in") %>% 
+  column_spec(2, width = "3.3in")
 ```
 
 ```{block lc-asm, type='learncheck', purl=FALSE}
@@ -934,7 +907,7 @@ You can access this cheatsheet by going to the RStudio Menu Bar -> Help -> Cheat
 include_graphics("images/dplyr_cheatsheet-1.png")
 ```
 
-On top of the following examples of other verbs, if you'd like to see more examples on using `dplyr`, the data wrangling verbs we introduction in Section \@ref(verbs), and the pipe function `%>%` with the `nycflights13` dataset, check out [Chapter 5](http://r4ds.had.co.nz/transform.html) of Hadley and Garrett's book [@rds2016].
+On top of data wrangling verbs and examples we presented in this section, if you'd like to see more examples of using the `dplyr` package for data wrangling check out [Chapter 5](http://r4ds.had.co.nz/transform.html) of Garrett Grolemund and Hadley Wickham's and Garrett's book [@rds2016].
 
 <!--
 Review questions have been designed using the `fivethirtyeight` R package [@R-fivethirtyeight] with links to the corresponding FiveThirtyEight.com articles in our free DataCamp course **Effective Data Storytelling using the `tidyverse`**.  The material in this chapter is covered in the chapters of the DataCamp course available below:
@@ -947,7 +920,9 @@ Review questions have been designed using the `fivethirtyeight` R package [@R-fi
 
 ### What's to come?
 
-So far in this book, we've explored, visualized, and wrangled data saved in data frames that are in spreadsheet-type format: rectangular with a certain number of rows corresponding to observations and a certain number of columns corresponding to variables describing the observations. We'll see in Chapter \@ref(tidy) that there are actually two ways to represent data in spreadsheet-type rectangular format: 1) "wide" format and 2) "tall/narrow" format also known in R circles as "tidy" format. While the distinction between "tidy" and non-"tidy" formatted data is very subtle, it has very large implications for whether or not we can use the `ggplot2` package for data visualization and the `dplyr` package for data wrangling. 
+So far in this book, we've explored, visualized, and wrangled data saved in data frames that are in spreadsheet-type format: rectangular with a certain number of rows corresponding to observations and a certain number of columns corresponding to variables describing the observations. 
+
+We'll see in Chapter \@ref(tidy) that there are actually two ways to represent data in spreadsheet-type rectangular format: 1) "wide" format and 2) "tall/narrow" format also known in R circles as "tidy" format. While the distinction between "tidy" and non-"tidy" formatted data is very subtle, it has very large implications for whether or not we can use the `ggplot2` package for data visualization and the `dplyr` package for data wrangling. 
 
 Furthermore, we've only explored, visualized, and wrangled data saved within R packages. What if you have spreadsheet data saved in a Microsoft Excel, Google Sheets, or "Comma-Separated Values" (CSV) file that you would like to analyze? In Chapter \@ref(tidy), we'll show you how to import this data into R using the `readr` package. 
 
