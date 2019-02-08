@@ -245,8 +245,9 @@ freq_dest %>%
 ## View(airports)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## flights %>%
+## flights_with_airport_names <-  flights %>%
 ##   inner_join(airports, by = c("dest" = "faa"))
+## View(flights_with_airport_names)
 
 ## ------------------------------------------------------------------------
 named_dests <- flights %>%
@@ -257,11 +258,10 @@ named_dests <- flights %>%
   rename(airport_name = name)
 named_dests
 
-## ------------------------------------------------------------------------
-flights_weather_joined <- flights %>%
-  inner_join(weather, 
-             by = c("year", "month", "day", "hour", "origin"))
-flights_weather_joined
+## ---- eval=FALSE---------------------------------------------------------
+## flights_weather_joined <- flights %>%
+##   inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
+## View(flights_weather_joined)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## glimpse(flights)
@@ -273,7 +273,7 @@ flights_weather_joined
 ## ---- eval=FALSE---------------------------------------------------------
 ## flights_no_year <- flights %>%
 ##   select(-year)
-## names(flights_no_year)
+## glipmse(flights_no_year)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## flight_arr_times <- flights %>%
@@ -282,8 +282,8 @@ flights_weather_joined
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## flights_reorder <- flights %>%
-##   select(month:day, hour:time_hour, everything())
-## names(flights_reorder)
+##   select(year, month, day, hour, minute, time_hour, everything())
+## glimpse(flights_reorder)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## flights_begin_a <- flights %>%
@@ -305,7 +305,7 @@ flights_weather_joined
 ##   select(contains("time")) %>%
 ##   rename(departure_time = dep_time,
 ##          arrival_time = arr_time)
-## names(flights_time)
+## glimpse(flights_time)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## named_dests %>%
@@ -316,29 +316,21 @@ flights_weather_joined
 ##   top_n(n = 10, wt = num_flights) %>%
 ##   arrange(desc(num_flights))
 
-## ---- eval=FALSE---------------------------------------------------------
-## ten_freq_dests <- flights %>%
-##   group_by(dest) %>%
-##   summarize(num_flights = n()) %>%
-##   arrange(desc(num_flights)) %>%
-##   top_n(n = 10)
-## View(ten_freq_dests)
-
 ## ----wrangle-summary-table, echo=FALSE, message=FALSE--------------------
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1nRkXfYMQiTj79c08xQPY0zkoJSpde3NC1w6DRhsWCss/edit#gid=0
 
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vRgwl1lugQA6zxzfB6_0hM5vBjXkU7cbUVYYXLcWeaRJ9HmvNXyCjzJCgiGW8HCe1kvjLCGYHf-BvYL/pub?gid=0&single=true&output=csv" %>% 
   read_csv(na = "") %>% 
-  rename_(" " = "X1") %>% 
+  select(-X1) %>% 
   kable(
     caption = "Summary of data wrangling verbs", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position")) %>%
-  column_spec(2, width = "0.9in") %>% 
-  column_spec(3, width = "3.3in")
+  column_spec(1, width = "0.9in") %>% 
+  column_spec(2, width = "3.3in")
 
 ## ----dplyr-cheatsheet, echo=FALSE, fig.cap="Data Transformation with dplyr cheatsheat"----
 include_graphics("images/dplyr_cheatsheet-1.png")
