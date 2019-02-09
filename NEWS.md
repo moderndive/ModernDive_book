@@ -207,6 +207,8 @@
     + Added `fivethirtyeight::drinks` example of hitting the non-tidy wall, then using `tidyr::gather()`
     + Made Guatemala democracy score a case study.
     + Added discussion on what `tidyverse` package is.
+    + Moved discussion on normal forms to Ch4: Data Wrangling - joins
+    + Moved discussion on identification vs measurement variables to Ch2: Getting started with data.
 * Chapter 6 - Basic regression:
     + Moved residual analysis to Chapter 11
 * Chapter 7 - Multiple regression:
