@@ -263,6 +263,13 @@ named_dests
 ##   inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
 ## View(flights_weather_joined)
 
+## ----eval=FALSE----------------------------------------------------------
+## joined_flights <- flights %>%
+##   inner_join(airlines, by = "carrier")
+## View(joined_flights)
+
+## **_Learning check_**
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## glimpse(flights)
 

@@ -66,10 +66,13 @@ ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
 ## ------------------------------------------------------------------------
 drinks_smaller_tidy
 
-## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from http://r4ds.had.co.nz/tidy-data.html"----
+## ------------------------------------------------------------------------
+drinks_smaller
+
+## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from [R for Data Science](http://r4ds.had.co.nz/tidy-data.html)."----
 knitr::include_graphics("images/tidy-1.png")
 
-## ----echo=FALSE----------------------------------------------------------
+## ----non-tidy-stocks, echo=FALSE-----------------------------------------
 stocks <- data_frame(
   Date = as.Date('2009-01-01') + 0:4,
   `Boeing Stock Price` = paste("$", c("173.55", "172.61", "173.86", "170.77", "174.29"), sep = ""),
@@ -86,7 +89,7 @@ stocks %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
-## ----echo=FALSE----------------------------------------------------------
+## ----tidy-stocks, echo=FALSE---------------------------------------------
 stocks_tidy <- stocks %>% 
   rename(
     Boeing = `Boeing Stock Price`,
@@ -103,7 +106,7 @@ stocks_tidy %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
-## ----echo=FALSE----------------------------------------------------------
+## ----tidy-stocks-2, echo=FALSE-------------------------------------------
 stocks <- data_frame(
   Date = as.Date('2009-01-01') + 0:4,
   `Boeing Price` = paste("$", c("173.55", "172.61", "173.86", "170.77", "174.29"), sep = ""),
@@ -119,6 +122,8 @@ stocks %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("HOLD_position"))
 
+## **_Learning check_**
+
 ## ------------------------------------------------------------------------
 drinks_smaller
 
@@ -127,29 +132,24 @@ drinks_smaller_tidy <- drinks_smaller %>%
   gather(key = type, value = servings, -country)
 drinks_smaller_tidy
 
+## ---- eval=FALSE---------------------------------------------------------
+## drinks_smaller_tidy <- drinks_smaller %>%
+##   gather(key = type, value = servings, c(beer, spirit, wine))
+## drinks_smaller_tidy
+
 ## ------------------------------------------------------------------------
 ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
   geom_col(position = "dodge")
 
 ## **_Learning check_**
 
-## ----echo=FALSE----------------------------------------------------------
-drinks_sub <- drinks %>%
-  select(-total_litres_of_pure_alcohol) %>% 
-  filter(country %in% c("USA", "Canada", "South Korea"))
-drinks_sub_tidy <- drinks_sub %>%
-  gather(type, servings, -c(country)) %>%
-  mutate(
-    type = str_sub(type, start=1, end=-10)
-  ) %>%
-  arrange(country, type) %>% 
-  rename(`alcohol type` = type)
-drinks_sub
+## ---- eval=FALSE---------------------------------------------------------
+## airline_safety
 
 ## ------------------------------------------------------------------------
-glimpse(airports)
-
-## **_Learning check_**
+airline_safety_smaller <- airline_safety %>% 
+  select(-c(incl_reg_subsidiaries, avail_seat_km_per_week))
+airline_safety_smaller
 
 ## ------------------------------------------------------------------------
 guat_dem <- dem_score %>% 
@@ -157,18 +157,18 @@ guat_dem <- dem_score %>%
 guat_dem
 
 ## ------------------------------------------------------------------------
-guat_tidy <- guat_dem %>% 
+guat_dem_tidy <- guat_dem %>% 
   gather(key = year, value = democracy_score, -country) 
-guat_tidy
+guat_dem_tidy
+
+## ------------------------------------------------------------------------
+guat_dem_tidy <- guat_dem_tidy %>% 
+  mutate(year = as.numeric(year))
 
 ## ----errors=TRUE---------------------------------------------------------
-ggplot(guat_tidy, aes(x = year, y = democracy_score)) +
-  geom_line()
-
-## ----guatline, fig.cap="Guatemala's democracy score ratings from 1952 to 1992"----
-ggplot(guat_tidy, aes(x = parse_number(year), y = democracy_score)) +
+ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
   geom_line() +
-  labs(x = "year")
+  labs(x = "Year", y = "Democracy Score", title = "Democracy score in Guatemala 1952-1992")
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## library(dplyr)
@@ -188,14 +188,6 @@ ggplot(guat_tidy, aes(x = parse_number(year), y = democracy_score)) +
 ## library(tibble)
 ## library(stringr)
 ## library(forcats)
-
-## ----message=FALSE-------------------------------------------------------
-joined_flights <- inner_join(x = flights, y = airlines, by = "carrier")
-
-## ----eval=FALSE----------------------------------------------------------
-## View(joined_flights)
-
-## **_Learning check_**
 
 ## ----import-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheat"-----
 include_graphics("images/import_cheatsheet-1.png")

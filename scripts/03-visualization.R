@@ -125,7 +125,7 @@ ggplot(data = weather, mapping = aes(x = temp)) +
 ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(color = "white", fill = "steelblue")
 
-## ---- warning=FALSE, message=FALSE, fig.cap= "Histogram with 60 bins."----
+## ---- warning=FALSE, message=FALSE, fig.cap= "Histogram with 40 bins."----
 ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(bins = 40, color = "white")
 
