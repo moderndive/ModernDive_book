@@ -280,7 +280,7 @@ named_dests
 ## ---- eval=FALSE---------------------------------------------------------
 ## flights_no_year <- flights %>%
 ##   select(-year)
-## glipmse(flights_no_year)
+## glimpse(flights_no_year)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## flight_arr_times <- flights %>%
