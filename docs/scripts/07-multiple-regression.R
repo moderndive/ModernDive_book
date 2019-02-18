@@ -21,9 +21,6 @@ library(forcats)
 library(gridExtra)
 library(patchwork)
 
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.3\\textwidth")
-
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(ISLR)
 Credit <- Credit %>%
