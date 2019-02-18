@@ -64,11 +64,11 @@ virtual_shovel %>%
 
 ## ------------------------------------------------------------------------
 virtual_shovel %>% 
-  mutate(is_red = color == "red")
+  mutate(is_red = (color == "red"))
 
 ## ------------------------------------------------------------------------
 virtual_shovel %>% 
-  mutate(is_red = color == "red") %>% 
+  mutate(is_red = (color == "red")) %>% 
   summarize(num_red = sum(is_red))  
 
 ## ------------------------------------------------------------------------
@@ -332,7 +332,8 @@ comparing_n_table  %>%
 
 ## ------------------------------------------------------------------------
 bowl %>% 
-  summarize(sum_red = sum(color == "red"), sum_not_red = sum(color != "red"))
+  summarize(sum_red = sum(color == "red"), 
+            sum_not_red = sum(color != "red"))
 
 ## ----comparing-sampling-distributions-3, echo=FALSE, fig.cap="Three sampling distributions with population proportion $p$ marked in red."----
 p <- bowl %>% 
@@ -357,7 +358,7 @@ virtual_prop %>%
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
   read_csv(na = "") %>% 
   kable(
-    caption = "\\label{tab:summarytable}Scenarios of sampling for inference", 
+    caption = "\\label{tab:summarytable-ch8}Scenarios of sampling for inference", 
     booktabs = TRUE,
     escape = FALSE
   ) %>% 
