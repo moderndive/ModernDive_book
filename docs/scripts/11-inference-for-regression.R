@@ -76,7 +76,7 @@ null_slope_distn %>%
 ##   generate(reps = 10000, type = "permute") %>%
 ##   calculate(stat = "slope")
 
-## ----echo=FALSE----------------------------------------------------------
+## ------------------------------------------------------------------------
 bootstrap_slope_distn <- evals %>% 
   specify(score ~ bty_avg) %>%
   generate(reps = 10000, type = "bootstrap") %>% 
