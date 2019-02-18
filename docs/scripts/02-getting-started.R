@@ -32,6 +32,11 @@ glimpse(flights)
 ## airlines
 ## airlines$name
 
+## ------------------------------------------------------------------------
+glimpse(airports)
+
+## **_Learning check_**
+
 ## ----eval=FALSE----------------------------------------------------------
 ## ?flights
 
