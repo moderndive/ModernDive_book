@@ -1,31 +1,3 @@
-## ----summarytable-prep, echo=FALSE, message=FALSE------------------------
-library(dplyr)
-library(readr)
-
-## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
-# Packages needed internally, but not in text.
-library(knitr)
-library(kableExtra)
-
-## ----summarytable, echo=FALSE, message=FALSE-----------------------------
-# The following Google Doc is published to CSV and loaded below using read_csv() below:
-# https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
-
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-  read_csv(na = "") %>% 
-  kable(
-    caption = "\\label{tab:summarytable}Scenarios of sampling for inference", 
-    booktabs = TRUE,
-    escape = FALSE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position")) %>%
-  column_spec(1, width = "0.5in") %>% 
-  column_spec(2, width = "0.7in") %>%
-  column_spec(3, width = "1in") %>%
-  column_spec(4, width = "1.1in") %>% 
-  column_spec(5, width = "1in")
-
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
@@ -33,70 +5,70 @@ library(janitor)
 library(moderndive)
 library(infer)
 
-## ----include=FALSE-------------------------------------------------------
-set.seed(2018)
-pennies_sample <- pennies %>% 
-  sample_n(40)
+## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
+# Packages needed internally, but not in the text
+library(knitr)
+library(kableExtra)
 
 ## ------------------------------------------------------------------------
-pennies_sample
+pennies_sample_2
 
 ## ------------------------------------------------------------------------
-ggplot(pennies_sample, aes(x = age_in_2011)) +
+ggplot(pennies_sample_2, aes(x = year)) +
   geom_histogram(bins = 10, color = "white")
 
 ## ------------------------------------------------------------------------
-x_bar <- pennies_sample %>% 
-  summarize(stat = mean(age_in_2011))
+x_bar <- pennies_sample_2 %>% 
+  summarize(stat = mean(year))
 x_bar
 
 ## ----include=FALSE-------------------------------------------------------
 set.seed(201)
 
 ## ------------------------------------------------------------------------
-bootstrap_sample1 <- pennies_sample %>% 
+bootstrap_sample1 <- pennies_sample_2 %>% 
   rep_sample_n(size = 40, replace = TRUE, reps = 1)
 bootstrap_sample1
 
 ## ------------------------------------------------------------------------
-ggplot(bootstrap_sample1, aes(x = age_in_2011)) +
+ggplot(bootstrap_sample1, aes(x = year)) +
   geom_histogram(bins = 10, color = "white")
 
 ## ------------------------------------------------------------------------
 bootstrap_sample1 %>% 
-  summarize(stat = mean(age_in_2011))
+  summarize(stat = mean(year))
 
 ## ------------------------------------------------------------------------
-six_bootstrap_samples <- pennies_sample %>% 
+six_bootstrap_samples <- pennies_sample_2 %>% 
   rep_sample_n(size = 40, replace = TRUE, reps = 6)
 
 ## ------------------------------------------------------------------------
-ggplot(six_bootstrap_samples, aes(x = age_in_2011)) +
+ggplot(six_bootstrap_samples, aes(x = year)) +
   geom_histogram(bins = 10, color = "white") +
   facet_wrap(~ replicate)
 
 ## ------------------------------------------------------------------------
 six_bootstrap_samples %>% 
   group_by(replicate) %>% 
-  summarize(stat = mean(age_in_2011))
+  summarize(stat = mean(year))
 
 ## ----fig.align='center', echo=FALSE--------------------------------------
 knitr::include_graphics("images/flowcharts/infer/specify.png")
 
 ## ------------------------------------------------------------------------
-pennies_sample %>% 
-  specify(response = age_in_2011)
+pennies_sample_2 %>% 
+  specify(response = year)
 
 ## ------------------------------------------------------------------------
-pennies_sample %>% 
-  specify(formula = age_in_2011 ~ NULL)
+pennies_sample_2 %>% 
+  specify(formula = year ~ NULL)
 
 ## ----fig.align='center', echo=FALSE--------------------------------------
 knitr::include_graphics("images/flowcharts/infer/generate.png")
 
 ## ------------------------------------------------------------------------
-thousand_bootstrap_samples <- pennies_sample %>% 
-  specify(response = age_in_2011) %>% 
+thousand_bootstrap_samples <- pennies_sample_2 %>% 
+  specify(response = year) %>% 
   generate(reps = 1000)
 
 ## ------------------------------------------------------------------------
@@ -107,19 +79,19 @@ thousand_bootstrap_samples %>%
 knitr::include_graphics("images/flowcharts/infer/calculate.png")
 
 ## ------------------------------------------------------------------------
-bootstrap_distribution <- pennies_sample %>% 
-  specify(response = age_in_2011) %>% 
+bootstrap_distribution <- pennies_sample_2 %>% 
+  specify(response = year) %>% 
   generate(reps = 1000) %>% 
   calculate(stat = "mean")
 bootstrap_distribution
 
 ## ------------------------------------------------------------------------
-pennies_sample %>% 
-  summarize(stat = mean(age_in_2011))
+pennies_sample_2 %>% 
+  summarize(stat = mean(year))
 
 ## ------------------------------------------------------------------------
-pennies_sample %>% 
-  specify(response = age_in_2011) %>% 
+pennies_sample_2 %>% 
+  specify(response = year) %>% 
   calculate(stat = "mean")
 
 ## ----fig.align='center', echo=FALSE--------------------------------------
@@ -165,21 +137,21 @@ bootstrap_distribution %>%
   visualize(endpoints = standard_error_ci, direction = "between")
 
 ## ------------------------------------------------------------------------
-ggplot(pennies, aes(x = age_in_2011)) +
+ggplot(pennies, aes(x = year)) +
   geom_histogram(bins = 10, color = "white")
 
 ## ------------------------------------------------------------------------
 pennies %>% 
-  summarize(mean_age = mean(age_in_2011),
-            median_age = median(age_in_2011))
+  summarize(mean_age = mean(year),
+            median_age = median(year))
 
 ## ------------------------------------------------------------------------
-ggplot(pennies_sample, aes(x = age_in_2011)) +
+ggplot(pennies_sample_2, aes(x = year)) +
   geom_histogram(bins = 10, color = "white")
 
 ## ------------------------------------------------------------------------
-pennies_sample %>% 
-  summarize(mean_age = mean(age_in_2011), median_age = median(age_in_2011))
+pennies_sample_2 %>% 
+  summarize(mean_age = mean(year), median_age = median(year))
 
 ## ------------------------------------------------------------------------
 thousand_samples <- pennies %>% 
@@ -188,7 +160,7 @@ thousand_samples <- pennies %>%
 ## ------------------------------------------------------------------------
 sampling_distribution <- thousand_samples %>% 
   group_by(replicate) %>% 
-  summarize(stat = mean(age_in_2011))
+  summarize(stat = mean(year))
 
 ## ---- fig.cap="Sampling distribution for n=40 samples of pennies"--------
 ggplot(sampling_distribution, aes(x = stat)) +
@@ -216,20 +188,20 @@ bootstrap_distribution %>%
 
 ## ------------------------------------------------------------------------
 pennies %>% 
-  summarize(overall_mean = mean(age_in_2011))
+  summarize(overall_mean = mean(year))
 
 ## ----include=FALSE-------------------------------------------------------
 pennies_mu <- pennies %>% 
-  summarize(overall_mean = mean(age_in_2011)) %>% 
+  summarize(overall_mean = mean(year)) %>% 
   pull()
 
 ## ------------------------------------------------------------------------
-pennies_sample2 <- pennies %>% 
+pennies_sample_2 <- pennies %>% 
   sample_n(size = 40)
 
 ## ------------------------------------------------------------------------
-percentile_ci2 <- pennies_sample2 %>% 
-  specify(formula = age_in_2011 ~ NULL) %>% 
+percentile_ci2 <- pennies_sample_2 %>% 
+  specify(formula = year ~ NULL) %>% 
   generate(reps = 1000) %>% 
   calculate(stat = "mean") %>% 
   get_ci()
@@ -247,7 +219,7 @@ nested_pennies <- pennies_samples %>%
 
 infer_pipeline <- function(entry){
   entry %>% 
-    specify(formula = age_in_2011 ~ NULL) %>% 
+    specify(formula = year ~ NULL) %>% 
     generate(reps = 1000) %>% 
     calculate(stat = "mean") %>% 
     get_ci()
@@ -256,7 +228,7 @@ infer_pipeline <- function(entry){
 if(!file.exists("rds/pennies_cis.rds")){
   pennies_cis <- nested_pennies %>% 
     mutate(percentile_ci = purrr::map(data, infer_pipeline)) %>% 
-    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$age_in_2011)))
+    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$year)))
   saveRDS(object = pennies_cis, "rds/pennies_cis.rds")
 } else {
   pennies_cis <- readRDS("rds/pennies_cis.rds")
@@ -289,11 +261,11 @@ pennies_samples2 <- pennies %>%
 nested_pennies2 <- pennies_samples2 %>% 
   group_by(replicate) %>% 
   tidyr::nest() %>% 
-  mutate(sample_mean = purrr::map_dbl(data, ~mean(.x$age_in_2011)))
+  mutate(sample_mean = purrr::map_dbl(data, ~mean(.x$year)))
 
 bootstrap_pipeline <- function(entry){
   entry %>% 
-    specify(formula = age_in_2011 ~ NULL) %>% 
+    specify(formula = year ~ NULL) %>% 
     generate(reps = 1000) %>% 
     calculate(stat = "mean")
 }
