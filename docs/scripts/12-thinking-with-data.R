@@ -47,9 +47,6 @@ library(knitr)
 library(patchwork)
 library(scales)
 
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/datacamp_intro_to_modeling.png", link = "https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse")
-
 ## ----warning=FALSE, message=FALSE----------------------------------------
 library(ggplot2)
 library(dplyr)
