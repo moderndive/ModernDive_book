@@ -10,6 +10,18 @@ library(broom)
 # Packages needed internally, but not in text.
 library(knitr)
 
+## ----message=FALSE, warning=FALSE----------------------------------------
+library(dplyr)
+library(ggplot2)
+library(infer)
+library(nycflights13)
+library(ggplot2movies)
+library(broom)
+
+## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
+# Packages needed internally, but not in text.
+library(knitr)
+
 ## ------------------------------------------------------------------------
 bos_sfo <- flights %>% 
   na.omit() %>% 
@@ -85,17 +97,20 @@ obs_diff
 ## ----include=FALSE-------------------------------------------------------
 set.seed(2018)
 
-## ----message=FALSE, warning=FALSE----------------------------------------
-shuffled_ratings_old <- #movies_trimmed %>%
-  movies_genre_sample %>% 
-     mutate(genre = mosaic::shuffle(genre)) %>% 
-     group_by(genre) %>%
-     summarize(mean = mean(rating))
-diff(shuffled_ratings_old$mean)
+## ----message=FALSE, warning=FALSE, include=FALSE, eval=FALSE-------------
+## shuffled_ratings_old <- #movies_trimmed %>%
+##   movies_genre_sample %>%
+##      mutate(genre = mosaic::shuffle(genre)) %>%
+##      group_by(genre) %>%
+##      summarize(mean = mean(rating))
+## diff(shuffled_ratings_old$mean)
 
-permuted_ratings <- movies_genre_sample %>% 
-  specify(formula = rating ~ genre) %>% 
-  generate(reps = 1)
+## ----message=FALSE, warning=FALSE----------------------------------------
+movies_genre_sample %>% 
+  specify(formula = rating ~ genre) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1) %>% 
+  calculate(stat = "diff in means", order = c("Romance", "Action"))
 
 ## ----include=FALSE-------------------------------------------------------
 if(!file.exists("rds/generated_samples.rds")){

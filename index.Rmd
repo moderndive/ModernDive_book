@@ -1,40 +1,56 @@
 --- 
-title: "An Introduction to Statistical and Data Sciences via R"
+title: "Statistical Inference via Data Science"
+subtitle: "A moderndive into R and the tidyverse"
 author: "Chester Ismay and Albert Y. Kim"
-date: "July 21, 2018"
+date: "February 24, 2019"
 site: bookdown::bookdown_site
-documentclass: book
+documentclass: krantz
 bibliography: [bib/books.bib, bib/packages.bib, bib/articles.bib]
 biblio-style: apalike
-link-citations: no
+fontsize: 12pt
+monofont: "Source Code Pro"
+monofontoptions: "Scale=0.7"
+link-citations: yes
+colorlinks: yes
+lot: yes
+lof: yes
+always_allow_html: yes
 github-repo: moderndive/moderndive_book
-description: "An open-source and fully-reproducible electronic textbook bridging the gap between traditional introductory statistics and data science courses."
+graphics: yes
+description: "An open-source and fully-reproducible electronic textbook for teaching statistical inference using tidyverse data science tools."
 cover-image: "images/logos/book_cover.png"
 url: 'https\://moderndive.com/'
 apple-touch-icon: "images/logos/favicons/apple-touch-icon.png"
 favicon: "images/logos/favicons/favicon.ico"
 ---
 
-
+<!-- For use only in PDF, is skipped in HTML -->
+\mainmatter
 
 ```{r set-options, include=FALSE}
+# Trigger for travis-ci rebuild: tic
+
 # Current version information: Date here should match the date in the YAML above.
 # Remove .9000 tag and set date to release date when releasing
-version <- "0.4.0"
-date <- "July 21, 2018"
+version <- "0.5.0"
+date <- "February 24, 2019"
 
 # Latest release information:
-latest_release_version <- "0.4.0"
-latest_release_date <- "July 21, 2018"
+latest_release_version <- "0.5.0"
+latest_release_date <- "February 24, 2019"
 
 # Set output options
-options(width = 80, digits = 7, bookdown.clean_book = TRUE)
+if(knitr:::is_html_output())
+  options(width = 80)
+if(knitr:::is_latex_output())
+  options(width = 65)
+options(digits = 7, bookdown.clean_book = TRUE, knitr.kable.NA = 'NA')
 knitr::opts_chunk$set(
   tidy = FALSE, 
-  out.width='\\textwidth', 
+  out.width = '\\textwidth', 
   fig.align = "center", 
   comment = NA
-)
+) 
 
 # CRAN packages needed
 needed_CRAN_pkgs <- c(
@@ -46,8 +62,9 @@ needed_CRAN_pkgs <- c(
   "infer", "moderndive",
   
   # Internally used packages:
-  "webshot", "tufte", "mvtnorm", "remotes", "devtools", "dygraphs", "gridExtra" 
-  )
+  "webshot", "mvtnorm", "remotes", "devtools", "dygraphs", "gridExtra", "kableExtra"
+  ) 
+
 new_pkgs <- needed_CRAN_pkgs[!(needed_CRAN_pkgs %in% installed.packages())]
 if(length(new_pkgs)) {
   install.packages(new_pkgs, repos = "http://cran.rstudio.com")
@@ -55,9 +72,9 @@ if(length(new_pkgs)) {
 
 # GitHub packages needed
 if(!"patchwork" %in% installed.packages()){
-  # patchwork as of 2018/7/20 needs dev version of ggplot2:
-  devtools::install_github("tidyverse/ggplot2")
-  devtools::install_github("thomasp85/patchwork")
+  # patchwork as of 2018-07-20 needs dev version of ggplot2:
+  remotes::install_github("tidyverse/ggplot2")
+  remotes::install_github("thomasp85/patchwork")
 }
 
 # Check that phantomjs is installed to create screenshots of apps
@@ -67,12 +84,12 @@ if(is.null(webshot:::find_phantom()))
 # Automatically create a bib database for R packages
 knitr::write_bib(
   c(.packages(), "bookdown", "knitr", "rmarkdown", "nycflights13",
-  "ggplot2", "webshot", "dygraphs", "dplyr",
-  "ggplot2movies", "fivethirtyeight", "tibble", "readr", "tidyr",
-  "janitor", "infer", "skimr"
+    "ggplot2", "webshot", "dygraphs", "dplyr",
+    "ggplot2movies", "fivethirtyeight", "tibble", "readr", "tidyr",
+    "janitor", "infer", "skimr", "kableExtra"
   ),
   "bib/packages.bib"
-  )
+)
 
 # Add all simulation results here
 dir.create("rds")
@@ -97,6 +114,9 @@ file.copy("data/offshore.csv", "docs/data/offshore.csv", overwrite = TRUE)
 file.copy("data/cleSac.txt", "docs/data/cleSac.txt", overwrite = TRUE)
 file.copy("data/zinc_tidy.csv", "docs/data/zinc_tidy.csv", overwrite = TRUE)
 
+# Make sure all images copy to docs folder
+dir.create("docs/images")
+system("cp -r images/* docs/images/")
 # Copy previous_versions/ to docs/previous_versions/
 # Should switch to use purrr here at some point
 dir.create("docs/previous_versions/")
@@ -107,56 +127,117 @@ system("cp -r previous_versions/* docs/previous_versions/")
 file.copy("images/logos/wide_format.png", "docs/wide_format.png", overwrite = TRUE)
 ```
 
+```{r images, include=FALSE}
+include_image <- function(path,                           
+                          html_opts = "width=45%", 
+                          latex_opts = html_opts,
+                          alt_text = ""){
+  if(knitr:::is_html_output()){
+    glue::glue("![{alt_text}]({path}){{ {html_opts} }}")
+  } else if(knitr:::is_latex_output()){
+    glue::glue("![{alt_text}]({path}){{ {latex_opts} }}")    
+  }
+}
 
-# Introduction {#intro}
-
-<!--
----
-
-```{block, type='learncheck', purl=FALSE}
-**Note: This is the development version of ModernDive and is currently in the process of being edited. For the latest released version of ModernDive, please go to [ModernDive.com](https://moderndive.com/).**
+image_link <- function(path,
+                       link,
+                       html_opts = "height: 200px;",
+                       latex_opts = "width=0.2\\textwidth",
+                       alt_text = "",
+                       centering = TRUE){
+  if(knitr:::is_html_output()){
+    if(centering){
+      glue::glue('
+      <center><a target="_blank" class="page-link" href="{link}"><img src="{path}" style="{html_opts}"/></a></center>')
+    } else {
+      glue::glue('
+      <a target="_blank" class="page-link" href="{link}"><img src="{path}" style="{html_opts}"/></a>')
+    }
+  }
+  else if(knitr:::is_latex_output()){
+    if(centering){
+      glue::glue('\\begin{{center}}
+        \\href{{{link}}}{{\\includegraphics[{latex_opts}]{{{path}}}}}
+        \\end{{center}}')
+    } else
+      glue::glue('\\href{{{link}}}{{\\includegraphics[{latex_opts}]{{{path}}}}}')
+  }
+}
 ```
 
 
-## Important Note
-
-This is a previous version (v`r version`) of ModernDive and may be out of date. For the current version of ModernDive, please go to [ModernDive.com](https://moderndive.com/). 
 
 
----
+# Introduction {#intro}
+
+
+***
+
+<h1>
+Special Announcement
+</h1>
+
+
+```{block, type='announcement', purl=FALSE}
+**We're excited to announce that we've signed a book deal with CRC Press! We will be publishing our first fully complete online version of ModernDive in Summer 2019, with a corresponding print edition to follow in Fall 2019. Don't worry though, our content will always remain freely available on [ModernDive.com](https://moderndive.com/).**
+```
+
+<center> 
+`r include_image(path = "images/crc_press.jpg", html_opts="height=150px", latex_opts = "width=20%")`
+</center>
+
+
+<!--
+```{block, type='announcement', purl=FALSE}
+**This is a previous version (v`r version`) of ModernDive and may be out of date. For the current version of ModernDive, please go to [ModernDive.com](https://moderndive.com/).**
+```
 -->
 
 
 
+***
+
+<!--
+```{block, type='announcement', purl=FALSE}
+**Please note that you are currently looking at the "development version" of ModernDive, which is a work in progress currently being edited and thus subject to frequent change. For the latest "released version" of ModernDive, which changes much less frequently, please visit [ModernDive.com](https://moderndive.com/).**
+```
+--> 
 
 
+**Help! I'm new to R and RStudio and I need to learn about them! However, I'm completely new to coding! What do I do?** 
 
+<!-- https://cran.r-project.org/Rlogo.svg -->
+<!-- https://www.rstudio.com/wp-content/uploads/2014/07/RStudio-Logo-Blue-Gradient.png -->
 
+<center>
+`r include_image("images/Rlogo.png", html_opts = "height=100px", latex_opts = "height=20%")`        \hfill &emsp; &emsp; &emsp; &emsp; `r include_image("images/RStudio-Logo-Blue-Gradient.png", html_opts = "height=100px", latex_opts = "height=20%")`
+</center>
 
-<img src="https://cran.r-project.org/Rlogo.svg" alt="Drawing" style="height: 150px;"/>
+<!--
+<img src="images/Rlogo.svg" style="height: 150px;"/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<img src="https://www.rstudio.com/wp-content/uploads/2014/07/RStudio-Logo-Blue-Gradient.png" alt="Drawing" style="height: 150px;"/>
+<img src="images/RStudio-Logo-Blue-Gradient.png" style="height: 150px;"/>
+-->
 
-**Help! I'm new to R and RStudio and I need to learn about them! However, I'm completely new to coding! What do I do?** If you're asking yourself this question, then you've come to the right place! Start with our [Introduction for Students](#sec:intro-for-students).
+If you're asking yourself this question, then you've come to the right place! Start with our [Introduction for Students](#sec:intro-for-students).
 
 * *Are you an instructor hoping to use this book in your courses? Then click [here](#sec:intro-instructors) for more information on how to teach with this book.*
 * *Are you looking to connect with and contribute to ModernDive? Then click [here](#sec:connect-contribute) for information on how.*
 * *Are you curious about the publishing of this book? Then click [here](#sec:about-book) for more information on the open-source technology, in particular R Markdown and the bookdown package.*
 
-This is version `r version` of ModernDive published on `r date`. For previous versions of ModernDive, see Section \@ref(sec:about-book).
+This is version `r version` of ModernDive published on `r date`. For previous versions of ModernDive, see Section \@ref(sec:about-book). While a PDF version of this book can be found [here](https://github.com/moderndive/moderndive_book/raw/master/docs/ismaykim.pdf){target="_blank"}, this is very much a work in progress with many things that still need to be fixed. We appreciate your patience. 
 
 
 
+***
 
 
-
----
 
 ## Introduction for students {#sec:intro-for-students}
 
 This book assumes no prerequisites: no algebra, no calculus, and no prior programming/coding experience. This is intended to be a gentle introduction to the practice of analyzing data and answering questions using data the way data scientists, statisticians, data journalists, and other researchers would. 
-  
-In Figure \@ref(fig:moderndive-figure) we present a flowchart of what you'll cover in this book. You'll first get started with  data in Chapter \@ref(getting-started), where you'll learn about the difference between R and RStudio, start coding in R, understand what R packages are, and explore your first dataset: all domestic departure flights from a New York City airport in 2013. Then
+
+In Figure \@ref(fig:moderndive-figure) we present a flowchart of what you'll cover in this book. You'll first get started with data in Chapter \@ref(getting-started), where you'll learn about the difference between R and RStudio, start coding in R, understand what R packages are, and explore your first dataset: all domestic departure flights from a New York City airport in 2013. Then
 
 1. **Data science**: You'll assemble your data science toolbox using `tidyverse` packages. In particular:
     + Ch.\@ref(viz): Visualizing data via the `ggplot2` package.
@@ -256,9 +337,9 @@ At this point, if you are interested in instructor perspectives on this book, wa
 
 
 
+***
 
 
----
 
 ## Introduction for instructors {#sec:intro-instructors}
 
@@ -297,14 +378,17 @@ Here are some principles and beliefs we kept in mind while writing this text. If
     + We are not teaching a course on coding/programming per se, but rather just enough of the computational and algorithmic thinking necessary for data analysis.
 1. **Complete reproducibility and customizability**
     + We are frustrated when textbooks give examples, but not the source code and the data itself. We give you the source code for all examples as well as the whole book!
-    + Ultimately the best textbook is one you've written yourself. You know best your audience, their background, and their priorities. You know best your own style and the types of examples and problems you like best. Customization is the ultimate end. For more about how to make this book your own, see [About this Book](#about-book).
+    + Ultimately the best textbook is one you've written yourself. You know best your audience, their background, and their priorities. You know best your own style and the types of examples and problems you like best. Customization is the ultimate end. For more about how to make this book your own, see [About this Book](#sec:about-book).
 
 
----
+
+***
+
+
 
 ## DataCamp {#datacamp}
 
-![](images/datacamp.png)
+`r include_image("images/datacamp.png", "width=100%", alt_text = "DataCamp logo")`
 
 DataCamp is a browser-based interactive platform for learning data science, offering courses on a wide array of courses on data science, analytics, statistics, machine learning, and artificial intelligence, where each course is a combination of lectures and exercises that offer immediate feedback.
 
@@ -312,18 +396,23 @@ The following chapters of ModernDive roughly map to the following closely-integr
 
 Click on the image for each course to access its webpage on [datacamp.com](https://www.datacamp.com/home). Instructors at accredited universities can sign their class up for a free academic licence at [DataCamp For The Classroom](https://www.datacamp.com/groups/education), giving their students access to all premium courses for 6 months for free.
 
+
+
+
 | Chapter | Topic | DataCamp Courses   
 | :-------------------------|:-------------------------|:-------------------------
-| 2 | Basic R programming concepts | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/free-introduction-to-r"><img src="images/datacamp_intro_to_R.png" alt="Drawing" style="height: 150px;"/></a> <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/intermediate-r"><img src="images/datacamp_intermediate_R.png" alt="Drawing" style="height: 150px;"/></a>
-| 3 & 5 | Introductory data visualization and wrangling | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/introduction-to-the-tidyverse"><img src="images/datacamp_intro_to_tidyverse.png" alt="Drawing" style="height: 150px;"/></a>
-| 4 & 5 | Data "tidying" and intermediate data wrangling | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/working-with-data-in-the-tidyverse"><img src="images/datacamp_working_with_data.png" alt="Drawing" style="height: 150px;"/></a>
-| 6 & 7 | Data modelling, basic regression, and multiple regression | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse"><img src="images/datacamp_intro_to_modeling.png" alt="Drawing" style="height: 150px;"/></a>
-| 9 & 10 | Statistical inference: confidence intervals and hypothesis testing | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/inference-for-numerical-data"><img src="images/datacamp_inference_for_numerical_data.png" alt="Drawing" style="height: 150px;"/></a> <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/inference-for-categorical-data"><img src="images/datacamp_inference_for_categorical_data.png" alt="Drawing" style="height: 150px;"/></a>
-| 11 | Inference for regression | <a target="_blank" class="page-link" href="https://www.datacamp.com/courses/inference-for-linear-regression"><img src="images/datacamp_inference_for_regression.png" alt="Drawing" style="height: 150px;"/></a> 
+| 2 | Basic R programming concepts | `r image_link(path = "images/datacamp_intro_to_R.png", link = "https://www.datacamp.com/courses/free-introduction-to-r", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth", center=FALSE)` `r image_link(path = "images/datacamp_intermediate_R.png", link = "https://www.datacamp.com/courses/intermediate-r", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth", center=FALSE)`
+| 3 & 5 | Introductory data visualization and wrangling | `r image_link(path = "images/datacamp_intro_to_tidyverse.png", link = "https://www.datacamp.com/courses/introduction-to-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth", center=FALSE)`
+| 4 & 5 | Data "tidying" and intermediate data wrangling | `r image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth", center=FALSE)`
+| 6 & 7 | Data modeling, basic regression, and multiple regression | `r image_link(path = "images/datacamp_intro_to_modeling.png", link = "https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth", center=FALSE)`
+| 9 & 10 | Statistical inference: confidence intervals and hypothesis testing | `r image_link(path = "images/datacamp_inference_for_numerical_data.png", link = "https://www.datacamp.com/courses/inference-for-numerical-data", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth", center=FALSE)` `r image_link(path = "images/datacamp_inference_for_categorical_data.png", link = "https://www.datacamp.com/courses/inference-for-categorical-data", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth", center=FALSE)`
+| 11 | Inference for regression | `r image_link(path = "images/datacamp_inference_for_regression.png", link = "https://www.datacamp.com/courses/inference-for-linear-regression", html_opts = "height: 150px;", latex_opts = "width=0.6\\textwidth", center=FALSE)`
 
 
 
----
+***
+
+
 
 ## Connect and contribute {#sec:connect-contribute}
 
@@ -338,13 +427,17 @@ If you would like to contribute to ModernDive, there are many ways! Let's all wo
 * Please let us know if you find any errors, typos, or areas from improvement on our [GitHub issues](https://github.com/moderndive/moderndive_book/issues) page.
 * If you are familiar with GitHub and would like to contribute more, please see Section \@ref(sec:about-book) below.
 
-The authors would like to thank [Nina Sonneborn](https://github.com/nsonneborn), [Kristin Bott](https://twitter.com/rhobott?lang=en), and the participants of our [USCOTS 2017 workshop](https://www.causeweb.org/cause/uscots/uscots17/workshop/3) for their feedback and suggestions.  A special thanks goes to Prof. Yana Weinstein, cognitive psychological scientist and co-founder of [The Learning Scientists](http://www.learningscientists.org/yana-weinstein/), for her extensive contributions.
+For example, we thank
+
+* [Dr Andrew Heiss](https://twitter.com/andrewheiss) for contributing Subsection 2.2.3 on "Errors, warnings, and messages".
+
+The authors would like to thank [Nina Sonneborn](https://github.com/nsonneborn), [Kristin Bott](https://twitter.com/rhobott?lang=en), and the participants of our [USCOTS 2017 workshop](https://www.causeweb.org/cause/uscots/uscots17/workshop/3) for their feedback and suggestions.  A special thanks goes to Dr. Yana Weinstein, cognitive psychological scientist and co-founder of [The Learning Scientists](http://www.learningscientists.org/yana-weinstein/), for her extensive contributions.
 
 
 
+***
 
 
----
 
 ## About this book {#sec:about-book}
 
@@ -357,6 +450,7 @@ This book was written using RStudio's [bookdown](https://bookdown.org/) package 
     + Preview of development version is available at [https://moderndive.netlify.com/](https://moderndive.netlify.com/)
     + Source code: Available on ModernDive's [GitHub repository page](https://github.com/moderndive/moderndive_book)
 * **Previous versions** Older versions that may be out of date:
+    + [Version 0.4.0](previous_versions/v0.4.0/index.html) released on July 21, 2018 ([source code](https://github.com/moderndive/moderndive_book/releases/tag/v0.4.0))
     + [Version 0.3.0](previous_versions/v0.3.0/index.html) released on February 3, 2018 ([source code](https://github.com/moderndive/moderndive_book/releases/tag/v0.3.0))
     + [Version 0.2.0](previous_versions/v0.2.0/index.html) released on August 02, 2017 ([source code](https://github.com/moderndive/moderndive_book/releases/tag/v0.2.0))
     + [Version 0.1.3](previous_versions/v0.1.3/index.html) released on February 09, 2017 ([source code](https://github.com/moderndive/moderndive_book/releases/tag/v0.1.3))
@@ -368,8 +462,9 @@ Finally, feel free to modify the book as you wish for your own needs, but please
 
 
 
+***
 
----
+
 
 ## About the authors {#sec:about-authors}
 
@@ -377,11 +472,13 @@ Who we are!
 
 Chester Ismay           |  Albert Y. Kim
 :-------------------------:|:-------------------------:
-<img src="images/ismay.jpeg" alt="Drawing" style="height: 200px;"/>  |  <img src="images/kim.jpeg" alt="Drawing" style="height: 200px;"/>
+`r include_image(path = "images/ismay.png", html_opts = "height=200px", latex_opts = "width=40%")` | `r include_image(path = "images/kim.png", html_opts = "height=200px", latex_opts = "width=40%")`
+
+<!-- <img src="images/ismay.jpeg" alt="Drawing" style="height: 200px;"/>  |  <img src="images/kim.jpeg" alt="Drawing" style="height: 200px;"/> -->
 
 * Chester Ismay: Senior Curriculum Lead - DataCamp, Portland, OR, USA.
     + Email: [chester.ismay@gmail.com](mailto:chester.ismay@gmail.com)
-    + Webpage: <http://ismayc.github.io/>
+    + Webpage: <http://chester.rbind.io/>
     + Twitter: [old_man_chester](https://twitter.com/old_man_chester)
     + GitHub: <https://github.com/ismayc>
 * Albert Y. Kim: Assistant Professor of Statistical & Data Sciences - Smith College, Northampton, MA, USA.
@@ -398,7 +495,10 @@ Chester Ismay           |  Albert Y. Kim
 -->
 
 ```{r colophon, echo=FALSE, eval=FALSE}
+library(kableExtra)
 knitr::kable(devtools::session_info(needed_pkgs)$packages, 
              booktabs = TRUE,
-             longtable = TRUE)
+             longtable = TRUE) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 ```

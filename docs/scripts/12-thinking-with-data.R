@@ -7,26 +7,16 @@ rq <- 0
 
 knitr::opts_chunk$set(
   tidy = FALSE, 
-  out.width = '\\textwidth'
+  out.width = '\\textwidth', 
+  fig.height = 4,
+  warning = FALSE
   )
 
-# This bit of code is a bug fix on asis blocks, which we use to show/not show LC
-# solutions, which are written like markdown text. In theory, it shouldn't be
-# necessary for knitr versions <=1.11.6, but I've found I still need to for
-# everything to knit properly in asis blocks. More info here: 
-# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
-library(knitr)
-knit_engines$set(asis = function(options) {
-  if (options$echo && options$eval) knit_child(text = options$code)
-})
+options(scipen = 99, digits = 3)
 
-# This controls which LC solutions to show. Options for solutions_shown: "ALL"
-# (to show all solutions), or subsets of c('4-4', '4-5'), including the
-# null vector c('') to show no solutions.
-solutions_shown <- c('')
-show_solutions <- function(section){
-  return(solutions_shown == "ALL" | section %in% solutions_shown)
-  }
+# Set random number generator see value for replicable pseudorandomness. Why 76?
+# https://www.youtube.com/watch?v=xjJ7FheCkCU
+set.seed(76)
 
 ## ----moderndive-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="ModernDive Flowchart"----
 knitr::include_graphics("images/flowcharts/flowchart/flowchart.002.png")
@@ -96,7 +86,7 @@ house_prices %>%
     IQR_price = IQR(price)
   )
 
-## ----log10-orders-of-magnitude, echo=FALSE-------------------------------
+## ----logten, echo=FALSE--------------------------------------------------
 data_frame(Price = c(1,10,100,1000,10000,100000,1000000)) %>% 
   mutate(
     `log10(Price)` = log10(Price),
@@ -105,9 +95,11 @@ data_frame(Price = c(1,10,100,1000,10000,100000,1000000)) %>%
     `Examples` = c("Cups of coffee", "Books", "Mobile phones", "High definition TV's", "Cars", "Luxury cars & houses", "Luxury houses")
     ) %>% 
   kable(
-    caption = "log10-transformated prices, orders of magnitude, and examples", 
+    caption = "log10-transformed prices, orders of magnitude, and examples", 
     booktabs = TRUE
-  )
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
+                latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 house_prices <- house_prices %>%

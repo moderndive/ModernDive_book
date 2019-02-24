@@ -12,28 +12,32 @@ knitr::opts_chunk$set(
   out.width = '\\textwidth', 
   fig.height = 4,
   warning = FALSE
-)
+  )
 
-# This bit of code is a bug fix on asis blocks, which we use to show/not show LC
-# solutions, which are written like markdown text. In theory, it shouldn't be
-# necessary for knitr versions <=1.11.6, but I've found I still need to for
-# everything to knit properly in asis blocks. More info here: 
-# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
-library(knitr)
-knit_engines$set(asis = function(options) {
-  if (options$echo && options$eval) knit_child(text = options$code)
-})
+options(scipen = 99, digits = 3)
 
-# This controls which LC solutions to show. Options for solutions_shown: "ALL"
-# (to show all solutions), or subsets of c('3-1', '3-2','3-3'), including the
-# null vector c('') to show no solutions.
-solutions_shown <- c("")
-show_solutions <- function(section){
-  return(solutions_shown == "ALL" | section %in% solutions_shown)
-  }
+# Set random number generator see value for replicable pseudorandomness. Why 76?
+# https://www.youtube.com/watch?v=xjJ7FheCkCU
+set.seed(76)
 ```
 
-We saw some of the main concepts of hypothesis testing introduced in Chapters \@ref(sampling) and \@ref(confidence-intervals).  We will expand further on these ideas here and also provide a framework for understanding hypothesis tests in general.Instead of presenting you with lots of different formulas and scenarios, we hope to build a way to think about all hypothesis tests.  You can then adapt to different scenarios as needed down the road when you encounter different statistical situations.
+
+
+***
+
+
+
+```{block, type='announcement', purl=FALSE}
+**In preparation for our first print edition to be published by CRC Press in Fall 2019, we're remodeling this chapter a bit.  Don't expect major changes in content, but rather only minor changes in presentation. Our remodeling will be complete and available online at [ModernDive.com](https://moderndive.com/) by early Summer 2019!**
+```
+
+
+
+***
+
+
+
+We saw some of the main concepts of hypothesis testing introduced in Chapters \@ref(sampling) and \@ref(confidence-intervals).  We will expand further on these ideas here and also provide a framework for understanding hypothesis tests in general. Instead of presenting you with lots of different formulas and scenarios, we hope to build a way to think about all hypothesis tests.  You can then adapt to different scenarios as needed down the road when you encounter different statistical situations.
 
 The same can be said for confidence intervals.  There was one general framework that applies to all confidence intervals and we elaborated on this using the `infer` package pipeline in Chapter \@ref(confidence-intervals). The specifics may change slightly for each variation, but the important idea is to understand the general framework so that you can apply it to more specific problems. We believe that this approach is much better in the long-term than teaching you specific tests and confidence intervals rigorously.  You can find fully-worked out examples for five common hypothesis tests and their corresponding confidence intervals in Appendix \@ref(appendixB).  
 
@@ -57,17 +61,41 @@ library(broom)
 library(knitr)
 ```
 
-### DataCamp {-}
-
-Our approach of using data science tools to understand the second major component of statistical inference, hypothesis testing, uses the same tools as in [Mine Cetinkaya-Rundel](https://twitter.com/minebocek) and [Andrew Bray's](https://twitter.com/crite) DataCamp courses "Inference for Numerical Data" and "Inference for Categorical Data." If you're interested in complementing your learning below in an interactive online environment, click on the images below to access the courses. 
-
-<center>
-<a target="_blank" class="page-link" href="https://www.datacamp.com/courses/inference-for-numerical-data"><img src="images/datacamp_inference_for_numerical_data.png" alt="Drawing" style="height: 150px;"/></a>
-<a target="_blank" class="page-link" href="https://www.datacamp.com/courses/inference-for-categorical-data"><img src="images/datacamp_inference_for_categorical_data.png" alt="Drawing" style="height: 150px;"/></a>
-</center>
 
 
----
+***
+
+
+
+We saw some of the main concepts of hypothesis testing introduced in Chapters \@ref(sampling) and \@ref(confidence-intervals).  We will expand further on these ideas here and also provide a framework for understanding hypothesis tests in general. Instead of presenting you with lots of different formulas and scenarios, we hope to build a way to think about all hypothesis tests.  You can then adapt to different scenarios as needed down the road when you encounter different statistical situations.
+
+The same can be said for confidence intervals.  There was one general framework that applies to all confidence intervals and we elaborated on this using the `infer` package pipeline in Chapter \@ref(confidence-intervals). The specifics may change slightly for each variation, but the important idea is to understand the general framework so that you can apply it to more specific problems. We believe that this approach is much better in the long-term than teaching you specific tests and confidence intervals rigorously.  You can find fully-worked out examples for five common hypothesis tests and their corresponding confidence intervals in Appendix \@ref(appendixB).  
+
+We recommend that you carefully review these examples as they also cover how the general frameworks apply to traditional normal-based methodologies like the $t$-test and normal-theory confidence intervals.  You'll see there that these methods are just approximations for the general computational frameworks, but require conditions to be met for their results to be valid.  The general frameworks using randomization, simulation, and bootstrapping do not hold the same sorts of restrictions and further advance computational thinking, which is one big reason for their emphasis throughout this textbook.
+
+### Needed packages {-}
+
+Let's load all the packages needed for this chapter (this assumes you've already installed them). If needed, read Section \@ref(packages) for information on how to install and load R packages.
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+library(infer)
+library(nycflights13)
+library(ggplot2movies)
+library(broom)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+# Packages needed internally, but not in text.
+library(knitr)
+```
+
+
+
+***
+
+
 
 ## When inference is not needed
 
@@ -112,6 +140,12 @@ Since there is no overlap at all, we can conclude that the `air_time` for San Fr
   
 As you get more and more practice with hypothesis testing, you'll be better able to determine in many cases whether or not the results will be statistically significant. There are circumstances where it is difficult to tell, but you should always try to make a guess FIRST about significance after you have completed your data exploration and before you actually begin the inferential techniques.
 
+
+
+***
+
+
+
 ## Basics of hypothesis testing {#ht-basics}
 
 In a hypothesis test, we will use data from a sample to help us decide between two competing _hypotheses_ about a population.  We make these hypotheses more concrete by specifying them in terms of at least one _population parameter_ of interest.  We refer to the competing claims about the population as the **null hypothesis**, denoted by $H_0$, and the **alternative (or research) hypothesis**, denoted by $H_a$.  The roles of these two hypotheses are NOT interchangeable.  
@@ -120,7 +154,7 @@ In a hypothesis test, we will use data from a sample to help us decide between t
 - Usually, the null hypothesis is a claim that there really is "no effect" or "no difference."  In many cases, the null hypothesis represents the status quo or that nothing interesting is happening.  
 - We assess the strength of evidence by assuming the null hypothesis is true and determining how unlikely it would be to see sample results/statistics as extreme (or more extreme) as those in the original sample.
 
-Hypothesis testing brings about many weird and incorrect notions in the scientific community and society at large.  One reason for this is that statistics has traditionally been thought of as this magic box of algorithms and procedures to get to results and this has been readily apparent if you do a Google search of "flowchart statistics hypothesis tests".  There are so many different complex ways to determine which test is appropriate.  
+Hypothesis testing brings about many weird and incorrect notions in the scientific community and society at large.  One reason for this is that statistics has traditionally been thought of as this magic box of algorithms and procedures to get to results and this has been readily apparent if you do a Google search of "flowchart statistics hypothesis tests."  There are so many different complex ways to determine which test is appropriate.  
 
 You'll see that we don't need to rely on these complicated series of assumptions and procedures to conduct a hypothesis test any longer.  These methods were introduced in a time when computers weren't powerful.  Your cellphone (in 2016) has more power than the computers that sent NASA astronauts to the moon after all.  We'll see that ALL hypothesis tests can be broken down into the following framework given by Allen Downey [here](http://allendowney.blogspot.com/2016/06/there-is-still-only-one-test.html):
 
@@ -132,9 +166,9 @@ Before we hop into this framework, we will provide another way to think about hy
 
 
 
+***
 
 
----
 
 ## Criminal trial analogy {#trial}
 
@@ -175,9 +209,9 @@ When you run a hypothesis test, you are the jury of the trial.  You decide wheth
 
 
 
+***
 
 
----
 
 ## Types of errors in hypothesis testing
 
@@ -234,9 +268,9 @@ So if we can set $\alpha$ to be whatever we want, why choose 0.05 instead of 0.0
 
 
 
+***
 
 
----
 
 ## Statistical significance
 
@@ -255,6 +289,12 @@ The idea that sample results are more extreme than we would reasonably expect to
 ```{block, type='learncheck', purl=FALSE}
 ```
 
+
+
+***
+
+
+
 ## Hypothesis testing with infer
 
 The "There is Only One Test" diagram mentioned in Section \@ref(ht-basics) was the inspiration for the `infer` pipeline that you saw for confidence intervals in Chapter \@ref(confidence-intervals). For hypothesis tests, we include one more verb into the pipeline: the `hypothesize()` verb. Its main argument is `null` which is either 
@@ -268,6 +308,12 @@ knitr::include_graphics("images/flowcharts/infer/ht.png")
 ```
 
 We'll first explore the two variable case by comparing two means. Note the section headings here that refer to the "There is Only One Test" diagram. We will lay out the specifics for each problem using this framework and the `infer` pipeline together.
+
+
+
+***
+
+
 
 ## Example: Comparing two means
 
@@ -452,7 +498,7 @@ Our goal next is to figure out a random process with which to simulate the null 
 
 Here, with us assuming the two population means are equal ($H_0: \mu_r - \mu_a = 0$), we can look at this from a tactile point of view by using index cards.  There are $n_r = 34$ data elements corresponding to romance movies and $n_a = 34$ for action movies.  We can write the 34 ratings from our sample for romance movies on one set of 34 index cards and the 34 ratings for action movies on another set of 34 index cards.  (Note that the sample sizes need not be the same.)
 
-The next step is to put the two stacks of index cards together, creating a new set of 68 cards.  If we assume that the two population means are equal, we are saying that there is no association between ratings and genre (romance vs action).  We can use the index cards to create two **new** stacks for romance and action movies.  First, we must shuffle all the cards thoroughly.  After doing so, in this case with equal values of sample sizes, we split the deck in half.
+The next step is to put the two stacks of index cards together, creating a new set of 68 cards.  If we assume that the two population means are equal, we are saying that there is no association between ratings and genre (romance vs action).  We can use the index cards to create two **new** stacks for romance and action movies.  Note that the **new** "romance movie stack" will likely have some of the original action movies in it and likewise for the "action movie stack" including some romance movies from our original set. Since we are assuming that each card is equally likely to have appeared in either one of the stacks this makes sense. First, we must shuffle all the cards thoroughly.  After doing so, in this case with equal values of sample sizes, we split the deck in half.
 
 We then calculate the new sample mean rating of the romance deck, and also the new sample mean rating of the action deck.  This creates one simulation of the samples that were collected originally.  We next want to calculate a statistic from these two samples.  Instead of actually doing the calculation using index cards, we can use R as we have before to simulate this process. Let's do this just once and compare the results to what we see in `movies_genre_sample`.
 
@@ -460,17 +506,21 @@ We then calculate the new sample mean rating of the romance deck, and also the n
 set.seed(2018)
 ```
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE, eval=FALSE}
 shuffled_ratings_old <- #movies_trimmed %>%
   movies_genre_sample %>% 
      mutate(genre = mosaic::shuffle(genre)) %>% 
      group_by(genre) %>%
      summarize(mean = mean(rating))
 diff(shuffled_ratings_old$mean)
+```
 
-permuted_ratings <- movies_genre_sample %>% 
-  specify(formula = rating ~ genre) %>% 
-  generate(reps = 1)
+```{r message=FALSE, warning=FALSE}
+movies_genre_sample %>% 
+  specify(formula = rating ~ genre) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1) %>% 
+  calculate(stat = "diff in means", order = c("Romance", "Action"))
 ```
 
 ```{block lc7-3b4, type='learncheck', purl=FALSE}
@@ -617,9 +667,9 @@ we fail to reject $H_0$.  (If no significance level is given, one can assume $\a
 
 
 
+***
 
 
----
 
 ## Building theory-based methods using computation {#theory-hypo}
 
@@ -629,7 +679,7 @@ These traditional methods have been used for many decades back to the time when 
 
 ### Example:  $t$-test for two independent samples
 
-What is commonly done in statistics is the process of normalization.  What this entails is calculating the mean and standard deviation of a variable.  Then you subtract the mean from each value of your variable and divide by the standard deviation.  The most common normalization is known as the $z$-score.  The formula for a $z$-score is $$Z = \frac{x - \mu}{\sigma},$$ where $x$ represent the value of a variable, $\mu$ represents the mean of the variable, and $\sigma$ represents the standard deviation of the variable.  Thus, if your variable has 10 elements, each one has a corresponding $z$-score that gives how many standard deviations away that value is from its mean.  $z$-scores are normally distributed with mean 0 and standard deviation 1.  They have the common, bell-shaped pattern seen below.
+What is commonly done in statistics is the process of standardization.  What this entails is calculating the mean and standard deviation of a variable.  Then you subtract the mean from each value of your variable and divide by the standard deviation.  The most common standardization is known as the $z$-score.  The formula for a $z$-score is $$Z = \frac{x - \mu}{\sigma},$$ where $x$ represent the value of a variable, $\mu$ represents the mean of the variable, and $\sigma$ represents the standard deviation of the variable.  Thus, if your variable has 10 elements, each one has a corresponding $z$-score that gives how many standard deviations away that value is from its mean.  $z$-scores are normally distributed with mean 0 and standard deviation 1.  They have the common, bell-shaped pattern seen below.
 
 ```{r echo=FALSE}
 ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm)
@@ -637,7 +687,7 @@ ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm)
 
 Recall, that we hardly ever know the mean and standard deviation of the population of interest.  This is almost always the case when considering the means of two independent groups.  To help account for us not knowing the population parameter values, we can use the sample statistics instead, but this comes with a bit of a price in terms of complexity.
 
-Another form of normalization occurs when we need to use the sample standard deviations as estimates for the unknown population standard deviations.  This normalization is often called the $t$-score.  For the two independent samples case like what we have for comparing action movies to romance movies, the formula is $$T =\dfrac{ (\bar{x}_1 - \bar{x}_2) - (\mu_1 - \mu_2)}{ \sqrt{\dfrac{{s_1}^2}{n_1} + \dfrac{{s_2}^2}{n_2}}  }$$
+Another form of standardization occurs when we need to use the sample standard deviations as estimates for the unknown population standard deviations.  This standardization is often called the $t$-score.  For the two independent samples case like what we have for comparing action movies to romance movies, the formula is $$T =\dfrac{ (\bar{x}_1 - \bar{x}_2) - (\mu_1 - \mu_2)}{ \sqrt{\dfrac{{s_1}^2}{n_1} + \dfrac{{s_2}^2}{n_2}}  }$$
   
 There is a lot to try to unpack here.  
 
@@ -723,6 +773,11 @@ Condition 3:  This is met since there is no natural pairing of a movie in the Ac
 Since all three conditions are met, we can be reasonably certain that the theory-based test will match the results of the randomization-based test using shuffling.  Remember that theory-based tests can produce some incorrect results in these assumptions are not carefully checked.  The only assumption for randomization and computational-based methods is that the sample is selected at random.  They are our preference and we strongly believe they should be yours as well, but it's important to also see how the theory-based tests can be done and used as an approximation for the computational techniques until at least more researchers are using these techniques that utilize the power of computers.
 
 
+
+***
+
+
+
 ## Conclusion
 
 We conclude by showing the `infer` pipeline diagram. In Chapter \@ref(inference-for-regression), we'll come back to regression and see how the ideas covered in Chapter \@ref(confidence-intervals) and this chapter can help in understanding the significance of predictors in modeling.
@@ -735,4 +790,3 @@ knitr::include_graphics("images/flowcharts/infer/ht_diagram.png")
 ### Script of R code
 
 An R script file of all R code used in this chapter is available [here](scripts/10-hypothesis-testing.R).
-

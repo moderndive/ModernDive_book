@@ -1,12 +1,15 @@
+## **_Learning check_**
+
+## NA
 ## ---- eval=FALSE---------------------------------------------------------
 ## library(ggplot2)
-## library(dplyr)
 
+## **_Learning check_**
+
+## NA
 ## ----message=FALSE-------------------------------------------------------
-library(dplyr)
-
-# Be sure to install these first!
 library(nycflights13)
+library(dplyr)
 library(knitr)
 
 ## ----load_flights--------------------------------------------------------
@@ -14,15 +17,11 @@ flights
 
 ## **_Learning check_**
 
-## **Learning Check Solutions**
-
 ## NA
 ## ------------------------------------------------------------------------
 glimpse(flights)
 
 ## **_Learning check_**
-
-## **Learning Check Solutions**
 
 ## NA
 ## ----eval=FALSE----------------------------------------------------------
@@ -33,17 +32,14 @@ glimpse(flights)
 ## airlines
 ## airlines$name
 
+## ------------------------------------------------------------------------
+glimpse(airports)
+
+## **_Learning check_**
+
 ## ----eval=FALSE----------------------------------------------------------
 ## ?flights
 
-## ---- echo=FALSE, warning=FALSE, message=FALSE, results='hide'-----------
-# needed_pkgs <- c("nycflights13", "tibble", "dplyr", "ggplot2", "knitr", 
-#   "okcupiddata", "dygraphs", "rmarkdown", "mosaic", 
-#   "ggplot2movies", "fivethirtyeight", "readr")
-# 
-# new.pkgs <- needed_pkgs[!(needed_pkgs %in% installed.packages())]
-# 
-# if(length(new.pkgs)) {
-#   install.packages(new.pkgs, repos = "http://cran.rstudio.com")
-# }
+## ----echo=FALSE, fig.cap="ModernDive flowchart", out.width='110%', fig.align='center'----
+knitr::include_graphics("images/flowcharts/flowchart/flowchart.004.png")
 
