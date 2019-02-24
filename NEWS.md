@@ -2,7 +2,7 @@
 
 ## Highlights
 
-* "Data wrangling" chapter now comes "Tidy data" chapter.
+* "Data wrangling" chapter now comes after "Tidy data" chapter.
 * Improved explanations and examples of `geom_histogram()`, `geom_boxplot()`, and "tidy" data
 * Moving residual analysis from regression Chapters 6 & 7 to Chap 11: Inference for regression
 * Reorganized Chap 8 on Sampling
