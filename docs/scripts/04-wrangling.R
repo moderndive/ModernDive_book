@@ -30,15 +30,22 @@ library(nycflights13)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## btv_sea_flights_fall <- flights %>%
-##   filter(origin == "JFK",
-##          dest == "BTV" | dest == "SEA",
-##          month >= 10)
+##   filter(origin == "JFK" & (dest == "BTV" | dest == "SEA") & month >= 10)
+## View(btv_sea_flights_fall)
+
+## ---- eval=FALSE---------------------------------------------------------
+## btv_sea_flights_fall <- flights %>%
+##   filter(origin == "JFK", (dest == "BTV" | dest == "SEA"), month >= 10)
 ## View(btv_sea_flights_fall)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## not_BTV_SEA <- flights %>%
 ##   filter(!(dest == "BTV" | dest == "SEA"))
 ## View(not_BTV_SEA)
+
+## ---- eval=FALSE---------------------------------------------------------
+## flights %>%
+##   filter(!dest == "BTV" | dest == "SEA")
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## many_airports <- flights %>%
@@ -50,11 +57,10 @@ library(nycflights13)
 ##   filter(dest %in% c("BTV", "SEA", "PDX", "SFO", "BDL"))
 ## View(many_airports)
 
-## ---- eval=FALSE---------------------------------------------------------
-## summary_temp <- weather %>%
-##   summarize(mean = mean(temp),
-##             std_dev = sd(temp))
-## summary_temp
+## ---- eval=TRUE----------------------------------------------------------
+summary_temp <- weather %>% 
+  summarize(mean = mean(temp), std_dev = sd(temp))
+summary_temp
 
 ## ---- echo=FALSE, eval=FALSE---------------------------------------------
 ## options(knitr.kable.NA = '')
@@ -65,22 +71,19 @@ library(nycflights13)
 ##   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
 ##                 latex_options = c("HOLD_position"))
 
-## ---- eval=FALSE---------------------------------------------------------
-## summary_temp <- weather %>%
-##   summarize(mean = mean(temp, na.rm = TRUE),
-##             std_dev = sd(temp, na.rm = TRUE))
-## summary_temp
-
-## ---- echo=FALSE---------------------------------------------------------
+## ---- eval = TRUE--------------------------------------------------------
 summary_temp <- weather %>% 
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))
-kable(summary_temp) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+summary_temp
 
-## ------------------------------------------------------------------------
-#summary_temp$mean
+## ---- echo=FALSE, eval=FALSE---------------------------------------------
+## summary_temp <- weather %>%
+##   summarize(mean = mean(temp, na.rm = TRUE),
+##             std_dev = sd(temp, na.rm = TRUE))
+## kable(summary_temp) %>%
+##   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+##                 latex_options = c("HOLD_position"))
 
 ## ----eval=FALSE----------------------------------------------------------
 ## summary_temp <- weather %>%
@@ -103,19 +106,36 @@ kable(summary_monthly_temp) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
-## ---- eval=FALSE---------------------------------------------------------
-## by_origin <- flights %>%
-##   group_by(origin) %>%
-##   summarize(count = n())
-## by_origin
+## ---- eval=TRUE----------------------------------------------------------
+diamonds
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- eval=TRUE----------------------------------------------------------
+diamonds %>% 
+  group_by(cut)
+
+## ---- eval=TRUE----------------------------------------------------------
+diamonds %>% 
+  group_by(cut) %>% 
+  summarize(avg_price = mean(price))
+
+## ---- eval=TRUE----------------------------------------------------------
+diamonds %>% 
+  group_by(cut) %>% 
+  ungroup()
+
+## ---- eval=TRUE----------------------------------------------------------
 by_origin <- flights %>% 
   group_by(origin) %>% 
   summarize(count = n())
-kable(by_origin) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+by_origin
+
+## ---- echo=FALSE, eval=FALSE---------------------------------------------
+## by_origin <- flights %>%
+##   group_by(origin) %>%
+##   summarize(count = n())
+## kable(by_origin) %>%
+##   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+##                 latex_options = c("HOLD_position"))
 
 ## ------------------------------------------------------------------------
 by_origin_monthly <- flights %>% 
@@ -130,12 +150,23 @@ by_origin_monthly_incorrect <- flights %>%
   summarize(count = n())
 by_origin_monthly_incorrect
 
-## ---- eval=FALSE---------------------------------------------------------
-## by_monthly_origin <- flights %>%
-##   count(origin, month)
-## by_monthly_origin
-
 ## NA
+## ---- eval=FALSE---------------------------------------------------------
+## weather <- weather %>%
+##   mutate(temp_in_C = (temp-32)/1.8)
+## View(weather)
+
+## ---- eval=TRUE, echo=FALSE----------------------------------------------
+weather <- weather %>% 
+  mutate(temp_in_C = (temp-32)/1.8)
+
+## ------------------------------------------------------------------------
+summary_monthly_temp <- weather %>% 
+  group_by(month) %>% 
+  summarize(mean_temp_in_F = mean(temp, na.rm = TRUE), 
+            mean_temp_in_C = mean(temp_in_C, na.rm = TRUE))
+summary_monthly_temp
+
 ## ------------------------------------------------------------------------
 flights <- flights %>% 
   mutate(gain = dep_delay - arr_delay)
@@ -214,8 +245,9 @@ freq_dest %>%
 ## View(airports)
 
 ## ---- eval=FALSE---------------------------------------------------------
-## flights %>%
+## flights_with_airport_names <-  flights %>%
 ##   inner_join(airports, by = c("dest" = "faa"))
+## View(flights_with_airport_names)
 
 ## ------------------------------------------------------------------------
 named_dests <- flights %>%
@@ -226,11 +258,17 @@ named_dests <- flights %>%
   rename(airport_name = name)
 named_dests
 
-## ------------------------------------------------------------------------
-flights_weather_joined <- flights %>%
-  inner_join(weather, 
-             by = c("year", "month", "day", "hour", "origin"))
-flights_weather_joined
+## ---- eval=FALSE---------------------------------------------------------
+## flights_weather_joined <- flights %>%
+##   inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
+## View(flights_weather_joined)
+
+## ----eval=FALSE----------------------------------------------------------
+## joined_flights <- flights %>%
+##   inner_join(airlines, by = "carrier")
+## View(joined_flights)
+
+## **_Learning check_**
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## glimpse(flights)
@@ -242,7 +280,7 @@ flights_weather_joined
 ## ---- eval=FALSE---------------------------------------------------------
 ## flights_no_year <- flights %>%
 ##   select(-year)
-## names(flights_no_year)
+## glimpse(flights_no_year)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## flight_arr_times <- flights %>%
@@ -251,8 +289,8 @@ flights_weather_joined
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## flights_reorder <- flights %>%
-##   select(month:day, hour:time_hour, everything())
-## names(flights_reorder)
+##   select(year, month, day, hour, minute, time_hour, everything())
+## glimpse(flights_reorder)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## flights_begin_a <- flights %>%
@@ -274,7 +312,7 @@ flights_weather_joined
 ##   select(contains("time")) %>%
 ##   rename(departure_time = dep_time,
 ##          arrival_time = arr_time)
-## names(flights_time)
+## glimpse(flights_time)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## named_dests %>%
@@ -285,29 +323,21 @@ flights_weather_joined
 ##   top_n(n = 10, wt = num_flights) %>%
 ##   arrange(desc(num_flights))
 
-## ---- eval=FALSE---------------------------------------------------------
-## ten_freq_dests <- flights %>%
-##   group_by(dest) %>%
-##   summarize(num_flights = n()) %>%
-##   arrange(desc(num_flights)) %>%
-##   top_n(n = 10)
-## View(ten_freq_dests)
-
 ## ----wrangle-summary-table, echo=FALSE, message=FALSE--------------------
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1nRkXfYMQiTj79c08xQPY0zkoJSpde3NC1w6DRhsWCss/edit#gid=0
 
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vRgwl1lugQA6zxzfB6_0hM5vBjXkU7cbUVYYXLcWeaRJ9HmvNXyCjzJCgiGW8HCe1kvjLCGYHf-BvYL/pub?gid=0&single=true&output=csv" %>% 
   read_csv(na = "") %>% 
-  rename_(" " = "X1") %>% 
+  select(-X1) %>% 
   kable(
     caption = "Summary of data wrangling verbs", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position")) %>%
-  column_spec(2, width = "0.9in") %>% 
-  column_spec(3, width = "3.3in")
+  column_spec(1, width = "0.9in") %>% 
+  column_spec(2, width = "3.3in")
 
 ## ----dplyr-cheatsheet, echo=FALSE, fig.cap="Data Transformation with dplyr cheatsheat"----
 include_graphics("images/dplyr_cheatsheet-1.png")

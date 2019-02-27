@@ -1,26 +1,9 @@
-# ModernDive 0.4.0.9000
+# ModernDive 0.5.0.9000
 
 ## Major refactoring of inference chapters of book
 
-### Old chapter structure
+**Old Chapter Structure**:
 
-* Chapter 8 - Sampling
-    1. Introduction to sampling
-        a) Concepts related to sampling
-        b) Inference via sampling
-    2. Tactile sampling simulation
-        a) Using the shovel once
-        b) Using the shovel 33 times
-    3. Virtual sampling simulation
-        a) Using the shovel once
-        b) Using shovel 33 times
-        c) Using shovel 1000 times
-        d) Using different shovels
-    4. In real-life sampling: Polls
-    5. Conclusion
-        a) Central Limit Theorem
-        b) What’s to come?
-        c) Script of R code
 * Chapter 9 - Confidence Intervals
     1. Bootstrapping
         a) Data explanation
@@ -83,61 +66,36 @@
         d) Script of R code
 
 
-### New chapter structure
+**New Chapter Structure**:
 
-* Chapter 8 - Sampling
-    1. Activity: Sampling from a bowl
-        a) Question: What proportion of this bowl is red?
-        b) Using shovel once
-        c) Using shovel 33 times
-    1. Computer simulation:
-        a) What is a simulation? We just did a "tactile" one by hand, now let's do one using the the computer
-        b) Using shovel once
-        c) Using shovel 33 times
-        d) Using shovel 1000 times
-        e) Using different shovels
-    1. Goal: Study fluctuations due to sampling variation
-        a) You probably already knew: Bigger sample size means "better" guess.
-        b) Comparing shovels: Role of sample size
-    1. Framework: Sampling
-        a) Terminology for sampling (population, sample, point estimate, etc)
-        b) Statistical concepts: sampling distribution and standard error
-        c) Computer's random number generator
-    1. Interpretation: 
-        a) Visual display of differences
-    1. Case study: Obama poll 
-    1. Big picture: 
-        a) Table of inferential scenarios: Add bowl and obama poll (both p)
-        b) Why does this work? Theoretial result: CLT
-        c) There's a formula for that: SE formula that has sqrt(n) at the bottom
-        d) Appendix: Normal distribution discussion
 * Chapter 9 - Confidence Intervals
     1. Activity: Working with a sample of pennies from the bank. Are they representative of all pennies in the US.
         a) Question: What do I do when I only have one sample?
         b) Resampling once (paper slips)
         c) Resampling 33 times
+        d) Diagrams in Keynote
     1. Computer simulation: 
         a) What is resampling?
         b) Resampling once
         c) Resampling 33 times
         d) Resampling 1000 times
     1. Goal: Generate an estimate that accounts for sampling variation
-        a) Constructing a confidence interval
+        a) Constructing a confidence interval: hide code to shade ci region and to get the actual values. 
         b) Constructing a CI using percentile method
         c) Constructing a CI using SE method
     1. Framework: Boostrap resampling with replacement
         a) What dplyr verbs did we use?
         b) There is only one test framework
-        c) the infer package
+        c) the infer package: make sure to draw parallels between dplyr code and infer verbs
     1. Interpretation: 
-        a) 95% speaks to reliability of the process, not about an particular interval
+        a) 95% speaks to reliability of the process, not about an particular interval. "We are 95% confident"
         b) What determines the width? Sample size, confidence levels (only int at population variance)
     1. Case study: Comparing two proportions with Mythbusters data
     1. Big picture: 
-        a) Does this even work? Comparing sampling and bootstrap distribution.
+        a) Does this even work? Comparing sampling and bootstrap distribution. Do this using balls. 
         b) Table of inferential scenarios: Add pennies (mu) and Mythbusters (p1 - p2)
-        c) Why does this work? Theoretical result: Donsker's theorem. The empirical CDF converges to the population CDF. Bootstrap works for any point estimate
-        d) There's a formula for that! Margin of error using critical values z*
+        c) Why does this work? Theoretical result: Efron. The empirical CDF converges to the population CDF. Bootstrap works for any point estimate
+        d) There's a formula for that! Margin of error using critical values z. Talk about normal distributions. 
 * Chapter 10 - Hypothesis Testing
     1. Activity: Shuffling resumes between male and female job applicants
         a) Question: Are men and women rated for jobs differently?
@@ -145,79 +103,147 @@
         c) What about sampling variation?
         d) What did we actually observe?
         e) How likely is this result?
-    1. Computer simulation: 
+        f) Diagrams in Keynote
+    1. Extension of previous framework/infer
+        a) Revisit verb framework
+        a) Permutation test resampling w/o replacement
+        b) There is only one test framework
+        a) Do activity via infer package
     1. Goal: Choose between two possible truths while accounting for sampling variation
         a) Conducting a hypothesis test
         b) Null hypothesis that's assumed
         c) Null distribution of test statistics: A "alternate universe" distribution
         d) Observed test statistics
         e) Definition of p-value
-    1. Framework: Permutation test resampling w/o replacement
-        a) Revisit verb framework
-        b) There is only one test framework
-        c) the infer package
     1. Interpretation: 
         a) A yes/no-type decision: statistical significance via alpha
         b) Types of errors: 2x2 table
         c) Analogy of criminal justice system
     1. Case study: Comparing two means with action vs romance movie data
     1. Big picture: 
+        a) When is inference not needed: EDA can solve the problem. 
         a) Problems with p-values: p-hacking, hard to understand, ASA statement
         b) Comparison with confidence intervals. HT yields binary decision, but CI's yield plausible range of estimates. This is statistical vs practical significance
         c) Table of inferential scenarios: Add action vs romance (mu1 - mu2)
-        d) Why does this work? Theoretical result: Neyman-Pearson lemma
-        e) There's a formula for that! t-test
+        d) Why does this work? Theoretical result: Neyman-Pearson lemma (maybe)
+        e) There's a formula for that! t-test. Draw a null distribution with t-distribution superimposed. 
 * Chapter 11 - Inference for Regression
     1. Activity: Revisit simple linear regression
         a) Question: Is there a significant relationship between teaching score and bty score above and beyond any evidence due to sampling variation.
         b) Review exercise/re-run all code
         c) Regression table
     1. Computer simulation: 
-        a) Bootstraping the relationship
-        b) Permuting the relationship
+        a) Permuting the relationship: to do a hypothesis test assuming independence of y & x. 
+        a) Bootstraping the rows: Having done HT, generate confidence interval.
     1. Goal: Inferring about the population regression slope
-        a) 
     1. Framework: 
     1. Interpretation:
-        a) Values in table are given! No simulations necessary!
-        b) Conditions for inference: residual and partial residual plots
-    1. Case study: Mmultiple regression example from Ch 7.
-        a) 
+        a) "You don't have to do any of this! Values in table are given!" No simulations necessary!
+        b) Conditions for inference: residual and partial residual plots, assumption of indepdence. 
+    1. Case study: Multiple regression example from Ch 7.
     1. Big picture: 
         a) ANOVA = Regression with categorical variables
-        b) Table of inferential scenarios: Add TBD (beta1)
-        c) Why does this work? Theoretical result: Gauss-Markov Theorem
-        d) There's a formula for that! Fitted intercept and slope. SE of fitted intercept and slope. Note there is a sqrt(n) in denominator. 
+        b) Table of inferential scenarios: Add (beta1)
+        c) Why does this work?
+        d) There's a formula for that! Fitted intercept and slope. SE of fitted intercept and slope: observe there is a sqrt(n) in denominator. 
+        
 
+
+***
+
+
+
+# ModernDive 0.5.0
+
+## Highlights
+
+* "Data wrangling" chapter now comes after "Tidy data" chapter.
+* Improved explanations and examples of `geom_histogram()`, `geom_boxplot()`, and "tidy" data
+* Moving residual analysis from regression Chapters 6 & 7 to Chap 11: Inference for regression
+* Reorganized Chap 8 on Sampling
+* All learning check solutions now in Appendix D
+* PDF build re-added (still a work-in-progress)
 
 ## All content changes
 
-* Changed title from "Statistical Inference via Data Science in R" to "Statistical Inference via Data Science: A moderndive into R and the tidyverse"
+* Changed title
+    + From: "Statistical Inference via Data Science in R"
+    + To: "Statistical Inference via Data Science: A moderndive into R and the tidyverse"
 * Chapter 2 - Getting Started
     + Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
 * Chapter 3 - Data visualization:
-    + Added simpler introductory `geom_histogram()` example
-    + Added simpler introductory `geom_boxplot()` example
-    + Started downweighting the amount of data wrangling previews included in this chapter, in particular `join`
+    + Added simpler introductory `geom_histogram()` and `geom_boxplot()` examples
+    + Started downweighting the amount of data wrangling previews included in this chapter, in particular `join`.
     + Cleaned up conclusion section
+    + Added cheatsheet
 * Switched order of "Chap 4 Tidy Data" and "Chap 5 Data Wrangling": Data Wrangling now comes first
 * Chapter 4 - Data wrangling:
+    + Added cheatsheet
 * Chapter 5 - Renamed to "Importing and tidy data"
     + Reordered sections: importing then tidying
-    + Added `fivethirtyeight::drinks` example of hitting the non-tidy wall, then using `tidyr::gather()`
+    + Added `fivethirtyeight::drinks` example of "hitting the non-tidy wall", then using `tidyr::gather()`
     + Made Guatemala democracy score a case study.
     + Added discussion on what `tidyverse` package is.
+    + Moved discussion on normal forms to Ch4: Data Wrangling - joins.
+    + Moved discussion on identification vs measurement variables to Ch2: Getting started with data.
 * Chapter 6 - Basic regression:
     + Moved residual analysis to Chapter 11
 * Chapter 7 - Multiple regression:
     + Moved residual analysis to Chapter 11
+* Chapter 8 - Sampling: Major refactoring of presentation/exposition; see below
 * Chapter 11 - Inference for regression:
     + Moved residual analysis from Chapter 6 & 7 here
 * Moved all Learning Check solutions to Appendix D
-    
-## Other changes
 
-* Added PDF build
+
+### Chapter 8 Sampling Refactoring
+
+**Old chapter structure**:
+
+1. Introduction to sampling
+    a) Concepts related to sampling
+    b) Inference via sampling
+2. Tactile sampling simulation
+    a) Using the shovel once
+    b) Using the shovel 33 times
+3. Virtual sampling simulation
+    a) Using the shovel once
+    b) Using shovel 33 times
+    c) Using shovel 1000 times
+    d) Using different shovels
+4. In real-life sampling: Polls
+5. Conclusion
+    a) Central Limit Theorem
+    b) What’s to come?
+    c) Script of R code
+
+**New chapter structure**:
+
+1. Activity: Sampling from a bowl
+    a) Question: What proportion of this bowl is red?
+    b) Using shovel once
+    c) Using shovel 33 times
+1. Computer simulation:
+    a) What is a simulation? We just did a "tactile" one by hand, now let's do one using the the computer
+    b) Using shovel once
+    c) Using shovel 33 times
+    d) Using shovel 1000 times
+    e) Using different shovels
+1. Goal: Study fluctuations due to sampling variation
+    a) You probably already knew: Bigger sample size means "better" guess.
+    b) Comparing shovels: Role of sample size
+1. Framework: Sampling
+    a) Terminology for sampling (population, sample, point estimate, etc)
+    b) Statistical concepts: sampling distribution and standard error
+    c) Computer's random number generator
+1. Interpretation: 
+    a) Visual display of differences
+1. Case study: Obama poll 
+1. Big picture: 
+    a) Table of inferential scenarios: Add bowl and obama poll (both p)
+    b) Why does this work? Theoretial result: CLT
+    c) There's a formula for that: SE formula that has sqrt(n) at the bottom
+    d) Appendix: Normal distribution discuss
 
 
 
