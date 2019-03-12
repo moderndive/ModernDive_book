@@ -69,12 +69,12 @@
 **New Chapter Structure**:
 
 * Chapter 9 - Confidence Intervals
-    1. Activity: Working with a sample of pennies from the bank. Are they representative of all pennies in the US.
-      - a) Question: What do I do when I only have one sample?
-      - b) Resampling once (paper slips)
-      - c) Resampling 33 times
-      - d) Diagrams in Keynote
-    1. Computer simulation: 
+1. Activity: Working with a sample of pennies from the bank. Are they representative of all pennies in the US.
+  - a) Question: What do I do when I only have one sample?
+  - b) Resampling once (paper slips)
+  - c) Resampling 33 times
+  - d) Diagrams in Keynote
+1. Computer simulation: 
       - a) What is resampling?
       - b) Resampling once
       - c) Resampling 33 times
