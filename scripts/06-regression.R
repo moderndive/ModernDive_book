@@ -5,12 +5,14 @@
 ## library(gapminder)
 ## library(skimr)
 
+
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 library(ggplot2)
 library(dplyr)
 library(moderndive)
 library(gapminder)
 # library(skimr) (Causes problems with table linking)
+
 
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 # Packages needed internally, but not in text.
@@ -23,13 +25,16 @@ library(janitor)
 library(patchwork)
 library(kableExtra)
 
+
 ## ------------------------------------------------------------------------
 evals_ch6 <- evals %>%
   select(score, bty_avg, age)
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## evals_ch6 %>%
 ##   sample_n(5)
+
 
 ## ---- echo=FALSE---------------------------------------------------------
 set.seed(76)
@@ -43,19 +48,23 @@ evals_ch6 %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("HOLD_position"))
 
+
 ## ------------------------------------------------------------------------
 glimpse(evals_ch6)
+
 
 ## ----eval=FALSE----------------------------------------------------------
 ## evals_ch6 %>%
 ##   select(score, bty_avg) %>%
 ##   skim()
 
+
 ## ----echo=FALSE, results='asis'------------------------------------------
 evals_ch6 %>% 
   select(score, bty_avg) %>% 
   skimr::skim() %>% 
   skimr::kable()
+
 
 ## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients"----
 correlation <- c(-0.9999, -0.75, 0, 0.75, 0.9999)
@@ -86,12 +95,15 @@ ggplot(data = values, mapping = aes(V1, V2)) +
     axis.ticks = element_blank()
   )
 
+
 ## ------------------------------------------------------------------------
 evals_ch6 %>% 
   get_correlation(formula = score ~ bty_avg)
 
+
 ## ------------------------------------------------------------------------
 cor(x = evals_ch6$bty_avg, y = evals_ch6$score)
+
 
 ## ----numxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin"----
 ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
@@ -99,12 +111,14 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   labs(x = "Beauty Score", y = "Teaching Score", 
        title = "Relationship of teaching and beauty scores")
 
+
 ## ----numxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin: Jittered"----
 set.seed(76)
 ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_jitter() +
   labs(x = "Beauty Score", y = "Teaching Score", 
        title = "Relationship of teaching and beauty scores")
+
 
 ## ----numxplot2-a, echo=FALSE, warning=FALSE, fig.cap="Comparing regular and jittered scatterplots."----
 box <- data_frame(x=c(7.6, 8, 8, 7.6, 7.6), y=c(4.75, 4.75, 5.1, 5.1, 4.75))
@@ -121,6 +135,7 @@ p2 <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_path(data = box, aes(x=x, y=y), col = "orange", size = 1)
 p1 + p2
 
+
 ## ---- echo=FALSE---------------------------------------------------------
 set.seed(76)
 
@@ -130,6 +145,7 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   labs(x = "Beauty Score", y = "Teaching Score", 
        title = "Relationship of teaching and beauty scores") +  
   geom_smooth(method = "lm")
+
 
 ## ---- echo=FALSE---------------------------------------------------------
 set.seed(76)
@@ -141,9 +157,15 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
        title = "Relationship of teaching and beauty scores") +
   geom_smooth(method = "lm", se = FALSE)
 
+
+
+
+
+
 ## ----regtable-0----------------------------------------------------------
 score_model <- lm(score ~ bty_avg, data = evals_ch6)
 score_model
+
 
 ## ----regtable, eval=FALSE------------------------------------------------
 ## # Fit regression model:
@@ -167,8 +189,14 @@ get_regression_table(score_model) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ----moderndive-figure-wrapper, echo=FALSE, fig.align='center', fig.cap="The concept of a 'wrapper' function."----
 knitr::include_graphics("images/flowcharts/flowchart.011-cropped.png")
+
+
+
+
+
 
 ## ---- echo=FALSE---------------------------------------------------------
 index <- which(evals_ch6$bty_avg == 7.333 & evals_ch6$score == 4.9)
@@ -189,6 +217,7 @@ evals_ch6 %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ---- echo=FALSE---------------------------------------------------------
 set.seed(76)
 
@@ -203,6 +232,7 @@ best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 best_fit_plot
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## regression_points <- get_regression_points(score_model)
@@ -219,14 +249,17 @@ regression_points %>%
     booktabs = TRUE
   )
 
+
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(gapminder)
 gapminder2007 <- gapminder %>%
   filter(year == 2007) %>% 
   select(country, continent, lifeExp, gdpPercap)
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## View(gapminder2007)
+
 
 ## ----model2-data-preview, echo=FALSE-------------------------------------
 gapminder2007 %>%
@@ -239,8 +272,10 @@ gapminder2007 %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ------------------------------------------------------------------------
 glimpse(gapminder2007)
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## gapminder2007 %>%
@@ -256,11 +291,13 @@ gapminder2007 %>%
 lifeExp_worldwide <- gapminder2007 %>%
   summarize(median = median(lifeExp), mean = mean(lifeExp))
 
+
 ## ----lifeExp2007hist, echo=FALSE, warning=FALSE, fig.cap="Histogram of Life Expectancy in 2007"----
 ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", y = "Number of countries", 
        title = "Worldwide life expectancy")
+
 
 ## ---- eval=TRUE----------------------------------------------------------
 lifeExp_by_continent <- gapminder2007 %>%
@@ -285,6 +322,7 @@ mean_africa <- lifeExp_by_continent %>%
 n_countries <- gapminder2007 %>% nrow()
 n_countries_africa <- gapminder2007 %>% filter(continent == "Africa") %>% nrow()
 
+
 ## ----catxplot0b, warning=FALSE, fig.cap="Life expectancy in 2007"--------
 ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
@@ -292,11 +330,17 @@ ggplot(gapminder2007, aes(x = lifeExp)) +
        title = "Life expectancy by continent") +
   facet_wrap(~ continent, nrow = 2)
 
+
 ## ----catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007"---------
 ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
   geom_boxplot() +
   labs(x = "Continent", y = "Life expectancy (years)", 
        title = "Life expectancy by continent") 
+
+
+
+
+
 
 ## ----continent-mean-life-expectancies, echo=FALSE------------------------
 gapminder2007 %>%
@@ -310,6 +354,7 @@ gapminder2007 %>%
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
@@ -330,6 +375,11 @@ get_regression_table(lifeExp_model) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
+
+
+
+
 ## ---- echo=FALSE---------------------------------------------------------
 gapminder2007 %>%
   slice(1:10) %>%
@@ -340,6 +390,7 @@ gapminder2007 %>%
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## regression_points <- get_regression_points(lifeExp_model)
@@ -356,6 +407,7 @@ regression_points %>%
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("HOLD_position"))
+
 
 ## ----correlation2, echo=FALSE, fig.cap="Different Correlation Coefficients"----
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
@@ -386,14 +438,18 @@ ggplot(data = values, mapping = aes(V1, V2)) +
     axis.ticks = element_blank()
   )
 
+
 ## ---- echo=FALSE, results='asis'-----------------------------------------
 image_link(path = "images/guess_the_correlation.png", link = "http://guessthecorrelation.com/", alt_text = "Guess the correlation")
+
 
 ## ----moderndive-figure-causal-graph-2, echo=FALSE, fig.align='center', fig.cap="Does sleeping with shoes on cause headaches?"----
 knitr::include_graphics("images/flowcharts/flowchart.010-cropped.png")
 
+
 ## ----moderndive-figure-causal-graph, echo=FALSE, fig.align='center', fig.cap="Causal graph."----
 knitr::include_graphics("images/flowcharts/flowchart.009-cropped.png")
+
 
 ## ----echo=FALSE----------------------------------------------------------
 index <- which(evals_ch6$bty_avg == 2.333 & evals_ch6$score == 2.7)
@@ -410,6 +466,7 @@ best_fit_plot <- best_fit_plot +
   annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 best_fit_plot
+
 
 ## ---- echo=FALSE---------------------------------------------------------
 index <- which(evals_ch6$bty_avg == 3.667 & evals_ch6$score == 4.4)
@@ -429,6 +486,7 @@ best_fit_plot <- best_fit_plot +
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 best_fit_plot
 
+
 ## ----here, echo=FALSE----------------------------------------------------
 index <- which(evals_ch6$bty_avg == 6 & evals_ch6$score == 3.8)
 score_model <- lm(score ~ bty_avg, data = evals_ch6)
@@ -446,6 +504,7 @@ best_fit_plot <- best_fit_plot +
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 best_fit_plot
 
+
 ## ---- eval = FALSE-------------------------------------------------------
 ## score_model <- lm(score ~ bty_avg, data = evals_ch6)
 ## get_regression_table(score_model)
@@ -456,6 +515,7 @@ get_regression_table(score_model) %>%
   knitr::kable() %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
+
 
 ## ---- eval = FALSE-------------------------------------------------------
 ## library(broom)
@@ -479,6 +539,7 @@ score_model %>%
   knitr::kable() %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
+
 
 ## ---- eval = FALSE-------------------------------------------------------
 ## library(broom)
