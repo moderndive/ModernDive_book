@@ -70,28 +70,28 @@
 
 * Chapter 9 - Confidence Intervals
 1. Activity: Working with a sample of pennies from the bank. Are they representative of all pennies in the US.
-  - a) Question: What do I do when I only have one sample?
-  - b) Resampling once (paper slips)
-  - c) Resampling 33 times
-  - d) Diagrams in Keynote
-1. Computer simulation: 
+- a) Question: What do I do when I only have one sample?
+- b) Resampling once (paper slips)
+- c) Resampling 33 times
+- d) Diagrams in Keynote
+2. Computer simulation: 
   - a) What is resampling?
   - b) Resampling once
   - c) Resampling 33 times
   - d) Resampling 1000 times
-1. Goal: Generate an estimate that accounts for sampling variation
+3. Goal: Generate an estimate that accounts for sampling variation
   - a) Constructing a confidence interval: hide code to shade ci region and to get the actual values. 
   - b) Constructing a CI using percentile method
   - c) Constructing a CI using SE method
-1. Framework: Boostrap resampling with replacement
+4. Framework: Boostrap resampling with replacement
   - a) What dplyr verbs did we use?
   - b) There is only one test framework
   - c) the infer package: make sure to draw parallels between dplyr code and infer verbs
-1. Interpretation: 
+5. Interpretation: 
   - a) 95% speaks to reliability of the process, not about an particular interval. "We are 95% confident"
   - b) What determines the width? Sample size, confidence levels (only int at population variance)
-1. Case study: Comparing two proportions with Mythbusters data
-1. Big picture: 
+6. Case study: Comparing two proportions with Mythbusters data
+7. Big picture: 
   - a) Does this even work? Comparing sampling and bootstrap distribution. Do this using balls. 
   - b) Table of inferential scenarios: Add pennies (mu) and Mythbusters (p1 - p2)
   - c) Why does this work? Theoretical result: Efron. The empirical CDF converges to the population CDF. Bootstrap works for any point estimate
