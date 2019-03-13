@@ -5,12 +5,14 @@
 ## library(ISLR)
 ## library(skimr)
 
+
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 library(ggplot2)
 library(dplyr)
 library(moderndive)
 library(ISLR)
 # library(skimr) (Causes problems with table linking)
+
 
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 # Packages needed internally, but not in text:
@@ -21,13 +23,16 @@ library(forcats)
 library(gridExtra)
 library(patchwork)
 
+
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(ISLR)
 Credit <- Credit %>%
   select(Balance, Limit, Income, Rating, Age)
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## View(Credit)
+
 
 ## ----model3-data-preview, echo=FALSE-------------------------------------
 Credit %>%
@@ -40,24 +45,29 @@ Credit %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ------------------------------------------------------------------------
 glimpse(Credit)
+
 
 ## ----eval=FALSE----------------------------------------------------------
 ## Credit %>%
 ##   select(Balance, Limit, Income) %>%
 ##   skim()
 
+
 ## ----echo=FALSE----------------------------------------------------------
 Credit %>% 
   select(Balance, Limit, Income) %>% 
   skimr::skim()
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## Credit %>%
 ##   get_correlation(Balance ~ Limit)
 ## Credit %>%
 ##   get_correlation(Balance ~ Income)
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## Credit %>%
@@ -76,6 +86,7 @@ Credit %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(Credit, aes(x = Limit, y = Balance)) +
 ##   geom_point() +
@@ -88,6 +99,7 @@ Credit %>%
 ##   labs(x = "Income (in $1000)", y = "Credit card balance (in $)",
 ##        title = "Relationship between balance and income") +
 ##   geom_smooth(method = "lm", se = FALSE)
+
 
 ## ----2numxplot1, echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
 model3_balance_vs_limit_plot <- ggplot(Credit, aes(x = Limit, y = Balance)) +
@@ -102,6 +114,9 @@ model3_balance_vs_income_plot <- ggplot(Credit, aes(x = Income, y = Balance)) +
   geom_smooth(method = "lm", se = FALSE) +
   scale_y_continuous(limits = c(0, NA))
 model3_balance_vs_limit_plot + model3_balance_vs_income_plot
+
+
+
 
 ## ---- eval=FALSE, echo=FALSE---------------------------------------------
 ## # Save as 798 x 562 images/credit_card_balance_3D_scatterplot.png
@@ -125,8 +140,10 @@ model3_balance_vs_limit_plot + model3_balance_vs_income_plot
 ##     )
 ##   )
 
+
 ## ----echo=FALSE, fig.cap="Regression plane", fig.align='center'----------
 knitr::include_graphics("images/credit_card_balance_regression_plane.png")
+
 
 ## ---- eval=FALSE, echo=FALSE---------------------------------------------
 ## # Save as 798 x 562 images/credit_card_balance_regression_plane.png
@@ -172,6 +189,11 @@ knitr::include_graphics("images/credit_card_balance_regression_plane.png")
 ##     z = z_grid
 ##   )
 
+
+
+
+
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## Balance_model <- lm(Balance ~ Limit + Income, data = Credit)
 ## get_regression_table(Balance_model)
@@ -191,6 +213,11 @@ get_regression_table(Balance_model) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
+
+
+
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## regression_points <- get_regression_points(Balance_model)
 ## regression_points
@@ -208,12 +235,15 @@ regression_points %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ------------------------------------------------------------------------
 evals_ch7 <- evals %>%
   select(score, age, gender)
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## View(evals_ch7)
+
 
 ## ----model4-data-preview, echo=FALSE-------------------------------------
 evals_ch7 %>%
@@ -226,23 +256,28 @@ evals_ch7 %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ----eval=FALSE----------------------------------------------------------
 ## evals_ch7 %>%
 ##   skim()
+
 
 ## ----echo=FALSE----------------------------------------------------------
 evals_ch7 %>% 
   skimr::skim()
 
+
 ## ------------------------------------------------------------------------
 evals_ch7 %>% 
   get_correlation(formula = score ~ age)
+
 
 ## ----numxcatxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin split by gender (jittered)"----
 ggplot(evals_ch7, aes(x = age, y = score, color = gender)) +
   geom_jitter() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
   geom_smooth(method = "lm", se = FALSE)
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## score_model_2 <- lm(score ~ age + gender, data = evals_ch7)
@@ -258,6 +293,7 @@ get_regression_table(score_model_2) %>%
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
+
 
 ## ----numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin by gender: same slope"----
 coeff <- lm(score ~ age + gender, data = evals_ch7) %>% 
@@ -276,6 +312,7 @@ ggplot(evals_ch7, aes(x = age, y = score, col = gender)) +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
   geom_line(data = slopes, aes(y = y_hat), size = 1)
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## score_model_interaction <- lm(score ~ age * gender, data = evals_ch7)
 ## get_regression_table(score_model_interaction)
@@ -291,6 +328,7 @@ get_regression_table(score_model_interaction) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ---- echo=FALSE---------------------------------------------------------
 data_frame(
   Gender = c("Male instructors", "Female instructors"),
@@ -303,6 +341,7 @@ data_frame(
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## regression_points <- get_regression_points(score_model_interaction)
@@ -320,6 +359,7 @@ regression_points %>%
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## library(ISLR)
@@ -344,13 +384,16 @@ Credit %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
 model3_balance_vs_limit_plot + model3_balance_vs_income_plot
+
 
 ## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and quartiles"----
 ggplot(Credit, aes(x = Limit)) +
   geom_histogram(color = "white") +
   geom_vline(xintercept = quantile(Credit$Limit, probs = c(0.25, 0.5, 0.75)), col = "red", linetype = "dashed")
+
 
 ## ---- 2numxplot4, fig.height=4, echo=FALSE, fig.cap="Relationship between credit card balance and income for different credit limit brackets"----
 Credit <- Credit %>% 
@@ -378,6 +421,7 @@ model3_balance_vs_income_plot_colored <- ggplot(Credit, aes(x = Income, y = Bala
   scale_y_continuous(limits = c(0, NA))
   
 model3_balance_vs_income_plot + model3_balance_vs_income_plot_colored
+
 
 ## ---- 2numxplot5, echo=FALSE, warning=FALSE, fig.cap="Relationship between credit card balance and income for different credit limit brackets"----
 ggplot(Credit, aes(x = Income, y = Balance)) +
