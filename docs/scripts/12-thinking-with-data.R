@@ -29,11 +29,14 @@ show_solutions <- function(section){
   return(solutions_shown == "ALL" | section %in% solutions_shown)
   }
 
+
 ## ----moderndive-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="ModernDive Flowchart"----
 knitr::include_graphics("images/flowcharts/flowchart/flowchart.002.png")
 
+
 ## ----pipeline-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="Data/Science Pipeline"----
 knitr::include_graphics("images/tidy1.png")
+
 
 ## ---- message=FALSE, warning=FALSE---------------------------------------
 library(ggplot2)
@@ -41,19 +44,23 @@ library(dplyr)
 library(moderndive)
 library(fivethirtyeight)
 
+
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
 library(patchwork)
 library(scales)
 
+
 ## ---- echo=FALSE, results='asis'-----------------------------------------
 image_link(path = "images/datacamp_intro_to_modeling.png", link = "https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse")
+
 
 ## ----warning=FALSE, message=FALSE----------------------------------------
 library(ggplot2)
 library(dplyr)
 library(moderndive)
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## View(house_prices)
@@ -61,6 +68,7 @@ library(moderndive)
 
 ## ---- echo=FALSE---------------------------------------------------------
 glimpse(house_prices)
+
 
 ## ---- eval=FALSE, message=FALSE, warning=FALSE---------------------------
 ## # Histogram of house price:
@@ -91,6 +99,7 @@ p3 <- ggplot(house_prices, aes(x = condition)) +
   labs(x = "condition", title = "House condition")
 p1 + p2 + p3
 
+
 ## ------------------------------------------------------------------------
 house_prices %>% 
   summarize(
@@ -99,6 +108,7 @@ house_prices %>%
     sd_price = sd(price),
     IQR_price = IQR(price)
   )
+
 
 ## ----logten, echo=FALSE--------------------------------------------------
 data_frame(Price = c(1,10,100,1000,10000,100000,1000000)) %>% 
@@ -115,12 +125,14 @@ data_frame(Price = c(1,10,100,1000,10000,100000,1000000)) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("HOLD_position"))
 
+
 ## ------------------------------------------------------------------------
 house_prices <- house_prices %>%
   mutate(
     log10_price = log10(price),
     log10_size = log10(sqft_living)
     )
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## house_prices %>%
@@ -130,6 +142,7 @@ house_prices <- house_prices %>%
 house_prices %>% 
   select(price, log10_price, sqft_living, log10_size) %>% 
   slice(1:10)
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Before:
@@ -152,6 +165,7 @@ p2 <- ggplot(house_prices, aes(x = log10_price)) +
   labs(x = "log10 price (USD)", title = "House price: After")
 p1 + p2
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Before:
 ## ggplot(house_prices, aes(x = sqft_living)) +
@@ -173,6 +187,7 @@ p2 <- ggplot(house_prices, aes(x = log10_size)) +
   labs(x = "log10 living space (square feet)", title = "House size: After")
 p1 + p2
 
+
 ## ----house-price-parallel-slopes, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Parallel slopes model", fig.width=16/2, fig.height=9/2----
 model_price_3_points <-
   house_prices %>%
@@ -184,11 +199,13 @@ ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
   geom_line(data = model_price_3_points, aes(y = log10_price_hat), show.legend = FALSE, size = 1) +
   guides(colour = guide_legend(override.aes = list(alpha = 1)))
 
+
 ## ----house-price-interaction, message=FALSE, warning=FALSE, fig.cap="Interaction model", fig.width=16/2, fig.height=9/2----
 ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
   geom_point(alpha = 0.1) +
   labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
   geom_smooth(method = "lm", se = FALSE)
+
 
 ## ----house-price-interaction-2, message=FALSE, warning=FALSE, fig.cap="Interaction model with facets", fig.width=16/2, fig.height=9/2----
 ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
@@ -197,11 +214,13 @@ ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
   geom_smooth(method = "lm", se = FALSE) +
   facet_wrap(~condition)
 
+
 ## ------------------------------------------------------------------------
 # Fit regression model:
 price_interaction <- lm(log10_price ~ log10_size * condition, data = house_prices)
 # Get regression table:
 get_regression_table(price_interaction)
+
 
 ## ----house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction model with prediction", fig.width=16/2, fig.height=9/2----
 new_house <- data_frame(log10_size = log10(1900), condition = factor(5)) %>% 
@@ -214,24 +233,36 @@ ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
   geom_vline(xintercept = log10(1900), linetype = "dashed", size = 1) +
   geom_point(data = new_house, aes(y = log10_price_hat), col ="black", size = 3)
 
+
 ## ------------------------------------------------------------------------
 2.45 + 1 * log10(1900)
 
+
 ## ------------------------------------------------------------------------
 10^(2.45 + 1 * log10(1900))
+
+
+
+
+
+
+
 
 ## ----fivethirtyeight-----------------------------------------------------
 library(ggplot2)
 library(dplyr)
 library(fivethirtyeight)
 
+
 ## ------------------------------------------------------------------------
 # Preview data
 glimpse(US_births_1994_2003)
 
+
 ## ------------------------------------------------------------------------
 US_births_1999 <- US_births_1994_2003 %>%
   filter(year == 1999)
+
 
 ## ------------------------------------------------------------------------
 ggplot(US_births_1999, aes(x = date, y = births)) +
