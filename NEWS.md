@@ -154,6 +154,7 @@
 * Chapter 6 - Basic regression:
     + Changed `skimr::skim()` outputs to be of type console.
     + Shorted simple linear regression EDA, in particular `geom_jitter()` and `geom_smooth(se = FALSE)`
+    + Expanded on "least squares" criteria for "best" fitting line in 6.3.3
 
 
 ***
