@@ -44,7 +44,7 @@ ggplot(data = gapminder_2007, mapping = aes(x=`GDP per Capita`, y=`Life Expectan
 
 
 ## ----summary-table-gapminder, echo=FALSE---------------------------------
-data_frame(
+tibble(
   `data variable` = c("GDP per Capita", "Life Expectancy", "Population", "Continent"),
   aes = c("x", "y", "size", "color"),
   geom = c("point", "point", "point", "point")
@@ -90,7 +90,7 @@ ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
 
 
 ## ----jitter-example-df, echo=FALSE---------------------------------------
-jitter_example <- data_frame(
+jitter_example <- tibble(
   x = c(0, 0, 0, 0),
   y = c(0, 0, 0, 0)
 )
@@ -222,7 +222,7 @@ weather %>%
 
 
 ## ----nov2, echo=FALSE, fig.cap="November temperatures.", fig.height=3.7----
-five_number <- data_frame(
+five_number <- tibble(
   temp = c(min_nov, quartiles, max_nov)
 )
 weather %>% 
@@ -269,10 +269,10 @@ ggplot(data = weather, mapping = aes(x = factor(month), y = temp)) +
 
 
 ## ------------------------------------------------------------------------
-fruits <- data_frame(
+fruits <- tibble(
   fruit = c("apple", "apple", "orange", "apple", "orange")
 )
-fruits_counted <- data_frame(
+fruits_counted <- tibble(
   fruit = c("apple", "orange"),
   number = c(3, 2)
 )

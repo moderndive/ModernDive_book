@@ -83,7 +83,7 @@ knitr::include_graphics("images/tidy-1.png")
 
 
 ## ----non-tidy-stocks, echo=FALSE-----------------------------------------
-stocks <- data_frame(
+stocks <- tibble(
   Date = as.Date('2009-01-01') + 0:4,
   `Boeing Stock Price` = paste("$", c("173.55", "172.61", "173.86", "170.77", "174.29"), sep = ""),
   `Amazon Stock Price` = paste("$", c("174.90", "171.42", "171.58", "173.89", "170.16"), sep = ""),
@@ -119,7 +119,7 @@ stocks_tidy %>%
 
 
 ## ----tidy-stocks-2, echo=FALSE-------------------------------------------
-stocks <- data_frame(
+stocks <- tibble(
   Date = as.Date('2009-01-01') + 0:4,
   `Boeing Price` = paste("$", c("173.55", "172.61", "173.86", "170.77", "174.29"), sep = ""),
   `Weather` = c("Sunny", "Overcast", "Rain", "Rain", "Sunny")

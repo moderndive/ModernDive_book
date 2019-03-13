@@ -1,27 +1,14 @@
-## ---- eval=FALSE---------------------------------------------------------
-## library(ggplot2)
-## library(dplyr)
-## library(moderndive)
-## library(ISLR)
-## library(skimr)
-
-
-## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
-library(ggplot2)
-library(dplyr)
+## ------------------------------------------------------------------------
+library(tidyverse)
 library(moderndive)
+library(skimr)
 library(ISLR)
-# library(skimr) (Causes problems with table linking)
 
 
 ## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
 # Packages needed internally, but not in text:
-library(mvtnorm)
-library(kableExtra)
-library(tidyr)
-library(forcats)
-library(gridExtra)
 library(patchwork)
+library(kableExtra)
 
 
 ## ---- warning=FALSE, message=FALSE---------------------------------------
@@ -50,16 +37,10 @@ Credit %>%
 glimpse(Credit)
 
 
-## ----eval=FALSE----------------------------------------------------------
-## Credit %>%
-##   select(Balance, Limit, Income) %>%
-##   skim()
-
-
-## ----echo=FALSE----------------------------------------------------------
+## ------------------------------------------------------------------------
 Credit %>% 
   select(Balance, Limit, Income) %>% 
-  skimr::skim()
+  skim()
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -257,14 +238,9 @@ evals_ch7 %>%
                 latex_options = c("HOLD_position"))
 
 
-## ----eval=FALSE----------------------------------------------------------
-## evals_ch7 %>%
-##   skim()
-
-
-## ----echo=FALSE----------------------------------------------------------
+## ------------------------------------------------------------------------
 evals_ch7 %>% 
-  skimr::skim()
+  skim()
 
 
 ## ------------------------------------------------------------------------
@@ -330,7 +306,7 @@ get_regression_table(score_model_interaction) %>%
 
 
 ## ---- echo=FALSE---------------------------------------------------------
-data_frame(
+tibble(
   Gender = c("Male instructors", "Female instructors"),
   Intercept = c(4.437, 4.883),
   `Slope for age` = c(-0.004, -0.018)
