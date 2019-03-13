@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
   warning = FALSE
   )
 
-options(scipen = 99, digits = 3)
+options(scipen = 99)#, digits = 3)
 
 # Set random number generator see value for replicable pseudorandomness. Why 76?
 # https://www.youtube.com/watch?v=xjJ7FheCkCU
@@ -23,9 +23,9 @@ set.seed(76)
 
 In Chapter \@ref(sampling), we explored the process of sampling from a representative sample to build a sampling distribution. The motivation there was to use multiple samples from the same population to visualize and attempt to understand the variability in the statistic from one sample to another. Furthermore, recall our concepts and terminology related to sampling from the beginning of Chapter \@ref(sampling):
 
-Generally speaking, we learned that if the sampling of a sample of size $n$ is done at *random*, then the resulting sample is *unbiased* and *representative* of the *population*, thus any result based on the sample can *generalize* to the population, and hence the **point estimate/sample statistic** computed from this sample is a "good guess" of the unknown population parameter of interest
+Generally speaking, we learned that if the sampling of a sample of size $n$ is done at *random*, then the resulting sample is *unbiased* and *representative* of the *population*. Thus, any result based on the sample can *generalize* to the population, and hence the **point estimate/sample statistic** computed from this sample is a "good guess" of the unknown population parameter of interest.
 
-Specific to the bowl, we learned that if we properly mix the balls first thereby ensuring the randomness of samples extracted using the shovel with $n=50$ slots, then the contents of the shovel will "look like" the contents of the bowl, thus any results based on the sample of $n=50$ balls can generalize to the large bowl of $N=2400$ balls, and hence the sample proportion red $\widehat{p}$ of the $n=50$ balls in the shovel is a "good guess" of the true population proportion red $p$ of the $N=2400$ balls in the bowl.
+Specific to the bowl, we learned that if we properly mix the balls first we ensure the randomness of samples extracted using the shovel with $n=50$ slots. Further, then the contents of the shovel will "look like" the contents of the bowl. Thus, any results based on the sample of $n=50$ balls can generalize to the large bowl of $N=2400$ balls. Hence the sample proportion red $\widehat{p}$ of the $n=50$ balls in the shovel is a "good guess" of the true population proportion red $p$ of the $N=2400$ balls in the bowl.
 
 We emphasize that we used a point estimate/sample statistic, in this case the sample proportion $\widehat{p}$, to estimate the unknown value of the population parameter, in this case the population proportion $p$. In other words, we are using the sample to **infer** about the population.
 
@@ -48,13 +48,18 @@ library(infer)
 # Packages needed internally, but not in the text
 library(knitr)
 library(kableExtra)
+library(stringr)
+library(patchwork)
+library(tibble)
+# Ensure pennies_sample_2 is loaded (might not be needed)
+data("pennies_sample_2")
 ```
 
 ---
 
 
 
-## Bootstrapping activity
+## Resampling activity
 
 As we did in Chapter \@ref(sampling), we'll begin with a hands-on activity.
 
@@ -66,7 +71,7 @@ In order to begin to answer this question, we obtained a sample of 50 US pennies
 knitr::include_graphics("images/sampling/pennies/pennies_trim.jpg")
 ```
 
-Each of the pennies was numbered as 1-50 starting in the top left and ending in the bottom right progressing row by row. This is shown with the "ID" values on top of and near the middle of each penny for clarity. The year of mint is also shown on top of and to the rightside of the penny as well.
+Each of the pennies was numbered as 1-50 starting in the top left and ending in the bottom right progressing row by row. This is shown with the "ID" values on top of and near the middle of each penny for clarity. The year of mint is also shown on top of and to the right side of the penny as well.
 
 ```{r echo=FALSE, fig.cap="50 US pennies labelled", fig.show='hold', purl=FALSE, out.width = "10%"}
 labelled <- list.files("images/sampling/pennies/labelled/", full.names = TRUE)
@@ -79,47 +84,232 @@ The `moderndive` package contains this data on the pennies collected and minted 
 pennies_sample_2
 ```
 
+
 The `pennies_sample_2` data frame has rows corresponding to a single penny with two variables:
 
 - `ID` of the penny stored as an integer to identify the penny from other pennies in the sample and
 - `year` of minting as shown on the penny and stored as an integer.
 
-Suppose we are interested in understanding some properties of the mean year of **all** US pennies from this data collected in 2019. How might we go about that? Let's begin by understanding some of the properties of `pennies_sample_2` using data wrangling from Chapter \@ref(wrangling) and data visualization from Chapter \@ref(viz).
+Suppose we are interested in understanding some properties of the mean year of **all** US pennies using this data on 50 pennies collected in 2019. How might we go about that? Let's begin by understanding some of the properties of `pennies_sample_2` using data wrangling from Chapter \@ref(wrangling) and data visualization from Chapter \@ref(viz).
 
-### Exploratory data analysis
+#### Exploratory data analysis on original sample {-}
 
 First, let's visualize the values in this sample as a histogram:
 
 ```{r}
 ggplot(pennies_sample_2, aes(x = year)) +
-  geom_histogram(bins = 10, color = "white")
+  geom_histogram(binwidth = 10, color = "white")
 ```
 
-<!-- Up to here -->
+We see a skewed distribution here that has many values in the 1990s through 2010s with only a few older than 1970. If `pennies_sample_2` is a representative sample from the population, we'd expect the age of all US pennies collected in 2019 to have a similar shape, a similar spread, and similar measures of central tendency like the mean.
 
-We see a roughly symmetric distribution here that has quite a few values near 20 years in age with only a few larger than 40 years or smaller than 5 years. If `pennies_sample` is a representative sample from the population, we'd expect the age of all US pennies collected in 2011 to have a similar shape, a similar spread, and similar measures of central tendency like the mean.
-
-So where does the mean value fall for this sample? This point will be known as our **point estimate** and provides us with a single number that could serve as the guess to what the true population mean age might be. Recall how to find this using the `dplyr` package:
+So where does the mean value fall for this sample? This point will be known as our **point estimate** and provides us with a single number that could serve as the guess to what the true population mean year might be. Recall how to find this using the `dplyr` package:
 
 ```{r}
 x_bar <- pennies_sample_2 %>% 
   summarize(stat = mean(year))
-x_bar
 ```
 
-We've denoted this *sample mean* as $\bar{x}$, which is the standard symbol for denoting the mean of a sample. Our point estimate is, thus, $\bar{x} = `r round(x_bar[[1, 1]], 1)`$. Note that this is just one sample though providing just one guess at the population mean. What if we'd like to have another guess?
+We've denoted this *sample mean* as $\bar{x}$, which is the standard symbol for denoting the mean of a sample. Our point estimate is, thus, $\bar{x} = `r round(x_bar[[1, 1]], 2)`$. Note that this is just one sample though providing just one guess at the population mean. What if we'd like to have another guess?
 
 This should all sound similar to what we did in Chapter \@ref(sampling). There instead of collecting just a single scoop of balls we had many different students use the shovel to scoop different samples of red and white balls. We then calculated a sample statistic (the sample proportion) from each sample. But, we don't have a population to pull from here with the pennies. We only have this one sample.
 
-The process of **bootstrapping** allows us to use a single sample to generate many different samples that will act as our way of approximating a sampling distribution using a created **bootstrap distribution** instead. We will pull ourselves up from our bootstraps using a single sample (`pennies_sample_2`) to get an idea of the grander sampling distribution.
+The process of **resampling** allows us to use a single sample to generate many different samples that will act as our way of approximating a sampling distribution. Let's see how this works using our sample of fifty pennies.
+
+### Using resampling once
+
+The fifty pennies represent one possible sample from all of the pennies in our population. As we saw in Chapter \@ref(sampling), there are other potential samples that could have been selected. All we know about the population is that it contains pennies with years equal to those in our sample. In our sample, we drew three pennies with a year of 1999. But will we always draw exactly three pennies with a year of 1999 if we drew other samples? More than likely not. We might draw 0, 1, 2, or even all 50 pennies as being from 1999. The same can be said for the other 26 years that are represented in our sample.
+
+Taking our sample of fifty pennies, we can perform a resampling process to obtain another potential sample from the population. This will help us get a sense for the variability in another sample like what we did in Chapter \@ref(sampling). Here's the process:
+
+1. First, pretend that each of the 50 values of `year` in `pennies_sample_2` were written on a small piece of paper. Recall that these values were 2002, 1986, 2017, 1988, 2008, etc. We also note the `ID` values here on each sheet of paper of 1, 2, 3, 4, 5, etc. to keep track of how resampling works.
+2. Now, put the 50 small pieces of paper into a receptacle such as a baseball cap.
+3. Shake up the pieces of paper.
+4. Draw "at random" from the cap to select one piece of paper.
+5. Write down the value of `age` and `ID` on this piece of paper. Say that it is 2005 for `year` and 39 for `ID`.
+6. Now, place this piece of paper corresponding to the 39th coin with a value of 2005 back into the cap.
+7. Draw "at random" again from the cap to select a piece of paper. Note that this is the *sampling with replacement* part since you may draw this 39th coin again.
+8. Repeat this process until you have drawn 50 pieces of paper and written down the `ID` and `year` values for these 50 pieces of paper. Completing this repetition produces ONE resample. 
+
+Let's enter these values into R in a tibble called `pennies_resample` and observe the first ten rows of this resample.
+
+```{r echo=FALSE}
+pennies_resample <- pennies_sample_2 %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 1) %>% 
+  ungroup() %>% 
+  select(-replicate)
+pennies_resample
+```
+
+Now we can view what the actual pennies sampled would look like corresponding to this resample:
+
+```{r echo=FALSE, fig.cap="50 resampled US pennies labelled", fig.show='hold', purl=FALSE, out.width = "10%"}
+# Should probably switch to here::here() in this example
+resampled_labelled <- paste0(getwd(),
+                             "/images/sampling/pennies/labelled/",
+                             str_pad(pennies_resample$ID, 2, pad = "0"), 
+                             ".jpg")
+knitr::include_graphics(resampled_labelled)
+```
+
+Note the different `ID` values and `year` values for each penny here. There are also some pennies drawn multiple times and some pennies not drawn at all from our original sample.
+
+#### Exploratory data analysis on the resample {-}
+
+Let's look at the distribution of `year`s in the original sample of `pennies_sample_2` compared to the resample of `pennies_resample`:
+
+```{r eval=FALSE}
+ggplot(pennies_sample_2, aes(x = year)) +
+  geom_histogram(binwidth = 10, color = "white") +
+  labs(title = "50 US pennies labelled")
+ggplot(pennies_resample, aes(x = year)) +
+  geom_histogram(binwidth = 10, color = "white") +
+  labs(title = "50 resampled US pennies labelled")
+```
+
+```{r orig-and-resample, echo=FALSE, fig.cap="Comparing years of original sample `pennies_sample_2` and resample `pennies_resample`", purl=FALSE}
+p1 <- ggplot(pennies_sample_2, aes(x = year)) +
+  geom_histogram(binwidth = 10, color = "white") +
+  coord_cartesian(xlim = seq(1950, 2030, 20), ylim = seq(0, 15, 5)) +
+  labs(title = "50 US pennies labelled")
+p2 <- ggplot(pennies_resample, aes(x = year)) +
+  geom_histogram(binwidth = 10, color = "white") +
+  coord_cartesian(xlim = seq(1950, 2030, 20), ylim = seq(0, 15, 5)) +
+  labs(title = "50 resampled US pennies labelled")
+p1 + p2
+```
+
+Note the similarities and differences between these two distributions. The general shape of the two distributions is similar. This won't always be the case for all resamples since there is some chance that values that don't appear frequently in the original sample won't be drawn in the resample. Note also that the range of possible values taken on for the years is the same as what was seen in `pennies_sample_2`. In other words, we don't see any years such as 1948 or 1952 in the `pennies_resample` data. This will always be the case with resamples since they are, by their name, sampling again from the original sample.
+
+So where does the mean of the `year` variable for this resample of `pennies_resample` fall? Any guesses? Let's have `dplyr` help us out here:
+
+```{r}
+resample_mean <- pennies_resample %>% 
+  summarize(stat = mean(year))
+```
+
+The value of the resampled mean is `r round(resample_mean[[1, 1]], 2)`. We might have guessed that our mean here is similar to what we saw for the mean of `pennies_sample_2` of `r round(x_bar[[1, 1]], 2)` based on the distributions in the histogram in Figure \@ref(fig:orig-and-resample).
+
+What if we repeated several times this exercise of resampling 50 times from our sample of pennies? Would we obtain a mean `year` value each time? In other words, would our guess at the mean year of all pennies in the US in 2019 be exactly `r round(resample_mean[[1, 1]], 2)` every time? This should remind you of what we did in Chapter \@ref(sampling). Let's do some more resamplings and observe the results with the help of 33 friends again.
+
+
+### Using resampling 33 times {#student-resamples}
+
+Each of our 33 friends will do the following: 
+
+1. Each take 50 sheets of paper that show the different `ID` and `year` pairings from the `pennies_sample_2` original sample.
+2. Then, each put the 50 small pieces of paper into something like a baseball cap.
+3. Shake up the pieces of paper.
+4. Draw "at random" from the cap to select one piece of paper.
+5. Write down the value of `age` and `ID` on this piece of paper.
+6. Next, place this piece of paper just drawn back into the cap to have 50 small pieces of paper again.
+7. Draw "at random" again from the cap to select a piece of paper.
+8. Repeat this process until each of your friends have drawn 50 pieces of paper and each written down the `ID` and `year` values for these 50 pieces of paper. 
+
+Now each of your 33 friends has a resample of penny `ID` and `year` pairings. You now ask your friends to each compute the mean of the `year` values for each of their resamples. Using a similar strategy to what was done in Chapter \@ref(sampling), we build out our histogram manually:
+
+<!-- Need to insert a histogram here "drawn" with Post-It notes. Showing
+the actual ggplot2 for reference here. -->
+
+<!-- Albert will update with actual values here taken from his class for the next go-round of the book. -->
+
+
+```{r resampling-exercise, echo=FALSE, fig.cap="Constructing a histogram of means from resamples.", purl=FALSE}
+virtual_resamples <- pennies_sample_2 %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 33)
+virtual_resample_means <- virtual_resamples %>% 
+  group_by(replicate) %>% 
+  summarize(stat = mean(year))
+ggplot(virtual_resample_means, mapping = aes(x = stat)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
+  scale_x_continuous(breaks = seq(1990, 2000, 2))
+```
+
+Observe the following about the histogram in Figure \@ref(fig:resampling-exercise):
+
+<!-- Will need to update this with the actual values of the in-class activity -->
+
+* Only one of your friends has a mean year between 1991 and 1992.
+* On the other side of the distribution, only one of your friends has a mean year between 1999 and 2000.
+* The most frequently occurring range is between 1995 and 1996 with 8 entries, but 1992 to 1993, 1993 to 1994, and 1996 to 1997 each have 6 entries.
+* The distribution is starting to show a bit of normality, but that might be a stretch to guess at with this small of a sample size.
+
+The different mean values reported by your 33 friends are stored in the `tactile_sample_means` tibble shown below.
+
+```{r echo=FALSE}
+# Remove this after the activity is done
+# Maybe switch `friend` to be `group`?
+tactile_resample_means <- virtual_resample_means %>% 
+  rownames_to_column(var = "friend") %>% 
+  select(friend, replicate, 
+         resample_mean = stat)
+```
+
+
+```{r, eval=FALSE}
+tactile_resample_means
+View(tactile_resample_means)
+```
+
+Let's display only the first 10 out of 33 rows of `tactile_prop_red`'s contents in Table \@ref(tab:tactilered).
+
+```{r tactilered, echo=FALSE}
+tactile_resample_means %>% 
+  slice(1:10) %>% 
+  kable(
+    digits = 3,
+    caption = "First 10 out of 33 friends' mean age of 50 resampled pennies.", 
+    booktabs = TRUE,
+    longtable = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position", "repeat_header"))
+```
+
+Recall the `replicate` column here similar to the one shown in Chapter \@ref(sampling) enumerating each of the 33 groups. This again corresponds to each row being viewed as one instance of a replicated activity. The activity here is the sampling with replacement from the original sample 50 times to create a resample.
+
+The distribution of the 33 means of these resamples is given using a `geom_histogram()` with `binwidth = 1` in Figure \@ref(fig:resamplingdistribution-tactile). As with the similar plot from Chapter \@ref(sampling) for the proportion of red balls, this computer-generated histogram matches our hand-drawn histogram from the earlier Figure \@ref(fig:resampling-exercise). 
+
+```{r eval=FALSE}
+ggplot(tactile_resample_means, mapping = aes(x = stat)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
+  scale_x_continuous(breaks = seq(1990, 2000, 2))
+```
+```{r resamplingdistribution-tactile, echo=FALSE, fig.cap="Distribution of 33 means based on 33 resamples of size 50"}
+tactile_histogram <- ggplot(tactile_resample_means, mapping = aes(x = stat)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
+  scale_x_continuous(breaks = seq(1990, 2000, 2))
+tactile_histogram + 
+  labs(x = "Mean age of pennies", 
+       title = "Distribution of means from 33 resamples")
+```
+
+<!-- Up to here -->
+
+<!-- Modify the below passage to reinforce learning about resampling and
+motivate simulation -->
+
+### What are we doing here?
+
+What we just demonstrated in this activity is the statistical concept of *sampling*. We would like to know the proportion of the bowl's balls that are red, but because the bowl has a very large number of balls performing an exhaustive count of the number of red and white balls in the bowl would be very costly in terms of both time and energy. We therefore extract a sample of 50 balls using the shovel. Using this sample of 50 balls, we estimate the proportion of the bowl's balls that are red using the proportion of the shovel's balls that are red. This estimate in our earlier example was 17 red balls out of 50 balls = 34%. Moreover, because we mixed the balls before each use of the shovel, the samples were randomly drawn. Because each sample was drawn at random, the samples were different from each other. Because the samples were different from each other, we obtained the different proportions red observed in Table \@ref(tab:tactilered). This is known as the concept of *sampling variation*.
+
+In Section \@ref(sampling-simulation) we'll mimic the hands-on sampling activity we just performed in a *computer simulation*; using a computer will allow us to repeat the above sampling activity much more than 33 times. Using a computer, not only will be able to repeat the hands-on activity a very large number of times, but we will also be able to repeat it using different sized shovels. After these simulations, in Section \@ref(sampling-goal) we'll explicitly articulate our goals for this chapter: understanding the concept of sampling variation and the role that sample size plays in this variation. 
+
+<!-- Albert will make sure sampling-goal is defined as a section or remove the reference above. -->
+
+After having armed ourselves with this conceptual understanding of sampling, we'll present you with definitions, terminology, and notation related to sampling in Section \@ref(sampling-framework). As with many disciplines, there are definitions, terminology, and notation that seem very inaccessible and even confusing at first. However, as with many difficult topics, if you truly understand the underlying concepts and practice, practice, practice, you'll be able to master these topics.
+
+To tie the contents of this chapter to the real-word, we'll present an example of one of the most recognizable uses of sampling: polls. In Section \@ref(sampling-case-study) we'll look at a particular case study: a 2013 poll on then President Obama's popularity amongst young Americans, conducted by the Harvard Kennedy School's Institute of Politics.
+
+We'll close this chapter by generalizing the above sampling from the bowl activity to other scenarios, distinguishing between *random sampling* and *random assignment*, presenting the theoretical result underpinning all our results, and presenting a few mathematical formulas that relate to the concepts and ideas explored in this chapter.
+
+<!-- To update -->
 
 ### The Bootstrapping Process {#bootstrap-process}
 
-Bootstrapping uses a process of sampling **with replacement** from our original sample to create new **bootstrap samples** of the *same* size as our original sample. We can again make use of the `rep_sample_n()` function to explore what one such bootstrap sample would look like. Remember that we are randomly sampling from the original sample here with replacement and that we always use the same sample size for the bootstrap samples as the size of the original sample (`pennies_sample_2`).
+We will pull ourselves up from our bootstraps using a single sample (`pennies_sample_2`) to get an idea of the grander sampling distribution.
 
-```{r include=FALSE}
-set.seed(201)
-```
+Bootstrapping uses a process of sampling **with replacement** from our original sample to create new **bootstrap samples** of the *same* size as our original sample. We can again make use of the `rep_sample_n()` function to explore what one such bootstrap sample would look like. Remember that we are randomly sampling from the original sample here with replacement and that we always use the same sample size for the bootstrap samples as the size of the original sample (`pennies_sample_2`).
 
 ```{r}
 bootstrap_sample1 <- pennies_sample_2 %>% 
@@ -145,14 +335,7 @@ We can see that this sample mean is smaller than the `x_bar` value we calculated
 
 Let's recap what was done to get to this bootstrap sample using a tactile explanation:
 
-1. First, pretend that each of the 40 values of `year` in `pennies_sample_2` were written on a small piece of paper. Recall that these values were 6, 30, 34, 19, 6, etc.
-2. Now, put the 40 small pieces of paper into a receptacle such as a baseball cap.
-3. Shake up the pieces of paper.
-4. Draw "at random" from the cap to select one piece of paper.
-5. Write down the value on this piece of paper. Say that it is 28.
-6. Now, place this piece of paper containing 28 back into the cap.
-7. Draw "at random" again from the cap to select a piece of paper. Note that this is the *sampling with replacement* part since you may draw 28 again.
-8. Repeat this process until you have drawn 40 pieces of paper and written down the values on these 40 pieces of paper. Completing this repetition produces ONE bootstrap sample.
+
 
 If you look at the values in `bootstrap_sample1`, you can see how this process plays out. We originally drew 28, then we drew 11, then 7, and so on. Of course, we didn't actually use pieces of paper and a cap here. We just had the computer perform this process for us to produce `bootstrap_sample1` using `rep_sample_n()` with `replace = TRUE` set.
 
