@@ -57,7 +57,7 @@ Let's now begin with basic regression, which are linear regression models with a
 
 ### Needed packages {-}
 
-Let's now load all the packages needed for this chapter. In this chapter we introduce some new packages:
+Let's now load all the packages needed for this chapter (this assumes you've already installed them). In this chapter we introduce some new packages:
 
 1. The `tidyverse` "umbrella" package. Recall from our discussion in Section \@ref(tidyverse-package) that loading the `tidyverse` package by running `library(tidyverse)` loads the following commonly used data science packages all at once:
     + `ggplot2` for data visualization
@@ -128,7 +128,7 @@ Observe that `Observations: 463` indicates that there are 463 rows/observations 
 
 While a full description of all the variables included in `evals` can be found at [openintro.org](https://www.openintro.org/stat/data/?data=evals) and by reading the associated help file by running `?evals` in the Console, let's fully describe the `r ncol(evals_ch6)` variables we selected in `evals_ch6`:
 
-1. `ID`: A variable used to distinguish between the 1 through 463 courses in the dataset.
+1. `ID`: An identification variable used to distinguish between the 1 through 463 courses in the dataset.
 1. `score`: A numerical variable of the course instructor's average teaching score, where the average is computed from the evaluation scores from all students in that course.  Teaching scores of 1 are lowest and 5 are highest. This is the outcome variable $y$ of interest.
 1. `bty_avg`: A numerical variable of the course instructor's average "beauty" score, where the average is computed from a separate panel of 6 students. "Beauty" scores of 1 are lowest and 10 are highest. This is the explantory variable $x$ of interest.
 1. `age`: A numerical variable of the course instructor's age. This will be another explanatory variable $x$ we'll study later. 
@@ -523,86 +523,130 @@ As this point we suggest you read Section \@ref(leastsquares) in which we define
 
 ## One categorical explanatory variable {#model2}
 
-It's an unfortunate truth that life expectancy is not the same across various countries in the world; there are a multitude of factors that are associated with how long people live. International development agencies are very interested in studying these differences in the hope of understanding where governments should allocate resources to address this problem. In this section, we'll explore differences in life expectancy in two ways:
+It's an unfortunate truth that life expectancy is not the same across all countries in the world. International development agencies are very interested in studying these differences in life expectancy in the hopes of identifying where governments should allocate resources to address this problem. In this section, we'll explore differences in life expectancy in two ways:
 
-1. Differences between continents: Are there significant differences in life expectancy, on average, between the five continents of the world: Africa, the Americas, Asia, Europe, and Oceania?
+1. Differences between continents: Are there significant differences in average life expectancy between the five continents of the world: Africa, the Americas, Asia, Europe, and Oceania?
 1. Differences within continents: How does life expectancy vary within the world's five continents? For example, is the spread of life expectancy among the countries of Africa larger than the spread of life expectancy among the countries of Asia? 
 
-To answer such questions, we'll study the `gapminder` dataset in the `gapminder` package. Recall we mentioned this dataset in Subsection \@ref(gapminder) when we first studied the "Grammar of Graphics" introduced in Figure \@ref(fig:gapminder). This dataset has international development statistics such as life expectancy, GDP per capita, and population by country ($n$ = 142) for 5-year intervals between 1952 and 2007. 
+To answer such questions, we'll use the `gapminder` data frame included in the `gapminder` package. This dataset has international development statistics such as life expectancy, GDP per capita, and population for 142 countries for 5-year intervals between 1952 and 2007. Recall we visualized this data in Figure \@ref(fig:gapminder) in Subsection \@ref(gapminder) on the "Grammar of Graphics". 
 
-We'll use this data for linear regression again, but note that our explanatory variable $x$ is now categorical, and not numerical like when we covered simple linear regression in Section \@ref(model1). More precisely, we have:
+We'll use this data for basic linear regression again but now using an explanatory variable $x$ that is categorical, as opposed to the numerical explanatory variable model we saw in Section \@ref(model1) on instructor teaching and beauty scores. In this section, we'll model the relationship between 
 
-1. A numerical outcome variable $y$. In this case, life expectancy.
-1. A single categorical explanatory variable $x$, In this case, the continent the country is part of. 
+1. A numerical outcome variable $y$, a country's life expectancy and
+1. A single categorical explanatory variable $x$, the continent the country is a part of. 
 
-When the explanatory variable $x$ is categorical, the concept of a "best-fitting" line is a little different than the one we saw previously in Section \@ref(model1) where the explanatory variable $x$ was numerical. We'll study these differences shortly in Subsection \@ref(model2table), but first we conduct our exploratory data analysis.
+When the explanatory variable $x$ is categorical, the concept of a "best-fitting" regression line is a little different than the one we saw previously in Section \@ref(model1) where the explanatory variable $x$ was numerical. We'll study these differences shortly in Subsection \@ref(model2table), but first we conduct our exploratory data analysis.
+
 
 ### Exploratory data analysis {#model2EDA}
 
-Let's load the `gapminder` data and `filter()` for only observations in 2007. Next we `select()` only the variables we'll need along with `gdpPercap`, which is each country's gross domestic product per capita (GDP). GDP is a rough measure of that country's economic performance. (This will be used for the upcoming Learning Check). Lastly, we save this in a data frame with name `gapminder2007`:
+The data on the 142 countries can be found in the `gapminder` data frame included in the `gapminder` package. However, to keep things simple, let's `filter()` for only observations/rows corresponding to the year 2007, `select()` only the subset of the variables we'll consider in this chapter, and save this data in a new data frame called `gapminder2007`:
 
 ```{r, warning=FALSE, message=FALSE}
 library(gapminder)
 gapminder2007 <- gapminder %>%
   filter(year == 2007) %>% 
-  select(country, continent, lifeExp, gdpPercap)
+  select(country, lifeExp, continent, gdpPercap) %>% 
+  mutate(gdpPercap_categ = ifelse(gdpPercap < 15000, "low", "high"))
+```
+```{r, echo=FALSE}
+# Hidden: internally compute mean and median life expectancy
+lifeExp_worldwide <- gapminder2007 %>%
+  summarize(median = median(lifeExp), mean = mean(lifeExp))
+mean_africa <- gapminder2007 %>% 
+  filter(continent == "Africa") %>% 
+  summarize(mean_africa = mean(lifeExp)) %>% 
+  pull(mean_africa)
 ```
 
-You should look at the raw data values both by bringing up RStudio's spreadsheet viewer and the `glimpse()` function. In Table \@ref(tab:model2-data-preview) we only show 5 randomly selected countries out of `r nrow(gapminder2007)`:
+Recall from Section \@ref(model1EDA) that there are three common steps in an exploratory data analysis:
+
+1. Most crucially: Looking at the raw data values. 
+1. Computing summary statistics, like means, medians, and interquartile ranges. 
+1. Creating data visualizations.
+
+Let's perform the first common step in an exploratory data analysis: looking at the raw data values. You can do this by using RStudio's spreadsheet viewer or by using the `glimpse()` command as introduced in Section \@ref(exploredataframes) on exploring data frames:
+
+```{r}
+glimpse(gapminder2007)
+```
+
+Observe that `Observations: 142` indicates that there are 142 rows/observations in `gapminder2007`, where each row corresponds to one country. In other words, the *observational unit* are individual countries. Furthermore, observe that the variable `continent` is of type `<fct>`, which stands for "factor," which is R's way of encoding categorical variables. 
+
+While a full description of all the variables included in `gapminder` can be found by reading the associated help file by running `?gapminder` in the Console, let's fully describe the `r ncol(gapminder2007)` variables we selected in `gapminder2007`:
+
+1. `country`: An identification variable used to distinguish the 142 countries in the dataset.
+1. `lifeExp`: A numerical variable of that country's life expectancy at birth. This is the outcome variable $y$ of interest.
+1. `continent`: A categorical variable with 5 levels i.e. possible catgories: Africa, Asia, Americas, Europe, and Oceania. This is the explantory variable $x$ of interest.
+1. `gdpPercap`: A numerical variable of that country's GDP per capita in US inflation-adjusted dollars that we'll use as another outcome variable $y$ in the Learning Check at the end of this section.
+
+Furthermore, let's look at a random sample of 5 out of the `r nrow(gapminder2007)` countries in Table \@ref(tab:model2-data-preview). Note due to the random nature of the sampling, you will likely end up with a different subset of 5 rows. 
 
 ```{r, eval=FALSE}
-View(gapminder2007)
+gapminder2007 %>%
+  sample_n(size = 5)
 ```
-
-
 
 ```{r model2-data-preview, echo=FALSE}
 gapminder2007 %>%
   sample_n(5) %>%
   knitr::kable(
     digits = 3,
-    caption = "Random sample of 5 countries",
+    caption = "Random sample of 5 out of 142 countries",
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 ```
 
+Now that we've looked at the raw values in our `gapminder2007` data frame and obtained a sense of the data, let's move on to next common step in an exploratory data analysis: computing summary statistics. Let's once again apply the `skim()` function from the `skimr` package. Recall from our previous EDA that this function takes in a data frame, "skims" it, and returns commonly used summary statistics. Let's take our `gapminder2007` data frame, `select()` only the outcome and explanatory variables `lifeExp` and `continent`, and pipe it into the `skim()` function:
 
-```{r}
-glimpse(gapminder2007)
-```
+The `skim()` output now reports summaries for categorical variables (`Variable type:factor`) separately from the numerical variables (`Variable type:numeric`). For the categorical variable `continent` it now reports:
 
-We see that the variable `continent` is indeed categorical, as it is encoded as `fct` which stands for "factor." This is R's way of storing categorical variables. Let's once again apply the `skim()` function from the `skimr` package to our two variables of interest: `continent` and `lifeExp`:
+- `missing`, `complete`, `n` which are the number of missing, complete, and total number of values as before.
+- `n_unique`: The number of unique levels to this variable, corresponding to Africa, Asia, Americas, Europe, and Oceania
+- `top_counts`: In this case the top four counts: `Africa` has 52 corresponding to its 52 countries, `Asia` has 33, `Europe` has 30, and `Americas` has 25. Not displayed is `Oceania` with 2 countries
+- `ordered`: This tells is whether the categorical variable is "ordinal": whether there is encoded hierarchy (like low, medium, high). In this case, it is not ordered. 
 
-```{r, echo=FALSE}
-gapminder2007 %>% 
-  select(continent, lifeExp) %>% 
-  skim()
-```
-```{r, echo=FALSE}
-lifeExp_worldwide <- gapminder2007 %>%
-  summarize(median = median(lifeExp), mean = mean(lifeExp))
-```
+Turning our attention to the summary statistics of the numerical variable `lifeExp`, we observe that the global median life expectancy is `r lifeExp_worldwide$median %>% round(2)`, or in other words half of the world's countries (71 countries) will have a life expectancy less than  `r lifeExp_worldwide$median %>% round(2)`. The mean life expectancy of `r lifeExp_worldwide$mean %>% round(2)` is lower however. Why is the mean life expectancy lower than the median?
 
+We can answer this question via the last of the three common steps in an exploratory data analysis: creating data visualizations. Let's visualize the distribution of our outcome variable $y$ = `lifeExp` in Figure \@ref(fig:lifeExp2007hist).
 
-The output now reports summaries for categorical variables (the variable type: factor) separately from the numerical variables. For the categorical variable `continent` it now reports:
-
-- `missing`, `complete`, `n` as before which are the number of missing, complete, and total number of values.
-- `n_unique`: The unique number of levels to this variable, corresponding to Africa, Asia, Americas, Europe, and Oceania
-- `top_counts`: In this case the top four counts: Africa has 52 entries each corresponding to a country, Asia has 33, Europe has 30, and Americans has 25. Not displayed is Oceania with 2 countries
-- `ordered`: Reporting whether the variable is "ordinal." In this case, it is not ordered. 
-
-Given that the global median life expectancy is `r lifeExp_worldwide$median %>% round(2)`, half of the world's countries (71 countries) will have a life expectancy less than  `r lifeExp_worldwide$median %>% round(2)`. Further, half will have a life expectancy greater than this value. The mean life expectancy of `r lifeExp_worldwide$mean %>% round(2)` is lower however. Why are these two values different? Let's look at a histogram of `lifeExp` in Figure \@ref(fig:lifeExp2007hist) to see why.
-
-```{r lifeExp2007hist, echo=FALSE, warning=FALSE, fig.cap="Histogram of Life Expectancy in 2007"}
+```{r lifeExp2007hist, echo=FALSE, warning=FALSE, fig.cap= "Histogram of Life Expectancy in 2007"}
 ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", y = "Number of countries", 
-       title = "Worldwide life expectancy")
+       title = "Histogram of distribution of worldwide life expectancies")
 ```
 
-We see that this data is left-skewed/negatively skewed: there are a few countries with very low life expectancy that are bringing down the mean life expectancy. However, the median is less sensitive to the effects of such outliers. Hence the median is greater than the mean in this case. Let's proceed by comparing median and mean life expectancy between continents by adding a `group_by(continent)` to the above code:
+We see that this data is *left-skewed*, also known as *negatively* skewed: there are a few countries with very low life expectancy that are bringing down the mean life expectancy. However, the median is less sensitive to the effects of such outliers, hence the median is greater than the mean in this case. 
+
+Remember however, that we want to compare life expectancies both between continents and within continents. In other words, our visualizations need to incorporate some notion of the variable `continent`. We can do this easily with a faceted histogram. Recall from Section \@ref(facets) that facets allow us to split a visualization by the different values of another variable. We display the resulting visualization in Figure \@ref(fig:catxplot0b) by adding a `facet_wrap(~ continent, nrow = 2)` layer. 
+
+```{r catxplot0b, warning=FALSE, fig.cap="Life expectancy in 2007"}
+ggplot(gapminder2007, aes(x = lifeExp)) +
+  geom_histogram(binwidth = 5, color = "white") +
+  labs(x = "Life expectancy", y = "Number of countries", 
+       title = "Histogram of distribution of worldwide life expectancies") + 
+  facet_wrap(~ continent, nrow = 2)
+```
+
+We observe that unfortunately the distribution of African life expectancies is much lower than the other continents while in Europe life expectancies tend to be higher and do not vary as much. Both Asia and Africa have the most variation in life expectancies. There is the least variation in Oceania, but this greatly influenced by the fact that there are only two countries in Oceania: Australia and New Zealand. 
+
+Recall than an alternative visualization of the distribution of a numerical variable split by a categorical variable is by using a side-by-side boxplot via a `geom_boxplot()`; we map the categorical variable `continent` to the $x$-axis and the different life expectancies within each continent on the $y$-axis.
+
+```{r catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007"}
+ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
+  geom_boxplot() +
+  labs(x = "Continent", y = "Life expectancy (years)", 
+       title = "Life expectancy by continent") 
+```
+
+Some people prefer comparing the distributions of a numerical variable between different levels of a categorical variable using a boxplot instead of faceted histogram as we can make quick comparisons with imaginary horizontal lines. For example observe in Figure \@ref(fig:catxplot1) that Oceania clearly tends to have the highest life expectancies given that we could draw an imaginary horizontal line at $y$ = 80. Furthermore, as we observed with in faceted histogram in Figure \@ref(fig:catxplot0b), Africa and Asia have the biggest variation in life expectancy as evidenced by their large interquartile ranges i.e. the height of the boxes.
+
+It’s important to remember however that the solid lines in the middle of the boxes correspond to the medians (i.e. the middle value) rather than the mean (the average). So, for example, if you look at Asia, the solid line denotes the median life expectancy of around 72 years, indicating to us that half of all countries in Asia have a life expectancy below 72 years whereas half of all countries in Asia have a life expectancy above 72 years. 
+
+Let's compute the median and mean life expectancy for each continent with a little more data wrangling and display the results in Table \@ref(tab:catxplot0).
 
 ```{r, eval=TRUE}
 lifeExp_by_continent <- gapminder2007 %>%
@@ -617,53 +661,15 @@ lifeExp_by_continent %>%
     booktabs = TRUE
   )
 ```
-```{r, echo=FALSE}
-median_africa <- lifeExp_by_continent %>%
-  filter(continent == "Africa") %>%
-  pull(median)
-mean_africa <- lifeExp_by_continent %>%
-  filter(continent == "Africa") %>%
-  pull(mean)
-n_countries <- gapminder2007 %>% nrow()
-n_countries_africa <- gapminder2007 %>% filter(continent == "Africa") %>% nrow()
-```
 
-We see now that there are differences in life expectancy between the continents. For example let's focus on only medians. While the median life expectancy across all $n = `r n_countries`$ countries in 2007 was `r lifeExp_worldwide$median %>% round(3)`, the median life expectancy across the $n =`r n_countries_africa`$ countries in Africa was only `r median_africa`.
+Observe the order of the second column `median` life expectancy: Africa is lowest, the Americas and Asia are next with similar medians, then Europe, then Asia. This ordering corresponds to the ordering of the solid black lines inside the boxes in our side-by-side boxplot in Figure \@ref(fig:catxplot1). Let's now turn our attention to the values in the third column `mean`. Using Africa as a *baseline for comparison*, let's start making comparisons of life expectancies with the other continents:
 
-Let's create a corresponding visualization. One way to compare the life expectancy of countries in different continents would be via a faceted histogram. Recall we saw back in the Data Visualization chapter, specifically Section \@ref(facets), that facets allow us to split a visualization by the different levels of a categorical variable or factor variable. In Figure \@ref(fig:catxplot0b), the variable we facet by is `continent`, which is categorical with five levels, each corresponding to the five continents of the world.
+1. The mean life expectancy of the Americas is 73.6 - 54.8 = 18.8 years higher.
+1. The mean life expectancy of Asia is 70.7 - 54.8 = 15.9 years higher.
+1. The mean life expectancy of Europe is 77.6 - 54.8 = 22.8 years higher.
+1. The mean life expectancy of Oceania is 80.7 - 54.8 = 25.9 years higher.
 
-```{r catxplot0b, warning=FALSE, fig.cap="Life expectancy in 2007"}
-ggplot(gapminder2007, aes(x = lifeExp)) +
-  geom_histogram(binwidth = 5, color = "white") +
-  labs(x = "Life expectancy", y = "Number of countries", 
-       title = "Life expectancy by continent") +
-  facet_wrap(~ continent, nrow = 2)
-```
-
-Another way would be via a `geom_boxplot` where we map the categorical variable `continent` to the $x$-axis and the different life expectancy within each continent on the $y$-axis; we do this in Figure \@ref(fig:catxplot1). 
-
-```{r catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007"}
-ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
-  geom_boxplot() +
-  labs(x = "Continent", y = "Life expectancy (years)", 
-       title = "Life expectancy by continent") 
-```
-
-Some people prefer comparing a numerical variable between different levels of a categorical variable, in this case comparing life expectancy between different continents, using a boxplot over a faceted histogram as we can make quick comparisons with single horizontal lines. For example, we can see that even the country with the highest life expectancy in Africa is still lower than all countries in Oceania. 
-
-It’s important to remember however that the solid lines in the middle of the boxes correspond to the medians (i.e. the middle value) rather than the mean (the average). So, for example, if you look at Asia, the solid line denotes the median life expectancy of around 72 years, indicating to us that half of all countries in Asia have a life expectancy below 72 years whereas half of all countries in Asia have a life expectancy above 72 years. Furthermore, note that:   
-    
-* Africa and Asia have much more spread/variation in life expectancy as indicated by the interquartile range (the height of the boxes).
-* Oceania has almost no spread/variation, but this might in large part be due to the fact there are only two countries in Oceania: Australia and New Zealand. 
-
-Now, let's start making comparisons of life expectancy *between* continents. Let's use Africa as a *baseline for comparison*. Why Africa? Only because it happened to be first alphabetically, we could have just as appropriately used the Americas as the baseline for comparison. Using the "eyeball test" (just using our eyes to see if anything stands out), we make the following observations about differences in median life expectancy compared to the baseline of Africa:
-
-1. The median life expectancy of the Americas is roughly 20 years greater.
-1. The median life expectancy of Asia is roughly 20 years greater.
-1. The median life expectancy of Europe is roughly 25 years greater.
-1. The median life expectancy of Oceania is roughly 27.8 years greater.
-
-Let's remember these four differences vs Africa corresponding to the Americas, Asia, Europe, and Oceania: 20, 20, 25, 27.8.
+Let's remember these four differences in average life expectancy as compared to Africa: Europe 18.8, Asia 15.9, Europe 22.8, and Oceania 25.9.
 
 ```{block, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -671,9 +677,9 @@ Let's remember these four differences vs Africa corresponding to the Americas, A
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Conduct a new exploratory data analysis with the same explanatory variable $x$ being `continent` but with `gdpPercap` as the new outcome variable $y$. Remember, this involves three things:
 
-a) Looking at the raw values
-a) Computing summary statistics of the variables of interest.
-a) Creating informative visualizations
+1. Most crucially: Looking at the raw data values. 
+1. Computing summary statistics, like means, medians, and interquartile ranges. 
+1. Creating data visualizations.
 
 What can you say about the differences in GDP per capita between continents based on this exploration?
 
