@@ -241,8 +241,7 @@ The different mean values reported by your 33 friends are stored in the `tactile
 # Maybe switch `friend` to be `group`?
 tactile_resample_means <- virtual_resample_means %>% 
   rownames_to_column(var = "friend") %>% 
-  select(friend, replicate, 
-         resample_mean = stat)
+  select(friend, replicate, stat)
 ```
 
 
@@ -253,7 +252,7 @@ View(tactile_resample_means)
 
 Let's display only the first 10 out of 33 rows of `tactile_prop_red`'s contents in Table \@ref(tab:tactilered).
 
-```{r tactilered, echo=FALSE}
+```{r tactile-resample-means, echo=FALSE}
 tactile_resample_means %>% 
   slice(1:10) %>% 
   kable(
@@ -276,7 +275,8 @@ ggplot(tactile_resample_means, mapping = aes(x = stat)) +
   scale_x_continuous(breaks = seq(1990, 2000, 2))
 ```
 ```{r resamplingdistribution-tactile, echo=FALSE, fig.cap="Distribution of 33 means based on 33 resamples of size 50"}
-tactile_histogram <- ggplot(tactile_resample_means, mapping = aes(x = stat)) +
+tactile_histogram <- ggplot(tactile_resample_means, 
+                            mapping = aes(x = stat)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
   scale_x_continuous(breaks = seq(1990, 2000, 2))
 tactile_histogram + 
@@ -284,28 +284,172 @@ tactile_histogram +
        title = "Distribution of means from 33 resamples")
 ```
 
+### What's the plan?
+
+We've just gone over how to use the technique of *resampling* to make a guess as to what the variability would look like if we were to take samples from a population. Thus, in essence, the *resampling distribution* would be an approximation of the *sampling distribution* discussed in Chapter \@ref(sampling). We saw that we obtained many different means from these resamples and began to see the underpinnings of the normal distribution take shape in the first 33 resamples made by our friends.
+
+In Section \@ref(resampling-simulation) we'll use *computer simulation* to imitate the hands-on resampling activity conducted here. We can use a computer to do the resampling many more times than just having our friends do this for us. This will allow us to better understand the distribution of means from many different resamples. Following these simulations, in Section \@ref(resampling-goal) we'll explicitly articulate our goals for this chapter: understanding the concept of resampling variation, defining the statistical idea of a *confidence interval* by building on our pennies example, and discussing how confidence intervals can be interpreted.
+
+Following this framework on confidence intervals, we'll discuss the `dplyr` and `infer` package code needed to complete the process of *bootstrapping*, which is another name for this resampling approach that is most commonly found in developing confidence intervals. We've used one of the functions in the `infer` package already with `rep_sample_n()`, but there's a lot more to this package than just that. We'll introduce the tidy statistical inference framework that was the motivation for the `infer` package pipeline that will be the driving package throughout the rest of this book.
+
+As we did in Chapter \@ref(sampling), we'll tie these ideas together with a case study in Section \@ref(resampling-case-study). Here we will be analyzing an experiment done about yawning on the US television show Mythbusters. The chapter concludes with a comparison of a sampling distribution and a bootstrap distribution using the balls data from Chapter \@ref(sampling). We'll also discuss briefly the normal distribution and how these traditional taught theoretical results tie in with the methods developed throughout the chapter.
+
+
+
+
+## Computer simulation of resampling
+
+We've completed a tactile example of resampling. We'll next explore how this can be done virtually using the computer.
+
+### Using the virtual resample once
+
+Recall that `pennies_sample_2` is stored as a dataset in the `moderndive` package. We've used the `rep_sample_n()` function in Chapter \@ref(sampling) to take samples from a population using `replace = FALSE` as the default. If we change this to `replace = TRUE`, we can also use this function to resample from a given original sample. Let's try this out:
+
+```{r eval=FALSE}
+virtual_resample <- pennies_sample_2 %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 1)
+```
+
+Note here that the `size` argument should always be the same as the original sample size. We are doing this resampling one time and, thus, `reps = 1`. So what does `virtual_resample` look like?
+
+```{r eval=FALSE}
+View(virtual_resample)
+```
+
+We'll display only the first 10 out of 50 rows of `virtual_shovel`'s contents in Table \@ref(tab:virtual-shovel).
+
+```{r virtual-resample, echo=FALSE}
+virtual_resample <- pennies_sample_2 %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 1)
+virtual_resample %>% 
+  slice(1:10) %>%
+  knitr::kable(
+    align = c("r", "r", "r"),
+    digits = 3,
+    caption = "First 10 resampled rows of 50 in virtual sample",
+    booktabs = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
+```
+
+The `ID` variable identifies which of the pennies from `pennies_sample_2` are included in our resample of 50 coins and `year` denotes the year minted on the penny. The `replicate` column here is always the value of 1 corresponding to us only having `reps = 1`. It will take values between 1 and 33 next. But before we get to resampling multiple time, let's compute the mean `year` in our virtual resample of size 50 using `dplyr`.
+
+```{r}
+virtual_resample %>% 
+  summarize(resample_mean = mean(year))
+```
+
+<!-- Not sure if needed, but those trying to follow along may be mystified
+if we don't include this. -->
+
+Note that tibbles will try to print as pretty as possible which may result in numbers being rounded. We can extract the actual value here using the `pull()` function which converts this value to be a vector instead:
+
+```{r}
+virtual_resample %>% 
+  summarize(resample_mean = mean(year)) %>% 
+  pull()
+```
+
+### Using the virtual resample 33 times
+
+Let's now extend this to have 33 virtual friends help us understand the variability in the means from 33 resamples of size 50.
+
+```{r eval=FALSE}
+virtual_resamples <- pennies_sample_2 %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 33)
+View(virtual_resamples)
+```
+
+```{r echo=FALSE}
+virtual_resamples <- pennies_sample_2 %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 33)
+```
+
+Just as we did with `virtual_resample`, we'll take the tibble `virtual_resamples` with 33 $\times$ 50 = 1650 rows corresponding to 33 resamples of size 50 pennies and then compute the resulting 33 means. We'll use the same `dplyr` verb as we did in the previous section, but compute the mean for each of our virtual friends:
+
+```{r, eval=FALSE}
+virtual_resample_means <- virtual_resamples %>% 
+  group_by(replicate) %>% 
+  summarize(stat = mean(year))
+View(virtual_resample_means)
+```
+
+
+```{r virtual-resample-means, echo=FALSE}
+virtual_resample_means <- virtual_resamples %>% 
+  group_by(replicate) %>% 
+  summarize(stat = mean(year))
+
+virtual_resample_means %>% 
+  slice(1:10) %>% 
+  kable(
+    digits = 3,
+    caption = "First 10 out of 33 means from virtual resamples", 
+    booktabs = TRUE,
+    longtable = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position", "repeat_header"))
+```
+
+By looking at these first 10 rows, we can see values in the same range as those obtained from our friends' resamples in Table \@ref(tab:tactile-resample-means). Let's next visualize these 33 means:
+
+```{r}
+ggplot(virtual_resample_means, aes(x = stat)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
+  scale_x_continuous(breaks = seq(1990, 2000, 2))
+```
+
+Let's next compare the two distributions of the tactile resampling done by friends and the virtual resampling done by the computer:
+
+```{r orig-and-resample-means, echo=FALSE, fig.cap="Comparing distributions of means from resamples`", purl=FALSE}
+p3 <- ggplot(tactile_resample_means, aes(x = stat)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
+  scale_x_continuous(breaks = seq(1990, 2000, 2)) +
+  coord_cartesian(xlim = seq(1990, 2000, 2), ylim = seq(0, 8, 2)) +
+  labs(title = "33 means of tactile resamples")
+p4 <- ggplot(virtual_resample_means, aes(x = stat)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
+  scale_x_continuous(breaks = seq(1990, 2000, 2)) +
+  coord_cartesian(ylim = seq(0, 8, 2)) +
+  labs(title = "33 means of virtual resamples")
+p3 + p4
+```
+
+<!-- Good learning check here would be for learners to compare the distributions since we did something similar in Chapter 8 and they should be well versed on this by now. -->
+
+### Using the virtual resample 1000 times
+
+Remember that one of the goal of resampling is to get an estimate for what the sampling distribution of the statistic of interest, the mean year here, looks like. To do so we'll need lots of different replicates to better understand the shape and the variability from one resample to the next. Let's extend our 33 replicates above to look at 1000 instead. With our goal being to get to 1000 resample means, we can use the `%>%` to get us there in one chain:
+
+```{r}
+virtual_resample_means <- pennies_sample_2 %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>% 
+  group_by(replicate) %>% 
+  summarize(stat = mean(year))
+```
+
+Let's next look at what this distribution of 1000 means from 1000 resamples looks like:
+
+```{r echo=FALSE, message=FALSE}
+# To get it to look nice I needed to make some tweaks
+ggplot(virtual_resample_means, aes(x = stat)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
+  scale_x_continuous(breaks = seq(1988, 2006, 2))
+```
+
+Note here the bell-shape starting to become more apparent. We now have a general sense for the range of values that the mean may take on in these resamples from this histogram.
+
+<!-- Another good learning check here would be to ask learners to summarize important features of the plot as was done in Chapter 8. -->
+
 <!-- Up to here -->
 
-<!-- Modify the below passage to reinforce learning about resampling and
-motivate simulation -->
+<!-- Now to the reordering. -->
 
-### What are we doing here?
+## Confidence intervals
 
-What we just demonstrated in this activity is the statistical concept of *sampling*. We would like to know the proportion of the bowl's balls that are red, but because the bowl has a very large number of balls performing an exhaustive count of the number of red and white balls in the bowl would be very costly in terms of both time and energy. We therefore extract a sample of 50 balls using the shovel. Using this sample of 50 balls, we estimate the proportion of the bowl's balls that are red using the proportion of the shovel's balls that are red. This estimate in our earlier example was 17 red balls out of 50 balls = 34%. Moreover, because we mixed the balls before each use of the shovel, the samples were randomly drawn. Because each sample was drawn at random, the samples were different from each other. Because the samples were different from each other, we obtained the different proportions red observed in Table \@ref(tab:tactilered). This is known as the concept of *sampling variation*.
-
-In Section \@ref(sampling-simulation) we'll mimic the hands-on sampling activity we just performed in a *computer simulation*; using a computer will allow us to repeat the above sampling activity much more than 33 times. Using a computer, not only will be able to repeat the hands-on activity a very large number of times, but we will also be able to repeat it using different sized shovels. After these simulations, in Section \@ref(sampling-goal) we'll explicitly articulate our goals for this chapter: understanding the concept of sampling variation and the role that sample size plays in this variation. 
-
-<!-- Albert will make sure sampling-goal is defined as a section or remove the reference above. -->
-
-After having armed ourselves with this conceptual understanding of sampling, we'll present you with definitions, terminology, and notation related to sampling in Section \@ref(sampling-framework). As with many disciplines, there are definitions, terminology, and notation that seem very inaccessible and even confusing at first. However, as with many difficult topics, if you truly understand the underlying concepts and practice, practice, practice, you'll be able to master these topics.
-
-To tie the contents of this chapter to the real-word, we'll present an example of one of the most recognizable uses of sampling: polls. In Section \@ref(sampling-case-study) we'll look at a particular case study: a 2013 poll on then President Obama's popularity amongst young Americans, conducted by the Harvard Kennedy School's Institute of Politics.
-
-We'll close this chapter by generalizing the above sampling from the bowl activity to other scenarios, distinguishing between *random sampling* and *random assignment*, presenting the theoretical result underpinning all our results, and presenting a few mathematical formulas that relate to the concepts and ideas explored in this chapter.
-
-<!-- To update -->
-
-### The Bootstrapping Process {#bootstrap-process}
+## The Bootstrapping Framework {#bootstrap-process}
 
 We will pull ourselves up from our bootstraps using a single sample (`pennies_sample_2`) to get an idea of the grander sampling distribution.
 
@@ -362,11 +506,11 @@ six_bootstrap_samples %>%
 
 Instead of doing this six times, we could do it 1000 times and then look at the distribution of `stat` across all 1000 of the `replicate`s. This sets the stage for the `infer` R package [@R-infer] that was created to help users perform statistical inference such as confidence intervals and hypothesis tests using verbs similar to what you've seen with `dplyr`. We'll walk through setting up each of the `infer` verbs for confidence intervals using this `pennies_sample_2` example, while also explaining the purpose of the verbs in a general framework.
 
-## The infer package for statistical inference
+### The infer package for statistical inference
 
 The `infer` package makes great use of the `%>%` to create a pipeline for statistical inference. The goal of the package is to provide a way for its users to explain the computational process of confidence intervals and hypothesis tests using the code as a guide. The verbs build in order here, so you'll want to start with `specify()` and then continue through the others as needed.
 
-### Specify variables
+#### Specify variables {-}
 
 ```{r fig.align='center', echo=FALSE}
 knitr::include_graphics("images/flowcharts/infer/specify.png")
@@ -392,7 +536,7 @@ pennies_sample_2 %>%
 
 Note that the formula notation uses the common R methodology to include the response $y$ variable on the left of the `~` and the explanatory $x$ variable on the right of the "tilde." Recall that you used this notation frequently with the `lm()` function in Chapters \@ref(regression) and \@ref(multiple-regression) when fitting regression models. Either notation works just fine, but a preference is usually given here for the `formula` notation to further build on the ideas from earlier chapters.
 
-### Generate replicates
+#### Generate replicates {-}
 
 ```{r fig.align='center', echo=FALSE}
 knitr::include_graphics("images/flowcharts/infer/generate.png")
@@ -417,7 +561,7 @@ thousand_bootstrap_samples %>%
 
 Notice that each `replicate` has 40 entries here. Now that we have 1000 different bootstrap samples, our next step is to `calculate` the bootstrap statistics for each sample.
 
-### Calculate summary statistics
+#### Calculate summary statistics {-}
 
 ```{r fig.align='center', echo=FALSE}
 knitr::include_graphics("images/flowcharts/infer/calculate.png")
@@ -456,7 +600,7 @@ pennies_sample_2 %>%
 
 This shortcut will be particularly useful when the calculation of the observed statistic is tricky to do using `dplyr` alone. This is particularly the case when working with more than one variable as will be seen in Chapter \@ref(hypothesis-testing).
 
-### Visualize the results
+#### Visualize the results {-}
 
 ```{r fig.align='center', echo=FALSE}
 knitr::include_graphics("images/flowcharts/infer/visualize.png")
@@ -686,8 +830,6 @@ If we aren't able to use the sample mean as a good guess for the population mean
 ## Interpreting the confidence interval
 
 As shown above in Subsection \@ref(percentile-method), one range of plausible values for the population mean age of pennies in 2011, denoted by $\mu$, is $[`r round(percentile_ci[["2.5%"]], 2)`, `r round(percentile_ci[["97.5%"]], 2)`]$. Recall that this confidence interval is based on bootstrapping using `pennies_sample_2`. Note that the mean of `pennies` (`r pennies_mu`) does fall in this confidence interval. If we had a different sample of size 40 and constructed a confidence interval using the same method, would we be guaranteed that it contained the population parameter value as well? Let's try it out:
-
-<!-- Need to remove this as we are avoiding `pennies` now. -->
 
 ```{r}
 pennies_sample_2 <- pennies %>% 
