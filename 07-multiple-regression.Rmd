@@ -109,7 +109,7 @@ evals_ch7 %>%
   sample_n(5) %>%
   knitr::kable(
     digits = 3,
-    caption = "Random sample of 5 instructors",
+    caption = "A random sample of 5 out of the 463 courses at UT Austin",
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -149,67 +149,7 @@ We notice some interesting trends:
 1. There are almost no women faculty over the age of 60 as evidenced by lack of red dots above $x$ = 60.
 1. While both regression lines are negatively sloped with age (i.e. as instructor's age, so also do they tend to receive lower teaching scores), the slope for age for the female instructors is *more* negative. In other words, the female instructors are paying a harsher penalty in their teaching scores then the male instructors do. 
 
-
-### Multiple regression: Parallel slopes model {#model4table}
-
-Much like we started to consider multiple explanatory variables using the `+` sign in Subsection \@ref(model3table), let's fit a regression model and get the regression table. This time we provide the name of `score_model_2` to our regression model fit, in so as to not overwrite the model `score_model` from Section \@ref(model1table). 
-
-```{r, eval=FALSE}
-score_model_2 <- lm(score ~ age + gender, data = evals_ch7)
-get_regression_table(score_model_2)
-```
-```{r, echo=FALSE}
-score_model_2 <- lm(score ~ age + gender, data = evals_ch7)
-get_regression_table(score_model_2) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Regression table", 
-    booktabs = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
-```
-
-The modeling equation for this scenario is:
-
-\begin{align}
-\widehat{y} &= b_0 + b_1 \cdot x_1 + b_2 \cdot x_2 \\
-\widehat{\mbox{score}} &= b_0 + b_{\mbox{age}} \cdot \mbox{age} + b_{\mbox{male}} \cdot \mathbb{1}_{\mbox{is male}}(x)
-\end{align}
-
-where $\mathbb{1}_{\mbox{is male}}(x)$ is an *indicator function* for `sex == male`. In other words,  $\mathbb{1}_{\mbox{is male}}(x)$ equals one if the current observation corresponds to a male professor, and 0 if the current observation corresponds to a female professor. This model can be visualized in Figure \@ref(fig:numxcatxplot2). 
-
-```{r numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin by gender: same slope"}
-coeff <- lm(score ~ age + gender, data = evals_ch7) %>% 
-  coef() %>%
-  as.numeric()
-slopes <- evals_ch7 %>%
-  group_by(gender) %>%
-  summarise(min = min(age), max = max(age)) %>%
-  mutate(intercept = coeff[1]) %>%
-  mutate(intercept = ifelse(gender == "male", intercept + coeff[3], intercept)) %>%
-  gather(point, age, -c(gender, intercept)) %>%
-  mutate(y_hat = intercept + age * coeff[2])
-
-ggplot(evals_ch7, aes(x = age, y = score, col = gender)) +
-  geom_jitter() +
-  labs(x = "Age", y = "Teaching Score", color = "Gender") +
-  geom_line(data = slopes, aes(y = y_hat), size = 1)
-```
-
-We see that:
-
-* Females are treated as the baseline for comparison for no other reason than "female" is alphabetically earlier than "male." The $b_{male} = 0.1906$ is the vertical "bump" that men get in their teaching evaluation scores. Or more precisely, it is the average difference in teaching score
-that men get *relative to the baseline of women*.
-* Accordingly, the intercepts (which in this case make no sense since no instructor can have an age of 0) are :
-    + for women: $b_0$ = 4.484
-    + for men: $b_0 + b_{male}$ = 4.484 + 0.191 = 4.675
-* Both men and women have the same slope. In other words, *in this model* the associated effect of age is the same for men and women. So for every increase of one year in age, there is on average an associated change of $b_{age}$ = -0.009 (a decrease) in teaching score.
-
-But wait, why is Figure \@ref(fig:numxcatxplot2) different than Figure \@ref(fig:numxcatxplot1)! What is going on? What we have in the original plot is known as an *interaction effect* between age and gender. Focusing on fitting a model for each of men and women, we see that the resulting regression lines are different. Thus, `gender` appears to interact in different ways for men and women with the different values of `age`.
-
-
-### Multiple regression: Interaction model {#model4interactiontable}
+### Interaction model {#model4interactiontable}
 
 We say a model has an *interaction effect* if the associated effect of one variable *depends on the value of another variable*. These types of models usually prove to be tricky to view on first glance because of their complexity. In this case, the effect of `age` will depend on the value of `gender`. Put differently, the effect of age on teaching scores will differ for men and for women, as was suggested by the different slopes for men and women in our visual exploratory data analysis in Figure \@ref(fig:numxcatxplot1).
 
@@ -282,6 +222,66 @@ tibble(
 We see that while male instructors have a lower intercept, as they age, they have a less steep associated average decrease in teaching scores: 0.004 teaching score units per year as opposed to -0.018 for women. This is consistent with the different slopes and intercepts of the red and blue regression lines fit in Figure \@ref(fig:numxcatxplot1). Recall our definition of a model having an interaction effect: when the associated effect of one variable, in this case `age`, depends on the value of another variable, in this case `gender`. 
 
 But how do we know when it's appropriate to include an interaction effect? For example, which is the more appropriate model? The regular multiple regression model without an interaction term we saw in Section \@ref(model4table) or the multiple regression model with the interaction term we just saw? We'll revisit this question in Chapter \@ref(inference-for-regression) on "inference for regression."
+
+
+### Parallel slopes model {#model4table}
+
+Much like we started to consider multiple explanatory variables using the `+` sign in Subsection \@ref(model3table), let's fit a regression model and get the regression table. This time we provide the name of `score_model_2` to our regression model fit, in so as to not overwrite the model `score_model` from Section \@ref(model1table). 
+
+```{r, eval=FALSE}
+score_model_2 <- lm(score ~ age + gender, data = evals_ch7)
+get_regression_table(score_model_2)
+```
+```{r, echo=FALSE}
+score_model_2 <- lm(score ~ age + gender, data = evals_ch7)
+get_regression_table(score_model_2) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Regression table", 
+    booktabs = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
+```
+
+The modeling equation for this scenario is:
+
+\begin{align}
+\widehat{y} &= b_0 + b_1 \cdot x_1 + b_2 \cdot x_2 \\
+\widehat{\mbox{score}} &= b_0 + b_{\mbox{age}} \cdot \mbox{age} + b_{\mbox{male}} \cdot \mathbb{1}_{\mbox{is male}}(x)
+\end{align}
+
+where $\mathbb{1}_{\mbox{is male}}(x)$ is an *indicator function* for `sex == male`. In other words,  $\mathbb{1}_{\mbox{is male}}(x)$ equals one if the current observation corresponds to a male professor, and 0 if the current observation corresponds to a female professor. This model can be visualized in Figure \@ref(fig:numxcatxplot2). 
+
+```{r numxcatxplot2, echo=FALSE, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin by gender: same slope"}
+coeff <- lm(score ~ age + gender, data = evals_ch7) %>% 
+  coef() %>%
+  as.numeric()
+slopes <- evals_ch7 %>%
+  group_by(gender) %>%
+  summarise(min = min(age), max = max(age)) %>%
+  mutate(intercept = coeff[1]) %>%
+  mutate(intercept = ifelse(gender == "male", intercept + coeff[3], intercept)) %>%
+  gather(point, age, -c(gender, intercept)) %>%
+  mutate(y_hat = intercept + age * coeff[2])
+
+ggplot(evals_ch7, aes(x = age, y = score, col = gender)) +
+  geom_jitter() +
+  labs(x = "Age", y = "Teaching Score", color = "Gender") +
+  geom_line(data = slopes, aes(y = y_hat), size = 1)
+```
+
+We see that:
+
+* Females are treated as the baseline for comparison for no other reason than "female" is alphabetically earlier than "male." The $b_{male} = 0.1906$ is the vertical "bump" that men get in their teaching evaluation scores. Or more precisely, it is the average difference in teaching score
+that men get *relative to the baseline of women*.
+* Accordingly, the intercepts (which in this case make no sense since no instructor can have an age of 0) are :
+    + for women: $b_0$ = 4.484
+    + for men: $b_0 + b_{male}$ = 4.484 + 0.191 = 4.675
+* Both men and women have the same slope. In other words, *in this model* the associated effect of age is the same for men and women. So for every increase of one year in age, there is on average an associated change of $b_{age}$ = -0.009 (a decrease) in teaching score.
+
+But wait, why is Figure \@ref(fig:numxcatxplot2) different than Figure \@ref(fig:numxcatxplot1)! What is going on? What we have in the original plot is known as an *interaction effect* between age and gender. Focusing on fitting a model for each of men and women, we see that the resulting regression lines are different. Thus, `gender` appears to interact in different ways for men and women with the different values of `age`.
+
 
 ### Observed/fitted values and residuals {#model4points}
 
@@ -573,7 +573,7 @@ What can you say about the relationship between a credit card holder's balance a
 ```
 
 
-### Multiple regression {#model3table}
+### Regression plane {#model3table}
 
 Just as we did when we had a single numerical explanatory variable $x$ in Subsection \@ref(model1table) and when we had a single categorical explanatory variable $x$ in Subsection \@ref(model2table), we fit a regression model and obtained the regression table in our two numerical explanatory variable scenario. To fit a regression model and get a table using `get_regression_table()`, we now use a `+` to consider multiple explanatory variables. In this case since we want to perform a regression of `Limit` and `Income` simultaneously, we input `Balance ~ Limit + Income`.
 
@@ -656,7 +656,12 @@ Recall the format of the output:
 
 ## Related topics
 
-### More on the correlation coefficient {#correlationcoefficient2}
+### Interaction vs parallel slopes model {#model-selection}
+
+How do you choose between parallel slopes and interaction models?
+
+
+### Correlation coefficient {#correlationcoefficient2}
 
 Recall from Table \@ref(tab:model3-correlation) that we saw the correlation
 coefficient between `Income` in thousands of dollars and credit card `Balance`
