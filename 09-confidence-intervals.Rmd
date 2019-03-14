@@ -15,6 +15,7 @@ knitr::opts_chunk$set(
   )
 
 options(scipen = 99)#, digits = 3)
+options(pillar.sigfig = 6)
 
 # Set random number generator see value for replicable pseudorandomness. Why 76?
 # https://www.youtube.com/watch?v=xjJ7FheCkCU
@@ -343,13 +344,7 @@ virtual_resample %>%
 <!-- Not sure if needed, but those trying to follow along may be mystified
 if we don't include this. -->
 
-Note that tibbles will try to print as pretty as possible which may result in numbers being rounded. We can extract the actual value here using the `pull()` function which converts this value to be a vector instead:
-
-```{r}
-virtual_resample %>% 
-  summarize(resample_mean = mean(year)) %>% 
-  pull()
-```
+Note that tibbles will try to print as pretty as possible which may result in numbers being rounded. In this chapter we have set the default number of values to be printed to six in tibbles with `options(pillar.sigfig = 6)`.
 
 ### Using the virtual resample 33 times
 
@@ -439,72 +434,140 @@ ggplot(virtual_resample_means, aes(x = stat)) +
   scale_x_continuous(breaks = seq(1988, 2006, 2))
 ```
 
-Note here the bell-shape starting to become more apparent. We now have a general sense for the range of values that the mean may take on in these resamples from this histogram.
+Note here the bell shape starting to become more apparent. We now have a general sense for the range of values that the mean may take on in these resamples from this histogram. Do you have a guess as to where this histogram is centered? With it being close to symmetric, either the mean or the median would serve as a good estimate for the center here. Let's look at the mean:
+
+```{r eval=FALSE}
+virtual_resample_means %>% 
+  summarize(mean_of_means = mean(stat))
+```
+
+```{r echo=FALSE}
+mean_of_means <- virtual_resample_means %>% 
+  summarize(mean(stat)) %>% 
+  pull()
+```
+
+The mean of the 1000 means from 1000 resamples is `r mean_of_means`. Note that this is quite close to the mean of our original sample: `r x_bar[[1, 1]]`. This will always be the case when we have 1000 or so replicates since each of the resamples is based on the original sample.
 
 <!-- Another good learning check here would be to ask learners to summarize important features of the plot as was done in Chapter 8. -->
 
-<!-- Up to here -->
+## Confidence intervals 
 
-<!-- Now to the reordering. -->
+**Definition: Confidence Interval**
 
-## Confidence intervals
+A *confidence interval* gives a range of plausible values for a parameter.  It depends on a specified _confidence level_ with higher confidence levels corresponding to wider confidence intervals and lower confidence levels corresponding to narrower confidence intervals. Common confidence levels include 90%, 95%, and 99%.
 
-## The Bootstrapping Framework {#bootstrap-process}
+Usually we don't just begin sections with a definition, but *confidence intervals* are simple to define and play an important role in the sciences and any field that uses data. We've also just shown the build-up to them visually in the previous section. 
 
-We will pull ourselves up from our bootstraps using a single sample (`pennies_sample_2`) to get an idea of the grander sampling distribution.
+You can think of a confidence interval as playing the role of a net when fishing. Instead of just trying to catch a fish with a single spear (estimating an unknown parameter by using a single point estimate/statistic), we can use a net to try to provide a range of possible locations for the fish (use a range of possible values based around our statistic to make a plausible guess as to the location of the parameter).
+
+The resampling process will provide statistics that have a distribution with center at (or extremely close to) the mean of the original sample. The distribution of statistics brought forth by resampling, also called the *resampling distribution* provides us a guess as to what the variability in different sample means may look like only using the original sample as our guide. We can quantify this variability in the form of a 95% confidence interval in a couple different ways.
+
+### The percentile method {#percentile-method}
+
+Recall that the actual mean year for all pennies in circulation in the US is unknown to us. But by finding a confidence interval we have a way to make an educated guess as to what a range of plausible values is for the unknown paramter. One way to calculate this range is to use the middle 95% of the `virtual_resample_means` to determine our endpoints. Our endpoints are thus at the 2.5^th^ and 97.5^th^ percentiles. We can visualize these percentiles on our distribution with green vertical lines:
+
+<!--
+This can be done with `infer` using the `get_ci()` function. (You can also use the `conf_int()` or `get_confidence_interval()` functions here as they are aliases that work the exact same way.)
+-->
+
+```{r echo=FALSE}
+percentile_ci <- virtual_resample_means %>% 
+  get_ci(level = 0.95, type = "percentile")
+ggplot(virtual_resample_means, aes(x = stat)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
+  scale_x_continuous(breaks = seq(1988, 2006, 2)) +
+  geom_vline(xintercept = percentile_ci[[1, 1]], color = "green", size = 2) +
+  geom_vline(xintercept = percentile_ci[[1, 2]], color = "green", size = 2)
+```
+
+Using the percentile method, our range of plausible values for the mean age of US pennies in circulation in 2011 is `r percentile_ci[["2.5%"]]` years to `r percentile_ci[["97.5%"]]` years. You'll see in later sections how to compute these values.
+
+You can see that 95% of the data stored in the `stat` variable in `virtual_resample_means` falls between the two endpoints with 2.5% to the left outside of the shading and 2.5% to the right outside of the shading. The cut-off points that provide our range are shown with the green lines.
+
+### The standard error method
+
+If the resampling distribution is close to symmetric and bell-shaped, we can also use a shortcut formula for determining the lower and upper endpoints of the confidence interval. This is done by using the formula $\bar{x} \pm (multiplier * SE),$ where $\bar{x}$ is our original sample mean and $SE$ stands for **standard error** and corresponds to the standard deviation of the resampling distribution.  The value of $multiplier$ here is the appropriate percentile of the standard normal distribution. 
+
+<!--
+These are automatically calculated when `level` is provided with `level = 0.95` being the default. (95% of the values in a standard normal distribution fall within 1.96 standard deviations of the mean, so $multiplier = 1.96$ for `level = 0.95`, for example.)  As mentioned, this formula assumes that the bootstrap distribution is symmetric and bell-shaped. This is often the case with bootstrap distributions, especially those in which the original distribution of the sample is not highly skewed.
+-->
+
+**Definition: standard error**
+
+The *standard error* is the standard deviation of the sampling distribution. 
+
+The variability of the sampling distribution may be approximated by the variability of the resampling distribution. Traditional theory-based methodologies for inference also have formulas for standard errors, assuming some conditions are met.
+
+Let's next see how the lower and upper values of the confidence interval compare across the two methods of "percentile" and "standard error."
+
+<!--
+This $\bar{x} \pm (multiplier * SE)$ formula is implemented in the `get_ci()` function as shown with our pennies problem using the bootstrap distribution's variability as an approximation for the sampling distribution's variability. We'll see more on this approximation shortly.
+
+Note that the center of the confidence interval (the `point_estimate`) must be provided for the standard error confidence interval.
+
+
+```{r eval=FALSE}
+standard_error_ci <- bootstrap_distribution %>% 
+  get_ci(type = "se", point_estimate = x_bar)
+standard_error_ci
+```
+-->
+
+```{r echo=FALSE}
+standard_error_ci <- virtual_resample_means %>% 
+  get_ci(type = "se", point_estimate = x_bar)
+ggplot(virtual_resample_means, aes(x = stat)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
+  scale_x_continuous(breaks = seq(1988, 2006, 2)) +
+  geom_vline(xintercept = standard_error_ci[[1, 1]], color = "green", size = 2) +
+  geom_vline(xintercept = standard_error_ci[[1, 2]], color = "green", size = 2)
+```
+
+
+We see that both methods produce nearly identical confidence intervals with the percentile method being $[`r round(percentile_ci[["2.5%"]], 2)`, `r round(percentile_ci[["97.5%"]], 2)`]$ and the standard error method being $[`r round(standard_error_ci[["lower"]], 2)`, `r round(standard_error_ci[["upper"]],2)`]$. This is to be expected since the resampling distribution is roughly bell-shaped. Now that you've seen how these methods work, let's dig into the formalities of the process and the code needed to calculate them.
+
+---
+
+## The bootstrapping framework {#bootstrap-process}
+
+The way in which we used resamples to get a range of plausible for an unknown parameter is known as **bootstrapping.** To better understand this term, we harken back to the idea of pulling oneself up by their bootstraps. To "pull oneself up by their bootstraps" means to ["succeed only by one's own efforts or abilities."](https://en.wiktionary.org/wiki/pull_oneself_up_by_one%27s_bootstraps). From a statistical perspective, we have pulled ourselves up from our bootstraps using a single sample (`pennies_sample_2`) to get an idea of the grander sampling distribution. Thus, we've used only the "effort" of the single original sample to approximate a larger goal of the variability in the sampling distribution.
 
 Bootstrapping uses a process of sampling **with replacement** from our original sample to create new **bootstrap samples** of the *same* size as our original sample. We can again make use of the `rep_sample_n()` function to explore what one such bootstrap sample would look like. Remember that we are randomly sampling from the original sample here with replacement and that we always use the same sample size for the bootstrap samples as the size of the original sample (`pennies_sample_2`).
 
-```{r}
-bootstrap_sample1 <- pennies_sample_2 %>% 
-  rep_sample_n(size = 40, replace = TRUE, reps = 1)
-bootstrap_sample1
+### The original workflow needed for this
+
+We saw earlier in Section \@ref(resampling-simulation) how to develop these bootstrap samples, bootstrap statistics, and the resulting *bootstrap distribution*. We called this *bootstrap distribution* the *resampling distribution* before to drill home the idea of this being based on resampling (sampling with replacement) instead of sampling without replacement as seen in Chapter \@ref(sampling). Let's revisit the flow using the `%>%` but this time call it `bootstrap_distribution`.
+
+First, we repeatedly (`reps = 1000`) sampled with replacement (`replace = TRUE`) from the original sample with the same size of the resample (`size = 50`) using the `rep_sample_n()` function in the `infer` package:
+
+```{r eval=FALSE}
+pennies_sample_2 %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 1000)
 ```
 
-Let's visualize what this new bootstrap sample looks like:
+Next, since we are looking to get the mean value for year across each `replicate`, we used the `dplyr` verb `group_by()` to set up that grouping for our next step:
 
-```{r}
-ggplot(bootstrap_sample1, aes(x = year)) +
-  geom_histogram(bins = 10, color = "white")
+```{r eval=FALSE}
+ pennies_sample_2 %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>% 
+  group_by(replicate) 
 ```
 
-We now have another sample from what we could assume comes from the population of interest. We can similarly calculate the sample mean of this bootstrap sample, called a **bootstrap statistic**.
+Lastly, we finish off the grouping by using `summarize()` from `dplyr` to get our mean value for year from each `replicate`. We also name this resulting 1000 row data frame `bootstrap_distribution`:
 
-```{r}
-bootstrap_sample1 %>% 
-  summarize(stat = mean(year))
-```
-
-We can see that this sample mean is smaller than the `x_bar` value we calculated earlier for the `pennies_sample_2` data. We'll come back to analyzing the different bootstrap statistic values shortly.
-
-Let's recap what was done to get to this bootstrap sample using a tactile explanation:
-
-
-
-If you look at the values in `bootstrap_sample1`, you can see how this process plays out. We originally drew 28, then we drew 11, then 7, and so on. Of course, we didn't actually use pieces of paper and a cap here. We just had the computer perform this process for us to produce `bootstrap_sample1` using `rep_sample_n()` with `replace = TRUE` set.
-
-The process of *sampling with replacement* is how we can use the original sample to take a guess as to what other values in the population may be. Sometimes in these bootstrap samples, we will select lots of larger values from the original sample, sometimes we will select lots of smaller values, and most frequently we will select values that are near the center of the sample. Let's explore what the distribution of values of `year` for six different bootstrap samples looks like to further understand this variability.
-
-```{r}
-six_bootstrap_samples <- pennies_sample_2 %>% 
-  rep_sample_n(size = 40, replace = TRUE, reps = 6)
-```
-
-```{r}
-ggplot(six_bootstrap_samples, aes(x = year)) +
-  geom_histogram(bins = 10, color = "white") +
-  facet_wrap(~ replicate)
-```
-
-We can also look at the six different means using `dplyr` syntax:
-
-```{r}
-six_bootstrap_samples %>% 
+```{r eval=FALSE}
+ bootstrap_distribution <- pennies_sample_2 %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>% 
   group_by(replicate) %>% 
   summarize(stat = mean(year))
 ```
 
-Instead of doing this six times, we could do it 1000 times and then look at the distribution of `stat` across all 1000 of the `replicate`s. This sets the stage for the `infer` R package [@R-infer] that was created to help users perform statistical inference such as confidence intervals and hypothesis tests using verbs similar to what you've seen with `dplyr`. We'll walk through setting up each of the `infer` verbs for confidence intervals using this `pennies_sample_2` example, while also explaining the purpose of the verbs in a general framework.
+```{r echo=FALSE}
+bootstrap_distribution <- virtual_resample_means
+```
+
+So for the case where we are bootstrapping a single variable like `year` that we have seen so far, we can get by with using the `rep_sample_n()` function and a couple `dplyr` verbs to get the bootstrap distribution. For more complicated inferential techniques we need a little more firepower though. Let's check out the `infer` package for tidy statistical inference!
 
 ### The infer package for statistical inference
 
@@ -518,7 +581,7 @@ knitr::include_graphics("images/flowcharts/infer/specify.png")
 
 The `specify()` function is used primarily to choose which variables will be the focus of the statistical inference. In addition, a setting of which variable will act as the `explanatory` and which acts as the `response` variable is done here. For proportion problems similar to those in Chapter \@ref(sampling), we can also give which of the different levels we would like to have as a `success`. We'll see further examples of these options in this chapter, Chapter \@ref(hypothesis-testing), and in Appendix \@ref(appendixB).
 
-To begin to create a confidence interval for the population mean age of US pennies in 2011, we start by using `specify()` to choose which variable in our `pennies_sample_2` data we'd like to work with. This can be done in one of two ways:
+To begin to create a confidence interval for the population mean year of US pennies in 2019, we start by using `specify()` to choose which variable in our `pennies_sample_2` data we'd like to work with. This can be done in one of two ways:
 
 1. Using the `response` argument:
 
@@ -542,14 +605,14 @@ Note that the formula notation uses the common R methodology to include the resp
 knitr::include_graphics("images/flowcharts/infer/generate.png")
 ```
 
-After `specify()`ing the variables we'd like in our inferential analysis, we next feed that into the `generate()` verb. The `generate()` verb's main argument is `reps`, which is used to give how many different repetitions one would like to perform. Another argument here is `type`, which is automatically determined by the kinds of variables passed into `specify()`. We can also be explicit and set this `type` to be `type = "bootstrap"`. This `type` argument will be further used in hypothesis testing in Chapter \@ref(hypothesis-testing) as well. Make sure to check out `?generate` to see the options here and use the `?` operator to better understand other verbs as well.
+After `specify()`ing the variables we'd like in our inferential analysis, we next feed that into the `generate()` verb. The `generate()` verb's main argument is `reps`, which is used to give how many different repetitions one would like to perform. Another argument here is `type`, which is automatically determined by the kinds of variables passed into `specify()`. We can also be explicit and set this `type` to be `type = "bootstrap"`. If you are not explicit, `infer` will send you a message just to make sure this is what you are wanting. This `type` argument will be further used in hypothesis testing in Chapter \@ref(hypothesis-testing) as well. Make sure to check out `?generate` to see the options here and use the `?` operator to better understand other verbs as well.
 
 Let's `generate()` 1000 bootstrap samples:
 
 ```{r}
 thousand_bootstrap_samples <- pennies_sample_2 %>% 
   specify(response = year) %>% 
-  generate(reps = 1000)
+  generate(reps = 1000, type = "bootstrap")
 ```
 
 We can use the `dplyr` `count()` function to help us understand what the `thousand_bootstrap_samples` data frame looks like:
@@ -559,7 +622,20 @@ thousand_bootstrap_samples %>%
   count(replicate)
 ```
 
-Notice that each `replicate` has 40 entries here. Now that we have 1000 different bootstrap samples, our next step is to `calculate` the bootstrap statistics for each sample.
+Notice that each `replicate` has 50 entries here. Now that we have 1000 different bootstrap samples, our next step is to `calculate` the bootstrap statistics for each sample.
+
+**Comparing back to original workflow**
+
+Note that the steps up to this point of the `infer` pipeline produce the same procedure as what we saw before with `rep_sample_n()`. In other words, the following two code chunks produce similar results:
+
+```{r eval=FALSE}
+# With infer pipeline             # Without infer pipeline
+pennies_sample_2 %>%              pennies_sample_2 %>% 
+  specify(response = year) %>%      rep_sample_n(size = 50, 
+   generate(reps = 1000)                         replace = TRUE, 
+                                                 reps = 1000)
+```
+
 
 #### Calculate summary statistics {-}
 
@@ -580,6 +656,20 @@ bootstrap_distribution
 ```
 
 We see that the resulting data has 1000 rows and 2 columns corresponding to the 1000 replicates and the mean for each bootstrap sample.
+
+**Comparing back to original workflow**
+
+We can see that the `calculate()` step does what the `group_by() %>% summarize()` steps do in the original workflow: 
+
+```{r eval=FALSE}
+# With infer pipeline             # Without infer pipeline
+pennies_sample_2 %>%              pennies_sample_2 %>% 
+  specify(response = year) %>%      rep_sample_n(size = 50, replace = TRUE, 
+  generate(reps = 1000) %>%                      reps = 1000) %>% 
+  calculate(stat = "mean")          group_by(replicate) %>% 
+                                    summarize(stat = mean(year))
+```
+
 
 #### Observed statistic / point estimate calculations {-}
 
@@ -608,7 +698,14 @@ knitr::include_graphics("images/flowcharts/infer/visualize.png")
 
 The `visualize()` verb provides a simple way to view the bootstrap distribution as a histogram of the `stat` variable values. It has many other arguments that one can use as well including the shading of the histogram values corresponding to the confidence interval values.
 
-```{r}
+```{r eval=FALSE}
+bootstrap_distribution %>% 
+  visualize()
+# or
+visualize(bootstrap_distribution)
+```
+
+```{r echo=FALSE}
 bootstrap_distribution %>% 
   visualize()
 ```
@@ -621,39 +718,14 @@ The following diagram recaps the `infer` pipeline for creating a bootstrap distr
 knitr::include_graphics("images/flowcharts/infer/ci_diagram.png")
 ```
 
+### Building confidence intervals with the infer package
+
+Recall how we showed two different methods for building a range of plausible values for an unknown parameter in Section \@ref(confidence-intervals). Let's now check out how the `infer` package and some new functions were used to get us there. There's also some additional functionality to further assist with visualizing the intervals built-in!
 
 
----
+### The percentile method with infer {#percentile-method-infer}
 
-
-
-## Now to confidence intervals
-
-**Definition: Confidence Interval**
-
-A *confidence interval* gives a range of plausible values for a parameter.  It depends on a specified _confidence level_ with higher confidence levels corresponding to wider confidence intervals and lower confidence levels corresponding to narrower confidence intervals. Common confidence levels include 90%, 95%, and 99%.
-
-Usually we don't just begin sections with a definition, but *confidence intervals* are simple to define and play an important role in the sciences and any field that uses data. You can think of a confidence interval as playing the role of a net when fishing. Instead of just trying to catch a fish with a single spear (estimating an unknown parameter by using a single point estimate/statistic), we can use a net to try to provide a range of possible locations for the fish (use a range of possible values based around our statistic to make a plausible guess as to the location of the parameter).
-
-The bootstrapping process will provide bootstrap statistics that have a bootstrap distribution with center at (or extremely close to) the mean of the original sample. This can be seen by giving the observed statistic `obs_stat` argument the value of the point estimate `x_bar`.
-
-```{r}
-bootstrap_distribution %>% 
-  visualize(obs_stat = x_bar)
-```
-
-We can also compute the mean of the bootstrap distribution of means to see how it compares to `x_bar`:
-
-```{r}
-bootstrap_distribution %>% 
-  summarize(mean_of_means = mean(stat))
-```
-
-In this case, we can see that the bootstrap distribution provides us a guess as to what the variability in different sample means may look like only using the original sample as our guide. We can quantify this variability in the form of a 95% confidence interval in a couple different ways.
-
-### The percentile method {#percentile-method}
-
-One way to calculate a range of plausible values for the unknown mean age of coins in 2011 is to use the middle 95% of the `bootstrap_distribution` to determine our endpoints. Our endpoints are thus at the 2.5^th^ and 97.5^th^ percentiles. This can be done with `infer` using the `get_ci()` function. (You can also use the `conf_int()` or `get_confidence_interval()` functions here as they are aliases that work the exact same way.)
+Recall the percentile method of looking at the middle 95% of values with the lower endpoint at the 2.5^th^ percentile and the upper endpoint at the 97.5^th^ percentile. This can be done with `infer` using the `get_confidence_interval()` function. You can also use the alias `get_ci()` if you'd like the short version. That's what we use here.
 
 ```{r}
 bootstrap_distribution %>% 
@@ -668,301 +740,101 @@ percentile_ci <- bootstrap_distribution %>%
 percentile_ci
 ```
 
-Using the percentile method, our range of plausible values for the mean age of US pennies in circulation in 2011 is `r percentile_ci[["2.5%"]]` years to `r percentile_ci[["97.5%"]]` years. We can use the `visualize()` function to view this using the `endpoints` and `direction` arguments, setting `direction` to `"between"` (between the values) and `endpoints` to be those stored with name `percentile_ci`.
+Now we see where the values obtained in Section \@ref(confidence-intervals) come from. Using the percentile method, our range of plausible values for the mean age of US pennies in circulation in 2011 is `r percentile_ci[["2.5%"]]` years to `r percentile_ci[["97.5%"]]` years. We can further use the `visualize()` function and `shade_confidence_interval()` function, or alias `shade_ci()`, to view this. We use the `endpoints` argument to be those stored with name `percentile_ci`.
 
-```{r}
-bootstrap_distribution %>% 
-  visualize(endpoints = percentile_ci, direction = "between")
+```{r eval=FALSE}
+visualize(bootstrap_distribution) + 
+  shade_ci(endpoints = percentile_ci)
 ```
+
+```{r echo=FALSE}
+# Will need to make a tweak to the {infer} package
+# so that it doesn't always display "Null" here
+visualize(bootstrap_distribution) + 
+  ggtitle("Simulation-Based Bootstrap Distribution") +
+  shade_ci(endpoints = percentile_ci)
+```
+
 
 You can see that 95% of the data stored in the `stat` variable in `bootstrap_distribution` falls between the two endpoints with 2.5% to the left outside of the shading and 2.5% to the right outside of the shading. The cut-off points that provide our range are shown with the darker lines.
 
-### The standard error method
+Note that you can change the colors here as you wish using the `color` and `fill` arguments.
 
-If the bootstrap distribution is close to symmetric and bell-shaped, we can also use a shortcut formula for determining the lower and upper endpoints of the confidence interval. This is done by using the formula $\bar{x} \pm (multiplier * SE),$ where $\bar{x}$ is our original sample mean and $SE$ stands for **standard error** and corresponds to the standard deviation of the bootstrap distribution.  The value of $multiplier$ here is the appropriate percentile of the standard normal distribution. 
+```{r eval=FALSE}
+visualize(bootstrap_distribution) + 
+  shade_ci(endpoints = percentile_ci,
+           color = "brown",
+           fill = "khaki")
+```
 
-These are automatically calculated when `level` is provided with `level = 0.95` being the default. (95% of the values in a standard normal distribution fall within 1.96 standard deviations of the mean, so $multiplier = 1.96$ for `level = 0.95`, for example.)  As mentioned, this formula assumes that the bootstrap distribution is symmetric and bell-shaped. This is often the case with bootstrap distributions, especially those in which the original distribution of the sample is not highly skewed.
+```{r echo=FALSE}
+# Will need to make a tweak to the {infer} package
+# so that it doesn't always display "Null" here
+visualize(bootstrap_distribution) + 
+  ggtitle("Simulation-Based Bootstrap Distribution") +
+  shade_ci(endpoints = percentile_ci,
+           color = "brown",
+           fill = "khaki")
+```
 
-**Definition: standard error**
+```{r eval=FALSE}
+visualize(bootstrap_distribution) + 
+  shade_ci(endpoints = percentile_ci,
+           color = "hotpink",
+           fill = NULL)
+```
 
-The *standard error* is the standard deviation of the sampling distribution. 
+```{r echo=FALSE}
+# Will need to make a tweak to the {infer} package
+# so that it doesn't always display "Null" here
+visualize(bootstrap_distribution) + 
+  ggtitle("Simulation-Based Bootstrap Distribution") +
+  shade_ci(endpoints = percentile_ci,
+           color = "hotpink",
+           fill = NULL)
+```
 
-The variability of the sampling distribution may be approximated by the variability of the bootstrap distribution. Traditional theory-based methodologies for inference also have formulas for standard errors, assuming some conditions are met.
+
+### The standard error method with infer
+
+Recall the formula $\bar{x} \pm (multiplier * SE),$ where $\bar{x}$ is our original sample mean and $SE$ stands for **standard error** and corresponds to the standard deviation of the bootstrap distribution. This is the formula for using the standard error method for calculating a confidence interval.
+
+The $multiplier$ is automatically calculated when `level` is provided with `level = 0.95` being the default. (95% of the values in a standard normal distribution fall within 1.96 standard deviations of the mean, so $multiplier = 1.96$ for `level = 0.95`, for example.)  As mentioned, this formula assumes that the bootstrap distribution is symmetric and bell-shaped. This is often the case with bootstrap distributions, especially those in which the original distribution of the sample is not highly skewed.
 
 This $\bar{x} \pm (multiplier * SE)$ formula is implemented in the `get_ci()` function as shown with our pennies problem using the bootstrap distribution's variability as an approximation for the sampling distribution's variability. We'll see more on this approximation shortly.
 
 Note that the center of the confidence interval (the `point_estimate`) must be provided for the standard error confidence interval.
 
-```{r eval=FALSE}
+```{r}
 standard_error_ci <- bootstrap_distribution %>% 
   get_ci(type = "se", point_estimate = x_bar)
 standard_error_ci
 ```
 
+```{r eval=FALSE}
+visualize(bootstrap_distribution) + 
+  shade_ci(endpoints = standard_error_ci)
+```
+
 ```{r echo=FALSE}
-standard_error_ci <- bootstrap_distribution %>% 
-  get_ci(type = "se", point_estimate = x_bar)
-round(standard_error_ci, 2)
+visualize(bootstrap_distribution) + 
+  ggtitle("Simulation-Based Bootstrap Distribution") +
+  shade_ci(endpoints = standard_error_ci)
 ```
 
-```{r}
-bootstrap_distribution %>% 
-  visualize(endpoints = standard_error_ci, direction = "between")
-```
+As noted in Section \@ref(confidence-intervals) both methods produce similar confidence intervals.
 
-We see that both methods produce nearly identical confidence intervals with the percentile method being $[`r round(percentile_ci[["2.5%"]], 2)`, `r round(percentile_ci[["97.5%"]], 2)`]$ and the standard error method being $[`r round(standard_error_ci[["lower"]], 2)`, `r round(standard_error_ci[["upper"]],2)`]$.
+| Percentile | Standard error |
+|---|---|
+| $[`r round(percentile_ci[["2.5%"]], 2)`, `r round(percentile_ci[["97.5%"]], 2)`]$ | $[`r round(standard_error_ci[["lower"]], 2)`, `r round(standard_error_ci[["upper"]],2)`]$ |
 
-## Comparing bootstrap and sampling distributions
-
-To help build up the idea of a confidence interval, we weren't completely honest in our initial discussion. The `pennies_sample_2` data frame represents a sample from a larger number of pennies stored as `pennies` in the `moderndive` package. The `pennies` data frame (also in the `moderndive` package) contains 800 rows of data and two columns pertaining to the same variables as `pennies_sample_2`. Let's begin by understanding some of the properties of the `age_by_2011` variable in the `pennies` data frame.
-
-```{r}
-ggplot(pennies, aes(x = year)) +
-  geom_histogram(bins = 10, color = "white")
-```
-
-```{r}
-pennies %>% 
-  summarize(mean_age = mean(year),
-            median_age = median(year))
-```
-
-We see that `pennies` is slightly right-skewed with the mean being pulled towards the upper outliers. Recall that `pennies_sample_2` was more symmetric than `pennies`. In fact, it actually exhibited some left-skew as we compare the mean and median values.
-
-```{r}
-ggplot(pennies_sample_2, aes(x = year)) +
-  geom_histogram(bins = 10, color = "white")
-```
-
-```{r}
-pennies_sample_2 %>% 
-  summarize(mean_age = mean(year), median_age = median(year))
-```
-
-#### Sampling distribution {-}
-
-Let's assume that `pennies` represents our population of interest. We can then create a sampling distribution for the population mean age of pennies, denoted by the Greek letter $\mu$, using the `rep_sample_n()` function seen in Chapter \@ref(sampling). First we will create 1000 samples from the `pennies` data frame.
-
-```{r}
-thousand_samples <- pennies %>% 
-  rep_sample_n(size = 40, reps = 1000, replace = FALSE)
-```
-
-When creating a sampling distribution, we do not replace the items when we create each sample. This is in contrast to the bootstrap distribution. It's important to remember that the sampling distribution is sampling **without** replacement from the population to better understand sample-to-sample variability, whereas the bootstrap distribution is sampling **with** replacement from our original sample to better understand potential sample-to-sample variability.
-
-After sampling from `pennies` 1000 times, we next want to compute the mean age for each of the 1000 samples:
-
-```{r}
-sampling_distribution <- thousand_samples %>% 
-  group_by(replicate) %>% 
-  summarize(stat = mean(year))
-```
-
-<!--
-We could use `ggplot()` with `geom_histogram()` again, but since we've named our column in `summarize()` to be `stat`, we can also use the shortcut `visualize()` function in `infer` and also specify the number of bins and also fill the bars with a different color such as `"salmon"`. This will be done to help remember that `"salmon"` corresponds to "sampling distribution".
--->
-
-```{r, fig.cap="Sampling distribution for n=40 samples of pennies"}
-ggplot(sampling_distribution, aes(x = stat)) +
-  geom_histogram(bins = 10, fill = "salmon", color = "white")
-```
-
-We can also examine the variability in this sampling distribution by calculating the standard deviation of the `stat` column. Remember that the standard deviation of the sampling distribution is the **standard error**, frequently denoted as `se`.
-
-```{r}
-sampling_distribution %>% 
-  summarize(se = sd(stat))
-```
-
-
-#### Bootstrap distribution {-}
-
-Let's now see how the shape of the bootstrap distribution compares to that of the sampling distribution. We'll shade the bootstrap distribution blue to further assist with remembering which is which.
-
-```{r}
-bootstrap_distribution %>% 
-  visualize(bins = 10, fill = "blue")
-```
-
-```{r}
-bootstrap_distribution %>% 
-  summarize(se = sd(stat))
-```
-
-Notice that while the standard deviations are similar, the center of the sampling distribution and the bootstrap distribution differ:
-
-```{r}
-sampling_distribution %>% 
-  summarize(mean_of_sampling_means = mean(stat))
-```
-
-```{r}
-bootstrap_distribution %>% 
-  summarize(mean_of_bootstrap_means = mean(stat))
-```
-
-Since the bootstrap distribution is centered at the original sample mean, it doesn't necessarily provide a good estimate of the overall population mean $\mu$. Let's calculate the mean of `year` for the `pennies` data frame to see how it compares to the mean of the sampling distribution and the mean of the bootstrap distribution.
-
-```{r}
-pennies %>% 
-  summarize(overall_mean = mean(year))
-```
-
-```{r include=FALSE}
-pennies_mu <- pennies %>% 
-  summarize(overall_mean = mean(year)) %>% 
-  pull()
-```
-
-
-Notice that this value matches up well with the mean of the sampling distribution. This is actually an artifact of the Central Limit Theorem introduced in Chapter \@ref(sampling). The mean of the sampling distribution is expected to be the mean of the overall population.
-
-The unfortunate fact though is that we don't know the population mean in nearly all circumstances. The motivation of presenting it here was to show that the theory behind the Central Limit Theorem works using the tools you've worked with so far using the `ggplot2`, `dplyr`, `moderndive`, and `infer` packages.
-
-If we aren't able to use the sample mean as a good guess for the population mean, how should we best go about estimating what the population mean may be if we can only select samples from the population. We've now come full circle and can discuss the underpinnings of the confidence interval and ways to interpret it.
-
-
+The `[lower, upper]` notation here corresponds to the `lower` value being the smallest included entry in the confidence interval and `upper` being the largest included entry in the confidence interval.
 
 ---
-
-
 
 ## Interpreting the confidence interval
 
-As shown above in Subsection \@ref(percentile-method), one range of plausible values for the population mean age of pennies in 2011, denoted by $\mu$, is $[`r round(percentile_ci[["2.5%"]], 2)`, `r round(percentile_ci[["97.5%"]], 2)`]$. Recall that this confidence interval is based on bootstrapping using `pennies_sample_2`. Note that the mean of `pennies` (`r pennies_mu`) does fall in this confidence interval. If we had a different sample of size 40 and constructed a confidence interval using the same method, would we be guaranteed that it contained the population parameter value as well? Let's try it out:
-
-```{r}
-pennies_sample_2 <- pennies %>% 
-  sample_n(size = 40)
-```
-
-Note the use of the `sample_n()` function in the `dplyr` package here. This does the same thing as `rep_sample_n(reps = 1)` but omits the extra `replicate` column.
-
-We next create an `infer` pipeline to generate a percentile-based 95% confidence interval for $\mu$:
-
-```{r}
-percentile_ci2 <- pennies_sample_2 %>% 
-  specify(formula = year ~ NULL) %>% 
-  generate(reps = 1000) %>% 
-  calculate(stat = "mean") %>% 
-  get_ci()
-percentile_ci2
-```
-
-This new confidence interval also contains the value of $\mu$. Let's further investigate by repeating this process 100 times to get 100 different confidence intervals derived from 100 different samples of `pennies`. Each sample will have size of 40 just as the original sample. We will plot each of these confidence intervals as horizontal lines. We will also show a line corresponding to the known population value of `r pennies_mu` years.
-
-```{r echo=FALSE}
-set.seed(201)
-
-pennies_samples <- pennies %>% 
-  rep_sample_n(size = 40, reps = 100, replace = FALSE)
-
-nested_pennies <- pennies_samples %>% 
-  group_by(replicate) %>% 
-  tidyr::nest()
-
-infer_pipeline <- function(entry){
-  entry %>% 
-    specify(formula = year ~ NULL) %>% 
-    generate(reps = 1000) %>% 
-    calculate(stat = "mean") %>% 
-    get_ci()
-}
-
-if(!file.exists("rds/pennies_cis.rds")){
-  pennies_cis <- nested_pennies %>% 
-    mutate(percentile_ci = purrr::map(data, infer_pipeline)) %>% 
-    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$year)))
-  saveRDS(object = pennies_cis, "rds/pennies_cis.rds")
-} else {
-  pennies_cis <- readRDS("rds/pennies_cis.rds")
-}
-
-perc_cis <- pennies_cis %>% 
-  tidyr::unnest(percentile_ci) %>% 
-  rename(lower = `2.5%`, upper = `97.5%`) %>% 
-  mutate(captured = lower <= pennies_mu & pennies_mu <= upper)
-
-ggplot(perc_cis) +
-  geom_point(aes(x = point_estimate, y = replicate, color = captured)) +
-  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, 
-                   color = captured)) +
-  labs(
-    x = expression("Age in 2011 (Years)"),
-    y = "Replicate ID",
-    title = expression(paste("95% percentile-based confidence intervals for ", 
-                             mu, sep = ""))
-  ) +
-  scale_color_manual(values = c("blue", "orange")) + 
-  geom_vline(xintercept = pennies_mu, color = "red") 
-```
-
-Of the 100 confidence intervals based on samples of size $n = 40$, `r sum(perc_cis[["captured"]])` of them captured the population mean $\mu = `r pennies_mu`$, whereas `r 100 - sum(perc_cis[["captured"]])` of them did not include it. If we repeated this process of building confidence intervals more times with more samples, we'd expect 95% of them to contain the population mean. In other words, the procedure we have used to generate confidence intervals is "95% reliable" in that we can expect it to include the true population parameter 95% of the time if the process is repeated.
-
-To further accentuate this point, let's perform a similar procedure using 90% confidence intervals instead. This time we will use the standard error method instead of the percentile method for computing the confidence intervals.
-
-```{r echo=FALSE}
-set.seed(2019)
-
-pennies_samples2 <- pennies %>% 
-  rep_sample_n(size = 40, reps = 100, replace = FALSE)
-
-nested_pennies2 <- pennies_samples2 %>% 
-  group_by(replicate) %>% 
-  tidyr::nest() %>% 
-  mutate(sample_mean = purrr::map_dbl(data, ~mean(.x$year)))
-
-bootstrap_pipeline <- function(entry){
-  entry %>% 
-    specify(formula = year ~ NULL) %>% 
-    generate(reps = 1000) %>% 
-    calculate(stat = "mean")
-}
-
-if(!file.exists("rds/pennies_se_cis.rds")){
-  pennies_se_cis <- nested_pennies2 %>% 
-    mutate(bootstraps = purrr::map(data, bootstrap_pipeline)) %>% 
-    group_by(replicate) %>% 
-    mutate(se_ci = purrr::map(bootstraps, get_ci, type = "se",
-                              level = 0.9,
-                              point_estimate = sample_mean))
-  saveRDS(object = pennies_se_cis, "rds/pennies_se_cis.rds")
-} else {
-  pennies_se_cis <- readRDS("rds/pennies_se_cis.rds")
-}
-
-se_cis <- pennies_se_cis %>% 
-  tidyr::unnest(se_ci) %>% 
-  mutate(captured = lower <= pennies_mu & pennies_mu <= upper)
-
-ggplot(se_cis) +
-  geom_point(aes(x = sample_mean, y = replicate, color = captured)) +
-  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, 
-                   color = captured)) +
-  labs(
-    x = expression("Age in 2011 (Years)"),
-    y = "Replicate ID",
-    title = expression(paste(
-      "90% standard error-based confidence intervals for ", mu, sep = "")
-      )
-  ) +
-  scale_color_manual(values = c("blue", "orange")) + 
-  geom_vline(xintercept = pennies_mu, color = "red") 
-```
-
-Of the 100 confidence intervals based on samples of size $n = 40$, `r sum(se_cis[["captured"]])` of them captured the population mean $\mu = `r pennies_mu`$, whereas `r 100 - sum(se_cis[["captured"]])` of them did not include it. Repeating this process for more samples would result in us getting closer and closer to 90% of the confidence intervals including the true value. It is common to say while interpreting a confidence interval to be "95% confident" or "90% confident" that the true value falls within the range of the specified confidence interval. We will use this "confident" language throughout the rest of this chapter, but remember that it has more to do with a measure of reliability of the building process.
-
-#### Back to our pennies example {-}
-
-After this elaboration on what the level corresponds to in a confidence interval, let's conclude by providing an interpretation of the original confidence interval result we found in Subsection \@ref(percentile-method).
-
-**Interpretation:** We are 95% confident that the true mean age of pennies in circulation in 2011 is between `r percentile_ci[["2.5%"]]` and `r percentile_ci[["97.5%"]]` years. This level of confidence is based on the percentile-based method including the true mean 95% of the time if many different samples (not just the one we used) were collected and confidence intervals were created.
-
-
-
----
-
-
+<!-- Up to here -->
 
 ## Example: One proportion {#one-prop-ci}
 
@@ -1159,7 +1031,7 @@ We see that:
 * In 31 cases, the confidence intervals "capture" the true $p = 900 / 2400 = 0.375$
 * In 2 cases, the confidence intervals do not "capture" the true $p = 900 / 2400 = 0.375$
 
-Thus, the confidence intervals capture the true proportion $31 / 33 = `r 31 / 33 * 100`% of the time using this theory-based methodology.
+Thus, the confidence intervals capture the true proportion $31 / 33$ = `r 31 / 33 * 100`% of the time using this theory-based methodology.
 
 #### Confidence intervals based on 100 virtual samples {-}
 
@@ -1376,6 +1248,16 @@ Note that this all relates to the importance of denoting the `order` argument in
 
 We, therefore, have evidence via this confidence interval suggesting that the conclusion from the Mythbusters show that "yawning is contagious" being "confirmed" is not statistically appropriate.
 
+
+
+---
+
+
+## Comparing bootstrap and sampling distributions
+
+<!-- Need to use balls instead -->
+
+
 ```{block, type='learncheck', purl=FALSE}
 **_Learning check_**
 ```
@@ -1385,11 +1267,7 @@ Practice problems to come soon!
 ```{block, type='learncheck', purl=FALSE}
 ```
 
-
-
 ---
-
-
 
 ## Conclusion
 
