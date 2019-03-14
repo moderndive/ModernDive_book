@@ -25,11 +25,11 @@ options(knitr.kable.NA = '')
 set.seed(76)
 ```
 
-In Chapter \@ref(regression) we introduced ideas related to modeling, in particular that the fundamental premise of modeling is *to make explicit the relationship* between an outcome variable $y$ and an explanatory/predictor variable $x$. Recall further the synonyms that we used to also denote $y$ as the dependent variable and $x$ as an independent variable or covariate. 
+In Chapter \@ref(regression) we introduced ideas related to modeling for explanation, in particular that the goal of modeling is make explicit the relationship between some outcome variable $y$ and some explanatory variable $x$. While there are many approaches to modeling, we focused on one particular technique: *linear regression*, one of the most commonly-used and easy-to-understand approaches to modeling. Furthemore to keep things simple we only considered models with one explanatory $x$ variable that was either numerical in Section \@ref(model1) or categorical in Section \@ref(model2).
 
-There are many modeling approaches one could take, among the most well-known being linear regression, which was the focus of the last chapter. Whereas in the last chapter we focused solely on regression scenarios where there is only one explanatory/predictor variable, in this chapter, we now focus on modeling scenarios where there is more than one. This case of regression more than one explanatory variable is known as multiple regression. You can imagine when trying to model a particular outcome variable, like teaching evaluation score as in Section \@ref(model1) or life expectancy as in Section \@ref(model2), it would be very useful to incorporate more than one explanatory variable. 
+In this chapter on multiple regression we'll start considering models that include more than one explanatory variable $x$. You can imagine when trying to model a particular outcome variable, like teaching evaluation scores as in Section \@ref(model1) or life expectancy as in Section \@ref(model2), that it would be very useful to include more than just one explanatory variable's worth of information. 
 
-Since our regression models will now consider more than one explanatory/predictor variable, the interpretation of the associated effect of any one explanatory/predictor variables must be made in conjunction with the others. For example, say we are modeling individuals' incomes as a function of their number of years of education and their parents' wealth. When interpreting the effect of education on income, one has to consider the effect of their parents' wealth at the same time, as these two variables are almost certainly related. Make note of this throughout this chapter and as you work on interpreting the results of multiple regression models into the future.
+Since our regression models will now consider more than one explanatory variable, the interpretation of the associated effect of any one explanatory variable must be made in conjunction with the other explanatory variables included in your model. Let's begin!
 
 ### Needed packages {-}
 
@@ -50,11 +50,10 @@ library(skimr)
 library(ISLR)
 ```
 
-
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 # Packages needed internally, but not in text:
-library(patchwork)
 library(kableExtra)
+library(patchwork)
 ```
 
 
@@ -62,35 +61,49 @@ library(kableExtra)
 ***
 
 
+
 ## One numerical & one categorical explanatory variable {#model4}
 
-Let's revisit the instructor evaluation data introduced in Section \@ref(model1), where we studied the relationship between instructor evaluation scores and their beauty scores. This analysis suggested that there is a positive relationship between `bty_avg` and `score`, in other words as instructors had higher beauty scores, they also tended to have higher teaching evaluation scores. Now let's say instead of `bty_avg` we are interested in the numerical explanatory variable $x_1$ `age` and furthermore we want to use a second explanatory variable $x_2$, the (binary) categorical variable `gender`. 
+Let's revisit the instructor evaluation data we introduced in Section \@ref(model1), where we studied the relationship between instructor evaluation scores (as given by students) and their "beauty" scores for instructors teaching courses at the UT Austin; the variable teaching `score` was a numerical outcome variable $y$ and the variable beauty score `bty_avg` was a numerical explanatory $x$ variable. 
 
-**Note**: This study only focused on the gender binary of `"male"` or `"female"` when the data was collected and analyzed years ago. It has been tradition to use gender as an "easy" binary variable in the past in statistical analyses. We have chosen to include it here because of the interesting results of the study, but we also understand that a segment of the population is not included in this dichotomous assignment of gender and we advocate for more inclusion in future studies to show representation of groups that do not identify with the gender binary. We now resume our analyses using this `evals` data and hope that others find these results interesting and worth further exploration.
+In this section we are going to consider a different model. Our outcome variable will still be teaching score, but now including two different explanatory variables: age and gender. Could it be that instructors who are older receive better teaching evaluations from students? Or could it instead be that younger instructors receive better evaluations? Are there differences in evaluations given by students for instructors of different genders? We'll answer these questions by modeling the relationship between these variables using *multiple regression* where we have:
 
-Our modeling scenario now becomes
-
-1. A numerical outcome variable $y$. As before, instructor evaluation score.
+1. A numerical outcome variable $y$, as before the instructor's teaching score and
 1. Two explanatory variables:
-    1. A numerical explanatory variable $x_1$: in this case, their age.
-    1. A categorical explanatory variable $x_2$: in this case, their binary gender.
+    1. A numerical explanatory variable $x_1$, the instructor's age
+    1. A categorical explanatory variable $x_2$, the instructor's binary gender (male or female).
+
+It is important to note that at the time of this study, due to then commonly held beliefs about gender, this variable was often recorded as a binary. While the results of a model that oversimplies gender this way may be imperfect, we still found the results to be very pertinent and relevant today.
+
 
 
 ### Exploratory data analysis {#model4EDA}
 
-Let's reload the `evals` data and `select()` only the needed subset of variables. Note that these are different than the variables chosen in Chapter 6. Let's given this the name `evals_ch7`.
+The data on the 463 courses at the UT Austin can be found in the `evals` data frame included in the `moderndive` package. However, to keep things simple, let's `select()` only the subset of the variables we'll consider in this chapter, and save this data in a new data frame called `eval_ch7`. Note that these are different than the variables chosen in Chapter 6. 
 
 ```{r}
 evals_ch7 <- evals %>%
-  select(score, age, gender)
+  select(ID, score, age, gender)
 ```
 
-Let's look at the raw data values both by bringing up RStudio's spreadsheet viewer and the `glimpse()` function, although in Table \@ref(tab:model4-data-preview) we only show 5 randomly selected instructors out of `r nrow(evals_ch7)`:
+Recall the three common steps in an exploratory data analysis we saw in Section \@ref(model1EDA)
+
+1.  Looking at the raw data values.
+1. Computing summary statistics, like means, medians, and interquartile ranges.
+1. Creating data visualizations.
+
+Let's first look at the raw data values both either looking at `evals_ch7` RStudio's spreadsheet viewer or using the `glimpse()` function
+
+```{r}
+glimpse(evals_ch7)
+```
+
+Let's also display a random sample of 5 rows of the 463 rows corresponding to different courses in Table \@ref(tab:model4-data-preview). Remember due to the random nature of the sampling, you will likely end up with a different subset of 5 rows.
 
 ```{r, eval=FALSE}
-View(evals_ch7)
+evals_ch7 %>%
+  sample_n(size = 5)
 ```
-
 ```{r model4-data-preview, echo=FALSE}
 evals_ch7 %>%
   sample_n(5) %>%
@@ -103,39 +116,38 @@ evals_ch7 %>%
                 latex_options = c("HOLD_position"))
 ```
 
-Let's look at some summary statistics using the `skim()` function from the `skimr` package:
+Now that we've looked at the raw values in our `evals_ch7` data frame and obtained a sense of the data, let's move on to next common step in an exploratory data analysis: computing summary statistics. As we did in our exploratory data analyses in Sections \@ref(model1EDA) and  \@ref(model2EDA) from the previous chapter, let's use the `skim()` function from the `skimr` package, being sure to only `select()` the columns of interest:
 
 ```{r}
 evals_ch7 %>% 
+  select(score, age, gender) %>% 
   skim()
 ```
 
-Furthermore, let's compute the correlation between two numerical variables we have `score` and `age`. Recall that correlation coefficients only exist between numerical variables. We observe that they are weakly negatively correlated.
+Observe for example that we have no missing data, courses taught by 268 male vs 195 female instructors, and and average age of 48.37. Recall however that each row in our data represents a particular course and that instructors can teach more than one course. Therefore the average age of the unique instructors may differ. 
+
+Furthermore, let's compute the correlation between our two numerical variables: `score` and `age`. Recall from Section \@ref(model1EDA) that correlation coefficients only exist between numerical variables. We observe that they are weakly negatively correlated.
 
 ```{r}
 evals_ch7 %>% 
   get_correlation(formula = score ~ age)
 ```
 
+Let's now perform the last of the three common steps in an exploratory data analysis: creating data visualizations. Given that the outcome variable `score` and explanatory variable `age` are both numerical, we'll use a scatterplot to display their relationship. How can we incorporate the categorical variable `gender` however? By mapping the variable `gender` to the color aesthetic and creating a *colored* scatterplot! The following code is very similar to the code that created the scatterplot of teaching score and beauty score in Figure \@ref(fig:numxplot1), but with `color = gender` added to the `aes()`.
 
-
-In Figure \@ref(fig:numxcatxplot1), we plot a scatterplot of `score` over `age`. Given that `gender` is a binary categorical variable in this study, we can make some interesting tweaks:
-
-1. We can assign a color to points from each of the two levels of `gender`: female and male.
-1. Furthermore, the `geom_smooth(method = "lm", se = FALSE)` layer automatically fits a different regression line for each since we have provided `color = gender` at the top level in `ggplot()`. This allows for all `geom_`etries that follow to have the same mapping of `aes()`thetics to variables throughout the plot.
-
-```{r numxcatxplot1, warning=FALSE, fig.cap="Instructor evaluation scores at UT Austin split by gender (jittered)"}
+```{r numxcatxplot1, warning=FALSE, fig.cap="Colored scatterplot of relationship of teaching and beauty scores"}
 ggplot(evals_ch7, aes(x = age, y = score, color = gender)) +
-  geom_jitter() +
+  geom_point() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
   geom_smooth(method = "lm", se = FALSE)
 ```
 
+In the resulting Figure \@ref(fig:numxcatxplot1), observe that `ggplot` assigns a default red/blue color scheme to the points and lines associated with each of the two levels of `gender`: `female` and `male`. Furthermore the `geom_smooth(method = "lm", se = FALSE)` layer automatically fits a different regression line for each group since we have provided `color = gender` in the aesthetic mapping. This allows for all subsequent geometries to have the same aesthetic mappings.
+
 We notice some interesting trends:
 
-1. There are almost no women faculty over the age of 60. We can see this by the lack of red dots above 60.
-1. Fitting separate regression lines for men and women, we see they have different slopes. We see that the associated effect of increasing age seems to be much harsher for women than men. In other words, as women age, the drop in their teaching score appears to be faster.
-
+1. There are almost no women faculty over the age of 60 as evidenced by lack of red dots above $x$ = 60.
+1. While both regression lines are negatively sloped with age (i.e. as instructor's age, so also do they tend to receive lower teaching scores), the slope for age for the female instructors is *more* negative. In other words, the female instructors are paying a harsher penalty in their teaching scores then the male instructors do. 
 
 
 ### Multiple regression: Parallel slopes model {#model4table}
