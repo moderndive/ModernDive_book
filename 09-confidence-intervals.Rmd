@@ -452,7 +452,7 @@ The mean of the 1000 means from 1000 resamples is `r mean_of_means`. Note that t
 
 <!-- Another good learning check here would be to ask learners to summarize important features of the plot as was done in Chapter 8. -->
 
-## Confidence intervals 
+## Confidence interval build-up
 
 **Definition: Confidence Interval**
 
@@ -1054,13 +1054,13 @@ if(!file.exists("rds/balls_perc_cis.rds")){
   balls_perc_cis <- nested_balls2 %>% 
     mutate(percentile_ci = purrr::map(data, infer_pipeline)) %>% 
     mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$color == "red")))
-  saveRDS(object = pennies_cis, "rds/balls_perc_cis.rds")
+  write_rds(balls_perc_cis, "rds/balls_perc_cis.rds")
 } else {
-  pennies_cis <- readRDS("rds/balls_perc_cis.rds")
+  balls_perc_cis <- read_rds("rds/balls_perc_cis.rds")
 }
 perc_cis <- balls_perc_cis %>% 
   tidyr::unnest(percentile_ci) %>% 
-  rename(lower = `2.5%`, upper = `97.5%`) %>% 
+  rename(lower = `5%`, upper = `95%`) %>% 
   mutate(captured = lower <= p_red & p_red <= upper)
 ggplot(perc_cis) +
   geom_point(aes(x = point_estimate, y = replicate, color = captured)) +
@@ -1086,7 +1086,7 @@ After this elaboration on what the level corresponds to in a confidence interval
 
 ### The width of confidence intervals
 
-#### The impact of changing confidence levels
+#### The impact of confidence levels {-}
 
 When looking at the relative sizes of the orange horizontal lines in Figure \@ref(fig:reliable-se) with 95% confidence intervals and Figure \@ref(fig:reliable-perc) with 90% confidence intervals, does anything stand out in terms of the width of the intervals to you? The statement of confidence in terms of the level should match with what you expect of the word "confident." If someone says they are 99% confident about the high temperature between one value and another for the next day, we'd expect that range to be higher than if they said they were only 80% confident, right?
 
@@ -1098,7 +1098,69 @@ What if we wanted to be a little less confident and say have a 50-50 chance of g
 
 **Higher confidence levels tend to produce wider confidence intervals.**
 
-Let's play with a few examples here to drill this idea home. We can also observe the impact of sample size on these calculations and make some generalizations.
+Let's play with do a little more analysis using the `bowl` data to construct 80%, 95%, and 99% confidence intervals here to drill this idea home. We'll focus on the percentile-based method though a similar analysis could be done for the standard error-based method. Let's calculate 1000 confidence intervals of each of these three different levels and then look at the median and mean length of these intervals. These will be stored in the `perc_cis_80`, `perc_cis_95`, and `perc_cis_99` data frames. 
+
+<!-- Albert: Should we load these into the moderndive package too so that readers can explore them a bit? -->
+
+```{r perc-80, echo=FALSE}
+balls_samples2 <- bowl %>% 
+  rep_sample_n(size = 50, reps = 100, replace = FALSE)
+nested_balls2 <- balls_samples2 %>% 
+  group_by(replicate) %>% 
+  tidyr::nest()
+infer_pipeline <- function(entry, ci_level){
+  entry %>% 
+    specify(formula = color ~ NULL, success = "red") %>% 
+    generate(reps = 1000, type = "bootstrap") %>% 
+    calculate(stat = "prop") %>% 
+    get_ci(level = ci_level)
+}
+if(!file.exists("rds/balls_perc_cis_80.rds")){
+  balls_perc_cis_80 <- nested_balls2 %>% 
+    mutate(percentile_ci = purrr::map(data, infer_pipeline, ci_level = 0.8)) %>% 
+    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$color == "red")))
+  write_rds(balls_perc_cis_80, "rds/balls_perc_cis_80.rds")
+} else {
+  balls_perc_cis_80 <- read_rds("rds/balls_perc_cis_80.rds")
+}
+perc_cis_80 <- balls_perc_cis_80 %>% 
+  tidyr::unnest(percentile_ci) %>% 
+  rename(lower = `10%`, upper = `90%`) %>% 
+  select(-data)
+
+if(!file.exists("rds/balls_perc_cis_95.rds")){
+  balls_perc_cis_95 <- nested_balls2 %>% 
+    mutate(percentile_ci = purrr::map(data, infer_pipeline, ci_level = 0.95)) %>% 
+    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$color == "red")))
+  write_rds(balls_perc_cis_95, "rds/balls_perc_cis_95.rds")
+} else {
+  balls_perc_cis_95 <- read_rds("rds/balls_perc_cis_95.rds")
+}
+perc_cis_95 <- balls_perc_cis_95 %>% 
+  tidyr::unnest(percentile_ci) %>% 
+  rename(lower = `2.5%`, upper = `97.5%`) %>% 
+  select(-data)
+
+if(!file.exists("rds/balls_perc_cis_99.rds")){
+  balls_perc_cis_99 <- nested_balls2 %>% 
+    mutate(percentile_ci = purrr::map(data, infer_pipeline, ci_level = 0.99)) %>% 
+    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$color == "red")))
+  write_rds(balls_perc_cis_99, "rds/balls_perc_cis_99.rds")
+} else {
+  balls_perc_cis_99 <- read_rds("rds/balls_perc_cis_99.rds")
+}
+perc_cis_99 <- balls_perc_cis_99 %>% 
+  tidyr::unnest(percentile_ci) %>% 
+  rename(lower = `0.5%`, upper = `99.5%`) %>% 
+  select(-data)
+```
+
+We've repeated the processes above 
+
+
+#### The impact of sample size
+
+We can also observe the impact of sample size on these calculations and make some generalizations. You'll see in Subsection \@ref(theory-ci) some reasons via mathematical formulas for the behavior of confidence interval width and changing sample sizes too.
 
 
 
@@ -1254,7 +1316,7 @@ Practice problems to come soon!
 
 ---
 
-### Theory-based confidence intervals
+### Theory-based confidence intervals {#theory-ci}
 
 When the bootstrap distribution has the nice symmetric, bell shape that we saw in the red balls example above, we can also use a formula to quantify the standard error. This provides another way to compute a confidence interval, but is a little more tedious and mathematical. The steps are outlined below. We've also shown how we can use the confidence interval (CI) interpretation in this case as well to support your understanding of this tricky concept.
 
