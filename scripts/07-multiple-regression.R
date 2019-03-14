@@ -1,4 +1,4 @@
-## ------------------------------------------------------------------------
+## ----message=FALSE, warning=FALSE----------------------------------------
 library(tidyverse)
 library(moderndive)
 library(skimr)
