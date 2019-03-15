@@ -110,7 +110,6 @@
 \newif\if@krantzb
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 \ExecuteOptions{letterpaper,10pt,twoside,onecolumn,final,openright}
 \ProcessOptions
 
