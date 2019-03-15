@@ -683,7 +683,7 @@ percentile_cis_by_level %>%
                 latex_options = c("HOLD_position", "repeat_header"))
 
 
-## ------------------------------------------------------------------------
+## ----echo=FALSE----------------------------------------------------------
 sample_of_cis <- percentile_cis_by_level %>% 
   group_by(confidence_level) %>% 
   sample_n(10) %>% 
@@ -789,7 +789,7 @@ perc_cis_n_100 <- balls_perc_cis_n_100 %>%
 percentile_cis_by_n <- bind_rows(perc_cis_n_25, perc_cis_n_50, perc_cis_n_100)
 
 
-## ------------------------------------------------------------------------
+## ----echo=FALSE----------------------------------------------------------
 sample_of_cis <- percentile_cis_by_n %>% 
   group_by(sample_size) %>% 
   sample_n(10) %>% 
