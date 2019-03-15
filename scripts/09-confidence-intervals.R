@@ -37,11 +37,18 @@ x_bar <- pennies_sample_2 %>%
 
 
 ## ----echo=FALSE----------------------------------------------------------
-pennies_resample <- pennies_sample_2 %>% 
-  rep_sample_n(size = 50, replace = TRUE, reps = 1) %>% 
-  ungroup() %>% 
-  select(-replicate)
+if(!file.exists("rds/pennies_resample.rds")){
+  pennies_resample <- pennies_sample_2 %>% 
+    rep_sample_n(size = 50, replace = TRUE, reps = 1) %>% 
+    ungroup() %>% 
+    select(-replicate)
+  write_rds(pennies_resample, "rds/pennies_resample.rds")
+} else {
+  pennies_resample <- read_rds("rds/pennies_resample.rds")
+}
+
 pennies_resample
+
 
 
 
@@ -82,7 +89,7 @@ tactile_resample_means %>%
   slice(1:10) %>% 
   kable(
     digits = 3,
-    caption = "First 10 out of 33 friends' mean age of 50 resampled pennies.", 
+    caption = "\\label{tactile-resample-means}First 10 out of 33 friends' mean age of 50 resampled pennies.", 
     booktabs = TRUE,
     longtable = TRUE
   ) %>% 
@@ -160,7 +167,7 @@ virtual_resample_means <- virtual_resamples %>%
 virtual_resample_means %>% 
   slice(1:10) %>% 
   kable(
-    digits = 3,
+ #   digits = 3,
     caption = "First 10 out of 33 means from virtual resamples", 
     booktabs = TRUE,
     longtable = TRUE
@@ -324,15 +331,14 @@ knitr::include_graphics("images/flowcharts/infer/visualize.png")
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## bootstrap_distribution %>%
-##   visualize()
+## bootstrap_distribution %>% visualize()
 ## # or
 ## visualize(bootstrap_distribution)
 
 
 ## ----echo=FALSE----------------------------------------------------------
-bootstrap_distribution %>% 
-  visualize()
+bootstrap_distribution %>% visualize() +
+  ggtitle("Simulation-Based Bootstrap Distribution")
 
 
 
@@ -666,15 +672,33 @@ percentile_cis_by_level <- bind_rows(perc_cis_80,
 
 ## ----perc_cis_level_print, echo=FALSE------------------------------------
 percentile_cis_by_level %>% 
-  slice(1:10) %>% 
+  sample_n(10) %>% 
   kable(
     digits = 3,
-    caption = "First 10 out of 100 confidence intervals at 80% level for p", 
+    caption = "10 randomly sampled confidence intervals for p for varying confidence levels", 
     booktabs = TRUE,
     longtable = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position", "repeat_header"))
+
+
+## ------------------------------------------------------------------------
+sample_of_cis <- percentile_cis_by_level %>% 
+  group_by(confidence_level) %>% 
+  sample_n(10) %>% 
+  mutate(sample_row = 1:10)
+ggplot(sample_of_cis) +
+  geom_point(aes(x = point_estimate, y = sample_row)) +
+  geom_segment(aes(y = sample_row, yend = sample_row, x = lower, xend = upper)) +
+  labs(
+    x = expression("Proportion of red balls"),
+    y = "Row of sample (out of 10)",
+    title = expression(paste("90% percentile-based confidence intervals for ", 
+                             p, " by level", sep = ""))
+  ) +
+  scale_y_continuous(breaks = 1:10) +
+  facet_wrap(~ confidence_level)
 
 
 ## ------------------------------------------------------------------------
@@ -766,6 +790,24 @@ percentile_cis_by_n <- bind_rows(perc_cis_n_25, perc_cis_n_50, perc_cis_n_100)
 
 
 ## ------------------------------------------------------------------------
+sample_of_cis <- percentile_cis_by_n %>% 
+  group_by(confidence_level) %>% 
+  sample_n(10) %>% 
+  mutate(sample_row = 1:10)
+ggplot(sample_of_cis) +
+  geom_point(aes(x = point_estimate, y = sample_row)) +
+  geom_segment(aes(y = sample_row, yend = sample_row, x = lower, xend = upper)) +
+  labs(
+    x = expression("Proportion of red balls"),
+    y = "Row of sample (out of 10)",
+    title = expression(paste("90% percentile-based confidence intervals for ", 
+                             p, " by sample size", sep = ""))
+  ) +
+  scale_y_continuous(breaks = 1:10) +
+  facet_wrap(~ sample_size)
+
+
+## ------------------------------------------------------------------------
 percentile_cis_by_n %>% 
   mutate(width = upper - lower) %>% 
   group_by(sample_size) %>% 
@@ -811,10 +853,6 @@ obs_diff
 
 ## ------------------------------------------------------------------------
 head(mythbusters_yawn)
-
-
-## ------------------------------------------------------------------------
-set.seed(2019)
 
 
 ## ------------------------------------------------------------------------
@@ -918,7 +956,7 @@ bootstrap_distribution_n_200
 ## visualize(bootstrap_distribution_n_200, bins = 10, fill = "blue")
 
 
-## ------------------------------------------------------------------------
+## ----echo=FALSE----------------------------------------------------------
 visualize(bootstrap_distribution_n_200, bins = 10, fill = "blue") +
   ggtitle("Simulation-Based Bootstrap Distribution")
 
@@ -1124,7 +1162,7 @@ qnorm(p = 0.025)
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
   read_csv(na = "") %>% 
   kable(
-    caption = "\\label{tab:summarytable-ch8}Scenarios of sampling for inference", 
+    caption = "\\label{tab:summarytable-ch9}Scenarios of sampling for inference", 
     booktabs = TRUE,
     escape = FALSE
   ) %>% 
