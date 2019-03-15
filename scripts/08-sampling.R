@@ -130,9 +130,6 @@ virtual_prop_red <- virtual_samples %>%
   summarize(red = sum(color == "red")) %>% 
   mutate(prop_red = red / 50)
 
-virtual_histogram <- ggplot(virtual_prop_red, aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white")
-
 virtual_prop_red %>% 
   slice(1:10) %>% 
   kable(
@@ -211,7 +208,7 @@ virtual_histogram +
        title = "Distribution of 1000 proportions red")
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## # Segment 1: sample size = 25 ------------------------------
 ## # 1.a) Virtually use shovel 1000 times
 ## virtual_samples_25 <- bowl %>%
@@ -263,8 +260,13 @@ virtual_histogram +
 
 ## ----comparing-sampling-distributions, echo=FALSE, fig.cap="Comparing the distributions of proportion red for different sample sizes"----
 # n = 25
-virtual_samples_25 <- bowl %>% 
-  rep_sample_n(size = 25, reps = 1000)
+if(!file.exists("rds/virtual_samples_25.rds")){
+  virtual_samples_25 <- bowl %>% 
+    rep_sample_n(size = 25, reps = 1000)
+  write_rds(virtual_samples_25, "rds/virtual_samples_25.rds")
+} else {
+  virtual_samples_25 <- read_rds("rds/virtual_samples_25.rds")
+}
 virtual_prop_red_25 <- virtual_samples_25 %>% 
   group_by(replicate) %>% 
   summarize(red = sum(color == "red")) %>% 
@@ -272,8 +274,14 @@ virtual_prop_red_25 <- virtual_samples_25 %>%
   mutate(n = 25)
 
 # n = 50
-virtual_samples_50 <- bowl %>% 
-  rep_sample_n(size = 50, reps = 1000)
+if(!file.exists("rds/virtual_samples_50.rds")){
+  virtual_samples_50 <- bowl %>% 
+    rep_sample_n(size = 50, reps = 1000)
+  write_rds(virtual_samples_50, "rds/virtual_samples_50.rds")
+} else {
+  virtual_samples_50 <- read_rds("rds/virtual_samples_50.rds")
+}
+
 virtual_prop_red_50 <- virtual_samples_50 %>% 
   group_by(replicate) %>% 
   summarize(red = sum(color == "red")) %>% 
@@ -281,8 +289,13 @@ virtual_prop_red_50 <- virtual_samples_50 %>%
   mutate(n = 50)
 
 # n = 100
-virtual_samples_100 <- bowl %>% 
-  rep_sample_n(size = 100, reps = 1000)
+if(!file.exists("rds/virtual_samples_100.rds")){
+  virtual_samples_100 <- bowl %>% 
+    rep_sample_n(size = 100, reps = 1000)
+  write_rds(virtual_samples_100, "rds/virtual_samples_100.rds")
+} else {
+  virtual_samples_100 <- read_rds("rds/virtual_samples_100.rds")
+}
 virtual_prop_red_100 <- virtual_samples_100 %>% 
   group_by(replicate) %>% 
   summarize(red = sum(color == "red")) %>% 
