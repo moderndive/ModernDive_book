@@ -791,7 +791,7 @@ percentile_cis_by_n <- bind_rows(perc_cis_n_25, perc_cis_n_50, perc_cis_n_100)
 
 ## ------------------------------------------------------------------------
 sample_of_cis <- percentile_cis_by_n %>% 
-  group_by(confidence_level) %>% 
+  group_by(sample_size) %>% 
   sample_n(10) %>% 
   mutate(sample_row = 1:10)
 ggplot(sample_of_cis) +
