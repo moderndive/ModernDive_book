@@ -373,7 +373,7 @@ p2 <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", data = ev
 p1 + p2
 ```
 
-At this point, you might be asking yourself: "Why would we ever use an parallel slopes model?" Looking at the left-hand plot in Figure \@ref(fig:numxcatx-comparison), the two lines definitely do not appear to be parallel, so why would we *force* them to be parallel as in the right-hand plot. 
+At this point, you might be asking yourself: "Why would we ever use an parallel slopes model?" Looking at the left-hand plot in Figure \@ref(fig:numxcatx-comparison), the two lines definitely do not appear to be parallel, so why would we *force* them to be parallel as in the right-hand plot?
 
 The answer lies in a philosophical principle known as "Occam's Razor" which states that "all other things being equal, simpler solutions are more likely to be correct than complex ones." When viewed in a modeling framework, Occam's Razor can be recast as "all other things being equal, simpler models are to be preferred over complex ones." In other words, we should only favor the more complex model if the additional complexity is warranted. 
 
@@ -381,26 +381,43 @@ Let's compare the equations for the regression line for both the interaction and
 
 $$
 \begin{align}
-\text{Interaction model} &: \widehat{y} = \widehat{\text{score}} = b_0 + b_{\mbox{age}} \cdot \mbox{age} + b_{\mbox{male}} \cdot \mathbb{1}_{\mbox{is male}}(x) + b_{\mbox{age,male}} \cdot \mbox{age} \cdot \mathbb{1}_{\mbox{is male}}\\
-\text{Parallel slopes model} &: \widehat{y} = \widehat{\text{score}} = b_0 + b_{\mbox{age}} \cdot \mbox{age} + b_{\mbox{male}} \cdot \mathbb{1}_{\mbox{is male}}(x)
+\text{Interaction} &: \widehat{y} = \widehat{\text{score}} = b_0 + b_{\mbox{age}} \cdot \mbox{age} + b_{\mbox{male}} \cdot \mathbb{1}_{\mbox{is male}}(x) + b_{\mbox{age,male}} \cdot \mbox{age} \cdot \mathbb{1}_{\mbox{is male}}\\
+\text{Parallel slopes} &: \widehat{y} = \widehat{\text{score}} = b_0 + b_{\mbox{age}} \cdot \mbox{age} + b_{\mbox{male}} \cdot \mathbb{1}_{\mbox{is male}}(x)
 \end{align}
 $$
 
 The interaction model is "more complex" in that there is an additional $b_{\mbox{age,male}} \cdot \mbox{age} \cdot \mathbb{1}_{\mbox{is male}}$ element to the equation not present for the parallel slopes model. Furthermore we should only favor the interaction model over the parallel slopes model when this additional complexity is *warranted*.
 
-So while in the Figure \@ref(fig:numxcatx-comparison) it appears this additional complexity is warranted as evidenced by the clearly different slopes in the interaction model, in Section \@ref(model-selection) on model selection below we'll present data where the case for using an interaction model isn't as strong.
+So while in Figure \@ref(fig:numxcatx-comparison) it appears this additional complexity is warranted given the clearly different slopes in the interaction model, in Section \@ref(model-selection) below on model selection we'll present data where the case for using an interaction model isn't as strong.
 
 
 ### Observed/fitted values and residuals {#model4points}
 
-Now say we want to apply the above calculations for male and female instructors for all `r nrow(evals_ch7)` instructors in the `evals_ch7` dataset. As our multiple regression models get more and more complex, computing such values by hand gets more and more tedious. The `get_regression_points()` function spares us this tedium and returns all fitted values and all residuals. For simplicity, let's focus only on the fitted interaction model, which is saved in `score_model_interaction`.
+For brevity's sake, in this section we'll only compute the observed values, fitted values, and residuals for the interaction model which we saved in `score_model_interaction`.
+
+In Figure \@ref(fig:fitted-values)
+
+```{r fitted-values, echo = FALSE, warning=FALSE, fig.cap="Fitted values for two new professors"}
+newpoints <- evals_ch7 %>% 
+  slice(c(1, 5)) %>% 
+  get_regression_points(score_model_interaction, newdata = .)
+
+ggplot(evals_ch7, aes(x = age, y = score, color = gender), show.legend = FALSE) +
+  geom_point() +
+  labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme(legend.position = "none") +
+  geom_vline(data = newpoints, aes(xintercept = age, col = gender), linetype = "dashed", size = 1) +
+  geom_point(data = newpoints, aes(x= age, y = score_hat), size = 6)
+```
+
+FILL THIS IN.
 
 ```{r, eval=FALSE}
 regression_points <- get_regression_points(score_model_interaction)
 regression_points
 ```
 ```{r model4-points-table, echo=FALSE}
-set.seed(76)
 regression_points <- get_regression_points(score_model_interaction)
 regression_points %>%
   slice(1:5) %>%
@@ -413,12 +430,16 @@ regression_points %>%
                 latex_options = c("HOLD_position"))
 ```
 
-Recall the format of the output:
+FILL THIS IN.
 
-* `score` corresponds to $y$ the observed value
-* `score_hat` corresponds to $\widehat{y} = \widehat{\mbox{score}}$ the fitted value
-* `residual` corresponds to the residual $y - \widehat{y}$
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
 
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Compute the observed values, fitted values, and residuals not for the interaction model as we just did, but rather for the parallel slopes model we saved in `score_model_interaction`.
+
+```{block, type='learncheck', purl=FALSE}
+```
 
 
 ***
@@ -450,18 +471,19 @@ Let's load the `Credit` data and `select()` only the needed subset of variables.
 
 ```{r, warning=FALSE, message=FALSE}
 library(ISLR)
-Credit <- Credit %>%
-  select(Balance, Limit, Income, Rating, Age)
+credit <- Credit %>%
+  as_tibble() %>% 
+  select(ID, debt = Balance, credit_limit = Limit, income = Income, credit_rating = Rating, age = Age)
 ```
 
-Let's look at the raw data values both by bringing up RStudio's spreadsheet viewer and the `glimpse()` function. Although in Table \@ref(tab:model3-data-preview) we only show 5 randomly selected credit card holders out of `r nrow(Credit)`:
+Let's look at the raw data values both by bringing up RStudio's spreadsheet viewer and the `glimpse()` function. Although in Table \@ref(tab:model3-data-preview) we only show 5 randomly selected credit card holders out of `r nrow(credit)`:
 
 ```{r, eval=FALSE}
-View(Credit)
+View(credit)
 ```
 
 ```{r model3-data-preview, echo=FALSE}
-Credit %>%
+credit %>%
   sample_n(5) %>%
   knitr::kable(
     digits = 3,
@@ -473,14 +495,14 @@ Credit %>%
 ```
 
 ```{r}
-glimpse(Credit)
+glimpse(credit)
 ```
 
 Let's look at some summary statistics, again using the `skim()` function from the `skimr` package:
 
 ```{r}
-Credit %>% 
-  select(Balance, Limit, Income) %>% 
+credit %>% 
+  select(debt, credit_limit, income) %>% 
   skim()
 ```
 
@@ -492,16 +514,16 @@ We observe for example:
 1. The mean and median credit card limit are \$4735.6 and \$4622.50 respectively.
 1. 75% of these card holders had incomes of $57,470 or less.
 
-Since our outcome variable `Balance` and the explanatory variables `Limit` and
-`Income` are numerical, we can compute the correlation coefficient between pairs
+Since our outcome variable `debt` and the explanatory variables `credit_limit` and
+`income` are numerical, we can compute the correlation coefficient between pairs
 of these variables. First, we could run the `get_correlation()` command as seen
 in Subsection \@ref(model1EDA) twice, once for each explanatory variable:
 
 ```{r, eval=FALSE}
-Credit %>% 
-  get_correlation(Balance ~ Limit)
-Credit %>% 
-  get_correlation(Balance ~ Income)
+credit %>% 
+  get_correlation(debt ~ credit_limit)
+credit %>% 
+  get_correlation(debt ~ income)
 ```
 
 Or we can simultaneously compute them by returning a *correlation matrix* in 
@@ -509,13 +531,13 @@ Table \@ref(tab:model3-correlation). We can read off the correlation coefficient
 for any pair of variables by looking them up in the appropriate row/column combination.
 
 ```{r, eval=FALSE}
-Credit %>%
-  select(Balance, Limit, Income) %>% 
+credit %>%
+  select(debt, credit_limit, income) %>% 
   cor()
 ```
 ```{r model3-correlation, echo=FALSE}
-Credit %>% 
-  select(Balance, Limit, Income) %>% 
+credit %>% 
+  select(debt, credit_limit, income) %>% 
   cor() %>% 
   knitr::kable(
     digits = 3,
@@ -528,23 +550,23 @@ Credit %>%
 
 For example, the correlation coefficient of:
 
-1. `Balance` with itself is 1 as we would expect based on the definition of the correlation coefficient.
-1. `Balance` with `Limit` is 0.862. This indicates a strong positive linear relationship, which makes sense as only individuals with large credit limits can accrue large credit card balances.
-1. `Balance` with `Income` is 0.464. This is suggestive of another positive linear relationship, although not as strong as the relationship between `Balance` and `Limit`.
-1. As an added bonus, we can read off the correlation coefficient of the two explanatory variables, `Limit` and `Income` of 0.792. In this case, we say there is a high degree of *collinearity* between these two explanatory variables. 
+1. `debt` with itself is 1 as we would expect based on the definition of the correlation coefficient.
+1. `debt` with `credit_limit` is 0.862. This indicates a strong positive linear relationship, which makes sense as only individuals with large credit limits can accrue large credit card balances.
+1. `debt` with `income` is 0.464. This is suggestive of another positive linear relationship, although not as strong as the relationship between `debt` and `credit_limit`.
+1. As an added bonus, we can read off the correlation coefficient of the two explanatory variables, `credit_limit` and `income` of 0.792. In this case, we say there is a high degree of *collinearity* between these two explanatory variables. 
 
-Collinearity (or multicollinearity) is a phenomenon in which one explanatory variable in a multiple regression model can be linearly predicted from the others with a substantial degree of accuracy. So in this case, if we knew someone's credit card `Limit` and since `Limit` and `Income` are highly correlated, we could make a fairly accurate guess as to that person's `Income`. Or put loosely, these two variables provided redundant information. For now let's ignore any issues related to collinearity and press on.
+Collinearity (or multicollinearity) is a phenomenon in which one explanatory variable in a multiple regression model can be linearly predicted from the others with a substantial degree of accuracy. So in this case, if we knew someone's credit card `credit_limit` and since `credit_limit` and `income` are highly correlated, we could make a fairly accurate guess as to that person's `income`. Or put loosely, these two variables provided redundant information. For now let's ignore any issues related to collinearity and press on.
 
 Let's visualize the relationship of the outcome variable with each of the two explanatory variables in two separate plots:
 
 ```{r, eval=FALSE}
-ggplot(Credit, aes(x = Limit, y = Balance)) +
+ggplot(credit, aes(x = credit_limit, y = debt)) +
   geom_point() +
   labs(x = "Credit limit (in $)", y = "Credit card balance (in $)", 
        title = "Relationship between balance and credit limit") +
   geom_smooth(method = "lm", se = FALSE)
   
-ggplot(Credit, aes(x = Income, y = Balance)) +
+ggplot(credit, aes(x = income, y = debt)) +
   geom_point() +
   labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
        title = "Relationship between balance and income") +
@@ -552,15 +574,15 @@ ggplot(Credit, aes(x = Income, y = Balance)) +
 ```
 
 ```{r 2numxplot1, echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"}
-model3_balance_vs_limit_plot <- ggplot(Credit, aes(x = Limit, y = Balance)) +
+model3_balance_vs_limit_plot <- ggplot(credit, aes(x = credit_limit, y = debt)) +
   geom_point() +
   labs(x = "Credit limit (in $)", y = "Credit card balance (in $)", 
-       title = "Balance vs credit limit") +
+       title = "debt vs credit limit") +
   geom_smooth(method = "lm", se = FALSE)
-model3_balance_vs_income_plot <- ggplot(Credit, aes(x = Income, y = Balance)) +
+model3_balance_vs_income_plot <- ggplot(credit, aes(x = income, y = debt)) +
   geom_point() +
-  labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
-       title = "Balance vs income") +
+  labs(x = "Income (in $1000)", y = "credit card balance (in $)", 
+       title = "debt vs income") +
   geom_smooth(method = "lm", se = FALSE) +
   scale_y_continuous(limits = c(0, NA))
 model3_balance_vs_limit_plot + model3_balance_vs_income_plot
@@ -568,10 +590,10 @@ model3_balance_vs_limit_plot + model3_balance_vs_income_plot
 
 First, there is a positive relationship between credit limit and balance, since as credit limit increases so also does credit card balance; this is to be expected given the strongly positive correlation coefficient of 0.862. In the case of income, the positive relationship doesn't appear as strong, given the weakly positive correlation coefficient of 0.464. However the two plots in Figure \@ref(fig:2numxplot1) only focus on the relationship of the outcome variable with each of the explanatory variables independently. To get a sense of the *joint* relationship of all three variables simultaneously through a visualization, let's display the data in a 3-dimensional (3D) scatterplot, where
 
-1. The numerical outcome variable $y$ `Balance` is on the z-axis (vertical axis)
+1. The numerical outcome variable $y$ `debt` is on the z-axis (vertical axis)
 1. The two numerical explanatory variables form the "floor" axes. In this case
-    1. The first numerical explanatory variable $x_1$ `Income` is on of the floor axes.
-    1. The second numerical explanatory variable $x_2$ `Limit` is on the other floor axis.
+    1. The first numerical explanatory variable $x_1$ `income` is on of the floor axes.
+    1. The second numerical explanatory variable $x_2$ `credit_limit` is on the other floor axis.
 
 Click on the following image to open an interactive 3D scatterplot in your browser:
 
@@ -585,19 +607,19 @@ library(ISLR)
 library(plotly)
 plot_ly(showscale=FALSE) %>%
   add_markers(
-    x = Credit$Income,
-    y = Credit$Limit,
-    z = Credit$Balance,
+    x = credit$income,
+    y = credit$credit_limit,
+    z = credit$debt,
     hoverinfo = 'text',
-    text = ~paste("x1 - Income: ", Credit$Income, 
-                  "</br> x2 - Limit: ", Credit$Limit, 
-                  "</br> y - Balance: ", Credit$Balance)
+    text = ~paste("x1 - Income: ", credit$income, 
+                  "</br> x2 - Credit Limit: ", credit$credit_limit, 
+                  "</br> y - Debt: ", credit$debt)
   ) %>% 
   layout(
     scene = list(
       xaxis = list(title = "x1 - Income (in $10K)"),
-      yaxis = list(title = "x2 - Limit ($)"),
-      zaxis = list(title = "y - Balance ($)")
+      yaxis = list(title = "x2 - Credit Limit ($)"),
+      zaxis = list(title = "y - debt ($)")
     )
   )
 ```
@@ -625,9 +647,9 @@ library(plotly)
 library(tidyverse)
 
 # setup hideous grid required by plotly
-model_lm <- lm(Balance ~ Income + Limit, data=Credit)
-x_grid <- seq(from=min(Credit$Income), to=max(Credit$Income), length=100)
-y_grid <- seq(from=min(Credit$Limit), to=max(Credit$Limit), length=200)
+model_lm <- lm(debt ~ income + credit_limit, data=credit)
+x_grid <- seq(from=min(credit$income), to=max(credit$income), length=100)
+y_grid <- seq(from=min(credit$credit_limit), to=max(credit$credit_limit), length=200)
 z_grid <- expand.grid(x_grid, y_grid) %>%
   tbl_df() %>%
   rename(
@@ -642,18 +664,18 @@ z_grid <- expand.grid(x_grid, y_grid) %>%
 # plot points and plane
 plot_ly(showscale = FALSE) %>%
   add_markers(
-    x = Credit$Income,
-    y = Credit$Limit,
-    z = Credit$Balance,
+    x = credit$income,
+    y = credit$credit_limit,
+    z = credit$debt,
     hoverinfo = 'text',
-    text = ~paste("x1 - Income: ", Credit$Income, "</br> x2 - Limit: ", 
-                  Credit$Limit, "</br> y - Balance: ", Credit$Balance)
+    text = ~paste("x1 - Income: ", credit$income, "</br> x2 - Credit Limit: ", 
+                  credit$credit_limit, "</br> y - Debt: ", credit$debt)
   ) %>% 
   layout(
     scene = list(
       xaxis = list(title = "x1 - Income (in $10K)"),
-      yaxis = list(title = "x2 - Limit ($)"),
-      zaxis = list(title = "y - Balance ($)")
+      yaxis = list(title = "x2 - Credit Limit ($)"),
+      zaxis = list(title = "y - Debt ($)")
     )
   ) %>% 
   add_surface(
@@ -667,7 +689,7 @@ plot_ly(showscale = FALSE) %>%
 **_Learning check_**
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Conduct a new exploratory data analysis with the same outcome variable $y$ being `Balance` but with `Rating` and `Age` as the new explanatory variables $x_1$ and $x_2$. Remember, this involves three things:
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Conduct a new exploratory data analysis with the same outcome variable $y$ being `debt` but with `credit_rating` and `age` as the new explanatory variables $x_1$ and $x_2$. Remember, this involves three things:
 
 a) Looking at the raw values
 a) Computing summary statistics of the variables of interest.
@@ -683,19 +705,19 @@ What can you say about the relationship between a credit card holder's balance a
 
 ### Regression plane {#model3table}
 
-Just as we did when we had a single numerical explanatory variable $x$ in Subsection \@ref(model1table) and when we had a single categorical explanatory variable $x$ in Subsection \@ref(model2table), we fit a regression model and obtained the regression table in our two numerical explanatory variable scenario. To fit a regression model and get a table using `get_regression_table()`, we now use a `+` to consider multiple explanatory variables. In this case since we want to perform a regression of `Limit` and `Income` simultaneously, we input `Balance ~ Limit + Income`.
+Just as we did when we had a single numerical explanatory variable $x$ in Subsection \@ref(model1table) and when we had a single categorical explanatory variable $x$ in Subsection \@ref(model2table), we fit a regression model and obtained the regression table in our two numerical explanatory variable scenario. To fit a regression model and get a table using `get_regression_table()`, we now use a `+` to consider multiple explanatory variables. In this case since we want to perform a regression of `credit_limit` and `income` simultaneously, we input `debt ~ credit_limit + income`.
 
 ```{r, eval=FALSE}
-Balance_model <- lm(Balance ~ Limit + Income, data = Credit)
-get_regression_table(Balance_model)
+debt_model <- lm(debt ~ credit_limit + income, data = credit)
+get_regression_table(debt_model)
 ```
 ```{r, echo=FALSE}
-Balance_model <- lm(Balance ~ Limit + Income, data = Credit)
-Credit_line <- get_regression_table(Balance_model) %>%
+debt_model <- lm(debt ~ credit_limit + income, data = credit)
+credit_line <- get_regression_table(debt_model) %>%
   pull(estimate)
 ```
 ```{r model3-table-output, echo=FALSE}
-get_regression_table(Balance_model) %>% 
+get_regression_table(debt_model) %>% 
   knitr::kable(
     digits = 3,
     caption = "Multiple regression table", 
@@ -707,22 +729,22 @@ get_regression_table(Balance_model) %>%
 
 How do we interpret these three values that define the regression plane?
 
-* Intercept: -$385.18 (rounded to two decimal points to represent cents). The intercept in our case represents the credit card balance for an individual who has both a credit `Limit` of $0 and `Income` of $0. In our data however, the intercept has limited practical interpretation as no individuals had `Limit` or `Income` values of $0 and furthermore the smallest credit card balance was $0. Rather, it is used to situate the regression plane in 3D space. 
-* Limit: $0.26. Now that we have multiple variables to consider, we have to add
-a caveat to our interpretation: *taking all other variables in our model into account, for every increase of one unit in credit `Limit` (dollars), there is an associated increase of on average $0.26 in credit card balance*. Note:
+* Intercept: -$385.18 (rounded to two decimal points to represent cents). The intercept in our case represents the credit card balance for an individual who has both a credit `credit_limit` of $0 and `income` of $0. In our data however, the intercept has limited practical interpretation as no individuals had `credit_limit` or `income` values of $0 and furthermore the smallest credit card balance was $0. Rather, it is used to situate the regression plane in 3D space. 
+* Credit limit: $0.26. Now that we have multiple variables to consider, we have to add
+a caveat to our interpretation: *taking all other variables in our model into account, for every increase of one unit in `credit_limit` (dollars), there is an associated increase of on average $0.26 in credit card balance*. Note:
     + Just as we did in Subsection \@ref(model1table), we are not making any causal statements, only statements relating to the association between credit limit and balance
-    + We need to preface our interpretation of the associated effect of `Limit` with the statement "taking all other variables into account", in this case `Income`, to emphasize that we are now jointly interpreting the associated effect of multiple explanatory variables in the same model and not in isolation.
-* Income: -$7.66. Similarly, *taking all other variables into account, for every increase of one unit in `Income` (in other words, $1000 in income), there is an associated decrease of on average $7.66 in credit card balance*.
+    + We need to preface our interpretation of the associated effect of `credit_limit` with the statement "taking all other variables into account", in this case `income`, to emphasize that we are now jointly interpreting the associated effect of multiple explanatory variables in the same model and not in isolation.
+* Income: -$7.66. Similarly, *taking all other variables into account, for every increase of one unit in `income` (in other words, $1000 in income), there is an associated decrease of on average $7.66 in credit card balance*.
 
-However, recall in Figure \@ref(fig:2numxplot1) that when considered separately, both `Limit` and `Income` had positive relationships with the outcome variable `Balance`. As card holders' credit limits increased their credit card balances tended to increase as well, and a similar relationship held for incomes and balances. In the above multiple regression, however, the slope for `Income` is now -7.66, suggesting a *negative relationship* between income and credit card balance. What explains these contradictory results? 
+However, recall in Figure \@ref(fig:2numxplot1) that when considered separately, both `credit_limit` and `income` had positive relationships with the outcome variable `debt`. As card holders' credit limits increased their credit card balances tended to increase as well, and a similar relationship held for incomes and balances. In the above multiple regression, however, the slope for `income` is now -7.66, suggesting a *negative relationship* between income and credit card balance. What explains these contradictory results? 
 
-This is known as Simpson's Paradox, a phenomenon in which a trend appears in several different groups of data but disappears or reverses when these groups are combined. We expand on this in Subsection \@ref(simpsonsparadox) where we'll look at the relationship between credit `Limit` and credit card balance but split by different income bracket groups.
+This is known as Simpson's Paradox, a phenomenon in which a trend appears in several different groups of data but disappears or reverses when these groups are combined. We expand on this in Subsection \@ref(simpsonsparadox) where we'll look at the relationship between credit `credit_limit` and credit card balance but split by different income bracket groups.
 
 ```{block, type='learncheck', purl=FALSE}
 **_Learning check_**
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Fit a new simple linear regression using `lm(Balance ~ Rating + Age, data = Credit)` where `Rating` and `Age` are the new numerical explanatory variables $x_1$ and $x_2$. Get information about the "best-fitting" line from the regression table by applying the `get_regression_table()` function. How do the regression results match up with the results from your exploratory data analysis above? 
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Fit a new simple linear regression using `lm(debt ~ credit_rating + age, data = credit)` where `credit_rating` and `age` are the new numerical explanatory variables $x_1$ and $x_2$. Get information about the "best-fitting" line from the regression table by applying the `get_regression_table()` function. How do the regression results match up with the results from your exploratory data analysis above? 
 
 ```{block, type='learncheck', purl=FALSE}
 ```
@@ -730,15 +752,15 @@ This is known as Simpson's Paradox, a phenomenon in which a trend appears in sev
 
 ### Observed/fitted values and residuals {#model3points}
 
-As we did previously in Table \@ref(tab:model3-points-table), let's unpack the output of the `get_regression_points()` function for our model for credit card balance for all `r nrow(Credit)` card holders in the dataset. Recall that each card holder corresponds to one of the `r nrow(Credit)` rows in the `Credit` data frame and also for one of the `r nrow(Credit)` 3D points in the 3D scatterplots in Subsection \@ref(model3EDA).
+As we did previously in Table \@ref(tab:model3-points-table), let's unpack the output of the `get_regression_points()` function for our model for credit card balance for all `r nrow(credit)` card holders in the dataset. Recall that each card holder corresponds to one of the `r nrow(credit)` rows in the `credit` data frame and also for one of the `r nrow(credit)` 3D points in the 3D scatterplots in Subsection \@ref(model3EDA).
 
 ```{r, eval=FALSE}
-regression_points <- get_regression_points(Balance_model)
+regression_points <- get_regression_points(debt_model)
 regression_points
 ```
 ```{r model3-points-table, echo=FALSE}
 set.seed(76)
-regression_points <- get_regression_points(Balance_model)
+regression_points <- get_regression_points(debt_model)
 regression_points %>%
   slice(1:5) %>%
   knitr::kable(
@@ -752,8 +774,8 @@ regression_points %>%
 
 Recall the format of the output:
 
-* `Balance` corresponds to $y$ (the observed value)
-* `Balance_hat` corresponds to $\widehat{y}$ (the fitted value)
+* `debt` corresponds to $y$ (the observed value)
+* `debt_hat` corresponds to $\widehat{y}$ (the fitted value)
 * `residual` corresponds to $y - \widehat{y}$ (the residual)
 
 
@@ -768,29 +790,91 @@ Recall the format of the output:
 
 How do you choose between parallel slopes and interaction models?
 
+```{r, eval = FALSE}
+# Interaction model
+ggplot(MA_schools, aes(x = perc_disadvan, y = average_sat_math, color = size))+
+  geom_point(alpha = 0.25) +
+  geom_smooth(method = "lm", se = FALSE ) +
+  labs(x = "Percent economically disadvantaged", y = "Math SAT Score", 
+       color = "School size", title = "Interaction model")
+
+# Parallel slopes model
+gg_parallel_slopes(y = "average_sat_math", num_x = "perc_disadvan", 
+                   cat_x = "size", data = MA_schools, alpha = 0.25) + 
+  labs(x = "Percent economically disadvantaged", y = "Math SAT Score", 
+       color = "School size", title = "Parallel slopes model") 
+```
+
+Figure \@ref(fig:numxcatx-comparison-2)
+
+```{r numxcatx-comparison-2, fig.width = 8, echo = FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models."}
+p1 <- ggplot(MA_schools, aes(x = perc_disadvan, y = average_sat_math, color = size))+
+  geom_point(alpha = 0.25) +
+  geom_smooth(method = "lm", se = FALSE ) +
+  labs(x = "Percent economically disadvantaged", y = "Math SAT Score", 
+       color = "School size", title = "Interaction model") + 
+  theme(legend.position = "none")
+p2 <- gg_parallel_slopes(y = "average_sat_math", num_x = "perc_disadvan", 
+                         cat_x = "size", data = MA_schools, alpha = 0.25) + 
+  labs(x = "Percent economically disadvantaged", y = "Math SAT Score", 
+       color = "School size", title = "Parallel slopes model") 
+p1 + p2
+```
+
+```{r, eval = FALSE}
+model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size, data = MA_schools)
+get_regression_table(model_2_interaction)
+```
+```{r model2-interaction, echo=FALSE}
+model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size, data = MA_schools)
+get_regression_table(model_2_interaction) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Interaction model regression table", 
+    booktabs = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
+```
+
+```{r, eval = FALSE}
+model_2_parralel_slopes <- lm(average_sat_math ~ perc_disadvan + size, data = MA_schools)
+get_regression_table(model_2_parralel_slopes)
+```
+```{r model2-parallel-slopes, echo=FALSE}
+model_2_parralel_slopes <- lm(average_sat_math ~ perc_disadvan + size, data = MA_schools)
+get_regression_table(model_2_parralel_slopes) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Parallel slopes regression table", 
+    booktabs = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
+```
+
+
 
 ### Correlation coefficient {#correlationcoefficient2}
 
 Recall from Table \@ref(tab:model3-correlation) that we saw the correlation
-coefficient between `Income` in thousands of dollars and credit card `Balance`
+coefficient between `income` in thousands of dollars and credit card `debt`
 was 0.464. What if in instead we looked at the correlation coefficient between
-`Income` and credit card `Balance`, but where `Income` was in dollars and not
-thousands of dollars? This can be done by multiplying `Income` by 1000.
+`income` and credit card `debt`, but where `income` was in dollars and not
+thousands of dollars? This can be done by multiplying `income` by 1000.
 
 ```{r, eval=FALSE}
 library(ISLR)
-data(Credit)
-Credit %>% 
-  select(Balance, Income) %>% 
-  mutate(Income = Income * 1000) %>% 
+credit %>% 
+  select(debt, income) %>% 
+  mutate(income = income * 1000) %>% 
   cor()
 ```
 ```{r cor-credit-2, echo=FALSE}
 library(ISLR)
-data(Credit)
-Credit %>% 
-  select(Balance, Income) %>% 
-  mutate(Income = Income * 1000) %>% 
+credit %>% 
+  select(debt, income) %>% 
+  mutate(income = income * 1000) %>% 
   cor() %>% 
   knitr::kable(
     digits = 3,
@@ -818,7 +902,7 @@ model3_balance_vs_limit_plot + model3_balance_vs_income_plot
 
 On the other hand, the multiple regression in Table \@ref(tab:model3-table-output), suggested that when modeling credit card balance as a function of both credit limit and income at the same time, credit limit has a negative relationship with balance, as evidenced by the slope of -7.66. How can this be?
 
-First, let's dive a little deeper into the explanatory variable `Limit`. Figure \@ref(fig:credit-limit-quartiles) shows a histogram of all `r nrow(Credit)` values of `Limit`, along with vertical red lines that cut up the data into quartiles, meaning: 
+First, let's dive a little deeper into the explanatory variable `credit_limit`. Figure \@ref(fig:credit-limit-quartiles) shows a histogram of all `r nrow(credit)` values of `credit_limit`, along with vertical red lines that cut up the data into quartiles, meaning: 
 
 1. 25% of credit limits were between \$0 and \$3088. Let's call this the "low" credit limit bracket.
 1. 25% of credit limits were between \$3088 and \$4622. Let's call this the "medium-low" credit limit bracket.
@@ -826,9 +910,9 @@ First, let's dive a little deeper into the explanatory variable `Limit`. Figure 
 1. 25% of credit limits were over \$5873. Let's call this the "high" credit limit bracket.
 
 ```{r credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and quartiles"}
-ggplot(Credit, aes(x = Limit)) +
+ggplot(credit, aes(x = credit_limit)) +
   geom_histogram(color = "white") +
-  geom_vline(xintercept = quantile(Credit$Limit, probs = c(0.25, 0.5, 0.75)), col = "red", linetype = "dashed")
+  geom_vline(xintercept = quantile(credit$credit_limit, probs = c(0.25, 0.5, 0.75)), col = "red", linetype = "dashed")
 ```
 
 Let's now display
@@ -837,8 +921,8 @@ Let's now display
 1. The scatterplot showing the relationship between credit card balance and limit now with a color aesthetic added corresponding to the credit limit bracket.
 
 ```{r, 2numxplot4, fig.height=4, echo=FALSE, fig.cap="Relationship between credit card balance and income for different credit limit brackets"}
-Credit <- Credit %>% 
-  mutate(limit_bracket = cut_number(Limit, 4)) %>% 
+credit <- credit %>% 
+  mutate(limit_bracket = cut_number(credit_limit, 4)) %>% 
   mutate(limit_bracket = fct_recode(limit_bracket,
     "low" =  "[855,3.09e+03]",
     "medium-low" = "(3.09e+03,4.62e+03]", 
@@ -846,18 +930,18 @@ Credit <- Credit %>%
     "high" = "(5.87e+03,1.39e+04]"
   ))
 
-model3_balance_vs_income_plot <- ggplot(Credit, aes(x = Income, y = Balance)) +
+model3_balance_vs_income_plot <- ggplot(credit, aes(x = income, y = debt)) +
   geom_point() +
   labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
-       title = "Balance vs income\n(overall)") +
+       title = "Debt vs income\n(overall)") +
   geom_smooth(method = "lm", se = FALSE) +
   scale_y_continuous(limits = c(0, NA))
 
-model3_balance_vs_income_plot_colored <- ggplot(Credit, aes(x = Income, y = Balance, col = limit_bracket)) +
+model3_balance_vs_income_plot_colored <- ggplot(credit, aes(x = income, y = debt, col = limit_bracket)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   labs(x = "Income (in $1000)", y = "Credit card balance (in $)", 
-       color = "Credit limit\nbracket", title = "Balance vs income\n(colored by credit limit bracket)") + 
+       color = "Credit limit\nbracket", title = "Debt vs income\n(colored by credit limit bracket)") + 
   theme(legend.position = "none") +
   scale_y_continuous(limits = c(0, NA))
   
@@ -878,7 +962,7 @@ Alternatively, we could also have used facets, where each facet has roughly 25% 
 on the credit limit bracket. However, IMO the above plot is easier to read.
 
 ```{r, 2numxplot5, echo=FALSE, warning=FALSE, fig.cap="Relationship between credit card balance and income for different credit limit brackets"}
-ggplot(Credit, aes(x = Income, y = Balance)) +
+ggplot(credit, aes(x = income, y = debt)) +
   geom_point() +
   facet_wrap(~limit_bracket) +
   geom_smooth(method = "lm", se = FALSE) +
