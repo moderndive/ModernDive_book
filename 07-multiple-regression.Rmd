@@ -675,9 +675,9 @@ plot_ly() %>%
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Conduct a new exploratory data analysis with the same outcome variable $y$ being `debt` but with `credit_rating` and `age` as the new explanatory variables $x_1$ and $x_2$. Remember, this involves three things:
 
-a) Looking at the raw values
-a) Computing summary statistics of the variables of interest.
-a) Creating informative visualizations
+1. Most crucially: Looking at the raw data values.
+1. Computing summary statistics, like means, medians, and interquartile ranges.
+1. Creating data visualizations.
 
 What can you say about the relationship between a credit card holder's balance and their credit rating and age?
 
@@ -687,18 +687,23 @@ What can you say about the relationship between a credit card holder's balance a
 
 ### Regression plane {#model3table}
 
-Just as we did when we had a single numerical explanatory variable $x$ in Subsection \@ref(model1table) and when we had a single categorical explanatory variable $x$ in Subsection \@ref(model2table), we fit a regression model and obtained the regression table in our two numerical explanatory variable scenario. To fit a regression model and get a table using `get_regression_table()`, we now use a `+` to consider multiple explanatory variables. In this case since we want to perform a regression of `credit_limit` and `income` simultaneously, we input `debt ~ credit_limit + income`.
+Let's now fit a regression model and get the regression table corresponding to the regression plane above. For simplicity's sake, we won't consider the two numerical explanatory variable analogue of the interaction model from Section \@ref(model4interactiontable) which we fit with a model formula of the form `y ~ x1 * x2`, but rather only regression models with model formula of the form `y ~ x1 + x2`. Somewhat confusing however, since we now have a regression plane instead of mutiple lines, the label "parallel slopes model" doesn't apply when you have two numerical explanatory variables. 
+
+Just as we have done multiple times throughout Chapters \@ref(regression) and this chapter, let's obtain the regression table for this model using our two-step process and display the results in Table \@ref(tab:model3-table-output)
+
+1. We first "fit" the linear regression model using the `lm(y ~ x1 + x2, data)` function and save it in `debt_model`.
+1. We get the regression table by applying the `get_regression_table()` from the `moderndive` package to `debt_model`.
 
 ```{r, eval=FALSE}
+# Fit regression model:
 debt_model <- lm(debt ~ credit_limit + income, data = credit_ch7)
+# Get regression table:
 get_regression_table(debt_model)
 ```
-```{r, echo=FALSE}
+```{r model3-table-output, echo=FALSE}
 debt_model <- lm(debt ~ credit_limit + income, data = credit_ch7)
 credit_line <- get_regression_table(debt_model) %>%
   pull(estimate)
-```
-```{r model3-table-output, echo=FALSE}
 get_regression_table(debt_model) %>% 
   knitr::kable(
     digits = 3,
@@ -709,24 +714,31 @@ get_regression_table(debt_model) %>%
                 latex_options = c("HOLD_position"))
 ```
 
-How do we interpret these three values that define the regression plane?
+How do we interpret the three values in the `estimate` column?
 
-* Intercept: -$385.18 (rounded to two decimal points to represent cents). The intercept in our case represents the credit card balance for an individual who has both a credit `credit_limit` of $0 and `income` of $0. In our data however, the intercept has limited practical interpretation as no individuals had `credit_limit` or `income` values of $0 and furthermore the smallest credit card balance was $0. Rather, it is used to situate the regression plane in 3D space. 
-* Credit limit: $0.26. Now that we have multiple variables to consider, we have to add
-a caveat to our interpretation: *taking all other variables in our model into account, for every increase of one unit in `credit_limit` (dollars), there is an associated increase of on average $0.26 in credit card balance*. Note:
-    + Just as we did in Subsection \@ref(model1table), we are not making any causal statements, only statements relating to the association between credit limit and balance
-    + We need to preface our interpretation of the associated effect of `credit_limit` with the statement "taking all other variables into account", in this case `income`, to emphasize that we are now jointly interpreting the associated effect of multiple explanatory variables in the same model and not in isolation.
-* Income: -$7.66. Similarly, *taking all other variables into account, for every increase of one unit in `income` (in other words, $1000 in income), there is an associated decrease of on average $7.66 in credit card balance*.
+* `intercept` = -\$385.18 (rounded to two decimal points). The intercept in our case represents the credit card debt for an individual who has  `credit_limit` of \$0 and `income` of \$0. In our data however, the intercept has limited practical interpretation since no individuals had `credit_limit` or `income` values of \$0. Rather, the intercept is used to situate the regression plane in 3D space. 
+* `credit_limit` = \$0.26. Taking into account all other the explanatory variables in our model, for every increase of one dollar in `credit_limit`, there is an associated increase of on average \$0.26 in credit card debt. Note:
+    + Just as we did in Subsection \@ref(model1table), we are cautious not to make a causal statement by merely stating there there was an *associated* increase.
+    + We preface our interpretation with the statement "taking into account all other the explanatory variables in our model", here  `income`, to emphasize that we are now jointly interpreting the associated effect of multiple explanatory variables in the same model at once. 
+* `income` = -\$7.66. Taking into account all other the explanatory variables in our model, for every increase of one unit in the varible `income`, in other words \$1000 in actual income, there is an associated decrease of on average \$7.66 in credit card debt.
 
-However, recall in Figure \@ref(fig:2numxplot1) that when considered separately, both `credit_limit` and `income` had positive relationships with the outcome variable `debt`. As card holders' credit limits increased their credit card balances tended to increase as well, and a similar relationship held for incomes and balances. In the above multiple regression, however, the slope for `income` is now -7.66, suggesting a *negative relationship* between income and credit card balance. What explains these contradictory results? 
+Putting these results together, the equation of the regression plane that gives us fitted values $\widehat{y}$ = $\widehat{\text{debt}}$.
 
-This is known as Simpson's Paradox, a phenomenon in which a trend appears in several different groups of data but disappears or reverses when these groups are combined. We expand on this in Subsection \@ref(simpsonsparadox) where we'll look at the relationship between credit `credit_limit` and credit card balance but split by different income bracket groups.
+$$
+\begin{aligned}
+\widehat{y} &= b_0 + b_1 \cdot x_1 +  b_2 \cdot x_2\\
+\widehat{\text{debt}} &= b_0 + b_{\text{limit}} \cdot \text{limit} + b_{\text{income}} \cdot\text{income}\\
+&= -387.179 + 0.263 \cdot\text{limit} - 7.663 \cdot\text{income}
+\end{aligned}
+$$
+
+Recall in the right-hand plot of Figure \@ref(fig:2numxplot1) that when plotting the relationship between `debt` and `income` in isolation, there appeared to be a positive relationship. In the above mutiple regresion however, when jointly modeling the relationship between `debt`, `credit_limit`, and `income`, there appears to be a negative relationship of `debt` and `income` as evidenced by the negative slope for `income` of -\$7.66.  What explains these contradictory results? A phenomenon known as Simpson's Paradox whereby overall trends that exist in aggregate either disapear or reverse when the data are broken down into groups. In Subsection \@ref(simpsonsparadox) we elaborate on this by looking at the relationship between `credit_limit` and credit card `debt`, but split by different income brackets.
 
 ```{block, type='learncheck', purl=FALSE}
 **_Learning check_**
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Fit a new simple linear regression using `lm(debt ~ credit_rating + age, data = credit_ch7)` where `credit_rating` and `age` are the new numerical explanatory variables $x_1$ and $x_2$. Get information about the "best-fitting" line from the regression table by applying the `get_regression_table()` function. How do the regression results match up with the results from your exploratory data analysis above? 
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Fit a new simple linear regression using `lm(debt ~ credit_rating + age, data = credit_ch7)` where `credit_rating` and `age` are the new numerical explanatory variables $x_1$ and $x_2$. Get information about the "best-fitting" regression plane from the regression table by applying the `get_regression_table()` function. How do the regression results match up with the results from your exploratory data analysis above? 
 
 ```{block, type='learncheck', purl=FALSE}
 ```
@@ -744,10 +756,10 @@ regression_points
 set.seed(76)
 regression_points <- get_regression_points(debt_model)
 regression_points %>%
-  slice(1:5) %>%
+  slice(1:10) %>%
   knitr::kable(
     digits = 3,
-    caption = "Regression points (first 5 rows of 400)",
+    caption = "Regression points (First 10 card holders of 400)",
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
