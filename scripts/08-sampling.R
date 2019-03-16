@@ -35,9 +35,10 @@ tactile_prop_red %>%
   slice(1:10) %>% 
   kable(
     digits = 3,
-    caption = "First 10 out of 33 groups' proportion of 50 balls that are red.", 
+    caption = "\\label{tab:tactilered}First 10 out of 33 groups' proportion of 50 balls that are red.", 
     booktabs = TRUE,
-    longtable = TRUE
+    longtable = TRUE,
+    align = rep('r', 4)
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position", "repeat_header"))
