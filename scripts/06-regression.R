@@ -1,7 +1,14 @@
-## ---- message=FALSE, warning=FALSE---------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
+## library(tidyverse)
+## library(moderndive)
+## library(skimr)
+## library(gapminder)
+
+
+## ---- echo=FALSE, message=FALSE, warning=FALSE---------------------------
 library(tidyverse)
 library(moderndive)
-library(skimr)
+# library(skimr) (DO NOT load this package as a whole as it will break all kable() code)
 library(gapminder)
 
 
@@ -45,10 +52,16 @@ evals_ch6 %>%
             median_bty_avg = median(bty_avg), median_score = median(score))
 
 
-## ------------------------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
+## evals_ch6 %>%
+##   select(score, bty_avg) %>%
+##   skim()
+
+
+## ----echo=FALSE----------------------------------------------------------
 evals_ch6 %>%
   select(score, bty_avg) %>%
-  skim()
+  skimr::skim()
 
 
 ## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients"----
