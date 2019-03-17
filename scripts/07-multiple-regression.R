@@ -1,7 +1,16 @@
-## ---- message=FALSE, warning=FALSE---------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
+## library(tidyverse)
+## library(moderndive)
+## library(skimr)
+## library(ISLR)
+
+
+## ---- echo=FALSE, message=FALSE, warning=FALSE---------------------------
 library(tidyverse)
 library(moderndive)
-library(skimr)
+# DO NOT load the skimr package as a whole as it will break all kable() code for the
+# remaining chapters in the book:
+# library(skimr)
 library(ISLR)
 
 
@@ -37,10 +46,15 @@ evals_ch7 %>%
                 latex_options = c("HOLD_position"))
 
 
-## ------------------------------------------------------------------------
+## ---- eval =FALSE--------------------------------------------------------
+## evals_ch7 %>%
+##   select(score, age, gender) %>%
+##   skim()
+
+## ----echo=FALSE----------------------------------------------------------
 evals_ch7 %>% 
   select(score, age, gender) %>% 
-  skim()
+  skimr::skim()
 
 
 ## ------------------------------------------------------------------------
@@ -131,15 +145,15 @@ get_regression_table(score_model_parallel_slopes) %>%
 
 
 ## ----numxcatx-comparison, fig.width = 8, echo = FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models."----
-p1 <- ggplot(evals_ch7, aes(x = age, y = score, color = gender), show.legend = FALSE) +
+interaction_plot <- ggplot(evals_ch7, aes(x = age, y = score, color = gender), show.legend = FALSE) +
   geom_point() +
   labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
   geom_smooth(method = "lm", se = FALSE) +
   theme(legend.position = "none")
-p2 <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", data = evals_ch7) +
+parallel_slopes_plot <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", data = evals_ch7) +
   labs(x = "Age", y = "Teaching Score", title = "Parallel slopes model") +
   theme(axis.title.y = element_blank())
-p1 + p2
+interaction_plot + parallel_slopes_plot
 
 
 ## ----fitted-values, echo = FALSE, warning=FALSE, fig.cap="Fitted values for two new professors"----
@@ -203,10 +217,15 @@ credit_ch7 %>%
                 latex_options = c("HOLD_position"))
 
 
-## ------------------------------------------------------------------------
+## ---- eval = FALSE-------------------------------------------------------
+## credit_ch7 %>%
+##   select(debt, credit_limit, income) %>%
+##   skim()
+
+## ---- echo=FALSE---------------------------------------------------------
 credit_ch7 %>% 
   select(debt, credit_limit, income) %>% 
-  skim()
+  skimr::skim()
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -227,7 +246,7 @@ credit_ch7 %>%
   cor() %>% 
   knitr::kable(
     digits = 3,
-    caption = "Correlation coefficients between credit card balance, credit limit, and income.", 
+    caption = "Correlation coefficients between credit card debt, credit limit, and income.", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -254,14 +273,15 @@ model3_balance_vs_limit_plot <- ggplot(credit_ch7, aes(x = credit_limit, y = deb
   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)", 
        title = "Debt and credit limit") +
   geom_smooth(method = "lm", se = FALSE) +
-  scale_y_continuous(limits = c(0, NA))
+  scale_y_continuous(limits = c(0, 2000))
 
 model3_balance_vs_income_plot <- ggplot(credit_ch7, aes(x = income, y = debt)) +
   geom_point() +
   labs(x = "Income (in $1000)", y = "Credit card debt (in $)", 
        title = "Debt and income") +
   geom_smooth(method = "lm", se = FALSE) +
-  scale_y_continuous(limits = c(0, NA))
+  scale_y_continuous(limits = c(0, 2000)) +
+  theme(axis.title.y = element_blank())
 
 model3_balance_vs_limit_plot + model3_balance_vs_income_plot
 
@@ -361,6 +381,18 @@ regression_points %>%
                 latex_options = c("HOLD_position"))
 
 
+## ---- fig.width = 8, echo = FALSE, warning=FALSE-------------------------
+interaction_plot <- ggplot(evals_ch7, aes(x = age, y = score, color = gender), show.legend = FALSE) +
+  geom_point() +
+  labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme(legend.position = "none")
+parallel_slopes_plot <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", data = evals_ch7) +
+  labs(x = "Age", y = "Teaching Score", title = "Parallel slopes model") +
+  theme(axis.title.y = element_blank())
+interaction_plot + parallel_slopes_plot
+
+
 ## ---- eval = FALSE-------------------------------------------------------
 ## # Interaction model
 ## ggplot(MA_schools, aes(x = perc_disadvan, y = average_sat_math, color = size))+
@@ -374,7 +406,6 @@ regression_points %>%
 ##                    cat_x = "size", data = MA_schools, alpha = 0.25) +
 ##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
 ##        color = "School size", title = "Parallel slopes model")
-
 
 ## ----numxcatx-comparison-2, fig.width = 8, echo = FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models."----
 p1 <- ggplot(MA_schools, aes(x = perc_disadvan, y = average_sat_math, color = size))+
@@ -395,7 +426,7 @@ p1 + p2
 ## model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size, data = MA_schools)
 ## get_regression_table(model_2_interaction)
 
-## ----model2-interaction, echo=FALSE--------------------------------------
+## ----model2-interaction, echo = FALSE------------------------------------
 model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size, data = MA_schools)
 get_regression_table(model_2_interaction) %>% 
   knitr::kable(
@@ -406,12 +437,11 @@ get_regression_table(model_2_interaction) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
-
 ## ---- eval = FALSE-------------------------------------------------------
 ## model_2_parralel_slopes <- lm(average_sat_math ~ perc_disadvan + size, data = MA_schools)
 ## get_regression_table(model_2_parralel_slopes)
 
-## ----model2-parallel-slopes, echo=FALSE----------------------------------
+## ----model2-parallel-slopes, echo = FALSE--------------------------------
 model_2_parralel_slopes <- lm(average_sat_math ~ perc_disadvan + size, data = MA_schools)
 get_regression_table(model_2_parralel_slopes) %>% 
   knitr::kable(
@@ -438,24 +468,25 @@ credit_ch7 %>%
   cor() %>% 
   knitr::kable(
     digits = 3,
-    caption = "Correlation between income (in dollars) and credit card balance", 
+    caption = "Correlation between income (in dollars) and credit card debt", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 
-## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"----
+## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card debt and credit limit/income"----
 model3_balance_vs_limit_plot + model3_balance_vs_income_plot
 
 
-## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and quartiles"----
+## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and quartiles", message=FALSE----
 ggplot(credit_ch7, aes(x = credit_limit)) +
   geom_histogram(color = "white") +
-  geom_vline(xintercept = quantile(credit_ch7$credit_limit, probs = c(0.25, 0.5, 0.75)), col = "red", linetype = "dashed")
+  geom_vline(xintercept = quantile(credit_ch7$credit_limit, probs = c(0.25, 0.5, 0.75)), col = "red", linetype = "dashed") +
+  labs(x = "Credit limit", title = "Credit limit quartiles")
 
 
-## ---- 2numxplot4, fig.height=4, echo=FALSE, fig.cap="Relationship between credit card debt and income for different credit limit brackets"----
+## ---- 2numxplot4, fig.width=8, echo=FALSE, fig.cap="Relationship between credit card debt and income for different credit limit groups"----
 credit_ch7 <- credit_ch7 %>% 
   mutate(limit_bracket = cut_number(credit_limit, 4)) %>% 
   mutate(limit_bracket = fct_recode(limit_bracket,
@@ -468,7 +499,7 @@ credit_ch7 <- credit_ch7 %>%
 model3_balance_vs_income_plot <- ggplot(credit_ch7, aes(x = income, y = debt)) +
   geom_point() +
   labs(x = "Income (in $1000)", y = "Credit card debt (in $)", 
-       title = "Debt vs income\n(overall)") +
+       title = "Debt vs income (overall)") +
   geom_smooth(method = "lm", se = FALSE) +
   scale_y_continuous(limits = c(0, NA))
 
@@ -476,17 +507,9 @@ model3_balance_vs_income_plot_colored <- ggplot(credit_ch7, aes(x = income, y = 
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   labs(x = "Income (in $1000)", y = "Credit card debt (in $)", 
-       color = "Credit limit\nbracket", title = "Debt vs income\n(colored by credit limit bracket)") + 
-  theme(legend.position = "none") +
-  scale_y_continuous(limits = c(0, NA))
+       color = "Credit limit", title = "Debt vs income (colored by credit limit)") + 
+  scale_y_continuous(limits = c(0, NA)) +
+  theme(axis.title.y = element_blank())
   
 model3_balance_vs_income_plot + model3_balance_vs_income_plot_colored
-
-
-## ---- 2numxplot5, echo=FALSE, warning=FALSE, fig.cap="Relationship between credit card debt and income for different credit limit brackets"----
-ggplot(credit_ch7, aes(x = income, y = debt)) +
-  geom_point() +
-  facet_wrap(~limit_bracket) +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(x = "Income (in $1000)", y = "Credit card debt (in $)")
 

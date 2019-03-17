@@ -8,7 +8,9 @@
 ## ---- echo=FALSE, message=FALSE, warning=FALSE---------------------------
 library(tidyverse)
 library(moderndive)
-# library(skimr) (DO NOT load this package as a whole as it will break all kable() code)
+# DO NOT load the skimr package as a whole as it will break all kable() code for the
+# remaining chapters in the book:
+# library(skimr)
 library(gapminder)
 
 
@@ -32,7 +34,6 @@ glimpse(evals_ch6)
 ## ---- eval=FALSE---------------------------------------------------------
 ## evals_ch6 %>%
 ##   sample_n(size = 5)
-
 
 ## ----five-random-courses, echo=FALSE-------------------------------------
 evals_ch6 %>%
@@ -150,7 +151,7 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
 ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score",
-       title = "Relationship of teaching and beauty scores") +  
+       title = "Relationship between teaching and beauty scores") +  
   geom_smooth(method = "lm", se = FALSE)
 
 
@@ -274,7 +275,6 @@ glimpse(gapminder2007)
 ## gapminder2007 %>%
 ##   sample_n(size = 5)
 
-
 ## ----model2-data-preview, echo=FALSE-------------------------------------
 gapminder2007 %>%
   sample_n(5) %>%
@@ -349,7 +349,7 @@ gapminder2007 %>%
 
 ## ---- echo=FALSE---------------------------------------------------------
 lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
-evals_line <- lifeExp_model %>% 
+evals_line <- lifeExp_model %>%
   get_regression_table() %>%
   pull(estimate)
 
@@ -471,8 +471,8 @@ regression_points <- get_regression_points(score_model)
 regression_points
 
 # Compute sum of squared residuals
-regression_points %>% 
-  mutate(squared_residuals = residual^2) %>% 
+regression_points %>%
+  mutate(squared_residuals = residual^2) %>%
   summarize(sum_of_squared_residuals = sum(squared_residuals))
 
 
