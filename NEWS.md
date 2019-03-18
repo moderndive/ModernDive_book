@@ -116,10 +116,11 @@
   - d) Observed test statistics
   - e) Definition of p-value
 4. Interpretation: 
-  - a) A yes/no-type decision: statistical significance via alpha
+  - a) Analogy of criminal justice system
   - b) Types of errors: 2x2 table
-  - c) Analogy of criminal justice system
+  - c) A yes/no-type decision: statistical significance via alpha
 5. Case study: Comparing two means with action vs romance movie data
+  - Use the "There is Only One Test" framework here
 6. Conclusion 
   - a) When is inference not needed: EDA can solve the problem. 
   - b) Problems with p-values: p-hacking, hard to understand, ASA statement
