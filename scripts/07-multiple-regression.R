@@ -128,9 +128,9 @@ gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", data = evals_ch
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Fit regression model:
-## score_model_interaction <- lm(score ~ age * gender, data = evals_ch7)
+## score_model_parallel_slopes <- lm(score ~ age + gender, data = evals_ch7)
 ## # Get regression table:
-## get_regression_table(score_model_interaction)
+## get_regression_table(score_model_parallel_slopes)
 
 ## ----regtable-parallel-slopes, echo=FALSE--------------------------------
 score_model_parallel_slopes <- lm(score ~ age + gender, data = evals_ch7)
