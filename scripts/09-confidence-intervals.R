@@ -1,19 +1,15 @@
 ## ----message=FALSE, warning=FALSE----------------------------------------
-library(dplyr)
-library(ggplot2)
-library(janitor)
+library(tidyverse)
 library(moderndive)
 library(infer)
+library(janitor)
 
 
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in the text
 library(knitr)
 library(kableExtra)
-library(stringr)
 library(patchwork)
-library(tibble)
-library(readr)
 # Ensure pennies_sample_2 is loaded (might not be needed)
 data("pennies_sample_2")
 

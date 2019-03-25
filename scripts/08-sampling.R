@@ -1,6 +1,5 @@
 ## ----message=FALSE, warning=FALSE----------------------------------------
-library(dplyr)
-library(ggplot2)
+library(tidyverse)
 library(moderndive)
 
 
@@ -9,8 +8,6 @@ library(moderndive)
 library(knitr)
 library(kableExtra)
 library(patchwork)
-library(readr)
-library(stringr)
 
 
 
