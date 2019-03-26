@@ -97,36 +97,37 @@
   - c) Why does this work? Theoretical result: Efron. The empirical CDF converges to the population CDF. Bootstrap works for any point estimate
   - d) There's a formula for that! Margin of error using critical values z. Talk about normal distributions. 
 * Chapter 10 - Hypothesis Testing
-    1. Activity: Shuffling resumes between male and female job applicants
-        a) Question: Are men and women rated for jobs differently?
-        b) Alternate universe: No difference
-        c) What about sampling variation?
-        d) What did we actually observe?
-        e) How likely is this result?
-        f) Diagrams in Keynote
-    1. Extension of previous framework/infer
-        a) Revisit verb framework
-        a) Permutation test resampling w/o replacement
-        b) There is only one test framework
-        a) Do activity via infer package
-    1. Goal: Choose between two possible truths while accounting for sampling variation
-        a) Conducting a hypothesis test
-        b) Null hypothesis that's assumed
-        c) Null distribution of test statistics: A "alternate universe" distribution
-        d) Observed test statistics
-        e) Definition of p-value
-    1. Interpretation: 
-        a) A yes/no-type decision: statistical significance via alpha
-        b) Types of errors: 2x2 table
-        c) Analogy of criminal justice system
-    1. Case study: Comparing two means with action vs romance movie data
-    1. Big picture: 
-        a) When is inference not needed: EDA can solve the problem. 
-        a) Problems with p-values: p-hacking, hard to understand, ASA statement
-        b) Comparison with confidence intervals. HT yields binary decision, but CI's yield plausible range of estimates. This is statistical vs practical significance
-        c) Table of inferential scenarios: Add action vs romance (mu1 - mu2)
-        d) Why does this work? Theoretical result: Neyman-Pearson lemma (maybe)
-        e) There's a formula for that! t-test. Draw a null distribution with t-distribution superimposed. 
+1. Activity: Shuffling resumes between male and female job applicants
+  - a) Question: Are men and women rated for jobs differently?
+  - b) Alternate universe: No difference
+  - c) What about sampling variation?
+  - d) What did we actually observe?
+  - e) How likely is this result?
+  - f) Diagrams in Keynote
+2. Extension of previous framework/infer
+  - a) Revisit verb framework
+  - b) Permutation test resampling w/o replacement
+  - c) There is only one test framework
+  - d) Do activity via infer package
+3. Goal: Choose between two possible truths while accounting for sampling variation
+  - a) Conducting a hypothesis test
+  - b) Null hypothesis that's assumed
+  - c) Null distribution of test statistics: A "alternate universe" distribution
+  - d) Observed test statistics
+  - e) Definition of p-value
+4. Interpretation: 
+  - a) Analogy of criminal justice system
+  - b) Types of errors: 2x2 table
+  - c) A yes/no-type decision: statistical significance via alpha
+5. Case study: Comparing two means with action vs romance movie data
+  - Use the "There is Only One Test" framework here
+6. Conclusion 
+  - a) When is inference not needed: EDA can solve the problem. 
+  - b) Problems with p-values: p-hacking, hard to understand, ASA statement
+  - c) Comparison with confidence intervals. HT yields binary decision, but CI's yield plausible range of estimates. This is statistical vs practical significance
+  - d) Table of inferential scenarios: Add action vs romance (mu1 - mu2)
+  - e) Why does this work? Theoretical result: Neyman-Pearson lemma (maybe)
+  - f) There's a formula for that! t-test. Draw a null distribution with t-distribution superimposed. 
 * Chapter 11 - Inference for Regression
     1. Activity: Revisit simple linear regression
         a) Question: Is there a significant relationship between teaching score and bty score above and beyond any evidence due to sampling variation.
@@ -153,7 +154,7 @@
 
 * Chapter 6 - Basic regression:
     + Changed `skimr::skim()` outputs to be of type console.
-    + Shorted simple linear regression EDA, in particular `geom_jitter()` and `geom_smooth(se = FALSE)`
+    + Shortened simple linear regression EDA, in particular `geom_jitter()` and `geom_smooth(se = FALSE)`
     + Expanded on "least squares" criteria for "best" fitting line in 6.3.3
 
 
