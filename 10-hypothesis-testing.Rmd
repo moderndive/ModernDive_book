@@ -48,8 +48,7 @@ We recommend that you carefully review these examples as they also cover how the
 Let's load all the packages needed for this chapter (this assumes you've already installed them). If needed, read Section \@ref(packages) for information on how to install and load R packages.
 
 ```{r message=FALSE, warning=FALSE}
-library(dplyr)
-library(ggplot2)
+library(tidyverse)
 library(janitor)
 library(infer)
 library(moderndive)
@@ -60,8 +59,6 @@ library(nycflights13)
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 # Packages needed internally, but not in text.
 library(knitr)
-library(readr) # Not needed after adding data to moderndive pkg
-library(tibble)
 library(kableExtra)
 library(gt)
 #library(nycflights13)
@@ -74,7 +71,7 @@ library(gt)
 
 ## Hypothesis testing activity {#ht-activity}
 
-Let's build on the ideas shown in Chapters \@ref(sampling) and \@ref(confidence-intervals) via an activity. From this activity we'll discuss much of the terminology used in hypothesis testing via an example based on gender differences in promotions from a 1970s study.
+Let's build on the ideas shown in Chapters \@ref(sampling) and \@ref(confidence-intervals) via an activity. From this activity we'll discuss much of the terminology used in hypothesis testing via an example based on gender differences in promotions from a 1970's study.
 
 <!-- Add gender_promotions.rds to moderndive package and make reference to openintro like what is done with evals data. -->
 
@@ -150,7 +147,7 @@ first_10 <- list(gender_promotions %>% slice(1:10),
                  one_permute %>% slice(1:10))
 first_10 %>% 
   kable(
-    caption = "\\label{tab:compare-first-10}First 10 row of original (left) and permuted (right) data", 
+    caption = "\\label{tab:compare-first-10}First 10 rows of original (left) and permuted (right) data", 
     booktabs = TRUE,
     longtable = TRUE
   ) %>% 
@@ -314,7 +311,7 @@ ggplot(null_distribution_two_props, aes(x = stat)) +
 We now see even greater evidence that gender discrimination was at play in how males and females were assigned promotion. We now have almost all of the 1000 statistics of the null distribution not as extreme as our observed test statistic. We'll formalize this in the image below as well as in Section \@ref(p-value) where we define the term **p-value** in relation to this set-up.
 
 
-### The "There Is Only One Test" framework
+### The "There Is Only One Test" framework {#only-one-test}
 
 In a hypothesis test, we will use data from a sample to help us decide between two competing _hypotheses_ about a population.  We make these hypotheses more concrete by specifying them in terms of at least one _population parameter_ of interest.  We refer to the competing claims about the population as the **null hypothesis**, denoted by $H_0$, and the **alternative (or research) hypothesis**, denoted by $H_a$.  The roles of these two hypotheses are NOT interchangeable.  
 
@@ -480,22 +477,27 @@ The risk of error is the price researchers pay for basing an inference about a p
 
 To help understand the concepts of Type I error and Type II error, observe the following table based on a criminal trial:
 
-```{r trial-errors-table, echo=FALSE}
-verdict <- c("Guilty verdict", "Not guilty verdict")
-Guilty <- c("True Positive (Correct result)", 
-            "False Negative (Type II Error)")
-`Not guilty` <- c("False Positive (Type I Error)", 
-                  "True Negative (Correct result)")
-
-table_entries <- tibble(verdict, Guilty, `Not guilty`)
-
-table_entries %>% 
-  gt(rowname_col = "verdict") %>% 
-  tab_header(title = "Type I and Type II errors for US trials") %>% 
-  tab_row_group(group = "Verdict")   %>% 
-  tab_spanner(label = "Actual result",
-              columns = vars(Guilty, `Not guilty`)) %>% 
-  cols_align(align = "center")
+```{r trial-errors-table, echo=FALSE, fig.cap="Type I and Type II errors"}
+if(knitr:::is_html_output()){
+  verdict <- c("Guilty verdict", "Not guilty verdict")
+  Guilty <- c("True Positive (Correct result)", 
+              "False Negative (Type II Error)")
+  `Not guilty` <- c("False Positive (Type I Error)", 
+                    "True Negative (Correct result)")
+  
+  table_entries <- tibble(verdict, Guilty, `Not guilty`)
+  
+  table_entries %>% 
+    gt(rowname_col = "verdict") %>% 
+    tab_header(title = "Type I and Type II errors for US trials") %>% 
+    tab_row_group(group = "Verdict")   %>% 
+    tab_spanner(label = "Actual result",
+                columns = vars(Guilty, `Not guilty`)) %>% 
+    cols_align(align = "center") %>% 
+    tab_options(table.width = pct(30))
+} else {
+  knitr::include_graphics("images/error-types.png")
+}
 ```
 
 If we are using sample data to make inferences about a parameter, we run the risk of making a mistake.  Obviously, we want to minimize our chance of error; we want a small probability of drawing an incorrect conclusion.
@@ -559,19 +561,17 @@ The idea that sample results are more extreme than we would reasonably expect to
 
 ## Case study: comparing two means {#ht-case-study}
 
-**Need to review and potentially reword since this is now further into the chapter.**
-
 ### Randomization/permutation
 
 We will now focus on building hypotheses looking at the difference between two population means in an example. We will denote population means using the Greek symbol $\mu$ (pronounced "mu"). Thus, we will be looking to see if one group "out-performs" another group.  This is quite possibly the most common type of statistical inference and serves as a basis for many other types of analyses when comparing the relationship between two variables. 
 
 Our null hypothesis will be of the form $H_0: \mu_1 = \mu_2$, which can also be written as $H_0: \mu_1 - \mu_2 = 0$.  Our alternative hypothesis will be of the form $H_0: \mu_1 \star \mu_2$ (or $H_a:  \mu_1 - \mu_2 \, \star \, 0$) where $\star$ = $<$, $\ne$, or $>$ depending on the context of the problem. You needn't focus on these new symbols too much at this point.  It will just be a shortcut way for us to describe our hypotheses.
 
-As we saw in Chapter \@ref(confidence-intervals), bootstrapping is a valuable tool when conducting inferences based on one or two population variables. We will see that the process of **randomization** (also known as **permutation**) will be valuable in conducting tests comparing quantitative values from two groups.
+As we saw in Chapter \@ref(confidence-intervals), bootstrapping is a valuable tool when conducting inferences based on one or two population variables. From earlier in this chapter, we saw that the process of **permutation** (also known as **randomization**) can be valuable in conducting tests comparing values from two groups. In this case study, we'll explore how we can use permutation to compare quantitative values, instead of proportions of successes, from two groups.
 
 ### Comparing action and romance movies
 
-The `movies` dataset in the `ggplot2movies` package contains information on a large number of movies that have been rated by users of IMDB.com [@R-ggplot2movies]. We are interested in the question here of whether `Action` movies are rated higher on IMDB than `Romance` movies. We will first need to do a little bit of data wrangling using the ideas from Chapter \@ref(wrangling) to get the data in the form that we would like:
+The `movies` dataset in the `ggplot2movies` package contains information on a large number of movies that have been rated by users of IMDB.com [@R-ggplot2movies]. We are interested in the question here of whether `Action` movies are rated higher, on average, on IMDB than `Romance` movies. We will first need to do a little bit of data wrangling using the ideas from Chapter \@ref(wrangling) to get the data in the form that we would like:
 
 ```{r message=FALSE, warning=FALSE}
 movies_trimmed <- movies %>% 
@@ -587,20 +587,19 @@ movies_trimmed <- movies_trimmed %>%
 
 We will now create a new variable called `genre` that specifies whether a movie in our `movies_trimmed` data frame is an `"Action"` movie, a `"Romance"` movie, or `"Neither"`.  We aren't really interested in the `"Neither"` category here so we will exclude those rows as well.  Lastly, the `Action` and `Romance` columns are not needed anymore since they are encoded in the `genre` column.
 
-<!-- Maybe just skip all this wrangling and include movies_trimmed in moderndive? I do kinda like coming back to wrangling though. -->
 
 ```{r}
 movies_trimmed <- movies_trimmed %>%
-  mutate(genre = case_when(Action == 1 ~ "Action",
-                           Romance == 1 ~ "Romance",
-                           TRUE ~ "Neither")) %>%
+  mutate(genre = case_when( (Action == 1) ~ "Action",
+                            (Romance == 1) ~ "Romance",
+                            TRUE ~ "Neither")) %>%
   filter(genre != "Neither") %>%
   select(-Action, -Romance)
 ```
   
-The `case_when` function is useful for assigning values in a new variable based on the values of another variable. The last step of `TRUE ~ "Neither"` is used when a particular movie is not set to either Action or Romance.  
+The `case_when()` function in the `dplyr` package is useful for assigning values in a new variable based on the values of one or more other variables. The last step of `TRUE ~ "Neither"` is used when a particular movie is not set to either Action or Romance.  
   
-We are left with `r nrow(movies_trimmed)` movies in our _population_ dataset that focuses on only `"Action"` and `"Romance"` movies.  
+We are left with `r nrow(movies_trimmed)` movies in our _population_ dataset that focuses on only `"Action"` and `"Romance"` movies. Note that we call this a population dataset since it includes all of the information we have available to us about movies and ratings.
     
 ```{block lc7-2, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -628,7 +627,7 @@ ggplot(data = movies_trimmed, mapping = aes(x = rating)) +
   facet_grid(genre ~ .)
 ```
 
-**Important note:** Remember that we hardly ever have access to the population values as we do here.  This example and the `nycflights13` dataset were used to create a common flow from chapter to chapter.  In nearly all circumstances, we'll be needing to use only a sample of the population to try to infer conclusions about the unknown population parameter values.  These examples do show a nice relationship between statistics (where data is usually small and more focused on experimental settings) and data science (where data is frequently large and collected without experimental conditions). 
+**Important note:** Remember that we hardly ever have access to the population values as we do here.  This example was used to show how well hypothesis testing procedures using methods like permutation can do at testing hypotheses about population parameters. In nearly all circumstances, we'll be needing to use only a sample of the population to try to infer conclusions about the unknown population parameter values.  This example does show a nice relationship between statistics (where data is usually small and more focused on experimental settings) and data science (where data is frequently large and collected without experimental conditions). 
 
 ### Sampling $\rightarrow$ randomization
     
@@ -643,6 +642,8 @@ We can use hypothesis testing to investigate ways to determine, for example, whe
 ```{block, type='learncheck', purl=FALSE}
 ```
 
+In what follows, we'll use the terminology from the "There is Only One Test" diagram discussed in Subsection \@ref(only-one-test). Carefully review it with the diagram handy to start to put the pieces together.
+
 ### Data
 
 Let's select a random sample of 34 action movies and a random sample of 34 romance movies.  (The number 34 was chosen somewhat arbitrarily here.)
@@ -655,11 +656,7 @@ movies_genre_sample <- movies_trimmed %>%
   ungroup()
 ```
 
-**Note** the addition of the `ungroup()` function here.  This will be useful shortly in allowing us to permute the values of `rating` across `genre`.  Our analysis does not work without this `ungroup()` function since the data stays grouped by the levels of `genre` without it.
-
-We can now observe the distributions of our two sample ratings for both groups.  Remember that these plots
-should be rough approximations of our population distributions of movie ratings for `"Action"` and `"Romance"`
-in our population of all movies in the `movies` data frame.
+**Note** the addition of the `ungroup()` function here.  This will be useful shortly in allowing us to permute the values of `rating` across `genre`.  Our analysis does not work without this `ungroup()` function since the data stays grouped by the levels of `genre` without it. We can now observe the distributions of our two sample ratings for both groups.  Remember that these plots should be rough approximations of our population distributions of movie ratings for `"Action"` and `"Romance"` in our population of all movies in the `movies` data frame.
 
 ```{r fig.cap="Genre vs rating for our sample"}
 ggplot(data = movies_genre_sample, aes(x = genre, y = rating)) +
@@ -681,7 +678,7 @@ ggplot(data = movies_genre_sample, mapping = aes(x = rating)) +
 ```{block, type='learncheck', purl=FALSE}
 ```
 
-Do we have reason to believe, based on the sample distributions of `rating` over the two groups of `genre`, that there is a significant difference between the mean `rating` for action movies compared to romance movies?  It's hard to say just based on the plots.  The boxplot does show that the median sample rating is higher for romance movies, but the histogram isn't as clear.  The two groups have somewhat differently shaped distributions but they are both over similar values of `rating`.  It's often useful to calculate the mean and standard deviation as well, conditioned on the two levels.
+Do we have reason to believe, based on the sample distributions of `rating` over the two groups of `genre`, that there is a significant difference between the mean `rating` for action movies compared to romance movies?  It's hard to say just based on the plots.  The boxplot does show that the median sample rating is higher for romance movies, but the histogram isn't as clear.  The two groups have somewhat differently shaped distributions but they are both over similar values of `rating`.  It's often useful to calculate the mean and standard deviation as well, conditioned on the two levels of the explanatory variable. We do so here to get the mean rating across the `"Action"` and `"Romance"` levels.
 
 ```{r}
 summary_ratings <- movies_genre_sample %>% 
@@ -701,7 +698,7 @@ summary_ratings
 ```{block, type='learncheck', purl=FALSE}
 ```
 
-We see that the sample mean rating for romance movies, $\bar{x}_{r}$, is greater than the similar measure for action movies, $\bar{x}_a$.  But is it statistically significantly greater (thus, leading us to conclude that the means are statistically different)?  The standard deviation can provide some insight here but with these standard deviations being so similar it's still hard to say for sure.
+We see that the sample mean rating for romance movies, $\overline{x}_{r}$, is greater than the similar measure for action movies, $\overline{x}_a$.  But is it statistically significantly greater (thus, leading us to conclude that the means are statistically different)?  The standard deviation can provide some insight here but with these standard deviations being so similar it's still hard to say for sure.
 
 ```{block lc7-3b3, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -740,11 +737,11 @@ Our goal next is to figure out a random process with which to simulate the null 
 
 <!-- Should probably include some pictures of the index cards here. -->
 
-Here, with us assuming the two population means are equal ($H_0: \mu_r - \mu_a = 0$), we can look at this from a tactile point of view by using index cards.  There are $n_r = 34$ data elements corresponding to romance movies and $n_a = 34$ for action movies.  We can write the 34 ratings from our sample for romance movies on one set of 34 index cards and the 34 ratings for action movies on another set of 34 index cards.  (Note that the sample sizes need not be the same.)
+Here, with us assuming the two population means are equal ($H_0: \mu_r - \mu_a = 0$), we can look at this from a tactile point of view by using index cards.  There are $n_r = 34$ data elements corresponding to romance movies and $n_a = 34$ for action movies. We can write the 34 ratings from our sample for romance movies on one set of 34 index cards and the 34 ratings for action movies on another set of 34 index cards.  (Note that the sample sizes need not be the same.)
 
-The next step is to put the two stacks of index cards together, creating a new set of 68 cards.  If we assume that the two population means are equal, we are saying that there is no association between ratings and genre (romance vs action).  We can use the index cards to create two **new** stacks for romance and action movies.  Note that the **new** "romance movie stack" will likely have some of the original action movies in it and likewise for the "action movie stack" including some romance movies from our original set. Since we are assuming that each card is equally likely to have appeared in either one of the stacks this makes sense. First, we must shuffle all the cards thoroughly.  After doing so, in this case with equal values of sample sizes, we split the deck in half.
+The next step is to put the two stacks of index cards together, creating a new set of 68 cards. If we assume that the two population means are equal, we are saying that there is no association between ratings and genre (romance vs action). We can use the index cards to create two **new** stacks for romance and action movies. In creating these two new stacks, we are assigning potentially new values to each of the movies in our sample via the process of permutation. Note that the **new** "romance movie stack" will likely have some of the original action movies in it and likewise for the "action movie stack" including some romance movies from our original set. Since we are assuming that each card is equally likely to have appeared in either one of the stacks this makes sense. First, we must shuffle all the cards thoroughly.  After doing so, in this case with equal values of sample sizes, we split the deck in half.
 
-We then calculate the new sample mean rating of the romance deck, and also the new sample mean rating of the action deck.  This creates one simulation of the samples that were collected originally.  We next want to calculate a statistic from these two samples.  Instead of actually doing the calculation using index cards, we can use R as we have before to simulate this process. Let's do this just once and compare the results to what we see in `movies_genre_sample`.
+We then calculate the new sample mean rating of the romance deck, and also the new sample mean rating of the action deck. This creates one simulation of the samples that were collected originally.  We next want to calculate a statistic from these two samples. Instead of actually doing the calculation using index cards, we can use R as we have before to simulate this process. Let's do this just once and compare the results to what we see in `movies_genre_sample`.
 
 ```{r include=FALSE}
 set.seed(2018)
@@ -803,12 +800,21 @@ generated_samples <- movies_genre_sample %>%
 ```
 
 
-A **null distribution** of simulated differences in sample means is created with the specification of `stat = "diff in means"` for the `calculate()` step. The **null distribution** is similar to the bootstrap distribution we saw in Chapter \@ref(confidence-intervals), but remember that it consists of statistics generated assuming the null hypothesis is true.
+A **null distribution** of simulated differences in sample means is created with the specification of `stat = "diff in means"` for the `calculate()` step. Recall that the **null distribution** is similar to the bootstrap distribution we saw in Chapter \@ref(confidence-intervals), but remember that it consists of statistics generated assuming the null hypothesis is true, whereas a bootstrap distribution does not make this assumption.
 
 ```{r include=FALSE}
 null_distribution_two_means <- generated_samples %>% 
   calculate(stat = "diff in means", order = c("Romance", "Action"))
 ```
+
+```{r eval=FALSE}
+null_distribution_two_means <- movies_genre_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 5000) %>% 
+  calculate(stat = "diff in means", order = c("Romance", "Action"))
+```
+
 
 We can now plot the distribution of these simulated differences in means:
 
@@ -821,22 +827,22 @@ null_distribution_two_means %>% visualize()
 Remember that we are interested in seeing where our observed sample mean difference of `r pull(obs_diff)` falls on this null/randomization distribution.  We are interested in simply a difference here so "more extreme" corresponds to values in both tails on the distribution.  Let's shade our null distribution to show a visual representation of our $p$-value:
 
 ```{r fig.cap="Shaded histogram to show p-value"}
-null_distribution_two_means %>% 
-  visualize(obs_stat = obs_diff, direction = "both")
+visualize(null_distribution_two_means) + 
+  shade_p_value(obs_stat = obs_diff, direction = "both")
 ```
 
 Remember that the observed difference in means was `r pull(obs_diff)`.  We have shaded red all values at or above that value and also shaded red those values at or below its negative value (since this is a two-tailed test).  By giving `obs_stat = obs_diff` a vertical darker line is also shown at `r pull(obs_diff)`. To better estimate how large the $p$-value will be, we also increase the number of bins to 100 here from 20:
 
 ```{r fig.cap="Histogram with vertical lines corresponding to observed statistic"}
-null_distribution_two_means %>% 
-  visualize(bins = 100, obs_stat = obs_diff, direction = "both")
+visualize(null_distribution_two_means, bins = 100) + 
+  shade_p_value(bins = 100, obs_stat = obs_diff, direction = "both")
 ```
 
 At this point, it is important to take a guess as to what the $p$-value may be.  We can see that there are only a few permuted differences as extreme or more extreme than our observed effect (in both directions).  Maybe we guess that this $p$-value is somewhere around 2%, or maybe 3%, but certainly not 30% or more. Lastly, we calculate the $p$-value directly using `infer`:
 
 ```{r}
 pvalue <- null_distribution_two_means %>% 
-  get_pvalue(obs_stat = obs_diff, direction = "both")
+  get_p_value(obs_stat = obs_diff, direction = "both")
 pvalue
 ```
 
@@ -864,8 +870,15 @@ percentile_ci_two_means <- movies_genre_sample %>%
   generate(reps = 5000) %>% 
   calculate(stat = "diff in means", order = c("Romance", "Action")) %>% 
   get_ci()
+```
+
+Note that we didn't originally set `type` in `generate()` but it was automatically set as `type = "permute"` based on the set-up of the problem. When we switch to build a confidence interval instead we change to `type = "bootstrap"` in `generate()` and we are giving a message here to confirm that decision.
+
+```{r}
 percentile_ci_two_means
 ```
+
+
 
 Thus, we can expect the true mean of Romance movies on IMDB to have a rating `r percentile_ci_two_means[["2.5%"]]` to `r percentile_ci_two_means[["97.5%"]]` points higher than that of Action movies. Remember that this is based on bootstrapping using `movies_genre_sample` as our original sample and the confidence interval process being 95% reliable.
 
@@ -873,7 +886,7 @@ Thus, we can expect the true mean of Romance movies on IMDB to have a rating `r 
 **_Learning check_**
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Conduct the same analysis comparing action movies versus romantic movies using the median rating instead of the mean rating? What was different and what was the same? 
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Conduct the same analysis comparing action movies versus romantic movies using the median rating instead of the mean rating. What was different and what was the same? 
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What conclusions can you make from viewing the faceted histogram looking at `rating` versus `genre` that you couldn't see when looking at the boxplot?
 
@@ -894,9 +907,9 @@ Thus, we can expect the true mean of Romance movies on IMDB to have a rating `r 
 
 ### When inference is not needed
 
-**Need to reword**
+We've now walked through a couple of different examples of how to use the `infer` package to conduct hypothesis tests. Whenever possible we always started with some exploratory data analysis.  It's good to remember that there are cases where you need not perform a rigorous statistical inference. An important and time-saving skill is to **ALWAYS** do exploratory data analysis using `dplyr` and `ggplot2` before thinking about running a hypothesis test. As a beginner to statistical inference, this helps you to get an intuition as to when statistical significance may be found. As a seasoned practioner, this helps to make sure you can make a sophisticated guess as to statistical significance before conducting the test. 
 
-Before we delve into hypothesis testing, it's good to remember that there are cases where you need not perform a rigorous statistical inference. An important and time-saving skill is to **ALWAYS** do exploratory data analysis using `dplyr` and `ggplot2` before thinking about running a hypothesis test. Let's look at such an example selecting a sample of flights traveling to Boston and to San Francisco from New York City in the `flights` data frame in the `nycflights13` package. (We will remove flights with missing data first using `na.omit` and then sample 100 flights going to each of the two airports.)
+Let's look at such an example selecting a sample of flights traveling to Boston and to San Francisco from New York City in the `flights` data frame in the `nycflights13` package. (We will remove flights with missing data first using `na.omit` and then sample 100 flights going to each of the two airports.)
 
 ```{r}
 bos_sfo <- flights %>% 
@@ -933,43 +946,90 @@ ggplot(data = bos_sfo, mapping = aes(x = dest, y = air_time)) +
   geom_boxplot()
 ```
 
-Since there is no overlap at all, we can conclude that the `air_time` for San Francisco flights is statistically greater (at any level of significance) than the `air_time` for Boston flights.  This is a clear example of not needing to do anything more than some simple exploratory data analysis with descriptive statistics and data visualization to get an appropriate inferential conclusion.  This is one reason why you should **ALWAYS** investigate the sample data first using `dplyr` and `ggplot2` via exploratory data analysis. 
+Since there is no overlap at all in terms of the `air_time` values for the two destination airports, we can conclude that the `air_time` for San Francisco flights is statistically greater (at any level of significance) than the `air_time` for Boston flights.  This is a clear example of not needing to do anything more than some simple exploratory data analysis with descriptive statistics and data visualization to get an appropriate inferential conclusion.  This is one reason why you should **ALWAYS** investigate the sample data first using `dplyr` and `ggplot2` via exploratory data analysis (EDA). 
   
 As you get more and more practice with hypothesis testing, you'll be better able to determine in many cases whether or not the results will be statistically significant. There are circumstances where it is difficult to tell, but you should always try to make a guess FIRST about significance after you have completed your data exploration and before you actually begin the inferential techniques.
 
-
-
 ### Problems with p-values
 
-**Need to write**
+One of the inherent problems that comes from this "sneaking a peak" process using EDA is that the user must remain vigilant at conducting the test itself as needed. The hunt for statistically significant values is one that science has recently tried to combat. Done incorrectly and tirelessly, this is called "p-hacking" and is incredibly dangerous. Instead of reporting results that were not significant, p-hackers look to find significant results and then only report those. This sometimes involves changing the research question of interest to better meet the goals of statistically significant results that hopefully lead to publication.
+
+**Note:** We personally as authors are in favor of reporting hypothesis tests but only with their corresponding confidence intervals as needed. And we also encourage our readers to take the pledge to not p-hack their results, but rather to be transparent about tests that did not bring statistical significance and discuss potential reasons for these failings as they can. This helps others to further test these results with new experiments.
+
+There are lots of articles and much has been written recently about misunderstandings and the problems with p-values that we encourage readers to check out and to ponder on. Here are just a few:
+
+<!-- Need to add these in as references to the book -->
+
+1. [Misunderstandings of $p$-values](https://en.wikipedia.org/wiki/Misunderstandings_of_p-values)
+2. [What a nerdy debate about p-values shows about science - and how to fix it](https://www.vox.com/science-and-health/2017/7/31/16021654/p-values-statistical-significance-redefine-0005)
+3. [Statisticians issue warning over misuse of $P$ values](https://www.nature.com/news/statisticians-issue-warning-over-misuse-of-p-values-1.19503)
+4. [You Can't Trust What You Read About Nutrition](https://fivethirtyeight.com/features/you-cant-trust-what-you-read-about-nutrition/)
+5. [A Litany of Problems with p-values](http://www.fharrell.com/post/pval-litany/)
+
+Point 5 advocates for using Bayesian inference instead of the "frequentist" methods we've shown throughout this book. We highly recommend that you do dig further into Bayesian methods if you'd like to expand your knowledge beyond this book, but they are beyond the scope of this book.
+
+
 
 ### Comparing confidence intervals and hypothesis tests
 
-**Need to summarize comparisons from earlier sections.**
+To follow-up on the previous sections and this and the previous chapter, it's important to understand what information hypothesis tests and confidence intervals provide. In short, hypothesis tests are aligned with statistical significance whereas confidence intervals are more aligned with practical significance. Like we saw in the movie ratings example, the hypothesis test told us that we had evidence that action and romance movies had a different mean rating. This is statistical significance. 
 
-Hypothesis tests aligned with statistical significance
-
-Confidence intervals aligned with practical significance
+We also found a range of plausible values for what the mean difference in ratings for action versus romance movies we'd expect to see. This gave us some practical evidence that we could use in later analyses. Thus, confidence intervals are the recommended go-to method since they can be both used to check for a statistical difference between a quantitative calculation on two variables (by checking for the inclusion of 0 in the interval) and also for providing some practicality as well.
 
 ### Summary table {#ht-conclusion-table}
 
-**copy over from Ch 9**
+In this chapter, we performed both tactile and virtual simulations of permutation to infer about hypotheses on unknown parameters. We also presented a case study of permuting in a real-life situation: movie ratings of action and romance movies. We used the difference in sample proportions $\widehat{p}_1 - \widehat{p}_2$ to estimate the difference in population proportions $p_1 - p_2$. We similarly used the difference in sample means $\overline{x}_1 - \overline{x}_2$ to estimate the difference in population mean $\mu_1 - \mu_2$. Here we use 1 and 2 to represent two different groups, but one could use other subscripts as needed to denote the groups. Let's review these and others one more time in Table \@ref(tab:summarytable-ch10). 
+
+```{r summarytable-ch10, echo=FALSE, message=FALSE}
+# The following Google Doc is published to CSV and loaded below using read_csv() below:
+# https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
+
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+  read_csv(na = "") %>% 
+  kable(
+    caption = "\\label{tab:summarytable-ch9}Scenarios of sampling for inference", 
+    booktabs = TRUE,
+    escape = FALSE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position")) %>%
+  column_spec(1, width = "0.5in") %>% 
+  column_spec(2, width = "0.7in") %>%
+  column_spec(3, width = "1in") %>%
+  column_spec(4, width = "1.1in") %>% 
+  column_spec(5, width = "1in")
+```
+
+We'll cover the remaining scenario as follows, using the terminology, notation, and definitions related to sampling you saw in Section \@ref(sampling-framework):
+
+* In Chapter \@ref(inference-for-regression), we'll cover an example of statistical inference for the relationship between teaching score and various instructor demographic variables you saw in Chapter \@ref(regression) on basic regression and Chapter \@ref(multiple-regression) on multiple regression. Specifically
+    + Scenario 5: The intercept $\beta_0$ of some population regression line.
+    + Scenario 6: The slope $\beta_1$ of some population regression line.
+
 
 ### Building theory-based methods using computation {#theory-hypo}
 
-As a point of reference, we will now discuss the traditional theory-based way to conduct the hypothesis test for determining if there is a statistically significant difference in the sample mean rating of Action movies versus Romance movies.  This method and ones like it work very well when the assumptions are met in order to run the test.  They are based on probability models and distributions such as the normal and $t$-distributions.  
+As a point of reference, we will now discuss the traditional theory-based way to conduct the hypothesis test for determining if there is a statistically significant difference in the sample mean rating of Action movies versus Romance movies. This method and ones like it work very well when the assumptions are met in order to run the test.  hey are based on probability models and distributions such as the normal and $t$-distributions. Recall that we briefly discussed the normal distribution in Subsection \@ref(theory-ci). We will extend that to look at the $t$-distribution here.
 
-These traditional methods have been used for many decades back to the time when researchers didn't have access to computers that could run 5000 simulations in a few seconds.  They had to base their methods on probability theory instead.  Many fields and researchers continue to use these methods and that is the biggest reason for their inclusion here.  It's important to remember that a $t$-test or a $z$-test is really just an approximation of what you have seen in this chapter already using simulation and randomization.  The focus here is on understanding how the shape of the $t$-curve comes about without digging big into the mathematical underpinnings.
+These traditional methods have been used for many decades back to the time when researchers didn't have access to computers that could run 5000 simulations in a few seconds.  They had to base their methods on probability theory instead.  Many fields and researchers continue to use these methods and that is the biggest reason for their inclusion here.  It's important to remember that a hypothesis test based on the $t$ distribution (commonly called a $t$-test) or a test based on the normal distribution (commonly called a $z$-test) is really just an approximation of what you have seen in this chapter already using simulation and randomization.  The focus here is on understanding how the shape of the $t$-curve comes about without digging much into the mathematical underpinnings.
 
 #### Example: $t$-test for two independent samples {-}
 
-What is commonly done in statistics is the process of standardization.  What this entails is calculating the mean and standard deviation of a variable.  Then you subtract the mean from each value of your variable and divide by the standard deviation.  The most common standardization is known as the $z$-score.  The formula for a $z$-score is $$Z = \frac{x - \mu}{\sigma},$$ where $x$ represent the value of a variable, $\mu$ represents the mean of the variable, and $\sigma$ represents the standard deviation of the variable.  Thus, if your variable has 10 elements, each one has a corresponding $z$-score that gives how many standard deviations away that value is from its mean.  $z$-scores are normally distributed with mean 0 and standard deviation 1.  They have the common, bell-shaped pattern seen below.
+What is commonly done in statistics is the process of standardization.  What this entails is calculating the mean and standard deviation of a variable.  Then you subtract the mean from each value of your variable and divide by the standard deviation.  The most common standardization is known as the $z$-score.  The formula for a $z$-score is 
+
+$$Z = \frac{x - \mu}{\sigma},$$
+
+where $x$ represent the value of a variable, $\mu$ represents the mean of the variable, and $\sigma$ represents the standard deviation of the variable.  Thus, if your variable has 10 elements, each one has a corresponding $z$-score that gives how many standard deviations away that value is from its mean.  $z$-scores are normally distributed with mean 0 and standard deviation 1.  They have the common, bell-shaped pattern seen below.
 
 ```{r echo=FALSE}
-ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm)
+ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm) +
+  ylab("") +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
 ```
 
-Recall, that we hardly ever know the mean and standard deviation of the population of interest.  This is almost always the case when considering the means of two independent groups.  To help account for us not knowing the population parameter values, we can use the sample statistics instead, but this comes with a bit of a price in terms of complexity.
+Recall, that we hardly ever know the mean and standard deviation of the population of interest. This is almost always the case when considering the means of two independent groups. To help account for us not knowing the population parameter values, we can use the sample statistics instead, but this comes with a bit of a price in terms of complexity.
 
 Another form of standardization occurs when we need to use the sample standard deviations as estimates for the unknown population standard deviations.  This standardization is often called the $t$-score.  For the two independent samples case like what we have for comparing action movies to romance movies, the formula is $$T =\dfrac{ (\bar{x}_1 - \bar{x}_2) - (\mu_1 - \mu_2)}{ \sqrt{\dfrac{{s_1}^2}{n_1} + \dfrac{{s_2}^2}{n_2}}  }$$
   
@@ -984,7 +1044,9 @@ There is a lot to try to unpack here.
 - $n_1$ is the sample size of the first group
 - $n_2$ is the sample size of the second group
   
-Assuming that the null hypothesis is true ($H_0: \mu_1 - \mu_2 = 0$), $T$ is said to be distributed following a $t$ distribution with degrees of freedom equal to the smaller value of $n_1 - 1$ and $n_2 - 1$.  The "degrees of freedom" can be thought of measuring how different the $t$ distribution will be as compared to a normal distribution.  Small sample sizes lead to small degrees of freedom and, thus, $t$ distributions that have more values in the tails of their distributions.  Large sample sizes lead to large degrees of freedom and, thus, $t$ distributions that closely align with the standard normal, bell-shaped curve. 
+<!-- Should we include a reference to https://en.wikipedia.org/wiki/Welch%27s_t-test here? -->  
+  
+Assuming that the null hypothesis is true ($H_0: \mu_1 - \mu_2 = 0$), $T$ is said to be distributed following a $t$ distribution with degrees of freedom "roughly equal to" the smaller value of $n_1 + n_2 - 2$.  The "degrees of freedom" can be thought of measuring how different the $t$ distribution will be as compared to a normal distribution. The "roughly equal to" here corresponds to the formula for degress of freedom being a bit more complicated than this simple expression, but we've found the formula to be beyond the scope of this book since it does little to build the intuition of the $t$-test. Small sample sizes lead to small degrees of freedom and, thus, $t$ distributions that have more values in the tails of their distributions. Large sample sizes lead to large degrees of freedom and, thus, $t$ distributions that closely align with the standard normal, bell-shaped curve. 
   
 So, assuming $H_0$ is true, our formula simplifies a bit:
 
@@ -1016,7 +1078,7 @@ null_distribution_t %>% visualize()
 
 We see that the shape of this `stat = "t"` distribution is the same as that of `stat = "diff in means"`.  The scale has changed though with the $t$ values having less spread than the difference in means.
 
-A traditional $t$-test doesn't look at this simulated distribution, but instead it looks at the $t$-curve with degrees of freedom equal to `r attr(null_distribution_t, "distr_param")`. We can overlay this distribution over the top of our permuted $t$ statistics using the `method = "both"` setting in `visualize()`.
+A traditional $t$-test doesn't look at this simulated distribution, but instead it looks at the $t$-curve with degrees of freedom equal to `r attr(null_distribution_t, "distr_param")`. This calculation is based on the complicated formula referenced above. (Note that this value is pretty close to the "roughly equal to" number of $34 + 34 - 2 = 66$.) We can overlay this distribution over the top of our permuted $t$ statistics using the `method = "both"` setting in `visualize()`.
 
 ```{r}
 null_distribution_t %>% 
@@ -1031,9 +1093,9 @@ obs_t <- movies_genre_sample %>%
   calculate(stat = "t", order = c("Romance", "Action"))
 ```
 
-So graphically we are interested in finding the percentage of values that are at or above `r pull(obs_t)` or at or below `r -pull(obs_t)`.
+So graphically we are interested in finding the percentage of values that are at or above `obs_t = ``r pull(obs_t)` or at or below `-obs_t = ``r -pull(obs_t)`.
 
-```{r}
+```{r warning=TRUE, message=TRUE}
 visualize(null_distribution_t, method = "both") +
   shade_p_value(obs_stat = obs_t, direction = "both")
 ```
