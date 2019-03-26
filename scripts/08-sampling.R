@@ -374,7 +374,7 @@ comparing_n_table <- virtual_prop %>%
 comparing_n_table  %>% 
   kable(
     digits = 3,
-      caption = "Three standard errors of the sample proportion $\\widehat{p}$ based on n = 25, 50, 100. ", 
+      caption = "Three standard errors of the sample proportion based on n = 25, 50, 100. ", 
       booktabs = TRUE
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),

@@ -87,7 +87,7 @@ tactile_resample_means %>%
   slice(1:10) %>% 
   kable(
     digits = 3,
-    caption = "\\label{tactile-resample-means}First 10 out of 33 friends' mean age of 50 resampled pennies.", 
+    caption = "\\label{tab:tactile-resample-means}First 10 out of 33 friends' mean age of 50 resampled pennies.", 
     booktabs = TRUE,
     longtable = TRUE
   ) %>% 
@@ -255,7 +255,7 @@ ggplot(virtual_resample_means, aes(x = stat)) +
 bootstrap_distribution <- virtual_resample_means
 
 
-## ----fig.align='center', echo=FALSE--------------------------------------
+## ----fig.align='center', echo=FALSE, out.width='30%'---------------------
 knitr::include_graphics("images/flowcharts/infer/specify.png")
 
 
@@ -269,7 +269,7 @@ pennies_sample_2 %>%
   specify(formula = year ~ NULL)
 
 
-## ----fig.align='center', echo=FALSE--------------------------------------
+## ----fig.align='center', echo=FALSE, out.width='70%'---------------------
 knitr::include_graphics("images/flowcharts/infer/generate.png")
 
 
@@ -292,7 +292,7 @@ thousand_bootstrap_samples %>%
 ##                                                  reps = 1000)
 
 
-## ----fig.align='center', echo=FALSE--------------------------------------
+## ----fig.align='center', echo=FALSE, out.width='70%'---------------------
 knitr::include_graphics("images/flowcharts/infer/calculate.png")
 
 
@@ -524,7 +524,7 @@ standard_error_ci_2 <- bowl_sample_2 %>%
 standard_error_ci_2 
 
 
-## ----reliable-se, fig.cap="Reliability of 95% confidence intervals",echo=FALSE----
+## ----reliable-se, fig.cap="Reliability of 95 percent confidence intervals",echo=FALSE----
 set.seed(201)
 
 ball_samples <- bowl %>% 
@@ -568,7 +568,7 @@ ggplot(se_cis) +
   geom_vline(xintercept = p_red, color = "red") 
 
 
-## ----reliable-perc, fig.cap="Reliability of 90% confidence intervals", echo=FALSE----
+## ----reliable-perc, fig.cap="Reliability of 90 percent confidence intervals", echo=FALSE----
 set.seed(201)
 balls_samples2 <- bowl %>% 
   rep_sample_n(size = 50, reps = 100, replace = FALSE)
@@ -668,7 +668,7 @@ percentile_cis_by_level <- bind_rows(perc_cis_80,
                                      perc_cis_99)
 
 
-## ----perc_cis_level_print, echo=FALSE------------------------------------
+## ----perc-cis-level-print, echo=FALSE------------------------------------
 percentile_cis_by_level %>% 
   sample_n(10) %>% 
   kable(
@@ -826,9 +826,9 @@ mythbusters_yawn %>%
   adorn_ns()
 
 
-## ----error=TRUE----------------------------------------------------------
-mythbusters_yawn %>% 
-  specify(formula = yawn ~ group)
+## ----eval=FALSE----------------------------------------------------------
+## mythbusters_yawn %>%
+##   specify(formula = yawn ~ group)
 
 
 ## ------------------------------------------------------------------------
@@ -836,10 +836,10 @@ mythbusters_yawn %>%
   specify(formula = yawn ~ group, success = "yes")
 
 
-## ----error=TRUE----------------------------------------------------------
-mythbusters_yawn %>% 
-  specify(formula = yawn ~ group, success = "yes") %>% 
-  calculate(stat = "diff in props")
+## ----eval=FALSE----------------------------------------------------------
+## mythbusters_yawn %>%
+##   specify(formula = yawn ~ group, success = "yes") %>%
+##   calculate(stat = "diff in props")
 
 
 ## ------------------------------------------------------------------------
@@ -912,9 +912,9 @@ sample_200 <- bowl %>%
   sample_n(200, replace = FALSE)
 
 
-## ----error=TRUE----------------------------------------------------------
-sample_200 %>% 
-  specify(formula = color ~ NULL)
+## ----eval=FALSE----------------------------------------------------------
+## sample_200 %>%
+##   specify(formula = color ~ NULL)
 
 
 ## ----eval=FALSE----------------------------------------------------------

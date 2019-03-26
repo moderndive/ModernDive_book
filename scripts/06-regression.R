@@ -210,7 +210,7 @@ evals_ch6 %>%
   slice(index) %>%
   knitr::kable(
     digits = 3,
-    caption = "Data for 21^st^ course out of 463",
+    caption = "Data for the 21st course out of 463",
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -242,7 +242,7 @@ regression_points %>%
   slice(c(index, index + 1, index + 2, index + 3)) %>%
   knitr::kable(
     digits = 3,
-    caption = "Regression points (for only 21^st^ through 24^th^ courses)",
+    caption = "Regression points (for only the 21st through 24th courses)",
     booktabs = TRUE
   )
 

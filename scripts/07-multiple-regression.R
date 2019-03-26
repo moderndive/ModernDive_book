@@ -122,8 +122,9 @@ tibble(
                 latex_options = c("HOLD_position"))
 
 
-## ----numxcatx-parallel, warning=FALSE, fig.cap="Parallel slopes model of relationship of score with age & gender."----
-gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", data = evals_ch7)
+## ----numxcatx-parallel, warning=FALSE, fig.cap="Parallel slopes model of relationship of score with age and gender."----
+gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", 
+                   data = evals_ch7)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -194,7 +195,8 @@ regression_points %>%
 library(ISLR)
 credit_ch7 <- Credit %>%
   as_tibble() %>% 
-  select(ID, debt = Balance, credit_limit = Limit, income = Income, credit_rating = Rating, age = Age)
+  select(ID, debt = Balance, credit_limit = Limit, 
+         income = Income, credit_rating = Rating, age = Age)
 
 
 ## ------------------------------------------------------------------------
@@ -284,6 +286,12 @@ model3_balance_vs_income_plot <- ggplot(credit_ch7, aes(x = income, y = debt)) +
   theme(axis.title.y = element_blank())
 
 model3_balance_vs_limit_plot + model3_balance_vs_income_plot
+
+
+## ----echo=FALSE----------------------------------------------------------
+if(knitr:::is_html_output())
+  cat("Click on the following image to open an interactive version of this plot in your browser:") 
+
 
 
 
@@ -395,7 +403,7 @@ interaction_plot + parallel_slopes_plot
 
 ## ---- eval = FALSE-------------------------------------------------------
 ## # Interaction model
-## ggplot(MA_schools, aes(x = perc_disadvan, y = average_sat_math, color = size))+
+## ggplot(MA_schools, aes(x = perc_disadvan, y = average_sat_math, color = size)) +
 ##   geom_point(alpha = 0.25) +
 ##   geom_smooth(method = "lm", se = FALSE ) +
 ##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
@@ -423,11 +431,13 @@ p1 + p2
 
 
 ## ---- eval = FALSE-------------------------------------------------------
-## model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size, data = MA_schools)
+## model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size,
+##                           data = MA_schools)
 ## get_regression_table(model_2_interaction)
 
 ## ----model2-interaction, echo = FALSE------------------------------------
-model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size, data = MA_schools)
+model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size, 
+                          data = MA_schools)
 get_regression_table(model_2_interaction) %>% 
   knitr::kable(
     digits = 3,
@@ -438,12 +448,14 @@ get_regression_table(model_2_interaction) %>%
                 latex_options = c("HOLD_position"))
 
 ## ---- eval = FALSE-------------------------------------------------------
-## model_2_parralel_slopes <- lm(average_sat_math ~ perc_disadvan + size, data = MA_schools)
-## get_regression_table(model_2_parralel_slopes)
+## model_2_parallel_slopes <- lm(average_sat_math ~ perc_disadvan + size,
+##                               data = MA_schools)
+## get_regression_table(model_2_parallel_slopes)
 
 ## ----model2-parallel-slopes, echo = FALSE--------------------------------
-model_2_parralel_slopes <- lm(average_sat_math ~ perc_disadvan + size, data = MA_schools)
-get_regression_table(model_2_parralel_slopes) %>% 
+model_2_parallel_slopes <- lm(average_sat_math ~ perc_disadvan + size, 
+                              data = MA_schools)
+get_regression_table(model_2_parallel_slopes) %>% 
   knitr::kable(
     digits = 3,
     caption = "Parallel slopes regression table", 
