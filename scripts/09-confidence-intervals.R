@@ -189,7 +189,7 @@ virtual_resample_means <- pennies_sample_2 %>%
   summarize(stat = mean(year))
 
 
-## ----echo=FALSE, message=FALSE-------------------------------------------
+## ----one-thousand-sample-means, echo=FALSE, message=FALSE, fig.cap="Bootstrap resampling distribution based on 1000 resamples."----
 # To get it to look nice I needed to make some tweaks
 ggplot(virtual_resample_means, aes(x = stat)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
