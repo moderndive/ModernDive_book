@@ -2,8 +2,7 @@
 
 [![Build Status](https://travis-ci.org/moderndive/moderndive_book.svg?branch=master)](https://travis-ci.org/moderndive/moderndive_book) Note: travis-ci currently deploys the developmental version of the book into the `gh-pages` branch of this repo, which is hosted via Netlify at [moderndive.netlify.com](https://moderndive.netlify.com).
 
-Welcome to the GitHub repository page for **ModernDive: An Introduction to 
-Statistical and Data Sciences via R** available at [ModernDive.com](https://moderndive.com/). 
+Welcome to the GitHub repository page for **Statistical Inference via Data Science: A moderndive into R and the tidyverse** available at [ModernDive.com](https://moderndive.com/). 
 
 
 ## Contents of this Repository
