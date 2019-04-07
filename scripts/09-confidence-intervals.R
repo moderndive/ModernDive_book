@@ -416,12 +416,6 @@ visualize(bootstrap_distribution) +
   shade_ci(endpoints = standard_error_ci)
 
 
-## ----include=FALSE-------------------------------------------------------
-color <- c(rep("red", 21), rep("white", 50 - 21)) %>% 
-  sample()
-tactile_shovel_1 <- tibble::tibble(color)
-
-
 ## ------------------------------------------------------------------------
 tactile_shovel_1
 
