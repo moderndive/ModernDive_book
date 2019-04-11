@@ -16,28 +16,13 @@ library(gt)
 #library(broom)
 
 
-## ----eval=FALSE, echo=FALSE----------------------------------------------
-## gender_promotions <- readRDS("rds/gender.discrimination.rds") %>%
-##   sample_n(size = 48, replace = FALSE) %>%
-##   mutate(id = 1:nrow(gender_promotions)) %>%
-##   select(id, decision, gender) %>%
-##   mutate(decision = factor(decision, levels = c("promoted", "not")),
-##          gender = factor(gender, levels = c("male", "female"))) %>%
-##   as_tibble()
-## readr::write_rds(gender_promotions, "rds/gender_promotions.rds")
-
-
-## ----echo=FALSE----------------------------------------------------------
-gender_promotions <- read_rds("rds/gender_promotions.rds")
+## ------------------------------------------------------------------------
+promotions
+glimpse(promotions)
 
 
 ## ------------------------------------------------------------------------
-gender_promotions
-glimpse(gender_promotions)
-
-
-## ------------------------------------------------------------------------
-gender_promotions %>% 
+promotions %>% 
   tabyl(gender, decision) %>% 
   adorn_percentages() %>% 
   adorn_pct_formatting() %>% 
@@ -47,10 +32,10 @@ gender_promotions %>%
 
 ## ----compare-first-10, echo=FALSE----------------------------------------
 set.seed(2019)
-one_permute <- gender_promotions %>%
+one_permute <- promotions %>%
   mutate(gender = sample(gender)) %>% 
   select(id, decision, gender)
-first_10 <- list(gender_promotions %>% slice(1:10),
+first_10 <- list(promotions %>% slice(1:10),
                  one_permute %>% slice(1:10))
 first_10 %>% 
   kable(
@@ -72,7 +57,7 @@ one_permute %>%
 
 
 ## ------------------------------------------------------------------------
-obs_diff_prop <- gender_promotions %>% 
+obs_diff_prop <- promotions %>% 
   specify(decision ~ gender, success = "promoted") %>% 
   calculate(stat = "diff in props", order = c("male", "female"))
 obs_diff_prop
@@ -80,7 +65,7 @@ obs_diff_prop
 
 ## ----echo=FALSE----------------------------------------------------------
 set.seed(2019)
-tactile_permutes <- gender_promotions %>% 
+tactile_permutes <- promotions %>% 
   specify(decision ~ gender, success = "promoted") %>% 
   hypothesize(null = "independence") %>% 
   generate(reps = 33, type = "permute") %>% 
@@ -94,18 +79,18 @@ ggplot(data = tactile_permutes, aes(x = stat)) +
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## gender_promotions %>%
+## promotions %>%
 ##   specify(formula = decision ~ gender, success = "promoted")
 
 
 ## ----echo=FALSE----------------------------------------------------------
-specify_ht <- gender_promotions %>% 
+specify_ht <- promotions %>% 
   specify(formula = decision ~ gender, success = "promoted")
 specify_ht
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## gender_promotions %>%
+## promotions %>%
 ##   specify(formula = decision ~ gender, success = "promoted")
 ##   hypothesize(null = "independence")
 
@@ -117,7 +102,7 @@ hypothesize_ht
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## gender_promotions %>%
+## promotions %>%
 ##   specify(formula = decision ~ gender, success = "promoted")
 ##   hypothesize(null = "independence") %>%
 ##   generate(reps = 1000, type = "permute")
@@ -130,7 +115,7 @@ generate_ht
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## null_distribution_two_props <- gender_promotions %>%
+## null_distribution_two_props <- promotions %>%
 ##   specify(formula = decision ~ gender, success = "promoted")
 ##   hypothesize(null = "independence") %>%
 ##   generate(reps = 1000, type = "permute") %>%
@@ -164,7 +149,7 @@ p_value
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## null_distribution_two_props <- gender_promotions %>%
+## null_distribution_two_props <- promotions %>%
 ##   specify(formula = decision ~ gender, success = "promoted") %>%
 ##   hypothesize(null = "independence") %>%
 ##   generate(reps = 1000, type = "permute") %>%
@@ -172,7 +157,7 @@ p_value
 
 
 ## ------------------------------------------------------------------------
-percentile_ci_two_props <- gender_promotions %>% 
+percentile_ci_two_props <- promotions %>% 
   specify(formula = decision ~ gender, success = "promoted") %>% 
   #  hypothesize(null = "independence") %>% 
   generate(reps = 1000, type = "bootstrap") %>% 
