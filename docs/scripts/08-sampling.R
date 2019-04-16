@@ -3,6 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(moderndive)
 
+
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
@@ -11,9 +12,23 @@ library(patchwork)
 library(readr)
 library(stringr)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## tactile_prop_red
 ## View(tactile_prop_red)
+
 
 ## ----tactilered, echo=FALSE----------------------------------------------
 tactile_prop_red %>% 
@@ -26,6 +41,7 @@ tactile_prop_red %>%
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position", "repeat_header"))
+
 
 ## ----eval=FALSE----------------------------------------------------------
 ## ggplot(tactile_prop_red, aes(x = prop_red)) +
@@ -40,13 +56,16 @@ tactile_histogram +
   labs(x = "Proportion of 50 balls that were red", 
        title = "Distribution of 33 proportions red")
 
+
 ## ------------------------------------------------------------------------
 bowl
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## virtual_shovel <- bowl %>%
 ##   rep_sample_n(size = 50)
 ## View(virtual_shovel)
+
 
 ## ----virtual-shovel, echo=FALSE------------------------------------------
 virtual_shovel <- bowl %>% 
@@ -62,14 +81,17 @@ virtual_shovel %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ------------------------------------------------------------------------
 virtual_shovel %>% 
   mutate(is_red = (color == "red"))
+
 
 ## ------------------------------------------------------------------------
 virtual_shovel %>% 
   mutate(is_red = (color == "red")) %>% 
   summarize(num_red = sum(is_red))  
+
 
 ## ------------------------------------------------------------------------
 virtual_shovel %>% 
@@ -77,10 +99,12 @@ virtual_shovel %>%
   summarize(num_red = sum(is_red)) %>% 
   mutate(prop_red = num_red / 50)
 
+
 ## ------------------------------------------------------------------------
 virtual_shovel %>% 
   summarize(num_red = sum(color == "red")) %>% 
   mutate(prop_red = num_red / 50)
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## virtual_samples <- bowl %>%
@@ -91,12 +115,14 @@ virtual_shovel %>%
 virtual_samples <- bowl %>% 
   rep_sample_n(size = 50, reps = 33)
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## virtual_prop_red <- virtual_samples %>%
 ##   group_by(replicate) %>%
 ##   summarize(red = sum(color == "red")) %>%
 ##   mutate(prop_red = red / 50)
 ## View(virtual_prop_red)
+
 
 ## ----virtualred, echo=FALSE----------------------------------------------
 virtual_prop_red <- virtual_samples %>% 
@@ -118,6 +144,7 @@ virtual_prop_red %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position", "repeat_header"))
 
+
 ## ----eval=FALSE----------------------------------------------------------
 ## ggplot(virtual_prop_red, aes(x = prop_red)) +
 ##   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
@@ -130,6 +157,7 @@ virtual_histogram <- ggplot(virtual_prop_red, aes(x = prop_red)) +
 virtual_histogram + 
   labs(x = "Proportion of 50 balls that were red", 
        title = "Distribution of 33 proportions red")
+
 
 ## ----tactile-vs-virtual, echo=FALSE, fig.cap="Comparing 33 virtual and 33 tactile proportions red."----
 bind_rows(
@@ -146,6 +174,7 @@ bind_rows(
   labs(x = "Proportion of 50 balls that were red", 
          title = "Comparing distributions")
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## virtual_samples <- bowl %>%
 ##   rep_sample_n(size = 50, reps = 1000)
@@ -155,12 +184,14 @@ bind_rows(
 virtual_samples <- bowl %>% 
   rep_sample_n(size = 50, reps = 1000)
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## virtual_prop_red <- virtual_samples %>%
 ##   group_by(replicate) %>%
 ##   summarize(red = sum(color == "red")) %>%
 ##   mutate(prop_red = red / 50)
 ## View(virtual_prop_red)
+
 
 ## ----eval=FALSE----------------------------------------------------------
 ## ggplot(virtual_prop_red, aes(x = prop_red)) +
@@ -178,6 +209,7 @@ virtual_histogram <- ggplot(virtual_prop_red, aes(x = prop_red)) +
 virtual_histogram + 
   labs(x = "Proportion of 50 balls that were red", 
        title = "Distribution of 1000 proportions red")
+
 
 ## ---- eval = FALSE-------------------------------------------------------
 ## # Segment 1: sample size = 25 ------------------------------
@@ -228,6 +260,7 @@ virtual_histogram +
 ##   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
 ##   labs(x = "Proportion of 100 balls that were red", title = "100")
 
+
 ## ----comparing-sampling-distributions, echo=FALSE, fig.cap="Comparing the distributions of proportion red for different sample sizes"----
 # n = 25
 virtual_samples_25 <- bowl %>% 
@@ -264,6 +297,7 @@ comparing_sampling_distributions <- ggplot(virtual_prop, aes(x = prop_red)) +
   facet_wrap(~n)
 comparing_sampling_distributions
 
+
 ## ---- eval = FALSE-------------------------------------------------------
 ## # n = 25
 ## virtual_prop_red_25 %>%
@@ -276,6 +310,7 @@ comparing_sampling_distributions
 ## # n = 100
 ## virtual_prop_red_100 %>%
 ##   summarize(sd = sd(prop_red))
+
 
 ## ----comparing-n, eval=TRUE, echo=FALSE----------------------------------
 comparing_n_table <- virtual_prop %>% 
@@ -292,12 +327,15 @@ comparing_n_table  %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ----echo=FALSE----------------------------------------------------------
 comparing_sampling_distributions
+
 
 ## ---- eval=TRUE, echo=FALSE----------------------------------------------
 comparing_n_table  %>% 
   kable(digits = 3)
+
 
 ## ----comparing-sampling-distributions-2, echo=FALSE, fig.cap="Three sampling distributions of the sample proportion $\\widehat{p}$."----
 virtual_prop %>% 
@@ -310,6 +348,7 @@ virtual_prop %>%
   labs(x = expression(paste("Sample proportion ", hat(p))), 
        title = expression(paste("Sampling distributions of the sample proportion ", hat(p), " based on n = 25, 50, 100.")) ) +
   facet_wrap(~n)
+
 
 ## ----comparing-n-2, eval=TRUE, echo=FALSE--------------------------------
 comparing_n_table <- virtual_prop %>% 
@@ -330,10 +369,12 @@ comparing_n_table  %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ------------------------------------------------------------------------
 bowl %>% 
   summarize(sum_red = sum(color == "red"), 
             sum_not_red = sum(color != "red"))
+
 
 ## ----comparing-sampling-distributions-3, echo=FALSE, fig.cap="Three sampling distributions with population proportion $p$ marked in red."----
 p <- bowl %>% 
@@ -350,6 +391,9 @@ virtual_prop %>%
        title = expression(paste("Sampling distributions of the sample proportion ", hat(p), " based on n = 25, 50, 100.")) ) +
   facet_wrap(~n) +
   geom_vline(xintercept = p, col = "red", size = 1)
+
+
+
 
 ## ----summarytable-ch8, echo=FALSE, message=FALSE-------------------------
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
