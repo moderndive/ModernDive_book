@@ -456,7 +456,7 @@ Recall that in the "resampling with replacement" scenario we are illustrating he
 ```
 
 
-### Virtually resampling 1000 times
+### Virtually resampling 1000 times {#bootstrap-1000-replicates}
 
 Remember that one of the goals of resampling with replacement is to construct the bootstrap distribution, which is an approximation of the sampling distribution of the point estimate of interest, here the sample mean year. However the bootstrap distribution of in Figure \@ref(fig:tactile-resampling-7) is based only on 35 resamples and hence looks a little coarse. Let's increase the number of resamples to 1000 to better observe the shape and the variability from one resample to the next. 
 
@@ -504,9 +504,12 @@ mean_of_means <- virtual_resampled_means %>%
 The mean of the 1000 means from 1000 resamples is `r mean_of_means`. Note that this is quite close to the mean of our original sample of 50 pennies from the bank: `r x_bar %>% pull(mean_year) %>% round(2)`. This is the case since each of the 1000 resamples are based on the original sample of 50 pennies.
 
 
+
 ```{block, type='learncheck', purl=FALSE}
 **_Learning check_**
 ```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is the difference between a bootstrap distribution and a sampling distribution?
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Ask learners to summarize important features of the plot as was done in Chapter 8.
 
@@ -519,47 +522,60 @@ The mean of the 1000 means from 1000 resamples is `r mean_of_means`. Note that t
 
 
 
-## Confidence interval build-up {#ci-build-up}
+## Constructing confidence intervals {#ci-build-up}
 
-**Definition: Confidence Interval**
+Let's start this section with an analogy involving fishing. Say you are trying to catch a fish. On the one hand you could use a spear, while on the other you could use a net. Using the net will probably yield better results!
 
-A *confidence interval* (CI) gives a range of plausible values for a parameter.  It depends on a specified _confidence level_ with higher confidence levels corresponding to wider confidence intervals and lower confidence levels corresponding to narrower confidence intervals. Common confidence levels include 90%, 95%, and 99%.
+Bringing things back to the pennies: you are trying to estimate the true population mean year $\mu$ of all US pennies. Think of the value of $\mu$ as the fish.
 
-Usually, we don't just begin sections with a definition, but *confidence intervals* are simple to define and play an important role in the sciences and any field that uses data. We've also just shown the build-up to them visually in the previous section. 
+On the one hand, we could use the appropriate point estimate/sample statistic to estimate $\mu$, which we saw in Table \@ref(tab:summarytable-ch8-b) is the sample mean $\overline{x}$. Based on our sample of 50 pennies from the bank, the sample mean was `r x_bar %>% pull(mean_year) %>% round(2)`. Think of this value as fishing with a spear. 
 
-You can think of a confidence interval as playing the role of a net when fishing. Instead of just trying to catch a fish with a single spear (estimating an unknown parameter by using a single point estimate/sample statistic), we can use a net to try to provide a range of possible locations for the fish (use a range of possible values based around our statistic to make a plausible guess as to the location of the parameter).
+On the other hand, let's use our results from the previous section to construct a range of highly probable values for $\mu$. Looking at the bootstrap distribution in Figure \@ref(fig:one-thousand-sample-means), between which two years would you say that "most" sample means lie?  While this question is somewhat subjective, saying that most sample means lie in the interval 1992 to 2000 would not be unreasonable. Think of this interval as fishing with a net.
+
+What we've just illustrated is the concept of a *confidence interval*, which we'll abbreviate with "CI" throughout this book. So as opposed to a point estimate/sample statistic that estimates the value of an unknown population parameter with a single value, a *confidence interval* gives a range of plausible values. Going back to our analogy, point estimates/sample statistics can be thought of as spears, whereas confidence intervals can be thought of as nets. 
 
 Point estimate/sample statistic           |  Confidence interval
 :-------------------------:|:-------------------------:
 ![](images/spear.jpg){ height=1.7in }  |  ![](images/net2.jpg){ height=1.7in }
 
-The resampling process will provide statistics that have a distribution with center at (or extremely close to) the mean of the original sample. The distribution of statistics brought forth by resampling, also called the *resampling distribution* provides us a guess as to what the variability in different sample means may look like only using the original sample as our guide. We can quantify this variability in the form of a 95% confidence interval in a couple of different ways.
+Our proposed interval of highly probably values for $\mu$ of 1992 to 2000 was constructed by eye and is thus somewhat subjective. We now introduce two methods for constructing such intervals in a more principled fashion: the percentile method and the standard error method.
+
+Both methods for confidence interval construction share some commonalities. First, they are both constructed from the bootstrap distribution, an example of which you created using 1000 bootstrap resamples with replacement in Subsection \@ref(bootstrap-1000-replicates) and saved in the `virtual_resampled_means` data frame. 
+
+Second, they both require you to specify the *confidence level*.  All other things being equal, higher confidence levels correspond to wider confidence intervals and lower confidence levels corresponding to narrower confidence intervals. Commonly used confidence levels include 90%, 95%, and 99%; we'll be mostly using 95% and hence constructing "95% confidence intervals for $\mu$"
+
 
 ### The percentile method {#percentile-method}
 
-Recall that the actual mean year for all pennies in circulation in the US is unknown to us. But by finding a confidence interval we have a way to make an educated guess as to what a range of plausible values is for the unknown parameter. One way to calculate this range is to use the middle 95% of the `virtual_resampled_means` to determine our endpoints. Our endpoints are thus at the 2.5^th^ and 97.5^th^ percentiles. We can visualize these percentiles on our distribution with green vertical lines:
-
-<!--
-This can be done with `infer` using the `get_ci()` function. (You can also use the `conf_int()` or `get_confidence_interval()` functions here as they are aliases that work the exact same way.)
--->
-
 ```{r echo=FALSE}
+# Can also use conf_int() and get_confidence_interval() instead of get_ci(),
+# as they are aliases that work the exact same way.
 percentile_ci <- virtual_resampled_means %>% 
+  rename(stat = mean_year) %>% 
   get_ci(level = 0.95, type = "percentile")
-ggplot(virtual_resampled_means, aes(x = mean_year)) +
-  geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
-  scale_x_continuous(breaks = seq(1988, 2006, 2)) +
-  geom_vline(xintercept = percentile_ci[[1, 1]], color = "green", size = 2) +
-  geom_vline(xintercept = percentile_ci[[1, 2]], color = "green", size = 2)
 ```
 
-Using the percentile method, our range of plausible values for the mean age of US pennies in circulation in 2011 is `r percentile_ci[["2.5%"]]` years to `r percentile_ci[["97.5%"]]` years. You'll see in later sections how to compute these values.
+Recall that the actual population mean year $\mu$ for all pennies in circulation in the US is unknown to us. The only way to know this value exactly would be to conduct a census of all pennies, a near impossible task. Instead, by constructing a confidence interval we'll obtain a range of plausible values for this unknown $\mu$. 
 
-You can see that 95% of the data stored in the `mean_year` variable in `virtual_resampled_means` falls between the two endpoints with 2.5% to the left outside of the shading and 2.5% to the right outside of the shading. The cut-off points that provide our range are shown with the green lines.
+One method to construct this range is to use the middle 95% of the 1000 sample means we computed using bootstrap resampling with replacement. We can do this by computing the 2.5^th^ and 97.5^th^ percentiles, which are `r percentile_ci[["2.5%"]]` and `r percentile_ci[["97.5%"]]` respectively. For now, let's focus on the concepts behind a percentile method constructed confidence interval; we'll show you the code to compute these values in the next section.
+
+We can mark these percentiles on the bootstrap distribution with red vertical lines in Figure \@ref(fig:percentile-method). You can see that 95% of the values in the `mean_year` variable in `virtual_resampled_means` fall between the two endpoints, with 2.5% to the left of the left-most red line and 2.5% to the right of the right-most red line. 
+
+```{r percentile-method, echo=FALSE, message=FALSE, fig.cap="Percentile method 95% confience interval."}
+ggplot(virtual_resampled_means, aes(x = mean_year)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
+  labs(x = "sample mean") +
+  scale_x_continuous(breaks = seq(1988, 2006, 2)) +
+  geom_vline(xintercept = percentile_ci[[1, 1]], color = "red", size = 1) +
+  geom_vline(xintercept = percentile_ci[[1, 2]], color = "red", size = 1)
+```
+
+
+
 
 ### The standard error method
 
-If the resampling distribution is close to symmetric and bell-shaped, we can also use a shortcut formula for determining the lower and upper endpoints of the confidence interval. This is done by using the formula $\bar{x} \pm (multiplier * SE),$ where $\bar{x}$ is our original sample mean and $SE$ stands for **standard error** and corresponds to the standard deviation of the resampling distribution.  The value of $multiplier$ here is the appropriate percentile of the standard normal distribution. We'll go into this further in Section \@ref(ci-conclusion).
+If the resampling distribution is close to symmetric and bell-shaped, we can also use a shortcut formula for determining the lower and upper endpoints of the confidence interval. This is done by using the formula $\overline{x} \pm (multiplier * SE),$ where $\bar{x}$ is our original sample mean and $SE$ stands for **standard error** and corresponds to the standard deviation of the resampling distribution.  The value of $multiplier$ here is the appropriate percentile of the standard normal distribution. We'll go into this further in Section \@ref(ci-conclusion).
 
 <!--
 These are automatically calculated when `level` is provided with `level = 0.95` being the default. (95% of the values in a standard normal distribution fall within 1.96 standard deviations of the mean, so $multiplier = 1.96$ for `level = 0.95`, for example.)  As mentioned, this formula assumes that the bootstrap distribution is symmetric and bell-shaped. This is often the case with bootstrap distributions, especially those in which the original distribution of the sample is not highly skewed.
@@ -588,12 +604,14 @@ standard_error_ci
 
 ```{r echo=FALSE}
 standard_error_ci <- virtual_resampled_means %>% 
+  rename(stat = mean_year) %>% 
   get_ci(type = "se", point_estimate = x_bar)
 ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
+  labs(x = "sample mean") +
   scale_x_continuous(breaks = seq(1988, 2006, 2)) +
-  geom_vline(xintercept = standard_error_ci[[1, 1]], color = "green", size = 2) +
-  geom_vline(xintercept = standard_error_ci[[1, 2]], color = "green", size = 2)
+  geom_vline(xintercept = standard_error_ci[[1, 1]], color = "red", size = 1) +
+  geom_vline(xintercept = standard_error_ci[[1, 2]], color = "red", size = 1)
 ```
 
 
