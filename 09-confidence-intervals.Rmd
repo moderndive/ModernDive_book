@@ -73,7 +73,7 @@ data("pennies_sample")
 
 ## Resampling activity
 
-As we did in Chapter \@ref(sampling), we'll begin with a hands-on activity.
+As we did in Chapter \@ref(sampling), we'll begin with a hands-on tactile activity.
 
 ### What is the average year on US pennies in 2019?
 
@@ -333,7 +333,7 @@ In Section \@ref(resampling-simulation) we'll mimic our tactile resampling activ
 
 Following this framework on confidence intervals, we'll discuss the `dplyr` and `infer` package code needed to complete the process of *bootstrapping*, which is another name for this resampling approach that is most commonly found in developing confidence intervals. We've used one of the functions in the `infer` package already with `rep_sample_n()`, but there's a lot more to this package than just that. We'll introduce the tidy statistical inference framework that was the motivation for the `infer` package pipeline that will be the driving package throughout the rest of this book.
 
-As we did in Chapter \@ref(sampling), we'll tie all these ideas together with a real-life case study in Section \@ref(case-study-two-prop-ci) involving data from an experiment about yawning from the US television show Mythbusters. The chapter concludes with a comparison of the sampling distribution and a bootstrap distribution using the balls data from Chapter \@ref(sampling). 
+As we did in Chapter \@ref(sampling), we'll tie all these ideas together with a real-life case study in Section \@ref(case-study-two-prop-ci) involving data from an experiment about yawning from the US television show Mythbusters. The chapter concludes with a comparison of the sampling distribution and a bootstrap distribution using the balls data from Chapter \@ref(sampling) on sampling. 
 
 
 
@@ -343,24 +343,31 @@ As we did in Chapter \@ref(sampling), we'll tie all these ideas together with a 
 
 ## Computer simulation of resampling {#resampling-simulation}
 
-We've completed a tactile example of resampling. We'll next explore how this can be done virtually using the computer.
+Let's now mimic our tactile resampling activity virtually by using our computer.
 
-### Using the virtual resample once
+### Virtually resampling once
 
-Recall that `pennies_sample` is stored as a dataset in the `moderndive` package. We've used the `rep_sample_n()` function in Chapter \@ref(sampling) to take samples from a population using `replace = FALSE` as the default. If we change this to `replace = TRUE`, we can also use this function to resample from a given original sample. Let's try this out:
+First, let's perform the virtual analog of resampling once. Recall that the `pennies_sample` data frame included in the `moderndive` package contains the years of our original sample of 50 pennies from the bank. Furthermore recall in Chapter \@ref(sampling) on sampling that we used the `rep_sample_n()` function as a virtual shovel to sample balls from our virtual bowl of `r nrow(bowl)` balls. 
+
+```{r, eval=FALSE, purl=FALSE}
+virtual_shovel <- bowl %>% 
+  rep_sample_n(size = 50)
+```
+
+Let's combine these two elements to virtually mimic our resampling with replacement exercise involving the slips of paper representing our 50 pennies in Figure \@ref(fig:resampling-exercise-c):
 
 ```{r eval=FALSE}
 virtual_resample <- pennies_sample %>% 
-  rep_sample_n(size = 50, replace = TRUE, reps = 1)
+  rep_sample_n(size = 50, replace = TRUE)
 ```
 
-Note here that the `size` argument should always be the same as the original sample size. We are doing this resampling one time and, thus, `reps = 1`. So what does `virtual_resample` look like?
+Observe how we explicitly set the `replace` argument to `TRUE` in order to tell `rep_sample_n()` that we would like to sample pennies *with* replacement. Had we not set `replace = TRUE`, the function would've assumed the default value of `FALSE`. Additionally, since we didn't specify the number of replicates via the `reps` argument, the function assumes the default of one replicate `reps = 1`. Note also that the `size` argument is set to match the original sample size of 50 pennies. So what does `virtual_resample` look like?
 
 ```{r eval=FALSE}
 View(virtual_resample)
 ```
 
-We'll display only the first 10 out of 50 rows of `virtual_shovel`'s contents in Table \@ref(tab:virtual-shovel).
+We'll display only the first 10 out of 50 rows of `virtual_resample`'s contents in Table \@ref(tab:virtual-shovel).
 
 ```{r virtual-resample, echo=FALSE}
 virtual_resample <- pennies_sample %>% 
@@ -377,124 +384,134 @@ virtual_resample %>%
                 latex_options = c("HOLD_position"))
 ```
 
-The `ID` variable identifies which of the pennies from `pennies_sample` are included in our resample of 50 coins and `year` denotes the year minted on the penny. The `replicate` column here is always the value of 1 corresponding to us only having `reps = 1`. It will take values between 1 and 33 next. But before we get to resampling multiple times, let's compute the mean `year` in our virtual resample of size 50 using `dplyr`.
+The `replicate` variable only takes on the value of 1 corresponding to us only having `reps = 1`, the `ID` variable indexes which of the 50 pennies from `pennies_sample` was resampled, and `year` denotes the year of minting. 
+
+Let's compute the mean `year` in our virtual resample of size 50 using data wrangling functions included in the `dplyr` package:
 
 ```{r}
 virtual_resample %>% 
   summarize(resample_mean = mean(year))
 ```
 
-<!-- Not sure if needed, but those trying to follow along may be mystified
-if we don't include this. -->
+As when we did our tactile resampling, the resulting mean year is different than that mean year of our 50 originally sampled pennies of `r x_bar %>% pull(mean_year) %>% round(2)`.
+
+<!-- 
+Chester: Not sure if needed, but those trying to follow along may be mystified if we don't include this. 
 
 Note that tibbles will try to print as pretty as possible which may result in numbers being rounded. In this chapter, we have set the default number of values to be printed to six in tibbles with `options(pillar.sigfig = 6)`.
 
-### Using the virtual resample 33 times
+Albert: I'm not sure if it's worth trouble to explain that command and why tidyverse opts for 3 sigfigs.
+-->
 
-Let's now extend this to have 33 virtual friends help us understand the variability in the means from 33 resamples of size 50.
+### Virtually resampling 35 times
 
-```{r eval=FALSE}
-virtual_resamples <- pennies_sample %>% 
-  rep_sample_n(size = 50, replace = TRUE, reps = 33)
-View(virtual_resamples)
-```
-
-```{r echo=FALSE}
-virtual_resamples <- pennies_sample %>% 
-  rep_sample_n(size = 50, replace = TRUE, reps = 33)
-```
-
-Just as we did with `virtual_resample`, we'll take the tibble `virtual_resamples` with 33 $\times$ 50 = 1650 rows corresponding to 33 resamples of size 50 pennies and then compute the resulting 33 means. We'll use the same `dplyr` verb as we did in the previous section, but compute the mean for each of our virtual friends:
-
-```{r, eval=FALSE}
-virtual_resample_means <- virtual_resamples %>% 
-  group_by(replicate) %>% 
-  summarize(stat = mean(year))
-View(virtual_resample_means)
-```
-
-
-```{r virtual-resample-means, echo=FALSE}
-virtual_resample_means <- virtual_resamples %>% 
-  group_by(replicate) %>% 
-  summarize(stat = mean(year))
-
-virtual_resample_means %>% 
-  slice(1:10) %>% 
-  kable(
- #   digits = 3,
-    caption = "First 10 out of 33 means from virtual resamples", 
-    booktabs = TRUE,
-    longtable = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position", "repeat_header"))
-```
-
-By looking at these first 10 rows, we can see values in the same range as those obtained from our friends' resamples in Table \@ref(tab:tactile-resample-means). Let's next visualize these 33 means:
+Let's now have 35 virtual friends perform our virtual resampling exercise. Using these results, we'll be able to study the variability in the sample means from 35 resamples of size 50. Let's first add a `reps = 35` argument to `rep_sample_n()` to indicate we would like 35 replicates, or in other words repeat the resampling with replacement of 50 pennies 35 times.
 
 ```{r}
-ggplot(virtual_resample_means, aes(x = stat)) +
-  geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
-  scale_x_continuous(breaks = seq(1990, 2000, 2))
+virtual_resamples <- pennies_sample %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 35)
+virtual_resamples
 ```
 
-Let's next compare the two distributions of the tactile resampling done by friends and the virtual resampling done by the computer:
+The resulting `virtual_resamples` data frame has 35 $\times$ 50 = `r 35*50` rows corresponding to 35 resamples of 50 pennies. What did each of our 35 virtual friends obtain as the mean year? We'll use the same `dplyr` verbs as we did in the previous section, but computing the mean for each of our virtual friends separately by adding a `group_by(replicate)`:
+
+```{r, eval=TRUE}
+virtual_resampled_means <- virtual_resamples %>% 
+  group_by(replicate) %>% 
+  summarize(mean_year = mean(year))
+virtual_resampled_means
+```
+
+Observe that `virtual_resampled_means` has 35 rows corresponding to the 35 resampled means and that the values of `mean_year` vary. Let's visualize the distribution of the numerical variable `mean_year` using a histogram in Figure \@ref(fig:tactile-resampling-7).
+
+```{r tactile-resampling-7, echo=TRUE, fig.cap="Distribution of 35 sample means from 35 resamples.", purl=FALSE}
+ggplot(virtual_resampled_means, aes(x = mean_year)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
+  labs(x = "Resampled mean year")
+```
+
+To convince ourselves that our virtual resampling indeed mimics the resampling done by our 35 friends, let's compare the bootstrap distribution we just virtually constructed with the bootstrap distribution our 35 friends constructed via tactile resampling in the previous section.
 
 ```{r orig-and-resample-means, echo=FALSE, fig.cap="Comparing distributions of means from resamples`", purl=FALSE}
-p3 <- ggplot(resampled_means, aes(x = mean_year)) +
+p3 <- ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
-  scale_x_continuous(breaks = seq(1990, 2000, 2)) +
-  coord_cartesian(xlim = seq(1990, 2000, 2), ylim = seq(0, 8, 2)) +
-  labs(title = "33 means of tactile resamples")
-p4 <- ggplot(virtual_resample_means, aes(x = stat)) +
+  labs(x = "Resampled mean year", title = "35 means of tactile resamples") +
+  scale_x_continuous(breaks = seq(1990, 2000, 2))
+p4 <- ggplot(resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
-  scale_x_continuous(breaks = seq(1990, 2000, 2)) +
-  coord_cartesian(ylim = seq(0, 8, 2)) +
-  labs(title = "33 means of virtual resamples")
+  labs(x = "Resampled mean year", title = "35 means of virtual resamples") +
+  scale_x_continuous(breaks = seq(1990, 2000, 2))
 p3 + p4
 ```
 
-<!-- Good learning check here would be for learners to compare the distributions since we did something similar in Chapter 8 and they should be well versed on this by now. -->
+Recall that in the "resampling with replacement" scenario we are illustrating here both the above histograms have a special name: the *bootstrap distribution of the sample mean*. Furthermore, they are an approximation to the *sampling distribution* of the sample mean, a concept you saw in Chapter \@ref(sampling) on sampling. These distributions allow us to study the effect of sampling variation on our estimates of the true population mean, in this case the true mean year for *all* US pennies. However, unlike in Chapter \@ref(sampling) where we simulated the act of taking multiple samples, something one would never do in practice, bootstrap distributions are constructed from a *single* sample, in this case the 50 original pennies from the bank. 
 
-### Using the virtual resample 1000 times
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
 
-Remember that one of the goals of resampling is to get an estimate for what the sampling distribution of the statistic of interest, the mean year here, looks like. To do so we'll need lots of different replicates to better understand the shape and the variability from one resample to the next. Let's extend our 33 replicates above to look at 1000 instead. With our goal being to get to 1000 resample means, we can use the `%>%` to get us there in one chain:
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Ask learners to compare the distributions since we did something similar in Chapter 8 and they should be well versed on this by now.
+
+```{block, type='learncheck', purl=FALSE}
+```
+
+
+### Virtually resampling 1000 times
+
+Remember that one of the goals of resampling with replacement is to construct the bootstrap distribution, which is an approximation of the sampling distribution of the point estimate of interest, here the sample mean year. However the bootstrap distribution of in Figure \@ref(fig:tactile-resampling-7) is based only on 35 resamples and hence looks a little coarse. Let's increase the number of resamples to 1000 to better observe the shape and the variability from one resample to the next. 
 
 ```{r}
-virtual_resample_means <- pennies_sample %>% 
+# Repeat resampling 1000 times
+virtual_resamples <- pennies_sample %>% 
+  rep_sample_n(size = 50, replace = TRUE, reps = 1000)
+
+# Compute 1000 sample means
+virtual_resampled_means <- virtual_resamples %>% 
+  group_by(replicate) %>% 
+  summarize(mean_year = mean(year))
+```
+
+However, in the interest of brevity, going forward let's combine the above two operations into a single chain of `%>%` pipe operators:
+
+```{r}
+virtual_resampled_means <- pennies_sample %>% 
   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>% 
   group_by(replicate) %>% 
-  summarize(stat = mean(year))
+  summarize(mean_year = mean(year))
+virtual_resampled_means
 ```
 
-Let's next look at what this distribution of 1000 sample means from 1000 resamples looks like in Figure \@ref(fig:one-thousand-sample-means):
+Let's visualize the bootstrap distribution of these 1000 sample means from 1000 virtual resamples looks like in Figure \@ref(fig:one-thousand-sample-means):
 
 ```{r one-thousand-sample-means, echo=FALSE, message=FALSE, fig.cap="Bootstrap resampling distribution based on 1000 resamples."}
-# To get it to look nice I needed to make some tweaks
-ggplot(virtual_resample_means, aes(x = stat)) +
-  geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
-  scale_x_continuous(breaks = seq(1988, 2006, 2))
+ggplot(virtual_resampled_means, aes(x = mean_year)) +
+  geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
+  labs(x = "sample mean")
 ```
 
-Note here the bell shape starting to become more apparent. We now have a general sense for the range of values that the mean may take on in these resamples from this histogram. Do you have a guess as to where this histogram is centered? With it being close to symmetric, either the mean or the median would serve as a good estimate for the center here. Let's look at the mean:
+Note here the bell shape starting to become more apparent. We now have a general sense for the range of values that the sample mean may take on in these resamples from this histogram of the bootstrap distribution. Do you have a guess as to where this histogram is centered? With it being close to symmetric, either the mean or the median would serve as a good estimate for the center here. Let's compute the mean:
 
-```{r eval=FALSE}
-virtual_resample_means %>% 
-  summarize(mean_of_means = mean(stat))
+```{r eval=TRUE}
+virtual_resampled_means %>% 
+  summarize(mean_of_means = mean(mean_year))
 ```
-
 ```{r echo=FALSE}
-mean_of_means <- virtual_resample_means %>% 
-  summarize(mean(stat)) %>% 
+mean_of_means <- virtual_resampled_means %>% 
+  summarize(mean(mean_year)) %>% 
   pull()
 ```
 
-The mean of the 1000 means from 1000 resamples is `r mean_of_means`. Note that this is quite close to the mean of our original sample: `r x_bar %>% pull(mean_year) %>% round(2)`. This will always be the case when we have 1000 or so replicates since each of the resamples is based on the original sample.
-
-<!-- Another good learning check here would be to ask learners to summarize important features of the plot as was done in Chapter 8. -->
+The mean of the 1000 means from 1000 resamples is `r mean_of_means`. Note that this is quite close to the mean of our original sample of 50 pennies from the bank: `r x_bar %>% pull(mean_year) %>% round(2)`. This is the case since each of the 1000 resamples are based on the original sample of 50 pennies.
 
 
+```{block, type='learncheck', purl=FALSE}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Ask learners to summarize important features of the plot as was done in Chapter 8.
+
+```{block, type='learncheck', purl=FALSE}
+```
 
 ***
 
@@ -518,16 +535,16 @@ The resampling process will provide statistics that have a distribution with cen
 
 ### The percentile method {#percentile-method}
 
-Recall that the actual mean year for all pennies in circulation in the US is unknown to us. But by finding a confidence interval we have a way to make an educated guess as to what a range of plausible values is for the unknown parameter. One way to calculate this range is to use the middle 95% of the `virtual_resample_means` to determine our endpoints. Our endpoints are thus at the 2.5^th^ and 97.5^th^ percentiles. We can visualize these percentiles on our distribution with green vertical lines:
+Recall that the actual mean year for all pennies in circulation in the US is unknown to us. But by finding a confidence interval we have a way to make an educated guess as to what a range of plausible values is for the unknown parameter. One way to calculate this range is to use the middle 95% of the `virtual_resampled_means` to determine our endpoints. Our endpoints are thus at the 2.5^th^ and 97.5^th^ percentiles. We can visualize these percentiles on our distribution with green vertical lines:
 
 <!--
 This can be done with `infer` using the `get_ci()` function. (You can also use the `conf_int()` or `get_confidence_interval()` functions here as they are aliases that work the exact same way.)
 -->
 
 ```{r echo=FALSE}
-percentile_ci <- virtual_resample_means %>% 
+percentile_ci <- virtual_resampled_means %>% 
   get_ci(level = 0.95, type = "percentile")
-ggplot(virtual_resample_means, aes(x = stat)) +
+ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
   scale_x_continuous(breaks = seq(1988, 2006, 2)) +
   geom_vline(xintercept = percentile_ci[[1, 1]], color = "green", size = 2) +
@@ -536,7 +553,7 @@ ggplot(virtual_resample_means, aes(x = stat)) +
 
 Using the percentile method, our range of plausible values for the mean age of US pennies in circulation in 2011 is `r percentile_ci[["2.5%"]]` years to `r percentile_ci[["97.5%"]]` years. You'll see in later sections how to compute these values.
 
-You can see that 95% of the data stored in the `stat` variable in `virtual_resample_means` falls between the two endpoints with 2.5% to the left outside of the shading and 2.5% to the right outside of the shading. The cut-off points that provide our range are shown with the green lines.
+You can see that 95% of the data stored in the `mean_year` variable in `virtual_resampled_means` falls between the two endpoints with 2.5% to the left outside of the shading and 2.5% to the right outside of the shading. The cut-off points that provide our range are shown with the green lines.
 
 ### The standard error method
 
@@ -568,9 +585,9 @@ standard_error_ci
 -->
 
 ```{r echo=FALSE}
-standard_error_ci <- virtual_resample_means %>% 
+standard_error_ci <- virtual_resampled_means %>% 
   get_ci(type = "se", point_estimate = x_bar)
-ggplot(virtual_resample_means, aes(x = stat)) +
+ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
   scale_x_continuous(breaks = seq(1988, 2006, 2)) +
   geom_vline(xintercept = standard_error_ci[[1, 1]], color = "green", size = 2) +
@@ -617,11 +634,11 @@ Lastly, we finish off the grouping by using `summarize()` from `dplyr` to get ou
  bootstrap_distribution <- pennies_sample %>% 
   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>% 
   group_by(replicate) %>% 
-  summarize(stat = mean(year))
+  summarize(mean_year = mean(year))
 ```
 
 ```{r echo=FALSE}
-bootstrap_distribution <- virtual_resample_means
+bootstrap_distribution <- virtual_resampled_means
 ```
 
 So for the case where we are bootstrapping a single variable like `year` that we have seen so far, we can get by with using the `rep_sample_n()` function and a couple `dplyr` verbs to get the bootstrap distribution. For more complicated inferential techniques we need a little more firepower though. Let's check out the `infer` package for tidy statistical inference!
