@@ -10,8 +10,8 @@ library(janitor)
 library(knitr)
 library(kableExtra)
 library(patchwork)
-# Ensure pennies_sample_2 is loaded (might not be needed)
-data("pennies_sample_2")
+# Ensure pennies_sample is loaded (might not be needed)
+data("pennies_sample")
 
 
 
@@ -21,22 +21,22 @@ data("pennies_sample_2")
 
 
 ## ------------------------------------------------------------------------
-pennies_sample_2
+pennies_sample
 
 
 ## ------------------------------------------------------------------------
-ggplot(pennies_sample_2, aes(x = year)) +
+ggplot(pennies_sample, aes(x = year)) +
   geom_histogram(binwidth = 10, color = "white")
 
 
 ## ------------------------------------------------------------------------
-x_bar <- pennies_sample_2 %>% 
+x_bar <- pennies_sample %>% 
   summarize(stat = mean(year))
 
 
 ## ----echo=FALSE----------------------------------------------------------
 if(!file.exists("rds/pennies_resample.rds")){
-  pennies_resample <- pennies_sample_2 %>% 
+  pennies_resample <- pennies_sample %>% 
     rep_sample_n(size = 50, replace = TRUE, reps = 1) %>% 
     ungroup() %>% 
     select(-replicate)
@@ -52,7 +52,7 @@ pennies_resample
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## ggplot(pennies_sample_2, aes(x = year)) +
+## ggplot(pennies_sample, aes(x = year)) +
 ##   geom_histogram(binwidth = 10, color = "white") +
 ##   labs(title = "50 US pennies labelled")
 ## ggplot(pennies_resample, aes(x = year)) +
@@ -111,7 +111,7 @@ tactile_histogram +
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## virtual_resample <- pennies_sample_2 %>%
+## virtual_resample <- pennies_sample %>%
 ##   rep_sample_n(size = 50, replace = TRUE, reps = 1)
 
 
@@ -120,7 +120,7 @@ tactile_histogram +
 
 
 ## ----virtual-resample, echo=FALSE----------------------------------------
-virtual_resample <- pennies_sample_2 %>% 
+virtual_resample <- pennies_sample %>% 
   rep_sample_n(size = 50, replace = TRUE, reps = 1)
 virtual_resample %>% 
   slice(1:10) %>%
@@ -140,13 +140,13 @@ virtual_resample %>%
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## virtual_resamples <- pennies_sample_2 %>%
+## virtual_resamples <- pennies_sample %>%
 ##   rep_sample_n(size = 50, replace = TRUE, reps = 33)
 ## View(virtual_resamples)
 
 
 ## ----echo=FALSE----------------------------------------------------------
-virtual_resamples <- pennies_sample_2 %>% 
+virtual_resamples <- pennies_sample %>% 
   rep_sample_n(size = 50, replace = TRUE, reps = 33)
 
 
@@ -183,7 +183,7 @@ ggplot(virtual_resample_means, aes(x = stat)) +
 
 
 ## ------------------------------------------------------------------------
-virtual_resample_means <- pennies_sample_2 %>% 
+virtual_resample_means <- pennies_sample %>% 
   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>% 
   group_by(replicate) %>% 
   summarize(stat = mean(year))
@@ -234,18 +234,18 @@ ggplot(virtual_resample_means, aes(x = stat)) +
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## pennies_sample_2 %>%
+## pennies_sample %>%
 ##   rep_sample_n(size = 50, replace = TRUE, reps = 1000)
 
 
 ## ----eval=FALSE----------------------------------------------------------
-##  pennies_sample_2 %>%
+##  pennies_sample %>%
 ##   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>%
 ##   group_by(replicate)
 
 
 ## ----eval=FALSE----------------------------------------------------------
-##  bootstrap_distribution <- pennies_sample_2 %>%
+##  bootstrap_distribution <- pennies_sample %>%
 ##   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>%
 ##   group_by(replicate) %>%
 ##   summarize(stat = mean(year))
@@ -260,12 +260,12 @@ knitr::include_graphics("images/flowcharts/infer/specify.png")
 
 
 ## ------------------------------------------------------------------------
-pennies_sample_2 %>% 
+pennies_sample %>% 
   specify(response = year)
 
 
 ## ------------------------------------------------------------------------
-pennies_sample_2 %>% 
+pennies_sample %>% 
   specify(formula = year ~ NULL)
 
 
@@ -274,7 +274,7 @@ knitr::include_graphics("images/flowcharts/infer/generate.png")
 
 
 ## ------------------------------------------------------------------------
-thousand_bootstrap_samples <- pennies_sample_2 %>% 
+thousand_bootstrap_samples <- pennies_sample %>% 
   specify(response = year) %>% 
   generate(reps = 1000, type = "bootstrap")
 
@@ -286,7 +286,7 @@ thousand_bootstrap_samples %>%
 
 ## ----eval=FALSE----------------------------------------------------------
 ## # With infer pipeline             # Without infer pipeline
-## pennies_sample_2 %>%              pennies_sample_2 %>%
+## pennies_sample %>%              pennies_sample %>%
 ##   specify(response = year) %>%      rep_sample_n(size = 50,
 ##    generate(reps = 1000)                         replace = TRUE,
 ##                                                  reps = 1000)
@@ -297,7 +297,7 @@ knitr::include_graphics("images/flowcharts/infer/calculate.png")
 
 
 ## ------------------------------------------------------------------------
-bootstrap_distribution <- pennies_sample_2 %>% 
+bootstrap_distribution <- pennies_sample %>% 
   specify(response = year) %>% 
   generate(reps = 1000) %>% 
   calculate(stat = "mean")
@@ -306,7 +306,7 @@ bootstrap_distribution
 
 ## ----eval=FALSE----------------------------------------------------------
 ## # With infer pipeline             # Without infer pipeline
-## pennies_sample_2 %>%              pennies_sample_2 %>%
+## pennies_sample %>%              pennies_sample %>%
 ##   specify(response = year) %>%      rep_sample_n(size = 50, replace = TRUE,
 ##   generate(reps = 1000) %>%                      reps = 1000) %>%
 ##   calculate(stat = "mean")          group_by(replicate) %>%
@@ -314,12 +314,12 @@ bootstrap_distribution
 
 
 ## ------------------------------------------------------------------------
-pennies_sample_2 %>% 
+pennies_sample %>% 
   summarize(stat = mean(year))
 
 
 ## ------------------------------------------------------------------------
-pennies_sample_2 %>% 
+pennies_sample %>% 
   specify(response = year) %>% 
   calculate(stat = "mean")
 
