@@ -570,7 +570,7 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
 ```
 
 
-### Standard error method
+### Standard error method {#se-method}
 
 ```{r echo=FALSE}
 # Can also use conf_int() and get_confidence_interval() instead of get_ci(),
@@ -805,9 +805,15 @@ knitr::include_graphics("images/flowcharts/infer/visualize.png")
 
 The `visualize()` verb provides a quick way to visualize the bootstrap distribution as a histogram of the numerical `stat` variable's values.  
 
-```{r boostrap-distribution-infer, echo=FALSE, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
+```{r eval=FALSE}
 bootstrap_distribution %>% 
   visualize()
+```
+```{r boostrap-distribution-infer, echo=FALSE, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+bootstrap_distribution %>% 
+  visualize() +
+  ggtitle("Simulation-Based Bootstrap Distribution") 
 ```
 
 **Comparing with original workflow**: In fact, `visualize()` is a *wrapper function* for the `ggplot()` function that uses a `geom_histogram()` layer. Recall that we illustrated the concept of a wrapper function in Figure \@ref(fig:moderndive-figure-wrapper) in Section \@ref(model1table).
@@ -831,110 +837,79 @@ Recall how we introduced two different methods for constructing 95% confidence i
 
 ### Percentile method with infer {#percentile-method-infer}
 
-Recall the percentile method of looking at the middle 95% of values with the lower endpoint at the 2.5^th^ percentile and the upper endpoint at the 97.5^th^ percentile. This can be done with `infer` using the `get_confidence_interval()` function. You can also use the alias `get_ci()` if you'd like the short version. That's what we use here.
+Recall the percentile method for constructing 95% confidence intervals we introduced in Section \@ref(percentile-method). This method sets the lower endpoint at the 2.5^th^ percentile of the bootstrap distribution and similarly sets the upper endpoint at the 97.5^th^ percentile. The resulting interval captures the middle 95% of values of the sample mean in the bootstrap distribution.
 
-```{r}
-bootstrap_distribution %>% 
-  get_ci(level = 0.95, type = "percentile")
-```
-
-These options are the default values for `level` and `type` so we can also just do:
+We can compute the 95% confidence interval by piping the `bootstrap_distribution` data frame we created above into the `get_confidence_interval()` function from the infer package, with the confidence `level` set to 0.95 and the confidence interval `type` to be percentile. Let's save the results in `percentile_ci`
 
 ```{r}
 percentile_ci <- bootstrap_distribution %>% 
-  get_ci()
+  get_confidence_interval(level = 0.95, type = "percentile")
 percentile_ci
 ```
 
-Now we see where the values obtained in Section \@ref(confidence-intervals) come from. Using the percentile method, our range of plausible values for the mean year of US pennies in circulation in 2019 is `r percentile_ci[["2.5%"]]` to `r percentile_ci[["97.5%"]]`. We can further use the `visualize()` function and the `shade_confidence_interval()` function, or alias `shade_ci()`, to view this. We use the `endpoints` argument to be those stored with name `percentile_ci`.
+If we would like to visualize the interval (`r percentile_ci[["2.5%"]] %>% round(2)`, `r percentile_ci[["97.5%"]] %>% round(2)`), we can pipe the `bootstrap_distribution` data frame into the `visualize()` function and add a `shade_confidence_interval()` layer to our plot with the `endpoints` argument to be `percentile_ci`:
 
 ```{r eval=FALSE}
-visualize(bootstrap_distribution) + 
-  shade_ci(endpoints = percentile_ci)
+bootstrap_distribution %>% 
+  visualize() + 
+  shade_confidence_interval(endpoints = c(1991.28, 1999.76))
+```
+```{r percentile-ci-viz, echo=FALSE, fig.show='hold', fig.cap="Percentile method 95% confidence interval.", purl=FALSE}
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+bootstrap_distribution %>% 
+  visualize() + 
+  shade_confidence_interval(endpoints = percentile_ci) +
+  ggtitle("Simulation-Based Bootstrap Distribution") 
 ```
 
-```{r echo=FALSE}
-# Will need to make a tweak to the {infer} package
-# so that it doesn't always display "Null" here
-visualize(bootstrap_distribution) + 
-  ggtitle("Simulation-Based Bootstrap Distribution") +
-  shade_ci(endpoints = percentile_ci)
-```
-
-
-You can see that 95% of the data stored in the `stat` variable in `bootstrap_distribution` falls between the two endpoints with 2.5% to the left outside of the shading and 2.5% to the right outside of the shading. The cut-off points that provide our range are shown with the darker lines.
-
-Note that you can change the colors here as you wish using the `color` and `fill` arguments.
+Observe that 95% of the sample means stored in the `stat` variable in `bootstrap_distribution` falls between the two endpoints marked with the darker lines, with 2.5% of the sample means to the left of the shaded area and 2.5% of the sample means to the right. You also have the option to change the colors of the shading using the `color` and `fill` arguments.
 
 ```{r eval=FALSE}
-visualize(bootstrap_distribution) + 
-  shade_ci(endpoints = percentile_ci,
-           color = "brown",
-           fill = "khaki")
+bootstrap_distribution %>% 
+  visualize() + 
+  shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 ```
-
 ```{r echo=FALSE}
-# Will need to make a tweak to the {infer} package
-# so that it doesn't always display "Null" here
-visualize(bootstrap_distribution) + 
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+bootstrap_distribution %>% 
+  visualize() + 
   ggtitle("Simulation-Based Bootstrap Distribution") +
-  shade_ci(endpoints = percentile_ci,
-           color = "brown",
-           fill = "khaki")
+  shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 ```
-
-```{r eval=FALSE}
-visualize(bootstrap_distribution) + 
-  shade_ci(endpoints = percentile_ci,
-           color = "hotpink",
-           fill = NULL)
-```
-
-```{r echo=FALSE}
-# Will need to make a tweak to the {infer} package
-# so that it doesn't always display "Null" here
-visualize(bootstrap_distribution) + 
-  ggtitle("Simulation-Based Bootstrap Distribution") +
-  shade_ci(endpoints = percentile_ci,
-           color = "hotpink",
-           fill = NULL)
-```
-
 
 ### Standard error method with infer
 
-Recall the formula $\bar{x} \pm (multiplier * SE),$ where $\bar{x}$ is our original sample mean and $SE$ stands for **standard error** and corresponds to the standard deviation of the bootstrap distribution. This is the formula for using the standard error method for calculating a confidence interval.
+Recall the standard error method for constructing 95% confidence intervals we introduced in Section \@ref(se-method). For any distribution that is normally shaped, roughly 95% of values lie within two standard deviations of the mean. In the case of the bootstrap distribution, the standard deviation has a special name: the standard error. So using our rule of thumb about normally shaped distributions, a 95% confidence interval is $\overline{x} \pm 1.96 \cdot SE$ = $(\overline{x} - 1.96 \cdot SE, \overline{x} + 1.96 \cdot SE)$.
 
-The $multiplier$ is automatically calculated when `level` is provided with `level = 0.95` being the default. (95% of the values in a standard normal distribution fall within 1.96 standard deviations of the mean, so $multiplier = 1.96$ for `level = 0.95`, for example.)  As mentioned, this formula assumes that the bootstrap distribution is symmetric and bell-shaped. This is often the case with bootstrap distributions, especially those in which the original distribution of the sample is not highly skewed.
-
-This $\bar{x} \pm (multiplier * SE)$ formula is implemented in the `get_ci()` function as shown with our pennies problem using the bootstrap distribution's variability as an approximation for the sampling distribution's variability. We'll see more on this approximation shortly.
-
-Note that the center of the confidence interval (the `point_estimate`) must be provided for the standard error confidence interval.
+We can compute the 95% confidence interval by piping the `bootstrap_distribution` data frame we created above into the `get_confidence_interval()` function. First, we set the `type` argument set to be `"se"`. Second, we must specify the `point_estimate` argument in order to set the center of the confidence interval: we set this to be sample mean of the original sample of 50 pennies of `r x_bar %>% pull(mean_year) %>% round(2)`.
 
 ```{r}
 standard_error_ci <- bootstrap_distribution %>% 
-  get_ci(type = "se", point_estimate = x_bar)
+  get_confidence_interval(type = "se", point_estimate = 1995.44)
 standard_error_ci
 ```
 
+If we would like to visualize the interval (`r standard_error_ci[["lower"]] %>% round(2)`, `r standard_error_ci[["upper"]] %>% round(2)`), we can pipe the `bootstrap_distribution` data frame into the `visualize()` function and add a `shade_confidence_interval()` layer to our plot with the `endpoints` argument to be `standard_error_ci`:
+
 ```{r eval=FALSE}
-visualize(bootstrap_distribution) + 
-  shade_ci(endpoints = standard_error_ci)
+bootstrap_distribution %>% 
+  visualize() + 
+  shade_confidence_interval(endpoints = standard_error_ci)
+```
+```{r se-ci-viz, echo=FALSE, fig.show='hold', fig.cap="Standard error method 95% confidence interval.", purl=FALSE}
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+bootstrap_distribution %>% 
+  visualize() + 
+  shade_confidence_interval(endpoints = standard_error_ci) +
+  ggtitle("Simulation-Based Bootstrap Distribution") 
 ```
 
-```{r echo=FALSE}
-visualize(bootstrap_distribution) + 
-  ggtitle("Simulation-Based Bootstrap Distribution") +
-  shade_ci(endpoints = standard_error_ci)
-```
-
-As noted in Section \@ref(confidence-intervals) both methods produce similar confidence intervals.
+As noted in Section \@ref(ci-build-up), both methods produce similar confidence intervals.
 
 | Percentile | Standard error |
-|---|---|
-| $[`r round(percentile_ci[["2.5%"]], 2)`, `r round(percentile_ci[["97.5%"]], 2)`]$ | $[`r round(standard_error_ci[["lower"]], 2)`, `r round(standard_error_ci[["upper"]],2)`]$ |
+|------------|----------------|
+| (`r percentile_ci[["2.5%"]] %>% round(2)`, `r percentile_ci[["97.5%"]] %>% round(2)`) | (`r standard_error_ci[["lower"]] %>% round(2)`, `r standard_error_ci[["upper"]] %>% round(2)`) |
 
-The `[lower, upper]` notation here corresponds to the `lower` value being the smallest included entry in the confidence interval and `upper` being the largest included entry in the confidence interval.
 
 
 
@@ -1036,7 +1011,7 @@ visualize(bootstrap_props, bins = 25) +
 
 We are "95% confident" that the true proportion of red balls in the bowl is between `r standard_error_ci[["lower"]]` and `r standard_error_ci[["upper"]]`. 
 
-## Interpreting the confidence interval
+## Interpreting confidence intervals
 
 One key to working with confidence intervals is to also understand how best to interpret them. From the previous example, this level of confidence (95%) is based on the standard error-based method including the true proportion 95% of the time if many different samples (not just the one we used) were collected and confidence intervals were created following this standard error-based method. Let's dig into what this means further by exploring the confidence intervals based on other samples to see how they compare to the one we just calculated. By the end of this section, you should have an understanding as to what "95% confident" means and how best to use that knowledge when you see that language used in other contexts.
 
