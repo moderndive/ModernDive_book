@@ -55,7 +55,6 @@ If needed, read Section \@ref(packages) for information on how to install and lo
 library(tidyverse)
 library(moderndive)
 library(infer)
-library(janitor)
 ```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
@@ -124,7 +123,6 @@ x_bar <- pennies_sample %>%
 ```
 
 Thus assuming `pennies_sample` is a representative sample from the population of all US pennies, a "good guess" of the average year of minting of all US pennies would be `r x_bar %>% pull(mean_year) %>% round(2)`, the average year of minting of our 50 sampled pennies. This should all start sounding similar to what we did previously in Chapter \@ref(sampling)!
-
 
 In Chapter \@ref(sampling) our study population was the bowl of $N$ = 2400 balls. Our population parameter of interest was the population proportion of these balls that were red, denoted mathematically by $p$. In order to estimate $p$, we extracted a sample of 50 balls using the shovel and computed the relevant point estimate: the sample proportion of these 50 balls that were red, denoted mathematically by $\widehat{p}$.
 
@@ -700,7 +698,7 @@ pennies_sample %>%
 
 For this simple case, we can get by with using the `rep_sample_n()` function and a couple of `dplyr` verbs to construct the bootstrap distribution. However, using only `dplyr` verbs only provides us with a limited set of tools. For more complicated situations, we need a little more firepower. Let's repeat the above using the `infer` package.
 
-### infer package workflow
+### infer package workflow {#infer-workflow}
 
 The `infer` package makes efficient use of the `%>%` pipe operator we saw in Chapter \@ref(wrangling) to spell out the sequence of steps necessary to perform statistical inference in a "tidy" and transparent fashion. Much in the same way that the functions in the `dplyr` have intuitive verb-based names, the infer package's functions are also verbs that spell out the computational process of constructing confidence intervals, as well as hypothesis tests as we'll see in Chapter \@ref(hypothesis-testing). 
 
@@ -912,17 +910,21 @@ As noted in Section \@ref(ci-build-up), both methods produce similar confidence 
 
 
 
-
 ***
 
 
 
-## Case study: Revisiting the red ball example {#one-prop-ci}
+## Interpreting confidence intervals
+
+Now that we've shown you how to construct confidence intervals, let's now focus on their intepretation. 
+
+
+One key to working with confidence intervals is to also understand how best to interpret them. From the previous example, this level of confidence (95%) is based on the standard error-based method including the true proportion 95% of the time if many different samples (not just the one we used) were collected and confidence intervals were created following this standard error-based method. Let's dig into what this means further by exploring the confidence intervals based on other samples to see how they compare to the one we just calculated. By the end of this section, you should have an understanding as to what "95% confident" means and how best to use that knowledge when you see that language used in other contexts.
+
 
 Let's revisit our exercise of trying to estimate the proportion of red balls in the bowl from Chapter \@ref(sampling). We are now interested in determining a confidence interval for the population parameter $p$, the proportion of balls that are red out of the total $N = 2400$ red and white balls. 
 
 We will use the first sample reported from Ilyas and Yohan in Subsection \@ref(student-shovels) for our point estimate. They observed 21 red balls out of the 50 in their shovel. This data is stored in the `tactile_shovel_1` data frame in the `moderndive` package.
-
 
 ```{r}
 tactile_shovel_1
@@ -1011,12 +1013,7 @@ visualize(bootstrap_props, bins = 25) +
 
 We are "95% confident" that the true proportion of red balls in the bowl is between `r standard_error_ci[["lower"]]` and `r standard_error_ci[["upper"]]`. 
 
-## Interpreting confidence intervals
-
-One key to working with confidence intervals is to also understand how best to interpret them. From the previous example, this level of confidence (95%) is based on the standard error-based method including the true proportion 95% of the time if many different samples (not just the one we used) were collected and confidence intervals were created following this standard error-based method. Let's dig into what this means further by exploring the confidence intervals based on other samples to see how they compare to the one we just calculated. By the end of this section, you should have an understanding as to what "95% confident" means and how best to use that knowledge when you see that language used in other contexts.
-
 As shown above in Subsection \@ref(one-prop-boot), one range of plausible values for the population proportion of red balls (the true proportion of all red balls in the entire bowl), denoted by $p$, is $[`r round(standard_error_ci[["lower"]], 2)`, `r round(standard_error_ci[["upper"]], 2)`]$. Recall that this confidence interval is based on bootstrapping using `tactile_shovel_1`. 
-
 
 To best understand how to interpret a confidence interval, it is important to see how the process works when we have a known population parameter. Recall the `bowl` data frame in the `moderndive` package contains our population of interest. We can calculate the proportion of red balls in this population to get the value of $p$. Remember this isn't usually the case of knowing the population parameter, but we'll see why this is useful for our build-up shortly. Let's do this two ways to review both the `infer` and `dplyr` pipelines:
 
@@ -1034,7 +1031,6 @@ bowl %>%
 ```{r echo=FALSE}
 p_red <- mean(bowl$color == "red")
 ```
-
 
 Both methods return `r p_red` as the proportion of red balls in the population of all balls in the bowl. So did our "95% confident" guess above of $[`r round(standard_error_ci[["lower"]], 2)`, `r round(standard_error_ci[["upper"]], 2)`]$ contain the "true value" for the population?
 
@@ -1270,10 +1266,7 @@ ggplot(sample_of_cis) +
   facet_wrap(~ confidence_level)
 ```
 
-
-
 We see that the sample proportion of reds varies in the `point_estimate` column with varying `lower` and `upper` bounds as well depending on the variability of the bootstrap distribution. The width of the confidence intervals appears to increase from left to right going from 80% confidence levels to 95% and then to 99%. Let's now compute the confidence interval (CI) width for each of these intervals and then get the median and mean length.
-
 
 ```{r}
 percentile_cis_by_level %>% 
@@ -1307,8 +1300,6 @@ virtual_samples_25 <- read_rds("rds/virtual_samples_25.rds")
 virtual_samples_50 <- read_rds("rds/virtual_samples_50.rds")
 virtual_samples_100 <- read_rds("rds/virtual_samples_100.rds")
 ```
-
-
 
 ```{r perc-sample-sizes, echo=FALSE}
 nested_balls_25 <- virtual_samples_25 %>% 
@@ -1397,7 +1388,6 @@ ggplot(sample_of_cis) +
   facet_wrap(~ sample_size)
 ```
 
-
 ```{r}
 percentile_cis_by_n %>% 
   mutate(width = upper - lower) %>% 
@@ -1410,90 +1400,110 @@ So as the sample size increases the width of our confidence intervals decreases.
 
 <!-- A good learning check might be to have the readers calculate confidence intervals when n = 1000, 2000, 2400. To their astonishment (maybe), they'll see that the size of the confidence interval is 0 when they get to 2400. -->
 
+
+
 ***
 
-## Case study: Comparing two proportions {#case-study-two-prop-ci}
 
-Let's now look into another example where the `infer` pipeline really shows off its power by looking at two variables. We'll have a response and an explanatory variable instead of just the one variable we've seen so far in the bowl of balls and pennies examples.
 
-If you see someone else yawn, are you more likely to yawn? In an [episode](http://www.discovery.com/tv-shows/mythbusters/mythbusters-database/yawning-contagious/) of the show *Mythbusters*, they tested the myth that yawning is contagious. The snippet from the show is available to view in the United States on the Discovery Network website [here](https://www.discovery.com/tv-shows/mythbusters/videos/is-yawning-contagious). More information about the episode is also available on IMDb [here](https://www.imdb.com/title/tt0768479/).
+## Case study: Is yawning contagious? {#case-study-two-prop-ci}
 
-Fifty adults who thought they were being considered for an appearance on the show were interviewed by a show recruiter ("confederate") who either yawned or did not. Participants then sat by themselves in a large van and were asked to wait. While in the van, the Mythbusters watched via hidden camera to see if the unaware participants yawned. The data frame containing the results is available at `mythbusters_yawn` in the `moderndive` package. Let's check it out.
+Let's apply our knowledge of confidence intervals to answer the question: "Is yawning contagious?" If you see someone else yawn, are you more likely to yawn? In an [episode](http://www.discovery.com/tv-shows/mythbusters/mythbusters-database/yawning-contagious/) of the US show *Mythbusters*, the hosts conducted an experiment to answer this question. The episode is available to view in the United States on the Discovery Network website [here](https://www.discovery.com/tv-shows/mythbusters/videos/is-yawning-contagious) and more information about the episode is also available on [IMDb](https://www.imdb.com/title/tt0768479/).
+
+### Data
+
+Fifty adult participants who thought they were being considered for an appearance on the show were interviewed by a show recruiter who either yawned or did not. Participants then sat by themselves in a large van and were asked to wait. While in the van, the Mythbusters watched via hidden camera to see if the participants yawned. The data frame containing the results is available in the `mythbusters_yawn` data frame included in the `moderndive` package:
 
 ```{r}
 mythbusters_yawn
 ```
 
-- The participant ID is stored in the `subj` variable with values of 1 to 50.
-- The `group` variable is either `"seed"` for when a confederate was trying to influence the participant or `"control"` if a confederate did not interact with the participant.
-- The `yawn` variable is either `"yes"` if the participant yawned or `"no"` if the participant did not yawn.
+The variables are:
 
-We can use the `janitor` package to get a glimpse into this data in a table format:
+- `subj`: The participant ID with values 1 throught 50.
+- `group`: A binary categorical variable of whether the participant was exposed to yawning, where `"seed"` indicates the participant was exposed to yawning and `"control"` indicates the participant was not. 
+- `yawn`: A `"yes"` vs `"no"` binary categorical variable indicating whether the participant responded by yawning.
+
+Let's use some data wrangling to obtain counts of the 4 possible outcomes:
 
 ```{r}
 mythbusters_yawn %>% 
-  tabyl(group, yawn) %>% 
-  adorn_percentages() %>% 
-  adorn_pct_formatting() %>% 
-  # To show original counts
-  adorn_ns()
+  group_by(group, yawn) %>% 
+  summarize(count = n())
 ```
 
-We are interested in comparing the proportion of those that yawned after seeing a seed versus those that yawned with no seed interaction. We'd like to see if the difference between these two proportions is significantly larger than 0. If so, we'd have evidence to support the claim that yawning is contagious based on this study.
+So 12 participants who were not exposed to yawning did not yawn, while 4 participants who were not exposed to yawning did yawn. So out of the 16 people who were not exposed to yawning, 4/16 = 0.25 = 25% did yawn. On the other hand, 24 participants who were exposed to yawning did not yawn, while 10 participants who were exposed to yawning did yawn. So out of the 34 people who were exposed to yawning, 10/34 = 0.294 = 29.4% did yawn. 
 
-In looking over this problem, we can make note of some important details to include in our `infer` pipeline:
+Putting these two values together, the participants who were exposed to yawning yawned 29.4% - 25% = 4.4% more often than those who were not exposed to yawning.
 
-- We are calling a `success` having a `yawn` value of `"yes"`.
-- Our response variable will always correspond to the variable used in the `success` so the response variable is `yawn`.
-- The explanatory variable is the other variable of interest here: `group`.
+### Back to sampling
 
-To summarize, we are looking to see the examine the relationship between yawning and whether or not the participant saw a seed yawn or not.
+In Chapter \@ref(sampling) our study population was the bowl of $N$ = 2400 balls. Our population parameter of interest was the population proportion of these balls that were red, denoted mathematically by $p$. In order to estimate $p$, we extracted a sample of 50 balls using the shovel and computed the relevant point estimate: the sample proportion of these 50 balls that were red, denoted mathematically by $\widehat{p}$.
 
-### Compute the point estimate
+Who is the study population here? All humans? All people who watch the show Mythbusters? It's hard to say! This question can only be answered if we know how the show's hosts recruited participants! We alas don't have this information. Only for the purposes of this case study however, we'll assume that the 50 participants are a representative sample of all Americans, and thus any results of this experiment will generalize to all $N$ = 327 million Americans (2018 population). 
+Just like with our sampling bowl, the population parameter of interest will involve proportions, but this time it will be the difference in population proportions $p_{seed} - p_{control}$, where $p_{seed}$ is the population proportion of people exposed to yawning who yawn and $p_{control}$ is the population proportion of people not exposed to yawning who yawn. Correspondingly, the point estimate/sample statistic based on sampled data will be the difference in sample proportions $\widehat{p}_{seed} - \widehat{p}_{control}$. Let's extend Table \@ref(tab:summarytable-ch8) of scenarios of sampling for inference to include our latest scenario. 
+
+```{r summarytable-ch8-c, echo=FALSE, message=FALSE}
+# The following Google Doc is published to CSV and loaded below using read_csv() below:
+# https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
+
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+  read_csv(na = "") %>% 
+  # Only first two scenarios
+  filter(Scenario <= 3) %>% 
+  kable(
+    caption = "\\label{tab:summarytable-ch8}Scenarios of sampling for inference", 
+    booktabs = TRUE,
+    escape = FALSE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position")) %>%
+  column_spec(1, width = "0.5in") %>% 
+  column_spec(2, width = "0.7in") %>%
+  column_spec(3, width = "1in") %>%
+  column_spec(4, width = "1.1in") %>% 
+  column_spec(5, width = "1in")
+```
+
+So in this case, based on two separate samples of size $n_{seed}$ = 34 and $n_{control}$ = 16, our estimate of $p_{seed} - p_{control}$, the difference in population proportions yawning, is $\widehat{p}_{seed} - \widehat{p}_{control}$ = 4.4%. This is known as a situtation of *two-sample* inference since we have two separate samples, in this case those who were exposed to yawning and those who were not. 
+
+However, say we had sampled 50 different people, 34 to be exposed to yawning and 16 not, and repeated this experiment. Would we obtain the exact same estimated difference of 4.4%? Probably not, because of sampling variation. How does this sampling variation affect our estimate of 4.4%? In other words, what would be a plausible range of values for this difference that accounts for this sampling variation? We can answer this question with confidence intervals! Furthermore, since we only have one single sample of 50 participants, we can construct the 95% confidence interval for $p_{seed} - p_{control}$ using bootstrap resampling with replacement. 
+
+
+### Constructing the confidence interval
+
+As we did in Section \@ref(infer-workflow), let's spell out the steps of the `infer` workflow to construct the 95% confidence interval for $p_{seed} - p_{control}$. However, since this is a new scenario for inference (difference in proportions), we'll need identify some new arguments to include in the `infer` functions:
+
+* We need to define a `success`, or event of interest to count. In the case of the sampling bowl from Chapter \@ref(sampling), it was observing a red ball. In our case, it will be a participant having a `yawn` value of `"yes"`.
+
+#### 1. `specify` variables {-}
+
+We take our `mythbusters_yawn` data frame with the data and `specify()` which variables are of interest using the formula interface where
+
+* Our response variable is `yawn`: whether or not a participant yawned.
+* The explanatory variable is `group`: whether or not a participant was exposed to yawning.
 
 ```{r eval=FALSE}
 mythbusters_yawn %>% 
   specify(formula = yawn ~ group)
 ```
-
 ```
 Error: A level of the response variable `yawn` needs to be specified
 for the `success` argument in `specify()`.
 ```
 
-Note that the `success` argument must be specified in situations such as this where the response variable has only two levels.
+Alas, we got an error message. `infer` is telling us that one of the levels of the categorical variable `yawn` needs to be defined as the `success`, or the event of interest we are trying to count. Are we interested in those participants who `"yes"` yawned or are we interested in those participants who `"no"` didn't yawn? This isn't clear. So we set the `success` argument as follows:
 
 ```{r}
 mythbusters_yawn %>% 
   specify(formula = yawn ~ group, success = "yes")
 ```
 
-We next want to calculate the statistic of interest for our sample. This corresponds to the difference in the proportion of successes.
+#### 2. `generate` replicates {-}
 
-```{r eval=FALSE}
-mythbusters_yawn %>% 
-  specify(formula = yawn ~ group, success = "yes") %>% 
-  calculate(stat = "diff in props")
-```
+<!--
+FIX THIS
 
-```
-Error: Statistic is based on a difference; specify the `order` in which to
-subtract the levels of the explanatory variable.
-```
-
-
-We see another error here. To further check to make sure that R knows exactly what we are after, we need to provide the `order` in which R should subtract these proportions of successes. As the error message states, we'll want to put `"seed"` first after `c()` and then `"control"`: `order = c("seed", "control")`. Our point estimate is thus calculated:
-
-```{r}
-obs_diff <- mythbusters_yawn %>% 
-  specify(formula = yawn ~ group, success = "yes") %>% 
-  calculate(stat = "diff in props", order = c("seed", "control"))
-obs_diff
-```
-
-This value represents the proportion of those that yawned after seeing a seed yawn (0.2941) minus the proportion of those that yawned with not seeing a seed (0.25).
-
-### Bootstrap distribution
 
 Our next step in building a confidence interval is to create a bootstrap distribution of statistics (differences in proportions of successes). We saw how it works with both a single variable in computing bootstrap means in Subsection \@ref(bootstrap-process) and in computing bootstrap proportions in Section \@ref(one-prop-ci), but we haven't yet worked with bootstrapping involving multiple variables though. 
 
@@ -1511,42 +1521,113 @@ head(mythbusters_yawn) %>%
 ```
 
 We can see that in this bootstrap sample generated from the first six rows of `mythbusters_yawn`, we have some rows repeated. The same is true when we perform the `generate()` step in `infer` as done below.
+-->
 
+Next, we `generate` 1000 replicates, or in other words we bootstrap resample the 50 participants with replacement 1000 times. This is what will inject sampling variation into our results. 
+
+```{r eval=TRUE}
+mythbusters_yawn %>% 
+  specify(formula = yawn ~ group, success = "yes") %>% 
+  generate(reps = 1000, type = "bootstrap")
+```
+
+Note the the resulting data frame has 50,000 rows. This is because we performed resampling of 50 participants with replacement 1000 times and thus 50,000 = 1000 $\times$ 50. Accordingly the variable `replicate`, indicating which resample each row belongs to, has the value `1` 50 times, the value `2` 50 times, all the way through to the value `1000` 50 times.
+
+#### 3. `calculate` summary statistics {-}
+
+After we `generate()` many replicates of bootstrap resampling with replacement, we next want to summarize of the bootstrap resamples of size 50 with a single summary statistic, the difference in proportions. In do this by setting the `stat` argument to `"diff in props"`:
+
+<!-- 
+A challenging learning check for those {dplyr} diehards is to get these values 
+without using {infer}. It takes a double group_by() and some trickery, but could 
+be a good exercise for those that don't quite see the power of {infer}.
+-->
+```{r, eval=FALSE}
+mythbusters_yawn %>% 
+  specify(formula = yawn ~ group, success = "yes") %>% 
+  generate(reps = 1000, type = "bootstrap") %>% 
+  calculate(stat = "diff in props")
+```
+```
+Error: Statistic is based on a difference; specify the `order` in which to
+subtract the levels of the explanatory variable.
+```
+
+We see another error here. `infer` is telling us that it needs to know is the difference in proportions $\widehat{p}_{seed} - \widehat{p}_{control}$ or $\widehat{p}_{control} - \widehat{p}_{seed}$. This isn't clear. So we set the `order` argument as `c("seed", "control")` to indicate we are interested in $\widehat{p}_{seed} - \widehat{p}_{control}$. Let's save this in a data frame `bootstrap_distribution_yawning`:
 
 ```{r}
-bootstrap_distribution <- mythbusters_yawn %>% 
+bootstrap_distribution_yawning <- mythbusters_yawn %>% 
   specify(formula = yawn ~ group, success = "yes") %>% 
   generate(reps = 1000, type = "bootstrap") %>% 
   calculate(stat = "diff in props", order = c("seed", "control"))
+bootstrap_distribution_yawning
 ```
 
-<!-- A challenging learning check for those {dplyr} diehards is to get these values without using {infer}. It takes a double group_by() and some trickery, but
-could be a good exercise for those that don't quite see the power of {infer}. -->
+We see that the resulting data frame has 1000 rows and 2 columns corresponding to the 1000 replicates and the difference in proportions for each bootstrap resample saved in the variable `stat`.
+
+#### 4. `visualize` the results {-}
+
+Figure \@ref(fig:boostrap-distribution-mythbusters)
 
 ```{r eval=FALSE}
-bootstrap_distribution %>% 
-  visualize(bins = 20)
+bootstrap_distribution_yawning %>% 
+  visualize()
 ```
-
-```{r echo=FALSE}
-bootstrap_distribution %>% 
-  visualize(bins = 20) +
+```{r boostrap-distribution-mythbusters, echo=FALSE, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+bootstrap_distribution_yawning %>% 
+  visualize() +
   ggtitle("Simulation-Based Bootstrap Distribution")
 ```
+
+<!--
+FIX THIS
+-->
+
 
 
 This distribution is roughly symmetric and bell-shaped but isn't quite there. Let's use the percentile-based method to compute a 95% confidence interval for the true difference in the proportion of those that yawn with and without a seed presented. The arguments are explicitly listed here but remember they are the defaults and simply `get_ci()` can be used.
 
 ```{r}
-bootstrap_distribution %>% 
-  get_ci(type = "percentile", level = 0.95)
+bootstrap_distribution_yawning %>% 
+  get_confidence_interval(type = "percentile", level = 0.95)
 ```
-
 ```{r include=FALSE}
-myth_ci <- bootstrap_distribution %>% 
-  get_ci(type = "percentile", level = 0.95)
+myth_ci <- bootstrap_distribution_yawning %>% 
+  get_confidence_interval(type = "percentile", level = 0.95)
 ```
 
+
+
+
+
+
+We next want to calculate the statistic of interest for our sample. This corresponds to the difference in the proportion of successes.
+
+```{r eval=FALSE}
+mythbusters_yawn %>% 
+  specify(formula = yawn ~ group, success = "yes") %>% 
+  calculate(stat = "diff in props")
+```
+
+Our point estimate is thus calculated:
+
+```{r}
+obs_diff <- mythbusters_yawn %>% 
+  specify(formula = yawn ~ group, success = "yes") %>% 
+  calculate(stat = "diff in props", order = c("seed", "control"))
+obs_diff
+```
+
+This value represents the proportion of those that yawned after seeing a seed yawn (0.2941) minus the proportion of those that yawned with not seeing a seed (0.25).
+
+
+
+
+
+
+
+### Interpreting the confidence interval
 
 The confidence interval shown here includes the value of 0. We'll see in Chapter \@ref(hypothesis-testing) further what this means in terms of this difference being statistically significant or not, but let's examine a bit here first. The range of plausible values for the difference in the proportion of those that yawned with and without a seed is between `r myth_ci[["2.5%"]]` and `r myth_ci[["97.5%"]]`. 
 
@@ -1556,9 +1637,11 @@ Note that this all relates to the importance of denoting the `order` argument in
 
 We, therefore, have evidence via this confidence interval suggesting that the conclusion from the Mythbusters show that "yawning is contagious" being "confirmed" is not statistically appropriate.
 
-<!-- Good learning check is to ask for an interpretation using the format above for this Mythbusters example. -->
 
----
+
+***
+
+
 
 ## Conclusion {#ci-conclusion}
 
@@ -1585,7 +1668,6 @@ sampling_distribution <- thousand_samples %>%
   summarize(stat = mean(color == "red"))
 ```
 
-
 ```{r, fig.cap="Sampling distribution for proportion red for n=200 samples of balls"}
 ggplot(sampling_distribution, aes(x = stat)) +
   geom_histogram(bins = 10, fill = "salmon", color = "white")
@@ -1598,7 +1680,6 @@ sampling_distribution %>%
   summarize(se = sd(stat))
 ```
 
-
 #### Bootstrap distribution {-}
 
 Let's now see how the shape of the bootstrap distribution compares to that of the sampling distribution. We'll shade the bootstrap distribution blue to further assist with remembering which is which, with the sampling distribution shaded salmon color. Let's walk through the steps needed with the `infer` pipeline to create the bootstrap distribution. We first need a sample of size 200 pulled from the `bowl` to give us a starting sample:
@@ -1607,7 +1688,6 @@ Let's now see how the shape of the bootstrap distribution compares to that of th
 sample_200 <- bowl %>% 
   sample_n(200, replace = FALSE)
 ```
-
 
 1. `specify` variables
 
@@ -1622,7 +1702,6 @@ sample_200 %>%
 Error: A level of the response variable `color` needs to be specified for the
 `success` argument in `specify()`.
 ```
-
 
 The `infer` package sends an error here that we need to tell it which of the possible `color` options we'd like to call a `success.`
 
@@ -1676,9 +1755,7 @@ visualize(bootstrap_distribution_n_200, bins = 10, fill = "blue") +
 ```
 
 
-*Side-by-side*
-
-Now that we have both the sampling distribution and the bootstrap distribution, let's put them on the same scales and examine their variability both visually and also by computing relevant standard deviations.
+*Side-by-side* Now that we have both the sampling distribution and the bootstrap distribution, let's put them on the same scales and examine their variability both visually and also by computing relevant standard deviations.
 
 ```{r fig.cap="Comparing sampling and bootstrap distributions", echo=FALSE}
 p_samp <- ggplot(sampling_distribution, aes(x = stat)) +
@@ -1691,7 +1768,6 @@ p_boot <- ggplot(bootstrap_distribution_n_200, aes(x = stat)) +
   labs(title = "Bootstrap distribution for n = 200")
 p_samp + p_boot
 ```
-
 
 ```{r}
 sampling_distribution %>% 
@@ -1720,8 +1796,6 @@ Since the bootstrap distribution is centered at the original sample proportion, 
 The unfortunate fact though is that we don't know the population mean in nearly all circumstances. The motivation of presenting it here was to show that the theory behind the Central Limit Theorem works using the tools you've worked with so far using the `ggplot2`, `dplyr`, `moderndive`, and `infer` packages.
 
 If we aren't able to use the sample mean as a good guess for the population mean, how should we best go about estimating what the population mean may be if we can only select samples from the population. We've now come full circle and can discuss the underpinnings of the confidence interval and ways to interpret it.
-
----
 
 ### Theory-based confidence intervals {#theory-ci}
 
@@ -1967,8 +2041,6 @@ qnorm(p = 0.025)
 
 This is what we expected above. Close to -1.96 corresponds to the spot that is 2.5% of the way into the values of the standard normal distribution. We'll elaborate more on these theory-based methods in Chapter \@ref(hypothesis-testing), but this should give you a good start!
 
----
-
 
 ```{block, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -1978,7 +2050,6 @@ Practice problems to come soon!
 
 ```{block, type='learncheck', purl=FALSE}
 ```
-
 
 
 ### Summary table {#ci-conclusion-table}
