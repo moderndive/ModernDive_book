@@ -1403,7 +1403,7 @@ So as the sample size increases the width of our confidence intervals decreases.
 
 Let's apply our knowledge of confidence intervals to answer the question: "Is yawning contagious?" If you see someone else yawn, are you more likely to yawn? In an [episode](http://www.discovery.com/tv-shows/mythbusters/mythbusters-database/yawning-contagious/) of the US show *Mythbusters*, the hosts conducted an experiment to answer this question. The episode is available to view in the United States on the Discovery Network website [here](https://www.discovery.com/tv-shows/mythbusters/videos/is-yawning-contagious) and more information about the episode is also available on [IMDb](https://www.imdb.com/title/tt0768479/).
 
-### Data
+### Data collected
 
 Fifty adult participants who thought they were being considered for an appearance on the show were interviewed by a show recruiter who either yawned or did not. Participants then sat by themselves in a large van and were asked to wait. While in the van, the Mythbusters watched via hidden camera to see if the participants yawned. The data frame containing the results is available in the `mythbusters_yawn` data frame included in the `moderndive` package:
 
@@ -1458,16 +1458,18 @@ Just like with our sampling bowl, the population parameter of interest will invo
   column_spec(5, width = "1in")
 ```
 
-So in this case, based on two separate samples of size $n_{seed}$ = 34 and $n_{control}$ = 16, our estimate of $p_{seed} - p_{control}$, the difference in population proportions yawning, is $\widehat{p}_{seed} - \widehat{p}_{control}$ = 4.4%. This is known as a situtation of *two-sample* inference since we have two separate samples, in this case those who were exposed to yawning and those who were not. 
+This is known as a situtation of *two-sample* inference since we have two separate samples, in this case those who were exposed to yawning and those who were not. So in our case, based on two separate samples of size $n_{seed}$ = 34 and $n_{control}$ = 16, 
+
+$$
+\widehat{p}_{seed} - \widehat{p}_{control} = \frac{24}{34} - \frac{12}{16} = 0.04411765 \approx 4.4\%
+$$
 
 However, say we had sampled 50 different people, 34 to be exposed to yawning and 16 not, and repeated this experiment. Would we obtain the exact same estimated difference of 4.4%? Probably not, because of sampling variation. How does this sampling variation affect our estimate of 4.4%? In other words, what would be a plausible range of values for this difference that accounts for this sampling variation? We can answer this question with confidence intervals! Furthermore, since we only have one single sample of 50 participants, we can construct the 95% confidence interval for $p_{seed} - p_{control}$ using bootstrap resampling with replacement. 
 
 
 ### Constructing the confidence interval
 
-As we did in Section \@ref(infer-workflow), let's spell out the steps of the `infer` workflow to construct the 95% confidence interval for $p_{seed} - p_{control}$. However, since this is a new scenario for inference (difference in proportions), we'll need identify some new arguments to include in the `infer` functions:
-
-* We need to define a `success`, or event of interest to count. In the case of the sampling bowl from Chapter \@ref(sampling), it was observing a red ball. In our case, it will be a participant having a `yawn` value of `"yes"`.
+As we did in Section \@ref(infer-workflow), let's spell out the steps of the `infer` workflow to construct the 95% confidence interval for $p_{seed} - p_{control}$. However, since difference in proportions are a new scenario for inference, we'll need identify some new arguments to include in the `infer` functions along the way.
 
 #### 1. `specify` variables {-}
 
@@ -1485,7 +1487,7 @@ Error: A level of the response variable `yawn` needs to be specified
 for the `success` argument in `specify()`.
 ```
 
-Alas, we got an error message. `infer` is telling us that one of the levels of the categorical variable `yawn` needs to be defined as the `success`, or the event of interest we are trying to count. Are we interested in those participants who `"yes"` yawned or are we interested in those participants who `"no"` didn't yawn? This isn't clear. So we set the `success` argument as follows:
+Alas, we got an error message. `infer` is telling us that one of the levels of the categorical variable `yawn` needs to be defined as the `success`, or the event of interest we are trying to count and compute proportions. Are we interested in those participants who `"yes"` yawned or are we interested in those participants who `"no"` didn't yawn? This isn't clear. So we set the `success` argument to `"yes"` as follows:
 
 ```{r}
 mythbusters_yawn %>% 
@@ -1496,7 +1498,6 @@ mythbusters_yawn %>%
 
 <!--
 FIX THIS
-
 
 Our next step in building a confidence interval is to create a bootstrap distribution of statistics (differences in proportions of successes). We saw how it works with both a single variable in computing bootstrap means in Subsection \@ref(bootstrap-process) and in computing bootstrap proportions in Section \@ref(one-prop-ci), but we haven't yet worked with bootstrapping involving multiple variables though. 
 
@@ -1535,6 +1536,7 @@ A challenging learning check for those {dplyr} diehards is to get these values
 without using {infer}. It takes a double group_by() and some trickery, but could 
 be a good exercise for those that don't quite see the power of {infer}.
 -->
+
 ```{r, eval=FALSE}
 mythbusters_yawn %>% 
   specify(formula = yawn ~ group, success = "yes") %>% 
@@ -1546,7 +1548,9 @@ Error: Statistic is based on a difference; specify the `order` in which to
 subtract the levels of the explanatory variable.
 ```
 
-We see another error here. `infer` is telling us that it needs to know is the difference in proportions $\widehat{p}_{seed} - \widehat{p}_{control}$ or $\widehat{p}_{control} - \widehat{p}_{seed}$. This isn't clear. So we set the `order` argument as `c("seed", "control")` to indicate we are interested in $\widehat{p}_{seed} - \widehat{p}_{control}$. Let's save this in a data frame `bootstrap_distribution_yawning`:
+We see another error here. We need to specify the order of the subtraction. Is it $\widehat{p}_{seed} - \widehat{p}_{control}$ or $\widehat{p}_{control} - \widehat{p}_{seed}$. We specify it to be $\widehat{p}_{seed} - \widehat{p}_{control}$ by setting `order = c("seed", "control")`. You can also set `order = c("control", "seed")`; it makes no difference in the analysis. However, whatever order you choose, it is important to stay consistent throughout your analysis. 
+
+Let's save the output in a data frame `bootstrap_distribution_yawning`:
 
 ```{r}
 bootstrap_distribution_yawning <- mythbusters_yawn %>% 
@@ -1560,7 +1564,7 @@ We see that the resulting data frame has 1000 rows and 2 columns corresponding t
 
 #### 4. `visualize` the results {-}
 
-Figure \@ref(fig:boostrap-distribution-mythbusters)
+In Figure \@ref(fig:boostrap-distribution-mythbusters) we `visualize()` the resulting bootstrap resampling distribution.
 
 ```{r eval=FALSE}
 bootstrap_distribution_yawning %>% 
@@ -1573,62 +1577,58 @@ bootstrap_distribution_yawning %>%
   ggtitle("Simulation-Based Bootstrap Distribution")
 ```
 
-<!--
-FIX THIS
--->
-
-
-
-This distribution is roughly symmetric and bell-shaped but isn't quite there. Let's use the percentile-based method to compute a 95% confidence interval for the true difference in the proportion of those that yawn with and without a seed presented. The arguments are explicitly listed here but remember they are the defaults and simply `get_ci()` can be used.
+First, let's compute the 95% confidence interval for $p_{seed} - p_{control}$ using the percentile method, in other words by identifying the 2.5^th^ and 97.5^th^ percentiles which include the middle 95% of values. Recall that this method does not require the bootstrap distribution to be normally shaped. 
 
 ```{r}
 bootstrap_distribution_yawning %>% 
   get_confidence_interval(type = "percentile", level = 0.95)
 ```
 ```{r include=FALSE}
-myth_ci <- bootstrap_distribution_yawning %>% 
+myth_ci_percentile <- bootstrap_distribution_yawning %>% 
   get_confidence_interval(type = "percentile", level = 0.95)
 ```
 
+Second, since the bootstrap distribution is roughly bell-shaped, it is reasonable to assume that it is normally shaped, and thus we can construct a confidence interval using the standard error method. Recall to construct a standard error method, we need to specify the center of the interval using the `point_estimate` argument. We set it to be the observed difference in sample proportions of 4.4% we computed earlier.
 
-
-
-
-
-We next want to calculate the statistic of interest for our sample. This corresponds to the difference in the proportion of successes.
-
-```{r eval=FALSE}
-mythbusters_yawn %>% 
-  specify(formula = yawn ~ group, success = "yes") %>% 
-  calculate(stat = "diff in props")
-```
-
-Our point estimate is thus calculated:
+However, we can also use the `infer` workflow to let R compute this value by excluding the `generate()` 1000 bootstrap replicates step. In other words, do not compute the difference in proportions for 1000 bootstrap samples with replacement, rather focus only on the observed sample data. We can achieve this by commenting out the `generate()` line, telling R to ignore it:
 
 ```{r}
-obs_diff <- mythbusters_yawn %>% 
+mythbusters_yawn %>% 
   specify(formula = yawn ~ group, success = "yes") %>% 
+  # generate(reps = 1000, type = "bootstrap") %>% 
   calculate(stat = "diff in props", order = c("seed", "control"))
-obs_diff
 ```
 
-This value represents the proportion of those that yawned after seeing a seed yawn (0.2941) minus the proportion of those that yawned with not seeing a seed (0.25).
+We thus plug this value as the `point_estimate` argument. 
 
+```{r}
+bootstrap_distribution_yawning %>% 
+  get_confidence_interval(type = "se", point_estimate = 0.0441176)
+```
+```{r include=FALSE}
+myth_ci_se <- bootstrap_distribution_yawning %>% 
+  get_confidence_interval(type = "se", point_estimate = 0.0441176)
+```
 
+Let's visualize both confidence intervals in Figure \@ref(fig:boostrap-distribution-mythbusters-CI), with the percentile method interval in red and the standard error method interval in blue. Observe that they are both similar. 
 
-
-
+```{r boostrap-distribution-mythbusters-CI, echo=FALSE, fig.show='hold', fig.cap="Two 95% confidence intervals: percentile method in red, standard error method in blue.", purl=FALSE}
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+bootstrap_distribution_yawning %>% 
+  visualize() +
+  ggtitle("") +
+  shade_confidence_interval(endpoints = myth_ci_percentile, fill = NULL, color = "red") + 
+  shade_confidence_interval(endpoints = myth_ci_se, fill = NULL, color = "blue")  
+```
 
 
 ### Interpreting the confidence interval
 
-The confidence interval shown here includes the value of 0. We'll see in Chapter \@ref(hypothesis-testing) further what this means in terms of this difference being statistically significant or not, but let's examine a bit here first. The range of plausible values for the difference in the proportion of those that yawned with and without a seed is between `r myth_ci[["2.5%"]]` and `r myth_ci[["97.5%"]]`. 
+Given that both confidence intervals are quite similar, let's focus our interpretation to only the percentile method confidence interval of (`r myth_ci_percentile[["2.5%"]] %>% round(2)`, `r myth_ci_percentile[["97.5%"]] %>% round(2)`). Recall that the correct statistical interpretation of a 95% confidence interval is: if repeated this procedure 100 times, then we'd expect 95 of the confidence intervals to capture the true population difference in proportions $p_{seed} - p_{control}$. In other words, if we gathered 100 samples of $n$ = 50 participants from a similar pool of people and constructed 100 confidence intervals, about 95 of them will contain the true value of $p_{seed} - p_{control}$ while about 5 won't. Given that this is a little long winded, we use the shorthand: we're 95% "confident" that the true difference in proportions $p_{seed} - p_{control}$ is between (`r myth_ci_percentile[["2.5%"]] %>% round(2)`, `r myth_ci_percentile[["97.5%"]] %>% round(2)`).
 
-Therefore, we are not sure which proportion is larger. Some of the bootstrap statistics showed the proportion without a seed to be higher and others showed the proportion with a seed to be higher. If the confidence interval was entirely above zero, we would be relatively sure (about "95% confident") that the seed group had a higher proportion of yawning than the control group.
+There is one value of particular interest that this interval contains: zero. If $p_{seed} - p_{control} = 0$, then there would be no difference in proportion yawning, suggesting that there is no associated effect of being exposed to yawning. Since the 95% confidence interval includes 0, we cannot conclusively say if either proportion is larger. Of our 1000 bootstrap resamples with replacement, sometimes $\widehat{p}_{seed}$ was higher and thus those exposed to yawning yawned themselves more often, and other times the reverse. Say on the other hand the 95% confidence interval was entirely above zero. This would be suggestive that $p_{seed} - p_{control} > 0$ and thus those exposed to yawning yawned more often. 
 
-Note that this all relates to the importance of denoting the `order` argument in the `calculate()` function. Since we specified `"seed"` and then `"control"` positive values for the statistic correspond to the `"seed"` proportion being higher, whereas negative values correspond to the `"control"` group being higher.
-
-We, therefore, have evidence via this confidence interval suggesting that the conclusion from the Mythbusters show that "yawning is contagious" being "confirmed" is not statistically appropriate.
+Furthermore, if the 50 participants were randomly allocated to the `"seed"` and `"control"` groups, then this would be suggestive that being exposed to yawning doesn't not *cause* yawning. In other words, yawning is not contagious. However, no information on how participatns were assigned to be exposed to yawning or not could be found, so we cannot make such a causal statement. 
 
 
 
