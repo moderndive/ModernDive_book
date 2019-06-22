@@ -417,31 +417,31 @@ visualize(bootstrap_distribution) +
 
 
 ## ------------------------------------------------------------------------
-tactile_shovel_1
+bowl_sample_1
 
 
 ## ------------------------------------------------------------------------
-p_hat <- tactile_shovel_1 %>% 
+p_hat <- bowl_sample_1 %>% 
   specify(formula = color ~ NULL, success = "red") %>% 
   calculate(stat = "prop")
 p_hat
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## tactile_shovel_1 %>%
+## bowl_sample_1 %>%
 ##   specify(formula = color ~ NULL, success = "red") %>%
 ##   generate(reps = 10000, type = "bootstrap")
 
 
 ## ----echo=FALSE----------------------------------------------------------
 set.seed(2000)
-gen <- tactile_shovel_1 %>% 
+gen <- bowl_sample_1 %>% 
   specify(formula = color ~ NULL, success = "red") %>% 
   generate(reps = 10000, type = "bootstrap")
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## bootstrap_props <- tactile_shovel_1 %>%
+## bootstrap_props <- bowl_sample_1 %>%
 ##   specify(formula = color ~ NULL, success = "red") %>%
 ##   generate(reps = 10000, type = "bootstrap") %>%
 ##   calculate(stat = "prop")
