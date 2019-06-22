@@ -25,5 +25,7 @@ ModernDive is built using RStudio's [`bookdown`](https://www.rstudio.com/resourc
 
 The authors would like to thank [Nina Sonneborn](https://github.com/nsonneborn), [Kristin Bott](https://twitter.com/rhobott?lang=en), and the participants of our [USCOTS 2017 workshop](https://www.causeweb.org/cause/uscots/uscots17/workshop/3) for their feedback and suggestions.  A special thanks goes to Prof. Yana Weinstein, cognitive psychological scientist and co-founder of [The Learning Scientists](http://www.learningscientists.org/yana-weinstein/), for her extensive contributions.
 
-
+## Images 
+ * Image catalog link(?)
+ * How coin images are made (?) 
 
