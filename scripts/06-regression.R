@@ -190,7 +190,7 @@ get_regression_table(score_model) %>%
 
 
 ## ----moderndive-figure-wrapper, echo=FALSE, fig.align='center', fig.cap="The concept of a 'wrapper' function."----
-knitr::include_graphics("images/flowcharts/flowchart.011-cropped.png")
+knitr::include_graphics("images/ss/560016454_chart.png")
 
 
 
@@ -390,7 +390,7 @@ regression_points %>%
 
 
 ## ----moderndive-figure-causal-graph-2, echo=FALSE, fig.align='center', fig.cap="Does sleeping with shoes on cause headaches?"----
-knitr::include_graphics("images/flowcharts/flowchart.010-cropped.png")
+knitr::include_graphics("images/ss/head.png")
 
 
 ## ----moderndive-figure-causal-graph, echo=FALSE, fig.align='center', fig.cap="Causal graph."----
