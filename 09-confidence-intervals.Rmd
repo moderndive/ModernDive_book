@@ -62,6 +62,7 @@ library(infer)
 library(knitr)
 library(kableExtra)
 library(patchwork)
+library(purrr)
 # Ensure pennies_sample is loaded (might not be needed)
 data("pennies_sample")
 ```
@@ -922,19 +923,19 @@ bowl %>%
 ```
 ```{r, echo = FALSE}
 p_red <- bowl %>% 
-  summarize(prop_red = 100*mean(color == "red")) %>% 
+  summarize(prop_red = mean(color == "red")) %>% 
   pull(prop_red) %>% 
   round(2)
 ```
 
-At this point you might be asking yourself: If we already know that $p$ = `r p_red/100` = `r p_red`% of the bowl's balls are red, then why are we sampling to estimate this value to begin with? Your skepticism is merited! Recall from Section \@ref(sampling-simulation), that this was virtual "simulation" used to study sampling. In any real-world setting however, we would not know the value of the population proportion $p$ and hence we have no choice but use sampling to estimate it.
+At this point you might be asking yourself: If we already know that $p$ = `r p_red` = `r 100*p_red`% of the bowl's balls are red, then why are we sampling to estimate this value to begin with? Your skepticism is merited! Recall from Section \@ref(sampling-simulation), that this was virtual "simulation" used to study sampling. In any real-world setting however, we would not know the value of the population proportion $p$ and hence we have no choice but use sampling to estimate it.
 
-Bringing the discussion back to confidence intervals constructed based on samples from the bowl, we have to ask ourselves: Does the interval include $p$ = `r p_red/100` = `r p_red`% or not? Alternatively, going back to our "fishing with a spear" versus "fishing with a net" analogy from Section \@ref(ci-build-up), we have to ask ourselves: Did our net capture the fish or not?
+Bringing the discussion back to confidence intervals constructed based on samples from the bowl, we have to ask ourselves: Does the interval include $p$ = `r p_red` = `r 100*p_red`% or not? Alternatively, going back to our "fishing with a spear" versus "fishing with a net" analogy from Section \@ref(ci-build-up), we have to ask ourselves: Did our net capture the fish or not?
 
 
-### Did Ilyas & Yohan's net capture the fish?
+### Did the net capture the fish?
 
-Recall from in Table \@ref(tab:tactilered) that we had 33 groups of friends repeat this sampling simulation, each taking samples of size 50 from the bowl and compute the sample proportion red $\widehat{p}$, resulting in 33 such estimates of $p$. Let's focus on Ilyas and Yohan's sample in Table \@ref(tab:tactilered) where they observed 21 red balls out of the 50 in their shovel, in other words their sample proportion $\widehat{p}$ = 21/50 = 0.42 = 42\%. This data is stored in the `tactile_shovel_1` data frame in the `moderndive` package:
+Recall from in Table \@ref(tab:tactilered) that we had 33 groups of friends repeat this sampling simulation, each taking samples of size 50 from the bowl and compute the sample proportion red $\widehat{p}$, resulting in 33 such estimates of $p$. Let's focus on Ilyas and Yohan's sample in Table \@ref(tab:tactilered) where they observed 21 red balls out of the 50 in their shovel, in other words their sample proportion $\widehat{p}$ = 21/50 = 0.42 = 42\%. This data is stored in the `bowl_sample_1` data frame in the `moderndive` package:
 
 
 <!--
@@ -942,17 +943,17 @@ At this point you might be asking yourself: why did we take 33 samples of size 5
 -->
 
 ```{r}
-tactile_shovel_1
+bowl_sample_1
 ```
 
-Let's follow the `infer` package workflow from Section \@ref(infer-workflow) to create a percentile method 95% confidence interval for $p$ using sample data in `tactile_shovel_1`.
+Let's follow the `infer` package workflow from Section \@ref(infer-workflow) to create a percentile method 95% confidence interval for $p$ using sample data in `bowl_sample_1`.
 
 #### 1. `specify` variables {-}
 
 First, we `specify()` the `response` variable of interest `color`:
 
 ```{r, eval=FALSE}
-tactile_shovel_1 %>% 
+bowl_sample_1 %>% 
   specify(response = color)
 ```
 ```
@@ -963,16 +964,16 @@ argument in `specify()`.
 Whoops! We need to define which event is of interest! `red` or `white` balls? Since we are interested in proportions red, let's set `success` to be `"red"`:
 
 ```{r}
-tactile_shovel_1 %>% 
+bowl_sample_1 %>% 
   specify(response = color, success = "red")
 ```
 
 #### 2. `generate` replicates {-}
 
-Second, we `generate()` 1000 replicates via bootstrap with replacement of our original sample of 50 balls in `tactile_shovel_1` by setting `reps = 1000` and `type = "bootstrap"`. 
+Second, we `generate()` 1000 replicates via bootstrap with replacement of our original sample of 50 balls in `bowl_sample_1` by setting `reps = 1000` and `type = "bootstrap"`. 
 
 ```{r}
-tactile_shovel_1 %>% 
+bowl_sample_1 %>% 
   specify(response = color, success = "red") %>% 
   generate(reps = 1000, type = "bootstrap")
 ```
@@ -981,14 +982,14 @@ Note the the resulting data frame has 50,000 rows. This is because we performed 
 
 #### 3. `calculate` summary statistics {-}
 
-Third, we summarize each of the 1000 resamples of size 50 with their `prop`ortion of "successes", in other words the proportion of the balls that are `"red"`. Let's save the result in a data frame called `shovel_bootstrap_1`:
+Third, we summarize each of the 1000 resamples of size 50 with their `prop`ortion of "successes", in other words the proportion of the balls that are `"red"`. Let's save the result in a data frame called `sample_1_bootstrap`:
 
 ```{r}
-shovel_bootstrap_1 <- tactile_shovel_1 %>% 
+sample_1_bootstrap <- bowl_sample_1 %>% 
   specify(response = color, success = "red") %>% 
   generate(reps = 1000, type = "bootstrap") %>% 
   calculate(stat = "prop")
-shovel_bootstrap_1
+sample_1_bootstrap
 ```
 
 #### 4. `visualize` the results {-}
@@ -996,165 +997,190 @@ shovel_bootstrap_1
 Fourth and lastly, let's compute the resulting 95% confidence interval. 
 
 ```{r}
-percentile_ci <- shovel_bootstrap_1 %>% 
+percentile_ci_1 <- sample_1_bootstrap %>% 
   get_confidence_interval(level = 0.95, type = "percentile")
-percentile_ci
+percentile_ci_1
 ```
 
 Furthermore, let's visualize the bootstrap distribution where we've adjusted the number of bins to better see the resulting shape. Furthermore, we add a vertical red line at $\widehat{p}$ = 21/50 = 0.42 = 42\% using `geom_vline()` by setting the `xintercept` argument
 
-
 ```{r eval=FALSE}
-shovel_bootstrap_1 %>% 
+sample_1_bootstrap %>% 
   visualize(bins = 15) + 
   shade_confidence_interval(endpoints = c(0.28, 0.56)) +
   geom_vline(xintercept = 0.375, col = "red")
 ```
 ```{r shovel-bootstrap-1-infer, echo=FALSE, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-shovel_bootstrap_1 %>% 
+sample_1_bootstrap %>% 
   visualize(bins = 15) + 
   shade_confidence_interval(endpoints = c(0.28, 0.56)) +
   ggtitle("Simulation-Based Bootstrap Distribution") +
   geom_vline(xintercept = 0.375, col = "red")
 ```
 
-Did Ilyas and Yohan's net capture the fish? In other based, did the 95% confidence interval for $p$ based on the 50 balls they sampled contain the true value of $p$, the population proportion of the bowl's balls that are red? Yes! `r p_red/100` is between the endpoints of our confidence interval (`r percentile_ci[[1]]`, `r percentile_ci[[2]]`)
+Did Ilyas and Yohan's net capture the fish? In other words, did the 95% confidence interval for $p$ based on the 50 balls they sampled contain the true value of $p$, the population proportion of the bowl's balls that are red? Yes! `r p_red` is between the endpoints of our confidence interval (`r percentile_ci_1[[1]]`, `r percentile_ci_1[[2]]`)
 
-However, will *every* 95% confidence interval for $p$ capture this value? In other words, if we had a different sample of size 50 and constructed a confidence interval using the same method, would we be guaranteed that it contained the population proportion $p$ as well? Let's study the effect of *sampling* variation by randomly sampling 50 balls from our virtual `bowl`:
+However, will *every* 95% confidence interval for $p$ capture this value? In other words, if we had a different sample of size 50 and constructed a confidence interval using the same method, would we be guaranteed that it contained the population proportion $p$ as well? Let's study the effect of sampling variation by randomly sampling *another* 50 balls from our virtual `bowl` using our virtual shovel:
 
 ```{r}
 bowl_sample_2 <- bowl %>% 
-  sample_n(size = 50)
+  rep_sample_n(size = 50)
+bowl_sample_2
 ```
 
-Note the use of the `sample_n()` function in the `dplyr` package here. This does the same thing as `rep_sample_n(reps = 1)` but omits the extra `replicate` column.
-
-We next create an `infer` pipeline to generate a standard error-based 95% confidence interval for $p$. Recall that we first need a `point_estimate` to act as the center of our standard error-based confidence interval. We calculate this with name `prop_red_2`.
+Let's perform the same steps of the `infer` pipeline we did on `bowl_sample_1` to generate *another* 95% confidence interval for $p$ based on the new sample of 50 balls in `bowl_sample_2`. First we create the bootstrap distribution of the sample proportion $\widehat{p}$ and save the results in `sample_2_bootstrap`:
 
 ```{r}
-prop_red_2 <- bowl_sample_2 %>% 
-  specify(formula = color ~ NULL, success = "red") %>% 
-  calculate(stat = "prop")
-standard_error_ci_2 <- bowl_sample_2 %>% 
-  specify(formula = color ~ NULL, success = "red") %>% 
+sample_2_bootstrap <- bowl_sample_2 %>% 
+  specify(response = color, success = "red") %>% 
   generate(reps = 1000, type = "bootstrap") %>% 
-  calculate(stat = "prop") %>% 
-  get_ci(type = "se", point_estimate = prop_red_2)
-standard_error_ci_2 
+  calculate(stat = "prop")
+sample_2_bootstrap
 ```
 
-This new confidence interval also contains the value of $p$. Let's further investigate by repeating this process 100 times to get 100 different confidence intervals derived from 100 different samples of the population `bowl`. Each sample will have a size of 50 just as the original sample. We will plot each of these confidence intervals as horizontal lines. At the center of each confidence interval is the point estimate denoted by a dot. We will also show a red line corresponding to the known population value of `r p_red` red balls.
+We once again compute the percentile-based confidence interval. 
 
-```{r reliable-se, fig.cap="Reliability of 95 percent confidence intervals",echo=FALSE}
-set.seed(201)
+```{r}
+percentile_ci_2 <- sample_2_bootstrap %>% 
+  get_confidence_interval(level = 0.95, type = "percentile")
+percentile_ci_2
+```
 
-ball_samples <- bowl %>% 
-  rep_sample_n(size = 50, reps = 33, replace = FALSE)
-nested_balls <- ball_samples %>% 
-  group_by(replicate) %>% 
-  tidyr::nest() %>% 
-  mutate(sample_prop = purrr::map_dbl(data, ~mean(.x$color == "red")))
-bootstrap_pipeline <- function(entry){
-  entry %>% 
-    specify(formula = color ~ NULL, success = "red") %>% 
-    generate(reps = 1000, type = "bootstrap") %>% 
-    calculate(stat = "prop")
-}
-if(!file.exists("rds/balls_se_cis.rds")){
-  balls_se_cis <- nested_balls %>% 
-    mutate(bootstraps = purrr::map(data, bootstrap_pipeline)) %>% 
+Does this new net capture the fish? In other words, did the 95% confidence interval for $p$ based on the 50 newly sampled balls contain the true value of $p$, the population proportion of the bowl's balls that are red? Yes! `r p_red` is between the endpoints of our confidence interval (`r percentile_ci_2[[1]]`, `r percentile_ci_2[[2]]`).
+
+Let's now repeat this process 100 more times, leaving us with 100 different 95% confidence intervals $p$ derived from 100 different samples of size 50 balls from the population `bowl`. Let's visualize the results in Figure \@ref(fig:reliable-percentile) where:
+
+1. We mark the true population proportion red $p$ = `r p_red` = `r p_red`% with a vertical red line.
+1. We mark each of the 100 95% confidence intervals for $p$ with horizontal lines. These are the "nets."
+1. The horizontal the line if colored orange of the confidence interval "captures" the true value of $p$ in red and the line is blue otherwise.
+1. We also mark each line with a dot indicated the value of the point estimate: the sample proportion $\widehat{p}$. These are the "spears."
+
+```{r reliable-percentile, fig.cap="100 SE-based 95% confidence intervals for p",echo=FALSE}
+if(!file.exists("rds/balls_percentile_cis.rds")){
+  # Set random number generator seed value to number 9 in honour of Bobby Orr.
+  set.seed(4)
+
+  # Function to run infer pipeline
+  bootstrap_pipeline <- function(sample_data){
+    sample_data %>% 
+      specify(formula = color ~ NULL, success = "red") %>% 
+      generate(reps = 1000, type = "bootstrap") %>% 
+      calculate(stat = "prop")
+  }
+  
+  # Compute nested data frame with sampled data, sample proportions, all 
+  # bootstrap replicates, and percentile_ci
+  balls_percentile_cis <- bowl %>% 
+    rep_sample_n(size = 50, reps = 100, replace = FALSE) %>% 
     group_by(replicate) %>% 
-    mutate(se_ci = purrr::map(bootstraps, get_ci, type = "se",
-                              level = 0.95,
-                              point_estimate = sample_prop))
+    tidyr::nest() %>% 
+    mutate(sample_prop = map_dbl(data, ~mean(.x$color == "red"))) %>%
+    # run infer pipeline on each nested tibble to generated bootstrap replicates
+    mutate(bootstraps = map(data, bootstrap_pipeline)) %>% 
+    group_by(replicate) %>% 
+    # Compute 95% percentile CI's for each nested element
+    mutate(percentile_ci = map(bootstraps, get_ci, type = "percentile", level = 0.95))
+  
+  # Save output to rds object
+  saveRDS(object = balls_percentile_cis, "rds/balls_percentile_cis.rds")
+} else {
+  balls_percentile_cis <- readRDS("rds/balls_percentile_cis.rds")
+}
+
+# Identify if confidence interval captured true p
+percentile_cis <- balls_percentile_cis %>% 
+  tidyr::unnest(percentile_ci) %>% 
+  mutate(captured = `2.5%` <= p_red & p_red <= `97.5%`)
+
+# Plot them!
+ggplot(percentile_cis) +
+  geom_segment(aes(y = replicate, yend = replicate, x = `2.5%`, xend = `97.5%`, color = captured)) +
+  geom_point(aes(x = sample_prop, y = replicate, color = captured)) +
+  labs(x = expression("Proportion of red balls"), y = "Replicate ID") +
+  scale_color_manual(values = c("blue", "orange")) + 
+  geom_vline(xintercept = p_red, color = "red") 
+```
+
+Of the 100 confidence intervals based on 100 samples of size $n$ = 50, `r percentile_cis[["captured"]] %>% sum()` of them captured the population mean $p$ = `r p_red`, whereas `r 100 - percentile_cis[["captured"]] %>% sum()` of them didn't. In other words, `r percentile_cis[["captured"]] %>% sum()` of our nets caught the fish whereas `r 100 - percentile_cis[["captured"]] %>% sum()` of our nets didn't. 
+
+This is where the 95% confidence level we defined in Section \@ref(ci-build-up) comes into play: for every 100 confidence intervals based on 100 different random examples, we *expect* that 95 of them will capture $p$ and 5 won't. Note that "expect" is a probabilistic statement that averages over sampling variation. In other words, for every 100 confidence intervals, we will observe about 5 confidence intervals that fail to capture $p$. In Figure \@ref(fig:reliable-percentile) for example, `r 100 - percentile_cis[["captured"]] %>% sum()` of the confidence intervals failed to capture $p$.
+
+To further accentuate this point, let's perform a similar procedure using 85% standard-error based confidence intervals instead. Let's visualize the results in Figure \@ref(fig:reliable-se).
+
+```{r reliable-se, fig.cap="100 SE-based 85% confidence intervals for p",echo=FALSE}
+if(!file.exists("rds/balls_se_cis.rds")){
+  # Set random number generator seed value to 9 in honour of Maurice "Rocket" Richard.
+  set.seed(9)
+  
+  # Function to run infer pipeline
+  bootstrap_pipeline <- function(sample_data){
+    sample_data %>% 
+      specify(formula = color ~ NULL, success = "red") %>% 
+      generate(reps = 1000, type = "bootstrap") %>% 
+      calculate(stat = "prop")
+  }
+  
+  # Compute nested data frame with sampled data, sample proportions, all 
+  # bootstrap replicates, and se_ci
+  balls_se_cis <- bowl %>% 
+    rep_sample_n(size = 50, reps = 100, replace = FALSE) %>% 
+    group_by(replicate) %>% 
+    tidyr::nest() %>% 
+    mutate(sample_prop = map_dbl(data, ~mean(.x$color == "red"))) %>%
+    # run infer pipeline on each nested tibble to generated bootstrap replicates
+    mutate(bootstraps = map(data, bootstrap_pipeline)) %>% 
+    group_by(replicate) %>% 
+    # Compute 95% se CI's for each nested element
+    mutate(se_ci = map(bootstraps, get_ci, type = "se", level = 0.85,
+                       point_estimate = sample_prop))
+  
+  # Save output to rds object
   saveRDS(object = balls_se_cis, "rds/balls_se_cis.rds")
 } else {
   balls_se_cis <- readRDS("rds/balls_se_cis.rds")
 }
+
+# Identify if confidence interval captured true p
 se_cis <- balls_se_cis %>% 
   tidyr::unnest(se_ci) %>% 
   mutate(captured = lower <= p_red & p_red <= upper)
+
+# Plot them!
 ggplot(se_cis) +
+  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, color = captured)) +
   geom_point(aes(x = sample_prop, y = replicate, color = captured)) +
-  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, 
-                   color = captured)) +
-  labs(
-    x = expression("Proportion of red balls"),
-    y = "Replicate ID",
-    title = expression(paste(
-      "95% standard error-based confidence intervals for ", p, sep = "")
-      )
-  ) +
+  labs(x = expression("Proportion of red balls"), y = "Replicate ID") +
   scale_color_manual(values = c("blue", "orange")) + 
   geom_vline(xintercept = p_red, color = "red") 
 ```
 
-Of the 100 confidence intervals based on samples of size $n = 50$, `r sum(se_cis[["captured"]])` of them captured the population mean $p = `r p_red`$, whereas `r 100 - sum(se_cis[["captured"]])` of them did not include it. If we repeated this process of building confidence intervals more times with more samples, we'd expect 95% of them to contain the population parameter $p$. In other words, the procedure we have used to generate confidence intervals is "95% reliable" in that we can expect it to include the true population parameter 95% of the time if the process is repeated.
+Of the 100 confidence intervals based on 100 samples of size $n = 50$, `r se_cis[["captured"]] %>% sum()` of them captured the population proportion $p = `r p_red`$, whereas `r 100 - sum(se_cis[["captured"]])` of them did not. Note that since we lowered the confidence level from 95% to 80%, we now have a much larger number of confidence intervals that failed to "catch the fish."
 
-To further accentuate this point, let's perform a similar procedure using 90% confidence intervals instead. This time we will use the percentile method instead of the standard error method for computing the confidence intervals.
 
-```{r reliable-perc, fig.cap="Reliability of 90 percent confidence intervals", echo=FALSE}
-set.seed(201)
-balls_samples2 <- bowl %>% 
-  rep_sample_n(size = 50, reps = 100, replace = FALSE)
-nested_balls2 <- balls_samples2 %>% 
-  group_by(replicate) %>% 
-  tidyr::nest()
-infer_pipeline <- function(entry){
-  entry %>% 
-    specify(formula = color ~ NULL, success = "red") %>% 
-    generate(reps = 1000, type = "bootstrap") %>% 
-    calculate(stat = "prop") %>% 
-    get_ci(level = 0.9)
-}
-if(!file.exists("rds/balls_perc_cis.rds")){
-  balls_perc_cis <- nested_balls2 %>% 
-    mutate(percentile_ci = purrr::map(data, infer_pipeline)) %>% 
-    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$color == "red")))
-  write_rds(balls_perc_cis, "rds/balls_perc_cis.rds")
-} else {
-  balls_perc_cis <- read_rds("rds/balls_perc_cis.rds")
-}
-perc_cis <- balls_perc_cis %>% 
-  tidyr::unnest(percentile_ci) %>% 
-  rename(lower = `5%`, upper = `95%`) %>% 
-  mutate(captured = lower <= p_red & p_red <= upper)
-ggplot(perc_cis) +
-  geom_point(aes(x = point_estimate, y = replicate, color = captured)) +
-  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, 
-                   color = captured)) +
-  labs(
-    x = expression("Proportion of red balls"),
-    y = "Replicate ID",
-    title = expression(paste("90% percentile-based confidence intervals for ", 
-                             p, sep = ""))
-  ) +
-  scale_color_manual(values = c("blue", "orange")) + 
-  geom_vline(xintercept = p_red, color = "red") 
-```
+### Precise & shorthand interpretation
 
-Of the 100 confidence intervals based on samples of size $n = 50$, `r sum(perc_cis[["captured"]])` of them captured the population proportion $p = `r p_red`$, whereas `r 100 - sum(perc_cis[["captured"]])` of them did not include it. Repeating this process for more samples would result in us getting closer and closer to 90% of the confidence intervals including the true value. It is common to say while interpreting a confidence interval to be "95% confident" or "90% confident" that the true value falls within the range of the specified confidence interval. We will use this "confident" language throughout the rest of this chapter, but remember that it has more to do with a measure of the reliability of the building process.
+Let's return our attention to our 95% confidence intervals. The precise and mathematically correct intepretation of a 95% confidence interval is a little long-winded:
+
+> Precise interpretation: If we repeated our sampling procedure a large number of times, we expect about 95% of the resulting confidence intervals to capture the value of the population parameter. 
+
+This is what we observed in Figure \@ref(fig:reliable-percentile): that our confidence interval construction procedure is 95% "reliable". In other words, we can expect our confidence intervals to include the true population parameter 95% of the time.
+
+A common but incorrect interpretation is: "There is a 95% probability that the confidence interval contains $p$." Because looking at Figure \@ref(fig:reliable-percentile), each of the confidence intervals either does or doesn't contain $p$, in other words the probability is either 1 or 0. 
+
+So if the 95% confidence level only relates to the reliability of the confidence interval construction procedure, what insight can be derived from one particular confidence interval? For example, going back to the pennies example, we found that the percentile method 95% confidence interval for $\mu$ was (`r percentile_ci[["2.5%"]] %>% round(2)`, `r percentile_ci[["97.5%"]] %>% round(2)`) whereas the standard error method 95% confidence interval was (`r standard_error_ci[["lower"]] %>% round(2)`, `r standard_error_ci[["upper"]] %>% round(2)`).
+
+Loosely speaking, we can think of these intervals as our "best guess" of a plausible range of values for the mean year of minting of all US pennies. Furthermore, for the rest of this text, we'll use the following shorthand to summarize the precise interpretation. 
+
+> Short-hand interpretation: We are 95% "confident" that a 95% confidence interval captures the value of the population parameter. 
+
+We use quotation marks around "confident" to emphasize that while 95% relates to the reliability of our confidence interval construction procedure, ultimately the resulting interval is our best guess of a range of values that contain the population parameter.
+
+So returning to our pennies example and focusing on the percentile-method, we are 95% "confident" that the true mean year of pennies in circulation in 2019 is somewhere between `r percentile_ci[["2.5%"]] %>% round(2)` and `r percentile_ci[["97.5%"]] %>% round(2)`.
 
 
 
-
-
-### Interpretation
-
-One key to working with confidence intervals is to also understand how best to interpret them. From the previous example, this level of confidence (95%) is based on the standard error-based method including the true proportion 95% of the time if many different samples (not just the one we used) were collected and confidence intervals were created following this standard error-based method. Let's dig into what this means further by exploring the confidence intervals based on other samples to see how they compare to the one we just calculated. By the end of this section, you should have an understanding as to what "95% confident" means and how best to use that knowledge when you see that language used in other contexts.
-
-We are "95% confident" that the true proportion of red balls in the bowl is between `r standard_error_ci[["lower"]]` and `r standard_error_ci[["upper"]]`. 
-
-
-
-#### Back to our pennies example {-}
-
-After this elaboration on what the level corresponds to in a confidence interval, let's conclude by providing an interpretation of the original confidence interval result we found in Section \@ref(bootstrap-process).
-
-**Interpretation:** We are 95% confident that the true mean year of pennies in circulation in 2019 is between `r percentile_ci[["2.5%"]]` to `r percentile_ci[["97.5%"]]`. This level of confidence is based on the percentile-based method including the true mean 95% of the time if many different samples (not just the one we used) were collected and confidence intervals were created.
-
-### The width of confidence intervals
+### Width of confidence intervals
 
 #### The impact of confidence levels {-}
 
@@ -1187,8 +1213,8 @@ infer_pipeline <- function(entry, ci_level){
 }
 if(!file.exists("rds/balls_perc_cis_80.rds")){
   balls_perc_cis_80 <- nested_balls2 %>% 
-    mutate(percentile_ci = purrr::map(data, infer_pipeline, ci_level = 0.8)) %>% 
-    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$color == "red")))
+    mutate(percentile_ci = map(data, infer_pipeline, ci_level = 0.8)) %>% 
+    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
   write_rds(balls_perc_cis_80, "rds/balls_perc_cis_80.rds")
 } else {
   balls_perc_cis_80 <- read_rds("rds/balls_perc_cis_80.rds")
@@ -1201,8 +1227,8 @@ perc_cis_80 <- balls_perc_cis_80 %>%
 
 if(!file.exists("rds/balls_perc_cis_95.rds")){
   balls_perc_cis_95 <- nested_balls2 %>% 
-    mutate(percentile_ci = purrr::map(data, infer_pipeline, ci_level = 0.95)) %>% 
-    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$color == "red")))
+    mutate(percentile_ci = map(data, infer_pipeline, ci_level = 0.95)) %>% 
+    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
   write_rds(balls_perc_cis_95, "rds/balls_perc_cis_95.rds")
 } else {
   balls_perc_cis_95 <- read_rds("rds/balls_perc_cis_95.rds")
@@ -1215,8 +1241,8 @@ perc_cis_95 <- balls_perc_cis_95 %>%
 
 if(!file.exists("rds/balls_perc_cis_99.rds")){
   balls_perc_cis_99 <- nested_balls2 %>% 
-    mutate(percentile_ci = purrr::map(data, infer_pipeline, ci_level = 0.99)) %>% 
-    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$color == "red")))
+    mutate(percentile_ci = map(data, infer_pipeline, ci_level = 0.99)) %>% 
+    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
   write_rds(balls_perc_cis_99, "rds/balls_perc_cis_99.rds")
 } else {
   balls_perc_cis_99 <- read_rds("rds/balls_perc_cis_99.rds")
@@ -1322,8 +1348,8 @@ infer_pipeline <- function(entry, ci_level){
 }
 if(!file.exists("rds/balls_perc_cis_n_25.rds")){
   balls_perc_cis_n_25 <- nested_balls_25 %>% 
-    mutate(percentile_ci = purrr::map(data, infer_pipeline)) %>% 
-    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$color == "red")))
+    mutate(percentile_ci = map(data, infer_pipeline)) %>% 
+    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
   write_rds(balls_perc_cis_n_25, "rds/balls_perc_cis_n_25.rds")
 } else {
   balls_perc_cis_n_25 <- read_rds("rds/balls_perc_cis_n_25.rds")
@@ -1336,8 +1362,8 @@ perc_cis_n_25 <- balls_perc_cis_n_25 %>%
 
 if(!file.exists("rds/balls_perc_cis_n_50.rds")){
   balls_perc_cis_n_50 <- nested_balls_50 %>% 
-    mutate(percentile_ci = purrr::map(data, infer_pipeline)) %>% 
-    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$color == "red")))
+    mutate(percentile_ci = map(data, infer_pipeline)) %>% 
+    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
   write_rds(balls_perc_cis_n_50, "rds/balls_perc_cis_n_50.rds")
 } else {
   balls_perc_cis_n_50 <- read_rds("rds/balls_perc_cis_n_50.rds")
@@ -1350,8 +1376,8 @@ perc_cis_n_50 <- balls_perc_cis_n_50 %>%
 
 if(!file.exists("rds/balls_perc_cis_n_100.rds")){
   balls_perc_cis_n_100 <- nested_balls_100 %>% 
-    mutate(percentile_ci = purrr::map(data, infer_pipeline)) %>% 
-    mutate(point_estimate = purrr::map_dbl(data, ~mean(.x$color == "red")))
+    mutate(percentile_ci = map(data, infer_pipeline)) %>% 
+    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
   write_rds(balls_perc_cis_n_100, "rds/balls_perc_cis_n_100.rds")
 } else {
   balls_perc_cis_n_100 <- read_rds("rds/balls_perc_cis_n_100.rds")
