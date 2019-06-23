@@ -1058,7 +1058,6 @@ Let's now repeat this process 100 more times, leaving us with 100 different 95% 
 
 ```{r reliable-percentile, fig.cap="100 SE-based 95% confidence intervals for p",echo=FALSE}
 if(!file.exists("rds/balls_percentile_cis.rds")){
-  # Set random number generator seed value to number 9 in honour of Bobby Orr.
   set.seed(4)
 
   # Function to run infer pipeline
@@ -1074,7 +1073,7 @@ if(!file.exists("rds/balls_percentile_cis.rds")){
   balls_percentile_cis <- bowl %>% 
     rep_sample_n(size = 50, reps = 100, replace = FALSE) %>% 
     group_by(replicate) %>% 
-    tidyr::nest() %>% 
+    nest() %>% 
     mutate(sample_prop = map_dbl(data, ~mean(.x$color == "red"))) %>%
     # run infer pipeline on each nested tibble to generated bootstrap replicates
     mutate(bootstraps = map(data, bootstrap_pipeline)) %>% 
@@ -1090,7 +1089,7 @@ if(!file.exists("rds/balls_percentile_cis.rds")){
 
 # Identify if confidence interval captured true p
 percentile_cis <- balls_percentile_cis %>% 
-  tidyr::unnest(percentile_ci) %>% 
+  unnest(percentile_ci) %>% 
   mutate(captured = `2.5%` <= p_red & p_red <= `97.5%`)
 
 # Plot them!
@@ -1126,7 +1125,7 @@ if(!file.exists("rds/balls_se_cis.rds")){
   balls_se_cis <- bowl %>% 
     rep_sample_n(size = 50, reps = 100, replace = FALSE) %>% 
     group_by(replicate) %>% 
-    tidyr::nest() %>% 
+    nest() %>% 
     mutate(sample_prop = map_dbl(data, ~mean(.x$color == "red"))) %>%
     # run infer pipeline on each nested tibble to generated bootstrap replicates
     mutate(bootstraps = map(data, bootstrap_pipeline)) %>% 
@@ -1143,7 +1142,7 @@ if(!file.exists("rds/balls_se_cis.rds")){
 
 # Identify if confidence interval captured true p
 se_cis <- balls_se_cis %>% 
-  tidyr::unnest(se_ci) %>% 
+  unnest(se_ci) %>% 
   mutate(captured = lower <= p_red & p_red <= upper)
 
 # Plot them!
@@ -1181,86 +1180,96 @@ So returning to our pennies example and focusing on the percentile-method, we ar
 
 ### Width of confidence intervals
 
-We now present some of the determinants of confidence interval widths.
+Now that we know how to interpret confidence intervals, let's go over some factors that determine their width.
 
 #### Impact of confidence level {-}
 
-When comparing the widths of the 95% confidence intervals in Figure \@ref(fig:reliable-percentile) with the widths of the 80% confidence intervals in Figure \@ref(fig:reliable-se), recall that the 95% confidence intervals were wider. The quantification of the confidence level should match what you expect of the word "confident." In order to be more confidence of our best guess of a range of values, we need to widen the range of values.
+One factor that determines confidence interval width is the pre-specified confidence level. For example in Figures \@ref(fig:reliable-percentile) and  \@ref(fig:reliable-se), we compared the widths of 95% and 80% confidence intervals. Recall that the 95% confidence intervals were wider. The quantification of the confidence level should match what you expect of the word "confident." In order to be more confidence of our best guess of a range of values, we need to widen the range of values.
 
-To elaborate on this, imagine we want to guess the forecasted high temperature in Seoul, South Korea on August 15th. Given Seoul's temperate climate with 4 distinct seasons, we could say somewhat confidently that the high temperature wouldn't be below 50&deg;F (10&deg;C) and that it wouldn't be above 95&deg;F (35&deg;C). 
+To elaborate on this, imagine we want to guess the forecasted high temperature in Seoul, South Korea on August 15th. Given Seoul's temperate climate with 4 distinct seasons, we could say somewhat confidently that the high temperature would be between 50&deg;F - 95&deg;F (10&deg;C - 35&deg;C). However, if we wanted a temperature range we were *absolutely* confident about, would we need to widen or narrow this range? We'd need to widen it! We need this wider range since it is possible to have a freak cold spell or heat wave. So a range of temperatures we could be near certain about would be between 32&deg;F - 110&deg;F (0&deg;C - 43&deg;C). On the other hand, if we wanted a range we could tolerate being a little less confident, we could narrow this range to between 70&deg;F - 85&deg;F (21&deg;C - 30&deg;C). 
 
-However, if we wanted a temperature range we were *absolutely* confident about, would we need to widen or narrow this range? We'd need to widen it! We need this wider range since it is possible to have a freak cold spell or heat wave. So a range of temperatures we could be near certain about would be 32&deg;F (0&deg;C) to 110&deg;F (43&deg;C). On the other hand, if we wanted a range we could tolerate being a little less confident about, we could narrow this range to something along the lines of 70&deg;F (21&deg;C) to 85&deg;F (30&deg;C). 
-
-
-
-As it relates to sampling for inference: **Higher confidence levels tend to produce wider confidence intervals.**
-
-Let's play with do a little more analysis using the `bowl` data to construct 80%, 95%, and 99% confidence intervals here to drill this idea home. We'll focus on the percentile-based method though a similar analysis could be done for the standard error-based method. Let's calculate 100 confidence intervals of each of these three different levels and then look at the median and mean length of these intervals. These will be stored in the `perc_cis_by_level` data frame. 
+Going back to our sampling bowl, let's compare confidence intervals for $p$ based on three different confidence levels: 80%, 95%, and 99%. Specifically, we'll first take 30 different random samples of $n$ = 50 balls from the bowl. We'll then construct 10 percentile-based confidence intervals based on each of the three different confidence levels and compare the widths of these intervals. We visualize the resulting 30 confidence intervals in Figure \@ref(fig:reliable-percentile-80-95-99) along with a vertical red line marking the true value of $p$ = `r p_red` = `r p_red`%, the population proportion of the bowl's balls that are red.
 
 <!-- 
-Chester says: Should we load these into the moderndive package too so that readers can explore them a bit?
-Albert says: Don't have time right now, maybe next edition?
+Chester says: Should we load the perc_cis_by_level and percentile_cis_by_n data
+frames into the moderndive package too so that readers can explore them a bit?
+
+Albert says: I totally agree. However making the code to replicate this process
+student-friendly is going to take a lot of work and this chapter is getting
+rather large as is, so let's punt until next edition. For now, let's just show
+the resulting faceted plots comparing:
+
+-For n=50, 80% + 95% + 99% confidence intervals
+-For 95% confidence level, based on n = 25, 50, 100
 -->
 
 ```{r perc-sizes, echo=FALSE}
-balls_samples2 <- bowl %>% 
-  rep_sample_n(size = 50, reps = 100, replace = FALSE)
-nested_balls2 <- balls_samples2 %>% 
-  group_by(replicate) %>% 
-  tidyr::nest()
-infer_pipeline <- function(entry, ci_level){
-  entry %>% 
-    specify(formula = color ~ NULL, success = "red") %>% 
-    generate(reps = 1000, type = "bootstrap") %>% 
-    calculate(stat = "prop") %>% 
-    get_ci(level = ci_level)
-}
-if(!file.exists("rds/balls_perc_cis_80.rds")){
-  balls_perc_cis_80 <- nested_balls2 %>% 
-    mutate(percentile_ci = map(data, infer_pipeline, ci_level = 0.8)) %>% 
-    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
-  write_rds(balls_perc_cis_80, "rds/balls_perc_cis_80.rds")
+if(!file.exists("rds/balls_perc_cis_80_95_99.rds")){
+  set.seed(9)
+  
+  # Function to run infer pipeline:
+  infer_pipeline <- function(entry, ci_level){
+    entry %>% 
+      specify(formula = color ~ NULL, success = "red") %>% 
+      generate(reps = 1000, type = "bootstrap") %>% 
+      calculate(stat = "prop") %>% 
+      get_ci(level = ci_level)
+  }
+  
+  # Compute 80% percentile CI's for each nested element
+  perc_cis_80 <- bowl %>% 
+    rep_sample_n(size = 50, reps = 10, replace = FALSE) %>% 
+    group_by(replicate) %>% 
+    nest() %>% 
+    mutate(
+      percentile_ci = map(data, infer_pipeline, ci_level = 0.8),
+      point_estimate = map_dbl(data, ~mean(.x$color == "red"))
+    ) %>% 
+    unnest(percentile_ci) %>% 
+    rename(lower = `10%`, upper = `90%`) %>% 
+    select(-data) %>% 
+    mutate(confidence_level = "80%")
+  
+  # Compute 95% percentile CI's for each nested element
+  perc_cis_95 <- bowl %>% 
+    rep_sample_n(size = 50, reps = 10, replace = FALSE) %>% 
+    group_by(replicate) %>% 
+    nest() %>% 
+    mutate(
+      percentile_ci = map(data, infer_pipeline, ci_level = 0.95),
+      point_estimate = map_dbl(data, ~mean(.x$color == "red"))
+    ) %>% 
+    unnest(percentile_ci) %>% 
+    rename(lower = `2.5%`, upper = `97.5%`) %>% 
+    select(-data) %>% 
+    mutate(confidence_level = "95%")
+  
+  # Compute 99% percentile CI's for each nested element
+  perc_cis_99 <- bowl %>% 
+    rep_sample_n(size = 50, reps = 10, replace = FALSE) %>% 
+    group_by(replicate) %>% 
+    nest() %>% 
+    mutate(
+      percentile_ci = map(data, infer_pipeline, ci_level = 0.99),
+      point_estimate = map_dbl(data, ~mean(.x$color == "red"))
+    ) %>% 
+    unnest(percentile_ci) %>% 
+    rename(lower = `0.5%`, upper = `99.5%`) %>% 
+    select(-data) %>% 
+    mutate(confidence_level = "99%")
+  
+  # Combine into single data frame
+  percentile_cis_by_level <- bind_rows(perc_cis_80, perc_cis_95, perc_cis_99)
+  
+  # Save output to rds object
+  write_rds(percentile_cis_by_level, "rds/balls_perc_cis_80_95_99.rds")
 } else {
-  balls_perc_cis_80 <- read_rds("rds/balls_perc_cis_80.rds")
+  percentile_cis_by_level <- read_rds("rds/balls_perc_cis_80_95_99.rds")
 }
-perc_cis_80 <- balls_perc_cis_80 %>% 
-  tidyr::unnest(percentile_ci) %>% 
-  rename(lower = `10%`, upper = `90%`) %>% 
-  select(-data) %>% 
-  mutate(confidence_level = 80)
-
-if(!file.exists("rds/balls_perc_cis_95.rds")){
-  balls_perc_cis_95 <- nested_balls2 %>% 
-    mutate(percentile_ci = map(data, infer_pipeline, ci_level = 0.95)) %>% 
-    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
-  write_rds(balls_perc_cis_95, "rds/balls_perc_cis_95.rds")
-} else {
-  balls_perc_cis_95 <- read_rds("rds/balls_perc_cis_95.rds")
-}
-perc_cis_95 <- balls_perc_cis_95 %>% 
-  tidyr::unnest(percentile_ci) %>% 
-  rename(lower = `2.5%`, upper = `97.5%`) %>% 
-  select(-data) %>% 
-  mutate(confidence_level = 95)
-
-if(!file.exists("rds/balls_perc_cis_99.rds")){
-  balls_perc_cis_99 <- nested_balls2 %>% 
-    mutate(percentile_ci = map(data, infer_pipeline, ci_level = 0.99)) %>% 
-    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
-  write_rds(balls_perc_cis_99, "rds/balls_perc_cis_99.rds")
-} else {
-  balls_perc_cis_99 <- read_rds("rds/balls_perc_cis_99.rds")
-}
-perc_cis_99 <- balls_perc_cis_99 %>% 
-  tidyr::unnest(percentile_ci) %>% 
-  rename(lower = `0.5%`, upper = `99.5%`) %>% 
-  select(-data) %>% 
-  mutate(confidence_level = 99)
-
-percentile_cis_by_level <- bind_rows(perc_cis_80, 
-                                     perc_cis_95, 
-                                     perc_cis_99)
 ```
+
+<!--
+See above note: punted for now
 
 Let's take a look into what the `perc_cis_by_level` data frame looks like and how a sample of 10 different confidence intervals each from the 80%, 95%, and 99% levels compare visually in terms of length. Then, we'll start computing some widths of the confidence intervals. Then we'll head into calculating the mean and median widths across the three different levels.
 
@@ -1277,160 +1286,154 @@ percentile_cis_by_level %>%
                 latex_options = c("HOLD_position", "repeat_header"))
 ```
 
-```{r echo=FALSE}
+We see that the sample proportion of reds varies in the `point_estimate` column with varying `lower` and `upper` bounds as well depending on the variability of the bootstrap distribution. The width of the confidence intervals appears to increase from left to right going from 80% confidence levels to 95% and then to 99%. Let's now compute the confidence interval (CI) width for each of these intervals and then get the median and mean length.
+-->
+
+```{r reliable-percentile-80-95-99, fig.cap="Ten 80%, 95%, & 99% confidence intervals for p based on n = 50.", echo=FALSE}
 sample_of_cis <- percentile_cis_by_level %>% 
   group_by(confidence_level) %>% 
-  sample_n(10) %>% 
   mutate(sample_row = 1:10)
+
 ggplot(sample_of_cis) +
   geom_point(aes(x = point_estimate, y = sample_row)) +
   geom_segment(aes(y = sample_row, yend = sample_row, x = lower, xend = upper)) +
-  labs(
-    x = expression("Proportion of red balls"),
-    y = "Row of sample (out of 10)",
-    title = expression(paste("90% percentile-based confidence intervals for ", 
-                             p, " by level", sep = ""))
-  ) +
+  labs(x = expression("Proportion of red balls"), y = "") +
   scale_y_continuous(breaks = 1:10) +
-  facet_wrap(~ confidence_level)
+  facet_wrap(~confidence_level) + 
+  geom_vline(xintercept = p_red, color = "red")
 ```
 
-We see that the sample proportion of reds varies in the `point_estimate` column with varying `lower` and `upper` bounds as well depending on the variability of the bootstrap distribution. The width of the confidence intervals appears to increase from left to right going from 80% confidence levels to 95% and then to 99%. Let's now compute the confidence interval (CI) width for each of these intervals and then get the median and mean length.
+Observe that as the confidence level increase from 80% to 95% to 99%, in general the confidence intervals get wider. Let's compare the average widths in Table \@ref(tab:perc-cis-average-width).
 
-```{r}
+```{r perc-cis-average-width, echo=FALSE}
 percentile_cis_by_level %>% 
   mutate(width = upper - lower) %>% 
   group_by(confidence_level) %>% 
-  summarize(median_width = median(width),
-            mean_width = mean(width))
+  summarize(`Mean width` = mean(width)) %>% 
+  rename(`Confidence level` = confidence_level) %>% 
+  kable(
+    digits = 3,
+    caption = "Mean width of 80%, 95%, & 99% confidence intervals.", 
+    booktabs = TRUE,
+    longtable = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position", "repeat_header"))
 ```
 
-As expected, as the confidence level increases, the width of the corresponding confidence interval also increases. To be more confident, we need to increase the range of plausible values.
+So in order to have a higher confidence interval, our "plausible range of values" must be wider. Ideally we would have both high confidence level and narrower confidence intervals; however we cannot have it both ways. If we want to "be more confident", we need to allow for wider intervals. Conversely, if we would like a narrow and tight interval, we must sacrifice confidence level. 
+
+The moral of the story is: **Higher confidence levels tend to produce wider confidence intervals.**  However, it is important to keep in mind in our example that we kept the sample size fixed at $n$ = 50. In other words, all 30 random samples from `bowl` used to construct the 30 confidence intervals had the same sample size. What happens if instead we take samples of different sizes? Recall that we did this in Section \@ref(different-shovels) where did this using virtual shovels with 25, 50, and 100 slots. We delve into this next.
 
 #### Impact of sample size {-}
 
-We can also observe the impact of sample size on these calculations and make some generalizations. You'll see in Subsection \@ref(theory-ci) some reasons via mathematical formulas for the behavior of confidence interval width and changing sample sizes too.
+This time, let's fix the confidence level at 95%, but consider three different sample sizes: $n$ equals 25, 50, and 100. Specifically, we'll first take 10 different random samples of size 25, 10 different random samples of size 50, and 10 different random samples of size 100. We'll then construct 95% percentile-based confidence intervals. We visualize the resulting 30 confidence intervals in Figure \@ref(fig:reliable-percentile-n-25-50-100) along with a vertical red line marking the true value of $p$ = `r p_red` = `r p_red`%, the population proportion of the bowl's balls that are red.
 
-Let's hold the confidence level fixed at 90% using the percentile-based method, but take samples of size 25, 50, and 100 corresponding to the different sizes of the shovels available to us in Chapter \@ref(sampling). Do you expect smaller sample sizes to produce wider confidence intervals? Or should larger sample sizes produce wider ones? Let's investigate.
-
-Recall the `virtual_samples_25`, `virtual_samples_50`, and `virtual_samples_100` data frames that were calculated in Chapter \@ref(sampling). As a reminder, here's the code needed to compute them.
-
-```{r eval=FALSE}
-virtual_samples_25 <- bowl %>% 
-  rep_sample_n(size = 25, reps = 1000, replace = FALSE)
-balls_samples_50 <- bowl %>% 
-  rep_sample_n(size = 50, reps = 1000, replace = FALSE)
-balls_samples_100 <- bowl %>% 
-  rep_sample_n(size = 100, reps = 1000, replace = FALSE)
+```{r perc-sizes-2, echo=FALSE}
+if(!file.exists("rds/balls_perc_cis_n_25_50_100.rds")){
+  set.seed(9)
+  
+  # Function to run infer pipeline:
+  infer_pipeline <- function(entry, ci_level){
+    entry %>% 
+      specify(formula = color ~ NULL, success = "red") %>% 
+      generate(reps = 1000, type = "bootstrap") %>% 
+      calculate(stat = "prop") %>% 
+      get_ci(level = 0.95)
+  }
+  
+  # Compute 95% percentile CI's based on n=25 for each nested element
+  perc_cis_n_25 <- bowl %>% 
+    rep_sample_n(size = 25, reps = 10, replace = FALSE) %>% 
+    group_by(replicate) %>% 
+    nest() %>% 
+    mutate(
+      percentile_ci = map(data, infer_pipeline),
+      point_estimate = map_dbl(data, ~mean(.x$color == "red"))
+    ) %>% 
+    unnest(percentile_ci) %>% 
+    rename(lower = `2.5%`, upper = `97.5%`) %>% 
+    select(-data) %>%
+    mutate(sample_size = "n = 25")
+  
+  # Compute 95% percentile CI's based on n=50 for each nested element
+  perc_cis_n_50 <- bowl %>% 
+    rep_sample_n(size = 50, reps = 10, replace = FALSE) %>% 
+    group_by(replicate) %>% 
+    nest() %>% 
+    mutate(
+      percentile_ci = map(data, infer_pipeline),
+      point_estimate = map_dbl(data, ~mean(.x$color == "red"))
+    ) %>% 
+    unnest(percentile_ci) %>% 
+    rename(lower = `2.5%`, upper = `97.5%`) %>% 
+    select(-data) %>%
+    mutate(sample_size = "n = 50")
+  
+  # Compute 95% percentile CI's based on n=100 for each nested element
+  perc_cis_n_100 <- bowl %>% 
+    rep_sample_n(size = 100, reps = 10, replace = FALSE) %>% 
+    group_by(replicate) %>% 
+    nest() %>% 
+    mutate(
+      percentile_ci = map(data, infer_pipeline),
+      point_estimate = map_dbl(data, ~mean(.x$color == "red"))
+    ) %>% 
+    unnest(percentile_ci) %>% 
+    rename(lower = `2.5%`, upper = `97.5%`) %>% 
+    select(-data) %>%
+    mutate(sample_size = "n = 100")
+  
+  # Combine into single data frame
+  percentile_cis_by_n <- bind_rows(perc_cis_n_25, perc_cis_n_50, perc_cis_n_100) %>% 
+    mutate(sample_size = factor(sample_size, levels = c("n = 25", "n = 50", "n = 100")))
+  
+  # Save output to rds object
+  write_rds(percentile_cis_by_n, "rds/balls_perc_cis_n_25_50_100.rds")
+} else {
+  percentile_cis_by_n <- read_rds("rds/balls_perc_cis_n_25_50_100.rds")
+}
 ```
 
-```{r echo=FALSE}
-virtual_samples_25 <- read_rds("rds/virtual_samples_25.rds")
-virtual_samples_50 <- read_rds("rds/virtual_samples_50.rds")
-virtual_samples_100 <- read_rds("rds/virtual_samples_100.rds")
-```
-
-```{r perc-sample-sizes, echo=FALSE}
-nested_balls_25 <- virtual_samples_25 %>% 
-  group_by(replicate) %>% 
-  tidyr::nest()
-
-nested_balls_50 <- virtual_samples_50 %>% 
-  group_by(replicate) %>% 
-  tidyr::nest()
-
-nested_balls_100 <- virtual_samples_100 %>% 
-  group_by(replicate) %>% 
-  tidyr::nest()
-
-infer_pipeline <- function(entry, ci_level){
-  entry %>% 
-    specify(formula = color ~ NULL, success = "red") %>% 
-    generate(reps = 1000, type = "bootstrap") %>% 
-    calculate(stat = "prop") %>% 
-    get_ci(level = 0.9)
-}
-if(!file.exists("rds/balls_perc_cis_n_25.rds")){
-  balls_perc_cis_n_25 <- nested_balls_25 %>% 
-    mutate(percentile_ci = map(data, infer_pipeline)) %>% 
-    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
-  write_rds(balls_perc_cis_n_25, "rds/balls_perc_cis_n_25.rds")
-} else {
-  balls_perc_cis_n_25 <- read_rds("rds/balls_perc_cis_n_25.rds")
-}
-perc_cis_n_25 <- balls_perc_cis_n_25 %>% 
-  tidyr::unnest(percentile_ci) %>% 
-  rename(lower = `5%`, upper = `95%`) %>% 
-  select(-data) %>%
-  mutate(sample_size = 25)
-
-if(!file.exists("rds/balls_perc_cis_n_50.rds")){
-  balls_perc_cis_n_50 <- nested_balls_50 %>% 
-    mutate(percentile_ci = map(data, infer_pipeline)) %>% 
-    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
-  write_rds(balls_perc_cis_n_50, "rds/balls_perc_cis_n_50.rds")
-} else {
-  balls_perc_cis_n_50 <- read_rds("rds/balls_perc_cis_n_50.rds")
-}
-perc_cis_n_50 <- balls_perc_cis_n_50 %>% 
-  tidyr::unnest(percentile_ci) %>% 
-  rename(lower = `5%`, upper = `95%`) %>% 
-  select(-data) %>%
-  mutate(sample_size = 50)
-
-if(!file.exists("rds/balls_perc_cis_n_100.rds")){
-  balls_perc_cis_n_100 <- nested_balls_100 %>% 
-    mutate(percentile_ci = map(data, infer_pipeline)) %>% 
-    mutate(point_estimate = map_dbl(data, ~mean(.x$color == "red")))
-  write_rds(balls_perc_cis_n_100, "rds/balls_perc_cis_n_100.rds")
-} else {
-  balls_perc_cis_n_100 <- read_rds("rds/balls_perc_cis_n_100.rds")
-}
-perc_cis_n_100 <- balls_perc_cis_n_100 %>% 
-  tidyr::unnest(percentile_ci) %>% 
-  rename(lower = `5%`, upper = `95%`) %>% 
-  select(-data) %>%
-  mutate(sample_size = 100)
-
-percentile_cis_by_n <- bind_rows(perc_cis_n_25, perc_cis_n_50, perc_cis_n_100)
-```
-
-<!-- Albert: What about these confidence intervals for different sample sizes in the moderndive package? -->
-
-As we did when investigating the role of confidence level, confidence intervals for each of the different 1000 samples of each of these three sample sizes has been saved into the `percentile_cis_by_n` data frame. Let's investigate width visually first and then look at the median and mean length of these intervals.
-
-```{r echo=FALSE}
+```{r reliable-percentile-n-25-50-100, fig.cap="Ten 95% confidence intervals for p based on n = 25, 50, & 100.", echo=FALSE}
 sample_of_cis <- percentile_cis_by_n %>% 
   group_by(sample_size) %>% 
-  sample_n(10) %>% 
   mutate(sample_row = 1:10)
+
 ggplot(sample_of_cis) +
   geom_point(aes(x = point_estimate, y = sample_row)) +
   geom_segment(aes(y = sample_row, yend = sample_row, x = lower, xend = upper)) +
-  labs(
-    x = expression("Proportion of red balls"),
-    y = "Row of sample (out of 10)",
-    title = expression(paste("90% percentile-based confidence intervals for ", 
-                             p, " by sample size", sep = ""))
-  ) +
+  labs(x = expression("Proportion of red balls"), y = "") +
   scale_y_continuous(breaks = 1:10) +
-  facet_wrap(~ sample_size)
+  facet_wrap(~sample_size) + 
+  geom_vline(xintercept = p_red, color = "red")
 ```
 
-```{r}
+Observe that as our confidence intervals are based on larger and larger sample sizes, in general the confidence intervals get narrower. Let's compare the average widths in Table \@ref(tab:perc-cis-average-width-2).
+
+```{r perc-cis-average-width-2, echo=FALSE}
 percentile_cis_by_n %>% 
   mutate(width = upper - lower) %>% 
   group_by(sample_size) %>% 
-  summarize(median_width = median(width),
-            mean_width = mean(width))
+  summarize(`Mean width` = mean(width)) %>% 
+  rename(`Sample size` = sample_size) %>% 
+  kable(
+    digits = 3,
+    caption = "Mean width of 95% confidence intervals based on n = 25, 50, & 100.", 
+    booktabs = TRUE,
+    longtable = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position", "repeat_header"))
 ```
 
-So as the sample size increases the width of our confidence intervals decreases. This intuitively makes sense since as we have larger samples we are getting closer and closer to the actual size of the population. As we get closer to the actual size of the population, we will have less and less variability in the sample proportion red since there will be less and less variability in the samples pulled from the population.
+The moral of the story is: **Larger sample sizes tend to produce narrow confidence intervals.**   Recall that this was a key message in the Section \@ref(moral-of-the-story). As we used the larger and larger shovels to draw our samples, our sample proportions red $\widehat{p}$ tended to vary less. In other words, our estimates got more and more precise. 
+
+We visualized these results in Figure \@ref(fig:comparing-sampling-distributions-3) where we compared the *sampling distributions* for $\widehat{p}$ based on samples of size $n$ equal 25, 50, 100. Furthermore, we could quantify the spread of these sampling distributions using their standard deviation, which as a special name: the *standard error*. As the sample size increases, the standard error decreases. 
+
+In fact, the standard error is a related factor in confidence interval width, which we explore in Subsection \@ref(theory-ci) when we discuss theoretically constructed confidence intervals using mathematical formulas.
 
 <!-- A good learning check might be to have the readers calculate confidence intervals when n = 1000, 2000, 2400. To their astonishment (maybe), they'll see that the size of the confidence interval is 0 when they get to 2400. -->
-
-
-#### Impact of standard error {-}
 
 
 
