@@ -930,10 +930,9 @@ At this point you might be asking yourself: If we already know that $p$ = `r p_r
 Bringing the discussion back to confidence intervals constructed based on samples from the bowl, we have to ask ourselves: Does the interval include $p$ = `r p_red` = `r 100*p_red`% or not? Alternatively, going back to our "fishing with a spear" versus "fishing with a net" analogy from Section \@ref(ci-build-up), we have to ask ourselves: Did our net capture the fish or not?
 
 
-### Did the net capture the fish?
+### Did the net capture the fish? {#ilyas-yohan}
 
 Recall from in Table \@ref(tab:tactilered) that we had 33 groups of friends repeat this sampling simulation, each taking samples of size 50 from the bowl and compute the sample proportion red $\widehat{p}$, resulting in 33 such estimates of $p$. Let's focus on Ilyas and Yohan's sample in Table \@ref(tab:tactilered) where they observed 21 red balls out of the 50 in their shovel, in other words their sample proportion $\widehat{p}$ = 21/50 = 0.42 = 42\%. This data is stored in the `bowl_sample_1` data frame in the `moderndive` package:
-
 
 <!--
 At this point you might be asking yourself: why did we take 33 samples of size 50 to estimate the population proportion $p$ of the balls that are red? Wouldn't it have made more sense to take a single sample that's as big as possible? Again this was virtual "simulation" used to study sampling variation. In order to study sample-to-sample variation, we need more than one sample! In any real-world setting however, we would not take repeated samples, rather a single sample that's as representative and as large as possible!
@@ -1679,158 +1678,138 @@ Furthermore, if the 50 participants were randomly allocated to the `"seed"` and 
 
 ## Conclusion {#ci-conclusion}
 
-
 ### Comparing bootstrap and sampling distributions
 
-Earlier in this chapter, we mentioned that the variability of the sampling distribution is often well-approximated by the variability of the bootstrap distribution. Since we've computed both of these distributions for the `bowl` example, let's dig into both of them further to make comparisons.
+In Section \@ref(shovel-1000-times), we took 1000 virtual samples from the `bowl` using a virtual shovel, then computed 1000 values of the sample proportion red $\widehat{p}$, an visualized their distribution in a histogram. Recall that this distribution is called the *sampling distribution of \widehat{p}* and furthermore the standard deviation of this sampling distribution has a special name: the *standard error*.
+
+However, this exercise was not what one would typically do in real-life, rather is was a simulation to study the effects of sampling variation on the value of $\widehat{p}$. In real-life, one would take only one sample that's as large as possible. But how can we get a sense of the effect of sample-to-sample variation if we only have one sample? Don't we need many samples?
+
+The solution to this was to perform bootstrap resampling with replacement from the original sample. We did this in the resampling activity in Section \@ref(resampling-tactile) where in this case, we were focused on the mean year of minting of pennies rather than the proportion of the bowl's balls that were red. We used pieces of paper representing the original sample of 50 pennies from the bank and resampled them with replacement from the hat. We had 35 of our friends perform this activity and visualized their resulting sample means $\overline{x}$. 
+
+This distribution was called the *bootstrap distribution* of $\overline{x}$ and it is an *approximation* to the sampling distribution of $\overline{x}$. Thus the variation of the bootstrap distribution of $\overline{x}$ could be used as an approximation to the variation of the sampling distribution of $\overline{x}$. 
+
+Let's now compare the sampling distribution of $\widehat{p}$ with the bootstrap distribution of $\widehat{p}$ and see how well they line up. Recall that we computed the sampling distribution of $\widehat{p}$ in Section \@ref(shovel-1000-times) based on 1000 virtual samples of size $n$ = 50 from the `bowl`. We'll compare this to the bootstrap distribution of $\widehat{p}$ from Section \@ref(ilyas-yohan) based on 1000 resamples with replacement from Ilyas and Yohan's sample of 50 balls saved in `bowl_sample_1`.
+
 
 #### Sampling distribution {-}
 
-Let's assume that `bowl` represents our population of interest. We'll next go over again how to create a sampling distribution for the population proportion of red balls, denoted by $p$, using the `rep_sample_n()` function seen in Chapter \@ref(sampling). Let's use a mega-virtual shovel of size 200 here. First, we will create 1000 samples from the `bowl` data frame.
+Here is the code you previously saw in Section \@ref(shovel-1000-times) to construct the sampling distribution of $\widehat{p}$, with some small changes to incorporate the statistical terminology relating to sampling you learned in Section \@ref(terminology-and-notation).
 
-```{r}
-thousand_samples <- bowl %>% 
-  rep_sample_n(size = 200, reps = 1000, replace = FALSE)
+```{r,echo=FALSE}
+set.seed(76)
 ```
-
-When creating a sampling distribution, we do not replace the items when we create each sample. This is in contrast to the bootstrap distribution. It's important to remember that the sampling distribution is sampling **without** replacement from the population to better understand sample-to-sample variability, whereas the bootstrap distribution is sampling **with** replacement from our original sample to better understand potential sample-to-sample variability. For the sampling distribution, we have access to the population whereas with the bootstrap distribution we are only going to pull ourselves up from our bootstraps using the single sample.
-
-After sampling from `bowl` 1000 times, we next want to compute the proportion of red balls for each of the 1000 samples:
-
 ```{r}
-sampling_distribution <- thousand_samples %>% 
+# Take 1000 virtual samples of size 50 from the bowl:
+virtual_samples <- bowl %>% 
+  rep_sample_n(size = 50, reps = 1000)
+
+# Compute the sampling distribution of 1000 values of p-hat
+sampling_distribution <- virtual_samples %>% 
   group_by(replicate) %>% 
-  summarize(stat = mean(color == "red"))
+  summarize(red = sum(color == "red")) %>% 
+  mutate(prop_red = red / 50)
+
+# Visualize sampling distribution of p-hat
+ggplot(sampling_distribution, aes(x = prop_red)) +
+  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
+  labs(x = "Proportion of 50 balls that were red", title = "Sampling distribution")
 ```
 
-```{r, fig.cap="Sampling distribution for proportion red for n=200 samples of balls"}
-ggplot(sampling_distribution, aes(x = stat)) +
-  geom_histogram(bins = 10, fill = "salmon", color = "white")
-```
+An important thing to keep in mind is the default value for `replace` is `FALSE` when using `rep_sample_n()`. This is because when sampling 50 balls with a shovel, we are extracting 50 balls one-by-one *without* replacing them. This is in contrast to bootstrap resampling *with* replacement, where we resample a ball and put it back, and repeat this process 50 times. 
 
-We can also examine the variability in this sampling distribution by calculating the standard deviation of the `stat` column. Remember that the standard deviation of the sampling distribution is the **standard error**, frequently denoted as `se`.
+We can also examine the variability in this sampling distribution by calculating the standard deviation of the `propr_red` variable representing 1000 values of the sample proportion $\widehat{p}$. Remember that the standard deviation of the sampling distribution is the **standard error**, frequently denoted as `se`.
 
 ```{r}
 sampling_distribution %>% 
-  summarize(se = sd(stat))
+  summarize(se = sd(prop_red))
 ```
+```{r, echo=FALSE}
+se_samp <- sampling_distribution %>% 
+  summarize(se = sd(prop_red)) %>% 
+  pull(se)
+```
+
 
 #### Bootstrap distribution {-}
 
-Let's now see how the shape of the bootstrap distribution compares to that of the sampling distribution. We'll shade the bootstrap distribution blue to further assist with remembering which is which, with the sampling distribution shaded salmon color. Let's walk through the steps needed with the `infer` pipeline to create the bootstrap distribution. We first need a sample of size 200 pulled from the `bowl` to give us a starting sample:
+Here is the code you previously saw in Section \@ref(ilyas-yohan) to construct the bootstrap distribution of $\widehat{p}$ based on Ilyas and Yohan's original sample of 50 balls saved in `bowl_sample_1`.
 
+```{r,echo=FALSE}
+set.seed(76)
+```
 ```{r}
-sample_200 <- bowl %>% 
-  sample_n(200, replace = FALSE)
-```
-
-1. `specify` variables
-
-We first identify which variable(s) we are interested in for our inferential analysis.
-
-```{r eval=FALSE}
-sample_200 %>% 
-  specify(formula = color ~ NULL)
-```
-
-```
-Error: A level of the response variable `color` needs to be specified for the
-`success` argument in `specify()`.
-```
-
-The `infer` package sends an error here that we need to tell it which of the possible `color` options we'd like to call a `success.`
-
-```{r eval=FALSE}
-sample_200 %>% 
-  specify(formula = color ~ NULL, success = "red")
-```
-
-```{r echo=FALSE}
-set.seed(2019)
-spec_200 <- sample_200 %>% 
-  specify(formula = color ~ NULL, success = "red")
-spec_200
-```
-
-2. `generate` bootstrap replicates
-
-```{r eval=FALSE}
-sample_200 %>% 
-  specify(formula = color ~ NULL, success = "red") %>% 
-  generate(reps = 1000, type = "bootstrap")
-```
-
-```{r echo=FALSE}
-gen_200 <- sample_200 %>% 
-  specify(formula = color ~ NULL, success = "red") %>% 
-  generate(reps = 1000, type = "bootstrap")
-gen_200
-```
-
-3. `calculate` statistics
-
-```{r}
-bootstrap_distribution_n_200 <- sample_200 %>% 
-  specify(formula = color ~ NULL, success = "red") %>% 
+# Compute the bootstrap distribution using infer workflow:
+bootstrap_distribution <- bowl_sample_1 %>% 
+  specify(response = color, success = "red") %>% 
   generate(reps = 1000, type = "bootstrap") %>% 
   calculate(stat = "prop")
-bootstrap_distribution_n_200
-```
 
-
-4. `visualize` distribution of `stat`istics
-
-```{r eval=FALSE}
-visualize(bootstrap_distribution_n_200, bins = 10, fill = "blue")
-```
-
-```{r echo=FALSE}
-visualize(bootstrap_distribution_n_200, bins = 10, fill = "blue") +
-  ggtitle("Simulation-Based Bootstrap Distribution")
-```
-
-
-*Side-by-side* Now that we have both the sampling distribution and the bootstrap distribution, let's put them on the same scales and examine their variability both visually and also by computing relevant standard deviations.
-
-```{r fig.cap="Comparing sampling and bootstrap distributions", echo=FALSE}
-p_samp <- ggplot(sampling_distribution, aes(x = stat)) +
-  geom_histogram(bins = 10, fill = "salmon", color = "white") +
-  coord_cartesian(xlim = seq(0.25, 0.50, 0.05), ylim = seq(0, 300, 50)) +
-  labs(title = "Sampling distribution for n = 200")
-p_boot <- ggplot(bootstrap_distribution_n_200, aes(x = stat)) +
-  geom_histogram(bins = 10, fill = "blue", color = "white") +
-  coord_cartesian(xlim = seq(0.25, 0.50, 0.05), ylim = seq(0, 300, 50)) +
-  labs(title = "Bootstrap distribution for n = 200")
-p_samp + p_boot
+# Visualize bootstrap distribution of p-hat
+bootstrap_distribution %>% 
+  visualize(binwidth = 0.05, boundary = 0.4, color = "white") + 
+  labs(x = "Proportion of 50 balls that were red", title = "Bootstrap distribution")
 ```
 
 ```{r}
-sampling_distribution %>% 
+bootstrap_distribution %>% 
   summarize(se = sd(stat))
 ```
-
-```{r}
-bootstrap_distribution_n_200 %>% 
-  summarize(se = sd(stat))
+```{r, echo=FALSE}
+se_boot <- bootstrap_distribution %>% 
+  summarize(se = sd(stat)) %>% 
+  pull(se)
 ```
 
-Notice that the bootstrap distribution's standard deviation is a good approximation for the standard error, the standard deviation of the sampling distribution. Note that while the standard deviations are similar, the center of the sampling distribution and the bootstrap distribution differ:
+#### Comparison {-}
 
-```{r}
-sampling_distribution %>% 
-  summarize(mean_of_sampling_means = mean(stat))
+Now that we have computed both the sampling distribution and the bootstrap distributions, let's visualize them side-by-side in Figure \@ref(fig:side-by-side). We'll make both histograms have the same scale on the x and y axes to make them more comparable and add vertical red lines that denote proportion of the bowl's balls that are red $p$ = `r p_red`. Furthermore, we'll add a vertical dashed line at Ilyas and Yohan's value of the sample proportion $\widehat{p}$ = 21/50 = 0.42 = 42\%.
+
+```{r side-by-side, fig.height = 7, fig.cap="Comparing the sampling and bootstrap distributions of p-hat", echo=FALSE}
+x_lim <- seq(from = 0.15, to = 0.65, by = 0.05)
+y_lim <- c(0, 350)
+p_samp <- ggplot(sampling_distribution, aes(x = prop_red)) +
+  geom_histogram(binwidth = 0.05, boundary = 0.4, fill = "salmon", color = "white") +
+  coord_cartesian(xlim = x_lim, ylim = y_lim) +
+  labs(x = "", title = "Sampling distribution") +
+  geom_vline(xintercept = p_red, size = 1, col = "red")
+p_boot <- ggplot(bootstrap_distribution, aes(x = stat)) +
+  geom_histogram(binwidth = 0.05, boundary = 0.4, fill = "blue", color = "white") + 
+  coord_cartesian(xlim = x_lim, ylim = y_lim) +
+  labs(x = "Proportion of 50 balls that were red", title = "Bootstrap distribution") +
+  geom_vline(xintercept = p_red, size = 1, col = "red") +
+  geom_vline(xintercept = 0.42, size = 1, linetype = "dashed")
+p_samp + p_boot + plot_layout(ncol = 1, heights = c(1, 1))
 ```
 
-```{r}
-bootstrap_distribution_n_200 %>% 
-  summarize(mean_of_bootstrap_means = mean(stat))
+There is a lot going on in this comparison, so let's pick them apart slowly. First, notice how the sampling distribution in salmon is centered at $p$ = `r p_red`. This is because the sample is done at random in an unbiased fashion, so the estimates $\widehat{p}$ are centered at the true value of $p$. This is actually an artifact of the Central Limit Theorem introduced in Chapter \@ref(sampling). The center of the sampling distribution is expected to be the value of the population parameter, in this case $p$.
+
+
+However, this is not the case with the bootstrap distribution in blue. The bootstrap distribution is centered at 0.42, which is the proportion red of Ilyas and Yohan's 50 sampled balls. This is because we are resampling from the sample and not from the population. Since the bootstrap distribution is centered at the original sample proportion, it doesn't necessarily provide a good estimate of the overall population proportion $p$, which we calculated to be `r p_red`. This leads us to our first lesson about bootstrapping:
+
+> The bootstrap distribution will likely not have the same center as the sampling distribution. In other words, bootstrapping cannot improve the quality of an estimate resulting from a single sample.
+
+However, let's now visually compare the spread of the two distributions; they are somewhat similar. In fact, we computed the standard deviations of both distributions earlier. Let's compare them in Table \@ref(tab:comparing-se)
+
+```{r comparing-se, echo=FALSE, message=FALSE}
+tibble(
+  `Distribution type` = c("Sampling distribution", "Bootstrap distribution"),
+  `Standard error` = c(se_samp, se_boot)
+) %>% 
+  kable(
+    caption = "Comparing standard errors", 
+    digits = 3, 
+    booktabs = TRUE,
+    escape = FALSE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position", "repeat_header"))
 ```
 
-Since the bootstrap distribution is centered at the original sample proportion, it doesn't necessarily provide a good estimate of the overall population proportion $p$, which we calculated to be `r p_red`. Notice that this value matches up well with the mean of the sampling distribution. This is actually an artifact of the Central Limit Theorem introduced in Chapter \@ref(sampling). The mean of the sampling distribution is expected to be the mean of the overall population.
+Notice that the bootstrap distribution's standard error is a good approximation to the sampling distribution's standard error. This leads us to our second lesson about bootstrapping:
 
-The unfortunate fact though is that we don't know the population mean in nearly all circumstances. The motivation of presenting it here was to show that the theory behind the Central Limit Theorem works using the tools you've worked with so far using the `ggplot2`, `dplyr`, `moderndive`, and `infer` packages.
+> Even if the bootstrap distribution might not have the same center as the sampling distribution, it will likely have a very similar spread. In other words, bootstrapping will give you a good estimate of the standard error using only a single sample. 
 
-If we aren't able to use the sample mean as a good guess for the population mean, how should we best go about estimating what the population mean may be if we can only select samples from the population. We've now come full circle and can discuss the underpinnings of the confidence interval and ways to interpret it.
+Using the fact that the bootstrap distribution and sampling distributions have similar spreads, we can build confidence intervals using bootstrapping as we've done all throughout this chapter!
 
 
 ### Theory-based confidence intervals {#theory-ci}
