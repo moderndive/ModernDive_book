@@ -76,6 +76,17 @@ ggplot(data = tactile_permutes, aes(x = stat)) +
   scale_y_continuous(breaks = 0:10)
 
 
+## ---- eval=FALSE---------------------------------------------------------
+## pennies_sample %>%
+##   summarize(stat = mean(year))
+
+
+## ---- eval=FALSE---------------------------------------------------------
+## pennies_sample %>%
+##   specify(response = year) %>%
+##   calculate(stat = "mean")
+
+
 
 
 ## ----eval=FALSE----------------------------------------------------------

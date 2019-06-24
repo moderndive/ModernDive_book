@@ -425,3 +425,33 @@ virtual_prop %>%
   column_spec(4, width = "1.1in") %>% 
   column_spec(5, width = "1in")
 
+
+## ----std-normal-setup, echo=FALSE----------------------------------------
+ggplot(data = data.frame(x = c(-3.5, 3.5)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) + 
+  scale_x_continuous(breaks = seq(-3.5, 3.5, 0.5)) +
+  ylab("") +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+
+## ----std-normal, echo=FALSE----------------------------------------------
+ggplot(data = data.frame(x = c(-3.5, 3.5)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) + 
+  scale_x_continuous(breaks = seq(-3.5, 3.5, 0.5)) +
+  ylab("") +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  geom_vline(xintercept = 1.96, color = "green", size = 1) +
+  geom_vline(xintercept = -1.96, color = "green", size = 1)
+
+
+## ------------------------------------------------------------------------
+qnorm(p = 0.95)
+
+
+## ------------------------------------------------------------------------
+qnorm(p = 0.025)
+
