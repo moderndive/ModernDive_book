@@ -7,8 +7,9 @@
 ## ---- echo=FALSE, message=FALSE, warning=FALSE---------------------------
 library(tidyverse)
 library(moderndive)
-# DO NOT load the skimr package as a whole as it will break all kable() code for the
-# remaining chapters in the book:
+# DO NOT load the skimr package as a whole as it will break all kable() code for 
+# the remaining chapters in the book.
+# Furthermore all skimr::skim() output in this Chapter has been hard coded. 
 # library(skimr)
 library(ISLR)
 
