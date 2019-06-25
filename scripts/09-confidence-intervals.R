@@ -635,7 +635,7 @@ percentile_cis_by_level %>%
                 latex_options = c("HOLD_position", "repeat_header"))
 
 
-## ----reliable-percentile-80-95-99, fig.cap="Ten 80%, 95%, & 99% confidence intervals for p based on n = 50.", echo=FALSE----
+## ----reliable-percentile-80-95-99, fig.cap="Ten 80, 95, and 99 percent confidence intervals for p based on n = 50.", echo=FALSE----
 sample_of_cis <- percentile_cis_by_level %>% 
   group_by(confidence_level) %>% 
   mutate(sample_row = 1:10)
@@ -657,7 +657,7 @@ percentile_cis_by_level %>%
   rename(`Confidence level` = confidence_level) %>% 
   kable(
     digits = 3,
-    caption = "Mean width of 80%, 95%, & 99% confidence intervals.", 
+    caption = "Mean width of 80, 95, and 99 percent confidence intervals.", 
     booktabs = TRUE,
     longtable = TRUE
   ) %>% 
@@ -753,7 +753,7 @@ percentile_cis_by_n %>%
   rename(`Sample size` = sample_size) %>% 
   kable(
     digits = 3,
-    caption = "Mean width of 95% confidence intervals based on n = 25, 50, & 100.", 
+    caption = "Mean width of 95 percent confidence intervals based on n = 25, 50, and 100.", 
     booktabs = TRUE,
     longtable = TRUE
   ) %>% 
