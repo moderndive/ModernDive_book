@@ -4,7 +4,6 @@
 ## library(skimr)
 ## library(gapminder)
 
-
 ## ---- echo=FALSE, message=FALSE, warning=FALSE---------------------------
 library(tidyverse)
 library(moderndive)
@@ -59,12 +58,6 @@ evals_ch6 %>%
 ##   skim()
 
 
-## ----echo=FALSE----------------------------------------------------------
-evals_ch6 %>%
-  select(score, bty_avg) %>%
-  skimr::skim()
-
-
 ## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients"----
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
 n_sim <- 100
@@ -77,6 +70,7 @@ for(i in seq_len(length(correlation))){
     mean = c(20,40),
     sigma = sigma
     ) %>%
+    as.data.frame() %>% 
     as_tibble() %>%
     mutate(correlation = round(rho,2))
 
@@ -189,7 +183,7 @@ get_regression_table(score_model) %>%
 ## get_regression_table(score_model)
 
 
-## ----moderndive-figure-wrapper, echo=FALSE, fig.align='center', fig.cap="The concept of a 'wrapper' function."----
+## ----moderndive-figure-wrapper, echo=FALSE, fig.align='center', fig.cap="The concept of a wrapper function."----
 knitr::include_graphics("images/ss/560016454_chart.png")
 
 
@@ -285,6 +279,12 @@ gapminder2007 %>%
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
+
+
+## ----eval=FALSE----------------------------------------------------------
+## gapminder2007 %>%
+##   select(lifeExp, continent) %>%
+##   skim()
 
 
 ## ----lifeExp2007hist, echo=FALSE, warning=FALSE, fig.cap= "Histogram of Life Expectancy in 2007"----
@@ -553,8 +553,4 @@ score_model %>%
   knitr::kable() %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
-
-
-## ---- echo=FALSE, results='asis'-----------------------------------------
-image_link(path = "images/guess_the_correlation.png", link = "http://guessthecorrelation.com/", alt_text = "Guess the correlation")
 

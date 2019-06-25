@@ -4,7 +4,6 @@
 ## library(skimr)
 ## library(ISLR)
 
-
 ## ---- echo=FALSE, message=FALSE, warning=FALSE---------------------------
 library(tidyverse)
 library(moderndive)
@@ -50,11 +49,6 @@ evals_ch7 %>%
 ## evals_ch7 %>%
 ##   select(score, age, gender) %>%
 ##   skim()
-
-## ----echo=FALSE----------------------------------------------------------
-evals_ch7 %>% 
-  select(score, age, gender) %>% 
-  skimr::skim()
 
 
 ## ------------------------------------------------------------------------
@@ -224,11 +218,6 @@ credit_ch7 %>%
 ##   select(debt, credit_limit, income) %>%
 ##   skim()
 
-## ---- echo=FALSE---------------------------------------------------------
-credit_ch7 %>% 
-  select(debt, credit_limit, income) %>% 
-  skimr::skim()
-
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## credit_ch7 %>%
@@ -286,11 +275,6 @@ model3_balance_vs_income_plot <- ggplot(credit_ch7, aes(x = income, y = debt)) +
   theme(axis.title.y = element_blank())
 
 model3_balance_vs_limit_plot + model3_balance_vs_income_plot
-
-
-## ----echo=FALSE----------------------------------------------------------
-if(knitr:::is_html_output())
-  cat("Click on the following image to open an interactive version of this plot in your browser:") 
 
 
 
