@@ -54,42 +54,44 @@ library(nycflights13)
 library(knitr)
 library(kableExtra)
 library(gt)
+library(patchwork)
 ```
 
 
 
 ***
 
+
+
 ## Promotions activity {#ht-activity}
 
-Let's start with an activity gender differences in promotions from a 1970's study.
+Let's start with an activity studying the effect of gender on promotions at a bank. 
 
-* Openintro
-* Link to Jo Hardin's blogpost
+### Does gender affect promotions at bank?
 
+Say you are working at a bank in the 1970's and you are submitting your resume to apply for a promotion. Will your gender affect your chances of getting promoted? To answer this question, we'll focus on a study published in the "Journal of Applied Psychology" in 1974 and previously used in the [OpenIntro](https://www.openintro.org/) series of statistics textbooks. 
 
-### Is a man more likely to get promoted than a woman?
+To begin the study, 48 bank supervisors were asked to assume the role of a hypothetical personnel director of a bank with multiple branches. Every one of the bank supervisors was given a resume and asked whether or not the candidate on the resume was fit to be promoted to a new position in one of their branches. 
 
-* Recall, that these are not actually 24 men and 24 women. Rather, these are 48 identical resumes, of which 24 were assigned gendered male names and 24 were assigned genered female names.
+However, each of these 48 resumes were identical in all respects except one: the name of the applicant at the top of the resume. 24 of the supervisors were randomly given resumes with stereotypically "male" names while 24 of the supervisors were randomly given resumes with stereotypically "female" names. Since only (binary) gender varied from resume to resume, researchers could isolate the effect of this variable in promotion rates. While many people today might disagree with such a binary view of gender, it is important to remember that this study was conducted a time where more nuanced views of gender were not as prevalent. Despite this imperfection, we decided to still use this example as we feel it still demonstrates relevant insight about the nature of the workplace.
 
-The `moderndive` package contains the data on the 48 applicants in the `promotions` frame. While in the text below we show you a preview of the first ten rows, we highly recommend you explore all 48 rows in RStudio's spreadsheet viewer as well.
+The `moderndive` package contains the data on the 48 applicants in the `promotions` data frame. Let’s explore this data first:
 
 ```{r}
 promotions
-glimpse(promotions)
 ```
 
-The variable `id` acts as an identification variable for all 48 rows, the `decision` variable indicates whether the applicant was selected for promotion or not, while the `gender` variable indicates the (binary) gender of the name used on the resume. 
+The variable `id` acts as an identification variable for all 48 rows, the `decision` variable indicates whether the applicant was selected for promotion or not, while the `gender` variable indicates the gender of the name used on the resume. Recall that this data does not pertain to 24 actual men and 24 actual women, but rather 48 identical resumes of which 24 were assigned stereotypially "male" names and 24 were assigned stereotypicaly "female" names.
 
-Let's do an exploratory data analysis in Figure \@ref(fig:promotions-barplot). Recall that we saw in Section \@ref(two-categ-barplot) that we can visualize the relationship between two categorical variables using a dodged barplot. 
+Let's perform an exploratory data analysis in Figure \@ref(fig:promotions-barplot) of the relationship between the two categorical variables `decision` and `gender`. Recall that we saw in Section \@ref(two-categ-barplot) that one way we can visualize such a relationship is using a stacked barplot. 
 
-```{r promotions-barplot, fig.cap="Barplot of relationship between (binary) gender and promotion decision."}
+```{r promotions-barplot, fig.cap="Barplot of relationship between gender and promotion decision."}
 ggplot(promotions, aes(x = gender, fill = decision)) +
-  geom_bar(position = "dodge") +
-  labs(x = "gender of resume name")
+  geom_bar() +
+  labs(x = "Gender of name on resume")
 ```
 
-It appears that resumes with male names got promoted at a higher rate. Let's compute the proportions using the `dplyr` package for data wrangling:
+It appears that resumes with female names were much less likely to be accepted for promotion.  Let's quantify these promotions rates by computing the proportion of resumes accepted for promotion for each group using the `dplyr` package for data wrangling:
 
 ```{r}
 promotions %>% 
@@ -104,62 +106,100 @@ observed_test_statistic <- promotions %>%
   round(3)
 ```
 
+So of the 24 resumes with male names 21 were selected for promotion, for a proportion of 21/24 = 0.875 = 87.5%. On the other hand, of the 24 resumes with female names 14 were selected for promotion, for a proportion of 14/24 = 0.583 = 58.3%. Comparing these two rates of promotion, it appears that resumes with male names were selected for promotion at a rate 0.875 - 0.583 = `r observed_test_statistic` = `r observed_test_statistic*100`% higher than resumes with female names. A clear edge for the "male" applicants.
 
-So of the 24 resumes with male names 21 were selected for promotion, for a proportion of 21/24 = 0.875 = 87.5%. On the other hand, of the 24 resumes with female names 14 were selected for promotion, for a proportion of 14/24 = 0.583 = 58.3%. Comparing these two rates of promotion, it appears that resumes with male names were selected for promotion at a 0.875 - 0.583 = `r observed_test_statistic` = `r observed_test_statistic*100`% higher rate than resumes with female names. A clear edge for the "male" applicants.
+The question is however, does this provide conclusive evidence that there is some discrimination in terms of gender in promotions at banks? Could a difference in promotion rates of `r observed_test_statistic*100`% still occur by chance, even in a world of no gender-based discrimination? In other words, what is the role of sampling variation in these results? To answer this question, we'll again rely on simulation to generate results as we did with our sampling bowl in Chapter \@ref(sampling) and our pennies in Chapter \@ref(confidence-intervals). 
 
 
+### Shuffling once
+
+First, imagine a hypothetical universe with no gender discrimination in promotions, with a big emphasis on the "hypothetical". In such a hypothetical universe, the gender of an applicant would have no bearing on their chances of promotions. Bringing things back to our `promotions` data frame, the `gender` variable would thus be an irrelevant label. If the `gender` label is irrelevant, then we can randomly "shuffle" this label to no consequence!
+
+To illustrate this idea, let's narrow our focus to 6 arbitrarily chosen resumes of the 48 in Table \@ref(tab:compare-six): 3 resumes not resulting in a promotion and 3 resumes resulting in a promotion. The left-hand side of the table displays the original relationship between `decision` and `gender` that was actually observed by researchers. 
+
+However, in our hypothesized universe of no gender discrimination, gender is irrelevant and thus it is of no consequence to randomly shuffle the values of `gender`. The right-hand side of the table displays one such possible random shuffling. Observe how the number of male and female remains the same at three each, but they are listed in a different order. 
+
+```{r compare-six, echo=FALSE}
+set.seed(2019)
+# Pick out 6 rows
+promotions_sample <- promotions %>%
+  slice(c(1, 5, 6, 20, 21, 47))
+# Shuffle these 6 rows
+promotions_sample_shuffled <- promotions_sample %>%
+  mutate(gender = sample(gender))
+
+list(promotions_sample, promotions_sample_shuffled) %>% 
+  kable(
+    caption = "\\label{tab:compare-six}Relationship of decision and gender for 6 resumes: original (left) and shuffled (right).", 
+    booktabs = TRUE,
+    longtable = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position", "repeat_header"))
+```
+
+Again, such random shuffling of gender only makes sense in the hypothesized universe of no gender discrimination. How could we extend this shuffling of the gender variable to all 48 resumes by hand? One way would be by using standard deck of 52 playing cards, which we display in Figure \@ref(fig:deck-of-cards).
+
+```{r deck-of-cards, echo=FALSE, fig.cap="Standard deck of 52 playing cards.", purl=FALSE, out.width="90%"}
+knitr::include_graphics("images/ss/670789453.png")
+```
+
+Since half the cards are red and the other half are black, by removing 2 red cards and 2 black cards, we would end up with 24 red cards and 24 black cards. After shuffling these 48 cards as seen in Figure \@ref(fig:shuffling), we can flip the cards over one-by-one, assigning "male" for each red card and "female" for each black card.
+
+```{r shuffling, echo=FALSE, fig.cap="Shuffling deck cards.", purl=FALSE, out.width="90%"}
+knitr::include_graphics("images/ss/128283971.png")
+```
 
 <!--
-Say you are working at a bank in the 1970's and you are applying for a promotion. 
+Going back to our index cards, pick up each of the 24 cards corresponding to males and females that you placed on top of the manager cards. The next step is to put the two stacks of index cards together, creating a new set of 48 cards.  If we assume that the two population means are equal, we are saying that there is no association between promotion and gender (male vs female). If there really is no association between these two variables than for each of the 48 managers, it wouldn't matter whether they saw the name of a male or female candidate on the resume they were given. They'd each be equally likely of granting a promotion for each of the two binary genders. So how do we do this with the cards?
 
-We will be looking to analyze "Are men and women rated for promotions differently?" We note again here as we did in Section \@ref(model4) that this study from 1974 only focused on the gender binary of `"male"` and `"female"`. We proceed with the example here to help to motivate the concepts of hypothesis testing via an interesting social question, but we again understand that a segment of our readers will not be included in this binary gender classification.
-
-This data from this study in the "Journal of Applied Psychology" has been loaded into the `moderndive` package as `promotions`. The study looks into different personnel decisions including promotion, professional development, and whether or not a grant a leave of absence based on gender. For our purposes, we will focus on the promotion portion based on the decisions from 48 male bank supervisors in 1972.
-
-To begin the study, the bank supervisors were asked to assume the role of a hypothetical personnel director of a bank with multiple branches. Every one of the bank supervisors was given a resume and asked whether or not the candidate on the resume was fit to be promoted to a new position in one of their branches. Each of these resumes was the same in terms of content and style with the only difference being that of the name at the top of the resume.
-
-It was hypothesized based on other studies at the time and commonly held assumptions that male supervisors were more likely to grant male candidates promotions than female candidates. Does this study also back up this claim? Or does it not provide evidence that there is a positive difference in the proportion of males and females promoted based on reviews by male supervisors?
-
-The `moderndive` package contains data from this 1974 study on the role of binary gender on promotions at banks in the `promotions` data frame. Let's look at what the data shows in this sample as a table using the `janitor` package we saw in Section \@ref(case-study-two-prop-ci).
-
-
-
-Let's lay out what this sample information looks like using decks of index cards. Let's take 48 note cards and assign them the `id` values of 1 to 48 and also whether or not that supervisor decided to promote from the second column of `promotions`. Set those in, say, 8 rows each with 6 entries from left to right and top to bottom. If you'd like you can denote `promoted` as green in color and `not` as red in color corresponding to common stoplight colors. Feel free to tweak this to different colors to assist with color-blind individuals as you like.
-
-Then take a second deck of 24 index cards of a third color corresponding to "male" and lastly a third deck of 24 index cards for "female". Now, setup this original sample by correctly matching male or female to the `id` of the supervisor by looking at the third column of `promotions`. Place the card of appropriate gender next to each of the 48 supervisor cards matching up with what we saw in our original sample. Now let's aggregate the proportion of successes (promotions) based on the two genders using the `janitor` package.
-
-We see that males were chosen for promotion at a rate of $21/24 = 87.5\%$ whereas females were chosen at a rate of $14/24 \approx 58.3\%$. This leads to an *observed test statistic* of around 29.2% (0.292) when taking the proportion of promotions for males minus the proportion of promotions for females. Does this provide evidence that there is some discrimination in terms of gender in promotions at banks? While males were suggested for promotion at a higher rate, sampling variability could be playing a role here. 
-
-If males and females were equally likely of being selected for promotion (that there was no gender discrimination in promotion), how likely would we be to see a difference as large (or larger) than this difference of $\approx$ 0.292 (29.2%)? Is a result like this uncommon in samples, assuming there is no gender discrimination? Or are there lots of other potential samples that could lead to a result like this? 
-
-In order to get to answer this question, we again will rely on the process of simulation to generate results. First let's build up a tactile simulation using notecards to understand what some instances assuming equal percentages for promoting males and females would look like. This process is called **permuting** and you'll see why next.
+Now that we have the our 48 cards corresponding to gender in a single pile, shuffle them. Feel free to do this a couple times. Now take each of the cards off the top of the pile and assign them to the 48 different supervisors. Keep the supervisor cards in the same place they were before. We are, thus, randomly assigning the different values of the **explanatory** variable to each of the entries of the **response** variable. To reiterate, we hold the response variable of `promotion` fixed by not shuffling those cards but we shuffle the values of `gender` as the explanatory variable. Let's check out what the first few rows of this permutation of the gender cards onto the supervisors might look like as data.
 -->
 
-
-
-### Permuting once
-
-* Imagine a hypothetical universe where there was no gender discrimination
+We've saved one such shuffling in the `one_permute` data frame of the `moderndive` package. If you view both the original `promotions` and the shuffled `one_permute` data frames and compare them, you'll see that while the `decision` variables are identical, the `gender` variables are indeed different.
 
 ```{r, echo=FALSE}
 set.seed(2019)
 one_permute <- promotions %>%
   mutate(gender = sample(gender))
 ```
+```{r}
+one_permute
+```
 
-```{r promotions-barplot-permuted, fig.cap="Barplot of relationship between shuffled gender and promotion decision."}
+Let's repeat the same exploratory data analysis we did for the original `promotions` data on our shuffled `one_permute` data frame. Let's create a barplot visualizing the relationship between `decision` and shuffled `gender` and compare this to the original unshuffled version in Figure \@ref(fig:promotions-barplot-permuted)
+
+```{r, eval = FALSE}
 ggplot(one_permute, aes(x = gender, fill = decision)) +
-  geom_bar(position = "dodge") +
-  labs(x = "gender of resume name")
+  geom_bar() +
+  labs(x = "Gender of resume name")
+```
+```{r promotions-barplot-permuted, fig.cap="Barplot of relationship between shuffled gender and promotion decision.", echo = FALSE}
+height1 <- promotions %>% 
+  group_by(gender, decision) %>% 
+  summarize(n = n()) %>% 
+  pull(n) %>% 
+  max()
+height2 <- one_permute %>% 
+  group_by(gender, decision) %>% 
+  summarize(n = n()) %>% 
+  pull(n) %>% 
+  max()
+height <- max(height1, height2)
+
+plot1 <- ggplot(promotions, aes(x = gender, fill = decision)) +
+  geom_bar() +
+  labs(x = "Gender of resume name", title = "Original") +
+  theme(legend.position = "none") +
+  coord_cartesian(ylim= c(0, height))
+plot2 <- ggplot(one_permute, aes(x = gender, fill = decision)) +
+  geom_bar() +
+  labs(x = "Gender of resume name", y ="", title = "Shuffled") +
+  coord_cartesian(ylim= c(0, height))
+plot1 + plot2
 ```
 
-It appears that resumes with male names got promoted at a higher rate. Let's compute the proportions using the `dplyr` package for data wrangling:
-
-```{r, echo=FALSE}
-set.seed(76)
-one_permute <- promotions %>%
-  mutate(gender = sample(gender))
-```
+Compared to the barplot in Figure \@ref(fig:promotions-barplot), it appears the different in "male" vs "female" promotions rates is now different. Let's also compute the proportion of resumes accepted for promotion for each group:
 
 ```{r}
 one_permute %>% 
@@ -186,45 +226,16 @@ n_women_not_promoted <- one_permute %>%
 prop_women_promoted <- n_women_promoted/(n_women_promoted + n_women_not_promoted)
 
 # diff
-diff_prop <- round(observed_test_statistic, 3)
+diff_prop <- round(prop_men_promoted - prop_women_promoted, 3)
 
 # round propotions post difference
 prop_men_promoted <- round(prop_men_promoted, 3)
 prop_women_promoted <- round(prop_women_promoted, 3)
 ```
 
-So in this hypothetical universe of no discrimination, of the 24 resumes with male names `r n_men_promoted` were selected for promotion, for a proportion of `r n_men_promoted`/24 = `r prop_men_promoted` = `r prop_men_promoted*100`%. On the other hand, of the 24 resumes with female names `r n_women_promoted` were selected for promotion, for a proportion of `r n_women_promoted`/24 = `r prop_women_promoted` = `r prop_women_promoted*100`%. Comparing these two rates of promotion, it appears that resumes with male names were selected for promotion at a `r prop_men_promoted ` - `r prop_women_promoted ` = `r diff_prop` = `r diff_prop*100`% differen rate than resumes with female names. 
+So in this hypothetical universe of no discrimination, `r n_men_promoted`/24 = `r prop_men_promoted` = `r prop_men_promoted*100`% of "male" resumes were selected for promotion. On the other hand, `r n_women_promoted`/24 = `r prop_women_promoted` = `r prop_women_promoted*100`% of "female" resumes were selected for promotion. Comparing these two values, it appears that resumes with male names were selected for promotion at a different rate of `r prop_men_promoted ` - `r prop_women_promoted ` = `r diff_prop` = `r diff_prop*100`%. 
 
-
-<!--
-We assume the two population proportions are equal ($H_0: p_{male} - p_{female} = 0$). In other words, we assume that the proportion of males being selected for promotion ($p_{male}$) is the same as the proportion of females being selected for promotion ($p_{female}$). So what would our sample look like if we had made this assumption?
-
-Going back to our index cards, pick up each of the 24 cards corresponding to males and females that you placed on top of the manager cards. The next step is to put the two stacks of index cards together, creating a new set of 48 cards.  If we assume that the two population means are equal, we are saying that there is no association between promotion and gender (male vs female). If there really is no association between these two variables than for each of the 48 managers, it wouldn't matter whether they saw the name of a male or female candidate on the resume they were given. They'd each be equally likely of granting a promotion for each of the two binary genders. So how do we do this with the cards?
-
-Now that we have the our 48 cards corresponding to gender in a single pile, shuffle them. Feel free to do this a couple times. Now take each of the cards off the top of the pile and assign them to the 48 different supervisors. Keep the supervisor cards in the same place they were before. We are, thus, randomly assigning the different values of the **explanatory** variable to each of the entries of the **response** variable. To reiterate, we hold the response variable of `promotion` fixed by not shuffling those cards but we shuffle the values of `gender` as the explanatory variable. Let's check out what the first few rows of this permutation of the gender cards onto the supervisors might look like as data.
-
-```{r compare-first-10, echo=FALSE}
-set.seed(2019)
-one_permute <- promotions %>%
-  mutate(gender = sample(gender)) %>% 
-  select(id, decision, gender)
-first_10 <- list(promotions %>% slice(1:10),
-                 one_permute %>% slice(1:10))
-first_10 %>% 
-  kable(
-    caption = "\\label{tab:compare-first-10}First 10 rows of original (left) and permuted (right) data", 
-    booktabs = TRUE,
-    longtable = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position", "repeat_header"))
-```
-
-We see that from the permuting of the gender cards we have the following new assignments to supervisors with `id`s of 2, 4, 5, 6, 7, 8, and 9. In these rows, the gender has switched on the presented resumes from what was in the original sample of resumes. The other rows (supervisors) have remained the same in terms of gender of their candidate. What does the difference in the promotion rates of males and females look like now our permuted data?
-
-
-We can calculate the *test statistic* for this permutation now as well to get a value of $79.2\% - 66.7\% = 12.5\%$. So this is one potential sample statistic that could come about based on chance alone if there was in fact no gender discrimination in promotions. We could have each of many friends help us out here to generate more permutations and resulting differences in the proportions of successes. Let's do that 33 times as we did in the previous chapters.
--->
+Observe how this difference in rates is different than the difference in rates of `r observed_test_statistic` = `r observed_test_statistic*100`% we originally observed. This is once again due to sampling variation. How can we better understand the effect of this sampling variation? By doing this several times!
 
 
 ### Permuting 33 times
@@ -532,7 +543,7 @@ knitr::include_graphics("images/ht.png")
 ```
 
 
-### Comparison with confidence intervals {#only-one-test}
+### Comparison with confidence intervals
 
 One of the great things about the `infer` pipeline is that going between hypothesis tests and confidence intervals is incredibly simple. To create a null distribution, we ran
 
