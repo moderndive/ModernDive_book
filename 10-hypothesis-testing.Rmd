@@ -298,9 +298,9 @@ We see that of the 33 samples we selected only one is close to as extreme as wha
 * Performed a hypothesis test
 * What we'll do for
 
-Much like with our case study on whether yawning is contagious from Section \@ref(#case-study-two-prop-ci), we are interested in inferring about the difference in population proportions $p_{m} - p_{f}$. Recall our summary table of sampling scenarios in Table \@ref(table:summarytable-ch8-c).
+Much like with our case study on whether yawning is contagious from Section \@ref(#case-study-two-prop-ci), we are interested in inferring about the difference in population proportions $p_{m} - p_{f}$. Recall our summary table of sampling scenarios from Table \@ref(table:summarytable-ch8-c).
 
-```{r summarytable-ch8-c, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE}
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
@@ -397,61 +397,24 @@ We'll see later on however, the p-value isn't quite 1/33, but rather (`r num` + 
 
 ## Conducting hypothesis tests {#ht-infer}
 
-
-* 
-* 
-* 
-
-
-
-
-<!--
-Moved observed test stat computation here from Ch 9.
-
-
-#### 4. Observed statistic / point estimate calculations {-}
-
-Just as `group_by() %>% summarize()` produces a useful workflow in `dplyr`, we can also use `specify() %>% calculate()` to compute summary measures on our original sample data. It's often helpful both in confidence interval calculations, but also in hypothesis testing to identify what the corresponding statistic is in the original data. For our example on penny age, we computed above a value of `x_bar` using the `summarize()` verb in `dplyr`:
-
-```{r, eval=FALSE}
-pennies_sample %>% 
-  summarize(stat = mean(year))
-```
-
-This can also be done by skipping the `generate()` step in the pipeline feeding `specify()` directly into `calculate()`:
-
-```{r, eval=FALSE}
-pennies_sample %>% 
-  specify(response = year) %>% 
-  calculate(stat = "mean")
-```
-
-This shortcut will be particularly useful when the calculation of the observed statistic is tricky to do using `dplyr` alone. This is particularly the case when working with more than one variable as will be seen in Chapter \@ref(hypothesis-testing).
-
--->
-
-
-### Revisiting the infer verb framework
-
 In Chaper \@ref(confidence-intervals), you were introduced to the framework for inference including the following verbs: `specify()`, `generate()`, and `calculate()`. This was useful when calculating bootstrap distributions in order to develop confidence intervals in both the one-sample and two-sample cases. One of the great powers of the `infer` package is in extending confidence intervals to hypothesis testing by including one more verb: `hypothesize()`. Its main argument is `null` which is either 
 
 - `"point"` for point hypotheses involving a single sample or
 - `"independence"` for testing for independence between two variables.
 
 
-```{r echo=FALSE, purl=FALSE}
+
+```{r infer-ht, echo=FALSE, fig.cap="Hypothesis testing via infer", purl=FALSE, out.width="90%"}
 knitr::include_graphics("images/flowcharts/infer/ht.png")
 ```
 
-Let's see how this is done with the gender discrimination study from Section \@ref(ht-activity).
-
-### The `infer` pipeline for the activity
+### infer package workflow {#infer-workflow}
 
 Remember that our goal here is to generate many different samples, assuming the null hypothesis is true. In doing so we will create a **null distribution**. This null distribution is similar to what we have seen so far with the *sampling distribution* in Chapter \@ref(sampling) and the *bootstrap distribution* in Chapter \@ref(confidence-intervals). Here though we have one more condition to apply in that we assume the null hypothesis is true, thus where the name of the *null* distribution comes from. The null distribution is still used to look at the variability from one sample to the next, but now we are interested in seeing where what we actually saw would fall on the "chance distribution." In doing so, we'll have a good sense for whether random chance is a good explanation for seeing the results in our observed sample or if there is something else going on which better aligns with $H_a$, the alternative hypothesis.
 
-Let's explore the `infer` pipeline one more time here:
+Let's explore the `infer` pipeline one more time here on the gender discrimination study from Section \@ref(ht-activity).
 
-#### Choose the variables of interest {-}
+#### 1. `specify` variables {-}
 
 We use the `specify()` verb to denote the response and, if needed, explanatory variables for our study. In this case, we are investigating `decision` as the response variable and `gender` as the explanatory variable. Recall that for the `formula` argument we use the notation `<response> ~ <explanatory>` where `<response`> is the name of the response variable in the data frame and `<explanatory>` is the name of the explanatory variable. Note also the importance of including which of the two levels here `"promoted"` or `"not"` is what we are defining as a success from the `decision` (response) variable.
 
@@ -466,7 +429,7 @@ specify_ht <- promotions %>%
 specify_ht
 ```
 
-#### Set the model for the null hypothesis {-}
+#### 2. `hypothesize` the null and alternative {-}
 
 The next step after `specify()` for hypothesis tests is a new one: `hypothesize()`. Here the argument `null` gives which type of null hypothesis we are working with. In this case, we are testing for the independence of the two variables so we set `null = "independence"`. 
 
@@ -482,8 +445,7 @@ hypothesize_ht <- specify_ht %>%
 hypothesize_ht
 ```
 
-
-#### Replicate samples assuming the null hypothesis is true {-}
+#### 3. `generate` replicates {-}
 
 After we have set the model for the null hypothesis, we simulate the null hypothesis being true by permuting our original sample in much the same way as we did with index cards in Section \@ref(ht-activity). We'll now let the computer do this shuffling many times. Let's use the 1000 `reps` argument we've used before in the `generate()` verb, but this time generating permutations with `type = "permute"` instead of `type = "bootstrap"` that we used previously for confidence intervals in Chapter \@ref(confidence-intervals).
 
@@ -501,7 +463,7 @@ generate_ht <- hypothesize_ht %>%
 generate_ht
 ```
 
-#### Compute the statistic for each replicate {-}
+#### 4. `calculate` summary statistics {-}
 
 Now that we have 1000 replicated samples assuming the null hypothesis of independence of the two variables `decision` and `gender`, we `calculate()` the difference in proportions (`"diff in props"`) for each permutation. We finish this step by including the `order` in which we'd like to take the difference. In this case, we've chosen `male` - `female`.
 
@@ -531,24 +493,7 @@ ggplot(null_distribution_two_props, aes(x = stat)) +
 We now see even greater evidence that gender discrimination was at play in how males and females were assigned promotion. We now have almost all of the 1000 statistics of the null distribution not as extreme as our observed test statistic. We'll formalize this in the image below as well as in Section \@ref(p-value) where we define the term **p-value** in relation to this set-up.
 
 
-### The "There Is Only One Test" framework {#only-one-test}
-
-In a hypothesis test, we will use data from a sample to help us decide between two competing _hypotheses_ about a population.  We make these hypotheses more concrete by specifying them in terms of at least one _population parameter_ of interest.  We refer to the competing claims about the population as the **null hypothesis**, denoted by $H_0$, and the **alternative (or research) hypothesis**, denoted by $H_a$.  The roles of these two hypotheses are NOT interchangeable.  
-
-- The claim for which we seek significant evidence is assigned to the alternative hypothesis.  The alternative is usually what the experimenter or researcher wants to establish or find evidence for.
-- Usually, the null hypothesis is a claim that there really is "no effect" or "no difference."  In many cases, the null hypothesis represents the status quo or that nothing interesting is happening.  
-- We assess the strength of evidence by assuming the null hypothesis is true and determining how unlikely it would be to see sample results/statistics as extreme (or more extreme) as those in the original sample.
-
-Hypothesis testing brings about many weird and incorrect notions in the scientific community and society at large.  One reason for this is that statistics has traditionally been thought of as this magic box of algorithms and procedures to get to results and this has been readily apparent if you do a Google search of "flowchart statistics hypothesis tests."  There are so many different complex ways to determine which test is appropriate.  
-
-You'll see that we don't need to rely on these complicated series of assumptions and procedures to conduct a hypothesis test any longer.  These methods were introduced in a time when computers weren't powerful.  Most cellphones (in 2019) have more power than the computers that sent NASA astronauts to the moon after all. We'll see that ALL hypothesis tests can be broken down into the following framework given by Allen Downey [here](http://allendowney.blogspot.com/2016/06/there-is-still-only-one-test.html):
-
-```{r htdowney, echo=FALSE, fig.cap="Hypothesis Testing Framework", purl=FALSE}
-knitr::include_graphics("images/ht.png")
-```
-
-In the examples that follow, we'll phrase things in terms of this framework by Downey, which is one of the inspirations for the `infer` package. Downey finishes off the process we have been working through so far with the shading of the **p-value** in Figure \@ref(fig:htdowney). But what does this shading mean? 
-
+#### 5. `visualize` the results {-}
 
 Remember that we are interested in seeing where our observed sample difference in proportions of `r pull(obs_diff_prop)` falls on this null/randomization distribution.  We are interested in seeing if males have a statistically higher rate of promotion so "more extreme" corresponds to values equal to or greater than what we saw.  Thus, we'll be looking for values as extreme or more extreme than what we saw in the right tail. Let's shade our null distribution to show a visual representation of our $p$-value:
 
@@ -566,9 +511,28 @@ p_value
 ```
 
 
+### "There is only one test" {#only-one-test}
+
+In the examples that follow, we'll phrase things in terms of this framework by Downey, which is one of the inspirations for the `infer` package. Downey finishes off the process we have been working through so far with the shading of the **p-value** in Figure \@ref(fig:htdowney). But what does this shading mean? 
+
 We have around `r pull(p_value) * 100`% of values as extreme or more extreme than our observed statistic in both directions. With hypothesis tests, it is common and recommended to first set the **significance level** of the test.  It is denoted as the Greek letter $\alpha$.  Common values for $\alpha$ are 0.1, 0.01, and 0.05 with 0.05 being the most common choice. This threshold is the point at which we decide that our observed results are "beyond a reasonable doubt." Assuming we are using a 5% significance level for $\alpha$, we have evidence supporting the conclusion that the proportion of males being chosen for promotion is greater than the proportion of females being chosen for promotion. The next important idea is to better understand just how much higher of a proportion for promotion can we expect the males to have compared to that of the females.
 
-### Corresponding confidence interval
+In a hypothesis test, we will use data from a sample to help us decide between two competing _hypotheses_ about a population.  We make these hypotheses more concrete by specifying them in terms of at least one _population parameter_ of interest.  We refer to the competing claims about the population as the **null hypothesis**, denoted by $H_0$, and the **alternative (or research) hypothesis**, denoted by $H_a$.  The roles of these two hypotheses are NOT interchangeable.  
+
+- The claim for which we seek significant evidence is assigned to the alternative hypothesis.  The alternative is usually what the experimenter or researcher wants to establish or find evidence for.
+- Usually, the null hypothesis is a claim that there really is "no effect" or "no difference."  In many cases, the null hypothesis represents the status quo or that nothing interesting is happening.  
+- We assess the strength of evidence by assuming the null hypothesis is true and determining how unlikely it would be to see sample results/statistics as extreme (or more extreme) as those in the original sample.
+
+Hypothesis testing brings about many weird and incorrect notions in the scientific community and society at large.  One reason for this is that statistics has traditionally been thought of as this magic box of algorithms and procedures to get to results and this has been readily apparent if you do a Google search of "flowchart statistics hypothesis tests."  There are so many different complex ways to determine which test is appropriate.  
+
+You'll see that we don't need to rely on these complicated series of assumptions and procedures to conduct a hypothesis test any longer.  These methods were introduced in a time when computers weren't powerful.  Most cellphones (in 2019) have more power than the computers that sent NASA astronauts to the moon after all. We'll see that ALL hypothesis tests can be broken down into the following framework given by Allen Downey [here](http://allendowney.blogspot.com/2016/06/there-is-still-only-one-test.html):
+
+```{r htdowney, echo=FALSE, fig.cap="Hypothesis Testing Framework", purl=FALSE, out.width="90%"}
+knitr::include_graphics("images/ht.png")
+```
+
+
+### Comparison with confidence intervals {#only-one-test}
 
 One of the great things about the `infer` pipeline is that going between hypothesis tests and confidence intervals is incredibly simple. To create a null distribution, we ran
 
@@ -593,6 +557,9 @@ percentile_ci_two_props <- promotions %>%
 
 Thus, we can expect the true proportion of men promoted in the relevant population to be `r percentile_ci_two_props[["2.5%"]]` to `r percentile_ci_two_props[["97.5%"]]` higher than that of females. Remember that this is based on bootstrapping using `promotions` as our original sample and the confidence interval process being 95% reliable.
 
+
+
+
 ```{block lc10-3b0, type='learncheck', purl=FALSE}
 **_Learning check_**
 ```
@@ -608,9 +575,10 @@ Thus, we can expect the true proportion of men promoted in the relevant populati
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is the value of the $p$-value for the hypothesis test comparing the mean rating of romance to action movies? How can it be interpreted in the context of the problem?
 
-
 ```{block, type='learncheck', purl=FALSE}
 ``` 
+
+
 
 ### Summary
 
@@ -722,7 +690,7 @@ if(knitr:::is_html_output()){
     tab_spanner(label = "Actual result",
                 columns = vars(Guilty, `Not guilty`)) %>% 
     cols_align(align = "center") %>% 
-    tab_options(table.width = pct(30))
+    tab_options(table.width = pct(90))
 } else {
   knitr::include_graphics("images/error-types.png")
 }
@@ -788,7 +756,18 @@ The idea that sample results are more extreme than we would reasonably expect to
 
 
 
-## Case study: Are action or romance movies rated higher on IMDb {#ht-case-study}
+## Case study: Are action or romance movies rated higher? {#ht-case-study}
+
+### Data collected
+
+### Back to sampling
+
+### Conducting the hypothesis test
+
+### Interpreting the hypothesis test
+
+### Comparison to confidence intervals
+
 
 ### Randomization/permutation
 
@@ -797,6 +776,30 @@ We will now focus on building hypotheses looking at the difference between two p
 Our null hypothesis will be of the form $H_0: \mu_1 = \mu_2$, which can also be written as $H_0: \mu_1 - \mu_2 = 0$.  Our alternative hypothesis will be of the form $H_0: \mu_1 \star \mu_2$ (or $H_a:  \mu_1 - \mu_2 \, \star \, 0$) where $\star$ = $<$, $\ne$, or $>$ depending on the context of the problem. You needn't focus on these new symbols too much at this point.  It will just be a shortcut way for us to describe our hypotheses.
 
 As we saw in Chapter \@ref(confidence-intervals), bootstrapping is a valuable tool when conducting inferences based on one or two population variables. From earlier in this chapter, we saw that the process of **permutation** (also known as **randomization**) can be valuable in conducting tests comparing values from two groups. In this case study, we'll explore how we can use permutation to compare quantitative values, instead of proportions of successes, from two groups.
+
+In this chapter, we performed both tactile and virtual simulations of permutation to infer about hypotheses on unknown parameters. We also presented a case study of permuting in a real-life situation: movie ratings of action and romance movies. We used the difference in sample proportions $\widehat{p}_1 - \widehat{p}_2$ to estimate the difference in population proportions $p_1 - p_2$. We similarly used the difference in sample means $\overline{x}_1 - \overline{x}_2$ to estimate the difference in population mean $\mu_1 - \mu_2$. Here we use 1 and 2 to represent two different groups, but one could use other subscripts as needed to denote the groups. Let's review these and others one more time in Table \@ref(tab:summarytable-ch10). 
+
+```{r summarytable-ch10, echo=FALSE, message=FALSE}
+# The following Google Doc is published to CSV and loaded below using read_csv() below:
+# https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
+
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+  read_csv(na = "") %>% 
+  filter(Scenario %in% c(1:4)) %>% 
+  kable(
+    caption = "\\label{tab:summarytable-ch9}Scenarios of sampling for inference", 
+    booktabs = TRUE,
+    escape = FALSE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position")) %>%
+  column_spec(1, width = "0.5in") %>% 
+  column_spec(2, width = "0.7in") %>%
+  column_spec(3, width = "1in") %>%
+  column_spec(4, width = "1.1in") %>% 
+  column_spec(5, width = "1in")
+```
+
 
 ### Comparing action and romance movies
 
@@ -1204,37 +1207,6 @@ Point 5 advocates for using Bayesian inference instead of the "frequentist" meth
 To follow-up on the previous sections and this and the previous chapter, it's important to understand what information hypothesis tests and confidence intervals provide. In short, hypothesis tests are aligned with statistical significance whereas confidence intervals are more aligned with practical significance. Like we saw in the movie ratings example, the hypothesis test told us that we had evidence that action and romance movies had a different mean rating. This is statistical significance. 
 
 We also found a range of plausible values for what the mean difference in ratings for action versus romance movies we'd expect to see. This gave us some practical evidence that we could use in later analyses. Thus, confidence intervals are the recommended go-to method since they can be both used to check for a statistical difference between a quantitative calculation on two variables (by checking for the inclusion of 0 in the interval) and also for providing some practicality as well.
-
-### Summary table {#ht-conclusion-table}
-
-In this chapter, we performed both tactile and virtual simulations of permutation to infer about hypotheses on unknown parameters. We also presented a case study of permuting in a real-life situation: movie ratings of action and romance movies. We used the difference in sample proportions $\widehat{p}_1 - \widehat{p}_2$ to estimate the difference in population proportions $p_1 - p_2$. We similarly used the difference in sample means $\overline{x}_1 - \overline{x}_2$ to estimate the difference in population mean $\mu_1 - \mu_2$. Here we use 1 and 2 to represent two different groups, but one could use other subscripts as needed to denote the groups. Let's review these and others one more time in Table \@ref(tab:summarytable-ch10). 
-
-```{r summarytable-ch10, echo=FALSE, message=FALSE}
-# The following Google Doc is published to CSV and loaded below using read_csv() below:
-# https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
-
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-  read_csv(na = "") %>% 
-  kable(
-    caption = "\\label{tab:summarytable-ch9}Scenarios of sampling for inference", 
-    booktabs = TRUE,
-    escape = FALSE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position")) %>%
-  column_spec(1, width = "0.5in") %>% 
-  column_spec(2, width = "0.7in") %>%
-  column_spec(3, width = "1in") %>%
-  column_spec(4, width = "1.1in") %>% 
-  column_spec(5, width = "1in")
-```
-
-We'll cover the remaining scenario as follows, using the terminology, notation, and definitions related to sampling you saw in Section \@ref(sampling-framework):
-
-* In Chapter \@ref(inference-for-regression), we'll cover an example of statistical inference for the relationship between teaching score and various instructor demographic variables you saw in Chapter \@ref(regression) on basic regression and Chapter \@ref(multiple-regression) on multiple regression. Specifically
-    + Scenario 5: The intercept $\beta_0$ of some population regression line.
-    + Scenario 6: The slope $\beta_1$ of some population regression line.
-
 
 ### Building theory-based methods using computation {#theory-hypo}
 
