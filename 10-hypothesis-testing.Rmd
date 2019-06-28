@@ -586,7 +586,7 @@ In other words, the probability of observing a difference in promotion rates as 
 
 ### Comparison with confidence intervals
 
-One of the great things about the `infer` pipeline is that going between hypothesis tests and confidence intervals is incredibly simple. To create a null distribution, we ran
+One of the great things about the `infer` pipeline is that we can jump between hypothesis tests and confidence intervals with minimal changes! Recall from the previous section that to create the null distribution needed to compute the p-value, we ran the following code:
 
 ```{r eval=FALSE}
 null_distribution <- promotions %>% 
@@ -596,18 +596,64 @@ null_distribution <- promotions %>%
   calculate(stat = "diff in props", order = c("male", "female"))
 ```
 
-To get the corresponding bootstrap distribution with which we can compute a confidence interval, we can just remove or comment out the `hypothesize()` step since we are no longer assuming the null hypothesis is true when we bootstrap. We also switch the `type` in `generate()` to be `"bootstrap"` to denote the confidence interval calculation instead of permutations for hypothesis tests.
+To create the corresponding bootstrap distribution needed to construct a 95% confidence interval for $p_{m} - p_{f}$, we only need to make two changes. First, we remove the `hypothesize()` step since we are no longer assuming a null hypothesis $H_0$ is true when we bootstrap. We do this by commenting out the `hypothesize()` line of code. Second, we switch the `type` of resampling in the `generate()` step to be `"bootstrap"` instead of `"permute"`.
 
 ```{r}
-percentile_ci_two_props <- promotions %>% 
+bootstrap_distribution <- promotions %>% 
   specify(formula = decision ~ gender, success = "promoted") %>% 
-  #  hypothesize(null = "independence") %>% 
+  # Change 1 - Remove hypothesize():
+  # hypothesize(null = "independence") %>% 
+  # Change 2 - Switch type from "permute" to "bootstrap":
   generate(reps = 1000, type = "bootstrap") %>% 
-  calculate(stat = "diff in props", order = c("male", "female")) %>% 
-  get_ci()
+  calculate(stat = "diff in props", order = c("male", "female"))
 ```
 
-Thus, we can expect the true proportion of men promoted in the relevant population to be `r percentile_ci_two_props[["2.5%"]]` to `r percentile_ci_two_props[["97.5%"]]` higher than that of females. Remember that this is based on bootstrapping using `promotions` as our original sample and the confidence interval process being 95% reliable.
+Using `bootstrap_distribution`, we first compute the percentile-based confidence intervals:
+
+```{r}
+percentile_ci <- bootstrap_distribution %>% 
+  get_confidence_interval(level = 0.95, type = "percentile")
+percentile_ci
+```
+
+Using our shorthand interpretation for 95% confidence intervals from Section \@ref(shorthand), we are 95% "confident" that the true difference in population proportions $p_{m} - p_{f}$ is between (`r percentile_ci[["lower"]]`, `r percentile_ci[["upper"]]`). Let's visualize `bootstrap_distribution` and the 95% confidence interval for $p_{m} - p_{f}$ in Figure \@ref(fig:boostrap-distribution-two-prop-percentile).
+
+```{r eval=FALSE}
+visualize(bootstrap_distribution) + 
+  shade_confidence_interval(endpoints = percentile_ci)
+```
+```{r boostrap-distribution-two-prop-percentile, echo=FALSE, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+visualize(bootstrap_distribution) + 
+  shade_confidence_interval(endpoints = percentile_ci) +
+  ggtitle("Simulation-Based Bootstrap Distribution") 
+```
+
+Since the bootstrap distribution appears to be roughly normally shaped, we can also used the standard error based confidence intervals, being sure to specify `point_estimate` as the observed difference in promotion rates `r observed_test_statistic` = `r observed_test_statistic*100`% saved in `obs_diff_prop`:
+
+```{r}
+se_ci <- bootstrap_distribution %>% 
+  get_confidence_interval(level = 0.95, type = "se", point_estimate = obs_diff_prop)
+se_ci
+```
+
+Let's visualize `bootstrap_distribution` and the 95% confidence interval for $p_{m} - p_{f}$ in Figure \@ref(fig:boostrap-distribution-two-prop-se).
+
+```{r eval=FALSE}
+visualize(bootstrap_distribution) + 
+  shade_confidence_interval(endpoints = se_ci)
+```
+```{r boostrap-distribution-two-prop-se, echo=FALSE, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+visualize(bootstrap_distribution) + 
+  shade_confidence_interval(endpoints = se_ci) +
+  ggtitle("Simulation-Based Bootstrap Distribution") 
+```
+
+
+
+
+
 
 ```{block lc10-3b0, type='learncheck', purl=FALSE}
 **_Learning check_**
