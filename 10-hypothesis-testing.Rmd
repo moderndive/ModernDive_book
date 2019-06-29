@@ -45,8 +45,8 @@ If needed, read Section \@ref(packages) for information on how to install and lo
 library(tidyverse)
 library(infer)
 library(moderndive)
-library(ggplot2movies)
 library(nycflights13)
+library(ggplot2movies)
 ```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
@@ -55,6 +55,7 @@ library(knitr)
 library(kableExtra)
 library(gt)
 library(patchwork)
+library(scales)
 ```
 
 
@@ -851,51 +852,45 @@ The idea that sample results are more extreme than we would reasonably expect to
 
 ## Case study: Are action or romance movies rated higher? {#ht-case-study}
 
-Let's apply our knowledge of hypothesis testing to answer the question: "Are action or romance movies rated higher on IMDb?" IMDb is an internet movie database providing information on movie and television show casts, plot summaries, trivia, and ratings. We'll investigate if on average action or romance movies get a higher rating based on a sample of 68 movies.
+Let's apply our knowledge of hypothesis testing to answer the question: "Are action or romance movies rated higher on IMDb?" [IMDb](https://www.imdb.com/) is an internet movie database providing information on movie and television show casts, plot summaries, trivia, and ratings. We'll investigate if on average action or romance movies get a higher rating on IMDb.
 
-### Data
+### IMDb ratings data
 
-The `movies` dataset in the `ggplot2movies` package contains information on a large number of movies that have been rated by users of IMDB.com. We are interested in the question here of whether `Action` movies are rated higher, on average, on IMDB than `Romance` movies. We will first need to do a little bit of data wrangling using the ideas from Chapter \@ref(wrangling) to get the data in the form that we would like:
+<!--
+**Important note:** Remember that we hardly ever have access to the population values as we do here.  This example was used to show how well hypothesis testing procedures using methods like permutation can do at testing hypotheses about population parameters. In nearly all circumstances, we'll be needing to use only a sample of the population to try to infer conclusions about the unknown population parameter values.  This example does show a nice relationship between statistics (where data is usually small and more focused on experimental settings) and data science (where data is frequently large and collected without experimental conditions). 
+-->
 
-```{r, echo=FALSE}
-movies_trimmed <- movies %>% 
-  select(title, year, rating, Action, Romance) %>%
-  filter(!(Action == 1 & Romance == 1)) %>%
-  mutate(genre = case_when( (Action == 1) ~ "Action",
-                            (Romance == 1) ~ "Romance",
-                            TRUE ~ "Neither")) %>%
-  filter(genre != "Neither") %>%
-  select(-Action, -Romance)
-
-set.seed(2017)
-movies_genre_sample <- movies_trimmed %>% 
-  sample_n(68)
-```
-
+The `movies` dataset in the `ggplot2movies` package contains information on `r nrow(movies) %>% comma()` movies that have been rated by users of IMDB.com. 
 
 ```{r}
-movies_genre_sample
+movies
 ```
 
-The variables include the `title` and `year` the movie was filmed. Furthermore, we have a numerical variable `rating`, which is the IMDb rating out of 10 stars, and a binary categorical variable `genre` indicating if the movie was an action or romance movie. 
+We'll focus on a random sample of 68 movies that are classified as either "action" or "romance" movies but not both. We disregard movies that are classified as both so that we can assign all 68 movies into either category. Furthermore, since the original `movies` dataset was a little messy, we provided a pre-wrangled version of our data in the `movies_sample` data frame included in the `moderndive` package (you can look at the code to do this data wrangling [here](https://github.com/moderndive/moderndive/blob/master/data-raw/process_data_sets.R#L14)):
+
+```{r}
+movies_sample
+```
+
+The variables include the `title` and `year` the movie was filmed. Furthermore, we have a numerical variable `rating`, which is the IMDb rating out of 10 stars, and a binary categorical variable `genre` indicating if the movie was an `Action` or `Romance` movie. We are interested in whether `Action` or `Romance` movies got on average a higher `rating`.
 
 Let's perform an exploratory data analysis of this data. Recall from Section \@ref(geomboxplot) that a boxplot one visualization we can use to show the relationship between a numerical and a categorical variable. Another option you saw in Section \@ref(facets) would be to use a facetted histogram. However, in the interest of brevity let's visualize just the boxplot in Figure \@ref(fig:action-romance-boxplot).
 
 ```{r action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs genre."}
-ggplot(data = movies_genre_sample, aes(x = genre, y = rating)) +
+ggplot(data = movies_sample, aes(x = genre, y = rating)) +
   geom_boxplot() +
   labs(y = "IMDb rating")
 ```
 
-Eyeballing Figure \@ref(fig:action-romance-boxplot), it appears that romance movies have a higher median rating. Furthermore, as evidenced by the height of boxes corresponding to the interquartile range, it appears that romance movies also have more variation in ratings. Let's compute some summary statistics using `dplyr` data wrangling verbs, in particular the count of each type of movies using the `n()` summary statistic function. 
+Eyeballing Figure \@ref(fig:action-romance-boxplot), it appears that romance movies have a higher median rating. Do we have reason to believe however, that there is a *significant* difference between the mean `rating` for action movies compared to romance movies?  It's hard to say just based on the plots.  The boxplot does show that the median sample rating is higher for romance movies.  Let's now calculate the number of movies, the mean rating, and the standard deviation split by the binary variable `genre`.  We'll do this using `dplyr` data wrangling verbs, in particular the count of each type of movies using the `n()` summary statistic function. 
 
 ```{r}
-movies_genre_sample %>% 
+movies_sample %>% 
   group_by(genre) %>% 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 ```
 ```{r, echo = FALSE}
-movies_genre_summaries <- movies_genre_sample %>% 
+movies_genre_summaries <- movies_sample %>% 
   group_by(genre) %>% 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 
@@ -918,22 +913,11 @@ So we have `r n_romance` movies with an average rating of `r x_bar_romance %>% r
 
 ### Sampling scenario
 
-We will now focus on building hypotheses looking at the difference between two population means in an example. We will denote population means using the Greek symbol $\mu$ (pronounced "mu"). Thus, we will be looking to see if one group "out-performs" another group.  This is quite possibly the most common type of statistical inference and serves as a basis for many other types of analyses when comparing the relationship between two variables. 
+Let's tie things in back with our sampling idea in Chapter \@ref(sampling). Recall our sampling bowl with $N$ = 2400 balls. Our population parameter of interest was the population proportion of these balls that were red, denoted mathematically by $p$. In order to estimate $p$, we extracted a sample of 50 balls using the shovel and computed the relevant point estimate: the sample proportion of these 50 balls that were red, denoted mathematically by $\widehat{p}$.
 
-Our null hypothesis will be of the form $H_0: \mu_1 = \mu_2$, which can also be written as $H_0: \mu_1 - \mu_2 = 0$.  Our alternative hypothesis will be of the form $H_0: \mu_1 \star \mu_2$ (or $H_a:  \mu_1 - \mu_2 \, \star \, 0$) where $\star$ = $<$, $\ne$, or $>$ depending on the context of the problem. You needn't focus on these new symbols too much at this point.  It will just be a shortcut way for us to describe our hypotheses.
+What is the study population here? It is all movies in the IMDb database that are either action or romance (but not both). In other words, of all `r nrow(movies) %>% comma()` in the `movies` data frame included in the `ggplot2movies` package, our study population are those movie who are either `Action` or `Romance`.  What is the sample here? It is the 68 movies included in the `movies_sample` dataset. Since this sample was randomly taken from the population `movies`, it is representative of all romance and action movies, and thus any analysis and results based on `movies_sample` can generalize to the entire population. Recall you studied these ideas in Section \@ref(terminology-and-notation). 
 
-As we saw in Chapter \@ref(confidence-intervals), bootstrapping is a valuable tool when conducting inferences based on one or two population variables. From earlier in this chapter, we saw that the process of **permutation** (also known as **randomization**) can be valuable in conducting tests comparing values from two groups. In this case study, we'll explore how we can use permutation to compare quantitative values, instead of proportions of successes, from two groups.
-
-So we have $n_r$ = `r n_romance` movies with a sample mean rating of $\overline{x}_r$ = `r x_bar_romance %>% round(2)` stars out of 10 and $n_a$ = `n_action` movies with a sample mean rating of $\overline{x}_a$ = `r x_bar_action %>% round(2)` stars out of 10. The difference in these average ratings is thus $\overline{x}_r - \overline{x}_r$ = `r x_bar_romance %>% round(2)` - `r x_bar_action %>% round(2)` = `r (x_bar_romance - x_bar_action) %>% round(2)`. So there appears to be an edge of `r (x_bar_romance - x_bar_action) %>% round(2)` stars in romance movie ratings. The question is however, are these results indicative of a true difference for all romance and action movies? Or could this difference be attributable to chance an sampling variation? 
-
-In this chapter, we performed both tactile and virtual simulations of permutation to infer about hypotheses on unknown parameters. We also presented a case study of permuting in a real-life situation: movie ratings of action and romance movies. We used the difference in sample proportions $\widehat{p}_1 - \widehat{p}_2$ to estimate the difference in population proportions $p_1 - p_2$. We similarly used the difference in sample means $\overline{x}_1 - \overline{x}_2$ to estimate the difference in population mean $\mu_1 - \mu_2$. Here we use 1 and 2 to represent two different groups, but one could use other subscripts as needed to denote the groups. Let's review these and others one more time in Table \@ref(tab:summarytable-ch10). 
-
-
-
-
-
-
-
+What are the relevant population parameter and point estimates? We introduce the fourth sampling scenario in Table \@ref(tab:summarytable-ch10). 
 
 ```{r summarytable-ch10, echo=FALSE, message=FALSE}
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
@@ -956,41 +940,44 @@ In this chapter, we performed both tactile and virtual simulations of permutatio
   column_spec(5, width = "1in")
 ```
 
+So whereas the sampling bowl exercise in Section \@ref(sampling-activity) concerned proportions, the pennies exercise in Section \@ref(resampling-tactile) concerned means, the case study on whether yawning is contagious in Section \@ref(case-study-two-prop-ci) and the promotions activity in Section \@ref(ht-activity) concerned differences in proportions, we are now concerned with differences in means. 
+
+In other words, the population parameter of interest is the difference in population mean ratings $\mu_a - \mu_r$, where $\mu_a$ is the mean rating of all action movies on IMDb and similarly $\mu_r$ is the mean rating of all romance movies. Thus, the point estimate/sample statistic of interest is the difference in sample means $\overline{x}_a - \overline{x}_r$, where $\overline{x}_a$ is the mean rating of the $n_a$ = `n_action` movies in our sample and $\overline{x}_r$ is the mean rating of the $n_r$ = `n_romance` in our sample. Based on our earlier exploratory data analysis, our estimate $\overline{x}_a - \overline{x}_r$ is `r x_bar_action %>% round(2)` - `r x_bar_romance %>% round(2)` = `r (x_bar_action - x_bar_romance) %>% round(2)`. 
+
+So there appears to be a slight difference of `r (x_bar_action - x_bar_romance) %>% round(2)` in favor of romance movies. The question is however, could this difference of `r (x_bar_action - x_bar_romance) %>% round(2)` be merely due to chance and sampling variation? Or are these results indicative of a true difference in mean ratings for all romance and action movies?  To answer this question, we'll use hypothesis testing. 
+
+
 ### Conducting the hypothesis test
 
-$$
-\begin{aligned}
-H_0 &: \text{romance and action movies have the same mean rating}\\
-\text{vs } H_A&: \text{romance and action movies have the same mean rating}
-\end{aligned}
-$$
-
-*Two-sided alternative*.
-
-We can reexpress the formulation of our hypothesis test in terms of the notation for our population parameter of interest:
+We'll be testing
 
 $$
 \begin{aligned}
-H_0 &: \mu_r - \mu_a = 0\\
-\text{vs } H_A&: \mu_r - \mu_a \neq 0
+H_0 &: \mu_a - \mu_r = 0\\
+\text{vs } H_A&: \mu_a - \mu_r \neq 0
 \end{aligned}
 $$
+
+In other words, the null hypothesis $H_0$ suggests that both romance and action movies have the same mean rating. This is the "hypothesized universe" we'll *assume* is true. The alternative hypothesis $H_A$ suggests on the other hand that there is a difference. Note that unlike the one-sided alternative we used in the promotions exercise $H_a: p_m - p_f > 0$, we are now considering a two-sided alternative of $H_A: \mu_a - \mu_r \neq 0$. 
+
+Furthermore, we'll pre-specify a relatively high significance level $\alpha$ = 0.2. By setting this value high, all things being equal there is a higher chance that the p-value will be less than this value, and thus there is a higher chance that we'll reject the null hypothesis $H_0$ in favor of the alternative hypothesis $H_A$. In other words, we'll reject the hypothesis that there is no difference in mean ratings for all action and romance movies even if we only have mild evidence. 
+
 
 #### 1. `specify` variables {-}
 
-We first `specify()` the variables of interest in the `movies_genre_sample` data frame using the `rating ~ genre`. This tells `infer` that the numerical variable `rating` is the outcome variable while the binary categorical variable `genre` is the explanatory variable. Note here however, than unlike when we are interested in proportions, since we are interested in the mean of a numerical variable, we do not need to set the `success` argument.
+We first `specify()` the variables of interest in the `movies_sample` data frame using the `rating ~ genre`. This tells `infer` that the numerical variable `rating` is the outcome variable while the binary categorical variable `genre` is the explanatory variable. Note here however, than unlike when we are interested in proportions, since we are interested in the mean of a numerical variable, we do not need to set the `success` argument.
 
 ```{r}
-movies_genre_sample %>% 
+movies_sample %>% 
   specify(formula = rating ~ genre)
 ```
 
 #### 2. `hypothesize` the null {-}
 
-We set the null hypothesis $H_0$ by using the `hypothesize()` function. Since we have two samples, the action and romance movies, we set `null = "independence"` as we described in Section \@ref(ht-infer).
+We set the null hypothesis $H_0: \mu_a - \mu_r = 0$ by using the `hypothesize()` function. Since we have two samples, the action and romance movies, we set `null = "independence"` as we described in Section \@ref(ht-infer).
 
 ```{r}
-movies_genre_sample %>% 
+movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   hypothesize(null = "independence")
 ```
@@ -1000,50 +987,50 @@ movies_genre_sample %>%
 After we have set the null hypothesis, we simulate observations assuming the null hypothesis is true by repeating the shuffling/permutation exercise you performed in Section \@ref(ht-activity). We'll repeat this resampling of `type = "permute"` a total of `reps = 1000` times . 
 
 ```{r}
-movies_genre_sample %>% 
+movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   hypothesize(null = "independence") %>% 
   generate(reps = 1000, type = "permute")
 ```
 
-Observe that it is at this point our output differs from the original `movies_genre_sample` data frame. The resulting data frame has 68,000 rows.  This is because we performed shuffles/permutations of the 68 values of `genre` 1000 times and thus 68,000 = 1000 $\times$ 68. 
+Observe that it is at this point our output differs from the original `movies_sample` data frame. The resulting data frame has 68,000 rows.  This is because we performed shuffles/permutations of the 68 values of `genre` 1000 times and thus 68,000 = 1000 $\times$ 68. 
 
 #### 4. `calculate` summary statistics {-}
 
-Now that we have 1000 replicated "shuffles" assuming the null hypothesis that both `Action` and `Romance` movies on average have the same ratings on IMDb, let's `calculate()` the appropriate summary statistic for each of our 1000 shuffles. Recall from Section \@ref(understanding-ht) that point estimates/summary statistics relating to hypothesis testing have a specific name: *test statistics*. Since the unknown population parameter of interest is the difference in population means $\mu_{r} - \mu_{a}$, the test statistic of interest here is the difference in sample means $\overline{x}_{r} - \overline{x}_{a}$. 
+Now that we have 1000 replicated "shuffles" assuming the null hypothesis that both `Action` and `Romance` movies on average have the same ratings on IMDb, let's `calculate()` the appropriate summary statistic for each of our 1000 shuffles. Recall from Section \@ref(understanding-ht) that point estimates/summary statistics relating to hypothesis testing have a specific name: *test statistics*. Since the unknown population parameter of interest is the difference in population means $\mu_{a} - \mu_{r}$, the test statistic of interest here is the difference in sample means $\overline{x}_{a} - \overline{x}_{r}$. 
 
-For each of our 1000 shuffles, we can calculate this test statistic by setting `stat = "diff in means"`. Furthermore, since we are interested in $\overline{x}_{r} - \overline{x}_{a}$ and not the reverse-ordered $\overline{x}_{a} - \overline{x}_{r}$, we set `order = c("Romance", "Action")`. Let's save the result in a data frame called `null_distribution_movies`:
+For each of our 1000 shuffles, we can calculate this test statistic by setting `stat = "diff in means"`. Furthermore, since we are interested in $\overline{x}_{a} - \overline{x}_{r}$ and not the reverse-ordered $\overline{x}_{r} - \overline{x}_{a}$, we set `order = c("Action", "Romance")`. Let's save the result in a data frame called `null_distribution_movies`:
 
 ```{r}
-null_distribution_movies <- movies_genre_sample %>% 
+null_distribution_movies <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   hypothesize(null = "independence") %>% 
   generate(reps = 1000, type = "permute") %>% 
-  calculate(stat = "diff in means", order = c("Romance", "Action"))
+  calculate(stat = "diff in means", order = c("Action", "Romance"))
 null_distribution_movies
 ```
 
-Observe that we have 1000 values of `stat`, each representing one "shuffled" instance of $\overline{x}_{r} - \overline{x}_{a}$ in a hypothesized world of no difference in movie ratings between romance and action movies.
+Observe that we have 1000 values of `stat`, each representing one "shuffled" instance of $\overline{x}_{a} - \overline{x}_{r}$ in a hypothesized world of no difference in movie ratings between romance and action movies.
 
-But wait! What happened in real-life? What was the observed difference in promotions rates? In other words, what was the *observed test statistic* $\overline{x}_{r} - \overline{x}_{a}$? Recall our earlier data wrangling from earlier, this observed difference in means was `r x_bar_romance %>% round(2)` - `r x_bar_action %>% round(2)` = `r (x_bar_romance - x_bar_action) %>% round(2)`.  We can also achieve this using the code above but with the `hypothesize()` and `generate()` steps removed. Let's save this in `obs_diff_means`
+But wait! What happened in real-life? What was the observed difference in promotions rates? In other words, what was the *observed test statistic* $\overline{x}_{a} - \overline{x}_{r}$? Recall our earlier data wrangling from earlier, this observed difference in means was `r x_bar_action %>% round(2)` - `r x_bar_romance %>% round(2)` = `r (x_bar_action - x_bar_romance) %>% round(2)`.  We can also achieve this using the code above but with the `hypothesize()` and `generate()` steps removed. Let's save this in `obs_diff_means`
 
 ```{r}
-obs_diff_means <- movies_genre_sample %>% 
+obs_diff_means <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
-  calculate(stat = "diff in means", order = c("Romance", "Action"))
+  calculate(stat = "diff in means", order = c("Action", "Romance"))
 obs_diff_means
 ```
 
 #### 5. `visualize` the p-value {-}
 
-Lastly to compute the p-value, we have to assess how "extreme" the observed difference in means `r obs_diff_means$stat` is by comparing it to our null distribution constructed in a hypothesized universe of no difference in movie ratings. Let's visualize the p-value in Figure \@ref(fig:null-distribution-movies-2). Unlike our example in Section \@ref(infer-workflow-ht) involving promotions, since we have a two-sided alternative hypothesis $\mu_r - \mu_a \neq 0$, we have to allow for both possibilities for "more extreme", so we set `direction = "both"`.
+Lastly to compute the p-value, we have to assess how "extreme" the observed difference in means `r obs_diff_means$stat %>% round(2)` is by comparing it to our null distribution constructed in a hypothesized universe of no difference in movie ratings. Let's visualize the p-value in Figure \@ref(fig:null-distribution-movies-2). Unlike our example in Section \@ref(infer-workflow-ht) involving promotions, since we have a two-sided alternative hypothesis $H_A: \mu_a - \mu_r \neq 0$, we have to allow for both possibilities for "more extreme", so we set `direction = "both"`.
 
 ```{r null-distribution-movies-2, fig.cap="Null distribution, observed test statistic, and p-value. "}
 visualize(null_distribution_movies, bins = 10) + 
   shade_p_value(obs_stat = obs_diff_means, direction = "both")
 ```
 
-Recall the tree elements of this plot. First, the histogram is the null distribution, which is the technical term for the sampling distribution of the "shuffled" difference in sample means $\overline{x}_{r} - \overline{x}_{a}$ assuming $H_0$ is true. Second, the solid line is the observed test statistic, or the difference in sample means we observed in real-life of `r x_bar_romance %>% round(2)` - `r x_bar_action %>% round(2)` = `r (x_bar_romance - x_bar_action) %>% round(2)`. Notice where this solid line is located in the null distribution: it very plausible to observe such a value. Third, the shaded area is the p-value, or the probability of obtaining a test statistic just as or more extreme than the observed test statistic *assuming the null hypothesis $H_0$ is true*.
+Recall the tree elements of this plot. First, the histogram is the null distribution, which is the technical term for the sampling distribution of the "shuffled" difference in sample means $\overline{x}_{a} - \overline{x}_{r}$ assuming $H_0$ is true. Second, the solid line is the observed test statistic, or the difference in sample means we observed in real-life of `r x_bar_action %>% round(2)` - `r x_bar_romance %>% round(2)` = `r (x_bar_action - x_bar_romance) %>% round(2)`. Notice where this solid line is located in the null distribution: it very plausible to observe such a value. Third, the shaded area is the p-value, or the probability of obtaining a test statistic just as or more extreme than the observed test statistic *assuming the null hypothesis $H_0$ is true*.
 
 What proportion of the null distribution is shaded? In other words, what is the numerical value of the p-value? We use the `get_p_value()` function to compute this value:
 
@@ -1057,7 +1044,7 @@ p_value_movies <- null_distribution_movies %>%
   mutate(p_value = round(p_value, 3))
 ```
 
-This p-value of `r p_value_movies$p_value` is very small. Thus we are very inclined to reject the null hypothesis $H_0: \mu_r - \mu_a = 0$ in favor of the alternative hypothesis $H_A: \mu_r - \mu_a \neq 0$. In non-statistical language, the conclusion is: the evidence in this sample of data suggests we should reject the hypothesis that there is no difference in mean IMDb ratings between romance and action movies in favor of the hypothesis that there is a difference. 
+This p-value of `r p_value_movies$p_value` is very small. In other words, there is a small chance that we'd observe a sample with a difference of `r x_bar_action %>% round(2)` - `r x_bar_romance %>% round(2)` = `r (x_bar_action - x_bar_romance) %>% round(2)` in a universe where there was truly no difference in ratings. This p-value is in fact much small that our pre-specified $\alpha$ significance level of 0.2, and thus we are very inclined to reject the null hypothesis $H_0: \mu_a - \mu_r = 0$ in favor of the alternative hypothesis $H_A: \mu_a - \mu_r \neq 0$. In non-statistical language, the conclusion is: the evidence in this sample of data suggests we should reject the hypothesis that there is no difference in mean IMDb ratings between romance and action movies in favor of the hypothesis that there is a difference. 
 
 
 
@@ -1214,7 +1201,7 @@ ggplot(data = null_distribution_movies, aes(x = stat)) +
 The `infer` package also includes some built-in theory-based statistics as well, so instead of going through the process of trying to transform the difference into a standardized form, we can just provide a different value for `stat` in `calculate()`. Recall the `generated_samples` data frame created via:
 
 ```{r eval=TRUE}
-generated_samples <- movies_genre_sample %>% 
+generated_samples <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   hypothesize(null = "independence") %>% 
   generate(reps = 5000)
@@ -1224,7 +1211,7 @@ We can now created a null distribution of $t$ statistics:
 
 ```{r}
 null_distribution_t <- generated_samples %>% 
-  calculate(stat = "t", order = c("Romance", "Action"))
+  calculate(stat = "t", order = c("Action", "Romance"))
 null_distribution_t %>% visualize()
 ```
 
@@ -1240,9 +1227,9 @@ null_distribution_t %>%
 We can see that the curve does a good job of approximating the randomization distribution here. (More on when to expect for this to be the case when we discuss conditions for the $t$-test in a bit.) To calculate the $p$-value in this case, we need to figure out how much of the total area under the $t$-curve is at our observed $T$-statistic or more, plus also adding the area under the curve at the negative value of the observed $T$-statistic or below.  (Remember this is a two-tailed test so we are looking for a difference--values in the tails of either direction.)  Just as we converted all of the simulated values to $T$-statistics, we must also do so for our observed effect $\delta^*$:
 
 ```{r}
-obs_t <- movies_genre_sample %>% 
+obs_t <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
-  calculate(stat = "t", order = c("Romance", "Action"))
+  calculate(stat = "t", order = c("Action", "Romance"))
 ```
 
 So graphically we are interested in finding the percentage of values that are at or above `obs_t = ``r pull(obs_t)` or at or below `-obs_t = ``r -pull(obs_t)`.
