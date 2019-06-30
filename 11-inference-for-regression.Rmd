@@ -53,6 +53,7 @@ library(ISLR)
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 # Packages needed internally, but not in text.
 library(knitr)
+library(tidyr)
 library(kableExtra)
 library(patchwork)
 ```
@@ -61,295 +62,126 @@ library(patchwork)
 
 ***
 
+## Regression refresher
 
-
-## Simulation-based Inference for Regression
-
-We can also use the concept of permuting to determine the standard error of our null distribution and conduct a hypothesis test for a population slope. Let's go back to our example on teacher evaluations Chapters \@ref(regression) and \@ref(multiple-regression).  We'll begin in the basic regression setting to test to see if we have evidence that a statistically significant *positive* relationship exists between teaching and beauty scores for the University of Texas professors. As we did in Chapter \@ref(regression), teaching `score` will act as our outcome variable and `bty_avg` will be our explanatory variable. We will set up this hypothesis testing process as we have each before via the "There is Only One Test" diagram in Figure \@ref(fig:htdowney) using the `infer` package.
-
-### Data
-
-Our data is stored in `evals` and we are focused on the measurements of the `score` and `bty_avg` variables there. Note that we don't choose a subset of variables here since we will `specify()` the variables of interest using `infer`.
+Let's first head back to reminding ourselves of the University of Texas student evaluations analysis in Section \@ref(model1). Let's begin by looking at the `evals_ch6` data frame that selected a subset of variables from the `evals` data frame in the `moderndive` package.
 
 ```{r}
-evals %>% 
-  specify(score ~ bty_avg)
+evals_ch6 <- evals %>%
+  select(ID, score, bty_avg, age)
+glimpse(evals_ch6)
 ```
 
-### Test statistic $\delta$
+In Chapter \@ref(regression), we investigated the relationship between student evaluation ratings (`score`) and the beauty rating (`bty_avg`). We saw there that there was a weakly positive correlation between the two variables as shown in the plot below. Note the use of the regression line as well in blue that attempts to summarize this linear relationship between the two variables.
 
-Our test statistic here is the sample slope coefficient that we denote with $b_1$.
-
-### Observed effect $\delta^*$
-
-We can use the `specify() %>% calculate()` shortcut here to determine the slope value seen in our observed data:
-
-```{r}
-slope_obs <- evals %>% 
-  specify(score ~ bty_avg) %>% 
-  calculate(stat = "slope")
-```
-
-The calculated slope value from our observed sample is $b_1 = `r pull(slope_obs)`$.
-
-### Model of $H_0$
-
-We are looking to see if a positive relationship exists so $H_A: \beta_1 > 0$.  Our null hypothesis is always in terms of equality so we have $H_0: \beta_1 = 0$. In other words, when we assume the null hypothesis is true, we are assuming there is NOT a linear relationship between teaching and beauty scores for University of Texas professors.
-
-### Simulated data
-
-Now to simulate the null hypothesis being true and recreating how our sample was created, we need to think about what it means for $\beta_1$ to be zero. If $\beta_1 = 0$, we said above that there is no relationship between the teaching and beauty scores. If there is no relationship, then any one of the teaching score values could have just as likely occurred with any of the other beauty score values instead of the one that it actually did fall with. We, therefore, have another example of permuting in our simulating of data under the null hypothesis.
-
-**Tactile simulation**
-
-We could use a deck of `r nrow(evals) * 2` note cards to create a tactile simulation of this permuting process. We would write the `r nrow(evals)` different values of beauty scores on each of the `r nrow(evals)` cards, one per card. We would then do the same thing for the `r nrow(evals)` teaching scores putting them on one per card.
-
-Next, we would lay out each of the `r nrow(evals)` beauty score cards and we would shuffle the teaching score deck. Then, after shuffling the deck well, we would disperse the cards one per each one of the beauty score cards. We would then enter these new values in for teaching score and compute a sample slope based on this permuting. We could repeat this process many times, keeping track of our sample slope after each shuffle.
-
-### Distribution of $\delta$ under $H_0$
-
-We can build our null distribution in much the same way we did in Chapter \@ref(hypothesis-testing) using the `generate()` and `calculate()` functions. Note also the addition of the `hypothesize()` function, which lets `generate()` know to perform the permuting instead of bootstrapping. 
-
-```{r eval=FALSE}
-null_slope_distn <- evals %>% 
-  specify(score ~ bty_avg) %>%
-  hypothesize(null = "independence") %>% 
-  generate(reps = 10000) %>% 
-  calculate(stat = "slope")
-```
-
-```{r echo=FALSE}
-if(!file.exists("rds/null_slope_distn.rds")){
-  null_slope_distn <- evals %>% 
-    specify(score ~ bty_avg) %>%
-    hypothesize(null = "independence") %>% 
-    generate(reps = 10000) %>% 
-    calculate(stat = "slope")
-   saveRDS(object = null_slope_distn, 
-           "rds/null_slope_distn.rds")
-} else {
-   null_slope_distn <- readRDS("rds/null_slope_distn.rds")
-}
-```
-
-```{r}
-null_slope_distn %>% 
-  visualize(obs_stat = slope_obs, direction = "greater")
-```
-
-In viewing the distribution above with shading to the right of our observed slope value of `r pull(slope_obs)`, we can see that we expect the p-value to be quite small. Let's calculate it next using a similar syntax to what was done with `visualize()`.
-
-### The p-value
-
-```{r fig.cap="Shaded histogram to show p-value"}
-null_slope_distn %>% 
-  get_pvalue(obs_stat = slope_obs, direction = "greater")
-```
-
-Since `r pull(slope_obs)` falls far to the right of this plot beyond where any of the histogram bins have data, we can say that we have a $p$-value of 0.  We, thus, have evidence to reject the null hypothesis in support of there being a positive association between the beauty score and teaching score of University of Texas faculty members.
-
-
-```{block lc9-5, type='learncheck', purl=FALSE}
-**_Learning check_**
-```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the inference above but this time for the correlation coefficient instead of the slope. Note the implementation of `stat = "correlation"` in the `calculate()` function of the `infer` package.
-
-```{block, type='learncheck', purl=FALSE}
-```
-
-
-
-***
-
-
-
-## Bootstrapping for the regression slope
-
-With the p-value calculated as 0 in the hypothesis test above, we can next determine just how strong of a positive slope value we might expect between the variables of teaching `score` and beauty score (`bty_avg`) for University of Texas faculty. Recall the `infer` pipeline above to compute the null distribution. Recall that this assumes the null hypothesis is true that there is no relationship between teaching score and beauty score using the `hypothesize()` function.
-
-```{r eval=FALSE}
-null_slope_distn <- evals %>% 
-  specify(score ~ bty_avg) %>%
-  hypothesize(null = "independence") %>% 
-  generate(reps = 10000, type = "permute") %>% 
-  calculate(stat = "slope")
-```
-
-To further reinforce the process being done in the pipeline, we've added the `type` argument to `generate()`. This is automatically added based on the entries for `specify()` and `hypothesize()` but it provides a useful way to check to make sure `generate()` is created the samples in the desired way. In this case, we `permute`d the values of one variable across the values of the other 10,000 times and `calculate`d a `"slope"` coefficient for each of these 10,000 `generate`d samples.
-
-If instead we'd like to get a range of plausible values for the true slope value, we can use the process of bootstrapping:
-
-```{r}
-bootstrap_slope_distn <- evals %>% 
-  specify(score ~ bty_avg) %>%
-  generate(reps = 10000, type = "bootstrap") %>% 
-  calculate(stat = "slope")
-```
-
-
-```{r echo=FALSE}
-if(!file.exists("rds/bootstrap_slope_distn.rds")){
-  bootstrap_slope_distn <- evals %>% 
-    specify(score ~ bty_avg) %>%
-    generate(reps = 10000, type = "bootstrap") %>% 
-    calculate(stat = "slope")
-  saveRDS(object = bootstrap_slope_distn, 
-           "rds/bootstrap_slope_distn.rds")
-} else {
-  bootstrap_slope_distn <- readRDS("rds/bootstrap_slope_distn.rds")
-}
-```
-
-```{r}
-bootstrap_slope_distn %>% visualize()
-```
-
-Next we can use the `get_ci()` function to determine the confidence interval. Let's do this in two different ways obtaining 99% confidence intervals. Remember that these denote a range of plausible values for an unknown true population slope parameter regressing teaching score on beauty score.
-
-```{r}
-percentile_slope_ci <- bootstrap_slope_distn %>% 
-  get_ci(level = 0.99, type = "percentile")
-percentile_slope_ci
-```
-
-```{r}
-se_slope_ci <- bootstrap_slope_distn %>% 
-  get_ci(level = 0.99, type = "se", point_estimate = slope_obs)
-se_slope_ci
-```
-
-With the bootstrap distribution being close to symmetric, it makes sense that the two resulting confidence intervals are similar.
-
-<!-- It's all you, Bert! Not sure if we want to cover more about the t distribution here as well or how we should transition from simulation-based to theory-based for the multiple regression part? -->
-
-
-
-***
-
-
-
-## Inference for multiple regression
-
-### Refresher: Professor evaluations data
-
-Let's revisit the professor evaluations data that we analyzed using multiple regression with one numerical and one categorical predictor. In particular
-
-* $y$: outcome variable of instructor evaluation `score`
-* predictor variables
-    + $x_1$: numerical explanatory/predictor variable of `age`
-    + $x_2$: categorical explanatory/predictor variable of `gender`
-
-```{r, echo=FALSE}
-library(tidyr)
-```
-    
-```{r}
-library(ggplot2)
-library(dplyr)
-library(moderndive)
-
-evals_multiple <- evals %>%
-  select(score, ethnicity, gender, language, age, bty_avg, rank)
-```
-
-First, recall that we had two competing potential models to explain professors'
-teaching scores:
-
-1. Model 1: No interaction term. i.e. both male and female profs have the same slope describing the associated effect of age on teaching score
-1. Model 2: Includes an interaction term. i.e. we allow for male and female profs to have different slopes describing the associated effect of age on teaching score
-
-### Refresher: Visualizations
-
-Recall the plots we made for both these models:
-
-```{r model1, echo=FALSE, warning=FALSE, fig.cap="Model 1: no interaction effect included"}
-coeff <- lm(score ~ age + gender, data = evals_multiple) %>% coef() %>% as.numeric()
-slopes <- evals_multiple %>%
-  group_by(gender) %>%
-  summarise(min = min(age), max = max(age)) %>%
-  mutate(intercept = coeff[1]) %>%
-  mutate(intercept = ifelse(gender == "male", intercept + coeff[3], intercept)) %>%
-  gather(point, age, -c(gender, intercept)) %>%
-  mutate(y_hat = intercept + age * coeff[2])
-  
-  ggplot(evals_multiple, aes(x = age, y = score, col = gender)) +
-  geom_jitter() +
-  labs(x = "Age", y = "Teaching Score", color = "Gender") +
-  geom_line(data = slopes, aes(y = y_hat), size = 1)
-```
-
-```{r model2, echo=FALSE, warning=FALSE, fig.cap="Model 2: interaction effect included"}
-ggplot(evals_multiple, aes(x = age, y = score, col = gender)) +
-  geom_jitter() +
-  labs(x = "Age", y = "Teaching Score", color = "Gender") +
+```{r regline, fig.cap="Relationship with regression line"}
+ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Teaching Score",
+       title = "Relationship between teaching and beauty scores") +  
   geom_smooth(method = "lm", se = FALSE)
 ```
 
-### Refresher: Regression tables
+Looking at this plots again, you might be asking "But is that line really that positive in its slope?" It does increase from left to right as the `bty_avg` variable increases, but by how much? To get to this information, we can use the `lm()` function to determine the necessary values that comprise the defining regression equation. Recall the use of the `get_regression_table()` function in the `moderndive` package to better summarize the results of this regression fit as well.
 
-Last, let's recall the regressions we fit. First, the regression with no 
-interaction effect: note the use of `+` in the formula in Table \@ref(tab:modelmultireg).
-
-```{r, eval=FALSE}
-score_model_2 <- lm(score ~ age + gender, data = evals_multiple)
-get_regression_table(score_model_2)
-```
-```{r modelmultireg, echo=FALSE}
-score_model_2 <- lm(score ~ age + gender, data = evals_multiple)
-get_regression_table(score_model_2) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Model 1: Regression table with no interaction effect included", 
-    booktabs = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+```{r}
+# Fit regression model:
+score_model <- lm(score ~ bty_avg, data = evals_ch6)
+# Get regression table:
+get_regression_table(score_model)
 ```
 
-Second, the regression with an interaction effect: note the use of `*` in the formula.
-
-```{r, eval=FALSE}
-score_model_3 <- lm(score ~ age * gender, data = evals_multiple)
-get_regression_table(score_model_3)
-```
-```{r, echo=FALSE}
-score_model_3 <- lm(score ~ age * gender, data = evals_multiple)
-get_regression_table(score_model_3) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Model 2: Regression table with interaction effect included", 
-    booktabs = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
-                latex_options = c("HOLD_position"))
+```{r echo=FALSE}
+slope_row <- get_regression_table(score_model) %>% 
+  filter(term == "bty_avg")
+b1 <- slope_row %>% pull(estimate)
+se1 <- slope_row %>% pull(std_error)
+t1 <- slope_row %>% pull(statistic)
+lower1 <- slope_row %>% pull(lower_ci)
+upper1 <- slope_row %>% pull(upper_ci)
 ```
 
-### Script of R code
+## Interpretation of regression table results {#regression-interp}
 
-An R script file of all R code used in this chapter is available [here](scripts/11-inference-for-regression.R).
+In Chapter \@ref(regression) we focused on the left-most column of this resulting summary of `score_model` using `get_regression_table()`. Remember the interpretation here of the `r b1` value:
 
+> For every increase of one unit in beauty rating, there is an associated increase, on average, of `r b1` units of evaluation score.
 
+Thus, the slope value quantifies the relationship between the `y` variable of `score` and the `x` variable of `bty_avg` as a single statistic/point estimate from our sample of student evaluations.
 
-***
+We also discussed the intercept value of $b_0$ = `r get_regression_table(score_model) %>% filter(term == "intercept") %>% pull(estimate)` and its lack of practical interpretation since the range of possible beauty scores does not include 0. Let's now shift to focus on the remaining columns of `std_error`, `statistic`, `p_value`, and the two columns related to confidence intervals (`lower_ci` and `upper_ci`) that were not discussed in Chapter \@ref(regression). Given we've just mentioned the lack of interpretation for the intercept value, we'll focus on the second row of the table corresponding to the slope of the regression equation.
 
+### Standard error
 
+Recall the definition of **standard error** given in Chapter \@ref(sampling):
 
-## Residual analysis
-### Residual analysis {#model1residuals}
+> The standard error is the standard deviation of any point estimate from a sampling scenario.
 
-Recall the residuals can be thought of as the error or the "lack-of-fit" between the observed value $y$ and the fitted value $\widehat{y}$ on the blue regression line in Figure \@ref(fig:numxplot4). Ideally when we fit a regression model, we'd like there to be *no systematic pattern* to these residuals. We'll be more specific as to what we mean by *no systematic pattern* when we see Figure \@ref(fig:numxplot7) below, but let's keep this notion imprecise for now. Investigating any such patterns is known as *residual analysis* and is the theme of this section. 
+So what does this mean in this scenario focusing on the sample slope statistic of $b_1$ = `r b1`. This value is just one possible statistic from one sample of students evaluations at the University of Texas. If a different sample was collected for the two variables of `bty_avg` and `score`, we may see different results. If this was done over and over again, we could quantify just how much deviation one would expect with a standard deviation of the sampling distribution for the point estimate $b_1$. So in our case, we can expect about `r se1` units of deviation on the `bty_avg` slope variable. Recall that `estimate` and `std_error` play a key role in helping us to make an educated guess about possible values for the unknown population slope `\beta_1` relating **all** University of Texas student evaluation scores in the year of the study to the beauty score of all faculty.
+
+### Statistic
+
+The `statistic` column in the regression table corresponds to a standardized statistic. This is similar to what was done in Subsection \@ref(theory-hypo) when a $t$-score was computed. To determine the `statistic` entry for slope, we can divide the `estimate` value by its corresponding `std_error` value to create the $t$-score. (Note that there will be a bit of rounding error here if the calculation is done with these rounded table values.) This entry is useful in determining the statistical significance of the $b_1$ value by determining how extreme it is after standardization in the corresponding `p_value` that follows.
+
+### p-value
+
+The `p_value` entry here corresponds to how extreme the entry of `r t1` is when compared to the appropriate $t$ distribution. With the `p_value` being 0 with rounding, we can conclude that the sample slope of `r b1` is statistically greater than 0. In other words, we have evidence that the relationship between beauty score and student evaluation score is positive.
+
+An extra caveat here is that this analysis of statistical significance via the hypothesis test using the $t$-statistic is only valid if some conditions are met. We'll see more about this in Section \@ref(regression-conditions).
+
+### Confidence interval
+
+The final rightmost entries in the table signify a range of possible values for the population slope `\beta_1` referring to the linear relationship between beauty score and student evaluation score in the population. Given that our hypothesis test above told us we had evidence of a positive slope, we should be happy to see the entries for `lower_ci` and `upper_ci` are both greater than 0. 
+
+To obtain these two values, we can use an approach similar to what was done in Subsection \@ref(infer-se). Remember here we are using the theory-based method of a standardized statistic instead of a simulation-based method. We'll compare these two results in Section \@ref(infer-regression). Recall that if we want to compute a 95% confidence interval around our point estimate, we can use the following formula:
+
+$$point\_estimate \pm 2 * standard\_error$$
+
+This confidence interval also is only valid if the conditions discussed in Section \@ref(regression-conditions) are met. Doing the multiplication and subtraction prescribed in the formula by plugging in the other relevant entries from the slope row gives us the resulting confidence interval of $(`r lower1`, `r upper1`)$. 
+
+## Conditions for inference with regression {#regression-conditions}
+
+In order for inference to be valid with linear regression, we must check for four conditions to be met. Note the first four letters of the conditions as highlighted in bold below. This can serve as a nice reminder of what to check whenever linear regression is performed.
+
+- **L**inearity of relationship between variables
+- **I**ndependence of residuals
+- **N**ormality of residuals
+- **E**quality of variance
+
+These conditions can mostly be checked via appropriate data visualizations. There are statistical tests that can also be done to further check for this, but here we will focus on the simpler style of evaluating plots.
+
+### Linearity of relationship
+
+We've already checked for this with our original scatterplot in Figure \@ref(fig:regline). While the plot didn't show a clear example of a linear relationship in that there was some clear deviation from a regression line fit throughout the plot, it also didn't show a different kind of non-linear relationship either. Let's dig further into the other conditions to see how they stack up.
+
+### Independence of residuals
+
+The next three conditions all refer to investigation of the residuals.  Investigating any such patterns is known as *residual analysis*. Recall that residuals can be thought of as the error or the "lack-of-fit" between the observed value $y$ and the fitted value $\widehat{y}$ on the blue regression line in Figure \@ref(fig:regline). Ideally when we fit a regression model, we'd like there to be *no systematic pattern* to these residuals. We'll be more specific as to what we mean by *no systematic pattern* when we see Figure \@ref(fig:regline), but let's keep this notion imprecise for now. 
 
 We'll perform our residual analysis in two ways:
 
 1. Creating a scatterplot with the residuals on the $y$-axis and the original explanatory variable $x$ on the $x$-axis.
 1. Creating a histogram of the residuals, thereby showing the *distribution* of the residuals.
 
-First, recall in Figure \@ref(fig:numxplot5) above we created a scatterplot where
+First, recall in Figure \@ref(fig:numxplot4) in Chapter \@ref(regression) we created a scatterplot. This is again shown below and has the following characteristics:
 
 * on the vertical axis we had the teaching score $y$,
 * on the horizontal axis we had the beauty score $x$, and
 * the blue arrow represented the residual for one particular instructor.
+
+```{r numxplot4-ch11, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual"}
+best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Teaching Score",
+       title = "Relationship of teaching and beauty scores") +
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("point", x = x, y = y, col = "red", size = 3) +
+  annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
+  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
+           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
+best_fit_plot
+```
+
 
 Instead, in Figure \@ref(fig:numxplot6) below, let's create a scatterplot where
 
@@ -399,31 +231,19 @@ ggplot(regression_points, aes(x = bty_avg, y = residual)) +
 
 You can think of Figure \@ref(fig:numxplot6) as Figure \@ref(fig:numxplot5) but with the blue line flattened out to $y=0$. Does it seem like there is *no systematic pattern* to the residuals? This question is rather qualitative and subjective in nature, thus different people may respond with different answers to the above question. However, it can be argued that there isn't a *drastic* pattern in the residuals.
 
+We do have extra information here that may lead us to question the independence of residuals further: The same professors exist multiple times in the data set in that multiple rows of the data set correspond to some of the same professors. Different courses that the professors taught were included in the analyses. Therefore, the residual in one observation will have a dependent relationship with another row breaking the independence assumption of the residuals.
+
+**Note:** As is often the case with regression analysis in the real-world, it can be difficult for the assumptions to be met exactly. We as authors advocate for clarity of interpretation and letting the stakeholders of analyses know about any shortcomings of a model as needed. Here as a preliminary analysis teaching the topics, we will continue on with testing the other conditions. A more valid and precise analysis would incorporate these dependencies between rows and instructors. This topic can get to the advanced stages quickly, so we have decided to omit any further discussion here.
+
+
+### Normality of residuals
+
 Let's now get a little more precise in our definition of *no systematic pattern* in the residuals. Ideally, the residuals should behave *randomly*. In addition,
 
 1. the residuals should be on average 0. In other words, sometimes the regression model will make a positive error in that $y - \widehat{y} > 0$, sometimes the regression model will make a negative error in that $y - \widehat{y} < 0$, but *on average* the error is 0. 
-1. Further, the value and spread of the residuals should not depend on the value of $x$.
+1. the residuals should have the characteristic normal shape.
 
-In Figure \@ref(fig:numxplot7) below, we display some hypothetical examples where there are *drastic* patterns to the residuals. In Example 1, the value of the residual seems to depend on $x$: the residuals tend to be positive for small and large values of $x$ in this range, whereas values of $x$ more in the middle tend to have negative residuals. In Example 2, while the residuals seem to be on average 0 for each value of $x$, the spread of the residuals varies for different values of $x$; this situation is known as *heteroskedasticity*. 
-
-```{r numxplot7, echo=FALSE, warning=FALSE, fig.cap="Examples of less than ideal residual patterns"}
-resid_ex <- evals_ch6
-resid_ex$ex_1 <- ((evals_ch6$bty_avg - 5) ^ 2 - 6 + rnorm(nrow(evals_ch6), 0, 0.5)) * 0.4
-resid_ex$ex_2 <- (rnorm(nrow(evals_ch6), 0, 0.075 * evals_ch6$bty_avg ^ 2)) * 0.4
-  
-resid_ex <- resid_ex %>%
-  select(bty_avg, ex_1, ex_2) %>%
-  gather(type, eps, -bty_avg) %>% 
-  mutate(type = ifelse(type == "ex_1", "Example 1", "Example 2"))
-
-ggplot(resid_ex, aes(x = bty_avg, y = eps)) +
-  geom_point() +
-  labs(x = "Beauty Score", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue", size = 1) +
-  facet_wrap(~type)
-```
-
-The second way to perform a residual analysis is to look at the histogram of the residuals:
+The simplest way to check for this condition of the normality of the residuals is to look at a histogram.
 
 ```{r, eval=FALSE, echo=TRUE}
 ggplot(regression_points, aes(x = residual)) +
@@ -455,9 +275,39 @@ ggplot(resid_ex, aes(x = eps)) +
   facet_wrap( ~ type, scales = "free")
 ```
 
-In fact, we'll see later on that we would like the residuals to be *normally distributed* with
-mean 0. In other words, be bell-shaped and centered at 0! While this requirement and residual analysis in general may seem to some of you as not being overly critical at this point, we'll see later after when we cover *inference for regression* in Chapter \@ref(inference-for-regression) that for the last five columns of the regression table from earlier (`std error`, `statistic`, `p_value`,`lower_ci`, and `upper_ci`) to have valid interpretations, the above three conditions should roughly hold. 
+### Equality of variance
 
+Lastly, to test for the **E** part of **LINE** in our conditions check, the value and spread of the residuals should not depend on the value of $x$. 
+
+In Figure \@ref(fig:numxplot7) below, we display some hypothetical examples where there are *drastic* patterns to the residuals. In Example 1, the value of the residual seems to depend on $x$: the residuals tend to be positive for small and large values of $x$ in this range, whereas values of $x$ more in the middle tend to have negative residuals. In Example 2, while the residuals seem to be on average 0 for each value of $x$, the spread of the residuals varies for different values of $x$; this situation is known as *heteroskedasticity*. 
+
+```{r numxplot7, echo=FALSE, warning=FALSE, fig.cap="Examples of less than ideal residual patterns"}
+resid_ex <- evals_ch6
+resid_ex$ex_1 <- ((evals_ch6$bty_avg - 5) ^ 2 - 6 + rnorm(nrow(evals_ch6), 0, 0.5)) * 0.4
+resid_ex$ex_2 <- (rnorm(nrow(evals_ch6), 0, 0.075 * evals_ch6$bty_avg ^ 2)) * 0.4
+  
+resid_ex <- resid_ex %>%
+  select(bty_avg, ex_1, ex_2) %>%
+  gather(type, eps, -bty_avg) %>% 
+  mutate(type = ifelse(type == "ex_1", "Example 1", "Example 2"))
+
+ggplot(resid_ex, aes(x = bty_avg, y = eps)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Residual") +
+  geom_hline(yintercept = 0, col = "blue", size = 1) +
+  facet_wrap(~type)
+```
+
+Do we see this kind of behavior in our student evaluation versus beauty score example? Let's look at the plot again in Figure \@ref(fig:numxplot6) removing the highlighting of a single residual.
+
+```{r numxplot6-again, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score"}
+ggplot(regression_points, aes(x = bty_avg, y = residual)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Residual") +
+  geom_hline(yintercept = 0, col = "blue", size = 1)
+```
+
+As we look at this plot, we don't see the noticeable patterns shown in Figure \@ref(fig:numxplot7). It doesn't have the fan-like pattern of Example 2 or the bowl-like pattern of Example 1. The residuals are pretty much scattered in similar ways as we look from small beauty score values on the left to larger beauty score values on the right.
 
 ```{block, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -468,197 +318,219 @@ mean 0. In other words, be bell-shaped and centered at 0! While this requirement
 ```{block, type='learncheck', purl=FALSE}
 ```
 
+### Summary
 
+The conditions for inference in regression problems are a key part of regression analysis that are of vital importance to the processes of confidence intervals and hypothesis tests. We also saw that there is a level of subjectivity in evaluating plots so you may be asking "What do I do when conditions aren't clearly met?". We as authors are of the opinion that discussion of these shortcomings goes a long way in helping others to understand your analyses. You won't always have ideal results but regression is a powerful technique that can do some wondrous things with data. But if conditions are violated badly, regression will just as much put you in the "garbage in, garbage out" situation. We recommend being vigilant about checking these conditions and you'll get better with practice on how to discuss the results of the analyses.
 
- 
+## Simulation-based inference for regression {#infer-regression}
 
+### Formula for the standard error of the slope statistic
 
-### Residual analysis {#model2residuals}
+The discussion of the regression table results in Section \@ref(regression-interp) were done using the traditional theory-based analyses and a $t$-statistic. There are formulas to compute the standard error as well as given in the table there. Let's review that table again here:
 
-```{r, eval=TRUE, echo=TRUE}
-# Get data:
-gapminder2007 <- gapminder %>%
-  filter(year == 2007) %>% 
-  select(country, continent, lifeExp, gdpPercap)
+```{r}
 # Fit regression model:
-lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
+score_model <- lm(score ~ bty_avg, data = evals_ch6)
 # Get regression table:
-get_regression_table(lifeExp_model)
-# Get regression points
-regression_points <- get_regression_points(lifeExp_model)
+get_regression_table(score_model)
 ```
 
-Recall our discussion on residuals from Section \@ref(model1residuals) where our goal was to investigate whether or not there was a *systematic pattern* to the residuals. Ideally since residuals can be thought of as error, there should be no such pattern. While there are many ways to do such residual analysis, we focused on two approaches based on visualizations. 
+Since we didn't do any bootstrapping or simulation-based procedures to get the value of `r se1` for the standard error, how was this number computed? What did R do behind the scenes? Well, there's a formula for the standard error. As we've seen with other standard error formulas $n$ and the square root function play a role. Memorizing this formula isn't the important part here. Seeing how the formula compares to the one given in the denominator of the $t$-statistic formula in Section \@ref(theory-hypo) is helpful here. From the theory-based perspective, the standard error of the slope statistic is denoted as $s_{b_1}$ and is given by
 
-1. A plot with residuals on the vertical axis and the predictor (in this case continent) on the horizontal axis
-1. A histogram of all residuals
+$$s_{b_1} = \dfrac{\dfrac{s_y}{s_x} \cdot \sqrt{1-r^2}}{\sqrt{n-2}}$$
 
-First, let's plot the residuals versus continent in Figure \@ref(fig:catxplot7), but also let's plot all `r nrow(gapminder2007)` points with a little horizontal random jitter by setting the `width = 0.1` parameter in `geom_jitter()`:
+<!-- Really like this breakdown: https://stats.stackexchange.com/questions/342632/how-to-understand-se-of-regression-slope-equation -->
 
-```{r catxplot7, warning=FALSE, fig.cap="Plot of residuals over continent"}
-ggplot(regression_points, aes(x = continent, y = residual)) +
-  geom_jitter(width = 0.1) + 
-  labs(x = "Continent", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue")
+As with many formulas in statistics, there's a lot going on here so let's first break down what each symbol represents:
+
+- $s_y$ is the sample standard deviation for the response variable `score`
+- $s_x$ is the sample standard deviation for the explanatory variable `bty_avg`
+- $r$ is the sample correlation coefficient between `score` and `bty_avg`. This was computed as `r cor(evals_ch6$score, evals_ch6$bty_avg)` in Chapter \@ref(regression).
+- $n$ is the number of pairs of points in the `evals_ch6` data frame (463).
+
+To put into words, the standard error depends on the relationship between how the response variable varies and the explanatory variable varies in the $s_y / s_x$ term. Next it looks into the relationship of how the two variables relate to each other in the $\sqrt{1-r^2}$ term. Lastly, the standard error depends on the "sample size", which here corresponds to how many observations are in the data set.
+
+### Hypothesis testing using infer
+
+We can also use the concept of permuting to determine the standard error of our null distribution and conduct a hypothesis test for a population slope. Let's see how the results above using the theoretical procedures on the student evaluations of faculty data compares to if we used the `infer` package procedures instead.  
+
+We'll begin in the basic regression setting to test to see if we have evidence that a statistically significant *positive* relationship exists between teaching and beauty scores for the University of Texas professors. As we did in Chapter \@ref(regression), teaching `score` will act as our outcome/response variable and `bty_avg` will be our explanatory variable. We will set up this hypothesis testing process as we have each before via the "There is Only One Test" diagram in Figure \@ref(fig:htdowney) using the `infer` package.
+
+### Data
+
+Our data is stored in `evals` and we are focused on the measurements of the `score` and `bty_avg` variables there. Note that we don't choose a subset of variables here since we will `specify()` the variables of interest using `infer`.
+
+```{r}
+evals %>% 
+  specify(score ~ bty_avg)
 ```
 
-We observe
+### Test statistic $\delta$
 
-1. There seems to be a rough balance of both positive and negative residuals for all 5 continents.
-1. However, there is one clear outlier in Asia, which has a residual with the largest deviation away from 0.
+Our test statistic here is the sample slope coefficient that we denote with $b_1$.
 
-Let's investigate the 5 countries in Asia with the shortest life expectancy:
+### Observed effect $\delta^*$
 
-```{r, eval=FALSE}
-gapminder2007 %>%
-  filter(continent == "Asia") %>%
-  arrange(lifeExp)
-```
-```{r, echo=FALSE}
-gapminder2007 %>%
-  filter(continent == "Asia") %>%
-  arrange(lifeExp) %>%
-  slice(1:5) %>%
-  knitr::kable(
-    digits = 3,
-    caption = "Countries in Asia with shortest life expectancy",
-    booktabs = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
-                latex_options = c("HOLD_position"))
+We can use the `specify() %>% calculate()` shortcut here to determine the slope value seen in our observed data:
+
+```{r}
+slope_obs <- evals %>% 
+  specify(score ~ bty_avg) %>% 
+  calculate(stat = "slope")
 ```
 
-This was the earlier identified residual for Afghanistan of -26.9. Unfortunately 
-given recent geopolitical turmoil, individuals who live in Afghanistan and, in particular in 2007, have a 
-drastically lower life expectancy. 
+The calculated slope value from our observed sample is $b_1 = `r pull(slope_obs)`$.
 
-Second, let's look at a histogram of all `r nrow(gapminder2007)` values of
-residuals in Figure \@ref(fig:catxplot8). In this case, the residuals form a
-rather nice bell-shape, although there are a couple of very low and very high
-values at the tails. As we said previously, searching for patterns in residuals
-can be somewhat subjective, but ideally we hope there are no "drastic" patterns.
+### Model of $H_0$
 
+We are looking to see if a positive relationship exists so $H_A: \beta_1 > 0$.  Our null hypothesis is always in terms of equality so we have $H_0: \beta_1 = 0$. In other words, when we assume the null hypothesis is true, we are assuming there is NOT a linear relationship between teaching and beauty scores for University of Texas professors.
 
-```{r catxplot8, warning=FALSE, fig.cap="Histogram of residuals"}
-ggplot(regression_points, aes(x = residual)) +
-  geom_histogram(binwidth = 5, color = "white") +
-  labs(x = "Residual")
+### Simulated data
+
+Now to simulate the null hypothesis being true and recreate how our sample was created, we need to think about what it means for $\beta_1$ to be zero. If $\beta_1 = 0$, we said earlier that there is no relationship between the teaching and beauty scores. If there is no relationship, then any one of the teaching score values could have just as likely occurred with any of the other beauty score values instead of the one that it actually did fall with. We, therefore, have another example of permuting in our simulating of data under the null hypothesis.
+
+**Tactile simulation**
+
+We could use a deck of `r nrow(evals) * 2` note cards to create a tactile simulation of this permuting process. We would write the `r nrow(evals)` different values of beauty scores on each of the `r nrow(evals)` cards, one per card. We would then do the same thing for the `r nrow(evals)` teaching scores putting them on one per card.
+
+Next, we would lay out each of the `r nrow(evals)` beauty score cards and we would shuffle the teaching score deck. Then, after shuffling the deck well, we would disperse the cards one per each one of the beauty score cards. We would then enter these new values in for teaching score and compute a sample slope based on this permuting. We could repeat this process many times, keeping track of our sample slope after each shuffle.
+
+### Distribution of $\delta$ under $H_0$
+
+We can build our null distribution in much the same way we did in Chapter \@ref(hypothesis-testing) using the `generate()` and `calculate()` functions. Note also the addition of the `hypothesize()` function, which lets `generate()` know to perform the permuting instead of bootstrapping. 
+
+```{r eval=FALSE}
+null_slope_distn <- evals %>% 
+  specify(score ~ bty_avg) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 10000) %>% 
+  calculate(stat = "slope")
 ```
 
-```{block, type='learncheck', purl=FALSE}
+```{r echo=FALSE}
+if(!file.exists("rds/null_slope_distn.rds")){
+  null_slope_distn <- evals %>% 
+    specify(score ~ bty_avg) %>%
+    hypothesize(null = "independence") %>% 
+    generate(reps = 10000) %>% 
+    calculate(stat = "slope")
+   saveRDS(object = null_slope_distn, 
+           "rds/null_slope_distn.rds")
+} else {
+   null_slope_distn <- readRDS("rds/null_slope_distn.rds")
+}
+```
+
+```{r}
+visualize(null_slope_distn) + 
+  shade_p_value(obs_stat = slope_obs, direction = "greater")
+```
+
+In viewing the distribution above with shading to the right of our observed slope value of `r pull(slope_obs)`, we can see that we expect the p-value to be quite small. Let's calculate it next using a similar syntax to what was done with `shade_p_value()`.
+
+### The p-value
+
+```{r fig.cap="Shaded histogram to show p-value"}
+null_slope_distn %>% 
+  get_pvalue(obs_stat = slope_obs, direction = "greater")
+```
+
+Since `r pull(slope_obs)` falls far to the right of this plot beyond where any of the histogram bins have data, we can say that we have a $p$-value of 0.  We, thus, have evidence to reject the null hypothesis in support of there being a positive association between the beauty score and teaching score of University of Texas faculty members.
+
+Recall that we came to a similar $p$-value and conclusion when looking at the theory-based approach given in the `get_regression_table(score_model)` table:
+
+```{r echo=FALSE}
+get_regression_table(score_model)
+```
+
+When the conditions are met and the null distribution has the characteristic bell shape, we are likely to see similar results between the simulation-based and theoretical results. In the next subsection, we'll compare the confidence interval results using bootstrapping and the theoretical results given in the regression table.
+
+```{block lc9-5, type='learncheck', purl=FALSE}
 **_Learning check_**
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Continuing with our regression using `gdpPercap` as the outcome variable and `continent` as the explanatory variable, use the `get_regression_points()` function to get the observed values, fitted values, and residuals for all `r nrow(gapminder2007)` countries in 2007 and perform a residual analysis to look for any systematic patterns in the residuals. Is there a pattern? Please keep in mind that these types of questions are somewhat subjective and different people will most likely have different answers. The focus should be on being able to justify the conclusions made.
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the inference above but this time for the correlation coefficient instead of the slope. Note the implementation of `stat = "correlation"` in the `calculate()` function of the `infer` package.
 
 ```{block, type='learncheck', purl=FALSE}
 ```
 
+### Bootstrapping for the regression slope
 
+With the $p$-value calculated as 0 in the hypothesis test above, we can next determine just how strong of a positive slope value we might expect between the variables of teaching `score` and beauty score (`bty_avg`) for University of Texas faculty using bootstrapping. Recall the `infer` pipeline above to compute the null distribution. This assumes the null hypothesis is true that there is no relationship between teaching score and beauty score using the `hypothesize()` function.
 
-
-
-
-### Residual analysis {#model3residuals}
-
-Recall in Section \@ref(model1residuals), our first residual analysis plot investigated the presence of any systematic pattern in the residuals when we had a single numerical predictor: `bty_age`. For the `Credit` card dataset, since we have two numerical predictors, `Limit` and `Income`, we must perform this twice:
-
-```{r, eval=TRUE, echo=TRUE}
-# Get data:
-Credit <- Credit %>%
-  select(Balance, Limit, Income, Rating, Age)
-# Fit regression model:
-Balance_model <- lm(Balance ~ Limit + Income, data = Credit)
-# Get regression table:
-get_regression_table(Balance_model)
-# Get regression points
-regression_points <- get_regression_points(Balance_model)
+```{r eval=FALSE}
+null_slope_distn <- evals %>% 
+  specify(score ~ bty_avg) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 10000, type = "permute") %>% 
+  calculate(stat = "slope")
 ```
 
-```{r, eval=FALSE}
-ggplot(regression_points, aes(x = Limit, y = residual)) +
-  geom_point() +
-  labs(x = "Credit limit (in $)", 
-       y = "Residual", 
-       title = "Residuals vs credit limit")
-  
-ggplot(regression_points, aes(x = Income, y = residual)) +
-  geom_point() +
-  labs(x = "Income (in $1000)", 
-       y = "Residual", 
-       title = "Residuals vs income")
+To further reinforce the process being done in the pipeline, we've added the `type` argument to `generate()`. This is automatically added based on the entries for `specify()` and `hypothesize()` but it provides a useful way to check to make sure `generate()` is created the samples in the desired way. In this case, we `permute`d the values of one variable across the values of the other 10,000 times and `calculate`d a `"slope"` coefficient for each of these 10,000 `generate`d samples.
+
+If instead we'd like to get a range of plausible values for the true slope value, we can use the process of bootstrapping:
+
+```{r}
+bootstrap_slope_distn <- evals %>% 
+  specify(score ~ bty_avg) %>%
+  generate(reps = 10000, type = "bootstrap") %>% 
+  calculate(stat = "slope")
 ```
 
-```{r, echo=FALSE, fig.height=4, fig.cap="Residuals vs credit limit and income"}
-model3_residual_vs_limit_plot <- ggplot(regression_points, aes(x = Limit, y = residual)) +
-  geom_point() +
-  labs(x = "Credit limit (in $)", y = "Residual", 
-       title = "Residuals vs credit limit")
-model3_residual_vs_income_plot <- ggplot(regression_points, aes(x = Income, y = residual)) +
-  geom_point() +
-  labs(x = "Income (in $1000)", y = "Residual", 
-       title = "Residuals vs income")
-model3_residual_vs_limit_plot + model3_residual_vs_income_plot
+Here, bootstrapping is done on the row level as was first done in Subsection \@ref(ci-build). Thus, the orignal pairs of points are linked together and may be repeated with each resample.
+
+```{r echo=FALSE}
+if(!file.exists("rds/bootstrap_slope_distn.rds")){
+  bootstrap_slope_distn <- evals %>% 
+    specify(score ~ bty_avg) %>%
+    generate(reps = 10000, type = "bootstrap") %>% 
+    calculate(stat = "slope")
+  saveRDS(object = bootstrap_slope_distn, 
+           "rds/bootstrap_slope_distn.rds")
+} else {
+  bootstrap_slope_distn <- readRDS("rds/bootstrap_slope_distn.rds")
+}
 ```
 
-In this case, there **does** appear to be a systematic pattern to the residuals. As the scatter of the residuals around the line $y=0$ is definitely not consistent. This behavior of the residuals is further evidenced by the histogram of residuals in Figure \@ref(fig:model3-residuals-hist). We observe that the residuals have a slight right-skew (recall we say that data is right-skewed, or positively-skewed, if there is a tail to the right). Ideally, these residuals should be bell-shaped around a residual value of 0. 
-
-```{r model3-residuals-hist, fig.height=4, fig.cap="Relationship between credit card balance and credit limit/income"}
-ggplot(regression_points, aes(x = residual)) +
-  geom_histogram(color = "white") +
-  labs(x = "Residual")
+```{r}
+bootstrap_slope_distn %>% visualize()
 ```
 
-Another way to interpret this histogram is that since the residual is computed as $y - \widehat{y}$ = `balance` - `balance_hat`, we have some values where the fitted value $\widehat{y}$ is very much lower than the observed value $y$. In other words, we are underestimating certain credit card holders' balances by a very large amount. 
+Next we can use the `get_ci()` function to determine the confidence interval. Let's do this in two different ways obtaining 99% confidence intervals. Remember that these denote a range of plausible values for an unknown true population slope parameter regressing teaching score on beauty score.
 
-```{block, type='learncheck', purl=FALSE}
-**_Learning check_**
+```{r}
+percentile_slope_ci <- bootstrap_slope_distn %>% 
+  get_ci(level = 0.99, type = "percentile")
+percentile_slope_ci
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Continuing with our regression using `Rating` and `Age` as the explanatory variables and credit card `Balance` as the outcome variable, use the `get_regression_points()` function to get the observed values, fitted values, and residuals for all `r nrow(Credit)` credit card holders. Perform a residual analysis and look for any systematic patterns in the residuals.
-
-```{block, type='learncheck', purl=FALSE}
+```{r}
+se_slope_ci <- bootstrap_slope_distn %>% 
+  get_ci(level = 0.99, type = "se", point_estimate = slope_obs)
+se_slope_ci
 ```
 
+With the bootstrap distribution being close to symmetric, it makes sense that the two resulting confidence intervals are similar. Note that both are a bit wider than the $(`r lower1`, `r upper1`)$ interval that theory would have predicted.
+
+
+***
+
+## Conclusion
+
+### Relating regression to other methods
+
+To conclude this chapter, we'll be investigating how regression relates to two different statistical techniques. One of them was covered already in this book, the difference in sample means, and the other is new to the text but is related, ANOVA. We'll see how both can be represented in the regression framework. The hope is that this closing section helps you to tie together many of the concepts you've seen in the Data Modeling and Statistical Inference parts of this book.
+
+#### Two sample difference in means
 
 
 
+### Additional resources
 
-### Residual analysis {#model4residuals}
-
-```{r, eval=TRUE, echo=TRUE}
-# Get data:
-evals_ch7 <- evals %>%
-  select(score, age, gender)
-# Fit regression model:
-score_model_2 <- lm(score ~ age + gender, data = evals_ch7)
-# Get regression table:
-get_regression_table(score_model_2)
-# Get regression points
-regression_points <- get_regression_points(score_model_2)
-```
+An R script file of all R code used in this chapter is available [here](scripts/11-inference-for-regression.R).
 
 
-As always, let's perform a residual analysis first with a histogram, which we can facet by `gender`:
 
-```{r residual1, warning=FALSE, fig.cap="Interaction model histogram of residuals"}
-ggplot(regression_points, aes(x = residual)) +
-  geom_histogram(binwidth = 0.25, color = "white") +
-  labs(x = "Residual") +
-  facet_wrap(~gender)
-```
+### What's to come
 
-Second, the residuals as compared to the predictor variables:
-
-* $x_1$: numerical explanatory/predictor variable of `age`
-* $x_2$: categorical explanatory/predictor variable of `gender`
-
-```{r residual2, warning=FALSE, fig.cap="Interaction model residuals vs predictor"}
-ggplot(regression_points, aes(x = age, y = residual)) +
-  geom_point() +
-  labs(x = "age", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue", size = 1) +
-  facet_wrap(~ gender)
-```
-
-
+You've now concluded the last major part of the book on "Statistical Inference via infer." The closing chapter concludes with a case study on house prices in Seattle, Washington in the US. You'll see there how the principles in this book can apply to help you be a great storyteller with data!
