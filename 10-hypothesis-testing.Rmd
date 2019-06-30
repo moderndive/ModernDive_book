@@ -356,7 +356,7 @@ Generally the null hypothesis is a claim that there really is "no effect" or "no
 $$
 \begin{aligned}
 H_0 &: \text{men and women are promoted at the same rate}\\
-\text{vs } H_A&: \text{men are promoted at a higher rate than women}
+\text{vs } H_A &: \text{men are promoted at a higher rate than women}
 \end{aligned}
 $$
 
@@ -500,11 +500,24 @@ The term "independence" relates to the fact that for two groups of observations,
 
 After we have set the null hypothesis, we simulate observations assuming the null hypothesis is true by repeating the shuffling exercise you performed in Section \@ref(ht-activity) several times. Instead of merely doing it 16 times as our groups of friends did, let's use the computer to repeat this 1000 times by setting `reps = 1000` in the `generate()` function. However, unlike with confidence intervals where we generated replicates using `type = "bootstrap"` resampling with replacement, we'll now perform shuffles/permutations by setting `type = "permute"`. Recall that shuffles/permutations are a form of resampling without replacement. 
 
-```{r}
+```{r eval=FALSE}
 promotions %>% 
   specify(formula = decision ~ gender, success = "promoted") %>% 
   hypothesize(null = "independence") %>% 
   generate(reps = 1000, type = "permute")
+```
+
+```{r echo=FALSE, purl=FALSE}
+if(!file.exists("rds/promotions_generate.rds")) {
+  promotions_generate <- promotions %>% 
+    specify(formula = decision ~ gender, success = "promoted") %>% 
+    hypothesize(null = "independence") %>% 
+    generate(reps = 1000, type = "permute")
+  write_rds(promotions_generate, "rds/promotions_generate.rds")
+} else {
+  promotions_generate <- read_rds("rds/promotions_generate.rds")
+}
+promotions_generate
 ```
 
 Note the the resulting data frame has 48,000 rows. This is because we performed shuffles/permutations of the 48 values of `gender` 1000 times and thus 48,000 = 1000 $\times$ 48. Accordingly the variable `replicate`, indicating which resample each row belongs to, has the value `1` 48 times, the value `2` 48 times, all the way through to the value `1000` 48 times. 
@@ -516,7 +529,7 @@ Now that we have 1000 replicated "shuffles" assuming the null hypothesis that bo
 
 For each of our 1000 shuffles, we can calculate this test statistic by setting `stat = "diff in props"`. Furthermore, since we are interested in $\widehat{p}_{m} - \widehat{p}_{f}$ and not the reverse-ordered $\widehat{p}_{f} - \widehat{p}_{m}$, we set `order = c("male", "female")`. Let's save the result in a data frame called `null_distribution`:
 
-```{r}
+```{r eval=FALSE}
 null_distribution <- promotions %>% 
   specify(formula = decision ~ gender, success = "promoted") %>% 
   hypothesize(null = "independence") %>% 
@@ -524,6 +537,18 @@ null_distribution <- promotions %>%
   calculate(stat = "diff in props", order = c("male", "female"))
 null_distribution
 ```
+
+```{r echo=FALSE, purl=FALSE}
+if(!file.exists("rds/null_distribution_promotions.rds")) {
+  null_distribution <- promotions_generate %>% 
+    calculate(stat = "diff in props", order = c("male", "female"))
+  write_rds(null_distribution, "rds/null_distribution_promotions.rds")
+} else {
+  null_distribution <- read_rds("rds/null_distribution_promotions.rds")
+}
+null_distribution
+```
+
 
 Observe that we have 1000 values of `stat`, each representing one "shuffled" instance of $\widehat{p}_{m} - \widehat{p}_{f}$ in a hypothesized world of no gender discrimination. Note as well we chose the name of this data frame carefully: `null_distribution`. Recall once again from Section \@ref(understanding-ht) that such sampling distributions when the null hypothesis $H_0$ is assumed to be true have a special name: the *null distribution*. 
 
@@ -543,13 +568,8 @@ The final step is to measure how surprised would we be by a promotion difference
 
 We start by visualizing the *null distribution* of our 1000 values of $\widehat{p}_{m} - \widehat{p}_{f}$ using `visualize()` in Figure \@ref(fig:null-distribution-infer). Recall that these are values of the difference in promotion rate assuming $H_0$ is true, in other words in our hypothesized universe of no gender discrimination.
 
-```{r eval=FALSE}
+```{r null-distribution-infer, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
 visualize(null_distribution, binwidth = 0.1)
-```
-```{r null-distribution-infer, echo=FALSE, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
-# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-visualize(null_distribution, binwidth = 0.1) +
-  ggtitle("Null distribution") 
 ```
 
 Let's now add what happened in real-life to Figure \@ref(fig:null-distribution-infer), the observed difference in promotions rates of 0.875 - 0.583 = `r observed_test_statistic` = `r observed_test_statistic*100`%. However, instead of merely adding a vertical line using `geom_vline()`, let's use the `shade_p_value()` function with `obs_stat` set to the observed test statistic value we saved in `obs_diff_prop` and `direction = "right"`:
@@ -632,7 +652,8 @@ Since the bootstrap distribution appears to be roughly normally shaped, we can a
 
 ```{r}
 se_ci <- bootstrap_distribution %>% 
-  get_confidence_interval(level = 0.95, type = "se", point_estimate = obs_diff_prop)
+  get_confidence_interval(level = 0.95, type = "se", 
+                          point_estimate = obs_diff_prop)
 se_ci
 ```
 
@@ -948,11 +969,25 @@ movies_sample %>%
 
 After we have set the null hypothesis, we simulate observations assuming the null hypothesis is true by repeating the shuffling/permutation exercise you performed in Section \@ref(ht-activity). We'll repeat this resampling of `type = "permute"` a total of `reps = 1000` times . 
 
-```{r}
+```{r eval=FALSE}
 movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   hypothesize(null = "independence") %>% 
   generate(reps = 1000, type = "permute")
+```
+
+
+```{r echo=FALSE}
+if(!file.exists("rds/movies_sample_generate.rds")){
+  movies_sample_generate <- movies_sample %>% 
+    specify(formula = rating ~ genre) %>% 
+    hypothesize(null = "independence") %>% 
+    generate(reps = 1000, type = "permute")
+  write_rds(movies_sample_generate, "rds/movies_sample_generate.rds")
+} else {
+  movies_sample_generate <- read_rds("rds/movies_sample_generate.rds")
+}
+movies_sample_generate
 ```
 
 Observe that it is at this point our output differs from the original `movies_sample` data frame. The resulting data frame has 68,000 rows.  This is because we performed shuffles/permutations of the 68 values of `genre` 1000 times and thus 68,000 = 1000 $\times$ 68. 
@@ -963,7 +998,7 @@ Now that we have 1000 replicated "shuffles" assuming the null hypothesis that bo
 
 For each of our 1000 shuffles, we can calculate this test statistic by setting `stat = "diff in means"`. Furthermore, since we are interested in $\overline{x}_{a} - \overline{x}_{r}$ and not the reverse-ordered $\overline{x}_{r} - \overline{x}_{a}$, we set `order = c("Action", "Romance")`. Let's save the result in a data frame called `null_distribution_movies`:
 
-```{r}
+```{r eval=FALSE}
 null_distribution_movies <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   hypothesize(null = "independence") %>% 
@@ -971,6 +1006,18 @@ null_distribution_movies <- movies_sample %>%
   calculate(stat = "diff in means", order = c("Action", "Romance"))
 null_distribution_movies
 ```
+
+```{r echo=FALSE, purl=FALSE}
+if(!file.exists("rds/null_distribution_movies.rds")){
+  null_distribution_movies <- movies_sample_generate %>% 
+    calculate(stat = "diff in means", order = c("Action", "Romance"))
+  write_rds("rds/null_distribution_movies.rds")
+} else {
+  null_distribution_movies <- read_rds("rds/null_distribution_movies.rds")
+}
+null_distribution_movies
+```
+
 
 Observe that we have 1000 values of `stat`, each representing one "shuffled" instance of $\overline{x}_{a} - \overline{x}_{r}$ in a hypothesized world of no difference in movie ratings between romance and action movies.
 
@@ -1112,24 +1159,23 @@ Using these values, we can show that the observed two-sample $t$-test statistic 
   
 Let's revisit the null distribution for the test statistic $\bar{x}_a - \bar{x}_r$ we constructed in Section \@ref(ht-case-study). 
 
-```{r, echo = TRUE, eval = FALSE}
+```{r, eval=FALSE}
 # Construct null distribution of xbar_a - xbar_m:
 null_distribution_movies <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   hypothesize(null = "independence") %>% 
   generate(reps = 1000, type = "permute") %>% 
   calculate(stat = "diff in means", order = c("Action", "Romance"))
-
-# Visualize:
-visualize(null_distribution_movies, bins = 10)
 ```
-```{r, echo = FALSE}
+
+```{r, echo=FALSE}
+# Visualize:
 visualize(null_distribution_movies, bins = 10)
 ```
 
 The `infer` package also includes some built-in theory-based test statistics as well. So instead of calculating the test statistic of interest as the `"diff in means"` $\bar{x}_a - \bar{x}_r$, we can calculate the above defined $t$-statistic by setting `stat = "t"`:
 
-```{r}
+```{r eval=FALSE}
 # Construct null distribution of t:
 null_distribution_movies_t <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
@@ -1137,7 +1183,24 @@ null_distribution_movies_t <- movies_sample %>%
   generate(reps = 1000, type = "permute") %>% 
   # Notice we switched stat from "diff in means" to "t"
   calculate(stat = "t", order = c("Action", "Romance"))
+```
 
+```{r echo=FALSE, purl=FALSE}
+if(!file.exists("rds/null_distribution_movies_t")){
+  null_distribution_movies_t <- movies_sample %>% 
+    specify(formula = rating ~ genre) %>% 
+    hypothesize(null = "independence") %>% 
+    generate(reps = 1000, type = "permute") %>% 
+    # Notice we switched stat from "diff in means" to "t"
+    calculate(stat = "t", order = c("Action", "Romance"))
+  write_rds(null_distribution_movies_t,
+            "rds/null_distribution_movies_t.rds")
+} else {
+  null_distribution_movies_t <- read_rds("rds/null_distribution_movies_t.rds")
+}
+```
+
+```{r}
 # Visualize:
 visualize(null_distribution_movies_t, bins = 10)
 ```
@@ -1253,7 +1316,7 @@ On top of the many common misunderstandings about hypothesis testing and p-value
 
 In fact, the American Statistical Association put out a statement in 2016 titled ["The ASA Statement on p-Values: Context, Process, and Purpose"](https://www.amstat.org/asa/files/pdfs/P-ValueStatement.pdf) with six principles underlying the proper use and interpretation of the p-value. The ASA released this guidance on p-values to improve the conduct and interpretation of quantitative science and inform the growing emphasis on reproducibility of science research. 
 
-We as authors much prefer the use of confidence intervals for statistical inference, as they are in our opinions much less prone to misinterpretations. However, many fields still use p-values exclusively for statistical inference and thus we still included them in our text. We also encourage to learn more about "p-hacking" and its implication for science.
+We as authors much prefer the use of confidence intervals for statistical inference, as they are in our opinions much less prone to misinterpretations. However, many fields still use $p$-values exclusively for statistical inference and thus we still included them in our text. We also encourage to learn more about "p-hacking" and its implication for science.
 
 
 ### Additional resources
@@ -1295,6 +1358,6 @@ get_regression_table(score_model) %>%
                 latex_options = c("HOLD_position"))
 ```
 
-We previously saw in Section \@ref(model1table) that the values in the `estimate` column are the fitted intercept $b_0$ and fitted slope for beauty score $b_1$. In Chapter \@ref(inference-for-regression), we'll unpack the remaining columns: `std_error` which is the standard error, `statistic` which is the observed test statistic to compute the `p_value`, and the 95% confidence intervals as given by `lower_ci` and `upper_ci`.
+We previously saw in Section \@ref(model1table) that the values in the `estimate` column are the fitted intercept $b_0$ and fitted slope for beauty score $b_1$. In Chapter \@ref(inference-for-regression), we'll unpack the remaining columns: `std_error` which is the standard error, `statistic` which is the observed **standardized** test statistic to compute the `p_value`, and the 95% confidence intervals as given by `lower_ci` and `upper_ci`.
 
 
