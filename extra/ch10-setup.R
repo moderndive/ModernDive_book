@@ -1,5 +1,7 @@
 library(tidyverse)
 library(ggplot2movies)
+library(infer)
+library(moderndive)
 
 ## ----message=FALSE, warning=FALSE----------------------------------------
 movies_trimmed <- movies %>%
@@ -34,3 +36,10 @@ generated_samples <- readRDS("rds/generated_samples.rds")
 
 null_distribution_two_means <- generated_samples %>%
   calculate(stat = "diff in means", order = c("Romance", "Action"))
+
+null_distribution_two_means %>%
+  get_p_value(obs_stat = obs_diff, direction = "both")
+
+movies_reg_model <- lm(rating ~ genre, data = movies_genre_sample)
+
+get_regression_table(movies_reg_model)
