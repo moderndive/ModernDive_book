@@ -400,7 +400,7 @@ named_dests
 ##   select(contains("time")) %>%
 ##   rename(departure_time = dep_time,
 ##          arrival_time = arr_time)
-## glimpse(flights_time)
+## glimpse(flights_time_new)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
