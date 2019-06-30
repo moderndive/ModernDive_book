@@ -69,8 +69,6 @@ data("pennies_sample")
 
 ***
 
-
-
 ## Pennies activity {#resampling-tactile}
 
 As we did in Chapter \@ref(sampling), we'll begin with a hands-on tactile activity.
@@ -233,13 +231,11 @@ ggplot(pennies_sample, aes(x = year)) +
 (ref:compare-plots) Comparing `year` in the resample `pennies_resample` with the original sample `pennies_sample`.
 
 ```{r orig-and-resample, echo=FALSE, fig.cap="(ref:compare-plots)", purl=FALSE}
-p1 <- 
-  ggplot(pennies_resample, aes(x = year)) +
+p1 <- ggplot(pennies_resample, aes(x = year)) +
   geom_histogram(binwidth = 10, color = "white") +
   labs(title = "Resample of 50 pennies") +
   coord_cartesian(xlim = seq(1950, 2030, 20), ylim = seq(0, 15, 5))
-p2 <- 
-  ggplot(pennies_sample, aes(x = year)) +
+p2 <- ggplot(pennies_sample, aes(x = year)) +
   geom_histogram(binwidth = 10, color = "white") +
   labs(title = "Original sample of 50 pennies") +
   coord_cartesian(xlim = seq(1950, 2030, 20), ylim = seq(0, 15, 5))
@@ -550,7 +546,7 @@ One method to construct this range is to use the middle 95% of the 1000 sample m
 
 We can mark these percentiles on the bootstrap distribution with red vertical lines in Figure \@ref(fig:percentile-method). You can see that 95% of the values in the `mean_year` variable in `virtual_resampled_means` fall between the two endpoints, with 2.5% to the left of the left-most red line and 2.5% to the right of the right-most red line. 
 
-```{r percentile-method, echo=FALSE, message=FALSE, fig.cap="Percentile method 95% confidence interval."}
+```{r percentile-method, echo=FALSE, message=FALSE, fig.cap="Percentile method 95 percent confidence interval."}
 ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
   labs(x = "sample mean") +
@@ -563,8 +559,8 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
 ### Standard error method {#se-method}
 
 ```{r echo=FALSE}
-# Can also use conf_int() and get_confidence_interval() instead of get_ci(),
-# as they are aliases that work the exact same way.
+# Can also use get_confidence_interval() instead of get_ci(),
+# as it is an alias that works the exact same way.
 standard_error_ci <- virtual_resampled_means %>% 
   rename(stat = mean_year) %>% 
   get_ci(type = "se", point_estimate = x_bar)
@@ -598,7 +594,7 @@ $$
 
 Let's add the SE method confidence interval (in blue) to our previously constructed percentile method confidence (in red) in Figure \@ref(fig:percentile-and-se-method).
 
-```{r percentile-and-se-method, echo=FALSE, message=FALSE, fig.cap="Comparing 95% confidence interval methods."}
+```{r percentile-and-se-method, echo=FALSE, message=FALSE, fig.cap="Comparing 95 percent confidence interval methods."}
 both_CI <- bind_rows(
   percentile_ci %>% gather(endpoint, value) %>% mutate(type = "percentile"),
   standard_error_ci %>% gather(endpoint, value) %>% mutate(type = "SE")
@@ -701,6 +697,7 @@ step.
 1. Only after these two steps, showing `infer` verb pipeline to construct
 bootstrap distribution of point estimate. i.e. with generate() and showing
 diagram.
+-->
 
 Just as `group_by() %>% summarize()` produces a useful workflow in `dplyr`, we can also use `specify() %>% calculate()` to compute summary measures on our original sample data. It's often helpful both in confidence interval calculations, but also in hypothesis testing to identify what the corresponding statistic is in the original data. For our example on penny age, we computed above a value of `x_bar` using the `summarize()` verb in `dplyr`:
 
@@ -718,7 +715,6 @@ pennies_sample %>%
 ```
 
 This shortcut will be particularly useful when the calculation of the observed statistic is tricky to do using `dplyr` alone. This is particularly the case when working with more than one explanatory variable as will be seen in Chapter \@ref(hypothesis-testing).
--->
 
 The `infer` package makes efficient use of the `%>%` pipe operator we saw in Chapter \@ref(wrangling) to spell out the sequence of steps necessary to perform statistical inference in a "tidy" and transparent fashion. Much in the same way that the functions in the `dplyr` have intuitive verb-based names, the infer package's functions are also verbs that spell out the computational process of constructing confidence intervals, as well as hypothesis tests as we'll see in Chapter \@ref(hypothesis-testing). 
 
@@ -761,10 +757,22 @@ After we `specify()` the variables of interest, we pipe the results into the `ge
 
 In our case, since we want to resample the 50 pennies in `pennies_sample` with replacement 1000 times, we set `reps = 1000` and `type = "bootstrap"` indicating that we want to perform bootstrap resampling. 
 
-```{r}
+```{r eval=FALSE}
 pennies_sample %>% 
   specify(response = year) %>% 
   generate(reps = 1000, type = "bootstrap")
+```
+
+```{r}
+if(!file.exists("rds/pennies_sample_generate.rds")){
+  pennies_sample_generate <- pennies_sample %>% 
+    specify(response = year) %>% 
+    generate(reps = 1000, type = "bootstrap")
+  write_rds(pennies_sample_generate, "rds/pennies_sample_generate.rds")
+} else {
+  pennies_sample_generate <- read_rds("rds/pennies_sample_generate.rds")
+}
+pennies_sample_generate
 ```
 
 Note the the resulting data frame has 50,000 rows. This is because we performed resampling of 50 pennies with replacement 1000 times and thus 50,000 = 1000 $\times$ 50. Accordingly, the variable `replicate`, indicating which resample each row belongs to, has the value `1` 50 times, the value `2` 50 times, all the way through to the value `1000` 50 times. 
@@ -791,11 +799,24 @@ After we `generate()` many replicates of bootstrap resampling with replacement, 
 
 In our case as we did earlier, we want to calculate the mean `year` for each bootstrap resample of size 50. To do so, we set the `stat` argument to `"mean"`. You can also set the `stat` argument to a variety of other common summary statistics, like `"median"`, `"sum"`, `"sd"` (standard deviation), and `"prop"` (proportion); we'll see examples of their use throughout the remaining chapters. Let's save the result in a data frame called `bootstrap_distribution`:
 
-```{r}
+```{r eval=FALSE}
 bootstrap_distribution <- pennies_sample %>% 
   specify(response = year) %>% 
   generate(reps = 1000) %>% 
   calculate(stat = "mean")
+bootstrap_distribution
+```
+
+```{r echo=FALSE}
+if(!file.exists("rds/bootstrap_distribution_pennies.rds")){
+  bootstrap_distribution <- pennies_sample %>% 
+    specify(response = year) %>% 
+    generate(reps = 1000) %>% 
+    calculate(stat = "mean")
+  write_rds(bootstrap_distribution, "rds/bootstrap_distribution_pennies.rds")
+} else {
+  bootstrap_distribution <- read_rds("rds/bootstrap_distribution_pennies.rds")
+}
 bootstrap_distribution
 ```
 
@@ -823,6 +844,7 @@ The `visualize()` verb provides a quick way to visualize the bootstrap distribut
 ```{r eval=FALSE}
 visualize(bootstrap_distribution)
 ```
+
 ```{r boostrap-distribution-infer, echo=FALSE, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
 visualize(bootstrap_distribution) +
@@ -866,7 +888,8 @@ If we would like to visualize the interval (`r percentile_ci[["2.5%"]] %>% round
 visualize(bootstrap_distribution) + 
   shade_confidence_interval(endpoints = c(1991.28, 1999.76))
 ```
-```{r percentile-ci-viz, echo=FALSE, fig.show='hold', fig.cap="Percentile method 95% confidence interval.", purl=FALSE}
+
+```{r percentile-ci-viz, echo=FALSE, fig.show='hold', fig.cap="Percentile method 95 percent confidence interval.", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
 visualize(bootstrap_distribution) + 
   shade_confidence_interval(endpoints = percentile_ci) +
@@ -879,6 +902,7 @@ Observe that 95% of the sample means stored in the `stat` variable in `bootstrap
 visualize(bootstrap_distribution) + 
   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 ```
+
 ```{r echo=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
 visualize(bootstrap_distribution) + 
@@ -904,7 +928,8 @@ If we would like to visualize the interval (`r standard_error_ci[["lower"]] %>% 
 visualize(bootstrap_distribution) + 
   shade_confidence_interval(endpoints = standard_error_ci)
 ```
-```{r se-ci-viz, echo=FALSE, fig.show='hold', fig.cap="Standard error method 95% confidence interval.", purl=FALSE}
+
+```{r se-ci-viz, echo=FALSE, fig.show='hold', fig.cap="Standard error method 95 percent confidence interval.", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
 visualize(bootstrap_distribution) + 
   shade_confidence_interval(endpoints = standard_error_ci) +
@@ -935,6 +960,7 @@ In the case of our sampling bowl from Chapter \@ref(sampling) however, we can co
 bowl %>% 
   summarize(p_red = mean(color == "red"))
 ```
+
 ```{r, echo = FALSE}
 p_red <- bowl %>% 
   summarize(prop_red = mean(color == "red")) %>% 
@@ -984,11 +1010,24 @@ bowl_sample_1 %>%
 
 Second, we `generate()` 1000 replicates via bootstrap with replacement of our original sample of 50 balls in `bowl_sample_1` by setting `reps = 1000` and `type = "bootstrap"`. 
 
-```{r}
+```{r eval=FALSE}
 bowl_sample_1 %>% 
   specify(response = color, success = "red") %>% 
   generate(reps = 1000, type = "bootstrap")
 ```
+
+```{r echo=FALSE}
+if(!file.exists("rds/bowl_sample_1_generate.rds")){
+   bowl_sample_1_generate <- bowl_sample_1 %>% 
+    specify(response = color, success = "red") %>% 
+    generate(reps = 1000, type = "bootstrap")
+   write_rds(bowl_sample_1_generate, 
+             "rds/bowl_sample_1_generate.rds")
+} else {
+  bowl_sample_1_generate <- read_rds("rds/bowl_sample_1_generate.rds")
+}
+```
+
 
 Note the resulting data frame has 50,000 rows. This is because we performed resampling of 50 balls with replacement 1000 times and thus 50,000 = 1000 $\times$ 50. Accordingly, the variable `replicate`, indicating which resample each row belongs to, has the value `1` 50 times, the value `2` 50 times, all the way through to the value `1000` 50 times. Recall generating 1000 replicates means we are repeating the resampling 1000 times so that we can study the sampling variation from resampling to resample!
 
@@ -996,13 +1035,26 @@ Note the resulting data frame has 50,000 rows. This is because we performed resa
 
 Third, we summarize each of 1000 resamples of size 50 with their `prop`ortion of "successes", in other words, the proportion of the balls that are `"red"`. Let's save the result in a data frame called `sample_1_bootstrap`:
 
-```{r}
+```{r eval=FALSE}
 sample_1_bootstrap <- bowl_sample_1 %>% 
   specify(response = color, success = "red") %>% 
   generate(reps = 1000, type = "bootstrap") %>% 
   calculate(stat = "prop")
 sample_1_bootstrap
 ```
+
+```{r calculate_prop, echo=FALSE}
+# Note this takes a few minutes to run
+if(!file.exists("rds/sample_1_bootstrap.rds")){
+  sample_1_bootstrap <- bowl_sample_1_generate %>% 
+    calculate(stat = "prop")
+  write_rds(sample_1_bootstrap, "rds/sample_1_bootstrap.rds")
+} else {
+  sample_1_bootstrap <- read_rds("rds/sample_1_bootstrap.rds")
+}
+sample_1_bootstrap
+```
+
 
 #### 4. `visualize` the results {-}
 
@@ -1014,7 +1066,7 @@ percentile_ci_1 <- sample_1_bootstrap %>%
 percentile_ci_1
 ```
 
-Furthermore, let's visualize the bootstrap distribution where we've adjusted the number of bins to better see the resulting shape. Furthermore, we add a vertical red line at $\widehat{p}$ = 21/50 = 0.42 = 42\% using `geom_vline()` by setting the `xintercept` argument
+Furthermore, let's visualize the bootstrap distribution where we've adjusted the number of bins to better see the resulting shape. Furthermore, we add a vertical red line at $\widehat{p}$ = 21/50 = 0.42 = 42\% using `geom_vline()` by setting the `xintercept` argument.
 
 ```{r eval=FALSE}
 sample_1_bootstrap %>% 
@@ -1031,7 +1083,7 @@ sample_1_bootstrap %>%
   geom_vline(xintercept = 0.375, col = "red")
 ```
 
-Did Ilyas and Yohan's net capture the fish? In other words, did the 95% confidence interval for $p$ based on the 50 balls they sampled contain the true value of $p$, the population proportion of the bowl's balls that are red? Yes! `r p_red` is between the endpoints of our confidence interval (`r percentile_ci_1[[1]]`, `r percentile_ci_1[[2]]`)
+Did Ilyas and Yohan's net capture the fish? In other words, did the 95% confidence interval for $p$ based on the 50 balls they sampled contain the true value of $p$, the population proportion of the bowl's balls that are red? Yes! `r p_red` is between the endpoints of our confidence interval (`r percentile_ci_1[[1]]`, `r percentile_ci_1[[2]]`).
 
 However, will *every* 95% confidence interval for $p$ capture this value? In other words, if we had a different sample of size 50 and constructed a confidence interval using the same method, would we be guaranteed that it contained the population proportion $p$ as well? Let's study the effect of sampling variation by randomly sampling *another* 50 balls from our virtual `bowl` using our virtual shovel:
 
@@ -1043,11 +1095,24 @@ bowl_sample_2
 
 Let's perform the same steps of the `infer` pipeline we did on `bowl_sample_1` to generate *another* 95% confidence interval for $p$ based on the new sample of 50 balls in `bowl_sample_2`. First we create the bootstrap distribution of the sample proportion $\widehat{p}$ and save the results in `sample_2_bootstrap`:
 
-```{r}
+```{r eval=FALSE}
 sample_2_bootstrap <- bowl_sample_2 %>% 
   specify(response = color, success = "red") %>% 
   generate(reps = 1000, type = "bootstrap") %>% 
   calculate(stat = "prop")
+sample_2_bootstrap
+```
+
+```{r echo=FALSE}
+if(!file.exists("rds/sample_2_bootstrap.rds")){
+  sample_2_bootstrap <- bowl_sample_2 %>% 
+    specify(response = color, success = "red") %>% 
+    generate(reps = 1000, type = "bootstrap") %>% 
+    calculate(stat = "prop")
+  write_rds(sample_2_bootstrap, "rds/sample_2_bootstrap.rds")
+} else {
+  sample_2_bootstrap <- read_rds("rds/sample_2_bootstrap.rds")
+}
 sample_2_bootstrap
 ```
 
@@ -1068,7 +1133,7 @@ Let's now repeat this process 100 more times, leaving us with 100 different 95% 
 1. The horizontal the line if colored orange of the confidence interval "captures" the true value of $p$ in red and the line is blue otherwise.
 1. We also mark each line with a dot indicated the value of the point estimate: the sample proportion $\widehat{p}$. These are the "spears."
 
-```{r reliable-percentile, fig.cap="100 SE-based 95% confidence intervals for p",echo=FALSE}
+```{r reliable-percentile, fig.cap="100 SE-based 95 percent confidence intervals for p",echo=FALSE}
 if(!file.exists("rds/balls_percentile_cis.rds")){
   set.seed(4)
 
@@ -1159,7 +1224,8 @@ se_cis <- balls_se_cis %>%
 
 # Plot them!
 ggplot(se_cis) +
-  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, color = captured)) +
+  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, 
+                   color = captured)) +
   geom_point(aes(x = sample_prop, y = replicate, color = captured)) +
   labs(x = expression("Proportion of red balls"), y = "Replicate ID") +
   scale_color_manual(values = c("blue", "orange")) + 
@@ -1285,7 +1351,7 @@ See above note: punted for now
 
 Let's take a look into what the `perc_cis_by_level` data frame looks like and how a sample of 10 different confidence intervals each from the 80%, 95%, and 99% levels compare visually in terms of length. Then, we'll start computing some widths of the confidence intervals. Then we'll head into calculating the mean and median widths across the three different levels.
 
-```{r perc-cis-level-print, echo=FALSE}
+```{r perc-cis-level-print, eval=FALSE, echo=FALSE}
 percentile_cis_by_level %>% 
   sample_n(10) %>% 
   kable(
@@ -1407,7 +1473,7 @@ if(!file.exists("rds/balls_perc_cis_n_25_50_100.rds")){
 }
 ```
 
-```{r reliable-percentile-n-25-50-100, fig.cap="Ten 95% confidence intervals for p based on n = 25, 50, & 100.", echo=FALSE}
+```{r reliable-percentile-n-25-50-100, fig.cap="Ten 95 percent confidence intervals for p based on n = 25, 50, & 100.", echo=FALSE}
 sample_of_cis <- percentile_cis_by_n %>% 
   group_by(sample_size) %>% 
   mutate(sample_row = 1:10)
@@ -1570,10 +1636,22 @@ head(mythbusters_yawn) %>%
 
 We can see that in this bootstrap sample generated from the first six rows of `mythbusters_yawn`, we have some rows repeated. The same is true when we perform the `generate()` step in `infer` as done below. Next, we `generate` 1000 replicates, or in other words, we bootstrap resample the 50 participants with replacement 1000 times. This is what will inject sampling variation into our results. 
 
-```{r eval=TRUE}
+```{r eval=FALSE}
 mythbusters_yawn %>% 
   specify(formula = yawn ~ group, success = "yes") %>% 
   generate(reps = 1000, type = "bootstrap")
+```
+
+```{r echo=FALSE, purl=FALSE}
+if(!file.exists("rds/generate_yawn.rds")){
+  generate_yawn <- mythbusters_yawn %>% 
+    specify(formula = yawn ~ group, success = "yes") %>% 
+    generate(reps = 1000, type = "bootstrap")
+  write_rds(generate_yawn, "rds/generate_yawn.rds")
+} else {
+  generate_yawn <- read_rds("rds/generate_yawn.rds")
+}
+generate_yawn
 ```
 
 Note the resulting data frame has 50,000 rows. This is because we performed resampling of 50 participants with replacement 1000 times and thus 50,000 = 1000 $\times$ 50. Accordingly, the variable `replicate`, indicating which resample each row belongs to, has the value `1` 50 times, the value `2` 50 times, all the way through to the value `1000` 50 times.
@@ -1603,13 +1681,29 @@ We see another error here. We need to specify the order of the subtraction. Is i
 
 Let's save the output in a data frame `bootstrap_distribution_yawning`:
 
-```{r}
+```{r eval=FALSE}
 bootstrap_distribution_yawning <- mythbusters_yawn %>% 
   specify(formula = yawn ~ group, success = "yes") %>% 
   generate(reps = 1000, type = "bootstrap") %>% 
   calculate(stat = "diff in props", order = c("seed", "control"))
 bootstrap_distribution_yawning
 ```
+
+```{r echo=FALSE}
+if(!file.exists("rds/bootstrap_distribution_yawning.rds")){
+  bootstrap_distribution_yawning <- mythbusters_yawn %>% 
+    specify(formula = yawn ~ group, success = "yes") %>% 
+    generate(reps = 1000, type = "bootstrap") %>% 
+    calculate(stat = "diff in props", order = c("seed", "control"))
+  write_rds(bootstrap_distribution_yawning,
+            "rds/bootstrap_distribution_yawning.rds")
+} else {
+  bootstrap_distribution_yawning <- read_rds(
+    "rds/bootstrap_distribution_yawning.rds")
+}
+bootstrap_distribution_yawning
+```
+
 
 We see that the resulting data frame has 1000 rows and 2 columns corresponding to the 1000 replicates and the difference in proportions for each bootstrap resample saved in the variable `stat`.
 
@@ -1661,7 +1755,7 @@ myth_ci_se <- bootstrap_distribution_yawning %>%
 
 Let's visualize both confidence intervals in Figure \@ref(fig:bootstrap-distribution-mythbusters-CI), with the percentile method interval in red and the standard error method interval in blue. Observe that they are both similar. 
 
-```{r boostrap-distribution-mythbusters-CI, echo=FALSE, fig.show='hold', fig.cap="Two 95% confidence intervals: percentile method in red, standard error method in blue.", purl=FALSE}
+```{r boostrap-distribution-mythbusters-CI, echo=FALSE, fig.show='hold', fig.cap="Two 95 percent confidence intervals: percentile method in red, standard error method in blue.", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
 visualize(bootstrap_distribution_yawning) + 
   ggtitle("") +
@@ -1745,23 +1839,42 @@ Here is the code you previously saw in Section \@ref(ilyas-yohan) to construct t
 ```{r,echo=FALSE}
 set.seed(76)
 ```
-```{r}
+
+```{r eval=FALSE}
 # Compute the bootstrap distribution using infer workflow:
 bootstrap_distribution <- bowl_sample_1 %>% 
   specify(response = color, success = "red") %>% 
   generate(reps = 1000, type = "bootstrap") %>% 
   calculate(stat = "prop")
+```
 
+```{r echo=FALSE}
+if(!file.exists("rds/bootstrap_distribution_balls.rds")){
+  bootstrap_distribution <- bowl_sample_1 %>% 
+    specify(response = color, success = "red") %>% 
+    generate(reps = 1000, type = "bootstrap") %>% 
+    calculate(stat = "prop")
+  write_rds(bootstrap_distribution, 
+            "rds/bootstrap_distribution_balls.rds")
+} else {
+  bootstrap_distribution <- read_rds("rds/bootstrap_distribution_balls.rds")
+}
+```
+
+```{r warning=FALSE}
 # Visualize bootstrap distribution of p-hat
 bootstrap_distribution %>% 
   visualize(binwidth = 0.05, boundary = 0.4, color = "white") + 
-  labs(x = "Proportion of 50 balls that were red", title = "Bootstrap distribution")
+  labs(x = "Proportion of 50 balls that were red", 
+       title = "Bootstrap distribution")
 ```
+
 
 ```{r}
 bootstrap_distribution %>% 
   summarize(se = sd(stat))
 ```
+
 ```{r, echo=FALSE}
 se_boot <- bootstrap_distribution %>% 
   summarize(se = sd(stat)) %>% 
@@ -1772,7 +1885,7 @@ se_boot <- bootstrap_distribution %>%
 
 Now that we have computed both the sampling distribution and the bootstrap distributions, let's visualize them side-by-side in Figure \@ref(fig:side-by-side). We'll make both histograms have the same scale on the x and y-axes to make them more comparable and add vertical red lines that denote the proportion of the bowl's balls that are red $p$ = `r p_red`. Furthermore, we'll add a vertical dashed line at Ilyas and Yohan's value of the sample proportion $\widehat{p}$ = 21/50 = 0.42 = 42\%.
 
-```{r side-by-side, fig.height = 7, fig.cap="Comparing the sampling and bootstrap distributions of p-hat", echo=FALSE}
+```{r side-by-side, fig.height=7, fig.cap="Comparing the sampling and bootstrap distributions of p-hat", echo=FALSE}
 x_lim <- seq(from = 0.15, to = 0.65, by = 0.05)
 y_lim <- c(0, 350)
 p_samp <- ggplot(sampling_distribution, aes(x = prop_red)) +
@@ -1790,7 +1903,6 @@ p_samp + p_boot + plot_layout(ncol = 1, heights = c(1, 1))
 ```
 
 There is a lot going on in this comparison, so let's pick them apart slowly. First, notice how the sampling distribution in salmon is centered at $p$ = `r p_red`. This is because the sample is done at random in an unbiased fashion, so the estimates $\widehat{p}$ are centered at the true value of $p$. This is actually an artifact of the Central Limit Theorem introduced in Chapter \@ref(sampling). The center of the sampling distribution is expected to be the value of the population parameter, in this case $p$.
-
 
 However, this is not the case with the bootstrap distribution in blue. The bootstrap distribution is centered at 0.42, which is the proportion red of Ilyas and Yohan's 50 sampled balls. This is because we are resampling from the sample and not from the population. Since the bootstrap distribution is centered at the original sample proportion, it doesn't necessarily provide a good estimate of the overall population proportion $p$, which we calculated to be `r p_red`. This leads us to our first lesson about bootstrapping:
 
@@ -1842,7 +1954,7 @@ Observe that the standard error has gone done from 0.0698 to 0.0494. In other wo
 
 Why is this formula true? Unfortunately, we don't have the tools at this point to prove this; you'll need to take a more advanced course in probability and statistics. 
 
-#### Theory-based method for constructing confidence intervals{-}
+#### Theory-based method for constructing confidence intervals {-}
 
 We now present a third method for constructing a 95% confidence interval for $p$ that does not involve bootstrap resampling with replacement, but rather mathematical formulas. It is critical to remember that this method holds only if the sampling distribution is normally shaped.
 
@@ -1871,8 +1983,6 @@ $$
 
 Thus their poll results are based on a confidence level of 95% and the resulting 95% confidence interval for the proportion of all young Americans who support Obama is: $\widehat{p} \pm \text{MoE}$ = 0.42 $\pm$ 0.021 = (0.339, 0.441) = (33.9%, 44.1%)
 
-
-
 #### Confidence intervals based on 33 tactile samples {-}
 
 Let's revisit our 33 friend's samples from the `bowl` from Section \@ref(student-shovels). Recall this data was saved in the `tactile_prop_red` data frame included in the `moderndive` package. We'll then apply the theory-based procedure for constructing confidence intervals for $p$ using some of the `dplyr` data wrangling tools seen in Chapter \@ref(wrangling):
@@ -1900,7 +2010,7 @@ conf_ints
 
 Let's plot now plot the 33 confidence intervals for $p$ saved in `conf_ints` along with a vertical red line at $p$ = `r p_red` = `r p_red*100`% indicating the true proportion of the `bowl`'s balls that are red in Figure \@ref(fig:tactile-conf-int).
 
-```{r tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 95% confidence intervals based on 33 tactile samples of size n=50", fig.height=6}
+```{r tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 95 percent confidence intervals based on 33 tactile samples of size n=50", fig.height=6}
 conf_ints <- conf_ints %>% 
   mutate(
     y = 1:n(),
@@ -1940,7 +2050,7 @@ Let's say however, we repeated the above 100 times, not tactilely, but virtually
 
 Run the following three steps, being sure to `View()` the resulting data frame after each step so you can convince yourself of what's going on:
 
-```{r}
+```{r eval=FALSE}
 # First: Take 100 virtual samples of n=50 balls
 virtual_samples <- bowl %>% 
   rep_sample_n(size = 50, reps = 100)
@@ -1965,7 +2075,7 @@ virtual_prop_red <- virtual_prop_red %>%
 
 Here are the results:
 
-```{r virtual-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"}
+```{r virtual-conf-int, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"}
 set.seed(79)
 
 virtual_samples <- bowl %>% 
