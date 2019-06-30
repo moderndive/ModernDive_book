@@ -168,7 +168,6 @@ virtual_resampled_means
 
 
 ## ------------------------------------------------------------------------
-
 # Repeat resampling 1000 times
 virtual_resamples <- pennies_sample %>% 
   rep_sample_n(size = 50, replace = TRUE, reps = 1000)
@@ -285,6 +284,17 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
 ##   summarize(mean_year = mean(year))
 
 
+## ---- eval=FALSE---------------------------------------------------------
+## pennies_sample %>%
+##   summarize(stat = mean(year))
+
+
+## ---- eval=FALSE---------------------------------------------------------
+## pennies_sample %>%
+##   specify(response = year) %>%
+##   calculate(stat = "mean")
+
+
 ## ----fig.align='center', echo=FALSE, out.width='20%'---------------------
 knitr::include_graphics("images/flowcharts/infer/specify.png")
 
@@ -341,15 +351,14 @@ knitr::include_graphics("images/flowcharts/infer/visualize.png")
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## bootstrap_distribution %>%
-##   visualize()
+## visualize(bootstrap_distribution)
 
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## # infer workflow:             # Original workflow:
-## bootstrap_distribution %>%    ggplot(bootstrap_distribution, aes(x = stat)) +
-##   visualize()                   geom_histogram()
+## # infer workflow:                  # Original workflow:
+## visualize(bootstrap_distribution)  ggplot(bootstrap_distribution, aes(x = stat)) +
+##                                      geom_histogram()
 
 
 
@@ -361,21 +370,18 @@ percentile_ci
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## bootstrap_distribution %>%
-##   visualize() +
+## visualize(bootstrap_distribution) +
 ##   shade_confidence_interval(endpoints = c(1991.28, 1999.76))
 
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## bootstrap_distribution %>%
-##   visualize() +
+## visualize(bootstrap_distribution) +
 ##   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 
 ## ----echo=FALSE----------------------------------------------------------
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-bootstrap_distribution %>% 
-  visualize() + 
+visualize(bootstrap_distribution) + 
   ggtitle("Simulation-Based Bootstrap Distribution") +
   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 
@@ -387,8 +393,7 @@ standard_error_ci
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## bootstrap_distribution %>%
-##   visualize() +
+## visualize(bootstrap_distribution) +
 ##   shade_confidence_interval(endpoints = standard_error_ci)
 
 
@@ -834,8 +839,7 @@ bootstrap_distribution_yawning
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## bootstrap_distribution_yawning %>%
-##   visualize()
+## visualize(bootstrap_distribution_yawning)
 
 
 

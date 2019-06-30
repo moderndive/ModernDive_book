@@ -1,10 +1,9 @@
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(tidyverse)
-library(janitor)
 library(infer)
 library(moderndive)
-library(ggplot2movies)
 library(nycflights13)
+library(ggplot2movies)
 
 
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
@@ -12,34 +11,45 @@ library(nycflights13)
 library(knitr)
 library(kableExtra)
 library(gt)
-#library(nycflights13)
-#library(broom)
+library(patchwork)
+library(scales)
 
 
 ## ------------------------------------------------------------------------
 promotions
-glimpse(promotions)
+
+
+## ----promotions-barplot, fig.cap="Barplot of relationship between gender and promotion decision."----
+ggplot(promotions, aes(x = gender, fill = decision)) +
+  geom_bar() +
+  labs(x = "Gender of name on resume")
 
 
 ## ------------------------------------------------------------------------
 promotions %>% 
-  tabyl(gender, decision) %>% 
-  adorn_percentages() %>% 
-  adorn_pct_formatting() %>% 
-  # To show original counts
-  adorn_ns()
+  group_by(gender, decision) %>% 
+  summarize(n = n())
+
+## ---- echo = FALSE-------------------------------------------------------
+observed_test_statistic <- promotions %>% 
+  specify(decision ~ gender, success = "promoted") %>% 
+  calculate(stat = "diff in props", order = c("male", "female")) %>% 
+  pull(stat) %>% 
+  round(3)
 
 
-## ----compare-first-10, echo=FALSE----------------------------------------
+## ----compare-six, echo=FALSE---------------------------------------------
 set.seed(2019)
-one_permute <- promotions %>%
-  mutate(gender = sample(gender)) %>% 
-  select(id, decision, gender)
-first_10 <- list(promotions %>% slice(1:10),
-                 one_permute %>% slice(1:10))
-first_10 %>% 
+# Pick out 6 rows
+promotions_sample <- promotions %>%
+  slice(c(1, 5, 6, 20, 21, 47))
+# Shuffle these 6 rows
+promotions_sample_shuffled <- promotions_sample %>%
+  mutate(gender = sample(gender))
+
+list(promotions_sample, promotions_sample_shuffled) %>% 
   kable(
-    caption = "\\label{tab:compare-first-10}First 10 rows of original (left) and permuted (right) data", 
+    caption = "\\label{tab:compare-six}Relationship of decision and gender for 6 resumes: original (left) and shuffled (right).", 
     booktabs = TRUE,
     longtable = TRUE
   ) %>% 
@@ -47,13 +57,168 @@ first_10 %>%
                 latex_options = c("HOLD_position", "repeat_header"))
 
 
-## ----echo=FALSE----------------------------------------------------------
+
+
+
+
+## ---- echo=FALSE---------------------------------------------------------
+set.seed(2019)
+one_permute <- promotions %>%
+  mutate(gender = sample(gender))
+
+## ------------------------------------------------------------------------
+one_permute
+
+
+## ---- eval = FALSE-------------------------------------------------------
+## ggplot(one_permute, aes(x = gender, fill = decision)) +
+##   geom_bar() +
+##   labs(x = "Gender of resume name")
+
+## ----promotions-barplot-permuted, fig.cap="Barplot of relationship between shuffled gender and promotion decision.", echo = FALSE----
+height1 <- promotions %>% 
+  group_by(gender, decision) %>% 
+  summarize(n = n()) %>% 
+  pull(n) %>% 
+  max()
+height2 <- one_permute %>% 
+  group_by(gender, decision) %>% 
+  summarize(n = n()) %>% 
+  pull(n) %>% 
+  max()
+height <- max(height1, height2)
+
+plot1 <- ggplot(promotions, aes(x = gender, fill = decision)) +
+  geom_bar() +
+  labs(x = "Gender of resume name", title = "Original") +
+  theme(legend.position = "none") +
+  coord_cartesian(ylim= c(0, height))
+plot2 <- ggplot(one_permute, aes(x = gender, fill = decision)) +
+  geom_bar() +
+  labs(x = "Gender of resume name", y ="", title = "Shuffled") +
+  coord_cartesian(ylim= c(0, height))
+plot1 + plot2
+
+
+## ------------------------------------------------------------------------
 one_permute %>% 
-  tabyl(gender, decision) %>% 
-  adorn_percentages() %>% 
-  adorn_pct_formatting() %>% 
-  # To show original counts
-  adorn_ns()
+  group_by(gender, decision) %>% 
+  summarize(n = n())
+
+## ---- echo = FALSE-------------------------------------------------------
+# male stats
+n_men_promoted <- one_permute %>% 
+  filter(decision == "promoted", gender == "male") %>% 
+  nrow()
+n_men_not_promoted <- one_permute %>% 
+  filter(decision == "not", gender == "male") %>% 
+  nrow()
+prop_men_promoted <- n_men_promoted/(n_men_promoted + n_men_not_promoted)
+
+# female stats  
+n_women_promoted <- one_permute %>% 
+  filter(decision == "promoted", gender == "female") %>% 
+  nrow()
+n_women_not_promoted <- one_permute %>% 
+  filter(decision == "not", gender == "female") %>% 
+  nrow()
+prop_women_promoted <- n_women_promoted/(n_women_promoted + n_women_not_promoted)
+
+# diff
+diff_prop <- round(prop_men_promoted - prop_women_promoted, 3)
+
+# round propotions post difference
+prop_men_promoted <- round(prop_men_promoted, 3)
+prop_women_promoted <- round(prop_women_promoted, 3)
+
+
+
+
+## ---- eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE----------------
+# https://docs.google.com/spreadsheets/d/1Q-ENy3o5IrpJshJ7gn3hJ5A0TOWV2AZrKNHMsshQtiE/edit#gid=0
+shuffled_data <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQXLJxwSp1ALEJ1JRNn3o8K3jVdqRG_5yxpoOhIFYflbFIkb2ttH73w8mljptn12CsDyIvjr5p0IGUe/pub?gid=0&single=true&output=csv")
+n_replicates <- ncol(shuffled_data) - 2
+
+shuffled_data_tidy <- shuffled_data %>% 
+  gather(team, gender, -c(id, decision)) %>% 
+  mutate(replicate = rep(1:n_replicates, each = 48))
+
+# Sanity check results
+# shuffled_data_tidy %>% group_by(replicate) %>% count(gender) %>% filter(n != 24) %>% View()
+
+shuffled_data_tidy <- shuffled_data_tidy %>% 
+  group_by(replicate) %>% 
+  count(gender, decision) %>% 
+  filter(decision == "promoted") %>% 
+  mutate(prop = n/24) %>% 
+  select(replicate, gender, prop) %>% 
+  spread(gender, prop) %>% 
+  mutate(stat = m - f) 
+
+
+
+
+## ---- eval=FALSE---------------------------------------------------------
+## obs_diff_prop <- promotions %>%
+##   specify(decision ~ gender, success = "promoted") %>%
+##   calculate(stat = "diff in props", order = c("male", "female"))
+## obs_diff_prop
+
+
+## ----echo=FALSE, eval=FALSE----------------------------------------------
+## set.seed(2019)
+## tactile_permutes <- promotions %>%
+##   specify(decision ~ gender, success = "promoted") %>%
+##   hypothesize(null = "independence") %>%
+##   generate(reps = 33, type = "permute") %>%
+##   calculate(stat = "diff in props", order = c("male", "female"))
+## ggplot(data = tactile_permutes, aes(x = stat)) +
+##   geom_histogram(binwidth = 0.05, boundary = -0.2, color = "white") +
+##   geom_vline(xintercept = pull(obs_diff_prop), color = "blue", size = 2) +
+##   scale_y_continuous(breaks = 0:10)
+
+
+
+
+## ---- echo = FALSE-------------------------------------------------------
+num <- sum(shuffled_data_tidy$stat >= observed_test_statistic)
+denom <- nrow(shuffled_data_tidy)
+p_val <- round((num + 1)/(denom + 1),3)
+
+
+
+
+
+
+## ---- echo=FALSE---------------------------------------------------------
+alpha <- 0.001
+
+
+## ------------------------------------------------------------------------
+promotions %>% 
+  specify(formula = decision ~ gender, success = "promoted")
+
+
+## ------------------------------------------------------------------------
+promotions %>% 
+  specify(formula = decision ~ gender, success = "promoted") %>% 
+  hypothesize(null = "independence")
+
+
+## ------------------------------------------------------------------------
+promotions %>% 
+  specify(formula = decision ~ gender, success = "promoted") %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute")
+
+
+## ------------------------------------------------------------------------
+null_distribution <- promotions %>% 
+  specify(formula = decision ~ gender, success = "promoted") %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in props", order = c("male", "female"))
+null_distribution
 
 
 ## ------------------------------------------------------------------------
@@ -63,104 +228,28 @@ obs_diff_prop <- promotions %>%
 obs_diff_prop
 
 
-## ----echo=FALSE----------------------------------------------------------
-set.seed(2019)
-tactile_permutes <- promotions %>% 
-  specify(decision ~ gender, success = "promoted") %>% 
-  hypothesize(null = "independence") %>% 
-  generate(reps = 33, type = "permute") %>% 
-  calculate(stat = "diff in props", order = c("male", "female"))
-ggplot(data = tactile_permutes, aes(x = stat)) +
-  geom_histogram(binwidth = 0.05, boundary = -0.2, color = "white") +
-  geom_vline(xintercept = pull(obs_diff_prop), color = "blue", size = 2) +
-  scale_y_continuous(breaks = 0:10)
-
-
-## ---- eval=FALSE---------------------------------------------------------
-## pennies_sample %>%
-##   summarize(stat = mean(year))
-
-
-## ---- eval=FALSE---------------------------------------------------------
-## pennies_sample %>%
-##   specify(response = year) %>%
-##   calculate(stat = "mean")
-
-
-
-
 ## ----eval=FALSE----------------------------------------------------------
-## promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted")
-
-
-## ----echo=FALSE----------------------------------------------------------
-specify_ht <- promotions %>% 
-  specify(formula = decision ~ gender, success = "promoted")
-specify_ht
-
-
-## ----eval=FALSE----------------------------------------------------------
-## promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted")
-##   hypothesize(null = "independence")
-
-
-## ----echo=FALSE----------------------------------------------------------
-hypothesize_ht <- specify_ht %>% 
-  hypothesize(null = "independence")
-hypothesize_ht
-
-
-## ----eval=FALSE----------------------------------------------------------
-## promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted")
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute")
-
-
-## ----echo=FALSE----------------------------------------------------------
-generate_ht <- hypothesize_ht %>% 
-  generate(reps = 1000, type = "permute")
-generate_ht
-
-
-## ----eval=FALSE----------------------------------------------------------
-## null_distribution_two_props <- promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted")
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute") %>%
-##   calculate(stat = "diff in props", order = c("male", "female"))
-## null_distribution_two_props
-
-
-## ----echo=FALSE----------------------------------------------------------
-null_distribution_two_props <- generate_ht %>% 
-  calculate(stat = "diff in props", order = c("male", "female"))
-null_distribution_two_props
-
-
-## ----echo=FALSE----------------------------------------------------------
-ggplot(null_distribution_two_props, aes(x = stat)) +
-  geom_histogram(bins = 10, color = "white") +
-  geom_vline(xintercept = pull(obs_diff_prop), color = "blue", size = 2)
+## visualize(null_distribution, binwidth = 0.1)
 
 
 
-
-## ----fig.cap="Shaded histogram to show p-value"--------------------------
-visualize(null_distribution_two_props, bins = 10) + 
+## ----null-distribution-infer-2, fig.cap="Shaded histogram to show p-value"----
+visualize(null_distribution, bins = 10) + 
   shade_p_value(obs_stat = obs_diff_prop, direction = "right")
 
 
 ## ------------------------------------------------------------------------
-p_value <- null_distribution_two_props %>% 
-  get_p_value(obs_stat = obs_diff_prop, direction = "both")
-p_value
+null_distribution %>% 
+  get_p_value(obs_stat = obs_diff_prop, direction = "right")
+
+## ---- echo = FALSE-------------------------------------------------------
+p_value <- null_distribution %>% 
+  get_p_value(obs_stat = obs_diff_prop, direction = "right") %>% 
+  mutate(p_value = round(p_value, 3))
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## null_distribution_two_props <- promotions %>%
+## null_distribution <- promotions %>%
 ##   specify(formula = decision ~ gender, success = "promoted") %>%
 ##   hypothesize(null = "independence") %>%
 ##   generate(reps = 1000, type = "permute") %>%
@@ -168,12 +257,39 @@ p_value
 
 
 ## ------------------------------------------------------------------------
-percentile_ci_two_props <- promotions %>% 
+bootstrap_distribution <- promotions %>% 
   specify(formula = decision ~ gender, success = "promoted") %>% 
-  #  hypothesize(null = "independence") %>% 
+  # Change 1 - Remove hypothesize():
+  # hypothesize(null = "independence") %>% 
+  # Change 2 - Switch type from "permute" to "bootstrap":
   generate(reps = 1000, type = "bootstrap") %>% 
-  calculate(stat = "diff in props", order = c("male", "female")) %>% 
-  get_ci()
+  calculate(stat = "diff in props", order = c("male", "female"))
+
+
+## ------------------------------------------------------------------------
+percentile_ci <- bootstrap_distribution %>% 
+  get_confidence_interval(level = 0.95, type = "percentile")
+percentile_ci
+
+
+## ----eval=FALSE----------------------------------------------------------
+## visualize(bootstrap_distribution) +
+##   shade_confidence_interval(endpoints = percentile_ci)
+
+
+
+## ------------------------------------------------------------------------
+se_ci <- bootstrap_distribution %>% 
+  get_confidence_interval(level = 0.95, type = "se", point_estimate = obs_diff_prop)
+se_ci
+
+
+## ----eval=FALSE----------------------------------------------------------
+## visualize(bootstrap_distribution) +
+##   shade_confidence_interval(endpoints = se_ci)
+
+
+
 
 
 
@@ -181,68 +297,37 @@ percentile_ci_two_props <- promotions %>%
 
 
 ## ----trial-errors-table, echo=FALSE, fig.cap="Type I and Type II errors"----
-if(knitr:::is_html_output()){
-  verdict <- c("Guilty verdict", "Not guilty verdict")
-  Guilty <- c("True Positive (Correct result)", 
-              "False Negative (Type II Error)")
-  `Not guilty` <- c("False Positive (Type I Error)", 
-                    "True Negative (Correct result)")
-  
-  table_entries <- tibble(verdict, Guilty, `Not guilty`)
-  
-  table_entries %>% 
-    gt(rowname_col = "verdict") %>% 
-    tab_header(title = "Type I and Type II errors for US trials") %>% 
-    tab_row_group(group = "Verdict")   %>% 
-    tab_spanner(label = "Actual result",
-                columns = vars(Guilty, `Not guilty`)) %>% 
-    cols_align(align = "center") %>% 
-    tab_options(table.width = pct(30))
-} else {
-  knitr::include_graphics("images/error-types.png")
-}
+tibble(
+  verdict = c("Not guilty verdict", "Guilty verdict"),
+  `Truly not guilty` = c("Correct", "Type I error"),
+  `Truly guilty` = c("Type II error", "Correct")
+) %>% 
+  gt(rowname_col = "verdict") %>% 
+  tab_header(title = "Type I and Type II errors in US trials") %>% 
+  tab_row_group(group = "Verdict")   %>% 
+  tab_spanner(
+    label = "Truth",
+    columns = vars(`Truly not guilty`, `Truly guilty`)
+  ) %>% 
+  cols_align(align = "center") %>% 
+  tab_options(table.width = pct(90))
 
 
-
-
-
-
-
-
-
-
-## ----message=FALSE, warning=FALSE----------------------------------------
-movies_trimmed <- movies %>% 
-  select(title, year, rating, Action, Romance)
-
-
-## ------------------------------------------------------------------------
-movies_trimmed <- movies_trimmed %>%
-  filter(!(Action == 1 & Romance == 1))
-
-
-## ------------------------------------------------------------------------
-movies_trimmed <- movies_trimmed %>%
-  mutate(genre = case_when( (Action == 1) ~ "Action",
-                            (Romance == 1) ~ "Romance",
-                            TRUE ~ "Neither")) %>%
-  filter(genre != "Neither") %>%
-  select(-Action, -Romance)
-
-
-
-
-
-
-## ----fig.cap="Rating vs genre in the population"-------------------------
-ggplot(data = movies_trimmed, aes(x = genre, y = rating)) +
-  geom_boxplot()
-
-
-## ----movie-hist, warning=FALSE, fig.cap="Faceted histogram of genre vs rating"----
-ggplot(data = movies_trimmed, mapping = aes(x = rating)) +
-  geom_histogram(binwidth = 1, color = "white") +
-  facet_grid(genre ~ .)
+## ----trial-errors-table-ht, echo=FALSE, fig.cap="Type I and Type II errors"----
+tibble(
+  Decision = c("Fail to reject H0", "Reject H0"), 
+  `H0 true` = c("Correct", "Type I error"),
+  `HA true` = c("Type II error", "Correct")
+) %>% 
+  gt(rowname_col = "verdict") %>% 
+  tab_header(title = "Type I and Type II errors hypothesis tests") %>% 
+  tab_row_group(group = "Verdict")   %>% 
+  tab_spanner(
+    label = "Truth",
+    columns = vars(`H0 true`, `HA true`)
+  ) %>% 
+  cols_align(align = "center") %>% 
+  tab_options(table.width = pct(90))
 
 
 
@@ -250,177 +335,41 @@ ggplot(data = movies_trimmed, mapping = aes(x = rating)) +
 
 
 ## ------------------------------------------------------------------------
-set.seed(2017)
-movies_genre_sample <- movies_trimmed %>% 
-  group_by(genre) %>%
-  sample_n(34) %>% 
-  ungroup()
-
-
-## ----fig.cap="Genre vs rating for our sample"----------------------------
-ggplot(data = movies_genre_sample, aes(x = genre, y = rating)) +
-  geom_boxplot()
-
-
-## ----warning=FALSE, fig.cap="Genre vs rating for our sample as faceted histogram"----
-ggplot(data = movies_genre_sample, mapping = aes(x = rating)) +
-  geom_histogram(binwidth = 1, color = "white") +
-  facet_grid(genre ~ .)
-
-
-
-
+movies
 
 
 ## ------------------------------------------------------------------------
-summary_ratings <- movies_genre_sample %>% 
-  group_by(genre) %>%
-  summarize(mean = mean(rating),
-            std_dev = sd(rating),
-            n = n())
-summary_ratings
+movies_sample
 
 
-
-
-
-
-
-
+## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs genre."----
+ggplot(data = movies_sample, aes(x = genre, y = rating)) +
+  geom_boxplot() +
+  labs(y = "IMDb rating")
 
 
 ## ------------------------------------------------------------------------
-obs_diff <- movies_genre_sample %>% 
-  specify(formula = rating ~ genre) %>% 
-  calculate(stat = "diff in means", order = c("Romance", "Action"))
-obs_diff
+movies_sample %>% 
+  group_by(genre) %>% 
+  summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 
+## ---- echo = FALSE-------------------------------------------------------
+movies_genre_summaries <- movies_sample %>% 
+  group_by(genre) %>% 
+  summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 
-## ----include=FALSE-------------------------------------------------------
-set.seed(2018)
-
-
-## ----message=FALSE, warning=FALSE, include=FALSE, eval=FALSE-------------
-## shuffled_ratings_old <- #movies_trimmed %>%
-##   movies_genre_sample %>%
-##      mutate(genre = mosaic::shuffle(genre)) %>%
-##      group_by(genre) %>%
-##      summarize(mean = mean(rating))
-## diff(shuffled_ratings_old$mean)
-
-
-## ----message=FALSE, warning=FALSE----------------------------------------
-movies_genre_sample %>% 
-  specify(formula = rating ~ genre) %>%
-  hypothesize(null = "independence") %>% 
-  generate(reps = 1) %>% 
-  calculate(stat = "diff in means", order = c("Romance", "Action"))
-
-
-
-
-
-
-## ----include=FALSE-------------------------------------------------------
-if(!file.exists("rds/generated_samples.rds")){
-  generated_samples <- movies_genre_sample %>% 
-    specify(formula = rating ~ genre) %>% 
-    hypothesize(null = "independence") %>% 
-    generate(reps = 5000)
-   saveRDS(object = generated_samples, 
-           "rds/generated_samples.rds")
-} else {
-   generated_samples <- readRDS("rds/generated_samples.rds")
-}
-
-
-## ----eval=FALSE----------------------------------------------------------
-## generated_samples <- movies_genre_sample %>%
-##   specify(formula = rating ~ genre) %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 5000)
-
-
-## ----include=FALSE-------------------------------------------------------
-null_distribution_two_means <- generated_samples %>% 
-  calculate(stat = "diff in means", order = c("Romance", "Action"))
-
-
-## ----eval=FALSE----------------------------------------------------------
-## null_distribution_two_means <- movies_genre_sample %>%
-##   specify(formula = rating ~ genre) %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 5000) %>%
-##   calculate(stat = "diff in means", order = c("Romance", "Action"))
-
-
-## ----fig.cap="Simulated differences in means histogram"------------------
-null_distribution_two_means %>% visualize()
-
-
-## ----fig.cap="Shaded histogram to show p-value"--------------------------
-visualize(null_distribution_two_means) + 
-  shade_p_value(obs_stat = obs_diff, direction = "both")
-
-
-## ----fig.cap="Histogram with vertical lines corresponding to observed statistic"----
-visualize(null_distribution_two_means, bins = 100) + 
-  shade_p_value(bins = 100, obs_stat = obs_diff, direction = "both")
-
-
-## ------------------------------------------------------------------------
-pvalue <- null_distribution_two_means %>% 
-  get_p_value(obs_stat = obs_diff, direction = "both")
-pvalue
-
-
-## ----eval=FALSE----------------------------------------------------------
-## null_distribution_two_means <- movies_genre_sample %>%
-##   specify(formula = rating ~ genre) %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 5000) %>%
-##   calculate(stat = "diff in means", order = c("Romance", "Action"))
-
-
-## ------------------------------------------------------------------------
-percentile_ci_two_means <- movies_genre_sample %>% 
-  specify(formula = rating ~ genre) %>% 
-#  hypothesize(null = "independence") %>% 
-  generate(reps = 5000) %>% 
-  calculate(stat = "diff in means", order = c("Romance", "Action")) %>% 
-  get_ci()
-
-
-## ------------------------------------------------------------------------
-percentile_ci_two_means
-
-
-
-
-
-
-## ------------------------------------------------------------------------
-bos_sfo <- flights %>% 
-  na.omit() %>% 
-  filter(dest %in% c("BOS", "SFO")) %>% 
-  group_by(dest) %>% 
-  sample_n(100)
-
-
-## ------------------------------------------------------------------------
-bos_sfo_summary <- bos_sfo %>% group_by(dest) %>% 
-  summarize(mean_time = mean(air_time),
-            sd_time = sd(air_time))
-bos_sfo_summary
-
-
-
-
-
-
-## ------------------------------------------------------------------------
-ggplot(data = bos_sfo, mapping = aes(x = dest, y = air_time)) +
-  geom_boxplot()
+x_bar_action <- movies_genre_summaries %>% 
+  filter(genre == "Action") %>% 
+  pull(mean_rating)
+x_bar_romance <- movies_genre_summaries %>% 
+  filter(genre == "Romance") %>% 
+  pull(mean_rating)
+n_action <- movies_genre_summaries %>% 
+  filter(genre == "Action") %>% 
+  pull(n)
+n_romance <- movies_genre_summaries %>% 
+  filter(genre == "Romance") %>% 
+  pull(n)
 
 
 ## ----summarytable-ch10, echo=FALSE, message=FALSE------------------------
@@ -429,6 +378,7 @@ ggplot(data = bos_sfo, mapping = aes(x = dest, y = air_time)) +
 
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
   read_csv(na = "") %>% 
+  filter(Scenario %in% c(1:4)) %>% 
   kable(
     caption = "\\label{tab:summarytable-ch9}Scenarios of sampling for inference", 
     booktabs = TRUE,
@@ -443,44 +393,171 @@ ggplot(data = bos_sfo, mapping = aes(x = dest, y = air_time)) +
   column_spec(5, width = "1in")
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ------------------------------------------------------------------------
+movies_sample %>% 
+  specify(formula = rating ~ genre)
+
+
+## ------------------------------------------------------------------------
+movies_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  hypothesize(null = "independence")
+
+
+## ------------------------------------------------------------------------
+movies_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute")
+
+
+## ------------------------------------------------------------------------
+null_distribution_movies <- movies_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("Action", "Romance"))
+null_distribution_movies
+
+
+## ------------------------------------------------------------------------
+obs_diff_means <- movies_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  calculate(stat = "diff in means", order = c("Action", "Romance"))
+obs_diff_means
+
+
+## ----null-distribution-movies-2, fig.cap="Null distribution, observed test statistic, and p-value. "----
+visualize(null_distribution_movies, bins = 10) + 
+  shade_p_value(obs_stat = obs_diff_means, direction = "both")
+
+
+## ------------------------------------------------------------------------
+null_distribution_movies %>% 
+  get_p_value(obs_stat = obs_diff_means, direction = "both")
+
+## ---- echo = FALSE-------------------------------------------------------
+p_value_movies <- null_distribution_movies %>% 
+  get_p_value(obs_stat = obs_diff_means, direction = "both") %>% 
+  mutate(p_value = round(p_value, 3))
+
+
+
+
+
+
+## ----z-curve, echo=FALSE, out.width="50%", fig.cap="Standard normal z curve"----
 ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm) +
-  ylab("") +
+  labs(x = "z", y = "") + 
   theme(axis.title.y = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank())
 
 
-## ----fig.cap="Simulated differences in means histogram"------------------
-ggplot(data = null_distribution_two_means, aes(x = stat)) +
-  geom_histogram(color = "white", bins = 20)
 
 
-## ----eval=FALSE----------------------------------------------------------
-## generated_samples <- movies_genre_sample %>%
+## ------------------------------------------------------------------------
+movies_sample %>% 
+  group_by(genre) %>% 
+  summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
+
+## ---- echo = FALSE-------------------------------------------------------
+t_stat <- movies_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  calculate(stat = "t", order = c("Action", "Romance")) %>% 
+  pull(stat) %>% 
+  round(3)
+
+
+## ---- echo = TRUE, eval = FALSE------------------------------------------
+## # Construct null distribution of xbar_a - xbar_m:
+## null_distribution_movies <- movies_sample %>%
 ##   specify(formula = rating ~ genre) %>%
 ##   hypothesize(null = "independence") %>%
-##   generate(reps = 5000)
+##   generate(reps = 1000, type = "permute") %>%
+##   calculate(stat = "diff in means", order = c("Action", "Romance"))
+## 
+## # Visualize:
+## visualize(null_distribution_movies, bins = 10)
+
+## ---- echo = FALSE-------------------------------------------------------
+visualize(null_distribution_movies, bins = 10)
 
 
 ## ------------------------------------------------------------------------
-null_distribution_t <- generated_samples %>% 
-  calculate(stat = "t", order = c("Romance", "Action"))
-null_distribution_t %>% visualize()
-
-
-## ------------------------------------------------------------------------
-null_distribution_t %>% 
-  visualize(method = "both")
-
-
-## ------------------------------------------------------------------------
-obs_t <- movies_genre_sample %>% 
+# Construct null distribution of t:
+null_distribution_movies_t <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
-  calculate(stat = "t", order = c("Romance", "Action"))
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  # Notice we switched stat from "diff in means" to "t"
+  calculate(stat = "t", order = c("Action", "Romance"))
+
+# Visualize:
+visualize(null_distribution_movies_t, bins = 10)
+
+
+## ------------------------------------------------------------------------
+visualize(null_distribution_movies_t, bins = 10, method = "both")
+
+
+## ------------------------------------------------------------------------
+obs_two_sample_t <- movies_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  calculate(stat = "t", order = c("Action", "Romance"))
+obs_two_sample_t
 
 
 ## ----warning=TRUE, message=TRUE------------------------------------------
-visualize(null_distribution_t, method = "both") +
-  shade_p_value(obs_stat = obs_t, direction = "both")
+visualize(null_distribution_movies_t, method = "both") +
+  shade_p_value(obs_stat = obs_two_sample_t, direction = "both")
+
+
+## ----warning=TRUE, message=TRUE------------------------------------------
+null_distribution_movies_t %>% 
+  get_p_value(obs_stat = obs_two_sample_t, direction = "both")
+
+
+## ------------------------------------------------------------------------
+flights_sample <- flights %>% 
+  filter(carrier %in% c("HA", "AS"))
+
+
+## ----ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2013."----
+ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
+  geom_boxplot() +
+  labs(x = "Carrier", y = "Air Time")
+
+
+## ------------------------------------------------------------------------
+flights_sample %>% 
+  group_by(carrier, dest) %>% 
+  summarize(n = n(), mean_time = mean(air_time, na.rm =TRUE))
+
+
+
+
+
+
+
+
+## ---- eval=FALSE---------------------------------------------------------
+## # Fit regression model:
+## score_model <- lm(score ~ bty_avg, data = evals)
+## # Get regression table:
+## get_regression_table(score_model)
+
+
+## ---- echo = FALSE-------------------------------------------------------
+# Fit regression model:
+score_model <- lm(score ~ bty_avg, data = evals)
+# Get regression table:
+get_regression_table(score_model) %>%
+  knitr::kable(
+    digits = 3,
+    caption = "Linear regression table",
+    booktabs = TRUE
+  ) %>%
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
