@@ -71,7 +71,7 @@ data("pennies_sample")
 
 
 
-## Resampling activity {#resampling-tactile}
+## Pennies activity {#resampling-tactile}
 
 As we did in Chapter \@ref(sampling), we'll begin with a hands-on tactile activity.
 
@@ -104,7 +104,6 @@ pennies_sample
 The `pennies_sample` data frame has 50 rows corresponding to each penny with two variables. The first variable `ID` corresponds to the ID labels in Figure \@ref(fig:resampling-exercise-c) whereas the second variable `year` corresponds to the year of minting saved as an integer.
 
 Based on these 50 sampled pennies, what can we say about *all* US pennies in 2019? Let's study some properties of our sample by performing an exploratory data analysis. Let's first visualize the distribution of the year of these 50 pennies using our data visualization tools from Chapter \@ref(viz). Since `year` is a numerical variable, we use a histogram in Figure \@ref(fig:pennies-sample-histogram).
-
 
 ```{r pennies-sample-histogram, fig.cap="Distribution of year on 50 US pennies."}
 ggplot(pennies_sample, aes(x = year)) +
@@ -315,7 +314,7 @@ Observe the following about the histogram in Figure \@ref(fig:tactile-resampling
 * The distribution of these 35 sample means based on 35 resamples is roughly centered at 1995, which is the sample mean of `r x_bar %>% pull(mean_year) %>% round(2)` of the original sample of 50 pennies from the bank.
 
 
-### What's the plan?
+### What did we just do?
 
 What we just demonstrated in this activity is the statistical procedure known as *bootstrap resampling with replacement*. We used *resampling* to mimic the sampling variation we observe from sample-to-sample as we did in Chapter \@ref(sampling) on sampling, but this time using a *single* sample from the population.
 
@@ -453,7 +452,6 @@ Recall that in the "resampling with replacement" scenario we are illustrating he
 Remember that one of the goals of resampling with replacement is to construct the bootstrap distribution, which is an approximation of the sampling distribution of the point estimate of interest, here the sample mean year. However, the bootstrap distribution of in Figure \@ref(fig:tactile-resampling-7) is based only on 35 resamples and hence looks a little coarse. Let's increase the number of resamples to 1000 to better observe the shape and the variability from one resample to the next. 
 
 ```{r}
-
 # Repeat resampling 1000 times
 virtual_resamples <- pennies_sample %>% 
   rep_sample_n(size = 50, replace = TRUE, reps = 1000)
@@ -644,7 +642,7 @@ standard_error_ci
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What condition about the bootstrap distribution must be met for us to be able to construct confidence intervals using the standard error method?
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Say we wanted to contruct a 68% confidence interval instead of a 95% confidence interval for $\mu$?
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Say we wanted to construct a 68% confidence interval instead of a 95% confidence interval for $\mu$?
 
 ```{block, type='learncheck', purl=FALSE}
 ```
@@ -693,6 +691,34 @@ pennies_sample %>%
 For this simple case, we can get by with using the `rep_sample_n()` function and a couple of `dplyr` verbs to construct the bootstrap distribution. However, using only `dplyr` verbs only provides us with a limited set of tools. For more complicated situations, we need a little more firepower. Let's repeat the above using the `infer` package.
 
 ### infer package workflow {#infer-workflow}
+
+<!--
+In future, consider:
+
+1. Showing `dplyr` code to compute observed point estimate
+1. Showing `infer` verbs to compute observed point estimate. i.e. no generate()
+step.
+1. Only after these two steps, showing `infer` verb pipeline to construct
+bootstrap distribution of point estimate. i.e. with generate() and showing
+diagram.
+
+Just as `group_by() %>% summarize()` produces a useful workflow in `dplyr`, we can also use `specify() %>% calculate()` to compute summary measures on our original sample data. It's often helpful both in confidence interval calculations, but also in hypothesis testing to identify what the corresponding statistic is in the original data. For our example on penny age, we computed above a value of `x_bar` using the `summarize()` verb in `dplyr`:
+
+```{r, eval=FALSE}
+pennies_sample %>% 
+  summarize(stat = mean(year))
+```
+
+This can also be done by skipping the `generate()` step in the pipeline feeding `specify()` directly into `calculate()`:
+
+```{r, eval=FALSE}
+pennies_sample %>% 
+  specify(response = year) %>% 
+  calculate(stat = "mean")
+```
+
+This shortcut will be particularly useful when the calculation of the observed statistic is tricky to do using `dplyr` alone. This is particularly the case when working with more than one explanatory variable as will be seen in Chapter \@ref(hypothesis-testing).
+-->
 
 The `infer` package makes efficient use of the `%>%` pipe operator we saw in Chapter \@ref(wrangling) to spell out the sequence of steps necessary to perform statistical inference in a "tidy" and transparent fashion. Much in the same way that the functions in the `dplyr` have intuitive verb-based names, the infer package's functions are also verbs that spell out the computational process of constructing confidence intervals, as well as hypothesis tests as we'll see in Chapter \@ref(hypothesis-testing). 
 
@@ -763,9 +789,7 @@ knitr::include_graphics("images/flowcharts/infer/calculate.png")
 
 After we `generate()` many replicates of bootstrap resampling with replacement, we next want to condense each of 1000 resamples of size 50 to a single statistic value. As seen in the diagram, the `calculate()` function does this. 
 
-In our case, as we did earlier, we want to calculate the mean `year` for each bootstrap resample of size 50. To do so, we set the `stat` argument to `"mean"`. You can set the `stat` argument to a variety of other common summary statistics as well, like `"median"`, `"sum"`, `"sd"` (standard deviation), and `"prop"` (proportion); we'll see examples of their use throughout the remaining chapters. 
-
-Let's save the result in a data frame called `bootstrap_distribution`:
+In our case as we did earlier, we want to calculate the mean `year` for each bootstrap resample of size 50. To do so, we set the `stat` argument to `"mean"`. You can also set the `stat` argument to a variety of other common summary statistics, like `"median"`, `"sum"`, `"sd"` (standard deviation), and `"prop"` (proportion); we'll see examples of their use throughout the remaining chapters. Let's save the result in a data frame called `bootstrap_distribution`:
 
 ```{r}
 bootstrap_distribution <- pennies_sample %>% 
@@ -797,22 +821,20 @@ knitr::include_graphics("images/flowcharts/infer/visualize.png")
 The `visualize()` verb provides a quick way to visualize the bootstrap distribution as a histogram of the numerical `stat` variable's values.  
 
 ```{r eval=FALSE}
-bootstrap_distribution %>% 
-  visualize()
+visualize(bootstrap_distribution)
 ```
 ```{r boostrap-distribution-infer, echo=FALSE, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-bootstrap_distribution %>% 
-  visualize() +
+visualize(bootstrap_distribution) +
   ggtitle("Simulation-Based Bootstrap Distribution") 
 ```
 
 **Comparing with original workflow**: In fact, `visualize()` is a *wrapper function* for the `ggplot()` function that uses a `geom_histogram()` layer. Recall that we illustrated the concept of a wrapper function in Figure \@ref(fig:moderndive-figure-wrapper) in Section \@ref(model1table).
 
 ```{r eval=FALSE}
-# infer workflow:             # Original workflow:
-bootstrap_distribution %>%    ggplot(bootstrap_distribution, aes(x = stat)) +
-  visualize()                   geom_histogram()
+# infer workflow:                  # Original workflow:
+visualize(bootstrap_distribution)  ggplot(bootstrap_distribution, aes(x = stat)) +
+                                     geom_histogram()
 ```
 
 The `visualize()` function can take many other arguments which we'll see momentarily, including the shading of the histogram values corresponding to the confidence interval values.
@@ -841,14 +863,12 @@ percentile_ci
 If we would like to visualize the interval (`r percentile_ci[["2.5%"]] %>% round(2)`, `r percentile_ci[["97.5%"]] %>% round(2)`), we can pipe the `bootstrap_distribution` data frame into the `visualize()` function and add a `shade_confidence_interval()` layer to our plot with the `endpoints` argument to be `percentile_ci`:
 
 ```{r eval=FALSE}
-bootstrap_distribution %>% 
-  visualize() + 
+visualize(bootstrap_distribution) + 
   shade_confidence_interval(endpoints = c(1991.28, 1999.76))
 ```
 ```{r percentile-ci-viz, echo=FALSE, fig.show='hold', fig.cap="Percentile method 95% confidence interval.", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-bootstrap_distribution %>% 
-  visualize() + 
+visualize(bootstrap_distribution) + 
   shade_confidence_interval(endpoints = percentile_ci) +
   ggtitle("Simulation-Based Bootstrap Distribution") 
 ```
@@ -856,14 +876,12 @@ bootstrap_distribution %>%
 Observe that 95% of the sample means stored in the `stat` variable in `bootstrap_distribution` falls between the two endpoints marked with the darker lines, with 2.5% of the sample means to the left of the shaded area and 2.5% of the sample means to the right. You also have the option to change the colors of the shading using the `color` and `fill` arguments.
 
 ```{r eval=FALSE}
-bootstrap_distribution %>% 
-  visualize() + 
+visualize(bootstrap_distribution) + 
   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 ```
 ```{r echo=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-bootstrap_distribution %>% 
-  visualize() + 
+visualize(bootstrap_distribution) + 
   ggtitle("Simulation-Based Bootstrap Distribution") +
   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 ```
@@ -883,14 +901,12 @@ standard_error_ci
 If we would like to visualize the interval (`r standard_error_ci[["lower"]] %>% round(2)`, `r standard_error_ci[["upper"]] %>% round(2)`), we can pipe the `bootstrap_distribution` data frame into the `visualize()` function and add a `shade_confidence_interval()` layer to our plot with the `endpoints` argument to be `standard_error_ci`:
 
 ```{r eval=FALSE}
-bootstrap_distribution %>% 
-  visualize() + 
+visualize(bootstrap_distribution) + 
   shade_confidence_interval(endpoints = standard_error_ci)
 ```
 ```{r se-ci-viz, echo=FALSE, fig.show='hold', fig.cap="Standard error method 95% confidence interval.", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-bootstrap_distribution %>% 
-  visualize() + 
+visualize(bootstrap_distribution) + 
   shade_confidence_interval(endpoints = standard_error_ci) +
   ggtitle("Simulation-Based Bootstrap Distribution") 
 ```
@@ -1153,7 +1169,7 @@ ggplot(se_cis) +
 Of the 100 confidence intervals based on 100 samples of size $n = 50$, `r se_cis[["captured"]] %>% sum()` of them captured the population proportion $p = `r p_red`$, whereas `r 100 - sum(se_cis[["captured"]])` of them did not. Note that since we lowered the confidence level from 95% to 80%, we now have a much larger number of confidence intervals that failed to "catch the fish."
 
 
-### Precise & shorthand interpretation
+### Precise & shorthand interpretation {#shorthand}
 
 Let's return our attention to our 95% confidence intervals. The precise and mathematically correct interpretation of a 95% confidence interval is a little long-winded:
 
@@ -1443,7 +1459,7 @@ A good learning check might be to have the readers calculate confidence interval
 
 Let's apply our knowledge of confidence intervals to answer the question: "Is yawning contagious?" If you see someone else yawn, are you more likely to yawn? In an [episode](http://www.discovery.com/tv-shows/mythbusters/mythbusters-database/yawning-contagious/) of the US show *Mythbusters*, the hosts conducted an experiment to answer this question. The episode is available to view in the United States on the Discovery Network website [here](https://www.discovery.com/tv-shows/mythbusters/videos/is-yawning-contagious) and more information about the episode is also available on [IMDb](https://www.imdb.com/title/tt0768479/).
 
-### Data collected
+### Mythbusters study data
 
 Fifty adult participants who thought they were being considered for an appearance on the show were interviewed by a show recruiter who either yawned or did not. Participants then sat by themselves in a large van and were asked to wait. While in the van, the Mythbusters watched via hidden camera to see if the participants yawned. The data frame containing the results is available in the `mythbusters_yawn` data frame included in the `moderndive` package:
 
@@ -1469,11 +1485,12 @@ So 12 participants who were not exposed to yawning did not yawn, while 4 partici
 
 Putting these two values together, the participants who were exposed to yawning yawned 29.4% - 25% = 4.4% more often than those who were not exposed to yawning.
 
-### Back to sampling
+### Sampling scenario
 
 In Chapter \@ref(sampling) our study population was the bowl of $N$ = 2400 balls. Our population parameter of interest was the population proportion of these balls that were red, denoted mathematically by $p$. In order to estimate $p$, we extracted a sample of 50 balls using the shovel and computed the relevant point estimate: the sample proportion of these 50 balls that were red, denoted mathematically by $\widehat{p}$.
 
 Who is the study population here? All humans? All the people who watch the show Mythbusters? It's hard to say! This question can only be answered if we know how the show's hosts recruited participants! We alas don't have this information. Only for the purposes of this case study, however, we'll assume that the 50 participants are a representative sample of all Americans, and thus any results of this experiment will generalize to all $N$ = 327 million Americans (2018 population). 
+
 Just like with our sampling bowl, the population parameter of interest will involve proportions, but this time it will be the difference in population proportions $p_{seed} - p_{control}$, where $p_{seed}$ is the population proportion of people exposed to yawning who yawn and $p_{control}$ is the population proportion of people not exposed to yawning who yawn. Correspondingly, the point estimate/sample statistic based on sampled data will be the difference in sample proportions $\widehat{p}_{seed} - \widehat{p}_{control}$. Let's extend Table \@ref(tab:summarytable-ch8) of scenarios of sampling for inference to include our latest scenario. 
 
 ```{r summarytable-ch8-c, echo=FALSE, message=FALSE}
@@ -1598,16 +1615,14 @@ We see that the resulting data frame has 1000 rows and 2 columns corresponding t
 
 #### 4. `visualize` the results {-}
 
-In Figure \@ref(fig:boostrap-distribution-mythbusters) we `visualize()` the resulting bootstrap resampling distribution.
+In Figure \@ref(fig:bootstrap-distribution-mythbusters) we `visualize()` the resulting bootstrap resampling distribution.
 
 ```{r eval=FALSE}
-bootstrap_distribution_yawning %>% 
-  visualize()
+visualize(bootstrap_distribution_yawning)
 ```
 ```{r bootstrap-distribution-mythbusters, echo=FALSE, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-bootstrap_distribution_yawning %>% 
-  visualize() +
+visualize(bootstrap_distribution_yawning) + 
   ggtitle("Simulation-Based Bootstrap Distribution")
 ```
 
@@ -1644,12 +1659,11 @@ myth_ci_se <- bootstrap_distribution_yawning %>%
   get_confidence_interval(type = "se", point_estimate = 0.0441176)
 ```
 
-Let's visualize both confidence intervals in Figure \@ref(fig:boostrap-distribution-mythbusters-CI), with the percentile method interval in red and the standard error method interval in blue. Observe that they are both similar. 
+Let's visualize both confidence intervals in Figure \@ref(fig:bootstrap-distribution-mythbusters-CI), with the percentile method interval in red and the standard error method interval in blue. Observe that they are both similar. 
 
 ```{r boostrap-distribution-mythbusters-CI, echo=FALSE, fig.show='hold', fig.cap="Two 95% confidence intervals: percentile method in red, standard error method in blue.", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-bootstrap_distribution_yawning %>% 
-  visualize() +
+visualize(bootstrap_distribution_yawning) + 
   ggtitle("") +
   shade_confidence_interval(endpoints = myth_ci_percentile, fill = NULL, color = "red") + 
   shade_confidence_interval(endpoints = myth_ci_se, fill = NULL, color = "blue")  
@@ -1662,7 +1676,7 @@ Given that both confidence intervals are quite similar, let's focus our interpre
 
 There is one value of particular interest that this interval contains: zero. If $p_{seed} - p_{control} = 0$, then there would be no difference in proportion yawning, suggesting that there is no associated effect of being exposed to yawning. Since the 95% confidence interval includes 0, we cannot conclusively say if either proportion is larger. Of our 1000 bootstrap resamples with replacement, sometimes $\widehat{p}_{seed}$ was higher and thus those exposed to yawning yawned themselves more often, and other times the reverse. Say on the other hand the 95% confidence interval was entirely above zero. This would be suggestive that $p_{seed} - p_{control} > 0$ and thus those exposed to yawning yawned more often. 
 
-Furthermore, if the 50 participants were randomly allocated to the `"seed"` and `"control"` groups, then this would be suggestive that being exposed to yawning doesn't not *cause* yawning. In other words, yawning is not contagious. However, no information on how participatns were assigned to be exposed to yawning or not could be found, so we cannot make such a causal statement. 
+Furthermore, if the 50 participants were randomly allocated to the `"seed"` and `"control"` groups, then this would be suggestive that being exposed to yawning doesn't not *cause* yawning. In other words, yawning is not contagious. However, no information on how participants were assigned to be exposed to yawning or not could be found, so we cannot make such a causal statement. 
 
 
 
@@ -1843,7 +1857,7 @@ We now present a third method for constructing a 95% confidence interval for $p$
 
 So going back to Yohan and Ilyas' sample of $n=50$ balls that had 21 red balls, the 95% confidence interval for $p$ is 0.42 $\pm$ 1.96 $\cdot$ 0.0698 = 0.42 $\pm$ 0.137  = (0.42 - 0.137, 0.42 + 0.137) = (0.283, 0.557). In other words, Yohan and Ilyas are 95% "confident" that the true proportion red of the bowl's balls is between 28.3% and 55.7%. Given that the true population proportion $p$ was `r 100*p_red`%, they successfully captured the fish.
 
-In Step 4 above, we defined the *margin of error*. You can think of this quantity as how much the net extends to the left and to the right of the center of our net. The 1.96 multiper roots in the 95% rule of thumb we introduced earlier and the fact that we want the confidence level to be 95%. The value of the margin error entirely determines the width of the confidence interval. Recall from Section \@ref(ci-width) that confidence interval widths are determined by an interplay of the confidence level, the sample size $n$, and the standard error.
+In Step 4 above, we defined the *margin of error*. You can think of this quantity as how much the net extends to the left and to the right of the center of our net. The 1.96 multiplier roots in the 95% rule of thumb we introduced earlier and the fact that we want the confidence level to be 95%. The value of the margin error entirely determines the width of the confidence interval. Recall from Section \@ref(ci-width) that confidence interval widths are determined by an interplay of the confidence level, the sample size $n$, and the standard error.
 
 Let's study a real-life example by revisiting the poll of President Obama's approval rating among young Americans aged 18-29 in the 2013 National Public Radio article [Poll: Support For Obama Among Young Americans Eroding](https://www.npr.org/sections/itsallpolitics/2013/12/04/248793753/poll-support-for-obama-among-young-americans-eroding). Pollsters found that based on a representative sample of $n$ = 2089 young Americans, $\widehat{p}$ = 0.41 = 41% supported President Obama. 
 
