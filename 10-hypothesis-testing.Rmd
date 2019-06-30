@@ -239,17 +239,16 @@ So in this hypothetical universe of no discrimination, `r n_men_promoted`/24 = `
 Observe how this difference in rates is different than the difference in rates of `r observed_test_statistic` = `r observed_test_statistic*100`% we originally observed. This is once again due to sampling variation. How can we better understand the effect of this sampling variation? By doing this several times!
 
 
-### Shuffling XX times
+### Shuffling 16 times
 
-<!--
+We recruited 16 groups of our friends to repeat the above shuffling/permuting exercise. We recorded these values in a [shared spreadsheet](https://docs.google.com/spreadsheets/d/1Q-ENy3o5IrpJshJ7gn3hJ5A0TOWV2AZrKNHMsshQtiE/edit?usp=sharing); we display a snapshot of the first 10 rows and 5 columns in Figure \@ref(fig:tactile-resampling-5)
 
-Need to finish
+```{r tactile-resampling-5, echo=FALSE, fig.cap = "Snapshot of shared spreadsheet of shuffled resumes.", fig.show='hold', purl=FALSE, out.width = "100%"}
+knitr::include_graphics("images/sampling/promotions/shared_spreadsheet.png")
+```
 
--->
 
-We recruited XX of our friends
-
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
 # https://docs.google.com/spreadsheets/d/1Q-ENy3o5IrpJshJ7gn3hJ5A0TOWV2AZrKNHMsshQtiE/edit#gid=0
 shuffled_data <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQXLJxwSp1ALEJ1JRNn3o8K3jVdqRG_5yxpoOhIFYflbFIkb2ttH73w8mljptn12CsDyIvjr5p0IGUe/pub?gid=0&single=true&output=csv")
 n_replicates <- ncol(shuffled_data) - 2
@@ -259,41 +258,30 @@ shuffled_data_tidy <- shuffled_data %>%
   mutate(replicate = rep(1:n_replicates, each = 48))
 
 # Sanity check results
-# shuffled_data_tidy %>% group_by(replicate) %>% count(gender)
+# shuffled_data_tidy %>% group_by(replicate) %>% count(gender) %>% filter(n != 24) %>% View()
 
-shuffled_data_tidy %>% 
+shuffled_data_tidy <- shuffled_data_tidy %>% 
   group_by(replicate) %>% 
   count(gender, decision) %>% 
   filter(decision == "promoted") %>% 
   mutate(prop = n/24) %>% 
   select(replicate, gender, prop) %>% 
   spread(gender, prop) %>% 
-  mutate(diff_m_minus_f = m - f) %>% 
-  ggplot(aes(x = diff_m_minus_f)) +
-  geom_histogram(binwidth = 0.1, color = "white") +
-  labs(x = "Difference in promotion rates (male - female)")
+  mutate(stat = m - f) 
 ```
 
-In Figure \@ref(fig:null-distribution-1), we show the distribution of the 33 "shuffled" differences in promotion rates using a histogram. Remember that the histogram represents the differences in promotion rates in our *hypothesized universe* of no gender discrimination. We also mark the observed difference in promotion rate that happened in real-life of `r observed_test_statistic` = `r observed_test_statistic*100`% with a red line.
+In Figure \@ref(fig:null-distribution-1), we show the distribution of the 16 "shuffled" differences in promotion rates using a histogram. Remember that the histogram represents the differences in promotion rates in our *hypothesized universe* of no gender discrimination. We also mark the observed difference in promotion rate that happened in real-life of `r observed_test_statistic` = `r observed_test_statistic*100`% with a red line.
 
 ```{r null-distribution-1, fig.cap="Distribution of \"shuffled\" differences in promotions.", purl=FALSE, echo = FALSE}
-set.seed(9)
-tactile_permutes <- promotions %>% 
-  specify(decision ~ gender, success = "promoted") %>% 
-  hypothesize(null = "independence") %>% 
-  generate(reps = 33, type = "permute") %>% 
-  calculate(stat = "diff in props", order = c("male", "female"))
-ggplot(data = tactile_permutes, aes(x = stat)) +
+ggplot(data = shuffled_data_tidy, aes(x = stat)) +
   geom_histogram(binwidth = 0.1, color = "white") +
   geom_vline(xintercept = observed_test_statistic, color = "red", size = 1) +
   labs(x = "Difference in promotion rates (male - female)")
 ```
 
-Observe first that the histogram is both roughly centered at 0. Saying that the difference in promotion rates is 0 is equivalent to saying that both genders had the same promotion rate. In other words, these 33 values are consistent with what we would expect in our hypothesized universe of no gender discrimination. However, while the values are centered at 0, there is variation about 0. This is because even in a hypothesized universe of no gender discrimination, you still still observe small differences in promotion rates because of *sampling variation*. Looking at the histogram, it could even be as extreme as `r tactile_permutes$stat %>% min() %>% round(3)` or `r tactile_permutes$stat %>% max() %>% round(3)`.
+Observe first that the histogram is both roughly centered at 0. Saying that the difference in promotion rates is 0 is equivalent to saying that both genders had the same promotion rate. In other words, these 16 values are consistent with what we would expect in our hypothesized universe of no gender discrimination. However, while the values are centered at 0, there is variation about 0. This is because even in a hypothesized universe of no gender discrimination, you still still observe small differences in promotion rates because of *sampling variation*. Looking at the histogram, it could even be as extreme as `r shuffled_data_tidy$stat %>% min() %>% round(3)` or `r shuffled_data_tidy$stat %>% max() %>% round(3)`.
 
-Turning our attention to what we observed in real-life: the difference of `r observed_test_statistic` = `r observed_test_statistic*100`% marked with a red line. While a value this high in favor of male names would 
-
-Ask yourself: in a hypothesized world of no gender discrimination, how likely would it be that we observe this difference? In our opinion, not likely. While the evidence isn't a "slam-dunk", one could argue that we'd be surprised.
+Turning our attention to what we observed in real-life: the difference of `r observed_test_statistic` = `r observed_test_statistic*100`% is marked with a red line.  Ask yourself: in a hypothesized world of no gender discrimination, how likely would it be that we observe this difference? In our opinion, not often! Now ask yourself: what does this say about our hypothesized universe of no gender discrimination. 
 
 <!--
 Now each of our 33 friends does the following:
@@ -312,14 +300,14 @@ Now each of our 33 friends does the following:
 
 Let's see what this leads to for our friends in terms of results and label where the observed test statistic falls in relation to our friends' statistics:
 
-```{r}
+```{r, eval=FALSE}
 obs_diff_prop <- promotions %>% 
   specify(decision ~ gender, success = "promoted") %>% 
   calculate(stat = "diff in props", order = c("male", "female"))
 obs_diff_prop
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, eval=FALSE}
 set.seed(2019)
 tactile_permutes <- promotions %>% 
   specify(decision ~ gender, success = "promoted") %>% 
@@ -391,10 +379,10 @@ Fourth, the **observed test statistic** is the value of the test statistic that 
 
 Fifth, the **null distribution** is the sampling distribution of the test statistic *assuming the null hypothesis $H_0$ is true*. Ooof! That's a long one! Let's unpack it slowly. The key to understanding the null distribution is that the null hypothesis $H_0$ *assumed* to be true. We're not saying that it is true at this point, merely assuming it. In our case, this corresponds to our hypothesized universe of no gender discrimination in promotion rates. Assuming the null hypothesis $H_0$, also stated as "Under $H_0$", how does the test statistic vary due to sampling variation? In our case, how will the difference in sample proportions $\widehat{p}_{m} - \widehat{p}_{f}$ vary due to sampling? Recall from Section \@ref(sampling-definitions) that distributions that display how point estimates vary due to sampling variation are called *sampling distributions*. The only additional thing to keep in mind for null distributions is that they are sampling distributions *assuming the null hypothesis $H_0$ is true*. 
 
-In our case, we previously visualized the null distribution in Figure \@ref(fig:null-distribution-1), which we re-display below in Figure \@ref(fig:null-distribution-2) using our new notation and terminology. It is the distribution of the 33 different difference in sample proportions our friends computed *assuming* a hypothetical universe of no gender discrimination.
+In our case, we previously visualized the null distribution in Figure \@ref(fig:null-distribution-1), which we re-display below in Figure \@ref(fig:null-distribution-2) using our new notation and terminology. It is the distribution of the 16 different difference in sample proportions our friends computed *assuming* a hypothetical universe of no gender discrimination.
 
 ```{r null-distribution-2, fig.cap = "Null distribution and observed test statistic.", purl=FALSE, echo = FALSE}
-ggplot(data = tactile_permutes, aes(x = stat)) +
+ggplot(data = shuffled_data_tidy, aes(x = stat)) +
   geom_histogram(binwidth = 0.1, color = "white") +
   geom_vline(xintercept = observed_test_statistic, color = "red", size = 1) +
   labs(x = expression(paste("Difference in sample proportions ", hat(p)["m"] - hat(p)["f"])))
@@ -402,15 +390,15 @@ ggplot(data = tactile_permutes, aes(x = stat)) +
 
 Sixth, the **p-value** is the probability of obtaining a test statistic just as or more extreme than the observed test statistic *assuming the null hypothesis $H_0$ is true*. Double ooof! Let's unpack this slowly as well. You can think of the p-value as a quantification of "surprise": assuming $H_0$ is true how surprised are we at observing the test statistic we did? Or in our case, in our hypothesized universe of no gender discrimination how surprised are we that we observed a difference in promotion rates of `r observed_test_statistic` = `r observed_test_statistic*100`%? Very surprised? Somewhat surprised? 
 
-The p-value quantifies this probability, or in the case of Figure \@ref(fig:null-distribution-2), of our 33 difference in sample proportions, what proportion had a more "extreme" result? Here, extreme is defined in terms of the alternative hypothesis $H_A$ that "male" applicants are promoted at a higher rate than "female" applicants. In other words, how often was the discrimination in favor of men even more pronounced than 0.875 - 0.583 = `r observed_test_statistic` = `r observed_test_statistic*100`%?
+The p-value quantifies this probability, or in the case of Figure \@ref(fig:null-distribution-2), of our 16 difference in sample proportions, what proportion had a more "extreme" result? Here, extreme is defined in terms of the alternative hypothesis $H_A$ that "male" applicants are promoted at a higher rate than "female" applicants. In other words, how often was the discrimination in favor of men even more pronounced than 0.875 - 0.583 = `r observed_test_statistic` = `r observed_test_statistic*100`%?
 
 ```{r, echo = FALSE}
-num <- sum(tactile_permutes$stat >= observed_test_statistic)
-denom <- nrow(tactile_permutes)
+num <- sum(shuffled_data_tidy$stat >= observed_test_statistic)
+denom <- nrow(shuffled_data_tidy)
 p_val <- round((num + 1)/(denom + 1),3)
 ```
 
-In this case, only `r sum(tactile_permutes$stat >= observed_test_statistic)` time out of `r nrow(tactile_permutes)` did we obtain a difference in proportion greater than or equal to the observed difference of `r observed_test_statistic` = `r observed_test_statistic*100`%. A very rare outcome of only 1 time in 33! Given the rarity of such a pronounced in difference in promotion rates in our hypothesized universe of no gender discrimination, we're inclined to *reject* this hypothesis in favor of the one saying there is discrimination in favor of the "male" applicants. We'll see later on however, the p-value isn't quite 1/33, but rather (`r num` + 1)/(`r denom` + 1) = `r num + 1`/`r denom + 1` = `r p_val` as we need to include the the observed test statistic in our calculation. 
+In this case, only `r sum(shuffled_data_tidy$stat >= observed_test_statistic)` time out of `r nrow(shuffled_data_tidy)` did we obtain a difference in proportion greater than or equal to the observed difference of `r observed_test_statistic` = `r observed_test_statistic*100`%. A very rare outcome of only 1 time in 16! Given the rarity of such a pronounced in difference in promotion rates in our hypothesized universe of no gender discrimination, we're inclined to *reject* this hypothesis in favor of the one saying there is discrimination in favor of the "male" applicants. We'll see later on however, the p-value isn't quite 1/16, but rather (`r num` + 1)/(`r denom` + 1) = `r num + 1`/`r denom + 1` = `r p_val` as we need to include the the observed test statistic in our calculation. 
 
 Seventh and lastly, in many hypothesis testing procedures, it is common to and recommended to set the **significance level** of the test beforehand.  It is denoted by the Greek letter $\alpha$. This value acts as a cutoff on the p-values, where if the p-value falls below $\alpha$, we would reject the null hypothesis $H_0$. Alternatively, if the p-value does not fall below $\alpha$, we would fail to reject $H_0$. Note this statement is not quite the same as saying we "accept" $H_0$. This distinction is rather subtle and not immediately obvious, so we'll revisit it later in Section \@ref(ht-interpretation).
 
@@ -510,7 +498,7 @@ The term "independence" relates to the fact that for two groups of observations,
 
 #### 3. `generate` replicates {-}
 
-After we have set the null hypothesis, we simulate observations assuming the null hypothesis is true by repeating the shuffling exercise you performed in Section \@ref(ht-activity) several times. Instead of merely doing it XX times as our friends did, let's use the computer to repeat this 1000 times by setting `reps = 1000` in the `generate()` function. However, unlike with confidence intervals where we generated replicates using `type = "bootstrap"` resampling with replacement, we'll now perform shuffles/permutations by setting `type = "permute"`. Recall that shuffles/permutations are a form of resampling without replacement. 
+After we have set the null hypothesis, we simulate observations assuming the null hypothesis is true by repeating the shuffling exercise you performed in Section \@ref(ht-activity) several times. Instead of merely doing it 16 times as our groups of friends did, let's use the computer to repeat this 1000 times by setting `reps = 1000` in the `generate()` function. However, unlike with confidence intervals where we generated replicates using `type = "bootstrap"` resampling with replacement, we'll now perform shuffles/permutations by setting `type = "permute"`. Recall that shuffles/permutations are a form of resampling without replacement. 
 
 ```{r}
 promotions %>% 
@@ -828,7 +816,7 @@ So what value should you use for $\alpha$? Different fields have different conve
 
 Let's apply our knowledge of hypothesis testing to answer the question: "Are action or romance movies rated higher on IMDb?" [IMDb](https://www.imdb.com/) is an internet movie database providing information on movie and television show casts, plot summaries, trivia, and ratings. We'll investigate if on average action or romance movies get a higher rating on IMDb.
 
-### IMDb ratings data
+### IMDb ratings data {#imdb-data}
 
 <!--
 **Important note:** Remember that we hardly ever have access to the population values as we do here.  This example was used to show how well hypothesis testing procedures using methods like permutation can do at testing hypotheses about population parameters. In nearly all circumstances, we'll be needing to use only a sample of the population to try to infer conclusions about the unknown population parameter values.  This example does show a nice relationship between statistics (where data is usually small and more focused on experimental settings) and data science (where data is frequently large and collected without experimental conditions). 
@@ -1051,137 +1039,161 @@ This p-value of `r p_value_movies$p_value` is very small. In other words, there 
 
 ## Conclusion
 
-### Building theory-based methods using computation {#theory-hypo}
+### Theory-based hypothesis tests {#theory-hypo}
 
-As a point of reference, we will now discuss the traditional theory-based way to conduct the hypothesis test for determining if there is a statistically significant difference in the sample mean rating of Action movies versus Romance movies. This method and ones like it work very well when the assumptions are met in order to run the test.  hey are based on probability models and distributions such as the normal and $t$-distributions. Recall that we briefly discussed the normal distribution in Subsection \@ref(theory-ci). We will extend that to look at the $t$-distribution here.
+Much as we did in Section \@ref(theory-ci) when we showed you a theory-based method for constructing confidence intervals that involved mathematical formulas, we now present an example of a traditional theory-based method to conduct the hypothesis test to determining if there is a statistically significant difference in the mean rating of Action versus Romance movies. This method rely on probability models, probability distributions, and a few assumptions to construct the null distribution. This is constast to the approach we used in Section \@ref(ht-infer) where we relied on simulations to construct the null distribution.
 
-These traditional methods have been used for many decades back to the time when researchers didn't have access to computers that could run 5000 simulations in a few seconds.  They had to base their methods on probability theory instead.  Many fields and researchers continue to use these methods and that is the biggest reason for their inclusion here.  It's important to remember that a hypothesis test based on the $t$ distribution (commonly called a $t$-test) or a test based on the normal distribution (commonly called a $z$-test) is really just an approximation of what you have seen in this chapter already using simulation and randomization.  The focus here is on understanding how the shape of the $t$-curve comes about without digging much into the mathematical underpinnings.
+These traditional theory-based methods have been used for decades mostly because researchers didn't have access to computers that could run thousands of simulations quickly and efficiently. Now that computing power is much cheaper and much more accessible, simulation-based methods are much more feasible, however many fields and researchers continue to use theory-based methods. Hence we make it a point to include discussion about them here. 
+
+As we'll show in this section, any theory-based method is ultimately an approximation to the simulation-based method. The theory-based method we'll focus on is known as the *two-sample $t$-test* for testing differences in sample means where the test statistic of interest isn't the difference in sample means $\overline{x}_1 - \overline{x}_2$, but the related two-sample $t$-statistic. The data we'll use will once again be the `movies_sample` data of action and romance movies where the outcome variable of interest are movies' IMDb ratings. 
 
 
-#### Example: $t$-test for two independent samples {-}
+#### Two-sample t-statistic {-}
 
-What is commonly done in statistics is the process of standardization.  What this entails is calculating the mean and standard deviation of a variable.  Then you subtract the mean from each value of your variable and divide by the standard deviation.  The most common standardization is known as the $z$-score.  The formula for a $z$-score is 
+A common task in statistics is the process of "standardizing a variable." By standardizing different variables, we can make them more comparable. For example, say you are interested in studying the distribution of temperature recordings from Portland, Oregon, USA with temperature recordings in Montreal, Quebec, Canada. Given that the US temperatures are generally recorded in degrees Farenheit and Canadian temperatures are generally recorded in degrees Celsius, how can we make them comparable? On the one hand, we could convert the degrees Farenheit into Celsius, or vice versa. On the other, we could convert them both to a common "standardized" scale. 
 
-$$Z = \frac{x - \mu}{\sigma},$$
+One common method for standardization from probability theory is computing the $z$-score:
 
-where $x$ represent the value of a variable, $\mu$ represents the mean of the variable, and $\sigma$ represents the standard deviation of the variable.  Thus, if your variable has 10 elements, each one has a corresponding $z$-score that gives how many standard deviations away that value is from its mean.  $z$-scores are normally distributed with mean 0 and standard deviation 1.  They have the common, bell-shaped pattern seen below.
+$$Z = \frac{x - \mu}{\sigma}$$
 
-```{r echo=FALSE}
+where $x$ represent the value of a variable, $\mu$ represents the mean of the variable, and $\sigma$ represents the standard deviation of the variable. You first subtract the mean $\mu$ from each value of $x$ and then divide $x - \mu$ by the standard deviation $\sigma$. These operations will have the effect of "re-centering" your variable around 0 and "re-scaling" your variable $x$ to have what are known as "standard units."
+
+Thus, if your variable has 10 elements, each one has a corresponding $z$-score that gives how many standard deviations away that value is from its mean. $z$-scores are normally distributed with mean 0 and standard deviation 1.  Such a curve is called a "$z$-distribution" as well a "standard normal" curve and they have the common, bell-shaped pattern from Figure \@ref(z-curve).
+
+```{r z-curve, echo=FALSE, out.width="50%", fig.cap="Standard normal z curve"}
 ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm) +
-  ylab("") +
+  labs(x = "z", y = "") + 
   theme(axis.title.y = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank())
 ```
 
-Recall, that we hardly ever know the mean and standard deviation of the population of interest. This is almost always the case when considering the means of two independent groups. To help account for us not knowing the population parameter values, we can use the sample statistics instead, but this comes with a bit of a price in terms of complexity.
+Brining these back to the difference of sample mean ratings $\overline{x}_a - \overline{x}_r$ of action versus romance movies, how would we standardize this variable? By once again substracting it's mean and standard deviation. Building on ideas from Section \@ref(moral-of-the-story) that: 1) If the sampling was done in representative fashion, then the sampling distribution of $\overline{x}_a - \overline{x}_r$ would be centered at the true population parameter: the difference in population means $\mu_a - \mu_r$. 2) The standard deviation of point estimates like $\overline{x}_a - \overline{x}_r$ have a special name: the standard error
 
-Another form of standardization occurs when we need to use the sample standard deviations as estimates for the unknown population standard deviations.  This standardization is often called the $t$-score.  For the two independent samples case like what we have for comparing action movies to romance movies, the formula is $$T =\dfrac{ (\bar{x}_1 - \bar{x}_2) - (\mu_1 - \mu_2)}{ \sqrt{\dfrac{{s_1}^2}{n_1} + \dfrac{{s_2}^2}{n_2}}  }$$
-  
-There is a lot to try to unpack here.  
+Applying these ideas, we present the two-sample $t$-statistic:
 
-- $\bar{x}_1$ is the sample mean response of the first group
-- $\bar{x}_2$ is the sample mean response of the second group
-- $\mu_1$ is the population mean response of the first group
-- $\mu_2$ is the population mean response of the second group
-- $s_1$ is the sample standard deviation of the response of the first group
-- $s_2$ is the sample standard deviation of the response of the second group
-- $n_1$ is the sample size of the first group
-- $n_2$ is the sample size of the second group
+$$t = \dfrac{ (\bar{x}_a - \bar{x}_r) - (\mu_a - \mu_r)}{ SE_{\bar{x}_a - \bar{x}_r} } = \dfrac{ (\bar{x}_a - \bar{x}_r) - (\mu_a - \mu_r)}{ \sqrt{\dfrac{{s_a}^2}{n_a} + \dfrac{{s_r}^2}{n_r}}  }$$
 
-Assuming that the null hypothesis is true ($H_0: \mu_1 - \mu_2 = 0$), $T$ is said to be distributed following a $t$ distribution with degrees of freedom "roughly equal to" the smaller value of $n_1 + n_2 - 2$.  The "degrees of freedom" can be thought of measuring how different the $t$ distribution will be as compared to a normal distribution. The "roughly equal to" here corresponds to the formula for degrees of freedom being a bit more complicated than this simple expression, but we've found the formula to be beyond the scope of this book since it does little to build the intuition of the $t$-test. Small sample sizes lead to small degrees of freedom and, thus, $t$ distributions that have more values in the tails of their distributions. Large sample sizes lead to large degrees of freedom and, thus, $t$ distributions that closely align with the standard normal, bell-shaped curve. 
-  
-So, assuming $H_0$ is true, our formula simplifies a bit:
+Oofda! There is a lot to try to unpack here! Let's go slowly. In the numerator $\bar{x}_a-\bar{x}_r$ is the difference in sample means while $\mu_a - \mu_r$ is the difference in population means. In the denominator $s_a$ and $s_r$ are the *sample standard deviations* of the action and romance movies in our sample `movies_sample` while $n_a$ and $n_r$ is the sample sizes of the action and romance movies. Putting the above together gives us the standard error $SE_{\bar{x}_a - \bar{x}_r}$.
+    
+Look closely at the formula for $SE_{\bar{x}_a - \bar{x}_r}$ in the denominator: the sample sizes $n_a$ and $n_r$ are there. So as the sample sizes increase, the standard error goes down. We've seen this concept numerous times now, in particular in our simulations using the three shovels with $n$ = 25, 50, and 100 slots in Figure \@ref(fig:comparing-sampling-distributions-3) and in Section \@ref(ci-width) where we studied the effect of using larger sample sizes on the widths of confidence intervals. 
 
-$$T =\dfrac{ \bar{x}_1 - \bar{x}_2}{ \sqrt{\dfrac{{s_1}^2}{n_1} + \dfrac{{s_2}^2}{n_2}}  }.$$
-  
-We have already built an approximation for what we think the distribution of $\delta = \bar{x}_1 - \bar{x}_2$ looks like using randomization above.  Recall this distribution:
+So how can we use the two-sample $t$-statistic as a test statistic in our hypothesis test? First, assuming the null hypothesis $H_0: \mu_a - \mu_r = 0$ is true, the right-hand side of the numerator becomes 0. Second, similarly to how the Central Limit Theorem from Section \@ref(sampling-conclusion-central-limit-theorem) states that sample means follow a normal distribution, it can be mathematically proven that $T$ follows a $t$ distribution with *degrees of freedom "roughly equal" to $df = n_a + n_r - 2$*.  We display three examples of $t$-distributions in Figure \@ref(fig:t-distributions) along with the standard normal $z$ curve.
 
-```{r blah, fig.cap="Simulated differences in means histogram"}
-ggplot(data = null_distribution_movies, aes(x = stat)) +
-  geom_histogram(color = "white", bins = 20)
+```{r t-distributions, echo=FALSE, fig.cap="Examples of t-distributions and z curve", purl=FALSE, out.width="60%"}
+knitr::include_graphics("images/t-distributions.png")
 ```
 
-The `infer` package also includes some built-in theory-based statistics as well, so instead of going through the process of trying to transform the difference into a standardized form, we can just provide a different value for `stat` in `calculate()`. Recall the `generated_samples` data frame created via:
+Observe that all four curves have a bell shape, are centered at 0, and that as the degrees of freedom increase, the $t$-distribution resembles the standard normal $z$ curve. The "degrees of freedom" can be thought of measuring how different the $t$ distribution will be compared to a normal distribution. The "roughly equal" above indicates that the equation $df = n_a + n_r - 2$ is a "good enough" approximation to the true degrees of freedom. The [true formula](https://en.wikipedia.org/wiki/Student%27s_t-test#Equal_or_unequal_sample_sizes,_unequal_variances) is a bit more complicated than this simple expression, but we've found the formula to be beyond the scope of this book since it does little to build the intuition of the $t$-test. The message to remain however is that small sample sizes lead to small degrees of freedom and thus lead to $t$ distributions that are slightly different than the $z$ curve: they have more values in the tails of their distributions. On the other hand, large sample sizes lead to large degrees of freedom and thus lead to $t$ distributions that closely align with the standard normal $z$-curve.
+  
+So, assuming the null hypothesis $H_0$ is true, our formula for the test statistic simplifies a bit:
 
-```{r eval=TRUE}
-generated_samples <- movies_sample %>% 
+$$t = \dfrac{ (\bar{x}_a - \bar{x}_r) - 0}{ \sqrt{\dfrac{{s_a}^2}{n_a} + \dfrac{{s_r}^2}{n_r}}  } = \dfrac{ \bar{x}_a - \bar{x}_r}{ \sqrt{\dfrac{{s_a}^2}{n_a} + \dfrac{{s_r}^2}{n_r}}  }$$
+
+Recall the summary statistics we computed during our exploratory data analysis in Section \@ref(imdb-data).
+
+```{r}
+movies_sample %>% 
+  group_by(genre) %>% 
+  summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
+```
+```{r, echo = FALSE}
+t_stat <- movies_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  calculate(stat = "t", order = c("Action", "Romance")) %>% 
+  pull(stat) %>% 
+  round(3)
+```
+
+Using these values, we can show that the observed two-sample $t$-test statistic is `r t_stat`. Great! How can we compute the p-value using this theory-based test statistic? We need to compare it to a null distribution, which we construct next.
+
+
+#### Null distribution {-}
+  
+Let's revisit the null distribution for the test statistic $\bar{x}_a - \bar{x}_r$ we constructed in Section \@ref(ht-case-study). 
+
+```{r, echo = TRUE, eval = FALSE}
+# Construct null distribution of xbar_a - xbar_m:
+null_distribution_movies <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   hypothesize(null = "independence") %>% 
-  generate(reps = 1000)
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("Action", "Romance"))
+
+# Visualize:
+visualize(null_distribution_movies, bins = 10)
+```
+```{r, echo = FALSE}
+visualize(null_distribution_movies, bins = 10)
 ```
 
-We can now created a null distribution of $t$ statistics:
+The `infer` package also includes some built-in theory-based test statistics as well. So instead of calculating the test statistic of interest as the `"diff in means"` $\bar{x}_a - \bar{x}_r$, we can calcute the above defined $t$-statistic by setting `stat = "t"`:
 
 ```{r}
-null_distribution_t <- generated_samples %>% 
+# Construct null distribution of t:
+null_distribution_movies_t <- movies_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  # Notice we switched stat from "diff in means" to "t"
   calculate(stat = "t", order = c("Action", "Romance"))
-null_distribution_t %>% 
-  visualize()
+
+# Visualize:
+visualize(null_distribution_movies_t, bins = 10)
 ```
 
-We see that the shape of this `stat = "t"` distribution is the same as that of `stat = "diff in means"`.  The scale has changed though with the $t$ values having less spread than the difference in means.
+Observe that while the shape of the `stat = "diff in means"` null distribution is the similar to `stat = "t"` null distribution, the scale on the x-axis has changed with the $t$ values having less spread than the difference in means. 
 
-A traditional $t$-test doesn't look at this simulated distribution, but instead it looks at the $t$-curve with degrees of freedom equal to `r attr(null_distribution_t, "distr_param")`. This calculation is based on the complicated formula referenced above. (Note that this value is pretty close to the "roughly equal to" number of $34 + 34 - 2 = 66$.) We can overlay this distribution over the top of our permuted $t$ statistics using the `method = "both"` setting in `visualize()`.
+However, a traditional theory-based $t$-test doesn't look at the simulated histogram in `null_distribution_movies_t`, but instead it looks at the $t$-distribution curve with degrees of freedom equal to roughly `r attr(null_distribution_movies_t, "distr_param") %>% round(4)`. This calculation is based on the complicated formula referenced above which we approximated with $df = n_a + n_r - 2$ = `r n_action` + `r n_romance` - 2 = `r n_action +  n_romance - 2`. We overlay this $t$-distribution curve over the top of our simulated $t$-statistics using the `method = "both"` argument in `visualize()`.
 
 ```{r}
-null_distribution_t %>% 
-  visualize(method = "both")
+visualize(null_distribution_movies_t, bins = 10, method = "both")
 ```
 
-We can see that the curve does a good job of approximating the randomization distribution here. (More on when to expect for this to be the case when we discuss conditions for the $t$-test in a bit.) To calculate the $p$-value in this case, we need to figure out how much of the total area under the $t$-curve is at our observed $T$-statistic or more, plus also adding the area under the curve at the negative value of the observed $T$-statistic or below.  (Remember this is a two-tailed test so we are looking for a difference--values in the tails of either direction.)  Just as we converted all of the simulated values to $T$-statistics, we must also do so for our observed effect $\delta^*$:
+Observe that the curve does a good job of approximating the histrogram here. To calculate the $p$-value in this case, we need to figure out how much of the total area under the $t$-distribution curve is at our observed $t$-statistic or is "more extreme." Since our alternative hypothesis $H_A: \mu_a - \mu_r \neq 0$ is a two-sided alternative, we need add up the areas at both tails. 
+
+We first compute the observed two-sample $t$-statistic using `infer` verbs:
 
 ```{r}
-obs_t <- movies_sample %>% 
+obs_two_sample_t <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   calculate(stat = "t", order = c("Action", "Romance"))
+obs_two_sample_t
 ```
 
-So graphically we are interested in finding the percentage of values that are at or above `obs_t = ``r pull(obs_t)` or at or below `-obs_t = ``r -pull(obs_t)`.
+So we are interested in finding the percentage of values that are at or above `obs_two_sample_t` = `r pull(obs_two_sample_t) %>% round(3)` or at or below `-obs_two_sample_t` = `r -pull(obs_two_sample_t) %>% round(3)`. We do this using the `shade_p_value()` function with the `direction` argument set to `"both"`:
 
 ```{r warning=TRUE, message=TRUE}
-visualize(null_distribution_t, method = "both") +
-  shade_p_value(obs_stat = obs_t, direction = "both")
+visualize(null_distribution_movies_t, method = "both") +
+  shade_p_value(obs_stat = obs_two_sample_t, direction = "both")
 ```
 
-As we might have expected with this just being a standardization of the difference in means statistic that produced a small $p$-value, we also have a very small one here.
+What is the p-value? We apply `get_p_value()` to our null distribution saved in `null_distribution_movies_t`:
 
-#### Conditions for t-test {-}
+```{r warning=TRUE, message=TRUE}
+null_distribution_movies_t %>% 
+  get_p_value(obs_stat = obs_two_sample_t, direction = "both")
+```
 
-The `infer` package does not automatically check conditions for the theoretical methods to work and this warning was given when we used `method = "both"`. In order for the results of the $t$-test to be valid, three conditions must be met:
+However, to be able to use the t-test and other such theoretical methods, there are always a few conditions to check. The `infer` package does not automatically check these conditions, hence the warning message we received above. These conditions are necessary so that the underlying mathematical theory holds. In order for the results of our two-sample $t$-test to be valid, three conditions must be met:
 
-1. Independent observations in both samples
-2. Nearly normal populations OR large sample sizes ($n \ge 30$)
-3. Independently selected samples
+1. Nearly normal populations or large sample sizes. A general rule of thumb that works in many (but not all) situations is that $n$ should be greater than 30.
+2. Both samples are selected independently of each other.
+3. All observations are independent from each other.
 
-Condition 1:  This is met since we sampled at random using R from our population.
+Let's see if these conditions hold for our `movies_sample` data:
 
-Condition 2:  Recall from Figure \@ref(fig:movie-hist), that we know how the populations are distributed.  Both of them are close to normally distributed.  If we are a little concerned about this assumption, we also do have samples of size larger than 30 ($n_1 = n_2 = 34$).
+1. This is met since $n_a$ = `r n_action` and $n_r$ = `r n_romance` are both larger than 30, satisfying our rule of thumb.
+1. This is met since we sampled the action and romance movies at random and in an unbiased fashion from the database of all IMDb movies.
+1. Unfortunately, we don't know how IMDb computes the ratings. For example, if the same person rated multiple movies, then those observations would be related and hence not independent.
 
-Condition 3:  This is met since there is no natural pairing of a movie in the Action group to a movie in the Romance group.
+Assuming all three conditions are met, we can be reasonably certain that the theory-based $t$-test results are valid. If any of the conditions were not met, we couldn't put as much faith into any conclusions.
 
-Since all three conditions are met, we can be reasonably certain that the theory-based test will match the results of the randomization-based test using shuffling.  Remember that theory-based tests can produce some incorrect results in these assumptions are not carefully checked.  The only assumption for randomization and computational-based methods is that the sample is selected at random.  They are our preference and we strongly believe they should be yours as well, but it's important to also see how the theory-based tests can be done and used as an approximation for the computational techniques until at least more researchers are using these techniques that utilize the power of computers.
+<!--
+On the other hand, the only simulation-based assumption that needs to be met in the simulation based method are that the sample is selected at random.  
 
-
-
-### Problems with p-values
-
-One of the inherent problems that comes from this "sneaking a peak" process using EDA is that the user must remain vigilant at conducting the test itself as needed. The hunt for statistically significant values is one that science has recently tried to combat. Done incorrectly and tirelessly, this is called "p-hacking" and is incredibly dangerous. Instead of reporting results that were not significant, p-hackers look to find significant results and then only report those. This sometimes involves changing the research question of interest to better meet the goals of statistically significant results that hopefully lead to publication.
-
-**Note:** We personally as authors are in favor of reporting hypothesis tests but only with their corresponding confidence intervals as needed. And we also encourage our readers to take the pledge to not p-hack their results, but rather to be transparent about tests that did not bring statistical significance and discuss potential reasons for these failings as they can. This helps others to further test these results with new experiments.
-
-There are lots of articles and much has been written recently about misunderstandings and the problems with p-values that we encourage readers to check out and to ponder on. Here are just a few:
-
-<!-- Need to add these in as references to the book -->
-
-1. [Misunderstandings of $p$-values](https://en.wikipedia.org/wiki/Misunderstandings_of_p-values)
-2. [What a nerdy debate about p-values shows about science - and how to fix it](https://www.vox.com/science-and-health/2017/7/31/16021654/p-values-statistical-significance-redefine-0005)
-3. [Statisticians issue warning over misuse of $P$ values](https://www.nature.com/news/statisticians-issue-warning-over-misuse-of-p-values-1.19503)
-4. [You Can't Trust What You Read About Nutrition](https://fivethirtyeight.com/features/you-cant-trust-what-you-read-about-nutrition/)
-5. [A Litany of Problems with p-values](http://www.fharrell.com/post/pval-litany/)
-
-Point 5 advocates for using Bayesian inference instead of the "frequentist" methods we've shown throughout this book. We highly recommend that you do dig further into Bayesian methods if you'd like to expand your knowledge beyond this book, but they are beyond the scope of this book.
-
+They are our prefered method as they have fewer assumptions, are conceptually easier to understand, and since computing power has recently become easily accessible, they can be run quickly. That being said since much of the world's research still relies on traditional theory-based methods and thus it is important to understand them. 
+-->
 
 
 ### When inference is not needed
@@ -1228,6 +1240,20 @@ This is a clear example of not needing to do anything more than some simple expl
 
 ```{block, type='learncheck', purl=FALSE}
 ```
+
+### Problems with p-values
+
+On top of the many common misunderstandings about hypothesis testing and p-values we listed in Section \@ref(ht-interpretation), another unfortunate consequence of the expanded use of p-values and hypothesis testing is a phenomenon known as "p-hacking." p-hacking is act of "cherry-picking" only results that are "statistically significant" while dismissing those that aren't, even if at the expense of the scientific ideas. There are lots of articles and much has been written recently about misunderstandings and the problems with p-values that we encourage readers to check out and to ponder on. Here are just a few:
+
+1. [Misunderstandings of $p$-values](https://en.wikipedia.org/wiki/Misunderstandings_of_p-values)
+2. [What a nerdy debate about p-values shows about science - and how to fix it](https://www.vox.com/science-and-health/2017/7/31/16021654/p-values-statistical-significance-redefine-0005)
+3. [Statisticians issue warning over misuse of $P$ values](https://www.nature.com/news/statisticians-issue-warning-over-misuse-of-p-values-1.19503)
+4. [You Can't Trust What You Read About Nutrition](https://fivethirtyeight.com/features/you-cant-trust-what-you-read-about-nutrition/)
+5. [A Litany of Problems with p-values](http://www.fharrell.com/post/pval-litany/)
+
+In fact, the American Statistical Association put out a statement in 2016 titled ["The ASA Statement on p-Values: Context, Process, and Purpose"](https://www.amstat.org/asa/files/pdfs/P-ValueStatement.pdf) with six principles underlying the proper use and interpretation of the p-value. The ASA released this guidance on p-values to improve the conduct and interpretation of quantitative science and inform the growing emphasis on reproducibility of science research. 
+
+We as authors much prefer the use of confidence intervals for statistical inference, as they are in our opinions much less prone to misinterpretations. However, many fields still use p-values exclusively for statistical inference and thus we still included them in our text. We also encourage to learn more about "p-hacking" and its implication for science.
 
 
 ### Additional resources
