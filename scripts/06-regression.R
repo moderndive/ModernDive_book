@@ -252,6 +252,7 @@ gapminder2007 <- gapminder %>%
   filter(year == 2007) %>%
   select(country, lifeExp, continent, gdpPercap)
 
+
 ## ---- echo=FALSE---------------------------------------------------------
 # Hidden: internally compute mean and median life expectancy
 lifeExp_worldwide <- gapminder2007 %>%

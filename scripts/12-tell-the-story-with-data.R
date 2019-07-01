@@ -19,8 +19,6 @@ options(scipen = 99, digits = 3)
 set.seed(76)
 
 
-
-
 ## ----moderndive-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="ModernDive Flowchart"----
 knitr::include_graphics("images/flowcharts/flowchart/flowchart.002.png")
 
@@ -98,7 +96,7 @@ house_prices %>%
 
 
 ## ----logten, echo=FALSE--------------------------------------------------
-data_frame(Price = c(1,10,100,1000,10000,100000,1000000)) %>% 
+tibble(Price = c(1,10,100,1000,10000,100000,1000000)) %>% 
   mutate(
     `log10(Price)` = log10(Price),
     Price = dollar(Price),
@@ -227,8 +225,6 @@ ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
 
 ## ------------------------------------------------------------------------
 10^(2.45 + 1 * log10(1900))
-
-
 
 
 
