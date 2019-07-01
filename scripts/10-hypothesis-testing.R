@@ -300,39 +300,48 @@ se_ci
 
 
 
-## ----trial-errors-table, echo=FALSE, fig.cap="Type I and Type II errors"----
-tibble(
-  verdict = c("Not guilty verdict", "Guilty verdict"),
-  `Truly not guilty` = c("Correct", "Type I error"),
-  `Truly guilty` = c("Type II error", "Correct")
-) %>% 
-  gt(rowname_col = "verdict") %>% 
-  tab_header(title = "Type I and Type II errors in US trials",
-             label="tab:trial-errors-table") %>% 
-  tab_row_group(group = "Verdict")   %>% 
-  tab_spanner(
-    label = "Truth",
-    columns = vars(`Truly not guilty`, `Truly guilty`)
-  ) %>% 
-  cols_align(align = "center") %>% 
-  tab_options(table.width = pct(90))
+## ----eval=FALSE----------------------------------------------------------
+## tibble(
+##   verdict = c("Not guilty verdict", "Guilty verdict"),
+##   `Truly not guilty` = c("Correct", "Type I error"),
+##   `Truly guilty` = c("Type II error", "Correct")
+## ) %>%
+##   gt(rowname_col = "verdict") %>%
+## #  tab_header(title = "Type I and Type II errors in US trials",
+## #             label="tab:trial-errors-table") %>%
+##   tab_row_group(group = "Verdict")   %>%
+##   tab_spanner(
+##     label = "Truth",
+##     columns = vars(`Truly not guilty`, `Truly guilty`)
+##   ) %>%
+##   cols_align(align = "center") %>%
+##   tab_options(table.width = pct(90))
 
 
-## ----trial-errors-table-ht, echo=FALSE, fig.cap="Type I and Type II errors"----
-tibble(
-  Decision = c("Fail to reject H0", "Reject H0"), 
-  `H0 true` = c("Correct", "Type I error"),
-  `HA true` = c("Type II error", "Correct")
-) %>% 
-  gt(rowname_col = "verdict") %>% 
-  tab_header(title = "Type I and Type II errors hypothesis tests") %>% 
-  tab_row_group(group = "Verdict")   %>% 
-  tab_spanner(
-    label = "Truth",
-    columns = vars(`H0 true`, `HA true`)
-  ) %>% 
-  cols_align(align = "center") %>% 
-  tab_options(table.width = pct(90))
+## ----trial-errors-table, echo=FALSE, fig.cap="Type I and Type II errors in criminal trials"----
+knitr::include_graphics("images/gt_error_table.png")
+
+
+## ----eval=FALSE----------------------------------------------------------
+## tibble(
+##   Decision = c("Fail to reject H0", "Reject H0"),
+##   `H0 true` = c("Correct", "Type I error"),
+##   `HA true` = c("Type II error", "Correct")
+## ) %>%
+##   gt(rowname_col = "Decision") %>%
+## #  tab_header(title = "Type I and Type II errors hypothesis tests",
+## #                          label="tab:trial-errors-table-ht") %>%
+##   tab_row_group(group = "Verdict") %>%
+##   tab_spanner(
+##     label = "Truth",
+##     columns = vars(`H0 true`, `HA true`)
+##   ) %>%
+##   cols_align(align = "center") %>%
+##   tab_options(table.width = pct(90))
+
+
+## ----trial-errors-table-ht, echo=FALSE, fig.cap="Type I and Type II errors in hypothesis tests"----
+knitr::include_graphics("images/gt_error_table_ht.png")
 
 
 
