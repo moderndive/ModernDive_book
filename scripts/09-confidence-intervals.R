@@ -214,7 +214,7 @@ percentile_ci <- virtual_resampled_means %>%
   get_ci(level = 0.95, type = "percentile")
 
 
-## ----percentile-method, echo=FALSE, message=FALSE, fig.cap="Percentile method 95% confidence interval."----
+## ----percentile-method, echo=FALSE, message=FALSE, fig.cap="Percentile method 95 percent confidence interval."----
 ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
   labs(x = "sample mean") +
@@ -224,8 +224,8 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
 
 
 ## ----echo=FALSE----------------------------------------------------------
-# Can also use conf_int() and get_confidence_interval() instead of get_ci(),
-# as they are aliases that work the exact same way.
+# Can also use get_confidence_interval() instead of get_ci(),
+# as it is an alias that works the exact same way.
 standard_error_ci <- virtual_resampled_means %>% 
   rename(stat = mean_year) %>% 
   get_ci(type = "se", point_estimate = x_bar)
@@ -241,7 +241,7 @@ virtual_resampled_means %>%
   summarize(SE = sd(mean_year))
 
 
-## ----percentile-and-se-method, echo=FALSE, message=FALSE, fig.cap="Comparing 95% confidence interval methods."----
+## ----percentile-and-se-method, echo=FALSE, message=FALSE, fig.cap="Comparing 95 percent confidence interval methods."----
 both_CI <- bind_rows(
   percentile_ci %>% gather(endpoint, value) %>% mutate(type = "percentile"),
   standard_error_ci %>% gather(endpoint, value) %>% mutate(type = "SE")
@@ -313,37 +313,64 @@ pennies_sample %>%
 knitr::include_graphics("images/flowcharts/infer/generate.png")
 
 
-## ------------------------------------------------------------------------
-pennies_sample %>% 
-  specify(response = year) %>% 
-  generate(reps = 1000, type = "bootstrap")
+## ----eval=FALSE----------------------------------------------------------
+## pennies_sample %>%
+##   specify(response = year) %>%
+##   generate(reps = 1000, type = "bootstrap")
+
+
+## ----echo=FALSE----------------------------------------------------------
+if(!file.exists("rds/pennies_sample_generate.rds")){
+  pennies_sample_generate <- pennies_sample %>% 
+    specify(response = year) %>% 
+    generate(reps = 1000, type = "bootstrap")
+  write_rds(pennies_sample_generate, "rds/pennies_sample_generate.rds")
+} else {
+  pennies_sample_generate <- read_rds("rds/pennies_sample_generate.rds")
+}
+pennies_sample_generate
 
 
 ## ----eval=FALSE----------------------------------------------------------
 ## # infer workflow:               # Original workflow:
 ## pennies_sample %>%              pennies_sample %>%
-##   specify(response = year) %>%    rep_sample_n(size = 50, replace = TRUE, reps = 1000)
-##   generate(reps = 1000)
+##   specify(response = year) %>%    rep_sample_n(size = 50, replace = TRUE,
+##   generate(reps = 1000)                        reps = 1000)
+## 
 
 
 ## ----fig.align='center', echo=FALSE, out.width='70%'---------------------
 knitr::include_graphics("images/flowcharts/infer/calculate.png")
 
 
-## ------------------------------------------------------------------------
-bootstrap_distribution <- pennies_sample %>% 
-  specify(response = year) %>% 
-  generate(reps = 1000) %>% 
-  calculate(stat = "mean")
+## ----eval=FALSE----------------------------------------------------------
+## bootstrap_distribution <- pennies_sample %>%
+##   specify(response = year) %>%
+##   generate(reps = 1000) %>%
+##   calculate(stat = "mean")
+## bootstrap_distribution
+
+
+## ----echo=FALSE----------------------------------------------------------
+if(!file.exists("rds/bootstrap_distribution_pennies.rds")){
+  bootstrap_distribution <- pennies_sample %>% 
+    specify(response = year) %>% 
+    generate(reps = 1000) %>% 
+    calculate(stat = "mean")
+  write_rds(bootstrap_distribution, "rds/bootstrap_distribution_pennies.rds")
+} else {
+  bootstrap_distribution <- read_rds("rds/bootstrap_distribution_pennies.rds")
+}
 bootstrap_distribution
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## # infer workflow:               # Original workflow:
-## pennies_sample %>%              pennies_sample %>%
-##   specify(response = year) %>%    rep_sample_n(size = 50, replace = TRUE, reps = 1000)
-##   generate(reps = 1000) %>%       group_by(replicate) %>%
-##   calculate(stat = "mean")        summarize(mean_year = mean(year))
+## # infer workflow:                 # Original workflow:
+## pennies_sample %>%                pennies_sample %>%
+##   specify(response = year) %>%      rep_sample_n(size = 50, replace = TRUE,
+##   generate(reps = 1000) %>%                      reps = 1000) %>%
+##   calculate(stat = "mean")          group_by(replicate) %>%
+##                                     summarize(mean_year = mean(year))
 
 
 ## ----fig.align='center', echo=FALSE--------------------------------------
@@ -355,10 +382,12 @@ knitr::include_graphics("images/flowcharts/infer/visualize.png")
 
 
 
+
 ## ----eval=FALSE----------------------------------------------------------
-## # infer workflow:                  # Original workflow:
-## visualize(bootstrap_distribution)  ggplot(bootstrap_distribution, aes(x = stat)) +
-##                                      geom_histogram()
+## # infer workflow:                    # Original workflow:
+## visualize(bootstrap_distribution)    ggplot(bootstrap_distribution,
+##                                             aes(x = stat)) +
+##                                        geom_histogram()
 
 
 
@@ -375,9 +404,11 @@ percentile_ci
 
 
 
+
 ## ----eval=FALSE----------------------------------------------------------
 ## visualize(bootstrap_distribution) +
 ##   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
+
 
 ## ----echo=FALSE----------------------------------------------------------
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
@@ -398,9 +429,11 @@ standard_error_ci
 
 
 
+
 ## ------------------------------------------------------------------------
 bowl %>% 
   summarize(p_red = mean(color == "red"))
+
 
 ## ---- echo = FALSE-------------------------------------------------------
 p_red <- bowl %>% 
@@ -422,17 +455,41 @@ bowl_sample_1 %>%
   specify(response = color, success = "red")
 
 
-## ------------------------------------------------------------------------
-bowl_sample_1 %>% 
-  specify(response = color, success = "red") %>% 
-  generate(reps = 1000, type = "bootstrap")
+## ----eval=FALSE----------------------------------------------------------
+## bowl_sample_1 %>%
+##   specify(response = color, success = "red") %>%
+##   generate(reps = 1000, type = "bootstrap")
 
 
-## ------------------------------------------------------------------------
-sample_1_bootstrap <- bowl_sample_1 %>% 
-  specify(response = color, success = "red") %>% 
-  generate(reps = 1000, type = "bootstrap") %>% 
-  calculate(stat = "prop")
+## ----echo=FALSE----------------------------------------------------------
+if(!file.exists("rds/bowl_sample_1_generate.rds")){
+   bowl_sample_1_generate <- bowl_sample_1 %>% 
+    specify(response = color, success = "red") %>% 
+    generate(reps = 1000, type = "bootstrap")
+   write_rds(bowl_sample_1_generate, 
+             "rds/bowl_sample_1_generate.rds")
+} else {
+  bowl_sample_1_generate <- read_rds("rds/bowl_sample_1_generate.rds")
+}
+
+
+## ----eval=FALSE----------------------------------------------------------
+## sample_1_bootstrap <- bowl_sample_1 %>%
+##   specify(response = color, success = "red") %>%
+##   generate(reps = 1000, type = "bootstrap") %>%
+##   calculate(stat = "prop")
+## sample_1_bootstrap
+
+
+## ----calculate_prop, echo=FALSE------------------------------------------
+# Note this takes a few minutes to run
+if(!file.exists("rds/sample_1_bootstrap.rds")){
+  sample_1_bootstrap <- bowl_sample_1_generate %>% 
+    calculate(stat = "prop")
+  write_rds(sample_1_bootstrap, "rds/sample_1_bootstrap.rds")
+} else {
+  sample_1_bootstrap <- read_rds("rds/sample_1_bootstrap.rds")
+}
 sample_1_bootstrap
 
 
@@ -456,11 +513,24 @@ bowl_sample_2 <- bowl %>%
 bowl_sample_2
 
 
-## ------------------------------------------------------------------------
-sample_2_bootstrap <- bowl_sample_2 %>% 
-  specify(response = color, success = "red") %>% 
-  generate(reps = 1000, type = "bootstrap") %>% 
-  calculate(stat = "prop")
+## ----eval=FALSE----------------------------------------------------------
+## sample_2_bootstrap <- bowl_sample_2 %>%
+##   specify(response = color, success = "red") %>%
+##   generate(reps = 1000, type = "bootstrap") %>%
+##   calculate(stat = "prop")
+## sample_2_bootstrap
+
+
+## ----echo=FALSE----------------------------------------------------------
+if(!file.exists("rds/sample_2_bootstrap.rds")){
+  sample_2_bootstrap <- bowl_sample_2 %>% 
+    specify(response = color, success = "red") %>% 
+    generate(reps = 1000, type = "bootstrap") %>% 
+    calculate(stat = "prop")
+  write_rds(sample_2_bootstrap, "rds/sample_2_bootstrap.rds")
+} else {
+  sample_2_bootstrap <- read_rds("rds/sample_2_bootstrap.rds")
+}
 sample_2_bootstrap
 
 
@@ -470,7 +540,7 @@ percentile_ci_2 <- sample_2_bootstrap %>%
 percentile_ci_2
 
 
-## ----reliable-percentile, fig.cap="100 SE-based 95% confidence intervals for p",echo=FALSE----
+## ----reliable-percentile, fig.cap="100 SE-based 95 percent confidence intervals for p",echo=FALSE----
 if(!file.exists("rds/balls_percentile_cis.rds")){
   set.seed(4)
 
@@ -515,7 +585,7 @@ ggplot(percentile_cis) +
   geom_vline(xintercept = p_red, color = "red") 
 
 
-## ----reliable-se, fig.cap="100 SE-based 85% confidence intervals for p",echo=FALSE----
+## ----reliable-se, fig.cap="100 SE-based 85 percent confidence intervals for p",echo=FALSE----
 if(!file.exists("rds/balls_se_cis.rds")){
   # Set random number generator seed value to 9 in honour of Maurice "Rocket" Richard.
   set.seed(9)
@@ -555,7 +625,8 @@ se_cis <- balls_se_cis %>%
 
 # Plot them!
 ggplot(se_cis) +
-  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, color = captured)) +
+  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, 
+                   color = captured)) +
   geom_point(aes(x = sample_prop, y = replicate, color = captured)) +
   labs(x = expression("Proportion of red balls"), y = "Replicate ID") +
   scale_color_manual(values = c("blue", "orange")) + 
@@ -627,17 +698,17 @@ if(!file.exists("rds/balls_perc_cis_80_95_99.rds")){
 }
 
 
-## ----perc-cis-level-print, echo=FALSE------------------------------------
-percentile_cis_by_level %>% 
-  sample_n(10) %>% 
-  kable(
-    digits = 3,
-    caption = "10 randomly sampled confidence intervals for p for varying confidence levels", 
-    booktabs = TRUE,
-    longtable = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position", "repeat_header"))
+## ----perc-cis-level-print, eval=FALSE, echo=FALSE------------------------
+## percentile_cis_by_level %>%
+##   sample_n(10) %>%
+##   kable(
+##     digits = 3,
+##     caption = "10 randomly sampled confidence intervals for p for varying confidence levels",
+##     booktabs = TRUE,
+##     longtable = TRUE
+##   ) %>%
+##   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+##                 latex_options = c("HOLD_position", "repeat_header"))
 
 
 ## ----reliable-percentile-80-95-99, fig.cap="Ten 80, 95, and 99 percent confidence intervals for p based on n = 50.", echo=FALSE----
@@ -736,7 +807,7 @@ if(!file.exists("rds/balls_perc_cis_n_25_50_100.rds")){
 }
 
 
-## ----reliable-percentile-n-25-50-100, fig.cap="Ten 95% confidence intervals for p based on n = 25, 50, & 100.", echo=FALSE----
+## ----reliable-percentile-n-25-50-100, fig.cap="Ten 95 percent confidence intervals for p based on n = 25, 50, and 100.", echo=FALSE----
 sample_of_cis <- percentile_cis_by_n %>% 
   group_by(sample_size) %>% 
   mutate(sample_row = 1:10)
@@ -817,10 +888,12 @@ head(mythbusters_yawn) %>%
   sample_n(size = 6, replace = TRUE)
 
 
-## ----eval=TRUE-----------------------------------------------------------
-mythbusters_yawn %>% 
-  specify(formula = yawn ~ group, success = "yes") %>% 
-  generate(reps = 1000, type = "bootstrap")
+## ----eval=FALSE----------------------------------------------------------
+## mythbusters_yawn %>%
+##   specify(formula = yawn ~ group, success = "yes") %>%
+##   generate(reps = 1000, type = "bootstrap")
+
+
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -830,11 +903,26 @@ mythbusters_yawn %>%
 ##   calculate(stat = "diff in props")
 
 
-## ------------------------------------------------------------------------
-bootstrap_distribution_yawning <- mythbusters_yawn %>% 
-  specify(formula = yawn ~ group, success = "yes") %>% 
-  generate(reps = 1000, type = "bootstrap") %>% 
-  calculate(stat = "diff in props", order = c("seed", "control"))
+## ----eval=FALSE----------------------------------------------------------
+## bootstrap_distribution_yawning <- mythbusters_yawn %>%
+##   specify(formula = yawn ~ group, success = "yes") %>%
+##   generate(reps = 1000, type = "bootstrap") %>%
+##   calculate(stat = "diff in props", order = c("seed", "control"))
+## bootstrap_distribution_yawning
+
+
+## ----echo=FALSE----------------------------------------------------------
+if(!file.exists("rds/bootstrap_distribution_yawning.rds")){
+  bootstrap_distribution_yawning <- mythbusters_yawn %>% 
+    specify(formula = yawn ~ group, success = "yes") %>% 
+    generate(reps = 1000, type = "bootstrap") %>% 
+    calculate(stat = "diff in props", order = c("seed", "control"))
+  write_rds(bootstrap_distribution_yawning,
+            "rds/bootstrap_distribution_yawning.rds")
+} else {
+  bootstrap_distribution_yawning <- read_rds(
+    "rds/bootstrap_distribution_yawning.rds")
+}
 bootstrap_distribution_yawning
 
 
@@ -903,22 +991,40 @@ se_samp <- sampling_distribution %>%
 ## ----echo=FALSE----------------------------------------------------------
 set.seed(76)
 
-## ------------------------------------------------------------------------
-# Compute the bootstrap distribution using infer workflow:
-bootstrap_distribution <- bowl_sample_1 %>% 
-  specify(response = color, success = "red") %>% 
-  generate(reps = 1000, type = "bootstrap") %>% 
-  calculate(stat = "prop")
 
+## ----eval=FALSE----------------------------------------------------------
+## # Compute the bootstrap distribution using infer workflow:
+## bootstrap_distribution <- bowl_sample_1 %>%
+##   specify(response = color, success = "red") %>%
+##   generate(reps = 1000, type = "bootstrap") %>%
+##   calculate(stat = "prop")
+
+
+## ----echo=FALSE----------------------------------------------------------
+if(!file.exists("rds/bootstrap_distribution_balls.rds")){
+  bootstrap_distribution <- bowl_sample_1 %>% 
+    specify(response = color, success = "red") %>% 
+    generate(reps = 1000, type = "bootstrap") %>% 
+    calculate(stat = "prop")
+  write_rds(bootstrap_distribution, 
+            "rds/bootstrap_distribution_balls.rds")
+} else {
+  bootstrap_distribution <- read_rds("rds/bootstrap_distribution_balls.rds")
+}
+
+
+## ----warning=FALSE-------------------------------------------------------
 # Visualize bootstrap distribution of p-hat
 bootstrap_distribution %>% 
   visualize(binwidth = 0.05, boundary = 0.4, color = "white") + 
-  labs(x = "Proportion of 50 balls that were red", title = "Bootstrap distribution")
+  labs(x = "Proportion of 50 balls that were red", 
+       title = "Bootstrap distribution")
 
 
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   summarize(se = sd(stat))
+
 
 ## ---- echo=FALSE---------------------------------------------------------
 se_boot <- bootstrap_distribution %>% 
@@ -926,7 +1032,7 @@ se_boot <- bootstrap_distribution %>%
   pull(se)
 
 
-## ----side-by-side, fig.height = 7, fig.cap="Comparing the sampling and bootstrap distributions of p-hat", echo=FALSE----
+## ----side-by-side, fig.height=7, fig.cap="Comparing the sampling and bootstrap distributions of p-hat", echo=FALSE----
 x_lim <- seq(from = 0.15, to = 0.65, by = 0.05)
 y_lim <- c(0, 350)
 p_samp <- ggplot(sampling_distribution, aes(x = prop_red)) +
@@ -971,7 +1077,7 @@ conf_ints <- tactile_prop_red %>%
 conf_ints
 
 
-## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 95% confidence intervals based on 33 tactile samples of size n=50", fig.height=6----
+## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 95 percent confidence intervals based on 33 tactile samples of size n=50", fig.height=6----
 conf_ints <- conf_ints %>% 
   mutate(
     y = 1:n(),
@@ -989,66 +1095,66 @@ ggplot(conf_ints) +
   scale_color_manual(values = c("blue", "orange")) 
 
 
-## ------------------------------------------------------------------------
-# First: Take 100 virtual samples of n=50 balls
-virtual_samples <- bowl %>% 
-  rep_sample_n(size = 50, reps = 100)
+## ----eval=FALSE----------------------------------------------------------
+## # First: Take 100 virtual samples of n=50 balls
+## virtual_samples <- bowl %>%
+##   rep_sample_n(size = 50, reps = 100)
+## 
+## # Second: For each virtual sample compute the proportion red
+## virtual_prop_red <- virtual_samples %>%
+##   group_by(replicate) %>%
+##   summarize(red = sum(color == "red")) %>%
+##   mutate(prop_red = red / 50)
+## 
+## # Third: Compute the 95% confidence interval as above
+## virtual_prop_red <- virtual_prop_red %>%
+##   rename(p_hat = prop_red) %>%
+##   mutate(
+##     n = 50,
+##     SE = sqrt(p_hat*(1-p_hat)/n),
+##     MoE = 1.96 * SE,
+##     lower_ci = p_hat - MoE,
+##     upper_ci = p_hat + MoE
+##   )
 
-# Second: For each virtual sample compute the proportion red
-virtual_prop_red <- virtual_samples %>% 
-  group_by(replicate) %>% 
-  summarize(red = sum(color == "red")) %>% 
-  mutate(prop_red = red / 50)
 
-# Third: Compute the 95% confidence interval as above
-virtual_prop_red <- virtual_prop_red %>% 
-  rename(p_hat = prop_red) %>% 
-  mutate(
-    n = 50,
-    SE = sqrt(p_hat*(1-p_hat)/n),
-    MoE = 1.96 * SE,
-    lower_ci = p_hat - MoE,
-    upper_ci = p_hat + MoE
-  )
-
-
-## ----virtual-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"----
-set.seed(79)
-
-virtual_samples <- bowl %>% 
-  rep_sample_n(size = 50, reps = 100)
-
-# Second: For each virtual sample compute the proportion red
-virtual_prop_red <- virtual_samples %>% 
-  group_by(replicate) %>% 
-  summarize(red = sum(color == "red")) %>% 
-  mutate(prop_red = red / 50)
-
-# Third: Compute the 95% confidence interval as above
-virtual_prop_red <- virtual_prop_red %>% 
-  rename(p_hat = prop_red) %>% 
-  mutate(
-    n = 50,
-    SE = sqrt(p_hat * (1 - p_hat) / n),
-    MoE = 1.96 * SE,
-    lower_ci = p_hat - MoE,
-    upper_ci = p_hat + MoE
-  ) %>% 
-  mutate(
-    y = seq_len(n()),
-    p = 900 / 2400,
-    captured = lower_ci <= p & p <= upper_ci
-  )
-
-ggplot(virtual_prop_red) +
-  geom_point(aes(x = p_hat, y = y, color = captured)) +
-  geom_segment(aes(y = y, yend = y, x = lower_ci, xend = upper_ci, 
-                   color = captured)) +
-  labs(
-    x = expression("Proportion red"),
-    y = "Replicate ID",
-    title = expression(paste("95% confidence intervals for ", p, sep = ""))
-  ) +
-  scale_color_manual(values = c("blue", "orange")) + 
-  geom_vline(xintercept = 900 / 2400, color = "red") 
+## ----virtual-conf-int, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"----
+## set.seed(79)
+## 
+## virtual_samples <- bowl %>%
+##   rep_sample_n(size = 50, reps = 100)
+## 
+## # Second: For each virtual sample compute the proportion red
+## virtual_prop_red <- virtual_samples %>%
+##   group_by(replicate) %>%
+##   summarize(red = sum(color == "red")) %>%
+##   mutate(prop_red = red / 50)
+## 
+## # Third: Compute the 95% confidence interval as above
+## virtual_prop_red <- virtual_prop_red %>%
+##   rename(p_hat = prop_red) %>%
+##   mutate(
+##     n = 50,
+##     SE = sqrt(p_hat * (1 - p_hat) / n),
+##     MoE = 1.96 * SE,
+##     lower_ci = p_hat - MoE,
+##     upper_ci = p_hat + MoE
+##   ) %>%
+##   mutate(
+##     y = seq_len(n()),
+##     p = 900 / 2400,
+##     captured = lower_ci <= p & p <= upper_ci
+##   )
+## 
+## ggplot(virtual_prop_red) +
+##   geom_point(aes(x = p_hat, y = y, color = captured)) +
+##   geom_segment(aes(y = y, yend = y, x = lower_ci, xend = upper_ci,
+##                    color = captured)) +
+##   labs(
+##     x = expression("Proportion red"),
+##     y = "Replicate ID",
+##     title = expression(paste("95% confidence intervals for ", p, sep = ""))
+##   ) +
+##   scale_color_manual(values = c("blue", "orange")) +
+##   geom_vline(xintercept = 900 / 2400, color = "red")
 

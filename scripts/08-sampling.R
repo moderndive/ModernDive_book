@@ -426,9 +426,79 @@ virtual_prop %>%
   column_spec(5, width = "1in")
 
 
+## ----curves not sure where to put----------------------------------------
+ggplot(data = data.frame(x = c(-3.5, 3.5)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1), color = 'red') +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = .5), color = 'dark green') +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 2), color = 'blue') +
+  stat_function(fun = dnorm, args = list(mean = 1, sd = 1), color = 'red')
+
+
 ## ----std-normal-setup, echo=FALSE----------------------------------------
+funcShaded1 <- function(x) {
+    y <- dnorm(x, mean = 0, sd = 1)
+    y[x <= -1.97 | x >= 1.97] <- NA
+    return(y)
+}
+funcShaded2 <- function(x) {
+    y <- dnorm(x, mean = 0, sd = 1)
+    y[x <= -1.65 | x >= 1.65] <- NA
+    return(y)
+}
+funcShaded3 <- function(x) {
+    y <- dnorm(x, mean = 0, sd = 1)
+    y[x <= -2.34 | x >= 2.34] <- NA
+    return(y)
+}
+# if use one image: 
 ggplot(data = data.frame(x = c(-3.5, 3.5)), aes(x)) +
   stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) + 
+  stat_function(fun = funcShaded1, geom = 'area', fill = 'red', alpha = .2) +
+  annotate(geom = "segment", x = c(1.96, -1.96), xend = c(1.96, -1.96), y = 0, 
+           yend = dnorm(1.96, mean = 0, sd = 1)) +
+  annotate(geom = "text", x = c(1.96, -1.96), y = 0, label = "text")+ 
+  # delete afterwards if decide to use multiple images 
+  stat_function(fun = funcShaded2, geom = 'area', fill = 'green', alpha = .2) +
+  annotate(geom = "segment", x = c(1.64, -1.64), xend = c(1.64, -1.64), y = 0, 
+           yend = dnorm(1.64, mean = 0, sd = 1))  + 
+  scale_x_continuous(breaks = seq(-3.5, 3.5, 0.5)) +
+  ylab("") +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+# if use multiple: 
+# 95% 
+ggplot(data = data.frame(x = c(-3.5, 3.5)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
+  stat_function(fun = funcShaded1, geom = 'area', fill = 'red', alpha = .2) +
+  annotate(geom = "segment", x = c(1.96, -1.96), xend = c(1.96, -1.96), y = 0, 
+           yend = dnorm(1.96, mean = 0, sd = 1)) +
+  annotate(geom = "text", x = c(1.96, -1.96), y = 0, label = "text") + 
+  scale_x_continuous(breaks = seq(-3.5, 3.5, 0.5)) +
+  ylab("") +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+# 90% 
+ggplot(data = data.frame(x = c(-3.5, 3.5)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) + 
+  stat_function(fun = funcShaded2, geom = 'area', fill = 'green', alpha = .2) +
+  annotate(geom = "segment", x = c(1.64, -1.64), xend = c(1.64, -1.64), y = 0, 
+           yend = dnorm(1.64, mean = 0, sd = 1)) +
+  annotate(geom = "text", x = c(1.64, -1.64), y = 0, label = "text") + 
+  scale_x_continuous(breaks = seq(-3.5, 3.5, 0.5)) +
+  ylab("") +
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+# 99% 
+ggplot(data = data.frame(x = c(-3.5, 3.5)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) + 
+  stat_function(fun = funcShaded3, geom = 'area', fill = 'blue', alpha = .2) +
+  annotate(geom = "segment", x = c(2.33, -2.33), xend = c(2.33, -2.33), y = 0, 
+           yend = dnorm(2.33, mean = 0, sd = 1)) +
+  annotate(geom = "text", x = c(2.33, -2.33), y = 0, label = "text") + 
   scale_x_continuous(breaks = seq(-3.5, 3.5, 0.5)) +
   ylab("") +
   theme(axis.title.y = element_blank(),
@@ -445,7 +515,7 @@ ggplot(data = data.frame(x = c(-3.5, 3.5)), aes(x)) +
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank()) +
   geom_vline(xintercept = 1.96, color = "green", size = 1) +
-  geom_vline(xintercept = -1.96, color = "green", size = 1)
+  geom_vline(xintercept = -1.96, color = "green", size = 1) 
 
 
 ## ------------------------------------------------------------------------
