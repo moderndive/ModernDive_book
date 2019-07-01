@@ -19,13 +19,6 @@ options(scipen = 99, digits = 3)
 set.seed(76)
 
 
-## ---- message=FALSE, warning=FALSE---------------------------------------
-library(ggplot2)
-library(dplyr)
-library(moderndive)
-library(infer)
-
-
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
