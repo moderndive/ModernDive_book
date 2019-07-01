@@ -157,8 +157,7 @@ drinks_smaller_tidy
 
 
 ## ------------------------------------------------------------------------
-ggplot(drinks_smaller_tidy, 
-       aes(x = country, y = servings, fill = type)) +
+ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
   geom_col(position = "dodge")
 
 
@@ -197,8 +196,7 @@ guat_dem_tidy <- guat_dem_tidy %>%
 ## ----errors=TRUE---------------------------------------------------------
 ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
   geom_line() +
-  labs(x = "Year", y = "Democracy Score", 
-       title = "Democracy score in Guatemala 1952-1992")
+  labs(x = "Year", y = "Democracy Score", title = "Democracy score in Guatemala 1952-1992")
 
 
 

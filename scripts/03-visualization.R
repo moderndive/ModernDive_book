@@ -430,5 +430,5 @@ include_graphics("images/ggplot_cheatsheet-1.png")
 
 
 ## ----echo=FALSE, fig.cap="ModernDive flowchart", out.width='110%', fig.align='center'----
-knitr::include_graphics("images/flowcharts/flowchart/flowchart.004.png")
+# knitr::include_graphics("images/flowcharts/flowchart/flowchart.004.png")
 

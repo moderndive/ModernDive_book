@@ -205,24 +205,20 @@ promotions %>%
   hypothesize(null = "independence")
 
 
-## ----eval=FALSE----------------------------------------------------------
-## promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted") %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute")
+## ------------------------------------------------------------------------
+promotions %>% 
+  specify(formula = decision ~ gender, success = "promoted") %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute")
 
 
-
-
-## ----eval=FALSE----------------------------------------------------------
-## null_distribution <- promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted") %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute") %>%
-##   calculate(stat = "diff in props", order = c("male", "female"))
-## null_distribution
-
-
+## ------------------------------------------------------------------------
+null_distribution <- promotions %>% 
+  specify(formula = decision ~ gender, success = "promoted") %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in props", order = c("male", "female"))
+null_distribution
 
 
 ## ------------------------------------------------------------------------
@@ -231,6 +227,9 @@ obs_diff_prop <- promotions %>%
   calculate(stat = "diff in props", order = c("male", "female"))
 obs_diff_prop
 
+
+## ----eval=FALSE----------------------------------------------------------
+## visualize(null_distribution, binwidth = 0.1)
 
 
 
@@ -257,16 +256,14 @@ p_value <- null_distribution %>%
 ##   calculate(stat = "diff in props", order = c("male", "female"))
 
 
-## ----eval=FALSE----------------------------------------------------------
-## bootstrap_distribution <- promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted") %>%
-##   # Change 1 - Remove hypothesize():
-##   # hypothesize(null = "independence") %>%
-##   # Change 2 - Switch type from "permute" to "bootstrap":
-##   generate(reps = 1000, type = "bootstrap") %>%
-##   calculate(stat = "diff in props", order = c("male", "female"))
-
-
+## ------------------------------------------------------------------------
+bootstrap_distribution <- promotions %>% 
+  specify(formula = decision ~ gender, success = "promoted") %>% 
+  # Change 1 - Remove hypothesize():
+  # hypothesize(null = "independence") %>% 
+  # Change 2 - Switch type from "permute" to "bootstrap":
+  generate(reps = 1000, type = "bootstrap") %>% 
+  calculate(stat = "diff in props", order = c("male", "female"))
 
 
 ## ------------------------------------------------------------------------
@@ -283,8 +280,7 @@ percentile_ci
 
 ## ------------------------------------------------------------------------
 se_ci <- bootstrap_distribution %>% 
-  get_confidence_interval(level = 0.95, type = "se", 
-                          point_estimate = obs_diff_prop)
+  get_confidence_interval(level = 0.95, type = "se", point_estimate = obs_diff_prop)
 se_ci
 
 
@@ -307,8 +303,7 @@ tibble(
   `Truly guilty` = c("Type II error", "Correct")
 ) %>% 
   gt(rowname_col = "verdict") %>% 
-  tab_header(title = "Type I and Type II errors in US trials",
-             label="tab:trial-errors-table") %>% 
+  tab_header(title = "Type I and Type II errors in US trials") %>% 
   tab_row_group(group = "Verdict")   %>% 
   tab_spanner(
     label = "Truth",
@@ -409,35 +404,20 @@ movies_sample %>%
   hypothesize(null = "independence")
 
 
-## ----eval=FALSE----------------------------------------------------------
-## movies_sample %>%
-##   specify(formula = rating ~ genre) %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute")
+## ------------------------------------------------------------------------
+movies_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute")
 
 
-## ----echo=FALSE----------------------------------------------------------
-if(!file.exists("rds/movies_sample_generate.rds")){
-  movies_sample_generate <- movies_sample %>% 
-    specify(formula = rating ~ genre) %>% 
-    hypothesize(null = "independence") %>% 
-    generate(reps = 1000, type = "permute")
-  write_rds(movies_sample_generate, "rds/movies_sample_generate.rds")
-} else {
-  movies_sample_generate <- read_rds("rds/movies_sample_generate.rds")
-}
-movies_sample_generate
-
-
-## ----eval=FALSE----------------------------------------------------------
-## null_distribution_movies <- movies_sample %>%
-##   specify(formula = rating ~ genre) %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute") %>%
-##   calculate(stat = "diff in means", order = c("Action", "Romance"))
-## null_distribution_movies
-
-
+## ------------------------------------------------------------------------
+null_distribution_movies <- movies_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("Action", "Romance"))
+null_distribution_movies
 
 
 ## ------------------------------------------------------------------------
@@ -466,7 +446,7 @@ p_value_movies <- null_distribution_movies %>%
 
 
 
-## ----zcurve, echo=FALSE, out.width="50%", fig.cap="Standard normal z curve"----
+## ----z-curve, echo=FALSE, out.width="50%", fig.cap="Standard normal z curve"----
 ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm) +
   labs(x = "z", y = "") + 
   theme(axis.title.y = element_blank(),
@@ -489,33 +469,30 @@ t_stat <- movies_sample %>%
   round(3)
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- echo = TRUE, eval = FALSE------------------------------------------
 ## # Construct null distribution of xbar_a - xbar_m:
 ## null_distribution_movies <- movies_sample %>%
 ##   specify(formula = rating ~ genre) %>%
 ##   hypothesize(null = "independence") %>%
 ##   generate(reps = 1000, type = "permute") %>%
 ##   calculate(stat = "diff in means", order = c("Action", "Romance"))
+## 
+## # Visualize:
+## visualize(null_distribution_movies, bins = 10)
 
-
-## ---- echo=FALSE---------------------------------------------------------
-# Visualize:
+## ---- echo = FALSE-------------------------------------------------------
 visualize(null_distribution_movies, bins = 10)
 
 
-## ----eval=FALSE----------------------------------------------------------
-## # Construct null distribution of t:
-## null_distribution_movies_t <- movies_sample %>%
-##   specify(formula = rating ~ genre) %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute") %>%
-##   # Notice we switched stat from "diff in means" to "t"
-##   calculate(stat = "t", order = c("Action", "Romance"))
-
-
-
-
 ## ------------------------------------------------------------------------
+# Construct null distribution of t:
+null_distribution_movies_t <- movies_sample %>% 
+  specify(formula = rating ~ genre) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  # Notice we switched stat from "diff in means" to "t"
+  calculate(stat = "t", order = c("Action", "Romance"))
+
 # Visualize:
 visualize(null_distribution_movies_t, bins = 10)
 

@@ -510,7 +510,3 @@ model3_balance_vs_income_plot_colored <- ggplot(credit_ch7, aes(x = income, y = 
   
 model3_balance_vs_income_plot + model3_balance_vs_income_plot_colored
 
-
-## ----echo=FALSE, fig.cap="ModernDive flowchart - On to Part III!", fig.align='center'----
-knitr::include_graphics("images/flowcharts/flowchart/flowchart.006.png")
-
