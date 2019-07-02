@@ -21,6 +21,11 @@ options(scipen = 99, digits = 3)
 set.seed(76)
 ```
 
+In our penultimate chapter, we'll revisit regression models we first studied in Chapters \@ref(regression) and \@ref(multiple-regression). Armed with our knowledge of confidence intervals and hypothesis test from Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing), we'll be able to apply statistical inference to regression intercepts and slopes. 
+
+
+### Needed packages {-}
+
 Let's load all the packages needed for this chapter (this assumes you've already installed them). Recall from our discussion in Section \@ref(tidyverse-package) that loading the `tidyverse` package by running `library(tidyverse)` loads the following commonly used data science packages all at once:
 
 * `ggplot2` for data visualization
@@ -30,6 +35,12 @@ Let's load all the packages needed for this chapter (this assumes you've already
 * As well as the more advanced `purrr`, `tibble`, `stringr`, and `forcats` packages
 
 If needed, read Section \@ref(packages) for information on how to install and load R packages. 
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(moderndive)
+library(infer)
+```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 # Packages needed internally, but not in text.
@@ -50,15 +61,30 @@ library(patchwork)
 
 ## Regression refresher
 
-Let's first head back to reminding ourselves of the University of Texas student evaluations analysis in Section \@ref(model1). Let's begin by looking at the `evals_ch6` data frame that selected a subset of variables from the `evals` data frame in the `moderndive` package.
+Before jumping into inference for regression, let's remind ourselves of the University of Texas student evaluations analysis in Section \@ref(model1). 
+
+### Teaching evals analysis
+
+Recall using simple linear regression \index{regression!simple linear} we modeled the relationship between
+
+1. A numerical outcome variable $y$, the instructor's teaching score and
+1. A single numerical explanatory variable $x$, the instructor's beauty score.
+
+We first created an `evals_ch6` data frame that selected a subset of variables from the `evals` data frame included in the `moderndive` package. This `evals_ch6` data frame contains only the variables of interest for our analysis, in particular the instructor's teaching `score` and the beauty rating `bty_avg`:
 
 ```{r}
 evals_ch6 <- evals %>%
   select(ID, score, bty_avg, age)
 glimpse(evals_ch6)
 ```
+```{r, echo = FALSE}
+cor_ch6 <- evals_ch6 %>%
+  summarize(correlation = cor(score, bty_avg)) %>%
+  pull(correlation) %>%
+  round(3)
+```
 
-In Chapter \@ref(regression), we investigated the relationship between student evaluation ratings (`score`) and the beauty rating (`bty_avg`). We saw there that there was a weakly positive correlation between the two variables as shown in the plot below. Note the use of the regression line as well in blue that attempts to summarize this linear relationship between the two variables.
+In Section \@ref(model1EDA), we performed an exploratory data analysis of the relationship between these two variables. We saw there that there was a weakly positive correlation of `r cor_ch6` between the two variables. This was evidenced in Figure \@ref(fig:regline) of the scatterplot along with the "best fitting" regression line that summarizes the linear relationship between the two variables.
 
 ```{r regline, fig.cap="Relationship with regression line"}
 ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
@@ -68,7 +94,10 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_smooth(method = "lm", se = FALSE)
 ```
 
-Looking at this plots again, you might be asking "But is that line really that positive in its slope?" It does increase from left to right as the `bty_avg` variable increases, but by how much? To get to this information, we can use the `lm()` function to determine the necessary values that comprise the defining regression equation. Recall the use of the `get_regression_table()` function in the `moderndive` package to better summarize the results of this regression fit as well.
+Looking at this plot again, you might be asking "But is that line really that positive in its slope?" It does increase from left to right as the `bty_avg` variable increases, but by how much? To get to this information, we used the `lm()` function to fit a regression model, which took a formula `y ~ x` = `score ~ bty_avg` as an input.
+
+1. We first "fit" the linear regression model using the `lm()` function and save it in `score_model`.
+1. We get the regression table by applying the `get_regression_table()` \index{moderndive!get\_regression\_table()} from the `moderndive` package to `score_model`.
 
 ```{r}
 # Fit regression model:
@@ -76,8 +105,8 @@ score_model <- lm(score ~ bty_avg, data = evals_ch6)
 # Get regression table:
 get_regression_table(score_model)
 ```
-
 ```{r echo=FALSE}
+# slope:
 slope_row <- get_regression_table(score_model) %>% 
   filter(term == "bty_avg")
 b1 <- slope_row %>% pull(estimate)
@@ -85,17 +114,77 @@ se1 <- slope_row %>% pull(std_error)
 t1 <- slope_row %>% pull(statistic)
 lower1 <- slope_row %>% pull(lower_ci)
 upper1 <- slope_row %>% pull(upper_ci)
+# intercept:
+intercept_row <- get_regression_table(score_model) %>% 
+  filter(term == "intercept")
+b0 <- intercept_row %>% pull(estimate)
+se0 <- intercept_row %>% pull(std_error)
+t0 <- intercept_row %>% pull(statistic)
+lower0 <- intercept_row %>% pull(lower_ci)
+upper0 <- intercept_row %>% pull(upper_ci)
 ```
 
-## Interpretation of regression table results {#regression-interp}
+Using the values in the `estimate` column, we could then obtain the equation of the "best-fitting" regression line in blue in Figure \@ref(fig:regline) where $b_0$ is the fitted intercept and $b_1$ is the fitted slope for `bty_avg`.
 
-In Chapter \@ref(regression) we focused on the left-most column of this resulting summary of `score_model` using `get_regression_table()`. Remember the interpretation here of the `r b1` value:
+$$
+\begin{aligned}
+\widehat{y} &= b_0 + b_1 \cdot x\\
+\widehat{\text{score}} &= b_0 + b_{\text{bty}\_\text{avg}} \cdot\text{bty}\_\text{avg}\\
+&= 3.880 + 0.067\cdot\text{bty}\_\text{avg}
+\end{aligned}
+$$
+
+Recall the interpretation of the $b_1$ = `r b1` value of the fitted slope:
 
 > For every increase of one unit in beauty rating, there is an associated increase, on average, of `r b1` units of evaluation score.
 
-Thus, the slope value quantifies the relationship between the `y` variable of `score` and the `x` variable of `bty_avg` as a single statistic/point estimate from our sample of student evaluations.
+Thus, the slope value quantifies the relationship between the `y` variable of `score` and the `x` variable of `bty_avg`. We also discussed the intercept value of $b_0$ = `r get_regression_table(score_model) %>% filter(term == "intercept") %>% pull(estimate)` and its lack of practical interpretation since the range of possible beauty scores does not include 0. 
 
-We also discussed the intercept value of $b_0$ = `r get_regression_table(score_model) %>% filter(term == "intercept") %>% pull(estimate)` and its lack of practical interpretation since the range of possible beauty scores does not include 0. Let's now shift to focus on the remaining columns of `std_error`, `statistic`, `p_value`, and the two columns related to confidence intervals (`lower_ci` and `upper_ci`) that were not discussed in Chapter \@ref(regression). Given we've just mentioned the lack of interpretation for the intercept value, we'll focus on the second row of the table corresponding to the slope of the regression equation.
+
+### Sampling scenario
+
+Now let's view the instructors for these `r nrow(evals_ch6)` courses in as a representative sample from a greater population as we defined in Section \@ref(terminology-and-notation). Perhaps these instructors can be viewed as a representative sample of all instructors in the University of Texas system, not just UT Austin? Or perhaps all Texas university and college level instructors? Or all instructors in the United States? For our purposes, since these data were collected between 2000-2002, we'll view the `evals_ch6` as a representative sample of courses between 1995 and 2002.
+
+Recall our sampling scenarios in Table \@ref(tab:summarytable-ch8). We now cover the final two scenarios: regression slopes and regression intercepts. 
+
+```{r summarytable-ch11, echo=FALSE, message=FALSE}
+# The following Google Doc is published to CSV and loaded below using read_csv() below:
+# https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
+
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+  read_csv(na = "") %>% 
+  filter(Scenario %in% c(1:6)) %>% 
+  kable(
+    caption = "\\label{tab:summarytable-ch9}Scenarios of sampling for inference", 
+    booktabs = TRUE,
+    escape = FALSE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position")) %>%
+  column_spec(1, width = "0.5in") %>% 
+  column_spec(2, width = "0.7in") %>%
+  column_spec(3, width = "1in") %>%
+  column_spec(4, width = "1.1in") %>% 
+  column_spec(5, width = "1in")
+```
+
+Thus we can view our fitted slope $b_1$ = `r b1` as a point estimate of a population slope $\beta_1$, in other words the slope quantifying the relationship between teaching `score` and beauty average `bty_avg` for *all* instructors in our population. Similarly, we can view our fitted intercept $b_0$ = `r b0` as a point estimate of a population intercept $\beta_0$. Putting these two together, we can view the equation of the fitted line $\widehat{y}$ = $b_0 + b_1 \cdot x$ = $3.880 + 0.067 \cdot \text{bty}\_\text{avg}$ as an estimate of a population line $y = \beta_0 + \beta_1 \cdot x$.
+
+Lastly, since we are now viewing our fitted slope $b_1$ and fitted intercept $b_0$ as estimates based on a sample, these estimates will be subject to *sampling variability* as we've seen numerous times throughout this book. In other words, if we collected new sample of data on a different set of $n$ = 463 courses and their instructors, the new fitted slope $b_1$ will very likely differ from `r b1`. The same goes for the new fitted intercept $b_0$. 
+
+But by how much will they differ? In other words, by how much will these estimates *vary*? This is where the knowledge about sampling from Chapter \@ref(sampling), confidence intervals from Chapter \@ref(confidence-intervals), and hypothesis tests from Chapter \@ref(hypothesis-testing) will serve us well!
+
+
+
+***
+
+
+
+## Interpretation of regression table results {#regression-interp}
+
+In Chapter \@ref(regression) we focused on the left-most column of this resulting summary of `score_model` using `get_regression_table()`. 
+
+Let's now shift to focus on the remaining columns of `std_error`, `statistic`, `p_value`, and the two columns related to confidence intervals (`lower_ci` and `upper_ci`) that were not discussed in Chapter \@ref(regression). Given we've just mentioned the lack of interpretation for the intercept value, we'll focus on the second row of the table corresponding to the slope of the regression equation.
 
 ### Standard error
 
