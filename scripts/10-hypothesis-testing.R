@@ -295,7 +295,7 @@ se_ci
 
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE, echo=FALSE----------------------------------------------
 ## tibble(
 ##   verdict = c("Not guilty verdict", "Guilty verdict"),
 ##   `Truly not guilty` = c("Correct", "Type I error"),
@@ -317,7 +317,7 @@ se_ci
 knitr::include_graphics("images/gt_error_table.png")
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE, echo=FALSE----------------------------------------------
 ## tibble(
 ##   Decision = c("Fail to reject H0", "Reject H0"),
 ##   `H0 true` = c("Correct", "Type I error"),

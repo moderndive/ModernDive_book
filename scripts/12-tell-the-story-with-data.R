@@ -71,18 +71,18 @@ glimpse(house_prices)
 ##   geom_bar() +
 ##   labs(x = "condition", title = "House condition")
 
-## ----house-prices-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Exploratory visualizations of Seattle house prices data", fig.width=16/2, fig.height=9/2.5----
+## ----house-prices-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Exploratory visualizations of Seattle house prices data.", fig.width=16/2, fig.height=9*2/3----
 library(patchwork)
 p1 <- ggplot(house_prices, aes(x = price)) +
   geom_histogram(color = "white") +
-  labs(x = "price (USD)", title = "House price")
+  labs(x = "price (USD)", title = "House price") 
 p2 <- ggplot(house_prices, aes(x = sqft_living)) +
   geom_histogram(color = "white") +
   labs(x = "living space (square feet)", title = "House size")
 p3 <- ggplot(house_prices, aes(x = condition)) +
   geom_bar() +
   labs(x = "condition", title = "House condition")
-p1 + p2 + p3
+p1 + p2 + p3 + plot_layout(ncol = 2)
 
 
 ## ------------------------------------------------------------------------

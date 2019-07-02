@@ -1033,19 +1033,18 @@ se_boot <- bootstrap_distribution %>%
 
 
 ## ----side-by-side, fig.height=7, fig.cap="Comparing the sampling and bootstrap distributions of p-hat", echo=FALSE----
-x_lim <- seq(from = 0.15, to = 0.65, by = 0.05)
-y_lim <- c(0, 350)
 p_samp <- ggplot(sampling_distribution, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, fill = "salmon", color = "white") +
-  coord_cartesian(xlim = x_lim, ylim = y_lim) +
   labs(x = "", title = "Sampling distribution") +
-  geom_vline(xintercept = p_red, size = 1, col = "red")
+  geom_vline(xintercept = p_red, size = 1, col = "red") +
+  scale_x_continuous(limits = c(0.15, 0.65), breaks = seq(from = 0.15, to = 0.65, by = 0.1)) + 
+  scale_y_continuous(limits = c(0, 350), breaks = seq(from = 0, to = 400, by = 100))
 p_boot <- ggplot(bootstrap_distribution, aes(x = stat)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, fill = "blue", color = "white") + 
-  coord_cartesian(xlim = x_lim, ylim = y_lim) +
   labs(x = "Proportion of 50 balls that were red", title = "Bootstrap distribution") +
-  geom_vline(xintercept = p_red, size = 1, col = "red") +
-  geom_vline(xintercept = 0.42, size = 1, linetype = "dashed")
+  geom_vline(xintercept = 0.42, size = 1, linetype = "dashed") +
+  scale_x_continuous(limits = c(0.15, 0.65), breaks = seq(from = 0.15, to = 0.65, by = 0.1)) + 
+  scale_y_continuous(limits = c(0, 350), breaks = seq(from = 0, to = 400, by = 100))
 p_samp + p_boot + plot_layout(ncol = 1, heights = c(1, 1))
 
 
