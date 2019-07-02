@@ -301,7 +301,7 @@ $$\text{SE}_{b_1} = \dfrac{\dfrac{s_y}{s_x} \cdot \sqrt{1-r^2}}{\sqrt{n-2}}$$
 
 As with many formulas in statistics, there's a lot going on here so let's first break down what each symbol represents: 1) $s_x$ and $s_y$ are the sample standard deviations for the explanatory variable `bty_avg` and the  response variable `score` respectively. 2) $r$ is the sample correlation coefficient between `score` and `bty_avg`. This was computed as `r cor(evals_ch6$score, evals_ch6$bty_avg) %>% round(3)` in Chapter \@ref(regression). 3) $n$ is the number of pairs of points in the `evals_ch6` data frame, here 463.
 
-To put the relationship into words, the standard error of $b_1$ depends on the relationship between how the response variable varies and the explanatory variable varies in the $s_y / s_x$ term. Next it looks into the relationship of how the two variables relate to each other in the $\sqrt{1-r^2}$ term. Lastly, the standard error depends on the "sample size", which here corresponds to how many observations are in the data set.
+To put the relationship into words, the standard error of $b_1$ depends on the relationship between how the response variable varies and the explanatory variable varies in the $s_y / s_x$ term. Next it looks into the relationship of how the two variables relate to each other in the $\sqrt{1-r^2}$ term. 
 
 However, the most important observation to make in the above formula is that there is a $n - 2$ in the denominator. In other words, as the sample size $n$ increases, the standard error $\text{SE}_{b_1}$ decreases. Just as we demonstrated in Section \@ref(moral-of-the-story) when we used shovels with $n$ = 25, 50, and 100, the amount of sample-to-sample variation in the fitted slope $b_1$ will depend on the sample size $n$. In particular, as the sample size increases, the sampling/bootstrap distribution narrows i.e. the standard error $\text{SE}_{b_1}$ goes down. Hence our estimates $b_1$ of the true population slope $\beta_1$ get more and more precise. 
 
@@ -333,104 +333,100 @@ In our opinion, a large benefit of simulation-based methods over theory-based is
 
 ## Conditions for inference for regression {#regression-conditions}
 
-In order for inference to be valid with linear regression, we must check for four conditions to be met. Note the first four letters of the conditions as highlighted in bold below. This can serve as a nice reminder of what to check whenever linear regression is performed. \index{regression!conditions for inference (LINE)}
+Similarly to Section \@ref(se-method) where we could only use the standard-error based method for constructing confidence intervals if the bootstrap distribution was bell shaped, there are certain conditions that need to be met in order for our hypothesis tests and confidence intervals we described in Section \@ref(regression-interp) above to have valid meaning. These conditions must be met for the underlying mathematical and probability theory to work. 
 
-- **L**inearity of relationship between variables
-- **I**ndependence of residuals
-- **N**ormality of residuals
-- **E**quality of variance
+For inference for regression, there are four conditions that need to be met. Note the first four letters of these conditions as highlighted in bold below: **LINE**. This can serve as a nice reminder of what to check whenever linear regression is performed. \index{regression!conditions for inference (LINE)}
 
-These conditions can mostly be checked via appropriate data visualizations. There are statistical tests that can also be done to further check for this, but here we will focus on the simpler style of evaluating plots.
+1. **L**inearity of relationship between variables
+1. **I**ndependence of residuals
+1. **N**ormality of residuals
+1. **E**quality of variance
 
-### Linearity of relationship
+Conditions **L**, **N**, and **E** can be verified through what is known as a **residual analysis**. Condition **I** can only be verified through an understanding of how the data was collected. Before we start verifying these conditions, let's go over a refresher of the concept of residuals. 
 
-We've already checked for this with our original scatterplot in Figure \@ref(fig:regline). While the plot didn't show a clear example of a linear relationship in that there was some clear deviation from a regression line fit throughout the plot, it also didn't show a different kind of non-linear relationship either. Let's dig further into the other conditions to see how they stack up.
+### Residuals refresher
 
-### Independence of residuals
+Recall our definition of a residual from Section \@ref(model1points): it is the observed value minus the fitted value $y - \widehat{y}$. Recall that residuals can be thought of as the error or the "lack-of-fit" between the observed value $y$ and the fitted value $\widehat{y}$ on the blue regression line in Figure \@ref(fig:regline). We illustrate one particular residual out of 463 in Figure \@ref(fig:residual-example).
 
-The next three conditions all refer to investigation of the residuals.  Investigating any such patterns is known as *residual analysis*. Recall that residuals can be thought of as the error or the "lack-of-fit" between the observed value $y$ and the fitted value $\widehat{y}$ on the blue regression line in Figure \@ref(fig:regline). Ideally when we fit a regression model, we'd like there to be *no systematic pattern* to these residuals. We'll be more specific as to what we mean by *no systematic pattern* when we see Figure \@ref(fig:regline), but let's keep this notion imprecise for now. 
-
-We'll perform our residual analysis in two ways:
-
-1. Creating a scatterplot with the residuals on the $y$-axis and the original explanatory variable $x$ on the $x$-axis.
-1. Creating a histogram of the residuals, thereby showing the *distribution* of the residuals.
-
-First, recall in Figure \@ref(fig:numxplot4) in Chapter \@ref(regression) we created a scatterplot. This is again shown below and has the following characteristics:
-
-* on the vertical axis we had the teaching score $y$ and
-* on the horizontal axis we had the beauty score $x$.
-
-```{r numxplot-ch11, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual"}
-best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
-  geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score",
-       title = "Relationship of teaching and beauty scores") +
-  geom_smooth(method = "lm", se = FALSE)
-best_fit_plot
-```
-
-
-Instead, in Figure \@ref(fig:numxplot6) below, let's create a scatterplot where
-
-* On the vertical axis we have the residual $y-\widehat{y}$ instead
-* On the horizontal axis we have the beauty score $x$ as before:
-
-```{r, eval=TRUE, echo=TRUE}
-# Get data
-evals_ch6 <- evals %>%
-  select(score, bty_avg, age)
-# Fit regression model:
-score_model <- lm(score ~ bty_avg, data = evals_ch6)
-# Get regression table:
-get_regression_table(score_model)
-# Get regression points
-regression_points <- get_regression_points(score_model)
-```
-
-```{r, echo=FALSE}
+```{r residual-example, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual"}
+# Pick out one particular point to drill down on
 index <- which(evals_ch6$bty_avg == 7.333 & evals_ch6$score == 4.9)
-target_point <- score_model %>% 
-  get_regression_points() %>% 
+target_point <- score_model %>%
+  get_regression_points() %>%
   slice(index)
 x <- target_point$bty_avg
 y <- target_point$score
 y_hat <- target_point$score_hat
 resid <- target_point$residual
-```
 
-
-```{r, eval=FALSE, echo=TRUE}
-ggplot(regression_points, aes(x = bty_avg, y = residual)) +
+# Plot residual
+best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_point() +
-  labs(x = "Beauty Score", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue", size = 1)
-```
-```{r numxplot6, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score"}
-ggplot(regression_points, aes(x = bty_avg, y = residual)) +
-  geom_point() +
-  labs(x = "Beauty Score", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue", size = 1) +
-  annotate("point", x = x, y = resid, col = "red", size = 3) +
-  annotate("point", x = x, y = 0, col = "red", shape = 15, size = 3) +
-  annotate("segment", x = x, xend = x, y = resid, yend = 0, color = "blue",
+  labs(x = "Beauty Score", y = "Teaching Score",
+       title = "Relationship of teaching and beauty scores") +
+  geom_smooth(method = "lm", se = FALSE) +
+  annotate("point", x = x, y = y, col = "red", size = 3) +
+  annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 3) +
+  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
+best_fit_plot
 ```
 
-You can think of Figure \@ref(fig:numxplot6) as Figure \@ref(fig:numxplot-ch11) but with the blue line flattened out to $y=0$. Does it seem like there is *no systematic pattern* to the residuals? This question is rather qualitative and subjective in nature, thus different people may respond with different answers to the above question. However, it can be argued that there isn't a *drastic* pattern in the residuals.
+Furthermore, we can automate the calculation of all $n$ = 463 residuals by applying the `get_regression_points()` function to `score_model`, which has our regression model saved in it. Observe how the resuling values of `residual` are roughly equal to `score - score_hat` (there is a slight difference due to rounding error).
 
-We do have extra information here that may lead us to question the independence of residuals further: The same professors exist multiple times in the data set in that multiple rows of the data set correspond to some of the same professors. Different courses that the professors taught were included in the analyses. Therefore, the residual in one observation will have a dependent relationship with another row breaking the independence assumption of the residuals.
+```{r, eval=TRUE, echo=TRUE}
+# Fit regression model:
+score_model <- lm(score ~ bty_avg, data = evals_ch6)
+# Get regression points:
+regression_points <- get_regression_points(score_model)
+regression_points
+```
 
-**Note:** As is often the case with regression analysis in the real-world, it can be difficult for the assumptions to be met exactly. We as authors advocate for clarity of interpretation and letting the stakeholders of analyses know about any shortcomings of a model as needed. Here as a preliminary analysis teaching the topics, we will continue on with testing the other conditions. A more valid and precise analysis would incorporate these dependencies between rows and instructors. This topic can get to the advanced stages quickly, so we have decided to omit any further discussion here.
+Ideally when we fit a regression model, we'd like there to be *no systematic pattern* to these residuals. We'll be more specific as to what we mean by *no systematic pattern* when we see Figure \@ref(fig:residual-example), but let's keep this notion imprecise for now. This residual analysis to verify conditions 1, 3, and 4 can be performed via appropriate data visualizations. While there are more sophisticated statistical approaches that can also be done, we'll will focus on the simpler approaches of evaluating plots.
+
+### Linearity of relationship
+
+The first condition is that the relationship between the outcome variable $y$ and the explanatory variable $x$ must be **L**inear. Recall the scatterplot in Figure \@ref(fig:regline). We had the explanatory variable beauty score $x$ on the x-axis and the outcome variable teaching score $y$ on the y-axis. Would you say that the relationship between $x$ and $y$ is linear? It's hard to say, because of the scatter of the points about the line. Recall that the correlation coefficient between teaching and beauty score was `r cor_ch6`, indicating a weakly positive linear relationship. In the authors' opinions, we feel this relationship is "linear enough".
+
+Let's present an example where the relationship between $x$ and $y$ is very clearly not linear in Figure \@ref(fig:non-linear). In this case, the points clearly do not form a line, but rather a U-shaped polynomial line. In this case, any inference for regression would not be valid. 
+
+```{r non-linear, fig.cap="Example of clearly non-linear relationship.", echo=FALSE}
+set.seed(76)
+evals_ch6 %>% 
+  mutate(
+    x = bty_avg,
+    y = (x-3)*(x-6) + rnorm(n(), 0, 0.75)
+    ) %>% 
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Teaching Score") +  
+  geom_smooth(method = "lm", se = FALSE) +
+  expand_limits(y = 10)
+```
+
+### Independence of residuals
+
+The second condition is that the residuals must be **I**ndependent. In other words, the different observations in our data must be independent of one another.
+
+For our UT Austin data, while there is data on 463 courses, there are only 94 unique instructors. In other words, the same professor can be included more than once in our data. The original `evals` data frame that we used to construct the `evals_ch6` data frame has a variable `prof_ID` of an anonymized identifation variable for the professor:
+
+```{r}
+evals %>% 
+  select(ID, prof_ID, score, bty_avg)
+```
+
+For example, the professor with ID equal to 1 taught the first 4 courses in the data, the professor with ID equal to 2 taught the next 3, and so on. Given that the same professor taught the first four courses, it is reasonable to expect that the teaching `score` for these courses are related. If a professor gets a high `score` in one classe, chances are fairly good they'll get a high `score` in another. This dataset thus provides different information than if we had 463 unique instructors teaching the 463 courses.
+
+In this case we say there exists *dependence* between observations. The first four courses taught by professor 1 are dependent, the next 3 courses taught by professor 2 are related, and so on. Any proper analysis of this data needs to take into account that we have *repeated measures* for the same profs.
+
+So in this case, the independence conditions is not met. What does this mean for our analysis? We'll address this in Subsection \@ref(what-is-the-conclusion) below, after we check the remaining two conditions.
 
 
 ### Normality of residuals
 
-Let's now get a little more precise in our definition of *no systematic pattern* in the residuals. Ideally, the residuals should behave *randomly*. In addition,
+Let's now get a little more precise in our definition of *no systematic pattern* in the residuals. The third condition is that the residuals should follow a **N**ormal distribution. Furthermore, the center of this distribution should be 0. In other words, sometimes the regression model will make positive errors: $y - \widehat{y} > 0$. Other times, the regression model will make equally negative errors: $y - \widehat{y} < 0$. However, *on average* the errors should be 0. 
 
-1. the residuals should be on average 0. In other words, sometimes the regression model will make a positive error in that $y - \widehat{y} > 0$, sometimes the regression model will make a negative error in that $y - \widehat{y} < 0$, but *on average* the error is 0. 
-1. the residuals should have the characteristic normal shape.
-
-The simplest way to check for this condition of the normality of the residuals is to look at a histogram.
+The simplest way to check for this condition of the normality of the residuals is to look at a histogram, which we visualize in Figure \@ref(fig:model1residualshist).
 
 ```{r, eval=FALSE, echo=TRUE}
 ggplot(regression_points, aes(x = residual)) +
@@ -443,20 +439,21 @@ ggplot(regression_points, aes(x = residual)) +
   labs(x = "Residual")
 ```
 
-This histogram seems to indicate that we have more positive residuals than negative. Since the residual $y-\widehat{y}$ is positive when $y > \widehat{y}$, it seems our fitted teaching score from the regression model tends to *underestimate* the true teaching score. This histogram has a slight *left-skew* in that there is a long tail on the left. Another way to say this is this data exhibits a *negative skew*. Is this a problem? Again, there is a certain amount of subjectivity in the response. In the authors' opinion, while there is a slight skew/pattern to the residuals, it isn't a large concern. On the other hand, others might disagree with our assessment. Here are examples of an ideal and less than ideal pattern to the residuals when viewed in a histogram:
+This histogram seems to indicate that we have more positive residuals than negative. Since the residual $y-\widehat{y}$ is positive when $y > \widehat{y}$, it seems our regression model's fitted teaching scores $\widehat{y}$ tend to *underestimate* the true teaching scores $y$. This histogram has a slight *left-skew* in that there is a tail on the left. Another way to say this is this data exhibits a *negative skew*. Is this a problem? Again, there is a certain amount of subjectivity in the response. In the authors' opinion, while there is a slight skew or pattern to the residuals, it isn't drastic. On the other hand, others might disagree with our assessment. 
 
-```{r numxplot9, echo=FALSE, warning=FALSE, fig.cap="Examples of ideal and less than ideal residual patterns"}
-resid_ex <- evals_ch6
-resid_ex$`Ideal` <- rnorm(nrow(resid_ex), 0, sd = sd(regression_points$residual))
-resid_ex$`Less than ideal` <-
-  rnorm(nrow(resid_ex), 0, sd = sd(regression_points$residual))^2
-resid_ex$`Less than ideal` <- resid_ex$`Less than ideal` - mean(resid_ex$`Less than ideal` )
+Let's present an example where the residuals clearly follow a normal distribution and an example where they don't in Figure \@ref(fig:normal-residuals). In this case of the model yielding the clearly non-normal residuals on the right, any inference for regression would not be valid. 
 
-resid_ex <- resid_ex %>%
-  select(bty_avg, `Ideal`, `Less than ideal`) %>%
-  gather(type, eps, -bty_avg)
-
-ggplot(resid_ex, aes(x = eps)) +
+```{r normal-residuals, echo=FALSE, warning=FALSE, fig.cap="Example of clearly normal and clearly non-normal residuals."}
+sigma <- sd(regression_points$residual)
+evals_ch6 %>% 
+  mutate(
+    `Clearly normal` = rnorm(n = n(), 0, sd = sigma),
+    `Clearly not normal` = rnorm(n = n(), mean = 0, sd = sigma)^2,
+    `Clearly not normal` = `Clearly not normal` - mean(`Clearly not normal`)
+  ) %>%
+  select(bty_avg, `Clearly normal`, `Clearly not normal`) %>%
+  gather(type, eps, -bty_avg) %>% 
+  ggplot(aes(x = eps)) +
   geom_histogram(binwidth = 0.25, color = "white") +
   labs(x = "Residual") +
   facet_wrap( ~ type, scales = "free")
@@ -464,37 +461,36 @@ ggplot(resid_ex, aes(x = eps)) +
 
 ### Equality of variance
 
-Lastly, to test for the **E** part of **LINE** in our conditions check, the value and spread of the residuals should not depend on the value of $x$. 
+Continuing with our ideal that there be *no systematic pattern* to the residuals, the fourth and final condition is that the residuals should exhibit **E**qual variance for across all values of $x$. In other words, the value and spread of the residuals should not depend on the value of $x$.  
 
-In Figure \@ref(fig:numxplot7) below, we display some hypothetical examples where there are *drastic* patterns to the residuals. In Example 1, the value of the residual seems to depend on $x$: the residuals tend to be positive for small and large values of $x$ in this range, whereas values of $x$ more in the middle tend to have negative residuals. In Example 2, while the residuals seem to be on average 0 for each value of $x$, the spread of the residuals varies for different values of $x$; this situation is known as \index{heteroskedasticity} *heteroskedasticity*. 
+First, recall the scatterplot in Figure \@ref(fig:regline). We had the explanatory variable beauty score $x$ on the x-axis and the outcome variable teaching score $y$ on the y-axis. Instead, let's create a scatterplot that has the same values on the x-axis, but now with the residual $y-\widehat{y}$ on the y-axis instead in Figure \@ref(fig:numxplot6) below.
 
-```{r numxplot7, echo=FALSE, warning=FALSE, fig.cap="Examples of less than ideal residual patterns"}
-resid_ex <- evals_ch6
-resid_ex$ex_1 <- ((evals_ch6$bty_avg - 5) ^ 2 - 6 + rnorm(nrow(evals_ch6), 0, 0.5)) * 0.4
-resid_ex$ex_2 <- (rnorm(nrow(evals_ch6), 0, 0.075 * evals_ch6$bty_avg ^ 2)) * 0.4
-  
-resid_ex <- resid_ex %>%
-  select(bty_avg, ex_1, ex_2) %>%
-  gather(type, eps, -bty_avg) %>% 
-  mutate(type = ifelse(type == "ex_1", "Example 1", "Example 2"))
-
-ggplot(resid_ex, aes(x = bty_avg, y = eps)) +
+```{r, eval=FALSE, echo=TRUE}
+ggplot(regression_points, aes(x = bty_avg, y = residual)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue", size = 1) +
-  facet_wrap(~type)
+  geom_hline(yintercept = 0, col = "blue", size = 1)
 ```
-
-Do we see this kind of behavior in our student evaluation versus beauty score example? Let's look at the plot again in Figure \@ref(fig:numxplot6) removing the highlighting of a single residual.
-
-```{r numxplot6-again, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score"}
+```{r numxplot6, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score"}
 ggplot(regression_points, aes(x = bty_avg, y = residual)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue", size = 1)
 ```
 
-As we look at this plot, we don't see the noticeable patterns shown in Figure \@ref(fig:numxplot7). It doesn't have the fan-like pattern of Example 2 or the bowl-like pattern of Example 1. The residuals are pretty much scattered in similar ways as we look from small beauty score values on the left to larger beauty score values on the right.
+You can think of this plot as a version of the plot with the regression line in blue Figure \@ref(fig:regline), but with the regression line flattened out to $y=0$. Looking at this plot, would you say that the spread of the residuals around the blue line is constant? This question is rather qualitative and subjective in nature, thus different people may respond with different answers to the above question. For example, some people might say that there is slightly more variation in the residuals for smaller values of $x$ than with for higher ones. However, it can be argued that there isn't a *drastic* inequality .
+
+Let's present an example where the residuals clearly do not have equal variance for all values of $x$ in Figure \@ref(fig:equal-variance-residuals). The spread of the residuals increases as the value of $x$ increases; this situation is known as \index{heteroskedasticity} *heteroskedasticity*. In this case of the model yielding these residuals on the right, any inference for regression would not be valid. 
+
+```{r equal-variance-residuals, echo=FALSE, warning=FALSE, fig.cap="Example of clearly non-equal variance."}
+evals_ch6 %>% 
+  mutate(eps = (rnorm(n(), 0, 0.075 * bty_avg ^ 2)) * 0.4) %>% 
+  ggplot(aes(x = bty_avg, y = eps)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Residual") +
+  geom_hline(yintercept = 0, col = "blue", size = 1)
+```
+
 
 ```{block, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -505,9 +501,24 @@ As we look at this plot, we don't see the noticeable patterns shown in Figure \@
 ```{block, type='learncheck', purl=FALSE}
 ```
 
-### Summary
+### What's the conclusion? {#what-is-the-conclusion}
 
-The conditions for inference in regression problems are a key part of regression analysis that are of vital importance to the processes of confidence intervals and hypothesis tests. We also saw that there is a level of subjectivity in evaluating plots so you may be asking "What do I do when conditions aren't clearly met?". We as authors are of the opinion that discussion of these shortcomings goes a long way in helping others to understand your analyses. You won't always have ideal results but regression is a powerful technique that can do some wondrous things with data. But if conditions are violated badly, regression will just as much put you in the "garbage in, garbage out" situation. We recommend being vigilant about checking these conditions and you'll get better with practice on how to discuss the results of the analyses.
+ Let's list our four conditions again and indicate whether or not they were satisfied in our analysis:
+
+1. **L**inearity of relationship between variables: Yes
+1. **I**ndependence of residuals: No
+1. **N**ormality of residuals: Somewhat
+1. **E**quality of variance: Yes
+
+So what does this mean for the results of our confidence intervals and hypothesis tests in Section \@ref(regression-interp)? Our model of `score ~ bty_avg` should be viewed as a preliminary analysis that needs to be improved on. 
+
+First, the **I**ndependence condition. The fact that there exist dependencies between different rows in `evals_ch6` must be addressed. In more advanced statistics courses, you'll learn how incorporate the fact that there are 94 instructors teaching multiple courses. One such technique is called *hierarchical AKA multilevel modeling*.
+
+Second, when conditions **L**, **N**, **E** are not met, it often means there is a shortcoming in our model. For example, is using only a single explanatory variable beauty score sufficient? Should we be including more information via a multiple regression model as we did in Chapter \@ref(multiple-regression)? Or perhaps a more sophisticated form of regression modeling, like **logistic** or **Poisson** regression is necessary?
+
+In our case, the best we can do is view the result suggested by our confidence intervals and hypothesis testing that there is in fact a relationship between teaching and beauty scores as preliminary. However further investigation is warranted, in particular by improving the model so that the 4 conditions are met. When the 4 conditions are at least roughly met, then we can put more faith into our confidence intervals and p-values. 
+
+The conditions for inference in regression problems are a key part of regression analysis that are of vital importance to the processes of constructing confidence intervals and conducting hypothesis tests. However, it is often the case with regression analysis in the real-world that not all the conditions are completely. Furthermore, as you saw in verifying there is a level of subjectivity in the residual analyses to verfify the **L**, **N**, and **E** conditions. So what can you do? We as authors advocate for transparency in communicating all results and letting the stakeholders of analyses know about any shortcomings of a model as needed or if the model is "good enough."
 
 
 
@@ -516,17 +527,6 @@ The conditions for inference in regression problems are a key part of regression
 
 
 ## Simulation-based inference for regression {#infer-regression}
-
-### Formula for the standard error of the slope statistic
-
-The discussion of the regression table results in Section \@ref(regression-interp) were done using the traditional theory-based analyses and a $t$-statistic. There are formulas to compute the standard error as well as given in the table there. Let's review that table again here:
-
-```{r}
-# Fit regression model:
-score_model <- lm(score ~ bty_avg, data = evals_ch6)
-# Get regression table:
-get_regression_table(score_model)
-```
 
 
 
@@ -692,11 +692,17 @@ se_slope_ci
 
 With the bootstrap distribution being close to symmetric, it makes sense that the two resulting confidence intervals are similar. Note that both are a bit wider than the $(`r lower1`, `r upper1`)$ interval that theory would have predicted.
 
-<!-- Albert will add content here.
+
+
+***
+
+
 
 ## Conclusion
 
+### FIX: SUmmary
 
+<!--
 ### Relating regression to other methods
 
 To conclude this chapter, we'll be investigating how regression relates to two different statistical techniques. One of them was covered already in this book, the difference in sample means, and the other is new to the text but is related, ANOVA. We'll see how both can be represented in the regression framework. The hope is that this closing section helps you to tie together many of the concepts you've seen in the Data Modeling and Statistical Inference parts of this book.
@@ -704,8 +710,8 @@ To conclude this chapter, we'll be investigating how regression relates to two d
 #### Two sample difference in means
 
 #### ANOVA
-
 -->
+
 
 ### Additional resources
 
@@ -713,4 +719,4 @@ An R script file of all R code used in this chapter is available [here](scripts/
 
 ### What's to come
 
-You've now concluded the last major part of the book on "Statistical Inference via infer." The closing chapter concludes with a case study on house prices in Seattle, Washington in the US. You'll see there how the principles in this book can apply to help you be a great storyteller with data!
+You've now concluded the last major part of the book on "Statistical Inference via `infer`." The closing chapter concludes with a case study on house prices in Seattle, Washington in the US. You'll see there how the principles in this book can apply to help you be a great storyteller with data!
