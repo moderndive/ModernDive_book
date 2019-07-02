@@ -61,17 +61,12 @@ list(promotions_sample, promotions_sample_shuffled) %>%
 
 
 
-## ---- echo=FALSE---------------------------------------------------------
-set.seed(2019)
-one_permute <- promotions %>%
-  mutate(gender = sample(gender))
-
 ## ------------------------------------------------------------------------
-one_permute
+promotions_shuffled
 
 
 ## ---- eval = FALSE-------------------------------------------------------
-## ggplot(one_permute, aes(x = gender, fill = decision)) +
+## ggplot(promotions_shuffled, aes(x = gender, fill = decision)) +
 ##   geom_bar() +
 ##   labs(x = "Gender of resume name")
 
@@ -81,7 +76,7 @@ height1 <- promotions %>%
   summarize(n = n()) %>% 
   pull(n) %>% 
   max()
-height2 <- one_permute %>% 
+height2 <- promotions_shuffled %>% 
   group_by(gender, decision) %>% 
   summarize(n = n()) %>% 
   pull(n) %>% 
@@ -93,7 +88,7 @@ plot1 <- ggplot(promotions, aes(x = gender, fill = decision)) +
   labs(x = "Gender of resume name", title = "Original") +
   theme(legend.position = "none") +
   coord_cartesian(ylim= c(0, height))
-plot2 <- ggplot(one_permute, aes(x = gender, fill = decision)) +
+plot2 <- ggplot(promotions_shuffled, aes(x = gender, fill = decision)) +
   geom_bar() +
   labs(x = "Gender of resume name", y ="", title = "Shuffled") +
   coord_cartesian(ylim= c(0, height))
@@ -101,25 +96,25 @@ plot1 + plot2
 
 
 ## ------------------------------------------------------------------------
-one_permute %>% 
+promotions_shuffled %>% 
   group_by(gender, decision) %>% 
   summarize(n = n())
 
 ## ---- echo = FALSE-------------------------------------------------------
 # male stats
-n_men_promoted <- one_permute %>% 
+n_men_promoted <- promotions_shuffled %>% 
   filter(decision == "promoted", gender == "male") %>% 
   nrow()
-n_men_not_promoted <- one_permute %>% 
+n_men_not_promoted <- promotions_shuffled %>% 
   filter(decision == "not", gender == "male") %>% 
   nrow()
 prop_men_promoted <- n_men_promoted/(n_men_promoted + n_men_not_promoted)
 
 # female stats  
-n_women_promoted <- one_permute %>% 
+n_women_promoted <- promotions_shuffled %>% 
   filter(decision == "promoted", gender == "female") %>% 
   nrow()
-n_women_not_promoted <- one_permute %>% 
+n_women_not_promoted <- promotions_shuffled %>% 
   filter(decision == "not", gender == "female") %>% 
   nrow()
 prop_women_promoted <- n_women_promoted/(n_women_promoted + n_women_not_promoted)
