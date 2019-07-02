@@ -514,7 +514,7 @@ So what does this mean for the results of our confidence intervals and hypothesi
 
 First, the **I**ndependence condition. The fact that there exist dependencies between different rows in `evals_ch6` must be addressed. In more advanced statistics courses, you'll learn how incorporate the fact that there are 94 instructors teaching multiple courses. One such technique is called *hierarchical AKA multilevel modeling*.
 
-Second, when conditions **L**, **N**, **E** are not met, it often means there is a shortcoming in our model. For example, is using only a single explanatory variable beauty score sufficient? Should we be including more information via a multiple regression model as we did in Chapter \@ref(multiple-regression)? Or perhaps a more sophisticated form of regression modeling, like **logistic** or **Poisson** regression is necessary?
+Second, when conditions **L**, **N**, **E** are not met, it often means there is a shortcoming in our model. For example, is using only a single explanatory variable beauty score sufficient? Should we be including more information via a multiple regression model as we did in Chapter \@ref(multiple-regression)? Or perhaps a more sophisticated form of regression modeling, like *logistic* or *Poisson* regression is necessary?
 
 In our case, the best we can do is view the result suggested by our confidence intervals and hypothesis testing that there is in fact a relationship between teaching and beauty scores as preliminary. However further investigation is warranted, in particular by improving the model so that the 4 conditions are met. When the 4 conditions are at least roughly met, then we can put more faith into our confidence intervals and p-values. 
 
@@ -528,102 +528,180 @@ The conditions for inference in regression problems are a key part of regression
 
 ## Simulation-based inference for regression {#infer-regression}
 
+Recall in Section \@ref(regression-table-computation) when we interpreted all the third through seventh colums if the regression table in Table \@ref(tab:regtable-11), we stated in Subsection \@ref(regression-table-computation) that R doesn't do simulations to compute these values. Rather R uses theory-based methods that involve mathematical formulas. 
 
+In this section, we'll use the simulation-based methods you previously learned in Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing) to replicate the above results. In particular, we'll use the `infer` package workflow to
 
-### Hypothesis testing using infer
+* Construct a 95% confidence interval for the population slope $\beta_1$ using bootstrap resampling with replacement. We did this previously in Sections \@ref(bootstrap-process) with the `pennies` data and \@ref(case-study-two-prop-ci) with the `mythbusters_yawn` data.
+* Conduct a hypothesis test of $H_0: \beta_1 = 0$ vs $H_A: \beta_1 \neq 1$ using permutating/shuffling. We did this previously in Sections \@ref(ht-infer) with the `promotions` data and \@ref(ht-case-study) with the `movies_sample` IMDb data.
 
-We can also use the concept of permuting to determine the standard error of our null distribution and conduct a hypothesis test for a population slope. Let's see how the results above using the theoretical procedures on the student evaluations of faculty data compares to if we used the `infer` package procedures instead.  
+### Confidence interval for slope
 
-We'll begin in the basic regression setting to test to see if we have evidence that a statistically significant *positive* relationship exists between teaching and beauty scores for the University of Texas professors. As we did in Chapter \@ref(regression), teaching `score` will act as our outcome/response variable and `bty_avg` will be our explanatory variable. We will set up this hypothesis testing process as we have each before via the "There is Only One Test" diagram in Figure \@ref(fig:htdowney) using the `infer` package.
+We construct the bootstrap distribution for the fitted slope $b_1$ by following the steps below. We then use this bootstrap distribution to construct a 95% confidence interval for $\beta_1$. Remember that these denote a range of plausible values for an unknown true population slope $\beta_1$ quantifying the relationship between teaching score on beauty score.
 
-### Data
+1. `specify()` the variables of interest in `evals_ch6` with the formula: `score ~ bty_avg`.
+1. `generate()` replicates by using `bootstrap` resampling with replacement from the original sample of 463 courses. We generate `reps = 1000` such replicates.
+1. `calculate()` the summary statistic of interest: the fitted `slope` $b_1$
 
-Our data is stored in `evals` and we are focused on the measurements of the `score` and `bty_avg` variables there. Note that we don't choose a subset of variables here since we will `specify()` the variables of interest using `infer`.
-
-```{r}
-evals %>% 
-  specify(score ~ bty_avg)
-```
-
-### Test statistic $\delta$
-
-Our test statistic here is the sample slope coefficient that we denote with $b_1$.
-
-### Observed effect $\delta^*$
-
-We can use the `specify() %>% calculate()` shortcut here to determine the slope value seen in our observed data:
-
-```{r}
-slope_obs <- evals %>% 
-  specify(score ~ bty_avg) %>% 
-  calculate(stat = "slope")
-```
-
-The calculated slope value from our observed sample is $b_1 = `r pull(slope_obs)`$.
-
-### Model of $H_0$
-
-We are looking to see if a positive relationship exists so $H_A: \beta_1 > 0$.  Our null hypothesis is always in terms of equality so we have $H_0: \beta_1 = 0$. In other words, when we assume the null hypothesis is true, we are assuming there is NOT a linear relationship between teaching and beauty scores for University of Texas professors.
-
-### Simulated data
-
-Now to simulate the null hypothesis being true and recreate how our sample was created, we need to think about what it means for $\beta_1$ to be zero. If $\beta_1 = 0$, we said earlier that there is no relationship between the teaching and beauty scores. If there is no relationship, then any one of the teaching score values could have just as likely occurred with any of the other beauty score values instead of the one that it actually did fall with. We, therefore, have another example of permuting in our simulating of data under the null hypothesis.
-
-**Tactile simulation**
-
-We could use a deck of `r nrow(evals) * 2` note cards to create a tactile simulation of this permuting process. We would write the `r nrow(evals)` different values of beauty scores on each of the `r nrow(evals)` cards, one per card. We would then do the same thing for the `r nrow(evals)` teaching scores putting them on one per card.
-
-Next, we would lay out each of the `r nrow(evals)` beauty score cards and we would shuffle the teaching score deck. Then, after shuffling the deck well, we would disperse the cards one per each one of the beauty score cards. We would then enter these new values in for teaching score and compute a sample slope based on this permuting. We could repeat this process many times, keeping track of our sample slope after each shuffle.
-
-### Distribution of $\delta$ under $H_0$
-
-We can build our null distribution in much the same way we did in Chapter \@ref(hypothesis-testing) using the `generate()` and `calculate()` functions. Note also the addition of the `hypothesize()` function, which lets `generate()` know to perform the permuting instead of bootstrapping. 
+Here, the bootstrapping with replacement is done row-by-row. Thus, the orignal pairs of points `score` and `bty_avg` are linked together and may be repeated with each resample.
 
 ```{r eval=FALSE}
-null_slope_distn <- evals %>% 
-  specify(score ~ bty_avg) %>%
-  hypothesize(null = "independence") %>% 
-  generate(reps = 10000) %>% 
+bootstrap_distn_slope <- evals_ch6 %>% 
+  specify(formula = score ~ bty_avg) %>%
+  generate(reps = 1000, type = "bootstrap") %>% 
   calculate(stat = "slope")
 ```
-
 ```{r echo=FALSE}
-if(!file.exists("rds/null_slope_distn.rds")){
-  null_slope_distn <- evals %>% 
+if(!file.exists("rds/bootstrap_distn_slope.rds")){
+  set.seed(76)
+  bootstrap_distn_slope <- evals %>% 
+    specify(score ~ bty_avg) %>%
+    generate(reps = 1000, type = "bootstrap") %>% 
+    calculate(stat = "slope")
+  saveRDS(object = bootstrap_distn_slope, 
+           "rds/bootstrap_distn_slope.rds")
+} else {
+  bootstrap_distn_slope <- readRDS("rds/bootstrap_distn_slope.rds")
+}
+```
+```{r}
+bootstrap_distn_slope
+```
+
+Observe how we have 1000 values of the bootstrapped slope $b_1$. Let's visualize the resulting bootstrap distribution in Figure \@ref(bootstrap-distribution-slope). Recall from Section \@ref(bootstrap-vs-sampling) that shape of the bootstrap distribution of $b_1$ closely approximates the shape of the sampling distribution of $b_1$, in particular the spread. 
+
+```{r eval=FALSE}
+visualize(bootstrap_distn_slope)
+```
+```{r bootstrap-distribution-slope, echo=FALSE, fig.show='hold', fig.cap="Bootstrap distribution", purl=FALSE}
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+visualize(bootstrap_distn_slope) + 
+  ggtitle("Simulation-Based Bootstrap Distribution")
+```
+
+#### Percentile-method {-}
+
+First, let's compute the 95% confidence interval for $\beta_1$ using the percentile method, in other words by identifying the 2.5^th^ and 97.5^th^ percentiles which include the middle 95% of values. Recall that this method does not require the bootstrap distribution to be normally shaped. 
+
+```{r}
+percentile_ci <- bootstrap_distn_slope %>% 
+  get_confidence_interval(type = "percentile", level = 0.95)
+percentile_ci
+```
+
+The resulting percentile-based 95% confidence interval for $\beta_1$ of (`r percentile_ci[[1]]`, `r percentile_ci[[2]]`) is similar to the confidence interval in the regression Table \@ref(tab:regtable-11) of (`r lower1`, `r upper1`).
+
+#### Standard error method {-}
+
+Since the bootstrap distribution in Figure \@ref(bootstrap-distribution-slope) appears to be roughly bell-shaped, we can also construct a 95% confidence interval for $\beta_1$ using the standard error method. This necessitates the fitted slope $b_1$. While we saw in the regression table in Table \@ref(tab:regtable-11) that this was $b_1$ = `r b1`, we can also use the infer pipeline with the `generate()` step removed:
+
+```{r}
+observed_slope <- evals %>% 
+  specify(score ~ bty_avg) %>% 
+  calculate(stat = "slope")
+observed_slope
+```
+
+```{r}
+se_ci <- bootstrap_distn_slope %>% 
+  get_ci(level = 0.95, type = "se", point_estimate = observed_slope)
+se_ci
+```
+
+The resulting standard error-based 95% confidence interval for $\beta_1$ of (`r se_ci[["lower"]]`, `r se_ci[["upper"]]`) is however slightly different than the confidence interval in the regression Table \@ref(tab:regtable-11) of (`r lower1`, `r upper1`).
+
+#### Comparing all three {-}
+
+Let's compare all three confidence intervals in Figure \@ref(fig:bootstrap-distribution-slope-CI), where the percentile-based confidence interval is in red, the standard error based confidence interval is in blue, and the theory-based confidence interval from the regression table is in green. 
+
+```{r, eval = FALSE}
+visualize(bootstrap_distn_slope) + 
+  shade_confidence_interval(endpoints = percentile_ci, fill = NULL, 
+                            color = "red") + 
+  shade_confidence_interval(endpoints = se_ci, fill = NULL, 
+                            color = "blue") +
+  shade_confidence_interval(endpoints = c(0.035, 0.099), fill = NULL, 
+                            color = "darkgreen")
+```
+```{r bootstrap-distribution-slope-CI, echo=FALSE, fig.show='hold', fig.cap="Two 95 percent confidence intervals: percentile method in red, standard error method in blue.", purl=FALSE}
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+visualize(bootstrap_distn_slope) + 
+  ggtitle("") + 
+  shade_confidence_interval(endpoints = percentile_ci, fill = NULL, color = "red") + 
+  shade_confidence_interval(endpoints = se_ci, fill = NULL, color = "blue") +
+  shade_confidence_interval(endpoints = c(0.035, 0.099), fill = NULL, color = "darkgreen")
+```
+
+Observe that all three are quite similar!
+
+### Hypothesis test for slope
+
+We will set up this hypothesis testing process consistent with the "There is Only One Test" diagram in Figure \@ref(fig:htdowney) using the `infer` package. Let's conduct a hypothesis test of $H_0: \beta_1 = 0$ vs $H_A: \beta_1 \neq 1$. We need to think about what it means for $\beta_1$ to be zero as stated in the null hypothesis $H_0$. If $\beta_1 = 0$, we said earlier that there is no relationship between the teaching and beauty scores. Assuming this particular null hypothesis means that in our "hypothesized universe" there is no relationship between `score` and `bty_avg` and thus we can shuffle/permute the `bty_avg` variable to no consequence. We, therefore, have another example of shuffling/permuting of data under the null hypothesis.
+
+We construct the null distribution of the fitted slope $b_1$ by following the steps. Recall from Section \@ref() that the null distribution is merely the sampling distribution of our test statistic $b_1$ assuming the null hypothesis $H_0$ is true.
+
+1. `specify()` the variables of interest in `evals_ch6` with the formula: `score ~ bty_avg`.
+1. `hypothesize()` the null hypothesis of `independence`. Recall from Section \@ref(ht-infer) that this is a step that needs to be added for hypothesis test. 
+1. `generate()` replicates by permuting/shuffling the explanatory variable `bty_avg` from the original sample of 463 courses. We generate `reps = 1000` such replicates.
+1. `calculate()` the test statistic of interest: the fitted `slope` $b_1$
+
+To further reinforce the process being done in the pipeline, we've added the `type = "permute"` argument to `generate()`. In this case, we `permute`d the values of one variable across the values of the other 1000 times and `calculate`d a `"slope"` coefficient for each of these 1000 `generate`d samples.
+
+```{r eval=FALSE}
+null_distn_slope <- evals %>% 
+  specify(score ~ bty_avg) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "slope")
+```
+```{r echo=FALSE}
+if(!file.exists("rds/null_distn_slope.rds")){
+  set.seed(76)
+  null_distn_slope <- evals %>% 
     specify(score ~ bty_avg) %>%
     hypothesize(null = "independence") %>% 
-    generate(reps = 10000) %>% 
+    generate(reps = 1000, type = "permute") %>% 
     calculate(stat = "slope")
-   saveRDS(object = null_slope_distn, 
-           "rds/null_slope_distn.rds")
+   saveRDS(object = null_distn_slope, 
+           "rds/null_distn_slope.rds")
 } else {
-   null_slope_distn <- readRDS("rds/null_slope_distn.rds")
+   null_distn_slope <- readRDS("rds/null_distn_slope.rds")
 }
 ```
 
+Let's visualize the resulting null distribution for the fitted slope $b_1$ in Figure \@ref(fig:null-distribution-slope). Notice how it is centered at $b_1$ = 0. This is because in our hypothesized universe, there is no relationship between `score` and `bty_avg`, or in other words $\beta_1$ = 0. Thus the most typical fitted slope $b_1$ we observe across our simulations is 0. Observe also how there is variation around this central value of 0. 
+
+```{r eval=FALSE}
+visualize(null_distn_slope)
+```
+```{r null-distribution-slope, echo=FALSE, fig.show='hold', fig.cap="Null distribution", purl=FALSE}
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+visualize(null_distn_slope) + 
+  ggtitle("Simulation-Based Null Distribution")
+```
+
+Let's visualize this p-value in the above null distribution by comparing it to the observed test statistic of $b_1$ = `r observed_slope`. We'll do this by adding a `shade_p_value()` layer in Figure \@ref(p-value-slope)
+
+```{r, eval=FALSE}
+visualize(null_distn_slope) + 
+  shade_p_value(obs_stat = observed_slope, direction = "both")
+```
+```{r p-value-slope, echo=FALSE, fig.show='hold', fig.cap="Null distribution and p-value", purl=FALSE}
+# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+visualize(null_distn_slope) + 
+  shade_p_value(obs_stat = observed_slope, direction = "both") + 
+  ggtitle("Simulation-Based Null Distribution")
+```
+
+Since `r pull(observed_slope)` falls far to the right of this null distribution and doesn't overlap it, we can say that we have a $p$-value of 0.  We, thus, have evidence that suggests there is a relationship between the beauty score and teaching score of University of Texas faculty members. What is the numerical value of the p-value? Let's use the `get_p_value()` function with the same inputs as the `shade_p_value()` function from above
+
 ```{r}
-visualize(null_slope_distn) + 
-  shade_p_value(obs_stat = slope_obs, direction = "greater")
+null_distn_slope %>% 
+  get_p_value(obs_stat = observed_slope, direction = "both")
 ```
 
-In viewing the distribution above with shading to the right of our observed slope value of `r pull(slope_obs)`, we can see that we expect the p-value to be quite small. Let's calculate it next using a similar syntax to what was done with `shade_p_value()`.
+This matches the p-value of 0 in the regression table in Table \@ref(tab:regtable-11). When the conditions for inference for regression are met and the null distribution has the characteristic bell shape, we are likely to see similar results between the simulation-based and theoretical results.
 
-### The p-value
-
-```{r fig.cap="Shaded histogram to show p-value"}
-null_slope_distn %>% 
-  get_pvalue(obs_stat = slope_obs, direction = "greater")
-```
-
-Since `r pull(slope_obs)` falls far to the right of this plot beyond where any of the histogram bins have data, we can say that we have a $p$-value of 0.  We, thus, have evidence to reject the null hypothesis in support of there being a positive association between the beauty score and teaching score of University of Texas faculty members.
-
-Recall that we came to a similar $p$-value and conclusion when looking at the theory-based approach given in the `get_regression_table(score_model)` table:
-
-```{r echo=FALSE}
-get_regression_table(score_model)
-```
-
-When the conditions are met and the null distribution has the characteristic bell shape, we are likely to see similar results between the simulation-based and theoretical results. In the next subsection, we'll compare the confidence interval results using bootstrapping and the theoretical results given in the regression table.
 
 ```{block lc9-5, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -634,64 +712,6 @@ When the conditions are met and the null distribution has the characteristic bel
 ```{block, type='learncheck', purl=FALSE}
 ```
 
-### Bootstrapping for the regression slope
-
-With the $p$-value calculated as 0 in the hypothesis test above, we can next determine just how strong of a positive slope value we might expect between the variables of teaching `score` and beauty score (`bty_avg`) for University of Texas faculty using bootstrapping. Recall the `infer` pipeline above to compute the null distribution. This assumes the null hypothesis is true that there is no relationship between teaching score and beauty score using the `hypothesize()` function.
-
-```{r eval=FALSE}
-null_slope_distn <- evals %>% 
-  specify(score ~ bty_avg) %>%
-  hypothesize(null = "independence") %>% 
-  generate(reps = 10000, type = "permute") %>% 
-  calculate(stat = "slope")
-```
-
-To further reinforce the process being done in the pipeline, we've added the `type` argument to `generate()`. This is automatically added based on the entries for `specify()` and `hypothesize()` but it provides a useful way to check to make sure `generate()` is created the samples in the desired way. In this case, we `permute`d the values of one variable across the values of the other 10,000 times and `calculate`d a `"slope"` coefficient for each of these 10,000 `generate`d samples.
-
-If instead we'd like to get a range of plausible values for the true slope value, we can use the process of bootstrapping:
-
-```{r eval=FALSE}
-bootstrap_slope_distn <- evals %>% 
-  specify(score ~ bty_avg) %>%
-  generate(reps = 10000, type = "bootstrap") %>% 
-  calculate(stat = "slope")
-```
-
-```{r echo=FALSE}
-if(!file.exists("rds/bootstrap_slope_distn.rds")){
-  bootstrap_slope_distn <- evals %>% 
-    specify(score ~ bty_avg) %>%
-    generate(reps = 10000, type = "bootstrap") %>% 
-    calculate(stat = "slope")
-  saveRDS(object = bootstrap_slope_distn, 
-           "rds/bootstrap_slope_distn.rds")
-} else {
-  bootstrap_slope_distn <- readRDS("rds/bootstrap_slope_distn.rds")
-}
-```
-
-Here, bootstrapping is done on the row level as was first done in Subsection \@ref(ci-build). Thus, the orignal pairs of points are linked together and may be repeated with each resample.
-
-```{r}
-bootstrap_slope_distn %>% visualize()
-```
-
-Next we can use the `get_ci()` function to determine the confidence interval. Let's do this in two different ways obtaining 99% confidence intervals. Remember that these denote a range of plausible values for an unknown true population slope parameter regressing teaching score on beauty score.
-
-```{r}
-percentile_slope_ci <- bootstrap_slope_distn %>% 
-  get_ci(level = 0.99, type = "percentile")
-percentile_slope_ci
-```
-
-```{r}
-se_slope_ci <- bootstrap_slope_distn %>% 
-  get_ci(level = 0.99, type = "se", point_estimate = slope_obs)
-se_slope_ci
-```
-
-With the bootstrap distribution being close to symmetric, it makes sense that the two resulting confidence intervals are similar. Note that both are a bit wider than the $(`r lower1`, `r upper1`)$ interval that theory would have predicted.
-
 
 
 ***
@@ -700,9 +720,35 @@ With the bootstrap distribution being close to symmetric, it makes sense that th
 
 ## Conclusion
 
-### FIX: SUmmary
+### Summary
+
+We've now completed our last sampling scenarios as originally introduced in Section \ref(summarytable-ch8). Armed with the regression modeling techinques you learned in Chapters \@ref(regression) and \@ref(multiple-regression), your understanding of sampling for inference in Chapter \@ref(sampling), and tools for statistical inference like confidence intervals and hypothesis tests in Chapters \@ref(confidence-intervals) and \@ref(hypothesis tests), you're now able to study a wide array of data!
+
+```{r, echo=FALSE, message=FALSE}
+# The following Google Doc is published to CSV and loaded below using read_csv() below:
+# https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
+
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+  read_csv(na = "") %>% 
+  filter(Scenario %in% c(1:6)) %>% 
+  kable(
+    caption = "\\label{tab:summarytable-ch9}Scenarios of sampling for inference", 
+    booktabs = TRUE,
+    escape = FALSE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position")) %>%
+  column_spec(1, width = "0.5in") %>% 
+  column_spec(2, width = "0.7in") %>%
+  column_spec(3, width = "1in") %>%
+  column_spec(4, width = "1.1in") %>% 
+  column_spec(5, width = "1in")
+```
 
 <!--
+
+
+
 ### Relating regression to other methods
 
 To conclude this chapter, we'll be investigating how regression relates to two different statistical techniques. One of them was covered already in this book, the difference in sample means, and the other is new to the text but is related, ANOVA. We'll see how both can be represented in the regression framework. The hope is that this closing section helps you to tie together many of the concepts you've seen in the Data Modeling and Statistical Inference parts of this book.
@@ -710,6 +756,10 @@ To conclude this chapter, we'll be investigating how regression relates to two d
 #### Two sample difference in means
 
 #### ANOVA
+
+
+
+
 -->
 
 
@@ -720,3 +770,7 @@ An R script file of all R code used in this chapter is available [here](scripts/
 ### What's to come
 
 You've now concluded the last major part of the book on "Statistical Inference via `infer`." The closing chapter concludes with a case study on house prices in Seattle, Washington in the US. You'll see there how the principles in this book can apply to help you be a great storyteller with data!
+
+```{r echo=FALSE, fig.cap="ModernDive flowchart - On to Part II!", fig.align='center'}
+knitr::include_graphics("images/flowcharts/flowchart/flowchart.002.png")
+```
