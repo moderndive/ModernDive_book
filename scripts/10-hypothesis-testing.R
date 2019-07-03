@@ -10,7 +10,6 @@ library(ggplot2movies)
 # Packages needed internally, but not in text.
 library(knitr)
 library(kableExtra)
-library(gt)
 library(patchwork)
 library(scales)
 
