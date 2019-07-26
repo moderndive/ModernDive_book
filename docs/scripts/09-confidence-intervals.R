@@ -2,10 +2,12 @@
 library(dplyr)
 library(readr)
 
+
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
 library(kableExtra)
+
 
 ## ----summarytable, echo=FALSE, message=FALSE-----------------------------
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
@@ -26,6 +28,7 @@ library(kableExtra)
   column_spec(4, width = "1.1in") %>% 
   column_spec(5, width = "1in")
 
+
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
@@ -33,78 +36,97 @@ library(janitor)
 library(moderndive)
 library(infer)
 
+
 ## ----include=FALSE-------------------------------------------------------
 set.seed(2018)
 pennies_sample <- pennies %>% 
   sample_n(40)
 
+
 ## ------------------------------------------------------------------------
 pennies_sample
+
 
 ## ------------------------------------------------------------------------
 ggplot(pennies_sample, aes(x = age_in_2011)) +
   geom_histogram(bins = 10, color = "white")
+
 
 ## ------------------------------------------------------------------------
 x_bar <- pennies_sample %>% 
   summarize(stat = mean(age_in_2011))
 x_bar
 
+
 ## ----include=FALSE-------------------------------------------------------
 set.seed(201)
+
 
 ## ------------------------------------------------------------------------
 bootstrap_sample1 <- pennies_sample %>% 
   rep_sample_n(size = 40, replace = TRUE, reps = 1)
 bootstrap_sample1
 
+
 ## ------------------------------------------------------------------------
 ggplot(bootstrap_sample1, aes(x = age_in_2011)) +
   geom_histogram(bins = 10, color = "white")
+
 
 ## ------------------------------------------------------------------------
 bootstrap_sample1 %>% 
   summarize(stat = mean(age_in_2011))
 
+
 ## ------------------------------------------------------------------------
 six_bootstrap_samples <- pennies_sample %>% 
   rep_sample_n(size = 40, replace = TRUE, reps = 6)
+
 
 ## ------------------------------------------------------------------------
 ggplot(six_bootstrap_samples, aes(x = age_in_2011)) +
   geom_histogram(bins = 10, color = "white") +
   facet_wrap(~ replicate)
 
+
 ## ------------------------------------------------------------------------
 six_bootstrap_samples %>% 
   group_by(replicate) %>% 
   summarize(stat = mean(age_in_2011))
 
+
 ## ----fig.align='center', echo=FALSE--------------------------------------
 knitr::include_graphics("images/flowcharts/infer/specify.png")
+
 
 ## ------------------------------------------------------------------------
 pennies_sample %>% 
   specify(response = age_in_2011)
 
+
 ## ------------------------------------------------------------------------
 pennies_sample %>% 
   specify(formula = age_in_2011 ~ NULL)
 
+
 ## ----fig.align='center', echo=FALSE--------------------------------------
 knitr::include_graphics("images/flowcharts/infer/generate.png")
+
 
 ## ------------------------------------------------------------------------
 thousand_bootstrap_samples <- pennies_sample %>% 
   specify(response = age_in_2011) %>% 
   generate(reps = 1000)
 
+
 ## ------------------------------------------------------------------------
 thousand_bootstrap_samples %>% 
   count(replicate)
 
+
 ## ----fig.align='center', echo=FALSE--------------------------------------
 knitr::include_graphics("images/flowcharts/infer/calculate.png")
+
 
 ## ------------------------------------------------------------------------
 bootstrap_distribution <- pennies_sample %>% 
@@ -113,119 +135,149 @@ bootstrap_distribution <- pennies_sample %>%
   calculate(stat = "mean")
 bootstrap_distribution
 
+
 ## ------------------------------------------------------------------------
 pennies_sample %>% 
   summarize(stat = mean(age_in_2011))
+
 
 ## ------------------------------------------------------------------------
 pennies_sample %>% 
   specify(response = age_in_2011) %>% 
   calculate(stat = "mean")
 
+
 ## ----fig.align='center', echo=FALSE--------------------------------------
 knitr::include_graphics("images/flowcharts/infer/visualize.png")
+
 
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   visualize()
 
+
+
+
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   visualize(obs_stat = x_bar)
+
 
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   summarize(mean_of_means = mean(stat))
 
+
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   get_ci(level = 0.95, type = "percentile")
+
 
 ## ------------------------------------------------------------------------
 percentile_ci <- bootstrap_distribution %>% 
   get_ci()
 percentile_ci
 
+
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   visualize(endpoints = percentile_ci, direction = "between")
+
 
 ## ----eval=FALSE----------------------------------------------------------
 ## standard_error_ci <- bootstrap_distribution %>%
 ##   get_ci(type = "se", point_estimate = x_bar)
 ## standard_error_ci
 
+
 ## ----echo=FALSE----------------------------------------------------------
 standard_error_ci <- bootstrap_distribution %>% 
   get_ci(type = "se", point_estimate = x_bar)
 round(standard_error_ci, 2)
 
+
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   visualize(endpoints = standard_error_ci, direction = "between")
 
+
 ## ------------------------------------------------------------------------
 ggplot(pennies, aes(x = age_in_2011)) +
   geom_histogram(bins = 10, color = "white")
+
 
 ## ------------------------------------------------------------------------
 pennies %>% 
   summarize(mean_age = mean(age_in_2011),
             median_age = median(age_in_2011))
 
+
 ## ------------------------------------------------------------------------
 ggplot(pennies_sample, aes(x = age_in_2011)) +
   geom_histogram(bins = 10, color = "white")
+
 
 ## ------------------------------------------------------------------------
 pennies_sample %>% 
   summarize(mean_age = mean(age_in_2011), median_age = median(age_in_2011))
 
+
 ## ------------------------------------------------------------------------
 thousand_samples <- pennies %>% 
   rep_sample_n(size = 40, reps = 1000, replace = FALSE)
+
 
 ## ------------------------------------------------------------------------
 sampling_distribution <- thousand_samples %>% 
   group_by(replicate) %>% 
   summarize(stat = mean(age_in_2011))
 
+
 ## ---- fig.cap="Sampling distribution for n=40 samples of pennies"--------
 ggplot(sampling_distribution, aes(x = stat)) +
   geom_histogram(bins = 10, fill = "salmon", color = "white")
 
+
 ## ------------------------------------------------------------------------
 sampling_distribution %>% 
   summarize(se = sd(stat))
+
 
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   visualize(bins = 10, fill = "blue")
 
+
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   summarize(se = sd(stat))
+
 
 ## ------------------------------------------------------------------------
 sampling_distribution %>% 
   summarize(mean_of_sampling_means = mean(stat))
 
+
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   summarize(mean_of_bootstrap_means = mean(stat))
 
+
 ## ------------------------------------------------------------------------
 pennies %>% 
   summarize(overall_mean = mean(age_in_2011))
+
 
 ## ----include=FALSE-------------------------------------------------------
 pennies_mu <- pennies %>% 
   summarize(overall_mean = mean(age_in_2011)) %>% 
   pull()
 
+
 ## ------------------------------------------------------------------------
 pennies_sample2 <- pennies %>% 
   sample_n(size = 40)
+
 
 ## ------------------------------------------------------------------------
 percentile_ci2 <- pennies_sample2 %>% 
@@ -234,6 +286,7 @@ percentile_ci2 <- pennies_sample2 %>%
   calculate(stat = "mean") %>% 
   get_ci()
 percentile_ci2
+
 
 ## ----echo=FALSE----------------------------------------------------------
 set.seed(201)
@@ -279,6 +332,7 @@ ggplot(perc_cis) +
   ) +
   scale_color_manual(values = c("blue", "orange")) + 
   geom_vline(xintercept = pennies_mu, color = "red") 
+
 
 ## ----echo=FALSE----------------------------------------------------------
 set.seed(2019)
@@ -328,13 +382,16 @@ ggplot(se_cis) +
   scale_color_manual(values = c("blue", "orange")) + 
   geom_vline(xintercept = pennies_mu, color = "red") 
 
+
 ## ----include=FALSE-------------------------------------------------------
 color <- c(rep("red", 21), rep("white", 50 - 21)) %>% 
   sample()
 tactile_shovel1 <- tibble::tibble(color)
 
+
 ## ------------------------------------------------------------------------
 tactile_shovel1
+
 
 ## ------------------------------------------------------------------------
 p_hat <- tactile_shovel1 %>% 
@@ -342,10 +399,12 @@ p_hat <- tactile_shovel1 %>%
   calculate(stat = "prop")
 p_hat
 
+
 ## ----eval=FALSE----------------------------------------------------------
 ## tactile_shovel1 %>%
 ##   specify(formula = color ~ NULL, success = "red") %>%
 ##   generate(reps = 10000)
+
 
 ## ----echo=FALSE----------------------------------------------------------
 set.seed(2018)
@@ -353,31 +412,38 @@ gen <- tactile_shovel1 %>%
   specify(formula = color ~ NULL, success = "red") %>% 
   generate(reps = 10000)
 
+
 ## ----eval=FALSE----------------------------------------------------------
 ## bootstrap_props <- tactile_shovel1 %>%
 ##   specify(formula = color ~ NULL, success = "red") %>%
 ##   generate(reps = 10000) %>%
 ##   calculate(stat = "prop")
 
+
 ## ----echo=FALSE----------------------------------------------------------
 bootstrap_props <- gen %>% 
   calculate(stat = "prop")
 
+
 ## ------------------------------------------------------------------------
 bootstrap_props %>% 
   visualize(bins = 25)
+
 
 ## ------------------------------------------------------------------------
 standard_error_ci <- bootstrap_props %>% 
   get_ci(type = "se", level = 0.95, point_estimate = p_hat)
 standard_error_ci
 
+
 ## ------------------------------------------------------------------------
 bootstrap_props %>% 
   visualize(bins = 25, endpoints = standard_error_ci)
 
+
 ## ---- eval=FALSE, message=FALSE, warning=FALSE---------------------------
 ## tactile_prop_red
+
 
 ## ---- eval=FALSE, message=FALSE, warning=FALSE---------------------------
 ## conf_ints <- tactile_prop_red %>%
@@ -415,6 +481,7 @@ conf_ints %>%
                 latex_options = c("HOLD_position", "repeat_header", 
                                   "scale_down"))
 
+
 ## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals based on 33 tactile samples of size n=50", fig.height=6----
 groups <- conf_ints$group
 conf_ints %>%
@@ -437,6 +504,7 @@ conf_ints %>%
                                 sep = ""))) +
   scale_color_manual(values = c("blue", "orange")) 
 
+
 ## ------------------------------------------------------------------------
 # First: Take 100 virtual samples of n=50 balls
 virtual_samples <- bowl %>% 
@@ -458,6 +526,7 @@ virtual_prop_red <- virtual_prop_red %>%
     lower_ci = p_hat - MoE,
     upper_ci = p_hat + MoE
   )
+
 
 ## ----virtual-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"----
 set.seed(79)
@@ -499,8 +568,10 @@ ggplot(virtual_prop_red) +
   scale_color_manual(values = c("blue", "orange")) + 
   geom_vline(xintercept = 900 / 2400, color = "red") 
 
+
 ## ------------------------------------------------------------------------
 mythbusters_yawn
+
 
 ## ------------------------------------------------------------------------
 mythbusters_yawn %>% 
@@ -510,18 +581,22 @@ mythbusters_yawn %>%
   # To show original counts
   adorn_ns()
 
+
 ## ----error=TRUE----------------------------------------------------------
 mythbusters_yawn %>% 
   specify(formula = yawn ~ group)
+
 
 ## ------------------------------------------------------------------------
 mythbusters_yawn %>% 
   specify(formula = yawn ~ group, success = "yes")
 
+
 ## ----error=TRUE----------------------------------------------------------
 mythbusters_yawn %>% 
   specify(formula = yawn ~ group, success = "yes") %>% 
   calculate(stat = "diff in props")
+
 
 ## ----error=TRUE----------------------------------------------------------
 obs_diff <- mythbusters_yawn %>% 
@@ -529,15 +604,19 @@ obs_diff <- mythbusters_yawn %>%
   calculate(stat = "diff in props", order = c("seed", "control"))
 obs_diff
 
+
 ## ------------------------------------------------------------------------
 head(mythbusters_yawn)
+
 
 ## ------------------------------------------------------------------------
 set.seed(2019)
 
+
 ## ------------------------------------------------------------------------
 head(mythbusters_yawn) %>% 
   sample_n(size = 6, replace = TRUE)
+
 
 ## ------------------------------------------------------------------------
 bootstrap_distribution <- mythbusters_yawn %>% 
@@ -545,13 +624,16 @@ bootstrap_distribution <- mythbusters_yawn %>%
   generate(reps = 1000) %>% 
   calculate(stat = "diff in props", order = c("seed", "control"))
 
+
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   visualize(bins = 20)
 
+
 ## ------------------------------------------------------------------------
 bootstrap_distribution %>% 
   get_ci(type = "percentile", level = 0.95)
+
 
 ## ----include=FALSE-------------------------------------------------------
 myth_ci <- bootstrap_distribution %>% 
