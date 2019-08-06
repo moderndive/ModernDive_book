@@ -99,20 +99,20 @@ evals_ch6 %>%
   summarize(correlation = cor(score, bty_avg))
 
 
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 cor_ch6 <- evals_ch6 %>%
   summarize(correlation = cor(score, bty_avg)) %>%
   pull(correlation) %>%
   round(3)
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
 ##   geom_point() +
 ##   labs(x = "Beauty Score", y = "Teaching Score",
 ##        title = "Scatterplot of relationship of teaching and beauty scores")
 
-## ----numxplot1, warning=FALSE, echo = FALSE, fig.cap="Instructor evaluation scores at UT Austin"----
+## ----numxplot1, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin"----
 # Define orange box
 margin_x <- 0.15
 margin_y <- 0.075
@@ -128,13 +128,13 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_path(data = box, aes(x=x, y=y), col = "orange", size = 1)
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
 ##   geom_jitter() +
 ##   labs(x = "Beauty Score", y = "Teaching Score",
 ##        title = "Scatterplot of relationship of teaching and beauty scores")
 
-## ----numxplot2, warning=FALSE, echo = FALSE, fig.cap="Instructor evaluation scores at UT Austin"----
+## ----numxplot2, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin"----
 ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_jitter() +
   labs(x = "Beauty Score", y = "Teaching Score",
@@ -480,7 +480,7 @@ regression_points %>%
 
 
 
-## ---- echo=FALSE---------------------------------------------------------
+## ----three-lines, fig.cap="Regression line and two others.", fig.height=3.5, echo=FALSE----
 example <- tibble(
   x = c(0, 0.5, 1),
   y = c(2, 1, 3)
@@ -496,21 +496,25 @@ ggplot(example, aes(x = x, y = y)) +
 
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## # Fit regression model:
 ## score_model <- lm(score ~ bty_avg, data = evals_ch6)
 ## # Get regression table:
 ## get_regression_table(score_model)
 
-## ---- echo = FALSE-------------------------------------------------------
+## ----recall-table, echo=FALSE--------------------------------------------
 score_model <- lm(score ~ bty_avg, data = evals_ch6)
 get_regression_table(score_model) %>%
-  knitr::kable() %>%
+  knitr::kable(
+    digits = 3,
+    caption = "Regression table.",
+    booktabs = TRUE
+  ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## library(broom)
 ## library(janitor)
 ## score_model %>%
@@ -520,7 +524,7 @@ get_regression_table(score_model) %>%
 ##   rename(lower_ci = conf_low,
 ##          upper_ci = conf_high)
 
-## ---- echo = FALSE-------------------------------------------------------
+## ----regtable-broom, echo=FALSE------------------------------------------
 library(broom)
 library(janitor)
 score_model %>%
@@ -529,12 +533,16 @@ score_model %>%
   clean_names() %>%
   rename(lower_ci = conf_low,
          upper_ci = conf_high) %>%
-  knitr::kable() %>%
+  knitr::kable(
+    digits = 3,
+    caption = "Regression table using tidy() from broom package.",
+    booktabs = TRUE
+  ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## library(broom)
 ## library(janitor)
 ## score_model %>%
@@ -543,7 +551,7 @@ score_model %>%
 ##   clean_names() %>%
 ##   select(-c("se_fit", "hat", "sigma", "cooksd", "std_resid"))
 
-## ---- echo = FALSE-------------------------------------------------------
+## ----regpoints-augment, echo=FALSE---------------------------------------
 library(broom)
 library(janitor)
 score_model %>%
@@ -552,7 +560,11 @@ score_model %>%
   clean_names() %>%
   select(-c("se_fit", "hat", "sigma", "cooksd", "std_resid")) %>%
   slice(1:10) %>%
-  knitr::kable() %>%
+  knitr::kable(
+    digits = 3,
+    caption = "Regression points using augment() from broom package.",
+    booktabs = TRUE
+  ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 

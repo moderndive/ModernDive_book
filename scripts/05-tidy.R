@@ -50,6 +50,10 @@ dem_score <- read_csv("data/dem_score.csv")
 dem_score
 
 
+## ----read-excel, echo=FALSE, fig.cap="Reading in an Excel file to R."----
+include_graphics("images/read_excel.png")
+
+
 ## ------------------------------------------------------------------------
 drinks
 
@@ -62,7 +66,7 @@ drinks_smaller <- drinks %>%
 drinks_smaller
 
 
-## ----drinks-smaller, fig.cap="Alcohol consumption in 4 countries.", fig.height=3.5, echo=FALSE----
+## ----drinks-smaller, fig.cap="Comparing alcohol consumption in 4 countries.", fig.height=3.5, echo=FALSE----
 drinks_smaller_tidy <- drinks_smaller %>% 
   gather(type, servings, -country)
 ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
@@ -78,7 +82,7 @@ drinks_smaller_tidy
 drinks_smaller
 
 
-## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from [R for Data Science](http://r4ds.had.co.nz/tidy-data.html)."----
+## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from R for Data Science."----
 knitr::include_graphics("images/tidy-1.png")
 
 
@@ -156,7 +160,7 @@ drinks_smaller_tidy
 ## drinks_smaller_tidy
 
 
-## ------------------------------------------------------------------------
+## ----drinks-smaller-tidy-barplot, fig.cap="Comparing alcohol consumption in 4 countries.", fig.height=3.5----
 ggplot(drinks_smaller_tidy, 
        aes(x = country, y = servings, fill = type)) +
   geom_col(position = "dodge")
@@ -194,11 +198,10 @@ guat_dem_tidy <- guat_dem_tidy %>%
   mutate(year = as.numeric(year))
 
 
-## ----errors=TRUE---------------------------------------------------------
+## ----guat-dem-tidy, fig.cap="Democracy scores in Guatemala 1952-1992.", fig.height=3.5----
 ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
   geom_line() +
-  labs(x = "Year", y = "Democracy Score", 
-       title = "Democracy score in Guatemala 1952-1992")
+  labs(x = "Year", y = "Democracy Score")
 
 
 

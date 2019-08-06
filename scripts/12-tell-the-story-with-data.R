@@ -24,7 +24,7 @@ knitr::include_graphics("images/flowcharts/flowchart/flowchart.002.png")
 
 
 ## ----pipeline-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="Data/Science Pipeline"----
-knitr::include_graphics("images/tidy1.png")
+knitr::include_graphics("images/data_science_pipeline.png")
 
 
 ## ---- message=FALSE, warning=FALSE---------------------------------------
@@ -37,6 +37,7 @@ library(fivethirtyeight)
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
+library(kableExtra)
 library(patchwork)
 library(scales)
 
@@ -103,7 +104,8 @@ tibble(Price = c(1,10,100,1000,10000,100000,1000000)) %>%
     `Order of magnitude` = c("Singles", "Tens", "Hundreds", "Thousands", "Tens of thousands", "Hundreds of thousands", "Millions"),
     `Examples` = c("Cups of coffee", "Books", "Mobile phones", "High definition TV's", "Cars", "Luxury cars & houses", "Luxury houses")
     ) %>% 
-  kable(
+  knitr::kable(
+    digits = 3, 
     caption = "log10-transformed prices, orders of magnitude, and examples", 
     booktabs = TRUE
   ) %>% 
@@ -247,7 +249,7 @@ US_births_1999 <- US_births_1994_2003 %>%
   filter(year == 1999)
 
 
-## ------------------------------------------------------------------------
+## ----us-births, fig.cap="Number of births in US in 1999.", fig.align='center'----
 ggplot(US_births_1999, aes(x = date, y = births)) +
   geom_line() +
   labs(x = "Data", y = "Number of births", title = "US Births in 1999")

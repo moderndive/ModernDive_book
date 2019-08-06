@@ -41,7 +41,7 @@ evals_ch6 <- evals %>%
   select(ID, score, bty_avg, age)
 glimpse(evals_ch6)
 
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 cor_ch6 <- evals_ch6 %>%
   summarize(correlation = cor(score, bty_avg)) %>%
   pull(correlation) %>%
@@ -68,7 +68,7 @@ score_model <- lm(score ~ bty_avg, data = evals_ch6)
 get_regression_table(score_model) %>%
   knitr::kable(
     digits = 3,
-    caption = "Linear regression table",
+    caption = "Previously seen linear regression table.",
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -113,9 +113,10 @@ upper0 <- intercept_row %>% pull(upper_ci)
   column_spec(5, width = "1in")
 
 
-## ---- echo=FALSE---------------------------------------------------------
+## ----score-model-part-deux, echo=FALSE-----------------------------------
 get_regression_table(score_model) %>%
   knitr::kable(
+    caption = "Previously seen regression table.", 
     digits = 3,
     booktabs = TRUE
   ) %>%
@@ -274,7 +275,7 @@ se_ci <- bootstrap_distn_slope %>%
 se_ci
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## visualize(bootstrap_distn_slope) +
 ##   shade_confidence_interval(endpoints = percentile_ci, fill = NULL,
 ##                             color = "red") +

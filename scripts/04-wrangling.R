@@ -14,11 +14,11 @@ library(nycflights13)
 
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## h(g(f(x)))
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## x %>%
 ##   f() %>%
 ##   g() %>%
@@ -123,21 +123,12 @@ summary_temp
 
 
 
-## ---- eval=FALSE---------------------------------------------------------
-## summary_monthly_temp <- weather %>%
-##   group_by(month) %>%
-##   summarize(mean = mean(temp, na.rm = TRUE),
-##             std_dev = sd(temp, na.rm = TRUE))
-## summary_monthly_temp
-
-## ---- echo=FALSE---------------------------------------------------------
+## ------------------------------------------------------------------------
 summary_monthly_temp <- weather %>% 
   group_by(month) %>% 
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))
-kable(summary_monthly_temp) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+summary_monthly_temp
 
 
 ## ---- eval=TRUE----------------------------------------------------------
@@ -223,24 +214,11 @@ flights <- flights %>%
 ## ---- echo=FALSE---------------------------------------------------------
 flights %>% 
   select(dep_delay, arr_delay, gain) %>% 
-  slice(1:5)
+  slice(1:5) %>% 
+  kable()
 
 
-## ---- eval=FALSE---------------------------------------------------------
-## gain_summary <- flights %>%
-##   summarize(
-##     min = min(gain, na.rm = TRUE),
-##     q1 = quantile(gain, 0.25, na.rm = TRUE),
-##     median = quantile(gain, 0.5, na.rm = TRUE),
-##     q3 = quantile(gain, 0.75, na.rm = TRUE),
-##     max = max(gain, na.rm = TRUE),
-##     mean = mean(gain, na.rm = TRUE),
-##     sd = sd(gain, na.rm = TRUE),
-##     missing = sum(is.na(gain))
-##   )
-## gain_summary
-
-## ----echo=FALSE----------------------------------------------------------
+## ------------------------------------------------------------------------
 gain_summary <- flights %>% 
   summarize(
     min = min(gain, na.rm = TRUE),
@@ -252,12 +230,10 @@ gain_summary <- flights %>%
     sd = sd(gain, na.rm = TRUE),
     missing = sum(is.na(gain))
   )
-kable(gain_summary) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
-                latex_options = c("HOLD_position"))
+gain_summary
 
 
-## ----message=FALSE, fig.cap="Histogram of gain variable"-----------------
+## ----message=FALSE, fig.cap="Histogram of gain variable."----------------
 ggplot(data = flights, mapping = aes(x = gain)) +
   geom_histogram(color = "white", bins = 20)
 

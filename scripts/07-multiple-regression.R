@@ -140,7 +140,7 @@ get_regression_table(score_model_parallel_slopes) %>%
                 latex_options = c("HOLD_position"))
 
 
-## ----numxcatx-comparison, fig.width = 8, echo = FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models."----
+## ----numxcatx-comparison, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models."----
 interaction_plot <- ggplot(evals_ch7, aes(x = age, y = score, color = gender), show.legend = FALSE) +
   geom_point() +
   labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
@@ -152,7 +152,7 @@ parallel_slopes_plot <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "
 interaction_plot + parallel_slopes_plot
 
 
-## ----fitted-values, echo = FALSE, warning=FALSE, fig.cap="Fitted values for two new professors"----
+## ----fitted-values, echo=FALSE, warning=FALSE, fig.cap="Fitted values for two new professors"----
 newpoints <- evals_ch7 %>% 
   slice(c(1, 5)) %>% 
   get_regression_points(score_model_interaction, newdata = .)
@@ -214,7 +214,7 @@ credit_ch7 %>%
                 latex_options = c("HOLD_position"))
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## credit_ch7 %>%
 ##   select(debt, credit_limit, income) %>%
 ##   skim()
@@ -374,7 +374,7 @@ regression_points %>%
                 latex_options = c("HOLD_position"))
 
 
-## ---- fig.width = 8, echo = FALSE, warning=FALSE-------------------------
+## ----recall-parallel-vs-interaction, fig.width=8, echo=FALSE, fig.cap="Previously seen comparison of interaction and parallel slopes models."----
 interaction_plot <- ggplot(evals_ch7, aes(x = age, y = score, color = gender), show.legend = FALSE) +
   geom_point() +
   labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
@@ -386,7 +386,7 @@ parallel_slopes_plot <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "
 interaction_plot + parallel_slopes_plot
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## # Interaction model
 ## ggplot(MA_schools, aes(x = perc_disadvan, y = average_sat_math, color = size)) +
 ##   geom_point(alpha = 0.25) +
@@ -400,7 +400,7 @@ interaction_plot + parallel_slopes_plot
 ##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
 ##        color = "School size", title = "Parallel slopes model")
 
-## ----numxcatx-comparison-2, fig.width = 8, echo = FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models."----
+## ----numxcatx-comparison-2, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models."----
 p1 <- ggplot(MA_schools, aes(x = perc_disadvan, y = average_sat_math, color = size))+
   geom_point(alpha = 0.25) +
   geom_smooth(method = "lm", se = FALSE ) +
@@ -415,12 +415,12 @@ p2 <- gg_parallel_slopes(y = "average_sat_math", num_x = "perc_disadvan",
 p1 + p2
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size,
 ##                           data = MA_schools)
 ## get_regression_table(model_2_interaction)
 
-## ----model2-interaction, echo = FALSE------------------------------------
+## ----model2-interaction, echo=FALSE--------------------------------------
 model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size, 
                           data = MA_schools)
 get_regression_table(model_2_interaction) %>% 
@@ -432,12 +432,12 @@ get_regression_table(model_2_interaction) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## model_2_parallel_slopes <- lm(average_sat_math ~ perc_disadvan + size,
 ##                               data = MA_schools)
 ## get_regression_table(model_2_parallel_slopes)
 
-## ----model2-parallel-slopes, echo = FALSE--------------------------------
+## ----model2-parallel-slopes, echo=FALSE----------------------------------
 model_2_parallel_slopes <- lm(average_sat_math ~ perc_disadvan + size, 
                               data = MA_schools)
 get_regression_table(model_2_parallel_slopes) %>% 
@@ -483,7 +483,7 @@ ggplot(credit_ch7, aes(x = credit_limit)) +
   labs(x = "Credit limit", title = "Credit limit quartiles")
 
 
-## ---- 2numxplot4, fig.width=8, echo=FALSE, fig.cap="Relationship between credit card debt and income for different credit limit groups"----
+## ----2numxplot4, fig.width=8, echo=FALSE, fig.cap="Relationship between credit card debt and income for different credit limit groups"----
 credit_ch7 <- credit_ch7 %>% 
   mutate(limit_bracket = cut_number(credit_limit, 4)) %>% 
   mutate(limit_bracket = fct_recode(limit_bracket,

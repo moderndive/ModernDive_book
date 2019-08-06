@@ -1,3 +1,10 @@
+## ----appendixb, echo=FALSE-----------------------------------------------
+if(!knitr::is_latex_output()){
+  cat("If you'd like more practice or to see how this framework applies to different scenarios, you can find fully-worked out examples for many common hypothesis tests and their corresponding confidence intervals in Appendix B.")
+  cat("We recommend that you carefully review these examples as they also cover how the general frameworks apply to traditional normal-based methodologies like the $t$-test and normal-theory confidence intervals.  You'll see there that these traditional methods are just approximations for the general computational frameworks, but require conditions to be met for their results to be valid.  The general frameworks using randomization, simulation, and bootstrapping do not hold the same sorts of restrictions and further advance computational thinking, which is one big reason for their emphasis throughout this textbook.")
+}
+
+
 ## ----message=FALSE, warning=FALSE----------------------------------------
 library(tidyverse)
 library(infer)
@@ -29,7 +36,7 @@ promotions %>%
   group_by(gender, decision) %>% 
   summarize(n = n())
 
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 observed_test_statistic <- promotions %>% 
   specify(decision ~ gender, success = "promoted") %>% 
   calculate(stat = "diff in props", order = c("male", "female")) %>% 
@@ -64,12 +71,12 @@ list(promotions_sample, promotions_sample_shuffled) %>%
 promotions_shuffled
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(promotions_shuffled, aes(x = gender, fill = decision)) +
 ##   geom_bar() +
 ##   labs(x = "Gender of resume name")
 
-## ----promotions-barplot-permuted, fig.cap="Barplot of relationship between shuffled gender and promotion decision.", echo = FALSE----
+## ----promotions-barplot-permuted, fig.cap="Barplot of relationship between shuffled gender and promotion decision.", echo=FALSE----
 height1 <- promotions %>% 
   group_by(gender, decision) %>% 
   summarize(n = n()) %>% 
@@ -99,7 +106,7 @@ promotions_shuffled %>%
   group_by(gender, decision) %>% 
   summarize(n = n())
 
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 # male stats
 n_men_promoted <- promotions_shuffled %>% 
   filter(decision == "promoted", gender == "male") %>% 
@@ -174,7 +181,7 @@ shuffled_data_tidy <- shuffled_data_tidy %>%
 
 
 
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 num <- sum(shuffled_data_tidy$stat >= observed_test_statistic)
 denom <- nrow(shuffled_data_tidy)
 p_val <- round((num + 1)/(denom + 1),3)
@@ -237,7 +244,7 @@ visualize(null_distribution, bins = 10) +
 null_distribution %>% 
   get_p_value(obs_stat = obs_diff_prop, direction = "right")
 
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 p_value <- null_distribution %>% 
   get_p_value(obs_stat = obs_diff_prop, direction = "right") %>% 
   mutate(p_value = round(p_value, 3))
@@ -361,7 +368,7 @@ movies_sample %>%
   group_by(genre) %>% 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 movies_genre_summaries <- movies_sample %>% 
   group_by(genre) %>% 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
@@ -388,7 +395,7 @@ n_romance <- movies_genre_summaries %>%
   read_csv(na = "") %>% 
   filter(Scenario %in% c(1:4)) %>% 
   kable(
-    caption = "\\label{tab:summarytable-ch9}Scenarios of sampling for inference", 
+    caption = "Scenarios of sampling for inference", 
     booktabs = TRUE,
     escape = FALSE
   ) %>% 
@@ -459,7 +466,7 @@ visualize(null_distribution_movies, bins = 10) +
 null_distribution_movies %>% 
   get_p_value(obs_stat = obs_diff_means, direction = "both")
 
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 p_value_movies <- null_distribution_movies %>% 
   get_p_value(obs_stat = obs_diff_means, direction = "both") %>% 
   mutate(p_value = round(p_value, 3))
@@ -484,7 +491,7 @@ movies_sample %>%
   group_by(genre) %>% 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 t_stat <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   calculate(stat = "t", order = c("Action", "Romance")) %>% 
@@ -501,7 +508,7 @@ t_stat <- movies_sample %>%
 ##   calculate(stat = "diff in means", order = c("Action", "Romance"))
 
 
-## ---- echo=FALSE---------------------------------------------------------
+## ----t-stat-1, fig.align='center', out.width='100%', fig.cap="Null distribution using difference in means."----
 # Visualize:
 visualize(null_distribution_movies, bins = 10)
 
@@ -518,12 +525,12 @@ visualize(null_distribution_movies, bins = 10)
 
 
 
-## ------------------------------------------------------------------------
+## ----t-stat-2, fig.align='center', out.width='100%', fig.cap="Null distribution using t-statistic."----
 # Visualize:
 visualize(null_distribution_movies_t, bins = 10)
 
 
-## ------------------------------------------------------------------------
+## ----t-stat-3, fig.align='center', out.width='100%', fig.cap="Null distribution using t-statistic and t-distribution."----
 visualize(null_distribution_movies_t, bins = 10, method = "both")
 
 
@@ -534,12 +541,12 @@ obs_two_sample_t <- movies_sample %>%
 obs_two_sample_t
 
 
-## ----warning=TRUE, message=TRUE------------------------------------------
+## ----t-stat-4, fig.align='center', out.width='100%', fig.cap="Null distribution using t-statistic and t-distribution with p-value shaded."----
 visualize(null_distribution_movies_t, method = "both") +
   shade_p_value(obs_stat = obs_two_sample_t, direction = "both")
 
 
-## ----warning=TRUE, message=TRUE------------------------------------------
+## ------------------------------------------------------------------------
 null_distribution_movies_t %>% 
   get_p_value(obs_stat = obs_two_sample_t, direction = "both")
 
@@ -574,7 +581,7 @@ flights_sample %>%
 ## get_regression_table(score_model)
 
 
-## ---- echo = FALSE-------------------------------------------------------
+## ----regression-table-inference, echo=FALSE------------------------------
 # Fit regression model:
 score_model <- lm(score ~ bty_avg, data = evals)
 # Get regression table:

@@ -206,6 +206,8 @@ mean_of_means <- virtual_resampled_means %>%
 
 
 
+
+
 ## ----echo=FALSE----------------------------------------------------------
 # Can also use conf_int() and get_confidence_interval() instead of get_ci(),
 # as they are aliases that work the exact same way.
@@ -295,8 +297,6 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
 ##   calculate(stat = "mean")
 
 
-## ----fig.align='center', echo=FALSE, out.width='20%'---------------------
-knitr::include_graphics("images/flowcharts/infer/specify.png")
 
 
 ## ------------------------------------------------------------------------
@@ -304,13 +304,11 @@ pennies_sample %>%
   specify(response = year)
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## pennies_sample %>%
 ##   specify(formula = year ~ NULL)
 
 
-## ----fig.align='center', echo=FALSE, out.width='50%'---------------------
-knitr::include_graphics("images/flowcharts/infer/generate.png")
 
 
 ## ----eval=FALSE----------------------------------------------------------
@@ -339,8 +337,6 @@ pennies_sample_generate
 ## 
 
 
-## ----fig.align='center', echo=FALSE, out.width='70%'---------------------
-knitr::include_graphics("images/flowcharts/infer/calculate.png")
 
 
 ## ----eval=FALSE----------------------------------------------------------
@@ -373,8 +369,6 @@ bootstrap_distribution
 ##                                     summarize(mean_year = mean(year))
 
 
-## ----fig.align='center', echo=FALSE--------------------------------------
-knitr::include_graphics("images/flowcharts/infer/visualize.png")
 
 
 ## ----eval=FALSE----------------------------------------------------------
@@ -410,12 +404,6 @@ percentile_ci
 ##   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 
 
-## ----echo=FALSE----------------------------------------------------------
-# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-visualize(bootstrap_distribution) + 
-  ggtitle("Simulation-Based Bootstrap Distribution") +
-  shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
-
 
 ## ------------------------------------------------------------------------
 standard_error_ci <- bootstrap_distribution %>% 
@@ -435,7 +423,7 @@ bowl %>%
   summarize(p_red = mean(color == "red"))
 
 
-## ---- echo = FALSE-------------------------------------------------------
+## ---- echo=FALSE---------------------------------------------------------
 p_red <- bowl %>% 
   summarize(prop_red = mean(color == "red")) %>% 
   pull(prop_red)
@@ -961,21 +949,6 @@ myth_ci_se <- bootstrap_distribution_yawning %>%
 ## ----echo=FALSE----------------------------------------------------------
 set.seed(76)
 
-## ------------------------------------------------------------------------
-# Take 1000 virtual samples of size 50 from the bowl:
-virtual_samples <- bowl %>% 
-  rep_sample_n(size = 50, reps = 1000)
-
-# Compute the sampling distribution of 1000 values of p-hat
-sampling_distribution <- virtual_samples %>% 
-  group_by(replicate) %>% 
-  summarize(red = sum(color == "red")) %>% 
-  mutate(prop_red = red / 50)
-
-# Visualize sampling distribution of p-hat
-ggplot(sampling_distribution, aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
-  labs(x = "Proportion of 50 balls that were red", title = "Sampling distribution")
 
 
 ## ------------------------------------------------------------------------
@@ -1013,12 +986,6 @@ if(!file.exists("rds/bootstrap_distribution_balls.rds")){
 }
 
 
-## ----warning=FALSE-------------------------------------------------------
-# Visualize bootstrap distribution of p-hat
-bootstrap_distribution %>% 
-  visualize(binwidth = 0.05, boundary = 0.4, color = "white") + 
-  labs(x = "Proportion of 50 balls that were red", 
-       title = "Bootstrap distribution")
 
 
 ## ------------------------------------------------------------------------

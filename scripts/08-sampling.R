@@ -55,6 +55,10 @@ tactile_histogram +
        title = "Distribution of 33 proportions red")
 
 
+
+
+
+
 ## ------------------------------------------------------------------------
 bowl
 
@@ -170,6 +174,10 @@ bind_rows(
          title = "Comparing distributions")
 
 
+
+
+
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## virtual_samples <- bowl %>%
 ##   rep_sample_n(size = 50, reps = 1000)
@@ -206,6 +214,12 @@ virtual_histogram +
        title = "Distribution of 1000 proportions red")
 
 
+
+
+
+
+
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Segment 1: sample size = 25 ------------------------------
 ## # 1.a) Virtually use shovel 1000 times
@@ -222,7 +236,9 @@ virtual_histogram +
 ## ggplot(virtual_prop_red_25, aes(x = prop_red)) +
 ##   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
 ##   labs(x = "Proportion of 25 balls that were red", title = "25")
-## 
+
+
+## ---- eval=FALSE---------------------------------------------------------
 ## # Segment 2: sample size = 50 ------------------------------
 ## # 2.a) Virtually use shovel 1000 times
 ## virtual_samples_50 <- bowl %>%
@@ -238,7 +254,9 @@ virtual_histogram +
 ## ggplot(virtual_prop_red_50, aes(x = prop_red)) +
 ##   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
 ##   labs(x = "Proportion of 50 balls that were red", title = "50")
-## 
+
+
+## ---- eval=FALSE---------------------------------------------------------
 ## # Segment 3: sample size = 100 ------------------------------
 ## # 3.a) Virtually using shovel with 100 slots 1000 times
 ## virtual_samples_100 <- bowl %>%
@@ -309,7 +327,7 @@ comparing_sampling_distributions <- ggplot(virtual_prop, aes(x = prop_red)) +
 comparing_sampling_distributions
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## # n = 25
 ## virtual_prop_red_25 %>%
 ##   summarize(sd = sd(prop_red))
@@ -339,13 +357,32 @@ comparing_n_table  %>%
                 latex_options = c("HOLD_position"))
 
 
-## ----echo=FALSE----------------------------------------------------------
+
+
+
+
+
+
+
+
+## ----comparing-sampling-distributions-1b, echo=FALSE, fig.cap="Previously seen three sampling distributions of the sample proportion $\\widehat{p}$."----
 comparing_sampling_distributions
 
 
-## ---- eval=TRUE, echo=FALSE----------------------------------------------
+## ----comparing-n-repeat, eval=TRUE, echo=FALSE---------------------------
+comparing_n_table <- virtual_prop %>% 
+  group_by(n) %>% 
+  summarize(sd = sd(prop_red)) %>% 
+  rename(`Number of slots in shovel` = n, `Standard deviation of proportions red` = sd) 
+
 comparing_n_table  %>% 
-  kable(digits = 3)
+  kable(
+    digits = 3,
+      caption = "Previously seen comparing standard deviations of proportions red for 3 different shovels.", 
+      booktabs = TRUE
+) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
 
 
 ## ----comparing-sampling-distributions-2, echo=FALSE, fig.cap="Three sampling distributions of the sample proportion $\\widehat{p}$."----
@@ -381,6 +418,10 @@ comparing_n_table  %>%
                 latex_options = c("HOLD_position"))
 
 
+
+
+
+
 ## ------------------------------------------------------------------------
 bowl %>% 
   summarize(sum_red = sum(color == "red"), 
@@ -406,6 +447,35 @@ virtual_prop %>%
 
 
 
+
+
+## ----comparing-n-3, eval=TRUE, echo=FALSE--------------------------------
+set.seed(76)
+comparing_n_table <- virtual_prop %>% 
+  group_by(n) %>% 
+  summarize(sd = sd(prop_red)) %>% 
+  mutate(
+    n = str_c("n = ")
+    ) %>% 
+  rename(`Sample size` = n, `Standard error of $\\widehat{p}$` = sd) %>% 
+ sample_frac(1)
+  
+comparing_n_table  %>% 
+  kable(
+    digits = 3,
+      caption = "Three standard errors of the sample proportion based on n = 25, 50, 100. ", 
+      booktabs = TRUE
+) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
+
+
+
+
+
+
+
+
 ## ----summarytable-ch8, echo=FALSE, message=FALSE-------------------------
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
@@ -424,6 +494,12 @@ virtual_prop %>%
   column_spec(3, width = "1in") %>%
   column_spec(4, width = "1.1in") %>% 
   column_spec(5, width = "1in")
+
+
+
+
+
+
 
 
 
