@@ -37,14 +37,6 @@ gapminder_2007 %>%
                 latex_options = c("HOLD_position"))
 
 
-## ----echo=FALSE----------------------------------------------------------
-if(knitr::is_latex_output()){
-  theme_set(theme_light())
-} else {
-  theme_set(theme_grey())
-}
-
-
 ## ----gapminder, echo=FALSE, fig.cap="Life Expectancy over GDP per Capita in 2007."----
 ggplot(data = gapminder_2007, 
        mapping = aes(x = `GDP per Capita`, 

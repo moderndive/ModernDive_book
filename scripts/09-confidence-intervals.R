@@ -38,7 +38,7 @@ x_bar <- pennies_sample %>%
   summarize(mean_year = mean(year))
 
 
-## ----summarytable-ch8-b, echo=FALSE, message=FALSE-----------------------
+## ----table-ch8-b, echo=FALSE, message=FALSE------------------------------
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
@@ -54,7 +54,7 @@ sampling_scenarios %>%
   # Only first two scenarios
   filter(Scenario <= 2) %>% 
   kable(
-    caption = "\\label{tab:summarytable-ch8-b}Scenarios of sampling for inference", 
+    caption = "\\label{tab:table-ch8-b}Scenarios of sampling for inference", 
     booktabs = TRUE,
     escape = FALSE
   ) %>% 
@@ -842,7 +842,7 @@ mythbusters_yawn %>%
   summarize(count = n())
 
 
-## ----summarytable-ch8-c, echo=FALSE, message=FALSE-----------------------
+## ----table-ch8-c, echo=FALSE, message=FALSE------------------------------
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
