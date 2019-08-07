@@ -1,3 +1,33 @@
+# ModernDive 0.6.0
+
+## Done first pass of infer chapters
+
+Completed major re-organization and clean-up of Chapters 9-11 using the `infer` package for "tidy and transparent" statistcal inference.
+
+* Chapter 9: Bootstrapping & confidence intervals
+    + Tactile exercise of sampling 50 pennies from bank and resampling from this sample.
+    + Added sections on
+        1. "Interpreting confidence intervals", in particular determinants of CI width.
+        1. "Theory-based confidence intervals" using formula for SE of p-hat, thereby bridging gap between simulation and theory-based methods.
+* Chapter 10: Hypothesis testing
+    + Added `promotions` example on gender discrimination in promotions at a bank. Data source: `openintro::gender.discrimination`
+    + Added section on "Theory-based hypothesis tests" using t-test, thereby bridging gap between simulation and theory-based methods.
+* Chapter 11: Inference for regression.
+    + Discussion on LINE conditions for inference. In particular using `moderndive::get_regression_points()` wrapper function to `broom::augment()` so that novices can do their own residual analyses.
+
+## Other changes
+
+* Chapter 7: Multiple regression
+    + Added Section 7.3.1 on model selection: choosing between "interaction" and "parallel slopes" models
+* Chapter 8: Sampling
+    + Added Section 8.5.3 with more in-depth discussion of normal distribution
+* Chapter 12: Renamed to "Tell your story with data"
+
+
+
+***
+
+
 # ModernDive 0.5.0
 
 ## Highlights
