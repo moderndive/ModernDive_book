@@ -30,15 +30,27 @@ gapminder_2007 %>%
   head() %>% 
   kable(
     digits=2,
-    caption = "Gapminder 2007 Data: First 6 of 142 countries", 
-    booktabs = TRUE
+    caption = "Gapminder 2007 Data: First 6 of 142 countries"#, 
+#    booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
 
-## ----gapminder, echo=FALSE, fig.cap="Life Expectancy over GDP per Capita in 2007"----
-ggplot(data = gapminder_2007, mapping = aes(x=`GDP per Capita`, y=`Life Expectancy`, size=Population, col=Continent)) +
+## ----echo=FALSE----------------------------------------------------------
+if(knitr::is_latex_output()){
+  theme_set(theme_light())
+} else {
+  theme_set(theme_grey())
+}
+
+
+## ----gapminder, echo=FALSE, fig.cap="Life Expectancy over GDP per Capita in 2007."----
+ggplot(data = gapminder_2007, 
+       mapping = aes(x = `GDP per Capita`, 
+                     y = `Life Expectancy`, 
+                     size = Population, 
+                     color = Continent)) +
   geom_point() +
   labs(x = "GDP per capita", y = "Life expectancy")
 
@@ -71,12 +83,12 @@ alaska_flights <- flights %>%
 ##   geom_point()
 
 
-## ----noalpha, fig.cap="Arrival delays vs departure delays for Alaska Airlines flights from NYC in 2013", warning=TRUE, echo=FALSE----
+## ----noalpha, fig.cap="Arrival delays vs departure delays for Alaska Airlines flights from NYC in 2013.", warning=TRUE, echo=FALSE----
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point()
 
 
-## ----nolayers, fig.cap="A plot with no layers"---------------------------
+## ----nolayers, fig.cap="A plot with no layers."--------------------------
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 
@@ -84,7 +96,7 @@ ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 
 
-## ----alpha, fig.cap="Arrival vs departure delays scatterplot with alpha=0.2"----
+## ----alpha, fig.cap="Arrival vs departure delays scatterplot with alpha = 0.2."----
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point(alpha = 0.2)
 
@@ -97,21 +109,21 @@ jitter_example <- tibble(
 jitter_example
 
 
-## ----jitter-example-plot-1, fig.cap="Regular scatterplot of example data", echo=FALSE----
+## ----jitter-example-plot-1, fig.cap="Regular scatterplot of example data.", echo=FALSE----
 ggplot(data = jitter_example, mapping = aes(x = x, y = y)) + 
   geom_point() +
   coord_cartesian(xlim = c(-0.025, 0.025), ylim = c(-0.025, 0.025)) + 
   labs(title = "Regular scatterplot")
 
 
-## ----jitter-example-plot-2, fig.cap="Jittered scatterplot of example data", echo=FALSE----
+## ----jitter-example-plot-2, fig.cap="Jittered scatterplot of example data.", echo=FALSE----
 ggplot(data = jitter_example, mapping = aes(x = x, y = y)) + 
   geom_jitter(width = 0.01, height = 0.01) +
   coord_cartesian(xlim = c(-0.025, 0.025), ylim = c(-0.025, 0.025)) + 
   labs(title = "Jittered scatterplot")
 
 
-## ----jitter, fig.cap="Arrival vs departure delays jittered scatterplot"----
+## ----jitter, fig.cap="Arrival vs departure delays jittered scatterplot."----
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_jitter(width = 30, height = 30)
 
@@ -129,7 +141,7 @@ early_january_weather <- weather %>%
 
 
 
-## ----hourlytemp, fig.cap="Hourly temperature in Newark for January 1-15, 2013"----
+## ----hourlytemp, fig.cap="Hourly temperature in Newark for January 1-15, 2013."----
 ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = temp)) +
   geom_line()
 
@@ -286,12 +298,12 @@ fruits
 fruits_counted
 
 
-## ----geombar, fig.cap="Barplot when counts are not pre-counted", fig.height=2.5----
+## ----geombar, fig.cap="Barplot when counts are not pre-counted.", fig.height=2.5----
 ggplot(data = fruits, mapping = aes(x = fruit)) +
   geom_bar()
 
 
-## ---- geomcol, fig.cap="Barplot when counts are pre-counted", fig.height=2.5----
+## ---- geomcol, fig.cap="Barplot when counts are pre-counted.", fig.height=2.5----
 ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
@@ -324,7 +336,7 @@ kable(flights_table,
 
 
 
-## ----carrierpie, echo=FALSE, fig.cap="The dreaded pie chart", fig.height=5----
+## ----carrierpie, echo=FALSE, fig.cap="The dreaded pie chart.", fig.height=5----
 ggplot(flights, mapping = aes(x = factor(1), fill = carrier)) +
   geom_bar(width = 1) +
   coord_polar(theta = "y") +
@@ -366,7 +378,7 @@ ggplot(data = flights, mapping = aes(x = carrier, color = origin)) +
 
 
 
-## ---- fig.cap="Side-by-side AKA dodged barplot comparing the number of flights by carrier and origin.", fig.height=3.5----
+## ---- fig.cap="Side-by-side (AKA dodged) barplot comparing the number of flights by carrier and origin.", fig.height=3.5----
 ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
   geom_bar(position = "dodge")
 
@@ -397,11 +409,11 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 ##   geom_bar()
 
 
-## ----ggplot-cheatsheet, echo=FALSE, fig.cap="Data Visualization with ggplot2 cheatsheat"----
+## ----ggplot-cheatsheet, echo=FALSE, fig.cap="Data Visualization with ggplot2 cheatsheat."----
 include_graphics("images/ggplot_cheatsheet-1.png")
 
 
-## ----viz-map, echo=FALSE, fig.cap="Mind map for Data Visualization", out.width="200%"----
+## ----viz-map, echo=FALSE, fig.cap="Mind map for Data Visualization.", out.width="200%"----
 #library(knitr)
 #if(knitr:::is_html_output()){
 #  include_url("https://coggle.it/diagram/V_G2gzukTDoQ-aZt-", 

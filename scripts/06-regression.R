@@ -59,7 +59,7 @@ evals_ch6 %>%
 ##   skim()
 
 
-## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients"----
+## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients."----
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
 n_sim <- 100
 values <- NULL
@@ -112,7 +112,7 @@ cor_ch6 <- evals_ch6 %>%
 ##   labs(x = "Beauty Score", y = "Teaching Score",
 ##        title = "Scatterplot of relationship of teaching and beauty scores")
 
-## ----numxplot1, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin"----
+## ----numxplot1, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin."----
 # Define orange box
 margin_x <- 0.15
 margin_y <- 0.075
@@ -134,7 +134,7 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
 ##   labs(x = "Beauty Score", y = "Teaching Score",
 ##        title = "Scatterplot of relationship of teaching and beauty scores")
 
-## ----numxplot2, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin"----
+## ----numxplot2, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin."----
 ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_jitter() +
   labs(x = "Beauty Score", y = "Teaching Score",
@@ -142,7 +142,7 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_path(data = box, aes(x=x, y=y), col = "orange", size = 1)
 
 
-## ----numxplot3, warning=FALSE, fig.cap="Regression line"-----------------
+## ----numxplot3, warning=FALSE, fig.cap="Regression line."----------------
 ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score",
@@ -212,7 +212,7 @@ evals_ch6 %>%
                 latex_options = c("HOLD_position"))
 
 
-## ----numxplot4, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual"----
+## ----numxplot4, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
 best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score",
@@ -289,14 +289,14 @@ gapminder2007 %>%
 ##   skim()
 
 
-## ----lifeExp2007hist, echo=FALSE, warning=FALSE, fig.cap= "Histogram of Life Expectancy in 2007"----
+## ----lifeExp2007hist, echo=FALSE, warning=FALSE, fig.cap="Histogram of Life Expectancy in 2007."----
 ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", y = "Number of countries",
        title = "Histogram of distribution of worldwide life expectancies")
 
 
-## ----catxplot0b, warning=FALSE, fig.cap="Life expectancy in 2007"--------
+## ----catxplot0b, warning=FALSE, fig.cap="Life expectancy in 2007."-------
 ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", y = "Number of countries",
@@ -304,7 +304,7 @@ ggplot(gapminder2007, aes(x = lifeExp)) +
   facet_wrap(~ continent, nrow = 2)
 
 
-## ----catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007"---------
+## ----catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007."--------
 ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
   geom_boxplot() +
   labs(x = "Continent", y = "Life expectancy (years)",
@@ -399,7 +399,7 @@ knitr::include_graphics("images/ss/head.png")
 knitr::include_graphics("images/flowcharts/flowchart.009-cropped.png")
 
 
-## ----best-fitting-line, fig.height = 8, fig.width = 8, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual"----
+## ----best-fitting-line, fig.height = 8, fig.width = 8, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
 # First residual
 best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_point(size = 0.8) +

@@ -19,11 +19,11 @@ options(scipen = 99, digits = 3)
 set.seed(76)
 
 
-## ----moderndive-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="ModernDive Flowchart"----
+## ----moderndive-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="ModernDive Flowchart."----
 knitr::include_graphics("images/flowcharts/flowchart/flowchart.002.png")
 
 
-## ----pipeline-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="Data/Science Pipeline"----
+## ----pipeline-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="Data/Science Pipeline."----
 knitr::include_graphics("images/data_science_pipeline.png")
 
 
@@ -142,7 +142,7 @@ house_prices %>%
 ##   geom_histogram(color = "white") +
 ##   labs(x = "log10 price (USD)", title = "House price: After")
 
-## ----log10-price-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House price before and after log10-transformation", fig.width=16/2, fig.height=9/2----
+## ----log10-price-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House price before and after log10-transformation.", fig.width=16/2, fig.height=9/2----
 library(patchwork)
 p1 <- ggplot(house_prices, aes(x = price)) +
   geom_histogram(color = "white") +
@@ -164,7 +164,7 @@ p1 + p2
 ##   geom_histogram(color = "white") +
 ##   labs(x = "log10 living space (square feet)", title = "House size: After")
 
-## ----log10-size-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House size before and after log10-transformation", fig.width=16/2, fig.height=9/2----
+## ----log10-size-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House size before and after log10-transformation.", fig.width=16/2, fig.height=9/2----
 library(patchwork)
 p1 <- ggplot(house_prices, aes(x = sqft_living)) +
   geom_histogram(color = "white") +
@@ -175,7 +175,7 @@ p2 <- ggplot(house_prices, aes(x = log10_size)) +
 p1 + p2
 
 
-## ----house-price-parallel-slopes, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Parallel slopes model", fig.width=16/2, fig.height=9/2----
+## ----house-price-parallel-slopes, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Parallel slopes model.", fig.width=16/2, fig.height=9/2----
 model_price_3_points <-
   house_prices %>%
   lm(log10_price ~ log10_size + condition, data = .) %>%
@@ -187,14 +187,14 @@ ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
   guides(colour = guide_legend(override.aes = list(alpha = 1)))
 
 
-## ----house-price-interaction, message=FALSE, warning=FALSE, fig.cap="Interaction model", fig.width=16/2, fig.height=9/2----
+## ----house-price-interaction, message=FALSE, warning=FALSE, fig.cap="Interaction model.", fig.width=16/2, fig.height=9/2----
 ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
   geom_point(alpha = 0.1) +
   labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
   geom_smooth(method = "lm", se = FALSE)
 
 
-## ----house-price-interaction-2, message=FALSE, warning=FALSE, fig.cap="Interaction model with facets", fig.width=16/2, fig.height=9/2----
+## ----house-price-interaction-2, message=FALSE, warning=FALSE, fig.cap="Interaction model with facets.", fig.width=16/2, fig.height=9/2----
 ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
   geom_point(alpha = 0.3) +
   labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
@@ -209,7 +209,7 @@ price_interaction <- lm(log10_price ~ log10_size * condition, data = house_price
 get_regression_table(price_interaction)
 
 
-## ----house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction model with prediction", fig.width=16/2, fig.height=9/2----
+## ----house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction model with prediction.", fig.width=16/2, fig.height=9/2----
 new_house <- data_frame(log10_size = log10(1900), condition = factor(5)) %>% 
   get_regression_points(price_interaction, newdata = .)
 

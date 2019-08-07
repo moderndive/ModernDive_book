@@ -1,6 +1,6 @@
-## ----appendixb, echo=FALSE-----------------------------------------------
+## ----appendixb, echo=FALSE, results="asis"-------------------------------
 if(!knitr::is_latex_output()){
-  cat("If you'd like more practice or to see how this framework applies to different scenarios, you can find fully-worked out examples for many common hypothesis tests and their corresponding confidence intervals in Appendix B.")
+  cat("If you'd like more practice or to see how this framework applies to different scenarios, you can find fully-worked out examples for many common hypothesis tests and their corresponding confidence intervals in Appendix B. ")
   cat("We recommend that you carefully review these examples as they also cover how the general frameworks apply to traditional normal-based methodologies like the $t$-test and normal-theory confidence intervals.  You'll see there that these traditional methods are just approximations for the general computational frameworks, but require conditions to be met for their results to be valid.  The general frameworks using randomization, simulation, and bootstrapping do not hold the same sorts of restrictions and further advance computational thinking, which is one big reason for their emphasis throughout this textbook.")
 }
 
@@ -137,7 +137,12 @@ prop_women_promoted <- round(prop_women_promoted, 3)
 
 ## ---- eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE----------------
 # https://docs.google.com/spreadsheets/d/1Q-ENy3o5IrpJshJ7gn3hJ5A0TOWV2AZrKNHMsshQtiE/edit#gid=0
-shuffled_data <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQXLJxwSp1ALEJ1JRNn3o8K3jVdqRG_5yxpoOhIFYflbFIkb2ttH73w8mljptn12CsDyIvjr5p0IGUe/pub?gid=0&single=true&output=csv")
+if(!file.exists("rds/shuffled_data.rds")){
+  shuffled_data <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQXLJxwSp1ALEJ1JRNn3o8K3jVdqRG_5yxpoOhIFYflbFIkb2ttH73w8mljptn12CsDyIvjr5p0IGUe/pub?gid=0&single=true&output=csv")
+  write_rds(shuffled_data, "rds/shuffled_data.rds")
+} else {
+  shuffled_data <- read_rds("rds/shuffled_data.rds")
+}
 n_replicates <- ncol(shuffled_data) - 2
 
 shuffled_data_tidy <- shuffled_data %>% 
@@ -235,7 +240,7 @@ obs_diff_prop
 
 
 
-## ----null-distribution-infer-2, fig.cap="Shaded histogram to show p-value"----
+## ----null-distribution-infer-2, fig.cap="Shaded histogram to show p-value."----
 visualize(null_distribution, bins = 10) + 
   shade_p_value(obs_stat = obs_diff_prop, direction = "right")
 
@@ -319,7 +324,7 @@ se_ci
 ##   tab_options(table.width = pct(90))
 
 
-## ----trial-errors-table, echo=FALSE, fig.cap="Type I and Type II errors in criminal trials"----
+## ----trial-errors-table, echo=FALSE, fig.cap="Type I and Type II errors in criminal trials."----
 knitr::include_graphics("images/gt_error_table.png")
 
 
@@ -341,7 +346,7 @@ knitr::include_graphics("images/gt_error_table.png")
 ##   tab_options(table.width = pct(90))
 
 
-## ----trial-errors-table-ht, echo=FALSE, fig.cap="Type I and Type II errors in hypothesis tests"----
+## ----trial-errors-table-ht, echo=FALSE, fig.cap="Type I and Type II errors in hypothesis tests."----
 knitr::include_graphics("images/gt_error_table_ht.png")
 
 
@@ -391,8 +396,15 @@ n_romance <- movies_genre_summaries %>%
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-  read_csv(na = "") %>% 
+if(!file.exists("rds/sampling_scenarios.rds")){
+  sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+    read_csv(na = "")
+  write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
+} else {
+  sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
+}
+
+sampling_scenarios %>% 
   filter(Scenario %in% c(1:4)) %>% 
   kable(
     caption = "Scenarios of sampling for inference", 
@@ -457,7 +469,7 @@ obs_diff_means <- movies_sample %>%
 obs_diff_means
 
 
-## ----null-distribution-movies-2, fig.cap="Null distribution, observed test statistic, and p-value. "----
+## ----null-distribution-movies-2, fig.cap="Null distribution, observed test statistic, and p-value."----
 visualize(null_distribution_movies, bins = 10) + 
   shade_p_value(obs_stat = obs_diff_means, direction = "both")
 
@@ -476,7 +488,7 @@ p_value_movies <- null_distribution_movies %>%
 
 
 
-## ----zcurve, echo=FALSE, out.width="50%", fig.cap="Standard normal z curve"----
+## ----zcurve, echo=FALSE, out.width="60%", fig.cap="Standard normal z curve."----
 ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm) +
   labs(x = "z", y = "") + 
   theme(axis.title.y = element_blank(),

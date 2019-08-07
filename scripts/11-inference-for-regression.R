@@ -48,7 +48,7 @@ cor_ch6 <- evals_ch6 %>%
   round(3)
 
 
-## ----regline, fig.cap="Relationship with regression line"----------------
+## ----regline, fig.cap="Relationship with regression line."---------------
 ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score",
@@ -96,11 +96,18 @@ upper0 <- intercept_row %>% pull(upper_ci)
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-  read_csv(na = "") %>% 
-  filter(Scenario %in% c(1:6)) %>% 
+if(!file.exists("rds/sampling_scenarios.rds")){
+  sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+    read_csv(na = "")
+  write_rds(table_ch3, "rds/sampling_scenarios.rds")
+} else {
+  sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
+}
+
+sampling_scenarios %>%  
+  filter(Scenario %in% 1:6) %>% 
   kable(
-    caption = "\\label{tab:summarytable-ch9}Scenarios of sampling for inference", 
+    caption = "\\label{tab:summarytable-ch11}Scenarios of sampling for inference", 
     booktabs = TRUE,
     escape = FALSE
   ) %>% 
@@ -124,7 +131,7 @@ get_regression_table(score_model) %>%
                 latex_options = c("HOLD_position"))
 
 
-## ----residual-example, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual"----
+## ----residual-example, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
 # Pick out one particular point to drill down on
 index <- which(evals_ch6$bty_avg == 7.333 & evals_ch6$score == 4.9)
 target_point <- score_model %>%
@@ -180,7 +187,7 @@ evals %>%
 ##   geom_histogram(binwidth = 0.25, color = "white") +
 ##   labs(x = "Residual")
 
-## ----model1residualshist, echo=FALSE, warning=FALSE, fig.cap="Histogram of residuals"----
+## ----model1residualshist, echo=FALSE, warning=FALSE, fig.cap="Histogram of residuals."----
 ggplot(regression_points, aes(x = residual)) +
   geom_histogram(binwidth = 0.25, color = "white") +
   labs(x = "Residual")
@@ -208,7 +215,7 @@ evals_ch6 %>%
 ##   labs(x = "Beauty Score", y = "Residual") +
 ##   geom_hline(yintercept = 0, col = "blue", size = 1)
 
-## ----numxplot6, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score"----
+## ----numxplot6, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score."----
 ggplot(regression_points, aes(x = bty_avg, y = residual)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Residual") +
@@ -332,9 +339,16 @@ null_distn_slope %>%
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-  read_csv(na = "") %>% 
-  filter(Scenario %in% c(1:6)) %>% 
+if(!file.exists("rds/sampling_scenarios.rds")){
+  sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+    read_csv(na = "")
+  write_rds(table_ch3, "rds/sampling_scenarios.rds")
+} else {
+  sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
+}
+
+sampling_scenarios %>%  
+  filter(Scenario %in% 1:6) %>% 
   kable(
     caption = "\\label{tab:summarytable-ch9}Scenarios of sampling for inference", 
     booktabs = TRUE,

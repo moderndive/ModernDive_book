@@ -63,7 +63,8 @@ library(nycflights13)
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## many_airports <- flights %>%
-##   filter(dest == "BTV" | dest == "SEA" | dest == "PDX" | dest == "SFO" | dest == "BDL")
+##   filter(dest == "BTV" | dest == "SEA" | dest == "PDX" |
+##          dest == "SFO" | dest == "BDL")
 ## View(many_airports)
 
 
@@ -190,12 +191,12 @@ by_origin_monthly_incorrect
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## weather <- weather %>%
-##   mutate(temp_in_C = (temp-32)/1.8)
+##   mutate(temp_in_C = (temp - 32) / 1.8)
 ## View(weather)
 
 ## ---- eval=TRUE, echo=FALSE----------------------------------------------
 weather <- weather %>% 
-  mutate(temp_in_C = (temp-32)/1.8)
+  mutate(temp_in_C = (temp - 32) / 1.8)
 
 
 ## ------------------------------------------------------------------------
@@ -211,11 +212,12 @@ flights <- flights %>%
   mutate(gain = dep_delay - arr_delay)
 
 
-## ---- echo=FALSE---------------------------------------------------------
+## ----first-five-flights, echo=FALSE--------------------------------------
 flights %>% 
   select(dep_delay, arr_delay, gain) %>% 
   slice(1:5) %>% 
-  kable()
+  kable(caption = "Subset of flights data frame") %>% 
+  kable_styling(position = "center", latex_options = "HOLD_position")
 
 
 ## ------------------------------------------------------------------------
@@ -288,7 +290,7 @@ freq_dest %>%
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## flights_with_airport_names <-  flights %>%
+## flights_with_airport_names <- flights %>%
 ##   inner_join(airports, by = c("dest" = "faa"))
 ## View(flights_with_airport_names)
 
@@ -398,8 +400,15 @@ named_dests
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1nRkXfYMQiTj79c08xQPY0zkoJSpde3NC1w6DRhsWCss/edit#gid=0
 
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vRgwl1lugQA6zxzfB6_0hM5vBjXkU7cbUVYYXLcWeaRJ9HmvNXyCjzJCgiGW8HCe1kvjLCGYHf-BvYL/pub?gid=0&single=true&output=csv" %>% 
-  read_csv(na = "") %>% 
+if(!file.exists("rds/ch4_scenarios.rds")){
+  ch4_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRgwl1lugQA6zxzfB6_0hM5vBjXkU7cbUVYYXLcWeaRJ9HmvNXyCjzJCgiGW8HCe1kvjLCGYHf-BvYL/pub?gid=0&single=true&output=csv" %>% 
+    read_csv(na = "")
+  write_rds(ch4_scenarios, "rds/ch4_scenarios.rds")
+} else {
+  ch4_scenarios <- read_rds("rds/ch4_scenarios.rds")
+}
+
+ch4_scenarios %>%  
   select(-X1) %>% 
   kable(
     caption = "Summary of data wrangling verbs", 
@@ -415,6 +424,6 @@ named_dests
 
 
 
-## ----dplyr-cheatsheet, echo=FALSE, fig.cap="Data Transformation with dplyr cheatsheat"----
+## ----dplyr-cheatsheet, echo=FALSE, fig.cap="Data Transformation with dplyr cheatsheet."----
 include_graphics("images/dplyr_cheatsheet-1.png")
 

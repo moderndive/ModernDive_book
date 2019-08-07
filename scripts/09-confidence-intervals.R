@@ -42,12 +42,19 @@ x_bar <- pennies_sample %>%
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-  read_csv(na = "") %>% 
+if(!file.exists("rds/sampling_scenarios.rds")){
+  sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+    read_csv(na = "")
+    write_rds(table_ch3, "rds/sampling_scenarios.rds")
+} else {
+  sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
+}
+
+sampling_scenarios %>%  
   # Only first two scenarios
   filter(Scenario <= 2) %>% 
   kable(
-    caption = "\\label{tab:summarytable-ch8}Scenarios of sampling for inference", 
+    caption = "\\label{tab:summarytable-ch8-b}Scenarios of sampling for inference", 
     booktabs = TRUE,
     escape = FALSE
   ) %>% 
@@ -528,7 +535,7 @@ percentile_ci_2 <- sample_2_bootstrap %>%
 percentile_ci_2
 
 
-## ----reliable-percentile, fig.cap="100 SE-based 95 percent confidence intervals for p",echo=FALSE----
+## ----reliable-percentile, fig.cap="100 SE-based 95 percent confidence intervals for $p$.",echo=FALSE----
 if(!file.exists("rds/balls_percentile_cis.rds")){
   set.seed(4)
 
@@ -573,7 +580,7 @@ ggplot(percentile_cis) +
   geom_vline(xintercept = p_red, color = "red") 
 
 
-## ----reliable-se, fig.cap="100 SE-based 85 percent confidence intervals for p",echo=FALSE----
+## ----reliable-se, fig.cap="100 SE-based 85 percent confidence intervals for $p$",echo=FALSE----
 if(!file.exists("rds/balls_se_cis.rds")){
   # Set random number generator seed value to 9 in honour of Maurice "Rocket" Richard.
   set.seed(9)
@@ -699,7 +706,7 @@ if(!file.exists("rds/balls_perc_cis_80_95_99.rds")){
 ##                 latex_options = c("HOLD_position", "repeat_header"))
 
 
-## ----reliable-percentile-80-95-99, fig.cap="Ten 80, 95, and 99 percent confidence intervals for p based on n = 50.", echo=FALSE----
+## ----reliable-percentile-80-95-99, fig.cap="Ten 80, 95, and 99 percent confidence intervals for $p$ based on $n = 50$.", echo=FALSE----
 sample_of_cis <- percentile_cis_by_level %>% 
   group_by(confidence_level) %>% 
   mutate(sample_row = 1:10)
@@ -795,7 +802,7 @@ if(!file.exists("rds/balls_perc_cis_n_25_50_100.rds")){
 }
 
 
-## ----reliable-percentile-n-25-50-100, fig.cap="Ten 95 percent confidence intervals for p based on n = 25, 50, and 100.", echo=FALSE----
+## ----reliable-percentile-n-25-50-100, fig.cap="Ten 95 percent confidence intervals for $p$ based on n = 25, 50, and 100.", echo=FALSE----
 sample_of_cis <- percentile_cis_by_n %>% 
   group_by(sample_size) %>% 
   mutate(sample_row = 1:10)
@@ -839,12 +846,19 @@ mythbusters_yawn %>%
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-  read_csv(na = "") %>% 
+if(!file.exists("rds/sampling_scenarios.rds")){
+  sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+    read_csv(na = "")
+  write_rds(table_ch3, "rds/sampling_scenarios.rds")
+} else {
+  sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
+}
+
+sampling_scenarios %>% 
   # Only first two scenarios
   filter(Scenario <= 3) %>% 
   kable(
-    caption = "\\label{tab:summarytable-ch8}Scenarios of sampling for inference", 
+    caption = "Scenarios of sampling for inference", 
     booktabs = TRUE,
     escape = FALSE
   ) %>% 
@@ -999,7 +1013,7 @@ se_boot <- bootstrap_distribution %>%
   pull(se)
 
 
-## ----side-by-side, fig.height=7, fig.cap="Comparing the sampling and bootstrap distributions of p-hat", echo=FALSE----
+## ----side-by-side, fig.height=7, fig.cap="Comparing the sampling and bootstrap distributions of $\\widehat{p}$", echo=FALSE----
 p_samp <- ggplot(sampling_distribution, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, fill = "salmon", color = "white") +
   labs(x = "", title = "Sampling distribution") +
@@ -1043,7 +1057,7 @@ conf_ints <- tactile_prop_red %>%
 conf_ints
 
 
-## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 95 percent confidence intervals based on 33 tactile samples of size n=50", fig.height=6----
+## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 95 percent confidence intervals based on 33 tactile samples of size n = 50.", fig.height=6----
 conf_ints <- conf_ints %>% 
   mutate(
     y = 1:n(),
@@ -1084,7 +1098,7 @@ ggplot(conf_ints) +
 ##   )
 
 
-## ----virtual-conf-int, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n=50"----
+## ----virtual-conf-int, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE, fig.height=6, fig.cap="100 confidence intervals based on 100 virtual samples of size n = 50."----
 ## set.seed(79)
 ## 
 ## virtual_samples <- bowl %>%

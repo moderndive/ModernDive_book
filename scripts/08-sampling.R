@@ -27,7 +27,7 @@ library(patchwork)
 ## View(tactile_prop_red)
 
 
-## ----tactilered, echo=FALSE----------------------------------------------
+## ----tactile-red1, echo=FALSE--------------------------------------------
 tactile_prop_red %>% 
   slice(1:10) %>% 
   kable(
@@ -47,7 +47,7 @@ tactile_prop_red %>%
 ##   labs(x = "Proportion of 50 balls that were red",
 ##        title = "Distribution of 33 proportions red")
 
-## ----samplingdistribution-tactile, echo=FALSE, fig.cap="Distribution of 33 proportions based on 33 samples of size 50"----
+## ----samplingdistribution-tactile, echo=FALSE, fig.cap="Distribution of 33 proportions based on 33 samples of size 50."----
 tactile_histogram <- ggplot(tactile_prop_red, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white")
 tactile_histogram + 
@@ -150,7 +150,7 @@ virtual_prop_red %>%
 ##   labs(x = "Proportion of 50 balls that were red",
 ##        title = "Distribution of 33 proportions red")
 
-## ----samplingdistribution-virtual, echo=FALSE, fig.cap="Distribution of 33 proportions based on 33 samples of size 50"----
+## ----samplingdistribution-virtual, echo=FALSE, fig.cap="Distribution of 33 proportions based on 33 samples of size 50."----
 virtual_histogram <- ggplot(virtual_prop_red, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white")
 virtual_histogram + 
@@ -202,7 +202,7 @@ virtual_samples <- bowl %>%
 ##   labs(x = "Proportion of 50 balls that were red",
 ##        title = "Distribution of 1000 proportions red")
 
-## ----samplingdistribution-virtual-1000, echo=FALSE, fig.cap="Distribution of 1000 proportions based on 33 samples of size 50"----
+## ----samplingdistribution-virtual-1000, echo=FALSE, fig.cap="Distribution of 1000 proportions based on 33 samples of size 50."----
 virtual_prop_red <- virtual_samples %>% 
   group_by(replicate) %>% 
   summarize(red = sum(color == "red")) %>% 
@@ -274,7 +274,7 @@ virtual_histogram +
 ##   labs(x = "Proportion of 100 balls that were red", title = "100")
 
 
-## ----comparing-sampling-distributions, echo=FALSE, fig.cap="Comparing the distributions of proportion red for different sample sizes"----
+## ----comparing-sampling-distributions, echo=FALSE, fig.cap="Comparing the distributions of proportion red for different sample sizes."----
 # n = 25
 if(!file.exists("rds/virtual_samples_25.rds")){
   virtual_samples_25 <- bowl %>% 
@@ -406,13 +406,14 @@ comparing_n_table <- virtual_prop %>%
     n = str_c("n = ", n),
     n = factor(n, levels = c("n = 25", "n = 50", "n = 100"))
     ) %>% 
-  rename(`Sample size` = n, `Standard error of $\\widehat{p}$` = sd) 
+  rename(`Sample size (n)` = n, `Standard error of $\\widehat{p}$` = sd) 
 
 comparing_n_table  %>% 
   kable(
     digits = 3,
-      caption = "Three standard errors of the sample proportion based on n = 25, 50, 100. ", 
-      booktabs = TRUE
+    caption = "Three standard errors of the sample proportion based on n = 25, 50, 100.", 
+    booktabs = TRUE#,
+#    escape = TRUE
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
@@ -440,7 +441,7 @@ virtual_prop %>%
   ggplot( aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
   labs(x = expression(paste("Sample proportion ", hat(p))), 
-       title = expression(paste("Sampling distributions of the sample proportion ", hat(p), " based on n = 25, 50, 100.")) ) +
+       title = expression(paste("Sampling distributions of ", hat(p), " based on n = 25, 50, 100.")) ) +
   facet_wrap(~n) +
   geom_vline(xintercept = p, col = "red", size = 1)
 
@@ -457,7 +458,7 @@ comparing_n_table <- virtual_prop %>%
   mutate(
     n = str_c("n = ")
     ) %>% 
-  rename(`Sample size` = n, `Standard error of $\\widehat{p}$` = sd) %>% 
+  rename(`Sample size` = n, `Standard error of p-hat` = sd) %>% 
  sample_frac(1)
   
 comparing_n_table  %>% 
@@ -476,12 +477,19 @@ comparing_n_table  %>%
 
 
 
-## ----summarytable-ch8, echo=FALSE, message=FALSE-------------------------
+## ----table-ch8, echo=FALSE, message=FALSE--------------------------------
 # The following Google Doc is published to CSV and loaded below using read_csv() below:
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-  read_csv(na = "") %>% 
+if(!file.exists("rds/sampling_scenarios.rds")){
+  sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
+    read_csv(na = "")
+    write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
+} else {
+  sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
+}
+
+sampling_scenarios %>% 
   kable(
     caption = "\\label{tab:summarytable-ch8}Scenarios of sampling for inference", 
     booktabs = TRUE,

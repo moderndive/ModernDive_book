@@ -82,7 +82,7 @@ drinks_smaller_tidy
 drinks_smaller
 
 
-## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from R for Data Science."----
+## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from 'R for Data Science'."----
 knitr::include_graphics("images/tidy-1.png")
 
 
@@ -230,7 +230,7 @@ ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
 ## library(forcats)
 
 
-## ----import-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheat"-----
+## ----import-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheet."----
 include_graphics("images/import_cheatsheet-1.png")
 
 

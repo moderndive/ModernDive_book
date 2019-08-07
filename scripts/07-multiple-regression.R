@@ -57,7 +57,7 @@ evals_ch7 %>%
   get_correlation(formula = score ~ age)
 
 
-## ----numxcatxplot1, warning=FALSE, fig.cap="Colored scatterplot of relationship of teaching and beauty scores"----
+## ----numxcatxplot1, warning=FALSE, fig.cap="Colored scatterplot of relationship of teaching and beauty scores."----
 ggplot(evals_ch7, aes(x = age, y = score, color = gender)) +
   geom_point() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
@@ -152,7 +152,7 @@ parallel_slopes_plot <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "
 interaction_plot + parallel_slopes_plot
 
 
-## ----fitted-values, echo=FALSE, warning=FALSE, fig.cap="Fitted values for two new professors"----
+## ----fitted-values, echo=FALSE, warning=FALSE, fig.cap="Fitted values for two new professors."----
 newpoints <- evals_ch7 %>% 
   slice(c(1, 5)) %>% 
   get_regression_points(score_model_interaction, newdata = .)
@@ -259,7 +259,7 @@ credit_ch7 %>%
 ##   geom_smooth(method = "lm", se = FALSE)
 
 
-## ----2numxplot1, echo=FALSE, fig.width = 8, fig.cap="Relationship between credit card debt and credit limit/income"----
+## ----2numxplot1, echo=FALSE, fig.width = 8, fig.cap="Relationship between credit card debt and credit limit/income."----
 model3_balance_vs_limit_plot <- ggplot(credit_ch7, aes(x = credit_limit, y = debt)) +
   geom_point() +
   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)", 
@@ -472,18 +472,18 @@ credit_ch7 %>%
                 latex_options = c("HOLD_position"))
 
 
-## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card debt and credit limit/income"----
+## ----echo=FALSE, fig.height=4, fig.cap="Relationship between credit card debt and credit limit/income."----
 model3_balance_vs_limit_plot + model3_balance_vs_income_plot
 
 
-## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and quartiles", message=FALSE----
+## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and quartiles.", message=FALSE----
 ggplot(credit_ch7, aes(x = credit_limit)) +
   geom_histogram(color = "white") +
   geom_vline(xintercept = quantile(credit_ch7$credit_limit, probs = c(0.25, 0.5, 0.75)), col = "red", linetype = "dashed") +
   labs(x = "Credit limit", title = "Credit limit quartiles")
 
 
-## ----2numxplot4, fig.width=8, echo=FALSE, fig.cap="Relationship between credit card debt and income for different credit limit groups"----
+## ----2numxplot4, fig.width=8, echo=FALSE, fig.cap="Relationship between credit card debt and income for different credit limit groups."----
 credit_ch7 <- credit_ch7 %>% 
   mutate(limit_bracket = cut_number(credit_limit, 4)) %>% 
   mutate(limit_bracket = fct_recode(limit_bracket,
