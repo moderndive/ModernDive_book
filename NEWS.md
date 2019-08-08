@@ -1,4 +1,14 @@
+# ModernDive 0.6.0.9000
+
+
+
+***
+
+
 # ModernDive 0.6.0
+
+We're only a few cosmetic edits away from v1.0.0, which will correspond to our print edition with CRC Press!
+
 
 ## Done first pass of infer chapters
 
