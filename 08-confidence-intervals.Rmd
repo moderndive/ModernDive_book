@@ -1153,7 +1153,7 @@ Let's now repeat this process 100 more times: we take 100 virtual samples from t
 
 1. We mark the true value of $p$ = 0.375 with a vertical line.
 1. We mark each of the 100 95% confidence intervals with horizontal lines. These are the "nets."
-1. The horizontal line is colored light orange if the confidence interval "captures" the true value of $p$ marked with the vertical line. The horizontal line is colored dark blue otherwise.
+1. The horizontal line is colored grey if the confidence interval "captures" the true value of $p$ marked with the vertical line. The horizontal line is colored black otherwise.
 
 ```{r reliable-percentile, fig.cap="100 percentile-based 95 percent confidence intervals for $p$.",echo=FALSE}
 if(!file.exists("rds/balls_percentile_cis.rds")){
@@ -1190,16 +1190,23 @@ if(!file.exists("rds/balls_percentile_cis.rds")){
 percentile_cis <- balls_percentile_cis %>% 
   unnest(percentile_ci) %>% 
   mutate(captured = `2.5%` <= p_red & p_red <= `97.5%`)
-
+    
 # Plot them!
 ggplot(percentile_cis) +
-  geom_segment(aes(y = replicate, yend = replicate, x = `2.5%`, xend = `97.5%`, color = captured)) +
-  # Removed point estimates since it doesn't act as center for percentile-based CI's
+  geom_segment(aes(
+    y = replicate, yend = replicate, x = `2.5%`, xend = `97.5%`, 
+    alpha = factor(captured, levels = c("TRUE", "FALSE"))
+  )) +
+  # Removed point estimates since it doesn't necessarily act as center for 
+  # percentile-based CI's
   # geom_point(aes(x = sample_prop, y = replicate, color = captured)) +
-  labs(x = expression("Proportion of red balls"), y = "Replicate ID") +
-  scale_color_manual(values = c("navyblue", "orange")) + 
+  labs(x = expression("Proportion of red balls"), y = "Confidence interval number", 
+       alpha = "Captured") +
   geom_vline(xintercept = p_red, color = "red") + 
-  coord_cartesian(xlim = c(0.1, 0.7))
+  coord_cartesian(xlim = c(0.1, 0.7)) + 
+  theme_light() + 
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank(),
+        panel.grid.minor.x = element_blank())
 ```
 
 Of the 100 95% confidence intervals, `r percentile_cis[["captured"]] %>% sum()` of them captured the true value $p$ = `r p_red`, whereas `r 100 - percentile_cis[["captured"]] %>% sum()` of them didn't. In other words, `r percentile_cis[["captured"]] %>% sum()` of our nets caught the fish, whereas `r 100 - percentile_cis[["captured"]] %>% sum()` of our nets didn't. 
@@ -1208,9 +1215,9 @@ This is where the "95% confidence level" we defined in Section \@ref(ci-build-up
 
 Note that "expect" is a probabilistic statement referring to a long-run average. In other words, for every 100 confidence intervals, we will observe *about* 95 confidence intervals that capture $p$, but not necessarily exactly 95. In Figure \@ref(fig:reliable-percentile) for example, `r percentile_cis[["captured"]] %>% sum()` of the confidence intervals capture $p$.
 
-To further accentuate our point about confidence levels, let's generate a figure similar to Figure \@ref(fig:reliable-percentile), but this time constructing 80% standard-error method based confidence intervals instead. Let's visualize the results in Figure \@ref(fig:reliable-se) with the scale on the x-axis being the same as in Figure \@ref(fig:reliable-percentile) to make comparison easy. Furthermore, since all standard-error method 95% confidence intervals for $p$ are centered at their respective point estimates $\widehat{p}$, we mark this value on each line with a dot.  
+To further accentuate our point about confidence levels, let's generate a figure similar to Figure \@ref(fig:reliable-percentile), but this time constructing 80% standard-error method based confidence intervals instead. Let's visualize the results in Figure \@ref(fig:reliable-se) with the scale on the x-axis being the same as in Figure \@ref(fig:reliable-percentile) to make comparison easy. Furthermore, since all standard-error method 95% confidence intervals for $p$ are centered at their respective point estimates $\widehat{p}$, we mark this value on each line with dots.  
 
-```{r reliable-se, fig.cap="100 SE-based 80 percent confidence intervals for $p$",echo=FALSE}
+```{r reliable-se, fig.cap="100 SE-based 80 percent confidence intervals for $p$ with point estimate center marked with dots.",echo=FALSE}
 if(!file.exists("rds/balls_se_cis.rds")){
   # Set random number generator seed value.
   set.seed(9)
@@ -1250,13 +1257,23 @@ se_cis <- balls_se_cis %>%
 
 # Plot them!
 ggplot(se_cis) +
-  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, 
-                   color = captured)) +
-  geom_point(aes(x = sample_prop, y = replicate, color = captured)) +
-  labs(x = expression("Proportion of red balls"), y = "Replicate ID") +
-  scale_color_manual(values = c("navyblue", "orange")) + 
+  geom_segment(aes(
+    y = replicate, yend = replicate, x = lower, xend = upper, 
+    alpha = factor(captured, levels = c("TRUE", "FALSE"))
+  )) +
+  geom_point(
+    aes(
+      x = sample_prop, y = replicate,
+      alpha = factor(captured, levels = c("TRUE", "FALSE"))
+    ), 
+    show.legend = FALSE, size = 1) +
+  labs(x = expression("Proportion of red balls"), y = "Confidence interval number", 
+       alpha = "Captured") +
   geom_vline(xintercept = p_red, color = "red") + 
-  coord_cartesian(xlim = c(0.1, 0.7))
+  coord_cartesian(xlim = c(0.1, 0.7)) + 
+  theme_light() + 
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank(),
+        panel.grid.minor.x = element_blank())
 ```
 
 Observe how the 80% confidence intervals are narrower than the 95% confidence intervals, reflecting our lower degree of confidence. Think of this as using a smaller "net." We'll explore other determinants of confidence interval width in the upcoming Section \@ref(ci-width).
@@ -1405,7 +1422,9 @@ sample_of_cis <- percentile_cis_by_level %>%
   mutate(sample_row = 1:10)
 
 ggplot(sample_of_cis) +
-  geom_point(aes(x = point_estimate, y = sample_row)) +
+  # Doesn't make sense to show point_estimate center for percentile confidence 
+  # intervals:
+  # geom_point(aes(x = point_estimate, y = sample_row)) +
   geom_segment(aes(y = sample_row, yend = sample_row, x = lower, xend = upper)) +
   labs(x = expression("Proportion of red balls"), y = "") +
   scale_y_continuous(breaks = 1:10) +
@@ -1511,7 +1530,9 @@ sample_of_cis <- percentile_cis_by_n %>%
   mutate(sample_row = 1:10)
 
 ggplot(sample_of_cis) +
-  geom_point(aes(x = point_estimate, y = sample_row)) +
+  # Doesn't make sense to show point_estimate center for percentile confidence 
+  # intervals:
+  # geom_point(aes(x = point_estimate, y = sample_row)) +
   geom_segment(aes(y = sample_row, yend = sample_row, x = lower, xend = upper)) +
   labs(x = expression("Proportion of red balls"), y = "") +
   scale_y_continuous(breaks = 1:10) +
@@ -2132,12 +2153,24 @@ conf_ints <- conf_ints %>%
 groups <- conf_ints$group
 
 ggplot(conf_ints) +
-  geom_point(aes(x = p_hat, y = y, col = captured)) +
+  geom_point(
+    aes(
+      x = p_hat, y = y, 
+      alpha = factor(captured, levels = c("TRUE", "FALSE"))
+    ),
+    show.legend = FALSE
+  ) +
   geom_vline(xintercept = 900 / 2400, col = "red") +
-  geom_segment(aes(y = y, yend = y, x = lower_ci, xend = upper_ci, col = captured)) +
+  geom_segment(aes(
+    y = y, yend = y, x = lower_ci, xend = upper_ci, 
+    alpha = factor(captured, levels = c("TRUE", "FALSE"))
+  )) +
   scale_y_continuous(breaks = 1:33, labels = groups) +
-  labs(x = expression("Proportion red"), y = "") +
-  scale_color_manual(values = c("navyblue", "orange"))
+  labs(x = expression("Proportion of red balls"), y = "Confidence interval number", 
+       alpha = "Captured") + 
+  theme_light() + 
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank(),
+        panel.grid.minor.x = element_blank())
 ```
 
 Observe that 31 of the 33 confidence intervals "captured" the true value of $p$, for a success rate of 31 / 33 = `r round(31 / 33 * 100, 2)`%. While this is not quite 95%, recall that we *expect* about 95% of such confidence intervals to capture $p$. The actual observed success rate will vary slightly. 
@@ -2228,7 +2261,6 @@ ggplot(virtual_prop_red) +
     y = "Replicate ID",
     title = expression(paste("95% confidence intervals for ", p, sep = ""))
   ) +
-  scale_color_manual(values = c("blue", "orange")) + 
   geom_vline(xintercept = 900 / 2400, color = "red") 
 ```
 
