@@ -19,6 +19,7 @@ library(knitr)
 library(kableExtra)
 library(patchwork)
 library(scales)
+library(viridis)
 
 
 ## ------------------------------------------------------------------------
@@ -518,12 +519,16 @@ p_value_movies <- null_distribution_movies %>%
 
 
 
-## ----zcurve, echo=FALSE, out.width="60%", fig.cap="Standard normal z curve."----
+## ----zcurve, echo=FALSE, out.width="80%", fig.cap="Standard normal z curve."----
 ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm) +
   labs(x = "z", y = "") + 
-  theme(axis.title.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank())
+  theme_light() +
+  theme(
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
 
 
 

@@ -214,7 +214,7 @@ evals_ch6 %>%
 
 ## ----numxplot4, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
 best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
-  geom_point() +
+  geom_point(color = "grey") +
   labs(x = "Beauty Score", y = "Teaching Score",
        title = "Relationship of teaching and beauty scores") +
   geom_smooth(method = "lm", se = FALSE) +
@@ -399,7 +399,7 @@ knitr::include_graphics("images/flowcharts/flowchart.009-cropped.png")
 ## ----best-fitting-line, fig.height = 8, fig.width = 8, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
 # First residual
 best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
-  geom_point(size = 0.8) +
+  geom_point(size = 0.8, color = "grey") +
   labs(x = "Beauty Score", y = "Teaching Score") +
   geom_smooth(method = "lm", se = FALSE) +
   annotate("point", x = x, y = y, col = "red", size = 2) +

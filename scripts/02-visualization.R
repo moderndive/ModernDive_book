@@ -165,9 +165,9 @@ ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(color = "white")
 
 
-## ----weather-histogram-3, warning=FALSE, message=FALSE, fig.cap="Blue steel histogram of hourly temperatures at three NYC airports."----
-ggplot(data = weather, mapping = aes(x = temp)) +
-  geom_histogram(color = "white", fill = "steelblue")
+## ---- eval = FALSE-------------------------------------------------------
+## ggplot(data = weather, mapping = aes(x = temp)) +
+##   geom_histogram(color = "white", fill = "steelblue")
 
 
 ## ---- eval = FALSE-------------------------------------------------------

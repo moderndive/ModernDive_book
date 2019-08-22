@@ -510,7 +510,7 @@ get_regression_table(debt_model) %>%
 ## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and brackets.", message=FALSE----
 ggplot(credit_ch7, aes(x = credit_limit)) +
   geom_histogram(color = "white") +
-  geom_vline(xintercept = quantile(credit_ch7$credit_limit, probs = c(0.25, 0.5, 0.75)), col = "red", linetype = "dashed", size = 1) +
+  geom_vline(xintercept = quantile(credit_ch7$credit_limit, probs = c(0.25, 0.5, 0.75)), linetype = "dashed", size = 1) +
   labs(x = "Credit limit", title = "Credit limit and 4 credit limit brackets.")
 
 

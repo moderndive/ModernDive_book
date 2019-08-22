@@ -210,8 +210,8 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
   labs(x = "Resample sample mean") +
   scale_x_continuous(breaks = seq(1988, 2006, 2)) +
-  geom_vline(xintercept = percentile_ci[[1, 1]], color = "red", size = 1) +
-  geom_vline(xintercept = percentile_ci[[1, 2]], color = "red", size = 1)
+  geom_vline(xintercept = percentile_ci[[1, 1]], size = 1) +
+  geom_vline(xintercept = percentile_ci[[1, 2]], size = 1)
 
 
 ## ----echo=FALSE----------------------------------------------------------
@@ -241,10 +241,10 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
   labs(x = "sample mean", title = "Percentile method CI (solid lines), SE method CI (dashed lines)") +
   scale_x_continuous(breaks = seq(1988, 2006, 2)) +
-  geom_vline(xintercept = percentile_ci[[1, 1]], color = "red", size = 1) +
-  geom_vline(xintercept = percentile_ci[[1, 2]], color = "red", size = 1) + 
-  geom_vline(xintercept = standard_error_ci[[1, 1]], color = "blue", linetype = "dashed", size = 1) +
-  geom_vline(xintercept = standard_error_ci[[1, 2]], color = "blue", linetype = "dashed", size = 1)
+  geom_vline(xintercept = percentile_ci[[1, 1]], size = 1) +
+  geom_vline(xintercept = percentile_ci[[1, 2]], size = 1) + 
+  geom_vline(xintercept = standard_error_ci[[1, 1]], linetype = "dashed", size = 1) +
+  geom_vline(xintercept = standard_error_ci[[1, 2]], linetype = "dashed", size = 1)
 
 
 ## ----eval=FALSE----------------------------------------------------------
@@ -553,19 +553,26 @@ if(!file.exists("rds/balls_percentile_cis.rds")){
 percentile_cis <- balls_percentile_cis %>% 
   unnest(percentile_ci) %>% 
   mutate(captured = `2.5%` <= p_red & p_red <= `97.5%`)
-
+    
 # Plot them!
 ggplot(percentile_cis) +
-  geom_segment(aes(y = replicate, yend = replicate, x = `2.5%`, xend = `97.5%`, color = captured)) +
-  # Removed point estimates since it doesn't act as center for percentile-based CI's
+  geom_segment(aes(
+    y = replicate, yend = replicate, x = `2.5%`, xend = `97.5%`, 
+    alpha = factor(captured, levels = c("TRUE", "FALSE"))
+  )) +
+  # Removed point estimates since it doesn't necessarily act as center for 
+  # percentile-based CI's
   # geom_point(aes(x = sample_prop, y = replicate, color = captured)) +
-  labs(x = expression("Proportion of red balls"), y = "Replicate ID") +
-  scale_color_manual(values = c("navyblue", "orange")) + 
+  labs(x = expression("Proportion of red balls"), y = "Confidence interval number", 
+       alpha = "Captured") +
   geom_vline(xintercept = p_red, color = "red") + 
-  coord_cartesian(xlim = c(0.1, 0.7))
+  coord_cartesian(xlim = c(0.1, 0.7)) + 
+  theme_light() + 
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank(),
+        panel.grid.minor.x = element_blank())
 
 
-## ----reliable-se, fig.cap="100 SE-based 80 percent confidence intervals for $p$",echo=FALSE----
+## ----reliable-se, fig.cap="100 SE-based 80 percent confidence intervals for $p$ with point estimate center marked with dots.",echo=FALSE----
 if(!file.exists("rds/balls_se_cis.rds")){
   # Set random number generator seed value.
   set.seed(9)
@@ -605,13 +612,23 @@ se_cis <- balls_se_cis %>%
 
 # Plot them!
 ggplot(se_cis) +
-  geom_segment(aes(y = replicate, yend = replicate, x = lower, xend = upper, 
-                   color = captured)) +
-  geom_point(aes(x = sample_prop, y = replicate, color = captured)) +
-  labs(x = expression("Proportion of red balls"), y = "Replicate ID") +
-  scale_color_manual(values = c("navyblue", "orange")) + 
+  geom_segment(aes(
+    y = replicate, yend = replicate, x = lower, xend = upper, 
+    alpha = factor(captured, levels = c("TRUE", "FALSE"))
+  )) +
+  geom_point(
+    aes(
+      x = sample_prop, y = replicate,
+      alpha = factor(captured, levels = c("TRUE", "FALSE"))
+    ), 
+    show.legend = FALSE, size = 1) +
+  labs(x = expression("Proportion of red balls"), y = "Confidence interval number", 
+       alpha = "Captured") +
   geom_vline(xintercept = p_red, color = "red") + 
-  coord_cartesian(xlim = c(0.1, 0.7))
+  coord_cartesian(xlim = c(0.1, 0.7)) + 
+  theme_light() + 
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank(),
+        panel.grid.minor.x = element_blank())
 
 
 ## ----perc-sizes, echo=FALSE----------------------------------------------
@@ -698,7 +715,9 @@ sample_of_cis <- percentile_cis_by_level %>%
   mutate(sample_row = 1:10)
 
 ggplot(sample_of_cis) +
-  geom_point(aes(x = point_estimate, y = sample_row)) +
+  # Doesn't make sense to show point_estimate center for percentile confidence 
+  # intervals:
+  # geom_point(aes(x = point_estimate, y = sample_row)) +
   geom_segment(aes(y = sample_row, yend = sample_row, x = lower, xend = upper)) +
   labs(x = expression("Proportion of red balls"), y = "") +
   scale_y_continuous(breaks = 1:10) +
@@ -794,7 +813,9 @@ sample_of_cis <- percentile_cis_by_n %>%
   mutate(sample_row = 1:10)
 
 ggplot(sample_of_cis) +
-  geom_point(aes(x = point_estimate, y = sample_row)) +
+  # Doesn't make sense to show point_estimate center for percentile confidence 
+  # intervals:
+  # geom_point(aes(x = point_estimate, y = sample_row)) +
   geom_segment(aes(y = sample_row, yend = sample_row, x = lower, xend = upper)) +
   labs(x = expression("Proportion of red balls"), y = "") +
   scale_y_continuous(breaks = 1:10) +
@@ -1068,12 +1089,24 @@ conf_ints <- conf_ints %>%
 groups <- conf_ints$group
 
 ggplot(conf_ints) +
-  geom_point(aes(x = p_hat, y = y, col = captured)) +
+  geom_point(
+    aes(
+      x = p_hat, y = y, 
+      alpha = factor(captured, levels = c("TRUE", "FALSE"))
+    ),
+    show.legend = FALSE
+  ) +
   geom_vline(xintercept = 900 / 2400, col = "red") +
-  geom_segment(aes(y = y, yend = y, x = lower_ci, xend = upper_ci, col = captured)) +
+  geom_segment(aes(
+    y = y, yend = y, x = lower_ci, xend = upper_ci, 
+    alpha = factor(captured, levels = c("TRUE", "FALSE"))
+  )) +
   scale_y_continuous(breaks = 1:33, labels = groups) +
-  labs(x = expression("Proportion red"), y = "") +
-  scale_color_manual(values = c("navyblue", "orange"))
+  labs(x = expression("Proportion of red balls"), y = "Confidence interval number", 
+       alpha = "Captured") + 
+  theme_light() + 
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank(),
+        panel.grid.minor.x = element_blank())
 
 
 ## ----eval=FALSE----------------------------------------------------------
@@ -1136,6 +1169,5 @@ ggplot(conf_ints) +
 ##     y = "Replicate ID",
 ##     title = expression(paste("95% confidence intervals for ", p, sep = ""))
 ##   ) +
-##   scale_color_manual(values = c("blue", "orange")) +
 ##   geom_vline(xintercept = 900 / 2400, color = "red")
 

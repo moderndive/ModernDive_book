@@ -281,11 +281,11 @@ se_ci
 ## ---- eval=FALSE---------------------------------------------------------
 ## visualize(bootstrap_distn_slope) +
 ##   shade_confidence_interval(endpoints = percentile_ci, fill = NULL,
-##                             linetype = "solid") +
+##                             linetype = "solid", color = "black") +
 ##   shade_confidence_interval(endpoints = se_ci, fill = NULL,
-##                             linetype = "dashed") +
+##                             linetype = "dashed", color = "black") +
 ##   shade_confidence_interval(endpoints = c(0.035, 0.099), fill = NULL,
-##                             linetype = "dotted")
+##                             linetype = "dotted", color = "black")
 
 
 
