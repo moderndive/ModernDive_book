@@ -1,4 +1,4 @@
-# Tidy Data via tidyr {#tidy}
+# Data Importing & "Tidy" Data {#tidy}
 
 ```{r setup_tidy, include=FALSE}
 chap <- 4
@@ -9,34 +9,26 @@ rq <- 0
 
 knitr::opts_chunk$set(
   tidy = FALSE, 
-  out.width = '\\textwidth'
-  )
+  out.width = '\\textwidth', 
+  fig.height = 4,
+  fig.align='center',
+  warning = FALSE
+)
 
-# This bit of code is a bug fix on asis blocks, which we use to show/not show LC
-# solutions, which are written like markdown text. In theory, it shouldn't be
-# necessary for knitr versions <=1.11.6, but I've found I still need to for
-# everything to knit properly in asis blocks. More info here: 
-# https://stackoverflow.com/questions/32944715/conditionally-display-block-of-markdown-text-using-knitr
-library(knitr)
-knit_engines$set(asis = function(options) {
-  if (options$echo && options$eval) knit_child(text = options$code)
-})
+options(scipen = 99, digits = 3)
 
-# This controls which LC solutions to show. Options for solutions_shown: "ALL"
-# (to show all solutions), or subsets of c('4-4', '4-5'), including the
-# null vector c('') to show no solutions.
-# solutions_shown <- c('4-1', '4-2', '4-3', '4-4')
-solutions_shown <- c('')
-show_solutions <- function(section){
-  return(solutions_shown == "ALL" | section %in% solutions_shown)
-  }
+# In knitr::kable printing replace all NA's with blanks
+options(knitr.kable.NA = '')
+
+# Set random number generator see value for replicable pseudorandomness.
+set.seed(76)
 ```
 
-In Subsection \@ref(programming-concepts) we introduced the concept of a data frame: a rectangular spreadsheet-like representation of data in R where the rows correspond to observations and the columns correspond to variables describing each observation.  In Section \@ref(nycflights13), we started explorations of our first data frame `flights` included in the `nycflights13` package. In Chapter \@ref(viz) we made graphics using data contained in `flights` and other data frames. 
+In Subsection \@ref(programming-concepts), we introduced the concept of a \index{data frame} data frame in R: a rectangular spreadsheet-like representation of data where the rows correspond to observations and the columns correspond to variables describing each observation.  In Section \@ref(nycflights13), we started exploring our first data frame: the `flights` data frame included in the `nycflights13` package. In Chapter \@ref(viz) we created visualizations based on the data included in `flights` and other data frames such as `weather`. In Chapter \@ref(wrangling), we learned how to wrangle data, in other words take existing data frames and transform/modify them to suit our ends. 
 
-In this chapter, we extend some of these ideas by discussing a type of data formatting called "tidy" data. You will see that having data stored in "tidy" format is about more than what the colloquial definition of the term "tidy" might suggest of having your data "neatly organized" in a spreadsheet. Instead, we define the term "tidy" in a more rigorous fashion, outlining a set of rules by which data can be stored and the implications of these rules on analyses.
+In this final chapter of the "Data Science via the tidyverse" portion of the book, we extend some of these ideas by discussing a type of data formatting called "tidy" data. You will see that having data stored in "tidy" format is about more than what the everyday definition of the term "tidy" might suggest: having your data "neatly organized." Instead, we define the term "tidy" as it's used by data scientists who use R, outlining a set of rules by which data is saved.
 
-Although knowledge of this type of data formatting was not necessary in our treatment of data visualization in Chapter \@ref(viz) since all the data was already in tidy format, we'll see going forward that having tidy data will allow you to more easily create data visualizations in a wide range of settings. Furthermore, it will also help you with data wrangling in Chapter \@ref(wrangling) and in all subsequent chapters in this book when we cover regression and discuss statistical inference.  
+Knowledge of this type of data formatting was not necessary for our treatment of data visualization in Chapter \@ref(viz) and data wrangling in Chapter \@ref(wrangling). This is because all the data used was already in "tidy" format. In this chapter, we'll now see that this format is essential to using the tools we covered up until now. Furthermore, it will also be useful for all subsequent chapters in this book when we cover regression and statistical inference. First however, we'll show you how to import spreadsheet data in R.
 
 ### Needed packages {-}
 
@@ -45,257 +37,46 @@ Let's load all the packages needed for this chapter (this assumes you've already
 ```{r warning=FALSE, message=FALSE}
 library(dplyr)
 library(ggplot2)
-library(nycflights13)
-library(tidyr)
 library(readr)
+library(tidyr)
+library(nycflights13)
+library(fivethirtyeight)
 ```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 # Packages needed internally, but not in text.
 library(knitr)
 library(kableExtra)
-library(fivethirtyeight)
 library(stringr)
-```
-
-### DataCamp {-}
-
-Our approach to introducing the concept of "tidy" data is aligned with the approach taken in [Alison Hill's](https://twitter.com/apreshill) DataCamp course "Working with Data in the Tidyverse," a course where students learn to work with data using tools from the tidyverse in R. If you're interested in complementing your learning below in an interactive online environment, click on the image below to access the course. The relevant chapter is Chapter 3 "Tidy your data."
-
-```{r, echo=FALSE, results='asis', purl=FALSE}
-image_link(path = "images/datacamp_working_with_data.png", link = "https://www.datacamp.com/courses/working-with-data-in-the-tidyverse", html_opts = "height: 150px;", latex_opts = "width=0.3\\textwidth")
-```
-
-
-***
-
-<!--Subsection on Tidy Data -->
-
-## What is tidy data?
-
-You have surely heard the word "tidy" in your life:
-
-- "Tidy up your room!"
-- "Please write your homework in a tidy way so that it is easier to grade and to provide feedback."
-- Marie Kondo's best-selling book [_The Life-Changing Magic of Tidying Up: The Japanese Art of Decluttering and Organizing_](https://www.amazon.com/Life-Changing-Magic-Tidying-Decluttering-Organizing/dp/1607747308/ref=sr_1_1?ie=UTF8&qid=1469400636&sr=8-1&keywords=tidying+up)
-- "I am not by any stretch of the imagination a tidy person, and the piles of unread books on the coffee table and by my bed have a plaintive, pleading quality to me - 'Read me, please!'" - Linda Grant
-
-What does it mean for your data to be "tidy"? Beyond just being organized, in the context of this book having "tidy" data means that your data follows a standardized format. This makes it easier for you and others to visualize your data, to wrangle/transform your data, and to model your data. We will follow Hadley Wickham's definition of *tidy data* here [@tidy]:
-
-> A dataset is a collection of values, usually either numbers (if quantitative)
-or strings AKA text data (if qualitative). Values are organised in two ways.
-Every value belongs to a variable and an observation. A variable contains all
-values that measure the same underlying attribute (like height, temperature,
-duration) across units. An observation contains all values measured on the same
-unit (like a person, or a day, or a city) across attributes.
-
-> Tidy data is a standard way of mapping the meaning of a dataset to its
-structure. A dataset is messy or tidy depending on how rows, columns and tables
-are matched up with observations, variables and types. In *tidy data*:
-
-> 1. Each variable forms a column.
-> 2. Each observation forms a row.
-> 3. Each type of observational unit forms a table.
-
-```{r tidyfig, echo=FALSE, fig.cap="Tidy data graphic from http://r4ds.had.co.nz/tidy-data.html"}
-knitr::include_graphics("images/tidy-1.png")
-```
-
-For example, say the following table consists of stock prices:
-
-```{r echo=FALSE}
-stocks <- data_frame(
-  Date = as.Date('2009-01-01') + 0:4,
-  `Boeing Stock Price` = paste("$", c("173.55", "172.61", "173.86", "170.77", "174.29"), sep = ""),
-  `Amazon Stock Price` = paste("$", c("174.90", "171.42", "171.58", "173.89", "170.16"), sep = ""),
-  `Google Stock Price` = paste("$", c("174.34", "170.04", "173.65", "174.87", "172.19") ,sep = "")
-) %>% 
-  slice(1:2)
-stocks %>% 
-  kable(
-    digits = 2,
-    caption = "Stock Prices (Non-Tidy Format)", 
-    booktabs = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
-```
-
-Although the data are neatly organized in a spreadsheet-type format, they are not in tidy format since there are three variables corresponding to three unique pieces of information (Date, Stock Name, and Stock Price), but there are not three columns. In tidy data format each variable should be its own column, as shown below. Notice that both tables present the same information, but in different formats. 
-
-```{r echo=FALSE}
-stocks_tidy <- stocks %>% 
-  rename(
-    Boeing = `Boeing Stock Price`,
-    Amazon = `Amazon Stock Price`,
-    Google = `Google Stock Price`
-  ) %>% 
-  gather(`Stock Name`, `Stock Price`, -Date)
-stocks_tidy %>% 
-  kable(
-    digits = 2,
-    caption = "Stock Prices (Tidy Format)", 
-    booktabs = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
-```
-
-However, consider the following table
-
-```{r echo=FALSE}
-stocks <- data_frame(
-  Date = as.Date('2009-01-01') + 0:4,
-  `Boeing Price` = paste("$", c("173.55", "172.61", "173.86", "170.77", "174.29"), sep = ""),
-  `Weather` = c("Sunny", "Overcast", "Rain", "Rain", "Sunny")
-) %>% 
-  slice(1:2)
-stocks %>% 
-  kable(
-    digits = 2,
-    caption = "Date, Boeing Price, Weather Data", 
-    booktabs = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
-                latex_options = c("HOLD_position"))
-```
-
-In this case, even though the variable "Boeing Price" occurs again, the data *is* tidy since there are three variables corresponding to three unique pieces of information (Date, Boeing stock price, and the weather that particular day).
-
-The non-tidy data format in the original table is also known as ["wide"](https://en.wikipedia.org/wiki/Wide_and_narrow_data) format whereas the tidy data format in the second table is also known as ["long/narrow"](https://en.wikipedia.org/wiki/Wide_and_narrow_data#Narrow) data format. 
-
-In this book, we will work mostly with datasets that are already in tidy format even though a lot of the world's data isn't always in this nice format that the `tidyverse` gets its name from.  Data that is in wide format can be converted to "tidy" format by using the `gather()` function in the `tidyr` package [@R-tidyr] in the `tidyverse`; we'll show an example of this in Section \@ref(tidying). For other examples of converting a dataset into "tidy" format, check out the different functions available for data tidying and a case study using data from the World Health Organization in [R for Data Science](http://r4ds.had.co.nz/tidy-data.html) [@rds2016].
-
-
-```{block, type='learncheck'}
-**_Learning check_**
-```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Consider the following data frame of average number of servings of beer, spirits, and wine consumption in three countries as reported in the FiveThirtyEight article [Dear Mona Followup: Where Do People Drink The Most Beer, Wine And Spirits?](https://fivethirtyeight.com/features/dear-mona-followup-where-do-people-drink-the-most-beer-wine-and-spirits/) 
-
-```{r echo=FALSE}
-drinks_sub <- drinks %>%
-  select(-total_litres_of_pure_alcohol) %>% 
-  filter(country %in% c("USA", "Canada", "South Korea"))
-drinks_sub_tidy <- drinks_sub %>%
-  gather(type, servings, -c(country)) %>%
-  mutate(
-    type = str_sub(type, start=1, end=-10)
-  ) %>%
-  arrange(country, type) %>% 
-  rename(`alcohol type` = type)
-drinks_sub
-```
-
-This data frame is not in tidy format. What would it look like if it were?
-
-```{asis lc4-1solutions, include=show_solutions('4-1')}
-**Learning Check Solutions**  
-
-**`r paste0("(LC", chap, ".", (lc), ")")`** There are three variables of information included: country, alcohol type, and number of servings. In tidy format, each of these variables of information are included in their own column.
-```
-```{r lc4-1solutions-2, include=show_solutions('4-1'), echo=FALSE}
-drinks_sub_tidy
-```
-```{asis lc4-1solutions-3, include=show_solutions('4-1')}
-Note that how the rows are sorted is inconsequential in whether or not the data frame is in tidy format. In other words, the following data frame sorted by alcohol type instead of country is equally in tidy format. 
-```
-```{r lc4-1solutions-4, include=show_solutions('4-1'), echo=FALSE}
-drinks_sub_tidy %>% 
-  arrange(`alcohol type`)
-```
-
-```{block, type='learncheck', purl=FALSE}
+library(scales)
 ```
 
 
 
 
-***
-
-## Back to nycflights13
-
-Recall the `nycflights13` package with data about all domestic flights departing from New York City in 2013 that we introduced in Section \@ref(nycflights13) and used extensively in Chapter \@ref(viz) to create visualizations. In particular, let's revisit the `flights` data frame by running `View(flights)` in your console. We see that `flights` has a rectangular shape with each row corresponding to a different flight and each column corresponding to a characteristic of that flight.  This matches exactly with how Hadley Wickham defined tidy data:
-
-1. Each variable forms a column.
-2. Each observation forms a row.
-
-But what about the third property?
-
-> 3. Each type of observational unit forms a table.
-
-### Observational units
-
-We identified earlier that the observational unit in the `flights` dataset is an individual flight.  And we have shown that this dataset consists of `r scales::comma(nrow(flights))` flights with `r ncol(flights)` variables.  In other words, rows of this dataset don't refer to a measurement on an airline or on an airport; they refer to characteristics/measurements on a given flight from New York City in 2013.
-
-Also included in the `nycflights13` package are datasets with different observational units [@R-nycflights13]:
-
-* `airlines`: translation between two letter IATA carrier codes and names (`r nrow(nycflights13::airlines)` in total)
-* `planes`: construction information about each of `r scales::comma(nrow(nycflights13::planes))` planes used
-* `weather`: hourly meteorological data (about `r nycflights13::weather %>% count(origin) %>% .[["n"]] %>% mean() %>% round()` observations) for each of the three NYC airports
-* `airports`: airport names and locations
-
-The organization of this data follows the third "tidy" data property: observations corresponding to the same observational unit should be saved in the same table/data frame.
-
-Another example involves a spreadsheet of all students enrolled in a university along with information about them, such as name, gender, and date of birth. Each row represents an individual student, which is the observational unit in question.
-
-### Identification vs measurement variables {#identification-vs-measurement}
-
-There is a subtle difference between the kinds of variables that you will encounter in data frames: *measurement variables* and *identification variables*.  The `airports` data frame you worked with above contains both these types of variables.  Recall that in `airports` the observational unit is an airport, and thus each row corresponds to one particular airport.  Let's pull them apart using the `glimpse` function:
-
-```{r}
-glimpse(airports)
-```
-
-The variables `faa` and `name` are what we will call *identification variables*: variables that uniquely identify each observational unit. They are mainly used to provide a unique name to each observational unit, thereby allowing us to uniquely identify them. `faa` gives the unique code provided by the FAA for that airport, while the `name` variable gives the longer more natural name of the airport.  The remaining variables (`lat`, `lon`, `alt`, `tz`, `dst`, `tzone`) are often called *measurement* or *characteristic* variables: variables that describe properties of each observational unit, in other words each observation in each row. For example, `lat` and `long` describe the latitude and longitude of each airport. 
-
-So in our above example of a spreadsheet of all students enrolled at a university, email address could be treated as an identical variable since it uniquely identifies each observational unit i.e. each student, while date of birth could not since it is possible (and highly probable) that two students share the same birthday. 
-
-Furthermore, sometimes a single variable might not be enough to uniquely identify each observational unit: combinations of variables might be needed (see Learning Check below). While it is not an absolute rule, for organizational purposes it is considered good practice to have your identification variables in the far left-most columns of your data frame.
-
-```{block lc3-3c, type='learncheck'}
-**_Learning check_**
-```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What properties of the observational unit do each of `lat`, `lon`, `alt`, `tz`, `dst`, and `tzone` describe for the `airports` data frame?  Note that you may want to use `?airports` to get more information.
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Provide the names of variables in a data frame with at least three variables in which one of them is an identification variable and the other two are not.  In other words, create your own tidy dataset that matches these conditions.
 
 
-```{asis lc4-2solutions, include=show_solutions('4-2')}
-**Learning Check Solutions**  
-**`r paste0("(LC", chap, ".", (lc - 1), ")")`** `lat` `long` represent the airport geographic coordinates, `alt` is the altitude above sea level of the airport (Run `airports %>% filter(faa == "DEN")` to see the altitude of Denver International Airport), `tz` is the time zone difference with respect to GMT in London UK, `dst` is the daylight savings time zone, and `tzone` is the time zone label.
 
-**`r paste0("(LC", chap, ".", (lc), ")")`** Identification Variables
+## Importing data {#csv}
 
-* In the `weather` example in LC3.8, the combination of `origin`, `year`, `month`, `day`, `hour`  are identification variables as they identify the observation in question.
-* Anything else pertains to observations: `temp`, `humid`, `wind_speed`, etc.
-```
+Up to this point, we've almost entirely used data stored inside of an R package. Say instead you have your own data saved on your computer or somewhere online? How can you analyze this data in R? Spreadsheet data is often saved in one of the following three formats.
 
-```{block, type='learncheck', purl=FALSE}
-```
+First, a *Comma Separated Values* `.csv` \index{CSV file} file.  You can think of a `.csv` file as a bare-bones spreadsheet where:
 
+* Each line in the file corresponds to one row of data/one observation.
+* Values for each line are separated with commas. In other words, the values of different variables are separated by commas.
+* The first line is often, but not always, a *header* row indicating the names of the columns/variables.
 
-***
+Second, an Excel `.xlsx` spreadsheet file. This format is based on Microsoft's proprietary Excel software. As opposed to a bare-bones `.csv` file, an `.xlsx` Excel files contains a lot of meta-data\index{meta-data}, or in other words, data about data. Recall we saw a previous example of meta-data in Section \@ref(groupby) when adding "group structure" meta-data to a data frame by using the `group_by()` verb. Some examples of Excel spreadsheet meta-data include the use of bold and italic fonts, colored cells, different column widths, and formula macros.
 
-## Importing spreadsheets into R {#csv}
+Third, a [Google Sheets](https://www.google.com/sheets/about/) file, which is a "cloud" or online-based way to work with a spreadsheet. Google Sheets allows you to download your data in both comma separated values `.csv` and Excel `.xlsx` formats. One way to import Google Sheets data is to go to the Google Sheets menu bar -> File -> Download as -> Select "Microsoft Excel" or "Comma-separated values" and then load that data into R.
 
-Up to this point, we've used data either stored inside of an R package or we've manually created the data such as the `fruits` and `fruits_counted` data in Subsection \@ref(geombar). Another common way to get data into R is by reading in data from a spreadsheet file either on your computer or online.  Spreadsheet data is often saved in one of two formats:
-
-* A *Comma Separated Values* `.csv` file.  You can think of a CSV file as a bare-bones spreadsheet where:
-    + Each line in the file corresponds to one row of data/one observation.
-    + Values for each line are separated with commas. In other words, the values of different variables are separated by commas.
-    + The first line is often, but not always, a *header* row indicating the names of the columns/variables.
-* An Excel `.xlsx` file. This format is based on Microsoft's proprietary Excel software. As opposed to a bare-bones `.csv` files, `.xlsx` Excel files contain a lot of *metadata*, or put more simply, data about the data. Examples include the use of bold and italic fonts, colored cells, different column widths, and formula macros etc.
-
-[Google Sheets](https://www.google.com/sheets/about/) allows you to download your data in both comma separated values `.csv` and Excel `.xlsx` formats: Go to the Google Sheets menu bar -> File -> Download as -> Select "Microsoft Excel" or "Comma-separated values."
-
-We'll cover two methods for importing data in R: one using the R console and the other using RStudio's graphical interface. 
+We'll cover two methods for importing `.csv` and `.xlsx` spreadsheet data in R: one using the console and the other using RStudio's graphical user interface, abbreviated by "GUI."
 
 
-### Method 1: From the console
+### Using the console
 
-First, let's download a *Comma Separated Values* (CSV) file of ratings of the level of democracy in different countries spanning 1952 to 1992: <https://moderndive.com/data/dem_score.csv>. We use the `read_csv()` function from the `readr` package to read it off the web and then take a look.
+First, let's import a Comma Separated Values `.csv` file that exists on the internet. The `.csv` file `dem_score.csv` contains ratings of the level of democracy in different countries spanning 1952 to 1992 and is accessible at <https://moderndive.com/data/dem_score.csv>. Let's use the `read_csv()` function from the `readr` \index{R packages!readr!read\_csv} [@R-readr] package to read it off the web, import it into R, and save it in a data frame called `dem_score`.
 
 ```{r message=FALSE, eval=FALSE}
 library(readr)
@@ -307,84 +88,336 @@ dem_score <- read_csv("data/dem_score.csv")
 dem_score
 ```
 
-In this `dem_score` data frame, the minimum value of -10 corresponds to a highly autocratic nation whereas a value of 10 corresponds to a highly democratic nation.  <!--Note also that backticks surround the different names of the columns here.  Variable names are not allowed to start with a number but this can be worked around by surrounding the column name in backticks.  Variable names also can't include spaces so if you'd like to refer to the variable **Stock Names** above, for example, you'll need to surround it in backticks: `` `Stock Names` ``.-->
+In this `dem_score` data frame, the minimum value of `-10` corresponds to a highly autocratic nation whereas a value of `10` corresponds to a highly democratic nation. Note also that backticks surround the different variable names.  Variable names in R by default are not allowed to start with a number nor include spaces, but we can get around this fact by surrounding the column name with backticks. We'll revisit the `dem_score` data frame in a case study in the upcoming Section \@ref(case-study-tidy).
 
-### Method 2: Using RStudio's interface
-
-Let's read in the same data saved in Excel format this time at <https://moderndive.com/data/dem_score.xlsx>, but using RStudio's graphical interface instead of via the R console. First download the Excel file, then go to the Files panel of RStudio -> Navigate to the directory where your downloaded `dem_score.xlsx` is saved -> Click on `dem_score.xlsx` -> Click "Import Dataset..." At this point you should see an image like in 
-
-![](images/read_excel.png)
-
-After clicking on the "Import" button on the bottom right RStudio save this spreadsheet's data in a data frame called `dem_score` and display its contents in the spreadsheet viewer. Furthermore you'll see the code that read in your data in the console; you can copy and paste this code to reload your data again later instead of repeating the above manual process.
+Note that the `read_csv()` function included in the `readr` package is different than the `read.csv()` function that comes installed with R. While the difference in the names might seem trivial (an `_` instead of a `.`), the `read_csv()` function is, in our opinion, easier to use since it can more easily read data off the web and generally imports data at a much faster speed. Furthermore, the `read_csv()` function included in the `readr` saves data frames as `tibbles` by default. `tibble` is short for "tidy table"; we'll discuss what it makes for data to be "tidy" shortly in the upcoming Section \@ref(tidy-data-ex).
 
 
+### Using RStudio's interface
+
+Let's read in the exact same data, but this time from an Excel file saved on your computer. Furthermore, we'll do this using RStudio's graphical interface instead of running `read_csv()` in the console. First, download the Excel file `dem_score.xlsx` by going to <a href="https://moderndive.com/data/dem_score.xlsx" download>https://moderndive.com/data/dem_score.xlsx</a>, then
+
+1. Go to the Files pane of RStudio.
+2. Navigate to the directory (i.e. folder on your computer) where the downloaded `dem_score.xlsx` Excel file is saved. For example, this might be in your Downloads folder.
+3. Click on `dem_score.xlsx`.
+4. Click "Import Dataset..." 
+
+At this point you should see a screen pop-up like in Figure \@ref(fig:read-excel). After clicking on the "Import" \index{RStudio!import data} button on the bottom right of Figure \@ref(fig:read-excel), RStudio will save this spreadsheet's data in a data frame called `dem_score` and display its contents in the spreadsheet viewer. 
+
+```{r read-excel, echo=FALSE, fig.cap="Importing an Excel file to R."}
+include_graphics("images/read_excel.png")
+```
+
+Furthermore, note the "Code Preview" block in the bottom right of Figure \@ref(fig:read-excel). You can copy and paste this code to reload your data again later automatically, instead of repeating this manual point-and-click process.
 
 
 
 
 
-***
+## Tidy data {#tidy-data-ex}
 
-## Converting to "tidy" data format {#tidying}
+Let's now switch gears and learn about the concept of "tidy" data format with a motivating example from the `fivethirtyeight` package. The `fivethirtyeight` package [@R-fivethirtyeight] provides access to the data sets used in many articles published by data journalism website [FiveThirtyEight.com](https://fivethirtyeight.com/). For a complete list of all `r nrow(data(package = "fivethirtyeight")[[3]])` data sets included in the `fivethirtyeight` package, check out the package webpage by going to <https://fivethirtyeight-r.netlify.com/articles/fivethirtyeight.html>.\index{R packages!fivethirtyeight}
 
-In this Section, we'll show you how to convert a dataset that isn't in "tidy" format i.e. "wide" format, to a dataset that is in "tidy" format i.e. "long/narrow" format. Let's use the `dem_score` data frame we loaded from a spreadsheet in the previous Section but focus on only data corresponding to the country of Guatemala.
+Let's focus our attention on the `drinks` data frame:
 
-```{r }
+```{r}
+drinks
+```
+
+After reading the help file by running `?drinks`, you'll see that `drinks` is a data frame containing results from a survey of the average number of servings of beer, spirits, and wine consumed in 193 countries. This data was originally reported on FiveThirtyEight.com in Mona Chalabi's article ["Dear Mona Followup: Where Do People Drink The Most Beer, Wine And Spirits?"](https://fivethirtyeight.com/features/dear-mona-followup-where-do-people-drink-the-most-beer-wine-and-spirits/)
+
+Let's apply some of the data wrangling verbs we learned in Chapter \@ref(wrangling) on the `drinks` data frame:
+
+1. `filter()` the `drinks` data frame to only consider 4 countries: the United States, China, Italy, and Saudi Arabia *then*
+1. `select()` all columns except `total_litres_of_pure_alcohol` by using the `-` sign, *then*
+1. `rename()` the variables `beer_servings`, `spirit_servings`, and `wine_servings` to `beer`, `spirit`, and `wine` respectively.
+
+and save the resulting data frame in `drinks_smaller`:
+
+```{r}
+drinks_smaller <- drinks %>% 
+  filter(country %in% c("USA", "China", "Italy", "Saudi Arabia")) %>% 
+  select(-total_litres_of_pure_alcohol) %>% 
+  rename(beer = beer_servings, spirit = spirit_servings, wine = wine_servings)
+drinks_smaller
+```
+
+Let's now ask ourselves a question: "Using the `drinks_smaller` data frame, how would we create the side-by-side (i.e. dodged) barplot in Figure \@ref(fig:drinks-smaller)?" Recall we saw barplots displaying two categorical variables in Section \@ref(two-categ-barplot).
+
+```{r drinks-smaller, fig.cap="Comparing alcohol consumption in 4 countries.", fig.height=3.5, echo=FALSE}
+drinks_smaller_tidy <- drinks_smaller %>% 
+  gather(type, servings, -country)
+ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
+  geom_col(position = "dodge") +
+  labs(x = "country", y = "servings")
+```
+
+Let's break down the Grammar of Graphics we introduced in Section \@ref(grammarofgraphics):
+
+1. The categorical variable `country` with four levels (China, Italy, Saudi Arabia, USA) would have to be mapped to the `x`-position of the bars.
+1. The numerical variable `servings` would have to be mapped to the `y`-position of the bars, in other words the height of the bars.
+1. The categorical variable `type` with three levels (beer, spirit, wine) would have to be mapped to the `fill` color of the bars.
+
+Observe however that `drinks_smaller` has three separate variables `beer`, `spirit`, and `wine`. In order to use the `ggplot()` function to recreate the barplot in Figure \@ref(fig:drinks-smaller) however, we need a *single variable* `type` with three possible values: `beer`, `spirit`, and `wine`.  We could then map this `type` variable to the `fill` aesthetic of our plot.  In other words, to recreate the barplot in Figure \@ref(fig:drinks-smaller), our data frame would have to look like this:
+
+```{r}
+drinks_smaller_tidy
+```
+
+Let's compare `drinks_smaller_tidy` to the `drinks_smaller` data frame from earlier:
+
+```{r}
+drinks_smaller
+```
+
+Observe that while `drinks_smaller` and `drinks_smaller_tidy` are both rectangular in shape and contain the same 12 numerical values (3 alcohol types $\times$ 4 countries), they are formatted differently. `drinks_smaller` is formatted in what's known as \index{wide data format} ["wide"](https://en.wikipedia.org/wiki/Wide_and_narrow_data) format, whereas `drinks_smaller_tidy` is formatted in what's known as ["long/narrow"](https://en.wikipedia.org/wiki/Wide_and_narrow_data#Narrow) format.
+
+In the context of doing data science in R, long/narrow format \index{long data format} is also known as "tidy" format. In order to use the `ggplot2` and `dplyr` packages for data visualization and data wrangling, your input data frames *must* be in "tidy" format. Thus, all non-"tidy" data must be converted to "tidy" format first. 
+
+Before we show you how to convert non-"tidy" data frames like `drinks_smaller` to "tidy" data frames like `drinks_smaller_tidy`, let's go over the explicit definition of "tidy" data.
+
+### Definition of "tidy" data {#tidy-definition}
+
+You have surely heard the word "tidy" in your life:
+
+* "Tidy up your room!"
+* "Please write your homework in a tidy way so that it is easier to grade and to provide feedback."
+* Marie Kondo's best-selling book [_The Life-Changing Magic of Tidying Up: The Japanese Art of Decluttering and Organizing_](https://www.amazon.com/Life-Changing-Magic-Tidying-Decluttering-Organizing/dp/B00RC3ZGN4/) and Netflix TV series [_Tidying Up with Marie Kondo_](https://www.netflix.com/title/80209379).
+* "I am not by any stretch of the imagination a tidy person, and the piles of unread books on the coffee table and by my bed have a plaintive, pleading quality to me - 'Read me, please!'" - Linda Grant
+
+What does it mean for your data to be "tidy"? While "tidy" has a clear English meaning of "organized", "tidy" in the context of data science using R means that your data follows a standardized format. We will follow Hadley Wickham's \index{Wickham, Hadley} definition of *tidy data* \index{tidy data} [@tidy].
+
+> A *dataset* is a collection of values, usually either numbers (if quantitative) or strings AKA text data (if qualitative/categorical). Values are organised in two ways. Every value belongs to a variable and an observation. A variable contains all values that measure the same underlying attribute (like height, temperature, duration) across units. An observation contains all values measured on the same unit (like a person, or a day, or a city) across attributes.
+> 
+> "Tidy" data is a standard way of mapping the meaning of a dataset to its structure. A dataset is messy or tidy depending on how rows, columns and tables are matched up with observations, variables and types. In *tidy data*:
+>
+> 1. Each variable forms a column.
+> 2. Each observation forms a row.
+> 3. Each type of observational unit forms a table.
+
+```{r tidyfig, echo=FALSE, fig.cap="Tidy data graphic from R for Data Science."}
+knitr::include_graphics("images/tidy-1.png")
+```
+
+For example, say you have the following table of stock prices in Table \@ref(tab:non-tidy-stocks):
+
+```{r non-tidy-stocks, echo=FALSE}
+stocks <- tibble(
+  Date = as.Date('2009-01-01') + 0:4,
+  `Boeing stock price` = paste("$", c("173.55", "172.61", "173.86", "170.77", "174.29"), sep = ""),
+  `Amazon stock price` = paste("$", c("174.90", "171.42", "171.58", "173.89", "170.16"), sep = ""),
+  `Google stock price` = paste("$", c("174.34", "170.04", "173.65", "174.87", "172.19") ,sep = "")
+) %>% 
+  slice(1:2)
+stocks %>% 
+  kable(
+    digits = 2,
+    caption = "Stock prices (non-tidy format)", 
+    booktabs = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
+```
+
+Although the data are neatly organized in a rectangular spreadsheet-type format, they do not follow the definition of data in "tidy" format. Wile there are three variables corresponding to three unique pieces of information (date, stock name, and stock price), there are not three columns. In "tidy" data format each variable should be its own column, as shown in Table \@ref(tab:tidy-stocks). Notice that both tables present the same information, but in different formats. 
+
+```{r tidy-stocks, echo=FALSE}
+stocks_tidy <- stocks %>% 
+  rename(
+    Boeing = `Boeing stock price`,
+    Amazon = `Amazon stock price`,
+    Google = `Google stock price`
+  ) %>% 
+  gather(`Stock name`, `Stock price`, -Date)
+stocks_tidy %>% 
+  kable(
+    digits = 2,
+    caption = "Stock prices (tidy format)", 
+    booktabs = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("HOLD_position"))
+```
+
+Now we have the requisite three columns `Date`, `Stock Name`, and `Stock Price`. On the other hand, consider the data in Table \@ref(tab:tidy-stocks-2).
+
+```{r tidy-stocks-2, echo=FALSE}
+stocks <- tibble(
+  Date = as.Date('2009-01-01') + 0:4,
+  `Boeing Price` = paste("$", c("173.55", "172.61", "173.86", "170.77", "174.29"), sep = ""),
+  `Weather` = c("Sunny", "Overcast", "Rain", "Rain", "Sunny")
+) %>% 
+  slice(1:2)
+stocks %>% 
+  kable(
+    digits = 2,
+    caption = "Example of tidy data.", 
+    booktabs = TRUE
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
+                latex_options = c("HOLD_position"))
+```
+
+In this case, even though the variable "Boeing Price" occurs just like in our non-"tidy" data in Table \@ref(tab:non-tidy-stocks), the data *is* "tidy" since there are three variables corresponding to three unique pieces of information: Date, Boeing stock price, and the weather that particular day.
+
+```{block, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are common characteristics of "tidy" data frames?
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What makes "tidy" data frames useful for organizing data?
+
+```{block, type='learncheck', purl=FALSE}
+```
+
+
+### Converting to "tidy" data
+
+In this book so far, you've only seen data frames that were already in "tidy" format. Furthermore for the rest of this book, you'll mostly only see data frames that are already in "tidy" format as well. This is not always the case however with all datasets in the world. If your original data frame is in wide i.e. non-"tidy" format and you would like to use the `ggplot2` or `dplyr` packages, you will first have to convert it "tidy" format using the \index{tidyr!gather()} `gather()` function in the `tidyr` \index{R packages!tidyr} package [@R-tidyr]. 
+
+Going back to our `drinks_smaller` data frame from earlier:
+
+```{r}
+drinks_smaller
+```
+
+We convert it to "tidy" format by using the `gather()` function from the `tidyr` package as follows:
+
+```{r}
+drinks_smaller_tidy <- drinks_smaller %>% 
+  gather(key = type, value = servings, -country)
+drinks_smaller_tidy
+```
+
+We set the arguments to `gather()` as follows:
+
+1. `key` is the name of the variable in the new "tidy" data frame that will contain the *column names* of the original data. Observe how we set `key = type`. In the resulting `drinks_smaller_tidy`, the column `type` contains the three types of alcohol `beer`, `spirit`, and `wine`.
+1. `value` is the name of the variable in the new "tidy" data frame that will contain the *rows and columns of values* of the original data. Observe how we set `value = servings`. In the resulting `drinks_smaller_tidy`, the column `value` contains the 4 $\times$ 3 = 12 numerical values.
+1. The third argument is the columns you either want to or don't want to tidy. Observe how we set this to `-country` indicating that we don't want to tidy the `country` variable in `drinks_smaller` and rather only `beer`, `spirit`, and `wine`.
+
+The third argument is a little nuanced, so let's consider code that's written slightly differently but that produces the same output: 
+
+```{r, eval=FALSE}
+drinks_smaller_tidy <- drinks_smaller %>% 
+  gather(key = type, value = servings, c(beer, spirit, wine))
+drinks_smaller_tidy
+```
+
+Note that the third argument now specifies which columns we want to tidy `c(beer, spirit, wine)`, instead of the columns we don't want to tidy using `-country`. We use the `c()` function to create a vector of the columns in `drinks_smaller` that we'd like to tidy. 
+
+With our `drinks_smaller_tidy` "tidy" formatted data frame, we can now produce the barplot you saw in Figure  \@ref(fig:drinks-smaller) using `geom_col()`. Recall from Section \@ref(geombar) on barplots that we use `geom_col()` and not `geom_bar()`, since we would like to map the "pre-counted" `servings` variable to the `y`-aesthetic of the bars.
+
+```{r drinks-smaller-tidy-barplot, fig.cap="Comparing alcohol consumption in 4 countries.", fig.height=3.5}
+ggplot(drinks_smaller_tidy, 
+       aes(x = country, y = servings, fill = type)) +
+  geom_col(position = "dodge")
+```
+
+Converting "wide" format data to "tidy" format often confuses new R users. The only way to learn to get comfortable with the `gather()` function is with practice, practice, and more practice. For example, run `?gather` and look at the examples in the bottom of the help file. We'll show another example of using `gather()` to convert a "wide" formatted data frame to "tidy" format in Section \@ref(case-study-tidy). For other examples of converting a dataset into "tidy" format, check out the different functions available for data tidying and a case study using data from the World Health Organization in [R for Data Science](http://r4ds.had.co.nz/tidy-data.html) [@rds2016].
+
+
+```{block, type='learncheck'}
+**_Learning check_**
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Take a look the `airline_safety` data frame included in the `fivethirtyeight` data package. Run the following:
+
+```{r, eval=FALSE}
+airline_safety
+```
+
+After reading the help file by running `?airline_safety`, we see that `airline_safety` is a data frame containing information on different airlines companies' safety records. This data was originally reported on the data journalism website FiveThirtyEight.com in Nate Silver's article ["Should Travelers Avoid Flying Airlines That Have Had Crashes in the Past?"](https://fivethirtyeight.com/features/should-travelers-avoid-flying-airlines-that-have-had-crashes-in-the-past/). Let's ignore the `incl_reg_subsidiaries` and `avail_seat_km_per_week` variables for simplicity:
+
+```{r}
+airline_safety_smaller <- airline_safety %>% 
+  select(-c(incl_reg_subsidiaries, avail_seat_km_per_week))
+airline_safety_smaller
+```
+
+This data frame is not in "tidy" format. How would you convert this data frame to be in "tidy" format, in particular so that it has a variable `incident_type_years` indicating the incident type/year and a variable `count` of the counts?
+
+```{block, type='learncheck', purl=FALSE}
+```
+
+
+
+
+
+
+
+### `nycflights13` package
+
+Recall the `nycflights13` package  we introduced in Section \@ref(nycflights13) with data about all domestic flights departing from New York City in 2013. Let's revisit the `flights` data frame by running `View(flights)`. We saw that `flights` has a rectangular shape, with each of its `r comma(nrow(flights))` rows corresponding to a flight and each of its `r ncol(flights)` columns corresponding to different characteristics/measurements of each flight. This satisfied the first two criteria of the definition of "tidy" data from Subsection \@ref(tidy-definition): that "Each variable forms a column" and "Each observation forms a row." But what about the third property of "tidy" data that "Each type of observational unit forms a table"?
+
+Recall that we also saw in Section \@ref(exploredataframes) that the observational unit for the `flights` data frame is an individual flight. In other words, the rows of the `flights` data frame refer to characteristics/measurements of individual flights. Also included in the `nycflights13` package are other data frames with their rows representing different observational units [@R-nycflights13]:
+
+* `airlines`: translation between two letter IATA carrier codes and airline company names (`r nrow(nycflights13::airlines)` in total). The observational unit is an airline company.
+* `planes`: aircraft information about each of `r comma(nrow(nycflights13::planes))` planes used. i.e. the observational unit is an aircraft.
+* `weather`: hourly meteorological data (about `r nycflights13::weather %>% count(origin) %>% .[["n"]] %>% mean() %>% round()` observations) for each of the three NYC airports. i.e. the observational unit is an hourly measurement of weather at one of the three airports.
+* `airports`: airport names and locations.  i.e. the observational unit is an airport.
+
+The organization of the information into these five data frames follow the third "tidy" data property: observations corresponding to the same observational unit should be saved in the same table i.e. data frame. You could think of this property as the old English expression: "birds of a feather flock together." 
+
+
+
+
+
+
+
+
+## Case study: Democracy in Guatemala {#case-study-tidy}
+
+In this section, we'll show you another example of how to convert a data frame that isn't in "tidy" format (in other words is in "wide" format) to a data frame that is in "tidy" format (in other words is in "long/narrow" format). We'll do this using the `gather()` function from the `tidyr` package again. 
+
+Furthermore, we'll make use of functions from the `ggplot2` and `dplyr` packages to produce a *time-series plot* showing how the democracy scores have changed over the 40 years from 1952 to 1992 for Guatemala. Recall that we saw time-series plots in Section \@ref(linegraphs) on creating linegraphs using `geom_line()`. 
+
+Let's use the `dem_score` data frame we imported in Section \@ref(csv), but focus on only data corresponding to Guatemala.
+
+```{r}
 guat_dem <- dem_score %>% 
   filter(country == "Guatemala")
 guat_dem
 ```
 
-Now let's produce a plot showing how the democracy scores have changed over the 40 years from 1952 to 1992 for Guatemala.  Let's start by laying out how we would map our aesthetics to variables in the data frame:
+Let's lay out the Grammar of Graphics we saw in Section \@ref(grammarofgraphics). 
 
-- The `data` frame is `guat_dem` by setting `data = guat_dem`
+First we know we need to set `data = guat_dem` and use a `geom_line()` layer, but what is the aesthetic mapping of variables. We'd like to see how the democracy score has changed over the years, so we need to map:
 
-What are the names of the variables to plot?  We'd like to see how the democracy score has changed over the years.  Now we are stuck in a predicament.  We see that we have a variable named `country` but its only value is `"Guatemala"`.  We have other variables denoted by different year values.  Unfortunately, we've run into a dataset that is not in the appropriate format to apply the Grammar of Graphics and `ggplot2`.  Remember that `ggplot2` is a package in the `tidyverse` and, thus, needs data to be in a tidy format.  We'd like to finish off our mapping of aesthetics to variables by doing something like 
+* `year` to the x-position aesthetic and
+* `democracy_score` to the y-position aesthetic
 
-- The `aes`thetic mapping is set by `aes(x = year, y = democracy_score)`
+Now we are stuck in a predicament, much like with our `drinks_smaller` example in Section \@ref(tidy-data-ex). We see that we have a variable named `country`, but its only value is `"Guatemala"`.  We have other variables denoted by different year values.  Unfortunately, the `guat_dem` data frame is not "tidy" and hence is not in the appropriate format to apply the Grammar of Graphics and thus we cannot use the `ggplot2` package just yet.  
 
-but this is not possible with our wide-formatted data. We need to take the values of the current column names in `guat_dem` (aside from `country`) and convert them into a new variable that will act as a key called `year`.  Then, we'd like to take the numbers on the inside of the table and turn them into a column that will act as values called `democracy_score`.  Our resulting data frame will have three columns:  `country`, `year`, and `democracy_score`.
-
-The `gather()` function in the `tidyr` package can complete this task for us.  The first argument to `gather()`, just as with `ggplot2()`, is the `data` argument where we specify which data frame we would like to tidy.  The next two arguments to `gather()` are `key` and `value`, which specify what we'd like to call the new columns that convert our wide data into long format.  Lastly, we include a specification for variables we'd like to NOT include in this tidying process using a `-`.
-
-<!-- Should we include a mention of also including all the variables you'd like to include? I rarely do this and use the negation instead. -->
-
-<!-- I like not teaching the pipe here since the data argument is the same as what they are used to with ggplot2 -->
+We need to take the values of the columns corresponding to years in `guat_dem` and convert them into a new "key" variable called `year`. Furthermore, we need to take the democracy score values in the inside of the data frame and turn them into a new "value" variable called `democracy_score`.  Our resulting data frame will thus have three columns:  `country`, `year`, and `democracy_score`. Recall that the `gather()` function in the `tidyr` package can complete this task for us:
 
 ```{r}
-guat_tidy <- gather(data = guat_dem, 
-                    key = year,
-                    value = democracy_score,
-                    - country) 
-guat_tidy
+guat_dem_tidy <- guat_dem %>% 
+  gather(key = year, value = democracy_score, -country) 
+guat_dem_tidy
 ```
 
-We can now create the plot to show how the democracy score of Guatemala changed from 1952 to 1992 using a linegraph and `ggplot2`.
+We set the arguments to `gather()` as follows:
 
-```{r errors=TRUE}
-ggplot(data = guat_tidy, 
-       mapping = aes(x = year, y = democracy_score)) +
-  geom_line()
+1. `key` is the name of the variable in the new "tidy" data frame that will contain the *column names* of the original data. Observe how we set `key = year`.  In the resulting `guat_dem_tidy`, the column `year` contains the years where Guatemala's democracy scores were measured.
+1. `value` is the name of the variable in the new "tidy" data frame that will contain the *rows and columns of values* of the original data. Observe how we set `value = democracy_score`. In the resulting `guat_dem_tidy` the column `democracy_score` contains the 1 $\times$ 9 = 9 democracy scores.
+1. The third argument is the columns you either want to or don't want to tidy. Observe how we set this to `-country` indicating that we don't want to tidy the `country` variable in `guat_dem` and rather only variables `1952` through `1992`. 
+
+However, observe in the output for `guat_dem_tidy` that the `year` variable is of type `chr` or character. Before we can plot this variable on the x-axis, we need to convert it into a numerical variable using the `as.numeric()` function within the `mutate()` function, which we saw in Section \@ref(mutate) on mutating existing variables to create new ones.
+
+```{r}
+guat_dem_tidy <- guat_dem_tidy %>% 
+  mutate(year = as.numeric(year))
 ```
 
-<!-- Arg, this is really annoying that gather() doesn't see that these are all numbers.  Do you know a way around this? I usually just go mutate(year = as.numeric(year) but they don't know mutate() yet. -->
+We can now create the time-series plot to visualize how democracy scores in Guatemala have changed from 1952 to 1992 using a \index{ggplot2!geom\_line()} `geom_line()`.
 
-Observe that the `year` variable in `guat_tidy` is stored as a character vector since we had to circumvent the naming rules in R by adding backticks around the different year columns in `guat_dem`.  This is leading to `ggplot` not knowing exactly how to plot a line using a categorical variable.  We can fix this by using the `parse_number()` function in the `readr` package and then specify the horizontal axis label to be `"year"`:
-
-```{r guatline, fig.cap="Guatemala's democracy score ratings from 1952 to 1992"}
-ggplot(data = guat_tidy, 
-       mapping = aes(x = parse_number(year), 
-                     y = democracy_score)) +
+```{r guat-dem-tidy, fig.cap="Democracy scores in Guatemala 1952-1992.", fig.height=3.5}
+ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
   geom_line() +
-  labs(x = "year")
+  labs(x = "Year", y = "Democracy Score")
 ```
 
-We'll see in Chapter \@ref(wrangling) how we could use the `mutate()` function to change `year` to be a numeric variable instead after we have done our tidying.  Notice now that the mappings of aesthetics to variables make sense in Figure \@ref(fig:guatline):
-
-- The `data` frame is `guat_tidy` by setting `data = dem_score`
-- The `x` `aes`thetic is mapped to `year`
-- The `y` `aes`thetic is mapped to `democracy_score`
-- The `geom_`etry chosen is `line`
 
 ```{block lc-tidying, type='learncheck', purl=FALSE}
 **_Learning check_**
@@ -395,110 +428,78 @@ a tidy data frame and assign the name of `dem_score_tidy` to the resulting long-
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  Read in the life expectancy data stored at <https://moderndive.com/data/le_mess.csv> and convert it to a tidy data frame. 
 
-
-```{asis lc4-3solutions, include=show_solutions('4-3')}
-**Learning Check Solutions**  
-
-**`r paste0("(LC", chap, ".", (lc - 1), ")")`** Running the following in the console  
-```
-```{r lc4-3solutions-2, include=show_solutions('4-3')}
-dem_score_tidy <- gather(data = dem_score, key = year, value = democracy_score, - country)
-```
-```{asis lc4-3solutions-3, include=show_solutions('4-3')}
-Let's now compare the `dem_score` and `dem_score_tidy`. `dem_score` has democracy score information for each year in columns, whereas in `dem_score_tidy` there are explicit variables `year` and `democracy_score`. While both representations of the data contain the same information, we can only use `ggplot()` to create plots using the `dem_score_tidy` data frame.
-```
-```{r lc4-3solutions-4, include=show_solutions('4-3')}
-dem_score
-dem_score_tidy
-```
-```{asis lc4-3solutions-5, include=show_solutions('4-3')}
-**`r paste0("(LC", chap, ".", (lc - 1), ")")`** The code is similar
-```
-```{r lc4-3solutions-6, eval=FALSE,include=show_solutions('4-3'), echo=show_solutions('4-3')}
-life_expectancy <- read_csv('https://moderndive.com/data/le_mess.csv')
-life_expectancy_tidy <- gather(data = life_expectancy, key = year, value = life_expectancy, -country)
-```
-```{r lc4-3solutions-6-noshow, echo=FALSE, purl=FALSE, message=FALSE, warning=FALSE}
-life_expectancy <- read_csv('data/le_mess.csv')
-life_expectancy_tidy <- gather(data = life_expectancy, key = year, value = life_expectancy, -country)
-```
-```{asis lc4-3solutions-7, include=show_solutions('4-3')}
-We observe the same construct structure with respect to `year` in `life_expectancy` vs `life_expectancy_tidy` as we did in `dem_score` vs `dem_score_tidy`:
-```
-```{r lc4-3solutions-8, lc4-2solutions-4, include=show_solutions('4-3')}
-life_expectancy
-life_expectancy_tidy
-```
-
 ```{block, type='learncheck', purl=FALSE}
 ```
 
 
+## `tidyverse` package {#tidyverse-package}
 
+Notice at the beginning of the chapter we loaded the following four packages, which are among the four of the most frequently used R packages for data science:
 
-
-***
-
-
-## Optional: Normal forms of data
-
-The datasets included in the `nycflights13` package are in a form that minimizes redundancy of data.  We will see that there are ways to _merge_ (or _join_) the different tables together easily.  We are capable of doing so because each of the tables have _keys_ in common to relate one to another.  This is an important property of **normal forms** of data.  The process of decomposing data frames into less redundant tables without losing information is called **normalization**.  More information is available on [Wikipedia](https://en.wikipedia.org/wiki/Database_normalization).
-
-We saw an example of this above with the `airlines` dataset.  While the `flights` data frame could also include a column with the names of the airlines instead of the carrier code, this would be repetitive since there is a unique mapping of the carrier code to the name of the airline/carrier. 
-
-Below an example is given showing how to **join** the `airlines` data frame together with the `flights` data frame by linking together the two datasets via a common **key** of `"carrier"`.  Note that this "joined" data frame is assigned to a new data frame called `joined_flights`. The **key** variable that we frequently join by is one of the *identification variables* mentioned above.
-
-```{r message=FALSE}
+```{r, eval=FALSE}
 library(dplyr)
-joined_flights <- inner_join(x = flights, 
-                             y = airlines, 
-                             by = "carrier")
+library(ggplot2)
+library(readr)
+library(tidyr)
 ```
 
-```{r eval=FALSE}
-View(joined_flights)
+There is a much quicker way to load these packages than by individually loading them: by installing and loading the `tidyverse` package. The `tidyverse` package acts as an "umbrella" package whereby installing/loading it will install/load multiple packages at once for you. 
+
+After installing the `tidyverse` package as you would a normal package via `install.packages("tidyverse")`, running:
+
+```{r, eval=FALSE}
+library(tidyverse)
 ```
 
-If we `View` this dataset, we see a new variable has been created called `name`. (We will see in Subsection \@ref(rename) ways to change `name` to a more descriptive variable name.)  More discussion about joining data frames together will be given in Chapter \@ref(wrangling).  We will see there that the names of the columns to be linked need not match as they did here with `"carrier"`.
+would be the same as running:
 
-```{block tidy_review, type='learncheck'}
-**_Learning check_**
+```{r, eval=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(purrr)
+library(tibble)
+library(stringr)
+library(forcats)
 ```
 
- **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are common characteristics of "tidy" datasets?
+You've seen the first 4 of the these packages: `ggplot2` for data visualization, `dplyr` for data wrangling, `tidyr` for converting data to "tidy" format, and `readr` for importing spreadsheet data into R. The remaining packages (`purrr`, `tibble`, `stringr`, and `forcats`) are left for a more advanced book; check out [R for Data Science](http://r4ds.had.co.nz/) to learn about these packages.
 
- **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What makes "tidy" datasets useful for organizing data?
-
- **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are some advantages of data in normal forms?  What are some disadvantages?
-
-```{asis lc4-4solutions, include=show_solutions('4-4')}
-**Learning Check Solutions**  
-**`r paste0("(LC", chap, ".", (lc - 2), ")")` What are common characteristics of "tidy" datasets?** Rows correspond to observations, while columns correspond to variables. 
-**`r paste0("(LC", chap, ".", (lc - 1), ")")` What makes "tidy" datasets useful for organizing data?** Tidy datasets are an organized way of viewing data. We'll see later that this format is required for the `ggplot2` and `dplyr` packages for data visualization and wrangling. 
-**`r paste0("(LC", chap, ".", (lc), ")")`** When datasets are in normal form, we can easily `_join` them with other datasets! For example, can we join the `flights` data with the `planes` data?  We'll see this more in Chapter 5!
-```
-
-```{block, type='learncheck', purl=FALSE}
-```
+For the remainder of this book, we'll start every chapter by running `library(tidyverse)`, instead of loading the various component packages individually. The `tidyverse` "umbrella" package gets its name from the fact that all the functions in all its packages are designed to have common inputs and outputs: data frames are in "tidy" format. This standardization of input and output data frames makes transitions between different functions in the different packages as seamless as possible. For more information, check out the [tidyverse.org](https://www.tidyverse.org/) webpage for the package.
 
 
 
 
-
-***
 
 ## Conclusion
 
-### Review questions
+### Additional resources
 
-<!-- Need to include an exercise in the DataCamp course on using gather() to turn the `police_locals` data frame into a tidy data frame. -->
+```{r echo=FALSE, purl=FALSE, results="asis"}
+generate_r_file_link("04-tidy.R")
+```
 
-Review questions have been designed using the `fivethirtyeight` R package [@R-fivethirtyeight] with links to the corresponding FiveThirtyEight.com articles in our free DataCamp course **Effective Data Storytelling using the `tidyverse`**.  The material in this chapter is covered in the **Tidy Data** chapter of the DataCamp course available [here](https://campus.datacamp.com/courses/effective-data-storytelling-using-the-tidyverse/tidy-data).
+If you want to learn more about using the `readr` \index{R packages!readr!cheatsheet} and `tidyr` \index{R packages!tidyr!cheatsheet} package, we suggest you that you check out RStudio's "Data Import Cheat Sheet."
+
+You can access these cheatsheets by going to the RStudio Menu Bar -> Help -> Cheatsheets -> "Browse Cheatsheets" -> Scroll down the page to the "Data Import Cheat Sheet". The first page of this cheatsheet has information on using the `readr` package to import data while the second page has information on using the `tidyr` package to "tidy" data. You can see previews of both cheatsheets in Figures \@ref(fig:import-cheatsheet) and \@ref(fig:tidyr-cheatsheet).
+
+```{r import-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheet (first page): readr package.", out.width="66%"}
+include_graphics("images/data-import-1.png")
+```
+
+```{r tidyr-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheet (second page): tidyr package.", out.width="66%"}
+include_graphics("images/data-import-2.png")
+```
+
 
 ### What's to come?
 
-In Chapter \@ref(wrangling), we'll further explore data in tidy format by grouping our data, creating summaries based on those groupings, filtering our data to match conditions, and performing other wranglings with our data including defining new columns/variables.  These data wrangling procedures will go hand-in-hand with the data visualizations you've produced in Chapter \@ref(viz). 
+Congratulations! You've completed the "Data Science with tidyverse" portion of this book! We'll now move to the "Data modeling with moderndive" portion of this book in Chapters \@ref(regression) and \@ref(multiple-regression), where you'll leverage your data visualization and wrangling skills to model relationships between different variables in data frames. 
 
-### Script of R code
+However, we're going to leave the Chapter \@ref(inference-for-regression) on "Inference for Regression" until after we've covered statistical inference in Chapters \@ref(sampling), \@ref(confidence-intervals), and \@ref(hypothesis-testing). Onwards and upwards!
 
-An R script file of all R code used in this chapter is available [here](scripts/04-tidy.R).
+```{r echo=FALSE, fig.cap="ModernDive flowchart - On to Part II!", fig.align='center', purl = FALSE}
+knitr::include_graphics("images/flowcharts/flowchart/flowchart.005.png")
+```
+

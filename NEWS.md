@@ -1,8 +1,144 @@
-# ModernDive 0.4.0.9000
+# ModernDive 0.6.0.9000
 
-* Added Learning Check solutions section to Appendix
-* Added PDF build
-* Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
+* Changed chapter numbers. Chapter "1. Introduction" is now "Preface", thus all Chapter numbers decreased by one.
+* Moved discussions on normal distribution (Ch on sampling) and log-transformations (Ch on tell your data story) to Appendix
+* 
+
+
+***
+
+
+# ModernDive 0.6.0
+
+We're only a few cosmetic edits away from v1.0.0, which will correspond to our print edition with CRC Press!
+
+
+## Done first pass of infer chapters
+
+Completed major re-organization and clean-up of Chapters 9-11 using the `infer` package for "tidy and transparent" statistcal inference.
+
+* Chapter 9: Bootstrapping & confidence intervals
+    + Tactile exercise of sampling 50 pennies from bank and resampling from this sample.
+    + Added sections on
+        1. "Interpreting confidence intervals", in particular determinants of CI width.
+        1. "Theory-based confidence intervals" using formula for SE of p-hat, thereby bridging gap between simulation and theory-based methods.
+* Chapter 10: Hypothesis testing
+    + Added `promotions` example on gender discrimination in promotions at a bank. Data source: `openintro::gender.discrimination`
+    + Added section on "Theory-based hypothesis tests" using t-test, thereby bridging gap between simulation and theory-based methods.
+* Chapter 11: Inference for regression.
+    + Discussion on LINE conditions for inference. In particular using `moderndive::get_regression_points()` wrapper function to `broom::augment()` so that novices can do their own residual analyses.
+
+## Other changes
+
+* Chapter 7: Multiple regression
+    + Added Section 7.3.1 on model selection: choosing between "interaction" and "parallel slopes" models
+* Chapter 8: Sampling
+    + Added Section 8.5.3 with more in-depth discussion of normal distribution
+* Chapter 12: Renamed to "Tell your story with data"
+
+
+
+***
+
+
+
+# ModernDive 0.5.0
+
+## Highlights
+
+* "Data wrangling" chapter now comes after "Tidy data" chapter.
+* Improved explanations and examples of `geom_histogram()`, `geom_boxplot()`, and "tidy" data
+* Moving residual analysis from regression Chapters 6 & 7 to Chap 11: Inference for regression
+* Reorganized Chap 8 on Sampling
+* All learning check solutions now in Appendix D
+* PDF build re-added (still a work-in-progress)
+
+## All content changes
+
+* Changed title
+    + From: "Statistical Inference via Data Science in R"
+    + To: "Statistical Inference via Data Science: A moderndive into R and the tidyverse"
+* Chapter 2 - Getting Started
+    + Added subsection 2.2.3 "Errors, warnings, and messages" by @andrewheiss
+* Chapter 3 - Data visualization:
+    + Added simpler introductory `geom_histogram()` and `geom_boxplot()` examples
+    + Started downweighting the amount of data wrangling previews included in this chapter, in particular `join`.
+    + Cleaned up conclusion section
+    + Added cheatsheet
+* Switched order of "Chap 4 Tidy Data" and "Chap 5 Data Wrangling": Data Wrangling now comes first
+* Chapter 4 - Data wrangling:
+    + Added cheatsheet
+* Chapter 5 - Renamed to "Importing and tidy data"
+    + Reordered sections: importing then tidying
+    + Added `fivethirtyeight::drinks` example of "hitting the non-tidy wall", then using `tidyr::gather()`
+    + Made Guatemala democracy score a case study.
+    + Added discussion on what `tidyverse` package is.
+    + Moved discussion on normal forms to Ch4: Data Wrangling - joins.
+    + Moved discussion on identification vs measurement variables to Ch2: Getting started with data.
+* Chapter 6 - Basic regression:
+    + Moved residual analysis to Chapter 11
+* Chapter 7 - Multiple regression:
+    + Moved residual analysis to Chapter 11
+* Chapter 8 - Sampling: Major refactoring of presentation/exposition; see below
+* Chapter 11 - Inference for regression:
+    + Moved residual analysis from Chapter 6 & 7 here
+* Moved all Learning Check solutions to Appendix D
+
+
+### Chapter 8 Sampling Refactoring
+
+**Old chapter structure**:
+
+1. Introduction to sampling
+    a) Concepts related to sampling
+    b) Inference via sampling
+2. Tactile sampling simulation
+    a) Using the shovel once
+    b) Using the shovel 33 times
+3. Virtual sampling simulation
+    a) Using the shovel once
+    b) Using shovel 33 times
+    c) Using shovel 1000 times
+    d) Using different shovels
+4. In real-life sampling: Polls
+5. Conclusion
+    a) Central Limit Theorem
+    b) What’s to come?
+    c) Script of R code
+
+**New chapter structure**:
+
+1. Activity: Sampling from a bowl
+    a) Question: What proportion of this bowl is red?
+    b) Using shovel once
+    c) Using shovel 33 times
+1. Computer simulation:
+    a) What is a simulation? We just did a "tactile" one by hand, now let's do one using the the computer
+    b) Using shovel once
+    c) Using shovel 33 times
+    d) Using shovel 1000 times
+    e) Using different shovels
+1. Goal: Study fluctuations due to sampling variation
+    a) You probably already knew: Bigger sample size means "better" guess.
+    b) Comparing shovels: Role of sample size
+1. Framework: Sampling
+    a) Terminology for sampling (population, sample, point estimate, etc)
+    b) Statistical concepts: sampling distribution and standard error
+    c) Computer's random number generator
+1. Interpretation: 
+    a) Visual display of differences
+1. Case study: Obama poll 
+1. Big picture: 
+    a) Table of inferential scenarios: Add bowl and obama poll (both p)
+    b) Why does this work? Theoretial result: CLT
+    c) There's a formula for that: SE formula that has sqrt(n) at the bottom
+    d) Appendix: Normal distribution discuss
+
+
+
+***
+
+
 
 # ModernDive 0.4.0
 
@@ -12,7 +148,6 @@
 1. Chapter 12 on "Thinking with Data" now includes a case study using the [Seattle house prices](https://www.kaggle.com/harlfoxem/housesalesprediction) dataset on Kaggle.com. Chapters 3 and 4 from new ["Modeling with Data in the Tidyverse"](https://www.datacamp.com/courses/modeling-with-data-in-the-tidyverse) DataCamp course by Albert Y. Kim are based on this analysis!
 1. Speaking of DataCamp, we point readers to [various DataCamp courses](https://moderndive.netlify.com/index.html#datacamp) that directly align with various chapters in the book!
 1. We significantly cleaned up Chapter 8 on sampling! In particular: adding a [2013 Obama approval rating poll](https://www.npr.org/sections/itsallpolitics/2013/12/04/248793753/poll-support-for-obama-among-young-americans-eroding) example to tie in with our sampling bowl tactile and virtual simulations and making it very clear that ultimately we are performing statistical **inference via sampling**.
-
 
 ## All content changes
 
@@ -56,12 +191,13 @@
     + Laid outline for "effective data storytelling" using `fivethirtyeight` data and added one small example using US births data
     + At the beginning of chapter, we now come full circle and revisit the discussion on the ModernDive [flowchart](https://github.com/moderndive/moderndive_book/blob/master/images/flowcharts/flowchart/flowchart.002.png) in the introduction.
 
-
 ## Other changes
 
 * Updated `moderndive` package on CRAN to 0.2.0. See [`NEWS.md`](https://github.com/moderndive/moderndive/releases)
 
- 
+
+
+***
 
 
 # ModernDive 0.3.0
@@ -79,13 +215,16 @@
     + Chapters 9 and 10 on confidence intervals and hypothesis testing have not yet been updated, as we were awaiting the now launched package: [`infer`: A tidyverse-friendly R package fo statistical inference](https://github.com/andrewpbray/infer)
     + Added Chapter 11 - Inference for regression (still under construction), where we'll revisit the regression models fit in Chapters 6 & 7
 
-
 ## Other changes
 
 - Development version of book now available at <https://moderndive.netlify.com/>; deployed via travis-ci + netlify. 
 - Added wide ModernDive logo to top of each chapter and `logos` folder
 - Added favicon (icon in browser tab)
 - Moved home GitHub repository from <https://github.com/ismayc/moderndiver-book/> to <https://github.com/moderndive/moderndive_book>
+
+
+
+***
 
 
 
@@ -132,6 +271,10 @@
 
 
 
+***
+
+
+
 # ModernDive 0.1.3
 
 * Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/moderndive/moderndive_book/issues/2)
@@ -143,6 +286,10 @@
 
 
 
+***
+
+
+
 # ModernDive 0.1.2
 
 * Converted last updated in index.Rmd to inline instead of R chunk
@@ -150,6 +297,10 @@
 * Fixed broken links to script files at the end of Chapters 4-9
 * Added `purl=FALSE` to chunks that do not contain useful code to the reader
 * Attempting to fix Shiny app in Figure 6.2 appearing as white box in published site noted [here](https://github.com/moderndive/moderndive_book/issues/2)
+
+
+
+***
 
 
 
@@ -164,6 +315,10 @@
     + May be weird issue with `cache = TRUE` that incorrectly plotted values on 1/10^th^ the correct scale
     + Will need to keep an eye on it going forward
 * Fixed typo on Reach for the Stars chapter name
+
+
+
+***
 
 
 

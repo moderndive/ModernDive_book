@@ -2,8 +2,12 @@
 
 [![Build Status](https://travis-ci.org/moderndive/moderndive_book.svg?branch=master)](https://travis-ci.org/moderndive/moderndive_book) Note: travis-ci currently deploys the developmental version of the book into the `gh-pages` branch of this repo, which is hosted via Netlify at [moderndive.netlify.com](https://moderndive.netlify.com).
 
-Welcome to the GitHub repository page for **ModernDive: An Introduction to 
-Statistical and Data Sciences via R** available at [ModernDive.com](https://moderndive.com/). 
+
+## About this book
+
+Welcome to the GitHub repository page for **Statistical Inference via Data Science: A moderndive into R and the tidyverse** available at [ModernDive.com](https://moderndive.com/).  CRC Press will be releasing the print edition of this book in Fall 2019.
+
+<img src="images/logos/book_cover.png" width="75%"/>
 
 
 ## Contents of this Repository
@@ -17,14 +21,6 @@ ModernDive is built using RStudio's [`bookdown`](https://www.rstudio.com/resourc
 
 ## More Information
 
-* If you would like to receive periodic updates about ModernDive (roughly every 3 months), please sign up for our [mailing list](http://eepurl.com/cBkItf).
 * Contact Albert at [albert.ys.kim@gmail.com](mailto:albert.ys.kim@gmail.com) and Chester [chester.ismay@gmail.com](mailto:chester.ismay@gmail.com).
-<!--* We're on Twitter at [ModernDive](https://twitter.com/ModernDive).-->
-
-
-## Acknowledgements
-
-The authors would like to thank [Nina Sonneborn](https://github.com/nsonneborn), [Kristin Bott](https://twitter.com/rhobott?lang=en), and the participants of our [USCOTS 2017 workshop](https://www.causeweb.org/cause/uscots/uscots17/workshop/3) for their feedback and suggestions.  A special thanks goes to Prof. Yana Weinstein, cognitive psychological scientist and co-founder of [The Learning Scientists](http://www.learningscientists.org/yana-weinstein/), for her extensive contributions.
-
-
-
+* We're on Twitter at [ModernDive](https://twitter.com/ModernDive).
+* If you would like to receive periodic updates about ModernDive (roughly every 3 months), please sign up for our [mailing list](http://eepurl.com/cBkItf).
