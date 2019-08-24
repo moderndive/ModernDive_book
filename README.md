@@ -7,7 +7,7 @@
 
 Welcome to the GitHub repository page for **Statistical Inference via Data Science: A moderndive into R and the tidyverse** available at [ModernDive.com](https://moderndive.com/).  CRC Press will be releasing the print edition of this book in Fall 2019.
 
-<img src="images/logos/book_cover.png" alt="Drawing" width="50%" />
+<img src="images/logos/book_cover.png" width="50%"/>
 
 
 ## Contents of this Repository
