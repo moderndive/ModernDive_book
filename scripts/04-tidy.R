@@ -50,7 +50,7 @@ dem_score
 
 
 ## ----read-excel, echo=FALSE, fig.cap="Importing an Excel file to R."-----
-include_graphics("images/read_excel.png")
+include_graphics("images/rstudio_screenshots/read_excel.png")
 
 
 ## ------------------------------------------------------------------------
@@ -81,26 +81,8 @@ drinks_smaller_tidy
 drinks_smaller
 
 
-## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from R for Data Science."----
-knitr::include_graphics("images/tidy-1.png")
 
 
-## ----non-tidy-stocks, echo=FALSE-----------------------------------------
-stocks <- tibble(
-  Date = as.Date('2009-01-01') + 0:4,
-  `Boeing stock price` = paste("$", c("173.55", "172.61", "173.86", "170.77", "174.29"), sep = ""),
-  `Amazon stock price` = paste("$", c("174.90", "171.42", "171.58", "173.89", "170.16"), sep = ""),
-  `Google stock price` = paste("$", c("174.34", "170.04", "173.65", "174.87", "172.19") ,sep = "")
-) %>% 
-  slice(1:2)
-stocks %>% 
-  kable(
-    digits = 2,
-    caption = "Stock prices (non-tidy format)", 
-    booktabs = TRUE
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
 
 
 ## ----tidy-stocks, echo=FALSE---------------------------------------------
@@ -232,9 +214,9 @@ ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
 
 
 ## ----import-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheet (first page): readr package.", out.width="66%"----
-include_graphics("images/data-import-1.png")
+include_graphics("images/cheatsheets/data-import-1.png")
 
 
 ## ----tidyr-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheet (second page): tidyr package.", out.width="66%"----
-include_graphics("images/data-import-2.png")
+include_graphics("images/cheatsheets/data-import-2.png")
 

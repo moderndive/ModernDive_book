@@ -408,5 +408,5 @@ if(knitr:::is_latex_output()){
 
 
 ## ----dplyr-cheatsheet, echo=FALSE, fig.cap="Data Transformation with dplyr cheatsheet."----
-include_graphics("images/dplyr_cheatsheet-1.png")
+include_graphics("images/cheatsheets/dplyr_cheatsheet-1.png")
 

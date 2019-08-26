@@ -394,7 +394,7 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 ## ----ggplot-cheatsheet, echo=FALSE, fig.cap="Data Visualization with ggplot2 cheatsheat."----
-include_graphics("images/ggplot_cheatsheet-1.png")
+include_graphics("images/cheatsheets/ggplot_cheatsheet-1.png")
 
 
 ## ----viz-map, echo=FALSE, fig.cap="Mind map for Data Visualization.", out.width="200%"----

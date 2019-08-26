@@ -21,7 +21,7 @@ set.seed(76)
 
 
 ## ----pipeline-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="Data/Science Pipeline."----
-knitr::include_graphics("images/data_science_pipeline.png")
+knitr::include_graphics("images/r4ds/data_science_pipeline.png")
 
 
 ## ---- eval = FALSE-------------------------------------------------------
