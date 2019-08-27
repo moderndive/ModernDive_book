@@ -183,15 +183,33 @@ parallel_slopes <-
   gg_parallel_slopes(y = "log10_price", num_x = "log10_size", cat_x = "condition", 
                      data = house_prices, alpha = 0.05) +
   labs(y = NULL, x = "log10 size")
-interaction + parallel_slopes
+if(knitr::is_html_output()){
+  interaction + parallel_slopes
+} else {
+  (interaction + scale_color_grey()) + 
+    (parallel_slopes + scale_color_grey())
+}
 
 
-## ----house-price-interaction-2, message=FALSE, warning=FALSE, fig.cap="Facetted plot of interaction model."----
-ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
+##   geom_point(alpha = 0.4) +
+##   geom_smooth(method = "lm", se = FALSE) +
+##   labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
+##   facet_wrap(~condition)
+
+
+## ----house-price-interaction-2, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Facetted plot of interaction model."----
+interaction_2_plot <- ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
   geom_point(alpha = 0.4) +
   geom_smooth(method = "lm", se = FALSE) +
   labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
   facet_wrap(~condition)
+if(knitr::is_html_output()){
+  interaction_2_plot
+} else {
+  interaction_2_plot + scale_color_grey()
+}
 
 
 ## ---- eval = FALSE-------------------------------------------------------
@@ -216,12 +234,17 @@ get_regression_table(price_interaction) %>%
 new_house <- data_frame(log10_size = log10(1900), condition = factor(5)) %>% 
   get_regression_points(price_interaction, newdata = .)
 
-ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
+with_prediction_plot <- ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
   geom_point(alpha = 0.05) +
   labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
   geom_smooth(method = "lm", se = FALSE) +
   geom_vline(xintercept = log10(1900), linetype = "dashed", size = 1) +
   geom_point(data = new_house, aes(y = log10_price_hat), col ="black", size = 3)
+if(knitr::is_html_output()){
+  with_prediction_plot
+} else {
+  with_prediction_plot + scale_color_grey()  
+}
 
 
 ## ------------------------------------------------------------------------

@@ -68,9 +68,17 @@ drinks_smaller
 ## ----drinks-smaller, fig.cap="Comparing alcohol consumption in 4 countries.", fig.height=3.5, echo=FALSE----
 drinks_smaller_tidy <- drinks_smaller %>% 
   gather(type, servings, -country)
-ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
+drinks_smaller_tidy_plot <- ggplot(
+    drinks_smaller_tidy, 
+    aes(x = country, y = servings, fill = type)
+    ) +
   geom_col(position = "dodge") +
   labs(x = "country", y = "servings")
+if(knitr::is_html_output()){
+  drinks_smaller_tidy_plot
+} else {
+  drinks_smaller_tidy_plot + scale_fill_grey()
+}
 
 
 ## ------------------------------------------------------------------------
@@ -141,10 +149,18 @@ drinks_smaller_tidy
 ## drinks_smaller_tidy
 
 
-## ----drinks-smaller-tidy-barplot, fig.cap="Comparing alcohol consumption in 4 countries.", fig.height=3.5----
-ggplot(drinks_smaller_tidy, 
-       aes(x = country, y = servings, fill = type)) +
-  geom_col(position = "dodge")
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(drinks_smaller_tidy,
+##        aes(x = country, y = servings, fill = type)) +
+##   geom_col(position = "dodge")
+
+
+## ----drinks-smaller-tidy-barplot, echo=FALSE, fig.cap="Comparing alcohol consumption in 4 countries.", fig.height=3.5----
+if(knitr::is_html_output()){
+  drinks_smaller_tidy_plot
+} else {
+  drinks_smaller_tidy_plot + scale_fill_grey()
+}
 
 
 ## **_Learning check_**
@@ -214,9 +230,11 @@ ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
 
 
 ## ----import-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheet (first page): readr package.", out.width="66%"----
-include_graphics("images/cheatsheets/data-import-1.png")
+if(knitr::is_html_output())
+  include_graphics("images/cheatsheets/data-import-1.png")
 
 
 ## ----tidyr-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheet (second page): tidyr package.", out.width="66%"----
-include_graphics("images/cheatsheets/data-import-2.png")
+if(knitr::is_html_output())
+  include_graphics("images/cheatsheets/data-import-2.png")
 

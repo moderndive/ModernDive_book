@@ -57,11 +57,26 @@ evals_ch7 %>%
   get_correlation(formula = score ~ age)
 
 
-## ----numxcatxplot1, warning=FALSE, fig.cap="Colored scatterplot of relationship of teaching and beauty scores."----
-ggplot(evals_ch7, aes(x = age, y = score, color = gender)) +
-  geom_point() +
-  labs(x = "Age", y = "Teaching Score", color = "Gender") +
-  geom_smooth(method = "lm", se = FALSE)
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(evals_ch7, aes(x = age, y = score, color = gender)) +
+##   geom_point() +
+##   labs(x = "Age", y = "Teaching Score", color = "Gender") +
+##   geom_smooth(method = "lm", se = FALSE)
+
+
+## ----numxcatxplot1, echo=FALSE, warning=FALSE, fig.cap="Colored scatterplot of relationship of teaching and beauty scores."----
+if(knitr::is_html_output()){
+  ggplot(evals_ch7, aes(x = age, y = score, color = gender)) +
+    geom_point() +
+    labs(x = "Age", y = "Teaching Score", color = "Gender") +
+    geom_smooth(method = "lm", se = FALSE)
+} else {
+    ggplot(evals_ch7, aes(x = age, y = score, color = gender)) +
+    geom_point() +
+    labs(x = "Age", y = "Teaching Score", color = "Gender") +
+    geom_smooth(method = "lm", se = FALSE) +
+    scale_color_grey()
+}
 
 
 ## ---- echo=FALSE---------------------------------------------------------
@@ -119,9 +134,20 @@ tibble(
 options(digits = 3)
 
 
-## ----numxcatx-parallel, warning=FALSE, fig.cap="Parallel slopes model of relationship of score with age and gender."----
-gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", 
+## ----eval=FALSE----------------------------------------------------------
+## gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender",
+##                    data = evals_ch7)
+
+
+## ----numxcatx-parallel, echo=FALSE, warning=FALSE, fig.cap="Parallel slopes model of relationship of score with age and gender."----
+par_slopes <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", 
                    data = evals_ch7)
+if(knitr::is_html_output()){
+  par_slopes
+} else {
+  par_slopes +
+    scale_color_grey()
+}
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -165,10 +191,22 @@ interaction_plot <- ggplot(evals_ch7, aes(x = age, y = score, color = gender), s
   labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
   geom_smooth(method = "lm", se = FALSE) +
   theme(legend.position = "none")
-parallel_slopes_plot <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", data = evals_ch7) +
+parallel_slopes_plot <- gg_parallel_slopes(y = "score", 
+                                           num_x = "age", 
+                                           cat_x = "gender", 
+                                           data = evals_ch7) +
   labs(x = "Age", y = "Teaching Score", title = "Parallel slopes model") +
   theme(axis.title.y = element_blank())
-interaction_plot + parallel_slopes_plot
+
+if(knitr::is_html_output()){
+  interaction_plot + parallel_slopes_plot
+} else {
+  grey_interaction_plot <- interaction_plot +
+    scale_color_grey()
+  grey_parallel_slopes_plot <- parallel_slopes_plot +
+    scale_color_grey()
+  grey_interaction_plot + grey_parallel_slopes_plot
+}
 
 
 ## ----fitted-values, echo=FALSE, warning=FALSE, fig.cap="Fitted values for two new professors."----
@@ -176,12 +214,18 @@ newpoints <- evals_ch7 %>%
   slice(c(1, 5)) %>% 
   get_regression_points(score_model_interaction, newdata = .)
 
-ggplot(evals_ch7, aes(x = age, y = score, color = gender), show.legend = FALSE) +
+fitted_plot <- ggplot(evals_ch7, aes(x = age, y = score, color = gender), show.legend = FALSE) +
   geom_point() +
   labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
   geom_smooth(method = "lm", se = FALSE) +
   geom_vline(data = newpoints, aes(xintercept = age, col = gender), linetype = "dashed", size = 1, show.legend = FALSE) +
   geom_point(data = newpoints, aes(x= age, y = score_hat), size = 4, show.legend = FALSE)
+
+if(knitr::is_html_output()){
+  fitted_plot
+} else {
+  fitted_plot + scale_color_grey()
+}
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -394,15 +438,15 @@ regression_points %>%
 
 
 ## ----recall-parallel-vs-interaction, fig.width=8, echo=FALSE, fig.cap="Previously seen comparison of interaction and parallel slopes models."----
-interaction_plot <- ggplot(evals_ch7, aes(x = age, y = score, color = gender), show.legend = FALSE) +
-  geom_point() +
-  labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
-  geom_smooth(method = "lm", se = FALSE) +
-  theme(legend.position = "none")
-parallel_slopes_plot <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", data = evals_ch7) +
-  labs(x = "Age", y = "Teaching Score", title = "Parallel slopes model") +
-  theme(axis.title.y = element_blank())
-interaction_plot + parallel_slopes_plot
+if(knitr::is_html_output()){
+  interaction_plot + parallel_slopes_plot
+} else {
+  grey_interaction_plot <- interaction_plot +
+    scale_color_grey()
+  grey_parallel_slopes_plot <- parallel_slopes_plot +
+    scale_color_grey()
+  grey_interaction_plot + grey_parallel_slopes_plot
+}
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -419,7 +463,7 @@ interaction_plot + parallel_slopes_plot
 ##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
 ##        color = "School size", title = "Parallel slopes model")
 
-## ----numxcatx-comparison-2, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models."----
+## ----numxcatx-comparison-2, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for MA schools."----
 p1 <- ggplot(MA_schools, aes(x = perc_disadvan, y = average_sat_math, color = size))+
   geom_point(alpha = 0.25) +
   geom_smooth(method = "lm", se = FALSE ) +
@@ -431,7 +475,13 @@ p2 <- gg_parallel_slopes(y = "average_sat_math", num_x = "perc_disadvan",
   labs(x = "Percent economically disadvantaged", y = "Math SAT Score", 
        color = "School size", title = "Parallel slopes model")  +
   theme(axis.title.y = element_blank())
-p1 + p2
+
+if(knitr::is_html_output()){
+  p1 + p2
+} else {
+  (p1 + scale_color_grey()) + (p2 + scale_color_grey())
+}
+
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -514,7 +564,7 @@ ggplot(credit_ch7, aes(x = credit_limit)) +
   labs(x = "Credit limit", title = "Credit limit and 4 credit limit brackets.")
 
 
-## ----2numxplot4, echo=FALSE, fig.cap="Relationship between credit card debt and income."----
+## ----2numxplot4, echo=FALSE, fig.cap="Relationship between credit card debt and income by credit limit bracket."----
 credit_ch7 <- credit_ch7 %>% 
   mutate(limit_bracket = cut_number(credit_limit, 4)) %>% 
   mutate(limit_bracket = fct_recode(limit_bracket,
@@ -538,6 +588,11 @@ model3_balance_vs_income_plot_colored <- ggplot(credit_ch7, aes(x = income, y = 
        color = "Credit limit\nbracket") + 
   scale_y_continuous(limits = c(0, NA)) +
   theme(axis.title.y = element_blank())
-  
-model3_balance_vs_income_plot + model3_balance_vs_income_plot_colored
+
+if(knitr::is_html_output()){
+  model3_balance_vs_income_plot + model3_balance_vs_income_plot_colored
+} else {
+  (model3_balance_vs_income_plot + scale_color_grey()) +
+    (model3_balance_vs_income_plot_colored + scale_color_grey())
+}
 

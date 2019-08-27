@@ -41,13 +41,24 @@ gapminder_2007 %>%
 
 
 ## ----gapminder, echo=FALSE, fig.cap="Life expectancy over GDP per capita in 2007."----
-ggplot(data = gapminder_2007, 
-       mapping = aes(x = `GDP per Capita`, 
-                     y = `Life Expectancy`, 
-                     size = Population, 
-                     color = Continent)) +
-  geom_point() +
-  labs(x = "GDP per capita", y = "Life expectancy")
+if(knitr::is_html_output()){
+  ggplot(data = gapminder_2007, 
+         mapping = aes(x = `GDP per Capita`, 
+                       y = `Life Expectancy`, 
+                       size = Population, 
+                       color = Continent)) +
+    geom_point() +
+    labs(x = "GDP per capita", y = "Life expectancy")
+} else {
+    ggplot(data = gapminder_2007, 
+         mapping = aes(x = `GDP per Capita`, 
+                       y = `Life Expectancy`, 
+                       size = Population, 
+                       color = Continent)) +
+    geom_point() +
+    labs(x = "GDP per capita", y = "Life expectancy") +
+    scale_color_grey()
+}
 
 
 ## ----summary-table-gapminder, echo=FALSE---------------------------------
@@ -327,17 +338,33 @@ kable(flights_table,
 
 
 ## ----carrierpie, echo=FALSE, fig.cap="The dreaded pie chart.", out.width="75%"----
-ggplot(flights, mapping = aes(x = factor(1), fill = carrier)) +
-  geom_bar(width = 1) +
-  coord_polar(theta = "y") +
-  theme(axis.title.x = element_blank(), 
-    axis.title.y = element_blank(),
-    axis.ticks = element_blank(),
-    axis.text.y = element_blank(),
-    axis.text.x = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank()) +
-  guides(fill = guide_legend(keywidth = 0.8, keyheight = 0.8))
+if(knitr::is_html_output()){
+  ggplot(flights, mapping = aes(x = factor(1), fill = carrier)) +
+    geom_bar(width = 1) +
+    coord_polar(theta = "y") +
+    theme(axis.title.x = element_blank(), 
+      axis.title.y = element_blank(),
+      axis.ticks = element_blank(),
+      axis.text.y = element_blank(),
+      axis.text.x = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()) +
+    guides(fill = guide_legend(keywidth = 0.8, keyheight = 0.8))
+} else {
+  ggplot(flights, mapping = aes(x = factor(1), fill = carrier)) +
+    geom_bar(width = 1) +
+    coord_polar(theta = "y") +
+    theme_light() +
+    theme(axis.title.x = element_blank(), 
+      axis.title.y = element_blank(),
+      axis.ticks = element_blank(),
+      axis.text.y = element_blank(),
+      axis.text.x = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()) +
+    guides(fill = guide_legend(keywidth = 0.8, keyheight = 0.8)) +
+    scale_fill_grey()
+}
 
 
 
@@ -349,9 +376,20 @@ ggplot(flights, mapping = aes(x = factor(1), fill = carrier)) +
 ##   geom_bar()
 
 
-## ----flights-stacked-bar, fig.cap="Stacked barplot comparing the number of flights by carrier and origin.", fig.height=3.5----
-ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
-  geom_bar()
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+##   geom_bar()
+
+
+## ----flights-stacked-bar, echo=FALSE, fig.cap="Stacked barplot comparing the number of flights by carrier and origin.", fig.height=3.5----
+if(knitr::is_html_output()) {
+  ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+    geom_bar()
+} else {
+  ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+    geom_bar() +
+    scale_fill_grey()
+}
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -359,14 +397,36 @@ ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
 ##   geom_bar()
 
 
-## ----flights-stacked-bar-color, fig.cap="Stacked barplot with color aesthetic used instead of fill.", fig.height=3.5----
-ggplot(data = flights, mapping = aes(x = carrier, color = origin)) +
-  geom_bar()
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(data = flights, mapping = aes(x = carrier, color = origin)) +
+##   geom_bar()
 
 
-## ----flights-dodged-bar-color, fig.cap="Side-by-side barplot comparing number of flights by carrier and origin.", fig.height=3.5----
-ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
-  geom_bar(position = "dodge")
+## ----flights-stacked-bar-color, echo=FALSE, fig.cap="Stacked barplot with color aesthetic used instead of fill.", fig.height=3.5----
+if(knitr::is_html_output()){
+  ggplot(data = flights, mapping = aes(x = carrier, color = origin)) +
+    geom_bar()
+} else {
+  ggplot(data = flights, mapping = aes(x = carrier, color = origin)) +
+    geom_bar() +
+    scale_color_grey()
+}
+
+
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+##   geom_bar(position = "dodge")
+
+
+## ----flights-dodged-bar-color, echo=FALSE, fig.cap="Side-by-side barplot comparing number of flights by carrier and origin.", fig.height=3.5----
+if(knitr::is_html_output()){
+  ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+    geom_bar(position = "dodge")
+} else {
+  ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+    geom_bar(position = "dodge") +
+    scale_fill_grey()
+}
 
 
 ## ----facet-bar-vert, fig.cap="Faceted barplot comparing the number of flights by carrier and origin.", fig.height=7.5----
@@ -393,8 +453,9 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 
-## ----ggplot-cheatsheet, echo=FALSE, fig.cap="Data Visualization with ggplot2 cheatsheat."----
-include_graphics("images/cheatsheets/ggplot_cheatsheet-1.png")
+## ----ggplot-cheatsheet, echo=FALSE, fig.cap="Data Visualization with ggplot2 cheatsheet."----
+if(knitr::is_html_output())
+  include_graphics("images/cheatsheets/ggplot_cheatsheet-1.png")
 
 
 ## ----viz-map, echo=FALSE, fig.cap="Mind map for Data Visualization.", out.width="200%"----

@@ -205,7 +205,7 @@ percentile_ci <- virtual_resampled_means %>%
   get_ci(level = 0.95, type = "percentile")
 
 
-## ----percentile-method, echo=FALSE, message=FALSE, fig.cap="Percentile method 95 percent confidence interval."----
+## ----percentile-method, echo=FALSE, message=FALSE, fig.cap="Percentile method 95 percent confidence interval. Interval marked by vertical lines."----
 ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
   labs(x = "Resample sample mean") +
@@ -480,7 +480,7 @@ percentile_ci_1
 ## ----eval=FALSE----------------------------------------------------------
 ## sample_1_bootstrap %>%
 ##   visualize(bins = 15) +
-##   shade_confidence_interval(endpoints = c(0.28, 0.56)) +
+##   shade_confidence_interval(endpoints = percentile_ci_1) +
 ##   geom_vline(xintercept = 0.375, linetype = "dashed")
 
 

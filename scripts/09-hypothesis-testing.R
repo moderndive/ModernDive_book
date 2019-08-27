@@ -26,10 +26,21 @@ library(viridis)
 promotions
 
 
-## ----promotions-barplot, fig.cap="Barplot of relationship between gender and promotion decision."----
-ggplot(promotions, aes(x = gender, fill = decision)) +
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(promotions, aes(x = gender, fill = decision)) +
+##   geom_bar() +
+##   labs(x = "Gender of name on resume")
+
+
+## ----promotions-barplot, echo=FALSE, fig.cap="Barplot of relationship between gender and promotion decision."----
+promotions_barplot <- ggplot(promotions, aes(x = gender, fill = decision)) +
   geom_bar() +
   labs(x = "Gender of name on resume")
+if(knitr::is_html_output()){
+  promotions_barplot
+} else {
+  promotions_barplot + scale_fill_grey()
+}
 
 
 ## ------------------------------------------------------------------------
@@ -100,7 +111,11 @@ plot2 <- ggplot(promotions_shuffled, aes(x = gender, fill = decision)) +
   geom_bar() +
   labs(x = "Gender of resume name", y ="", title = "Shuffled") +
   coord_cartesian(ylim= c(0, height))
-plot1 + plot2
+if(knitr::is_html_output()){
+  plot1 + plot2
+} else {
+    (plot1 + scale_fill_grey()) + (plot2 + scale_fill_grey())
+}
 
 
 ## ------------------------------------------------------------------------
@@ -500,9 +515,20 @@ obs_diff_means <- movies_sample %>%
 obs_diff_means
 
 
-## ----null-distribution-movies-2, fig.cap="Null distribution, observed test statistic, and p-value."----
-visualize(null_distribution_movies, bins = 10) + 
-  shade_p_value(obs_stat = obs_diff_means, direction = "both")
+## ----eval=FALSE----------------------------------------------------------
+## visualize(null_distribution_movies, bins = 10) +
+##   shade_p_value(obs_stat = obs_diff_means, direction = "both")
+
+
+## ----null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and p-value."----
+if(knitr::is_html_output()){
+  visualize(null_distribution_movies, bins = 10) + 
+    shade_p_value(obs_stat = obs_diff_means, direction = "both")
+} else {
+  visualize(null_distribution_movies, bins = 10) + 
+    shade_p_value(obs_stat = obs_diff_means, direction = "both",
+                              fill = "grey40", color = "grey30") 
+}
 
 
 ## ------------------------------------------------------------------------
