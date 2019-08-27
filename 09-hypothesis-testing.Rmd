@@ -94,10 +94,22 @@ The variable `id` acts as an identification variable for all 48 rows, the `decis
 
 Let's perform an exploratory data analysis of the relationship between the two categorical variables `decision` and `gender`. Recall that we saw in Section \@ref(two-categ-barplot) that one way we can visualize such a relationship is using a stacked barplot. 
 
-```{r promotions-barplot, fig.cap="Barplot of relationship between gender and promotion decision."}
+```{r eval=FALSE}
 ggplot(promotions, aes(x = gender, fill = decision)) +
   geom_bar() +
   labs(x = "Gender of name on resume")
+```
+
+
+```{r promotions-barplot, echo=FALSE, fig.cap="Barplot of relationship between gender and promotion decision."}
+promotions_barplot <- ggplot(promotions, aes(x = gender, fill = decision)) +
+  geom_bar() +
+  labs(x = "Gender of name on resume")
+if(knitr::is_html_output()){
+  promotions_barplot
+} else {
+  promotions_barplot + scale_fill_grey()
+}
 ```
 
 Observe in Figure \@ref(fig:promotions-barplot) that it appears that resumes with female names were much less likely to be accepted for promotion.  Let's quantify these promotions rates by computing the proportion of resumes accepted for promotion for each group using the `dplyr` package for data wrangling:
@@ -201,7 +213,11 @@ plot2 <- ggplot(promotions_shuffled, aes(x = gender, fill = decision)) +
   geom_bar() +
   labs(x = "Gender of resume name", y ="", title = "Shuffled") +
   coord_cartesian(ylim= c(0, height))
-plot1 + plot2
+if(knitr::is_html_output()){
+  plot1 + plot2
+} else {
+    (plot1 + scale_fill_grey()) + (plot2 + scale_fill_grey())
+}
 ```
 
 It appears the difference in "male names" versus "female names" promotion rates is now different. Compared to the original data in the left barplot, the new "shuffled" data in the right barplot has promotion rates that are much more similar.
@@ -723,9 +739,17 @@ visualize(bootstrap_distribution) +
 ```
 ```{r bootstrap-distribution-two-prop-percentile, echo=FALSE, fig.show='hold', fig.cap="Percentile-based 95 percent confidence interval.", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-visualize(bootstrap_distribution) + 
-  shade_confidence_interval(endpoints = percentile_ci) +
-  ggtitle("Simulation-Based Bootstrap Distribution") 
+
+if(knitr::is_html_output()){
+  visualize(bootstrap_distribution) + 
+    shade_confidence_interval(endpoints = percentile_ci) +
+    ggtitle("Simulation-Based Bootstrap Distribution") 
+} else {
+  visualize(bootstrap_distribution) + 
+    shade_confidence_interval(endpoints = percentile_ci,
+                              fill = "grey40", color = "grey30") +
+    ggtitle("Simulation-Based Bootstrap Distribution") 
+}
 ```
 
 Notice a key value that is not included in the 95% confidence interval for $p_{m} - p_{f}$: the value 0. In other words, a difference of 0 is not included in our net, suggesting that $p_{m}$ and $p_{f}$ are truly different! Furthermore, observe how the entirety of the 95% confidence interval for $p_{m} - p_{f}$ lies above 0, suggesting that this difference is in favor of men.
@@ -749,9 +773,17 @@ visualize(bootstrap_distribution) +
 ```
 ```{r bootstrap-distribution-two-prop-se, echo=FALSE, fig.show='hold', fig.cap="Standard error-based 95 percent confidence interval.", purl=FALSE}
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
+if(knitr::is_html_output()){
 visualize(bootstrap_distribution) + 
   shade_confidence_interval(endpoints = se_ci) +
   ggtitle("Simulation-Based Bootstrap Distribution") 
+} else {
+ visualize(bootstrap_distribution) + 
+  shade_confidence_interval(endpoints = se_ci,                               
+                            fill = "grey40", color = "grey30") +
+  ggtitle("Simulation-Based Bootstrap Distribution")
+
+}
 ```
 
 
@@ -1148,9 +1180,20 @@ Lastly, in order to compute the p-value, we have to assess how "extreme" the obs
 
 Let's visualize both the null distribution and the p-value in Figure \@ref(fig:null-distribution-movies-2). However, unlike our example in Section \@ref(infer-workflow-ht) involving promotions, since we have a two-sided alternative hypothesis $H_A: \mu_a - \mu_r \neq 0$, we have to allow for both possibilities for "more extreme", so we set `direction = "both"`.
 
-```{r null-distribution-movies-2, fig.cap="Null distribution, observed test statistic, and p-value."}
+```{r eval=FALSE}
 visualize(null_distribution_movies, bins = 10) + 
   shade_p_value(obs_stat = obs_diff_means, direction = "both")
+```
+
+```{r null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and p-value."}
+if(knitr::is_html_output()){
+  visualize(null_distribution_movies, bins = 10) + 
+    shade_p_value(obs_stat = obs_diff_means, direction = "both")
+} else {
+  visualize(null_distribution_movies, bins = 10) + 
+    shade_p_value(obs_stat = obs_diff_means, direction = "both",
+                              fill = "grey40", color = "grey30") 
+}
 ```
 
 Let's go over the elements of this plot. First, the histogram is the *null distribution*. Second, the solid line is the *observed test statistic*, or the difference in sample means we observed in real-life of `r x_bar_action %>% round(2)` - `r x_bar_romance %>% round(2)` = `r (x_bar_action - x_bar_romance) %>% round(2)`. Third, the two shaded areas of the histogram form the *p-value*, or the probability of obtaining a test statistic just as or more extreme than the observed test statistic *assuming the null hypothesis $H_0$ is true*.
@@ -1258,31 +1301,45 @@ TODO: Add legend to ggplot version of images/t-distributions.png
 -->
 
 ```{r t-distributions, echo=FALSE, fig.cap="Examples of t-distributions and the z curve.", purl=FALSE}
-tibble(
+all_points <- tibble(
   domain = seq(from = -4, to = 4, by = 0.01),
   `t: df = 1` = dt(x = domain, df = 1),
   `t: df = 3` = dt(x = domain, df = 3),
   `t: df = 10` = dt(x = domain, df = 10),
   `z` = dnorm(x = domain)
-) %>% 
+)  %>% 
   gather(key = "Distribution", value = "value", - domain) %>% 
   mutate(
-    type = ifelse(Distribution == "z-curve", "t", "z"),
-    Distribution = factor(Distribution, levels = c("z", "t: df = 10", "t: df = 3", "t: df = 1"))
-    ) %>% 
+    type = ifelse(Distribution == "z", "z", "t"),
+    Distribution = factor(
+      Distribution, 
+      levels = c("z", "t: df = 10", "t: df = 3", "t: df = 1")
+      )
+    )
+
+for_labels <- all_points %>% 
+  filter(between(domain, -1.205, -1.195) & Distribution == "t: df = 1" |
+         between(domain, -0.205, -0.195) & Distribution == "t: df = 3" |
+         between(domain, 0.095, 0.105) & Distribution == "t: df = 10" |
+         domain == 2.2 & Distribution == "z")
+
+all_points %>% 
   ggplot(aes(x = domain, y = value, color = Distribution)) +
   geom_line() +
   scale_color_viridis(discrete = TRUE) +
+  ggrepel::geom_label_repel(data = for_labels, aes(label = Distribution),
+                            nudge_x = c(1, -2, 2, -2)) +
   theme_light() +
   theme(
     axis.title.y = element_blank(),
     axis.title.x = element_blank(),
     axis.text.y = element_blank(),
-    axis.ticks.y = element_blank()
+    axis.ticks.y = element_blank(),
+    legend.position = "none"
   )
 ```
 
-Begin by looking at the center of the plot at 0 on the horizontal axis. Note that the bottom curve corresponds to 1 degrees of freedom, the curve above it is for 3 degrees of freedom, the curve above that is for 10 degrees of freedom, and lastly the dashed curve is the standard normal $z$ curve.
+Begin by looking at the center of the plot at 0 on the horizontal axis. As you move up from the value of 0, follow along with the labels and note that the bottom curve corresponds to 1 degree of freedom, the curve above it is for 3 degrees of freedom, the curve above that is for 10 degrees of freedom, and lastly the dashed curve is the standard normal $z$ curve.
 
 Observe that all four curves have a bell shape, are centered at 0, and that as the degrees of freedom increase, the $t$-distribution more and more resembles the standard normal $z$ curve. The "degrees of freedom" \index{degrees of freedom} measures how different the $t$ distribution will be from a normal distribution. $t$-distributions tend to have more values in the tails of their distributions than the standard normal $z$ curve.
 
