@@ -110,6 +110,7 @@
 \newif\if@krantzb
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 \ExecuteOptions{letterpaper,10pt,twoside,onecolumn,final,openright}
 \ProcessOptions
 
@@ -349,12 +350,12 @@
 \top@cornermarks
   {\@the@page\RunningHeadFont
     \hfill
-\if@mainmatter\thechapter\enspace\fi\leftmark
+\if@mainmatter\ifnum\value{chapter}>0 \thechapter\enspace\fi\fi\leftmark
     }}
 \def\odd@head{%
 \top@cornermarks
   \hfil{\RunningHeadFont
-\if@mainmatter\thesection\enspace\else\fi\rightmark
+\if@mainmatter\ifnum\value{section}>0 \thesection\enspace\fi\fi\rightmark
     }
 \hfill
     \@the@page
