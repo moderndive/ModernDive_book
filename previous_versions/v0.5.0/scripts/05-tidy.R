@@ -22,6 +22,7 @@ options(knitr.kable.NA = '')
 # https://www.youtube.com/watch?v=xjJ7FheCkCU
 set.seed(76)
 
+
 ## ----warning=FALSE, message=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
@@ -30,12 +31,14 @@ library(tidyr)
 library(nycflights13)
 library(fivethirtyeight)
 
+
 ## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
 # Packages needed internally, but not in text.
 library(knitr)
 library(kableExtra)
 library(fivethirtyeight)
 library(stringr)
+
 
 ## ----message=FALSE, eval=FALSE-------------------------------------------
 ## library(readr)
@@ -46,8 +49,10 @@ library(stringr)
 dem_score <- read_csv("data/dem_score.csv")
 dem_score
 
+
 ## ------------------------------------------------------------------------
 drinks
+
 
 ## ------------------------------------------------------------------------
 drinks_smaller <- drinks %>% 
@@ -56,6 +61,7 @@ drinks_smaller <- drinks %>%
   rename(beer = beer_servings, spirit = spirit_servings, wine = wine_servings)
 drinks_smaller
 
+
 ## ----drinks-smaller, fig.cap="Alcohol consumption in 4 countries.", fig.height=3.5, echo=FALSE----
 drinks_smaller_tidy <- drinks_smaller %>% 
   gather(type, servings, -country)
@@ -63,14 +69,18 @@ ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
   geom_col(position = "dodge") +
   labs(x = "country", y = "servings")
 
+
 ## ------------------------------------------------------------------------
 drinks_smaller_tidy
+
 
 ## ------------------------------------------------------------------------
 drinks_smaller
 
+
 ## ----tidyfig, echo=FALSE, fig.cap="Tidy data graphic from [R for Data Science](http://r4ds.had.co.nz/tidy-data.html)."----
 knitr::include_graphics("images/tidy-1.png")
+
 
 ## ----non-tidy-stocks, echo=FALSE-----------------------------------------
 stocks <- data_frame(
@@ -89,6 +99,7 @@ stocks %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ----tidy-stocks, echo=FALSE---------------------------------------------
 stocks_tidy <- stocks %>% 
   rename(
@@ -106,6 +117,7 @@ stocks_tidy %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("HOLD_position"))
 
+
 ## ----tidy-stocks-2, echo=FALSE-------------------------------------------
 stocks <- data_frame(
   Date = as.Date('2009-01-01') + 0:4,
@@ -122,53 +134,74 @@ stocks %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("HOLD_position"))
 
+
 ## **_Learning check_**
+
+
+
 
 ## ------------------------------------------------------------------------
 drinks_smaller
+
 
 ## ------------------------------------------------------------------------
 drinks_smaller_tidy <- drinks_smaller %>% 
   gather(key = type, value = servings, -country)
 drinks_smaller_tidy
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## drinks_smaller_tidy <- drinks_smaller %>%
 ##   gather(key = type, value = servings, c(beer, spirit, wine))
 ## drinks_smaller_tidy
 
+
 ## ------------------------------------------------------------------------
 ggplot(drinks_smaller_tidy, aes(x=country, y=servings, fill=type)) +
   geom_col(position = "dodge")
 
+
 ## **_Learning check_**
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## airline_safety
+
 
 ## ------------------------------------------------------------------------
 airline_safety_smaller <- airline_safety %>% 
   select(-c(incl_reg_subsidiaries, avail_seat_km_per_week))
 airline_safety_smaller
 
+
+
+
 ## ------------------------------------------------------------------------
 guat_dem <- dem_score %>% 
   filter(country == "Guatemala")
 guat_dem
+
 
 ## ------------------------------------------------------------------------
 guat_dem_tidy <- guat_dem %>% 
   gather(key = year, value = democracy_score, -country) 
 guat_dem_tidy
 
+
 ## ------------------------------------------------------------------------
 guat_dem_tidy <- guat_dem_tidy %>% 
   mutate(year = as.numeric(year))
+
 
 ## ----errors=TRUE---------------------------------------------------------
 ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
   geom_line() +
   labs(x = "Year", y = "Democracy Score", title = "Democracy score in Guatemala 1952-1992")
+
+
+
+
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## library(dplyr)
@@ -176,8 +209,10 @@ ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
 ## library(readr)
 ## library(tidyr)
 
+
 ## ---- eval=FALSE---------------------------------------------------------
 ## library(tidyverse)
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## library(ggplot2)
@@ -189,8 +224,10 @@ ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
 ## library(stringr)
 ## library(forcats)
 
+
 ## ----import-cheatsheet, echo=FALSE, fig.cap="Data Import cheatsheat"-----
 include_graphics("images/import_cheatsheet-1.png")
+
 
 ## ----echo=FALSE, fig.cap="ModernDive flowchart - On to Part II!", fig.align='center'----
 knitr::include_graphics("images/flowcharts/flowchart/flowchart.005.png")
