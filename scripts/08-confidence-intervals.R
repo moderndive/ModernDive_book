@@ -1020,19 +1020,28 @@ se_boot <- bootstrap_distribution %>%
   pull(se)
 
 
-## ----side-by-side, fig.height=7, fig.cap="Comparing the sampling and bootstrap distributions of $\\widehat{p}$", echo=FALSE----
+## ----side-by-side, fig.height=7.5, fig.cap="Comparing the sampling and bootstrap distributions of $\\widehat{p}$", echo=FALSE----
 p_samp <- ggplot(sampling_distribution, aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.05, boundary = 0.4, fill = "salmon", color = "white") +
+  geom_histogram(binwidth = 0.05, boundary = 0.4, fill = "salmon", 
+                 color = "white") +
   labs(x = "", title = "Sampling distribution") +
   geom_vline(xintercept = p_red, size = 1) +
-  scale_x_continuous(limits = c(0.15, 0.65), breaks = seq(from = 0.15, to = 0.65, by = 0.1)) + 
-  scale_y_continuous(limits = c(0, 350), breaks = seq(from = 0, to = 400, by = 100))
+  scale_x_continuous(limits = c(0.15, 0.65), 
+                     breaks = seq(from = 0.15, to = 0.65, by = 0.1)) + 
+  scale_y_continuous(limits = c(0, 350), 
+                     breaks = seq(from = 0, to = 400, by = 100))
 p_boot <- ggplot(bootstrap_distribution, aes(x = stat)) +
-  geom_histogram(binwidth = 0.05, boundary = 0.4, fill = "blue", color = "white") + 
-  labs(x = "Proportion of 50 balls that were red", title = "Bootstrap distribution: similar shape & spread but different center") +
+  geom_histogram(binwidth = 0.05, boundary = 0.4, fill = "blue", 
+                 color = "white") + 
+  labs(x = "Proportion of 50 balls that were red", 
+       title = 
+         "Bootstrap distribution: similar shape & spread but different center"
+       ) +
   geom_vline(xintercept = 0.42, size = 1, linetype = "dashed") +
-  scale_x_continuous(limits = c(0.15, 0.65), breaks = seq(from = 0.15, to = 0.65, by = 0.1)) + 
-  scale_y_continuous(limits = c(0, 350), breaks = seq(from = 0, to = 400, by = 100))
+  scale_x_continuous(limits = c(0.15, 0.65), 
+                     breaks = seq(from = 0.15, to = 0.65, by = 0.1)) + 
+  scale_y_continuous(limits = c(0, 350), breaks = seq(from = 0, 
+                                                      to = 400, by = 100))
 p_samp + p_boot + plot_layout(ncol = 1, heights = c(1, 1))
 
 
@@ -1053,7 +1062,8 @@ tibble(
 
 ## ----comparing-se-2, echo=FALSE, message=FALSE---------------------------
 tibble(
-  `Distribution type` = c("Sampling distribution", "Bootstrap distribution", "Formula approximation"),
+  `Distribution type` = c("Sampling distribution", "Bootstrap distribution", 
+                          "Formula approximation"),
   `Standard error` = c(se_samp, se_boot, 0.0698)
 ) %>% 
   kable(

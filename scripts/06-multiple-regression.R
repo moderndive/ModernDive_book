@@ -451,7 +451,8 @@ if(knitr::is_html_output()){
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Interaction model
-## ggplot(MA_schools, aes(x = perc_disadvan, y = average_sat_math, color = size)) +
+## ggplot(MA_schools,
+##        aes(x = perc_disadvan, y = average_sat_math, color = size)) +
 ##   geom_point(alpha = 0.25) +
 ##   geom_smooth(method = "lm", se = FALSE ) +
 ##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
@@ -460,8 +461,10 @@ if(knitr::is_html_output()){
 ## # Parallel slopes model
 ## gg_parallel_slopes(y = "average_sat_math", num_x = "perc_disadvan",
 ##                    cat_x = "size", data = MA_schools, alpha = 0.25) +
-##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
-##        color = "School size", title = "Parallel slopes model")
+##   labs(x = "Percent economically disadvantaged",
+##        y = "Math SAT Score",
+##        color = "School size",
+##        title = "Parallel slopes model")
 
 ## ----numxcatx-comparison-2, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for MA schools."----
 p1 <- ggplot(MA_schools, 
@@ -582,7 +585,9 @@ model3_balance_vs_income_plot <- ggplot(credit_ch7, aes(x = income, y = debt)) +
   geom_smooth(method = "lm", se = FALSE) +
   scale_y_continuous(limits = c(0, NA))
 
-model3_balance_vs_income_plot_colored <- ggplot(credit_ch7, aes(x = income, y = debt, col = limit_bracket)) +
+model3_balance_vs_income_plot_colored <- ggplot(credit_ch7, 
+                                                aes(x = income, y = debt, 
+                                                    col = limit_bracket)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   labs(x = "Income (in $1000)", y = "Credit card debt (in $)", 
