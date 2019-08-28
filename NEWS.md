@@ -1,4 +1,18 @@
+# ModernDive 0.6.0.9000
+
+* Changed chapter numbers. Chapter "1. Introduction" is now "Preface", thus all Chapter numbers decreased by one.
+* Moved discussions on normal distribution (Ch on sampling) and log-transformations (Ch on tell your data story) to Appendix A "Statistical Background"
+* Updated images used in book
+
+
+
+***
+
+
 # ModernDive 0.6.0
+
+We're only a few cosmetic edits away from v1.0.0, which will correspond to our print edition with CRC Press!
+
 
 ## Done first pass of infer chapters
 
