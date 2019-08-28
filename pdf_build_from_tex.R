@@ -1,6 +1,5 @@
 # For printing the PDF from the .tex file
-if(!dir.exists("docs"))
-  dir.create("docs")
+if(!dir.exists("docs")) dir.create("docs")
 file.copy("krantz.cls", "docs/krantz.cls", overwrite = TRUE)
 
 # Keep all the intermediary files so they can be copied below
@@ -23,10 +22,14 @@ file.copy(from = "_bookdown_files/moderndive_files/figure-latex",
           recursive = TRUE)
 
 # Copy references over
-if(!dir.exists("docs/bib"))
-  dir.create("docs/bib")
+if(!dir.exists("docs/bib")) dir.create("docs/bib")
 file.copy(from = "bib", to = "docs", recursive = TRUE)
 
-# Go to RStudio -> Preferences -> Sweave -> Typeset LaTeX into PDF
+# 1. Go to RStudio -> Preferences -> Sweave -> Typeset LaTeX into PDF
 #  - Change to XeLaTeX
-# Now open up moderndive.tex and press Compile PDF
+# 2. Go to Tools -> Project Options -> Sweave >- Typeset LaTeX into PDF
+#  - Change to XeLaTeX
+# 3. Now open up docs/moderndive.tex and press Compile PDF
+#  - The compiled PDF will be saved as docs/moderndive.pdf
+# 4. Compare to the other moderndive_*.pdf generated above to
+#    ensure things look OK.
