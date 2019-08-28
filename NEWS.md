@@ -1,8 +1,10 @@
+
 # ModernDive 0.7.0.9000
 
 * The 0.7.0 version will correspond to tweaks made following proofreading by CRC Press.
 
 ***
+
 
 # ModernDive 0.6.1
 
@@ -11,7 +13,6 @@
 * Updated images used in book
 * Did a full scan of the book for typos
 * Created greyscale versions of many images for the CRC Press printed version
-
 
 
 ***
