@@ -108,7 +108,7 @@ stocks_tidy %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----tidy-stocks-2, echo=FALSE-------------------------------------------
@@ -125,10 +125,14 @@ stocks %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
+
+## \vspace{-0.25in}
 
 ## **_Learning check_**
+
+## \vspace{-0.25in}
 
 
 
@@ -163,7 +167,11 @@ if(knitr::is_html_output()){
 }
 
 
+## \vspace{-0.25in}
+
 ## **_Learning check_**
+
+## \vspace{-0.25in}
 
 
 ## ---- eval=FALSE---------------------------------------------------------

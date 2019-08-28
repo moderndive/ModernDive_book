@@ -317,7 +317,7 @@ comparing_n_table  %>%
       booktabs = TRUE
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 
@@ -345,7 +345,7 @@ comparing_n_table  %>%
       booktabs = TRUE
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----comparing-sampling-distributions-2, echo=FALSE, fig.cap="Three sampling distributions of the sample proportion $\\widehat{p}$."----
@@ -379,7 +379,7 @@ comparing_n_table  %>%
 #    escape = TRUE
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 
@@ -431,7 +431,7 @@ comparing_n_table  %>%
       booktabs = TRUE
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 
@@ -459,7 +459,7 @@ sampling_scenarios %>%
     escape = FALSE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position")) %>%
+                latex_options = c("hold_position")) %>%
   column_spec(1, width = "0.5in") %>% 
   column_spec(2, width = "0.7in") %>%
   column_spec(3, width = "1in") %>%

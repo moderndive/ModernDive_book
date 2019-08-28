@@ -43,7 +43,7 @@ evals_ch7 %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ---- eval =FALSE--------------------------------------------------------
@@ -96,7 +96,7 @@ get_regression_table(lifeExp_model) %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -114,7 +114,7 @@ get_regression_table(score_model_interaction) %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----interaction-summary, echo=FALSE-------------------------------------
@@ -130,7 +130,7 @@ tibble(
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 options(digits = 3)
 
 
@@ -165,7 +165,7 @@ get_regression_table(score_model_parallel_slopes) %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----parallel-slopes-summary, echo=FALSE---------------------------------
@@ -181,7 +181,7 @@ tibble(
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 options(digits = 3)
 
 
@@ -242,7 +242,7 @@ regression_points %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 
@@ -275,7 +275,7 @@ credit_ch7 %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -306,7 +306,7 @@ credit_ch7 %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -412,7 +412,7 @@ get_regression_table(debt_model) %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 
@@ -434,7 +434,7 @@ regression_points %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----recall-parallel-vs-interaction, fig.width=8, echo=FALSE, fig.cap="Previously seen comparison of interaction and parallel slopes models."----
@@ -464,7 +464,8 @@ if(knitr::is_html_output()){
 ##        color = "School size", title = "Parallel slopes model")
 
 ## ----numxcatx-comparison-2, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for MA schools."----
-p1 <- ggplot(MA_schools, aes(x = perc_disadvan, y = average_sat_math, color = size))+
+p1 <- ggplot(MA_schools, 
+             aes(x = perc_disadvan, y = average_sat_math, color = size)) +
   geom_point(alpha = 0.25) +
   geom_smooth(method = "lm", se = FALSE ) +
   labs(x = "Percent economically disadvantaged", y = "Math SAT Score", 
@@ -499,7 +500,7 @@ get_regression_table(model_2_interaction) %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## model_2_parallel_slopes <- lm(average_sat_math ~ perc_disadvan + size,
@@ -516,7 +517,7 @@ get_regression_table(model_2_parallel_slopes) %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -536,7 +537,7 @@ credit_ch7 %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----2numxplot1-repeat, echo=FALSE, fig.cap="Relationship between credit card debt and income."----
@@ -554,7 +555,7 @@ get_regression_table(debt_model) %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and brackets.", message=FALSE----

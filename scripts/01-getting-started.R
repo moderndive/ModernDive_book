@@ -13,19 +13,33 @@ library(scales)
 
 
 
+## \vspace{-0.25in}
+
 ## **_Learning check_**
 
+## \vspace{-0.25in}
 
-## NA
+
+## \vspace{-0.25in}
+
+## \vspace{-0.25in}
+
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## library(ggplot2)
 
 
+## \vspace{-0.25in}
+
 ## **_Learning check_**
 
+## \vspace{-0.25in}
 
-## NA
+
+## \vspace{-0.25in}
+
+## \vspace{-0.25in}
+
 
 ## ----message=FALSE-------------------------------------------------------
 library(nycflights13)
@@ -37,19 +51,33 @@ library(knitr)
 flights
 
 
+## \vspace{-0.25in}
+
 ## **_Learning check_**
 
+## \vspace{-0.25in}
 
-## NA
+
+## \vspace{-0.25in}
+
+## \vspace{-0.25in}
+
 
 ## ------------------------------------------------------------------------
 glimpse(flights)
 
 
+## \vspace{-0.25in}
+
 ## **_Learning check_**
 
+## \vspace{-0.25in}
 
-## NA
+
+## \vspace{-0.25in}
+
+## \vspace{-0.25in}
+
 
 ## ----eval=FALSE----------------------------------------------------------
 ## airlines
@@ -64,7 +92,11 @@ glimpse(flights)
 glimpse(airports)
 
 
+## \vspace{-0.25in}
+
 ## **_Learning check_**
+
+## \vspace{-0.25in}
 
 
 
@@ -73,5 +105,9 @@ glimpse(airports)
 ## ?flights
 
 
+## \vspace{-0.25in}
+
 ## **_Learning check_**
+
+## \vspace{-0.25in}
 

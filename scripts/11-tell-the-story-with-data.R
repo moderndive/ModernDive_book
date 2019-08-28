@@ -144,44 +144,52 @@ p1 + p2
 ## # Before log10-transformation:
 ## ggplot(house_prices, aes(x = sqft_living)) +
 ##   geom_histogram(color = "white") +
-##   labs(x = "living space (square feet)", title = "House size: Before")
+##   labs(x = "living space (square feet)",
+##        title = "House size: Before")
 ## 
 ## # After log10-transformation:
 ## ggplot(house_prices, aes(x = log10_size)) +
 ##   geom_histogram(color = "white") +
-##   labs(x = "log10 living space (square feet)", title = "House size: After")
+##   labs(x = "log10 living space (square feet)",
+##        title = "House size: After")
 
 ## ----log10-size-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House size before and after log10-transformation.", fig.width=16/2, fig.height=9/2----
 p1 <- ggplot(house_prices, aes(x = sqft_living)) +
   geom_histogram(color = "white") +
-  labs(x = "living space (square feet)", title = "House size: Before")
+  labs(x = "living space (square feet)", 
+       title = "House size: Before")
 p2 <- ggplot(house_prices, aes(x = log10_size)) +
   geom_histogram(color = "white") +
-  labs(x = "log10 living space (square feet)", title = "House size: After")
+  labs(x = "log10 living space (square feet)", 
+       title = "House size: After")
 p1 + p2
 
 
 ## ---- eval = FALSE-------------------------------------------------------
 ## # Plot interaction model
-## ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
+## ggplot(house_prices,
+##        aes(x = log10_size, y = log10_price, col = condition)) +
 ##   geom_point(alpha = 0.05) +
 ##   geom_smooth(method = "lm", se = FALSE) +
-##   labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle")
+##   labs(y = "log10 price", x = "log10 size",
+##        title = "House prices in Seattle")
 ## 
 ## # Plot parallel slopes model
-## gg_parallel_slopes(y = "log10_price", num_x = "log10_size", cat_x = "condition",
-##                    data = house_prices, alpha = 0.05)
+## gg_parallel_slopes(y = "log10_price", num_x = "log10_size",
+##                    cat_x = "condition", data = house_prices,
+##                    alpha = 0.05)
 
 ## ----house-price-parallel-slopes, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction and parallel slopes models."----
-interaction <- ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
+interaction <- ggplot(house_prices, 
+                      aes(x = log10_size, y = log10_price, col = condition)) +
   geom_point(alpha = 0.05) +
   labs(y = "log10 price", x = "log10 size") +
   geom_smooth(method = "lm", se = FALSE) +
   guides(color=FALSE) +
   labs(title = "House prices in Seattle", x = "log10 size", y = "log10 price")
 parallel_slopes <- 
-  gg_parallel_slopes(y = "log10_price", num_x = "log10_size", cat_x = "condition", 
-                     data = house_prices, alpha = 0.05) +
+  gg_parallel_slopes(y = "log10_price", num_x = "log10_size", 
+                     cat_x = "condition", data = house_prices, alpha = 0.05) +
   labs(y = NULL, x = "log10 size")
 if(knitr::is_html_output()){
   interaction + parallel_slopes
@@ -192,18 +200,23 @@ if(knitr::is_html_output()){
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
+## ggplot(house_prices,
+##        aes(x = log10_size, y = log10_price, col = condition)) +
 ##   geom_point(alpha = 0.4) +
 ##   geom_smooth(method = "lm", se = FALSE) +
-##   labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
+##   labs(y = "log10 price", x = "log10 size",
+##        title = "House prices in Seattle") +
 ##   facet_wrap(~condition)
 
 
 ## ----house-price-interaction-2, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Facetted plot of interaction model."----
-interaction_2_plot <- ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
+interaction_2_plot <- ggplot(house_prices, 
+                             aes(x = log10_size, y = log10_price, 
+                                 col = condition)) +
   geom_point(alpha = 0.4) +
   geom_smooth(method = "lm", se = FALSE) +
-  labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
+  labs(y = "log10 price", x = "log10 size", 
+       title = "House prices in Seattle") +
   facet_wrap(~condition)
 if(knitr::is_html_output()){
   interaction_2_plot
@@ -212,14 +225,16 @@ if(knitr::is_html_output()){
 }
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## # Fit regression model:
-## price_interaction <- lm(log10_price ~ log10_size * condition, data = house_prices)
+## price_interaction <- lm(log10_price ~ log10_size * condition,
+##                         data = house_prices)
 ## # Get regression table:
 ## get_regression_table(price_interaction)
 
 ## ----seattle-interaction, echo=FALSE-------------------------------------
-price_interaction <- lm(log10_price ~ log10_size * condition, data = house_prices)
+price_interaction <- lm(log10_price ~ log10_size * condition, 
+                        data = house_prices)
 get_regression_table(price_interaction) %>% 
   knitr::kable(
     digits = 3,
@@ -227,7 +242,7 @@ get_regression_table(price_interaction) %>%
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction model with prediction.", fig.width=16/2, fig.height=9/2----

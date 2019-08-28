@@ -44,7 +44,7 @@ evals_ch6 %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----eval=TRUE-----------------------------------------------------------
@@ -174,7 +174,7 @@ get_regression_table(score_model) %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -209,7 +209,7 @@ evals_ch6 %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----numxplot4, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
@@ -280,7 +280,7 @@ gapminder2007 %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----eval=FALSE----------------------------------------------------------
@@ -336,7 +336,7 @@ gapminder2007 %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 
@@ -360,7 +360,7 @@ get_regression_table(lifeExp_model) %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 
@@ -381,7 +381,7 @@ regression_points %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 
@@ -508,7 +508,7 @@ get_regression_table(score_model) %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -536,7 +536,7 @@ score_model %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -563,5 +563,5 @@ score_model %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 

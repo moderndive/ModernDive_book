@@ -50,12 +50,12 @@ sampling_scenarios %>%
   # Only first two scenarios
   filter(Scenario <= 2) %>% 
   kable(
-    caption = "\\label{tab:table-ch8-b}Scenarios of sampling for inference", 
+    caption = "Scenarios of sampling for inference", 
     booktabs = TRUE,
     escape = FALSE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position")) %>%
+                latex_options = c("hold_position")) %>%
   column_spec(1, width = "0.5in") %>% 
   column_spec(2, width = "0.7in") %>%
   column_spec(3, width = "1in") %>%
@@ -706,7 +706,7 @@ if(!file.exists("rds/balls_perc_cis_80_95_99.rds")){
 ##     longtable = TRUE
 ##   ) %>%
 ##   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-##                 latex_options = c("HOLD_position", "repeat_header"))
+##                 latex_options = c("hold_position", "repeat_header"))
 
 
 ## ----reliable-percentile-80-95-99, fig.cap="Ten 80, 95, and 99 percent confidence intervals for $p$ based on $n = 50$.", echo=FALSE----
@@ -738,7 +738,7 @@ percentile_cis_by_level %>%
     longtable = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position", "repeat_header"))
+                latex_options = c("hold_position", "repeat_header"))
 
 
 ## ----perc-sizes-2, echo=FALSE--------------------------------------------
@@ -836,7 +836,7 @@ percentile_cis_by_n %>%
     longtable = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position", "repeat_header"))
+                latex_options = c("hold_position", "repeat_header"))
 
 
 ## ------------------------------------------------------------------------
@@ -870,7 +870,7 @@ sampling_scenarios %>%
     escape = FALSE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position")) %>%
+                latex_options = c("hold_position")) %>%
   column_spec(1, width = "0.5in") %>% 
   column_spec(2, width = "0.7in") %>%
   column_spec(3, width = "1in") %>%
@@ -1048,7 +1048,7 @@ tibble(
     escape = FALSE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position", "repeat_header"))
+                latex_options = c("hold_position", "repeat_header"))
 
 
 ## ----comparing-se-2, echo=FALSE, message=FALSE---------------------------
@@ -1063,7 +1063,7 @@ tibble(
     escape = FALSE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position", "repeat_header"))
+                latex_options = c("hold_position", "repeat_header"))
 
 
 ## ---- message=FALSE, warning=FALSE---------------------------------------

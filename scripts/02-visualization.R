@@ -37,7 +37,7 @@ gapminder_2007 %>%
 #    booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----gapminder, echo=FALSE, fig.cap="Life expectancy over GDP per capita in 2007."----
@@ -72,7 +72,7 @@ tibble(
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ------------------------------------------------------------------------
@@ -325,7 +325,7 @@ kable(flights_table,
       longtable = TRUE
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ---- eval=FALSE---------------------------------------------------------

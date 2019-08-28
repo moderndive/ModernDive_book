@@ -68,7 +68,7 @@ get_regression_table(score_model) %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 # slope:
 slope_row <- get_regression_table(score_model) %>% 
@@ -103,12 +103,12 @@ if(!file.exists("rds/sampling_scenarios.rds")){
 sampling_scenarios %>%  
   filter(Scenario %in% 1:6) %>% 
   kable(
-    caption = "\\label{tab:summarytable-ch11}Scenarios of sampling for inference", 
+    caption = "Scenarios of sampling for inference", 
     booktabs = TRUE,
     escape = FALSE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position")) %>%
+                latex_options = c("hold_position")) %>%
   column_spec(1, width = "0.5in") %>% 
   column_spec(2, width = "0.7in") %>%
   column_spec(3, width = "1in") %>%
@@ -124,7 +124,7 @@ get_regression_table(score_model) %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 
 
 ## ----residual-example, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
@@ -351,7 +351,7 @@ sampling_scenarios %>%
     escape = FALSE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position")) %>%
+                latex_options = c("hold_position")) %>%
   column_spec(1, width = "0.5in") %>% 
   column_spec(2, width = "0.7in") %>%
   column_spec(3, width = "1in") %>%

@@ -68,12 +68,12 @@ promotions_sample <- promotions %>%
 
 promotions_sample  %>% 
   kable(
-    caption = "\\label{tab:compare-six}One example of shuffling gender variable.", 
+    caption = "One example of shuffling gender variable.", 
     booktabs = TRUE,
     longtable = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position", "repeat_header"))
+                latex_options = c("hold_position", "repeat_header"))
 
 
 
@@ -222,7 +222,7 @@ sampling_scenarios %>%
     escape = FALSE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position")) %>%
+                latex_options = c("hold_position")) %>%
   column_spec(1, width = "0.5in") %>% 
   column_spec(2, width = "0.7in") %>%
   column_spec(3, width = "1in") %>%
@@ -458,7 +458,7 @@ sampling_scenarios %>%
     escape = FALSE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position")) %>%
+                latex_options = c("hold_position")) %>%
   column_spec(1, width = "0.5in") %>% 
   column_spec(2, width = "0.7in") %>%
   column_spec(3, width = "1in") %>%
@@ -668,5 +668,5 @@ get_regression_table(score_model) %>%
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("HOLD_position"))
+                latex_options = c("hold_position"))
 

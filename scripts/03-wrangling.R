@@ -157,7 +157,10 @@ by_origin_monthly_incorrect
 
 
 
-## NA
+## \vspace{-0.25in}
+
+## \vspace{-0.25in}
+
 
 
 
@@ -183,8 +186,10 @@ flights <- flights %>%
 flights %>% 
   select(dep_delay, arr_delay, gain) %>% 
   slice(1:5) %>% 
-  kable(caption = "First five rows of departure/arrival delay and gain variables.") %>% 
-  kable_styling(position = "center", latex_options = "HOLD_position")
+  kable(
+    caption = "First five rows of departure/arrival delay and gain variables."
+    ) %>% 
+  kable_styling(position = "center", latex_options = "hold_position")
 
 
 ## ------------------------------------------------------------------------
@@ -288,7 +293,11 @@ named_dests
 ## View(joined_flights)
 
 
+## \vspace{-0.25in}
+
 ## **_Learning check_**
+
+## \vspace{-0.25in}
 
 
 
@@ -388,7 +397,7 @@ if(knitr:::is_latex_output()){
       format = "latex"
     ) %>% 
     kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                  latex_options = c("HOLD_position")) %>%
+                  latex_options = c("hold_position")) %>%
     column_spec(1, width = "0.9in") %>% 
     column_spec(2, width = "4in")
 } else {
