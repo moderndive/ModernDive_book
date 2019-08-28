@@ -1,3 +1,11 @@
+
+# ModernDive 0.7.0.9000
+
+* The 0.7.0 version will correspond to tweaks made following proofreading by CRC Press.
+
+***
+
+
 # ModernDive 0.6.1
 
 * Changed chapter numbers. Chapter "1. Introduction" is now "Preface", thus all Chapter numbers decreased by one.
@@ -41,7 +49,6 @@ Completed major re-organization and clean-up of Chapters 9-11 using the `infer` 
 
 
 ***
-
 
 
 # ModernDive 0.5.0
