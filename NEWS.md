@@ -2,6 +2,7 @@
 # ModernDive 0.7.0.9000
 
 * The 0.7.0 version will correspond to tweaks made following proofreading by CRC Press.
+* Changed word in title of book from "moderndive" to "ModernDive" for consistency with hex sticker.
 
 ***
 
