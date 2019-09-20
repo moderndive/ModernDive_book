@@ -20,7 +20,7 @@ chapter_titles <- c("getting-started",
                     "confidence-intervals",
                     "hypothesis-testing",
                     "inference-for-regression",
-                    "tell-the-story-with-data")
+                    "tell-your-story-with-data")
 chapter_numbers <- stringr::str_pad(
   string = 1:(length(chapter_titles)),
   width = 2,
