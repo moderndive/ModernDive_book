@@ -85,7 +85,7 @@ summary_temp <- weather %>%
 summary_temp
 
 
-## ---- eval = TRUE--------------------------------------------------------
+## ------------------------------------------------------------------------
 summary_temp <- weather %>% 
   summarize(mean = mean(temp, na.rm = TRUE), 
             std_dev = sd(temp, na.rm = TRUE))

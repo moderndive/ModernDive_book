@@ -68,7 +68,7 @@ tibble(
   geom = c("point", "point", "point", "point")
 ) %>% 
   kable(
-    caption = "Summary of Grammar of Graphics for this plot", 
+    caption = "Summary of the Grammar of Graphics for this plot", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -197,7 +197,7 @@ hist_1 <- ggplot(data = weather, mapping = aes(x = temp)) +
   labs(title = "With 40 bins")
 hist_2 <- ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(binwidth = 10, color = "white") +
-  labs(title = "With binwidth = 10 deg F")
+  labs(title = "With binwidth = 10 degrees F")
 hist_1 + hist_2
 
 
@@ -245,7 +245,7 @@ five_number_summary <- tibble(
 )
 
 
-## ----nov1, echo=FALSE, fig.cap="November temperatures represented as points."----
+## ----nov1, echo=FALSE, fig.cap="November temperatures represented as jittered points."----
 base_plot <- weather %>% 
   filter(month %in% c(11)) %>% 
   ggplot(mapping = aes(x = factor(month), y = temp)) +
@@ -315,10 +315,10 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 ## ----flights-counted, message=FALSE, echo=FALSE--------------------------
-flights_table <- flights %>% 
+flights_counted <- flights %>% 
   group_by(carrier) %>% 
   summarize(number = n())
-kable(flights_table,
+kable(flights_counted,
       digits = 3,
       caption = "Number of flights pre-counted for each carrier.", 
       booktabs = TRUE,
@@ -425,6 +425,22 @@ if(knitr::is_html_output()){
 } else {
   ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
     geom_bar(position = "dodge") +
+    scale_fill_grey()
+}
+
+
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+##   geom_bar(position = position_dodge(preserve = "single"))
+
+
+## ----flights-dodged-bar-color-tweak, echo=FALSE, fig.cap="Side-by-side barplot comparing number of flights by carrier and origin (with formatting tweak).", fig.height=3.5----
+if(knitr::is_html_output()){
+  ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+    geom_bar(position = position_dodge(preserve = "single"))
+} else {
+  ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+    geom_bar(position = position_dodge(preserve = "single")) +
     scale_fill_grey()
 }
 

@@ -293,3 +293,34 @@ ggplot(US_births_1999, aes(x = date, y = births)) +
 US_births_1999 %>% 
   arrange(desc(births))
 
+
+
+
+
+
+## ----script-files-table, echo=FALSE, message=FALSE-----------------------
+if(!file.exists("rds/chapter_script_pub_files.rds")){
+  chapter_script_pub_files <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtqCUn7IdKJMgQ8LmXl7-us2DVxKCPz0w5BHhO5JLOof0gRfmv0DK1xw1PDC7PhIhUglb4Q_JA2zsg/pub?gid=0&single=true&output=csv" %>% 
+    read_csv(na = "")
+    write_rds(chapter_script_pub_files, "rds/chapter_script_pub_files.rds")
+} else {
+  chapter_script_pub_files <- read_rds("rds/chapter_script_pub_files.rds")
+}
+if(!file.exists("rds/chapter_script_dev_files.rds")){
+  chapter_script_dev_files <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtqCUn7IdKJMgQ8LmXl7-us2DVxKCPz0w5BHhO5JLOof0gRfmv0DK1xw1PDC7PhIhUglb4Q_JA2zsg/pub?gid=490443444&single=true&output=csv" %>% 
+    read_csv(na = "")
+    write_rds(chapter_script_dev_files, "rds/chapter_script_dev_files.rds")
+} else {
+  chapter_script_dev_files <- read_rds("rds/chapter_script_dev_files.rds")
+}
+
+if(dev_version){
+  chapter_script_dev_files %>% 
+    select(chapter, link) %>% 
+    kable()
+} else {
+  chapter_script_pub_files %>% 
+    select(chapter, link) %>% 
+    kable()
+}
+
