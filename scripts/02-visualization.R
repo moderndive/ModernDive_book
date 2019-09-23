@@ -314,10 +314,13 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
 
 
-## ----flights-counted, message=FALSE, echo=FALSE--------------------------
+## ---- message=FALSE, echo=TRUE-------------------------------------------
 flights_counted <- flights %>% 
   group_by(carrier) %>% 
   summarize(number = n())
+
+
+## ----flights-counted, message=FALSE, echo=FALSE--------------------------
 kable(flights_counted,
       digits = 3,
       caption = "Number of flights pre-counted for each carrier.", 
@@ -329,7 +332,7 @@ kable(flights_counted,
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## ggplot(data = flights_table, mapping = aes(x = carrier, y = number)) +
+## ggplot(data = flights_counted, mapping = aes(x = carrier, y = number)) +
 ##   geom_col()
 
 
