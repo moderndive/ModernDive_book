@@ -318,7 +318,6 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 flights_counted <- flights %>% 
   group_by(carrier) %>% 
   summarize(number = n())
-
 kable(flights_counted,
       digits = 3,
       caption = "\\label{tab:flights-counted} Number of flights pre-counted for each carrier.", 
@@ -327,11 +326,6 @@ kable(flights_counted,
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
-
-
-## ---- eval=FALSE---------------------------------------------------------
-## ggplot(data = flights_counted, mapping = aes(x = carrier, y = number)) +
-##   geom_col()
 
 
 
