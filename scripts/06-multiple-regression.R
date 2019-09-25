@@ -22,20 +22,20 @@ library(gapminder)
 
 
 ## ------------------------------------------------------------------------
-evals_ch7 <- evals %>%
+evals_ch6 <- evals %>%
   select(ID, score, age, gender)
 
 
 ## ------------------------------------------------------------------------
-glimpse(evals_ch7)
+glimpse(evals_ch6)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## evals_ch7 %>%
+## evals_ch6 %>%
 ##   sample_n(size = 5)
 
 ## ----model4-data-preview, echo=FALSE-------------------------------------
-evals_ch7 %>%
+evals_ch6 %>%
   sample_n(5) %>%
   knitr::kable(
     digits = 3,
@@ -47,18 +47,18 @@ evals_ch7 %>%
 
 
 ## ---- eval =FALSE--------------------------------------------------------
-## evals_ch7 %>%
+## evals_ch6 %>%
 ##   select(score, age, gender) %>%
 ##   skim()
 
 
 ## ------------------------------------------------------------------------
-evals_ch7 %>% 
+evals_ch6 %>% 
   get_correlation(formula = score ~ age)
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## ggplot(evals_ch7, aes(x = age, y = score, color = gender)) +
+## ggplot(evals_ch6, aes(x = age, y = score, color = gender)) +
 ##   geom_point() +
 ##   labs(x = "Age", y = "Teaching Score", color = "Gender") +
 ##   geom_smooth(method = "lm", se = FALSE)
@@ -66,12 +66,12 @@ evals_ch7 %>%
 
 ## ----numxcatxplot1, echo=FALSE, warning=FALSE, fig.cap="Colored scatterplot of relationship of teaching and beauty scores."----
 if(knitr::is_html_output()){
-  ggplot(evals_ch7, aes(x = age, y = score, color = gender)) +
+  ggplot(evals_ch6, aes(x = age, y = score, color = gender)) +
     geom_point() +
     labs(x = "Age", y = "Teaching Score", color = "Gender") +
     geom_smooth(method = "lm", se = FALSE)
 } else {
-    ggplot(evals_ch7, aes(x = age, y = score, color = gender)) +
+    ggplot(evals_ch6, aes(x = age, y = score, color = gender)) +
     geom_point() +
     labs(x = "Age", y = "Teaching Score", color = "Gender") +
     geom_smooth(method = "lm", se = FALSE) +
@@ -101,12 +101,12 @@ get_regression_table(lifeExp_model) %>%
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Fit regression model:
-## score_model_interaction <- lm(score ~ age * gender, data = evals_ch7)
+## score_model_interaction <- lm(score ~ age * gender, data = evals_ch6)
 ## # Get regression table:
 ## get_regression_table(score_model_interaction)
 
 ## ----regtable-interaction, echo=FALSE------------------------------------
-score_model_interaction <- lm(score ~ age * gender, data = evals_ch7)
+score_model_interaction <- lm(score ~ age * gender, data = evals_ch6)
 get_regression_table(score_model_interaction) %>% 
   knitr::kable(
     digits = 3,
@@ -136,12 +136,12 @@ options(digits = 3)
 
 ## ----eval=FALSE----------------------------------------------------------
 ## gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender",
-##                    data = evals_ch7)
+##                    data = evals_ch6)
 
 
 ## ----numxcatx-parallel, echo=FALSE, warning=FALSE, fig.cap="Parallel slopes model of relationship of score with age and gender."----
 par_slopes <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", 
-                   data = evals_ch7)
+                   data = evals_ch6)
 if(knitr::is_html_output()){
   par_slopes
 } else {
@@ -152,12 +152,12 @@ if(knitr::is_html_output()){
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Fit regression model:
-## score_model_parallel_slopes <- lm(score ~ age + gender, data = evals_ch7)
+## score_model_parallel_slopes <- lm(score ~ age + gender, data = evals_ch6)
 ## # Get regression table:
 ## get_regression_table(score_model_parallel_slopes)
 
 ## ----regtable-parallel-slopes, echo=FALSE--------------------------------
-score_model_parallel_slopes <- lm(score ~ age + gender, data = evals_ch7)
+score_model_parallel_slopes <- lm(score ~ age + gender, data = evals_ch6)
 get_regression_table(score_model_parallel_slopes) %>% 
   knitr::kable(
     digits = 3,
@@ -186,7 +186,7 @@ options(digits = 3)
 
 
 ## ----numxcatx-comparison, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models."----
-interaction_plot <- ggplot(evals_ch7, aes(x = age, y = score, color = gender), show.legend = FALSE) +
+interaction_plot <- ggplot(evals_ch6, aes(x = age, y = score, color = gender), show.legend = FALSE) +
   geom_point() +
   labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
   geom_smooth(method = "lm", se = FALSE) +
@@ -194,7 +194,7 @@ interaction_plot <- ggplot(evals_ch7, aes(x = age, y = score, color = gender), s
 parallel_slopes_plot <- gg_parallel_slopes(y = "score", 
                                            num_x = "age", 
                                            cat_x = "gender", 
-                                           data = evals_ch7) +
+                                           data = evals_ch6) +
   labs(x = "Age", y = "Teaching Score", title = "Parallel slopes model") +
   theme(axis.title.y = element_blank())
 
@@ -210,11 +210,11 @@ if(knitr::is_html_output()){
 
 
 ## ----fitted-values, echo=FALSE, warning=FALSE, fig.cap="Fitted values for two new professors."----
-newpoints <- evals_ch7 %>% 
+newpoints <- evals_ch6 %>% 
   slice(c(1, 5)) %>% 
   get_regression_points(score_model_interaction, newdata = .)
 
-fitted_plot <- ggplot(evals_ch7, aes(x = age, y = score, color = gender), show.legend = FALSE) +
+fitted_plot <- ggplot(evals_ch6, aes(x = age, y = score, color = gender), show.legend = FALSE) +
   geom_point() +
   labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
   geom_smooth(method = "lm", se = FALSE) +
@@ -251,23 +251,23 @@ regression_points %>%
 
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(ISLR)
-credit_ch7 <- Credit %>%
+credit_ch6 <- Credit %>%
   as_tibble() %>% 
   select(ID, debt = Balance, credit_limit = Limit, 
          income = Income, credit_rating = Rating, age = Age)
 
 
 ## ------------------------------------------------------------------------
-glimpse(credit_ch7)
+glimpse(credit_ch6)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## set.seed(9)
-## credit_ch7 %>%
+## credit_ch6 %>%
 ##   sample_n(size = 5)
 
 ## ----model3-data-preview, echo=FALSE-------------------------------------
-credit_ch7 %>%
+credit_ch6 %>%
   sample_n(5) %>%
   knitr::kable(
     digits = 3,
@@ -279,25 +279,25 @@ credit_ch7 %>%
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## credit_ch7 %>%
+## credit_ch6 %>%
 ##   select(debt, credit_limit, income) %>%
 ##   skim()
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## credit_ch7 %>%
+## credit_ch6 %>%
 ##   get_correlation(debt ~ credit_limit)
-## credit_ch7 %>%
+## credit_ch6 %>%
 ##   get_correlation(debt ~ income)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## credit_ch7 %>%
+## credit_ch6 %>%
 ##   select(debt, credit_limit, income) %>%
 ##   cor()
 
 ## ----model3-correlation, echo=FALSE--------------------------------------
-credit_ch7 %>% 
+credit_ch6 %>% 
   select(debt, credit_limit, income) %>% 
   cor() %>% 
   knitr::kable(
@@ -310,27 +310,27 @@ credit_ch7 %>%
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## ggplot(credit_ch7, aes(x = credit_limit, y = debt)) +
+## ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
 ##   geom_point() +
 ##   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)",
 ##        title = "Debt and credit limit") +
 ##   geom_smooth(method = "lm", se = FALSE)
 ## 
-## ggplot(credit_ch7, aes(x = income, y = debt)) +
+## ggplot(credit_ch6, aes(x = income, y = debt)) +
 ##   geom_point() +
 ##   labs(x = "Income (in $1000)", y = "Credit card debt (in $)",
 ##        title = "Debt and income") +
 ##   geom_smooth(method = "lm", se = FALSE)
 
 ## ----2numxplot1, echo=FALSE, fig.cap="Relationship between credit card debt and credit limit/income."----
-model3_balance_vs_limit_plot <- ggplot(credit_ch7, aes(x = credit_limit, y = debt)) +
+model3_balance_vs_limit_plot <- ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
   geom_point() +
   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)", 
        title = "Debt and credit limit") +
   geom_smooth(method = "lm", se = FALSE) +
   scale_y_continuous(limits = c(0, 2000))
 
-model3_balance_vs_income_plot <- ggplot(credit_ch7, aes(x = income, y = debt)) +
+model3_balance_vs_income_plot <- ggplot(credit_ch6, aes(x = income, y = debt)) +
   geom_point() +
   labs(x = "Income (in $1000)", y = "Credit card debt (in $)", 
        title = "Debt and income") +
@@ -350,9 +350,9 @@ model3_balance_vs_limit_plot + model3_balance_vs_income_plot
 ## library(tidyverse)
 ## 
 ## # setup hideous grid required by plotly
-## model_lm <- lm(debt ~ income + credit_limit, data=credit_ch7)
-## x_grid <- seq(from = min(credit_ch7$income), to = max(credit_ch7$income), length = 100)
-## y_grid <- seq(from = min(credit_ch7$credit_limit), to = max(credit_ch7$credit_limit), length = 200)
+## model_lm <- lm(debt ~ income + credit_limit, data = credit_ch6)
+## x_grid <- seq(from = min(credit_ch6$income), to = max(credit_ch6$income), length = 100)
+## y_grid <- seq(from = min(credit_ch6$credit_limit), to = max(credit_ch6$credit_limit), length = 200)
 ## z_grid <- expand.grid(x_grid, y_grid) %>%
 ##   tbl_df() %>%
 ##   rename(x_grid = Var1, y_grid = Var2) %>%
@@ -364,16 +364,16 @@ model3_balance_vs_limit_plot + model3_balance_vs_income_plot
 ## # Plot points
 ## plot_ly() %>%
 ##   add_markers(
-##     x = credit_ch7$income,
-##     y = credit_ch7$credit_limit,
-##     z = credit_ch7$debt,
+##     x = credit_ch6$income,
+##     y = credit_ch6$credit_limit,
+##     z = credit_ch6$debt,
 ##     hoverinfo = 'text',
 ##     text = ~paste("x1 - Income: ",
-##                   credit_ch7$income,
+##                   credit_ch6$income,
 ##                   "</br> x2 - Credit Limit: ",
-##                   credit_ch7$credit_limit,
+##                   credit_ch6$credit_limit,
 ##                   "</br> y - Debt: ",
-##                   credit_ch7$debt)
+##                   credit_ch6$debt)
 ##   ) %>%
 ##   # Label axes
 ##   layout(
@@ -397,12 +397,12 @@ model3_balance_vs_limit_plot + model3_balance_vs_income_plot
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Fit regression model:
-## debt_model <- lm(debt ~ credit_limit + income, data = credit_ch7)
+## debt_model <- lm(debt ~ credit_limit + income, data = credit_ch6)
 ## # Get regression table:
 ## get_regression_table(debt_model)
 
 ## ----model3-table-output, echo=FALSE-------------------------------------
-debt_model <- lm(debt ~ credit_limit + income, data = credit_ch7)
+debt_model <- lm(debt ~ credit_limit + income, data = credit_ch6)
 credit_line <- get_regression_table(debt_model) %>%
   pull(estimate)
 get_regression_table(debt_model) %>% 
@@ -524,13 +524,13 @@ get_regression_table(model_2_parallel_slopes) %>%
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## credit_ch7 %>%
+## credit_ch6 %>%
 ##   select(debt, income) %>%
 ##   mutate(income = income * 1000) %>%
 ##   cor()
 
 ## ----cor-credit-2, echo=FALSE--------------------------------------------
-credit_ch7 %>% 
+credit_ch6 %>% 
   select(debt, income) %>% 
   mutate(income = income * 1000) %>% 
   cor() %>% 
@@ -548,7 +548,7 @@ model3_balance_vs_income_plot
 
 
 ## ----model3-table-output-repeat, echo=FALSE------------------------------
-debt_model <- lm(debt ~ credit_limit + income, data = credit_ch7)
+debt_model <- lm(debt ~ credit_limit + income, data = credit_ch6)
 credit_line <- get_regression_table(debt_model) %>%
   pull(estimate)
 get_regression_table(debt_model) %>% 
@@ -562,14 +562,14 @@ get_regression_table(debt_model) %>%
 
 
 ## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and brackets.", message=FALSE----
-ggplot(credit_ch7, aes(x = credit_limit)) +
+ggplot(credit_ch6, aes(x = credit_limit)) +
   geom_histogram(color = "white") +
-  geom_vline(xintercept = quantile(credit_ch7$credit_limit, probs = c(0.25, 0.5, 0.75)), linetype = "dashed", size = 1) +
+  geom_vline(xintercept = quantile(credit_ch6$credit_limit, probs = c(0.25, 0.5, 0.75)), linetype = "dashed", size = 1) +
   labs(x = "Credit limit", title = "Credit limit and 4 credit limit brackets.")
 
 
 ## ----2numxplot4, echo=FALSE, fig.cap="Relationship between credit card debt and income by credit limit bracket."----
-credit_ch7 <- credit_ch7 %>% 
+credit_ch6 <- credit_ch6 %>% 
   mutate(limit_bracket = cut_number(credit_limit, 4)) %>% 
   mutate(limit_bracket = fct_recode(limit_bracket,
     "low" =  "[855,3.09e+03]",
@@ -578,14 +578,14 @@ credit_ch7 <- credit_ch7 %>%
     "high" = "(5.87e+03,1.39e+04]"
   ))
 
-model3_balance_vs_income_plot <- ggplot(credit_ch7, aes(x = income, y = debt)) +
+model3_balance_vs_income_plot <- ggplot(credit_ch6, aes(x = income, y = debt)) +
   geom_point() +
   labs(x = "Income (in $1000)", y = "Credit card debt (in $)", 
        title = "Two scatterplots of credit card debt vs income") +
   geom_smooth(method = "lm", se = FALSE) +
   scale_y_continuous(limits = c(0, NA))
 
-model3_balance_vs_income_plot_colored <- ggplot(credit_ch7, 
+model3_balance_vs_income_plot_colored <- ggplot(credit_ch6, 
                                                 aes(x = income, y = debt, 
                                                     col = limit_bracket)) +
   geom_point() +

@@ -23,20 +23,20 @@ library(patchwork)
 
 
 ## ------------------------------------------------------------------------
-evals_ch6 <- evals %>%
+evals_ch5 <- evals %>%
   select(ID, score, bty_avg, age)
 
 
 ## ------------------------------------------------------------------------
-glimpse(evals_ch6)
+glimpse(evals_ch5)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## evals_ch6 %>%
+## evals_ch5 %>%
 ##   sample_n(size = 5)
 
 ## ----five-random-courses, echo=FALSE-------------------------------------
-evals_ch6 %>%
+evals_ch5 %>%
   sample_n(5) %>%
   knitr::kable(
     digits = 3,
@@ -48,13 +48,13 @@ evals_ch6 %>%
 
 
 ## ----eval=TRUE-----------------------------------------------------------
-evals_ch6 %>%
+evals_ch5 %>%
   summarize(mean_bty_avg = mean(bty_avg), mean_score = mean(score),
             median_bty_avg = median(bty_avg), median_score = median(score))
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## evals_ch6 %>%
+## evals_ch5 %>%
 ##   select(score, bty_avg) %>%
 ##   skim()
 
@@ -85,29 +85,31 @@ ggplot(data = values, mapping = aes(V1, V2)) +
   theme(
     axis.text.x = element_blank(),
     axis.text.y = element_blank(),
-    axis.ticks = element_blank()
+    axis.ticks = element_blank(),
+    strip.text = element_text(colour = 'black'),
+    strip.background = element_rect(fill = "grey93")
   )
 
 
 ## ------------------------------------------------------------------------
-evals_ch6 %>%
+evals_ch5 %>%
   get_correlation(formula = score ~ bty_avg)
 
 
 ## ------------------------------------------------------------------------
-evals_ch6 %>%
+evals_ch5 %>%
   summarize(correlation = cor(score, bty_avg))
 
 
-## ---- echo=FALSE---------------------------------------------------------
-cor_ch6 <- evals_ch6 %>%
-  summarize(correlation = cor(score, bty_avg)) %>%
-  pull(correlation) %>%
-  round(3)
+## ----echo=FALSE----------------------------------------------------------
+cor_ch5 <- evals_ch5 %>%
+  summarize(correlation = cor(score, bty_avg)) %>% 
+  round(3) %>% 
+  pull()
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
+## ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 ##   geom_point() +
 ##   labs(x = "Beauty Score", y = "Teaching Score",
 ##        title = "Scatterplot of relationship of teaching and beauty scores")
@@ -121,7 +123,7 @@ box <- tibble(
   y = c(4.6, 4.6, 5, 5, 4.6) + c(-1, -1, 1, 1, -1) * margin_y
   )
 
-ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
+ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score",
        title = "Scatterplot of relationship of teaching and beauty scores") +
@@ -129,13 +131,13 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
+## ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 ##   geom_jitter() +
 ##   labs(x = "Beauty Score", y = "Teaching Score",
 ##        title = "Scatterplot of relationship of teaching and beauty scores")
 
 ## ----numxplot2, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin."----
-ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
+ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_jitter() +
   labs(x = "Beauty Score", y = "Teaching Score",
        title = "(Jittered) Scatterplot of relationship of teaching and beauty scores") +
@@ -143,7 +145,7 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
 
 
 ## ----numxplot3, warning=FALSE, fig.cap="Regression line."----------------
-ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
+ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score",
        title = "Relationship between teaching and beauty scores") +  
@@ -156,12 +158,12 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Fit regression model:
-## score_model <- lm(score ~ bty_avg, data = evals_ch6)
+## score_model <- lm(score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
 ## get_regression_table(score_model)
 
 ## ---- echo=FALSE---------------------------------------------------------
-score_model <- lm(score ~ bty_avg, data = evals_ch6)
+score_model <- lm(score ~ bty_avg, data = evals_ch5)
 evals_line <- score_model %>%
   get_regression_table() %>%
   pull(estimate)
@@ -179,7 +181,7 @@ get_regression_table(score_model) %>%
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Fit regression model:
-## score_model <- lm(score ~ bty_avg, data = evals_ch6)
+## score_model <- lm(score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
 ## get_regression_table(score_model)
 
@@ -193,7 +195,7 @@ knitr::include_graphics("images/shutterstock/wrapper_function.png")
 
 
 ## ----instructor-21, echo=FALSE-------------------------------------------
-index <- which(evals_ch6$bty_avg == 7.333 & evals_ch6$score == 4.9)
+index <- which(evals_ch5$bty_avg == 7.333 & evals_ch5$score == 4.9)
 target_point <- score_model %>%
   get_regression_points() %>%
   slice(index)
@@ -201,7 +203,7 @@ x <- target_point$bty_avg
 y <- target_point$score
 y_hat <- target_point$score_hat
 resid <- target_point$residual
-evals_ch6 %>%
+evals_ch5 %>%
   slice(index) %>%
   knitr::kable(
     digits = 4,
@@ -213,7 +215,7 @@ evals_ch6 %>%
 
 
 ## ----numxplot4, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
-best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
+best_fit_plot <- ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point(color = "grey") +
   labs(x = "Beauty Score", y = "Teaching Score",
        title = "Relationship of teaching and beauty scores") +
@@ -296,12 +298,30 @@ ggplot(gapminder2007, aes(x = lifeExp)) +
        title = "Histogram of distribution of worldwide life expectancies")
 
 
-## ----catxplot0b, warning=FALSE, fig.cap="Life expectancy in 2007."-------
-ggplot(gapminder2007, aes(x = lifeExp)) +
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(gapminder2007, aes(x = lifeExp)) +
+##   geom_histogram(binwidth = 5, color = "white") +
+##   labs(x = "Life expectancy", y = "Number of countries",
+##        title = "Histogram of distribution of worldwide life expectancies") +
+##   facet_wrap(~ continent, nrow = 2)
+
+
+## ----catxplot0b, echo=FALSE, warning=FALSE, fig.cap="Life expectancy in 2007."----
+faceted_life_exp <- ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", y = "Number of countries",
        title = "Histogram of distribution of worldwide life expectancies") +
   facet_wrap(~ continent, nrow = 2)
+
+# Make the text black and reduce darkness of the grey in the facet labels
+if(knitr::is_latex_output()) {
+  faceted_life_exp + 
+    theme(strip.text = element_text(colour = 'black'),
+          strip.background = element_rect(fill = "grey93")
+    )
+} else {
+  faceted_life_exp
+}
 
 
 ## ----catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007."--------
@@ -396,9 +416,9 @@ knitr::include_graphics("images/shutterstock/shoes_headache.png")
 knitr::include_graphics("images/flowcharts/flowchart.009-cropped.png")
 
 
-## ----best-fitting-line, fig.height = 8, fig.width = 8, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
+## ----best-fitting-line, fig.height=8, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
 # First residual
-best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
+best_fit_plot <- ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point(size = 0.8, color = "grey") +
   labs(x = "Beauty Score", y = "Teaching Score") +
   geom_smooth(method = "lm", se = FALSE) +
@@ -409,7 +429,7 @@ best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
 p1 <- best_fit_plot + labs(title = "First instructor's residual")
 
 # Second residual
-index <- which(evals_ch6$bty_avg == 2.333 & evals_ch6$score == 2.7)
+index <- which(evals_ch5$bty_avg == 2.333 & evals_ch5$score == 2.7)
 target_point <- get_regression_points(score_model) %>%
   slice(index)
 x <- target_point$bty_avg
@@ -425,8 +445,8 @@ best_fit_plot <- best_fit_plot +
 p2 <- best_fit_plot + labs(title = "Adding second instructor's residual")
 
 # Third residual
-index <- which(evals_ch6$bty_avg == 3.667 & evals_ch6$score == 4.4)
-score_model <- lm(score ~ bty_avg, data = evals_ch6)
+index <- which(evals_ch5$bty_avg == 3.667 & evals_ch5$score == 4.4)
+score_model <- lm(score ~ bty_avg, data = evals_ch5)
 target_point <- get_regression_points(score_model) %>%
   slice(index)
 x <- target_point$bty_avg
@@ -442,8 +462,8 @@ best_fit_plot <- best_fit_plot +
            arrow = arrow(type = "closed", length = unit(0.02, "npc")))
 p3 <- best_fit_plot + labs(title = "Adding third instructor's residual")
 
-index <- which(evals_ch6$bty_avg == 6 & evals_ch6$score == 3.8)
-score_model <- lm(score ~ bty_avg, data = evals_ch6)
+index <- which(evals_ch5$bty_avg == 6 & evals_ch5$score == 3.8)
+score_model <- lm(score ~ bty_avg, data = evals_ch5)
 target_point <- get_regression_points(score_model) %>%
   slice(index)
 x <- target_point$bty_avg
@@ -463,7 +483,7 @@ p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
 
 ## ------------------------------------------------------------------------
 # Fit regression model:
-score_model <- lm(score ~ bty_avg, data = evals_ch6)
+score_model <- lm(score ~ bty_avg, data = evals_ch5)
 
 # Get regression points:
 regression_points <- get_regression_points(score_model)
@@ -482,25 +502,25 @@ example <- tibble(
   x = c(0, 0.5, 1),
   y = c(2, 1, 3)
 )
+
 ggplot(example, aes(x = x, y = y)) +
   geom_smooth(method = "lm", se = FALSE, fullrange = TRUE) +
-  geom_hline(yintercept = 2.5, col = "red", linetype = "dashed", size = 1) +
-  geom_abline(intercept = 2, slope = -1, col = "forestgreen", linetype = "dashed", size = 1) +
+  geom_hline(yintercept = 2.5, col = "red", linetype = "dotted", size = 1) +
+  geom_abline(intercept = 2, slope = -1, col = "forestgreen", 
+              linetype = "dashed", size = 1) +
   geom_point(size = 4)
-# model_example <- lm(y ~ x, data = example)
-# get_regression_table(model_example)
 
 
 
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Fit regression model:
-## score_model <- lm(score ~ bty_avg, data = evals_ch6)
+## score_model <- lm(score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
 ## get_regression_table(score_model)
 
 ## ----recall-table, echo=FALSE--------------------------------------------
-score_model <- lm(score ~ bty_avg, data = evals_ch6)
+score_model <- lm(score ~ bty_avg, data = evals_ch5)
 get_regression_table(score_model) %>%
   knitr::kable(
     digits = 3,
