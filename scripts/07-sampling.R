@@ -93,6 +93,14 @@ virtual_shovel %>%
   summarize(num_red = sum(is_red)) %>% 
   mutate(prop_red = num_red / 50)
 
+## ---- echo=FALSE---------------------------------------------------------
+virtual_shovel_prop_red <- virtual_shovel %>% 
+  mutate(is_red = color == "red") %>% 
+  summarize(num_red = sum(is_red)) %>% 
+  mutate(prop_red = num_red / 50) %>% 
+  pull(prop_red) 
+virtual_shovel_prop_red <- virtual_shovel_prop_red * 100
+
 
 ## ------------------------------------------------------------------------
 virtual_shovel %>% 
