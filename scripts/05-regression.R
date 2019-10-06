@@ -63,7 +63,7 @@ evals_ch5 %>%
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
 n_sim <- 100
 values <- NULL
-for(i in seq_len(length(correlation))){
+for(i in seq_along(correlation)){
   rho <- correlation[i]
   sigma <- matrix(c(5, rho * sqrt(50), rho * sqrt(50), 10), 2, 2)
   sim <- rmvnorm(
@@ -78,17 +78,24 @@ for(i in seq_len(length(correlation))){
   values <- bind_rows(values, sim)
 }
 
-ggplot(data = values, mapping = aes(V1, V2)) +
+corr_plot <- ggplot(data = values, mapping = aes(V1, V2)) +
   geom_point() +
   facet_wrap(~ correlation, ncol = 3) +
   labs(x = "x", y = "y") +
   theme(
     axis.text.x = element_blank(),
     axis.text.y = element_blank(),
-    axis.ticks = element_blank(),
+    axis.ticks = element_blank())
+
+if(knitr::is_latex_output()){
+  corr_plot +
+  theme(
     strip.text = element_text(colour = 'black'),
     strip.background = element_rect(fill = "grey93")
   )
+} else {
+  corr_plot
+}
 
 
 ## ------------------------------------------------------------------------
@@ -141,7 +148,7 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_jitter() +
   labs(x = "Beauty Score", y = "Teaching Score",
        title = "(Jittered) Scatterplot of relationship of teaching and beauty scores") +
-  geom_path(data = box, aes(x=x, y=y), col = "orange", size = 1)
+  geom_path(data = box, aes(x = x, y = y), col = "orange", size = 1)
 
 
 ## ----numxplot3, warning=FALSE, fig.cap="Regression line."----------------

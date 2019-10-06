@@ -206,10 +206,10 @@ if(knitr::is_html_output()){
 ##   geom_smooth(method = "lm", se = FALSE) +
 ##   labs(y = "log10 price", x = "log10 size",
 ##        title = "House prices in Seattle") +
-##   facet_wrap(~condition)
+##   facet_wrap(~ condition)
 
 
-## ----house-price-interaction-2, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Facetted plot of interaction model."----
+## ----house-price-interaction-2, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Faceted plot of interaction model."----
 interaction_2_plot <- ggplot(house_prices, 
                              aes(x = log10_size, y = log10_price, 
                                  col = condition)) +
@@ -218,10 +218,15 @@ interaction_2_plot <- ggplot(house_prices,
   labs(y = "log10 price", x = "log10 size", 
        title = "House prices in Seattle") +
   facet_wrap(~condition)
-if(knitr::is_html_output()){
+
+if(!knitr::is_latex_output()){
   interaction_2_plot
 } else {
-  interaction_2_plot + scale_color_grey()
+  interaction_2_plot + 
+    scale_color_grey() +
+    theme(strip.text = element_text(colour = 'black'),
+          strip.background = element_rect(fill = "grey93")
+    )
 }
 
 

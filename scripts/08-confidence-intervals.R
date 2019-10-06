@@ -40,8 +40,9 @@ x_bar <- pennies_sample %>%
 
 if(!file.exists("rds/sampling_scenarios.rds")){
   sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-    read_csv(na = "")
-    write_rds(table_ch3, "rds/sampling_scenarios.rds")
+    read_csv(na = "") %>% 
+    slice(1:5)
+  write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
 } else {
   sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
 }
@@ -205,7 +206,7 @@ percentile_ci <- virtual_resampled_means %>%
   get_ci(level = 0.95, type = "percentile")
 
 
-## ----percentile-method, echo=FALSE, message=FALSE, fig.cap="Percentile method 95 percent confidence interval. Interval marked by vertical lines."----
+## ----percentile-method, echo=FALSE, message=FALSE, fig.cap="Percentile method 95 percent confidence interval. Interval endpoints marked by vertical lines."----
 ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
   labs(x = "Resample sample mean") +
@@ -355,7 +356,7 @@ bootstrap_distribution
 ##   specify(response = year) %>%        rep_sample_n(size = 50, replace = TRUE,
 ##   generate(reps = 1000) %>%                        reps = 1000) %>%
 ##   calculate(stat = "mean")            group_by(replicate) %>%
-##                                       summarize(mean_year = mean(year))
+##                                       summarize(stat = mean(year))
 
 
 
@@ -394,8 +395,9 @@ percentile_ci
 
 
 ## ------------------------------------------------------------------------
+x_bar
 standard_error_ci <- bootstrap_distribution %>% 
-  get_confidence_interval(type = "se", point_estimate = 1995.44)
+  get_confidence_interval(type = "se", point_estimate = x_bar)
 standard_error_ci
 
 
@@ -714,15 +716,25 @@ sample_of_cis <- percentile_cis_by_level %>%
   group_by(confidence_level) %>% 
   mutate(sample_row = 1:10)
 
-ggplot(sample_of_cis) +
+perc_interval_plot <- ggplot(sample_of_cis) +
   # Doesn't make sense to show point_estimate center for percentile confidence 
   # intervals:
   # geom_point(aes(x = point_estimate, y = sample_row)) +
   geom_segment(aes(y = sample_row, yend = sample_row, x = lower, xend = upper)) +
   labs(x = expression("Proportion of red balls"), y = "") +
   scale_y_continuous(breaks = 1:10) +
-  facet_wrap(~confidence_level) + 
+  facet_wrap(~ confidence_level) + 
   geom_vline(xintercept = p_red, color = "red")
+
+if(knitr::is_latex_output()){
+  perc_interval_plot  +
+  theme(
+    strip.text = element_text(colour = 'black'),
+    strip.background = element_rect(fill = "grey93")
+  )
+} else {
+  perc_interval_plot
+}
 
 
 ## ----perc-cis-average-width, echo=FALSE----------------------------------
@@ -807,12 +819,12 @@ if(!file.exists("rds/balls_perc_cis_n_25_50_100.rds")){
 }
 
 
-## ----reliable-percentile-n-25-50-100, fig.cap="Ten 95 percent confidence intervals for $p$ based on n = 25, 50, and 100.", echo=FALSE----
+## ----reliable-percentile-n-25-50-100, fig.cap="Ten 95 percent confidence intervals for $p$ based on $n = 25, 50,$ and $100$.", echo=FALSE----
 sample_of_cis <- percentile_cis_by_n %>% 
   group_by(sample_size) %>% 
   mutate(sample_row = 1:10)
 
-ggplot(sample_of_cis) +
+cis_plot <- ggplot(sample_of_cis) +
   # Doesn't make sense to show point_estimate center for percentile confidence 
   # intervals:
   # geom_point(aes(x = point_estimate, y = sample_row)) +
@@ -821,6 +833,16 @@ ggplot(sample_of_cis) +
   scale_y_continuous(breaks = 1:10) +
   facet_wrap(~sample_size) + 
   geom_vline(xintercept = p_red, color = "red")
+
+if(knitr::is_latex_output()){
+  cis_plot  +
+  theme(
+    strip.text = element_text(colour = 'black'),
+    strip.background = element_rect(fill = "grey93")
+  )
+} else {
+  cis_plot
+}
 
 
 ## ----perc-cis-average-width-2, echo=FALSE--------------------------------
@@ -831,9 +853,10 @@ percentile_cis_by_n %>%
   rename(`Sample size` = sample_size) %>% 
   kable(
     digits = 3,
-    caption = "Average width of 95 percent confidence intervals based on n = 25, 50, and 100.", 
+    caption = "Average width of $95\\%$ confidence intervals based on $n = 25$, $50$, and $100$.", 
     booktabs = TRUE,
-    longtable = TRUE
+    longtable = TRUE,
+    escape = FALSE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position", "repeat_header"))
@@ -855,8 +878,9 @@ mythbusters_yawn %>%
 
 if(!file.exists("rds/sampling_scenarios.rds")){
   sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-    read_csv(na = "")
-  write_rds(table_ch3, "rds/sampling_scenarios.rds")
+    read_csv(na = "") %>% 
+    slice(1:5)
+  write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
 } else {
   sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
 }
@@ -951,19 +975,17 @@ myth_ci_percentile <- bootstrap_distribution_yawning %>%
 
 
 ## ------------------------------------------------------------------------
-mythbusters_yawn %>% 
+obs_diff_in_props <- mythbusters_yawn %>% 
   specify(formula = yawn ~ group, success = "yes") %>% 
   # generate(reps = 1000, type = "bootstrap") %>% 
   calculate(stat = "diff in props", order = c("seed", "control"))
+obs_diff_in_props
 
 
 ## ------------------------------------------------------------------------
-bootstrap_distribution_yawning %>% 
-  get_confidence_interval(type = "se", point_estimate = 0.0441176)
-
-## ----include=FALSE-------------------------------------------------------
 myth_ci_se <- bootstrap_distribution_yawning %>% 
-  get_confidence_interval(type = "se", point_estimate = 0.0441176)
+  get_confidence_interval(type = "se", point_estimate = obs_diff_in_props)
+myth_ci_se
 
 
 
@@ -971,6 +993,21 @@ myth_ci_se <- bootstrap_distribution_yawning %>%
 ## ----echo=FALSE----------------------------------------------------------
 set.seed(76)
 
+## ----sampling-distribution-part-deux, fig.show='hold', fig.cap="Previously seen sampling distribution of sample proportion red for $n = 1000$."----
+# Take 1000 virtual samples of size 50 from the bowl:
+virtual_samples <- bowl %>% 
+  rep_sample_n(size = 50, reps = 1000)
+
+# Compute the sampling distribution of 1000 values of p-hat
+sampling_distribution <- virtual_samples %>% 
+  group_by(replicate) %>% 
+  summarize(red = sum(color == "red")) %>% 
+  mutate(prop_red = red / 50)
+
+# Visualize sampling distribution of p-hat
+ggplot(sampling_distribution, aes(x = prop_red)) +
+  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
+  labs(x = "Proportion of 50 balls that were red", title = "Sampling distribution")
 
 
 ## ------------------------------------------------------------------------
@@ -1089,7 +1126,7 @@ conf_ints <- tactile_prop_red %>%
 conf_ints
 
 
-## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 95 percent confidence intervals based on 33 tactile samples of size n = 50.", fig.height=6----
+## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals at the 95 percent level based on 33 tactile samples of size n = 50.", fig.height=6----
 conf_ints <- conf_ints %>% 
   mutate(
     y = 1:n(),

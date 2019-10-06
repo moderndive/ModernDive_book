@@ -22,8 +22,14 @@ library(scales)
 library(viridis)
 
 
+## ----echo=FALSE----------------------------------------------------------
+set.seed(2102)
+
+
 ## ------------------------------------------------------------------------
-promotions
+promotions %>% 
+  sample_n(size = 6) %>% 
+  arrange(id)
 
 
 ## ----eval=FALSE----------------------------------------------------------
@@ -46,7 +52,8 @@ if(knitr::is_html_output()){
 ## ------------------------------------------------------------------------
 promotions %>% 
   group_by(gender, decision) %>% 
-  summarize(n = n())
+  tally()
+
 
 ## ---- echo=FALSE---------------------------------------------------------
 observed_test_statistic <- promotions %>% 
@@ -81,7 +88,8 @@ promotions_sample  %>%
 
 
 ## ------------------------------------------------------------------------
-promotions_shuffled
+promotions_shuffled %>% 
+  slice(c(11, 26, 28, 36, 37, 46))
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -121,7 +129,7 @@ if(knitr::is_html_output()){
 ## ------------------------------------------------------------------------
 promotions_shuffled %>% 
   group_by(gender, decision) %>% 
-  summarize(n = n())
+  tally() # Same as summarize(n = n())
 
 ## ---- echo=FALSE---------------------------------------------------------
 # male stats
@@ -207,8 +215,9 @@ shuffled_data_tidy <- shuffled_data_tidy %>%
 
 if(!file.exists("rds/sampling_scenarios.rds")){
   sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-    read_csv(na = "")
-  write_rds(table_ch3, "rds/sampling_scenarios.rds")
+    read_csv(na = "") %>% 
+    slice(1:5)
+  write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
 } else {
   sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
 }
@@ -243,12 +252,12 @@ p_val <- round((num + 1)/(denom + 1),3)
 
 
 ## ---- echo=FALSE---------------------------------------------------------
-alpha <- 0.001
+alpha <- 0.05
 
 
 ## ------------------------------------------------------------------------
 promotions %>% 
-  specify(formula = decision ~ gender, success = "promoted")
+  specify(formula = decision ~ gender, success = "promoted") 
 
 
 ## ------------------------------------------------------------------------
@@ -258,10 +267,11 @@ promotions %>%
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## promotions %>%
+## promotions_generate <- promotions %>%
 ##   specify(formula = decision ~ gender, success = "promoted") %>%
 ##   hypothesize(null = "independence") %>%
 ##   generate(reps = 1000, type = "permute")
+## nrow(promotions_generate)
 
 
 
@@ -286,7 +296,7 @@ obs_diff_prop
 
 
 
-## ----null-distribution-infer-2, fig.cap="Shaded histogram to show p-value."----
+## ----null-distribution-infer-2, fig.cap="Shaded histogram to show $p$-value."----
 visualize(null_distribution, bins = 10) + 
   shade_p_value(obs_stat = obs_diff_prop, direction = "right")
 
@@ -343,6 +353,10 @@ se_ci
 ## ----eval=FALSE----------------------------------------------------------
 ## visualize(bootstrap_distribution) +
 ##   shade_confidence_interval(endpoints = se_ci)
+
+
+
+
 
 
 
@@ -444,7 +458,8 @@ n_romance <- movies_genre_summaries %>%
 
 if(!file.exists("rds/sampling_scenarios.rds")){
   sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-    read_csv(na = "")
+    read_csv(na = "") %>% 
+    slice(1:5)
   write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
 } else {
   sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
@@ -481,7 +496,8 @@ movies_sample %>%
 ## movies_sample %>%
 ##   specify(formula = rating ~ genre) %>%
 ##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute")
+##   generate(reps = 1000, type = "permute") %>%
+##   View()
 
 
 ## ----echo=FALSE----------------------------------------------------------
@@ -494,7 +510,6 @@ if(!file.exists("rds/movies_sample_generate.rds")){
 } else {
   movies_sample_generate <- read_rds("rds/movies_sample_generate.rds")
 }
-movies_sample_generate
 
 
 ## ----eval=FALSE----------------------------------------------------------
@@ -520,7 +535,7 @@ obs_diff_means
 ##   shade_p_value(obs_stat = obs_diff_means, direction = "both")
 
 
-## ----null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and p-value."----
+## ----null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and $p$-value."----
 if(knitr::is_html_output()){
   visualize(null_distribution_movies, bins = 10) + 
     shade_p_value(obs_stat = obs_diff_means, direction = "both")
@@ -615,7 +630,7 @@ obs_two_sample_t <- movies_sample %>%
 obs_two_sample_t
 
 
-## ----t-stat-4, fig.align='center', out.width='100%', fig.cap="Null distribution using t-statistic and t-distribution with p-value shaded."----
+## ----t-stat-4, fig.align='center', out.width='100%', fig.cap="Null distribution using t-statistic and t-distribution with $p$-value shaded.", warning=TRUE----
 visualize(null_distribution_movies_t, method = "both") +
   shade_p_value(obs_stat = obs_two_sample_t, direction = "both")
 
@@ -640,10 +655,6 @@ ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
 flights_sample %>% 
   group_by(carrier, dest) %>% 
   summarize(n = n(), mean_time = mean(air_time, na.rm =TRUE))
-
-
-
-
 
 
 

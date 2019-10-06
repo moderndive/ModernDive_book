@@ -99,7 +99,7 @@ virtual_shovel_prop_red <- virtual_shovel %>%
   summarize(num_red = sum(is_red)) %>% 
   mutate(prop_red = num_red / 50) %>% 
   pull(prop_red) 
-virtual_shovel_prop_red <- virtual_shovel_prop_red * 100
+virtual_shovel_perc_red <- virtual_shovel_prop_red * 100
 
 
 ## ------------------------------------------------------------------------
@@ -137,7 +137,7 @@ virtual_histogram +
 
 
 ## ----tactile-vs-virtual, echo=FALSE, fig.cap="Comparing 33 virtual and 33 tactile proportions red."----
-bind_rows(
+facet_compare <- bind_rows(
   virtual_prop_red %>% 
     mutate(type = "Virtual sampling"), 
   tactile_prop_red %>% 
@@ -147,9 +147,20 @@ bind_rows(
   mutate(type = factor(type, levels = c("Virtual sampling", "Tactile sampling"))) %>% 
   ggplot(aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
-  facet_wrap(~type) +
+  facet_wrap(~ type) +
   labs(x = "Proportion of 50 balls that were red", 
-         title = "Comparing distributions")
+         title = "Comparing distributions") 
+
+if(knitr::is_latex_output()){
+  facet_compare +
+  theme(
+    strip.text = element_text(colour = 'black'),
+    strip.background = element_rect(fill = "grey93")
+  )
+} else {
+  facet_compare
+}
+
 
 
 
@@ -289,13 +300,26 @@ virtual_prop_red_100 <- virtual_samples_100 %>%
   mutate(prop_red = red / 100) %>% 
   mutate(n = 100)
 
-virtual_prop <- bind_rows(virtual_prop_red_25, virtual_prop_red_50, virtual_prop_red_100)
+virtual_prop <- bind_rows(virtual_prop_red_25, 
+                          virtual_prop_red_50, 
+                          virtual_prop_red_100)
 
 comparing_sampling_distributions <- ggplot(virtual_prop, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
-  labs(x = "Proportion of shovel's balls that are red", title = "Comparing distributions of proportions red for 3 different shovels.") +
-  facet_wrap(~n)
-comparing_sampling_distributions
+  labs(x = "Proportion of shovel's balls that are red", 
+       title = "Comparing distributions of proportions red for three different shovel sizes.") +
+  facet_wrap(~ n) 
+
+if(knitr::is_latex_output()){
+  comparing_sampling_distributions +
+  theme(
+    strip.text = element_text(colour = 'black'),
+    strip.background = element_rect(fill = "grey93")
+  )
+} else {
+  comparing_sampling_distributions
+}
+
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -321,7 +345,7 @@ comparing_n_table <- virtual_prop %>%
 comparing_n_table  %>% 
   kable(
     digits = 3,
-      caption = "Comparing standard deviations of proportions red for 3 different shovels.", 
+      caption = "Comparing standard deviations of proportions red for three different shovels.", 
       booktabs = TRUE
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -349,7 +373,7 @@ comparing_n_table <- virtual_prop %>%
 comparing_n_table  %>% 
   kable(
     digits = 3,
-      caption = "Previously seen comparing standard deviations of proportions red for 3 different shovels.", 
+      caption = "Previously seen comparing standard deviations of proportions red for three different shovels.", 
       booktabs = TRUE
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -357,7 +381,7 @@ comparing_n_table  %>%
 
 
 ## ----comparing-sampling-distributions-2, echo=FALSE, fig.cap="Three sampling distributions of the sample proportion $\\widehat{p}$."----
-virtual_prop %>% 
+p_hat_compare <- virtual_prop %>% 
   mutate(
     n = str_c("n = ", n),
     n = factor(n, levels = c("n = 25", "n = 50", "n = 100"))
@@ -366,7 +390,18 @@ virtual_prop %>%
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
   labs(x = expression(paste("Sample proportion ", hat(p))), 
        title = expression(paste("Sampling distributions of the sample proportion ", hat(p), " based on n = 25, 50, 100.")) ) +
-  facet_wrap(~n)
+  facet_wrap(~ n)
+
+if(knitr::is_latex_output()){
+  p_hat_compare  +
+  theme(
+    strip.text = element_text(colour = 'black'),
+    strip.background = element_rect(fill = "grey93")
+  )
+} else {
+  p_hat_compare
+}
+
 
 
 ## ----comparing-n-2, eval=TRUE, echo=FALSE--------------------------------
@@ -382,9 +417,9 @@ comparing_n_table <- virtual_prop %>%
 comparing_n_table  %>% 
   kable(
     digits = 3,
-    caption = "Three standard errors of the sample proportion based on n = 25, 50, 100.", 
-    booktabs = TRUE#,
-#    escape = TRUE
+    caption = "Three standard errors of the sample proportion based on sample sizes of 25, 50, and 100.", 
+    booktabs = TRUE,
+    escape = FALSE
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -402,19 +437,31 @@ bowl %>%
 
 ## ----comparing-sampling-distributions-3, echo=FALSE, fig.cap="Three sampling distributions with population proportion $p$ marked in red."----
 p <- bowl %>% 
-  summarize(p = mean(color == "red")) %>% 
-  pull(p)
-virtual_prop %>% 
+  summarize(mean(color == "red")) %>% 
+  pull()
+samp_distn_compare <- virtual_prop %>% 
   mutate(
     n = str_c("n = ", n),
     n = factor(n, levels = c("n = 25", "n = 50", "n = 100"))
     ) %>% 
-  ggplot( aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
+  ggplot(aes(x = prop_red)) +
+  geom_histogram(binwidth = 0.05, boundary = 0.4, 
+                 color = "black", fill = "white") +
   labs(x = expression(paste("Sample proportion ", hat(p))), 
-       title = expression(paste("Sampling distributions of ", hat(p), " based on n = 25, 50, 100.")) ) +
-  facet_wrap(~n) +
+       title = expression(paste("Sampling distributions of ", hat(p), 
+                                " based on n = 25, 50, 100.")) ) +
+  facet_wrap(~ n) +
   geom_vline(xintercept = p, col = "red", size = 1)
+
+if(knitr::is_latex_output()){
+  samp_distn_compare  +
+  theme(
+    strip.text = element_text(colour = 'black'),
+    strip.background = element_rect(fill = "grey93")
+  )
+} else {
+  samp_distn_compare
+}
 
 
 
@@ -428,16 +475,17 @@ comparing_n_table <- virtual_prop %>%
   summarize(sd = sd(prop_red)) %>% 
   mutate(
     n = str_c("n = ")
-    ) %>% 
-  rename(`Sample size` = n, `Standard error of p-hat` = sd) %>% 
- sample_frac(1)
-  
+  ) %>% 
+  rename(`Sample size` = n, `Standard error of $\\widehat{p}$` = sd) %>% 
+  sample_frac(1)
+
 comparing_n_table  %>% 
   kable(
     digits = 3,
-      caption = "Three standard errors of the sample proportion based on n = 25, 50, 100. ", 
-      booktabs = TRUE
-) %>% 
+    caption = "Three standard errors of the sample proportion based on n = 25, 50, 100. ", 
+    booktabs = TRUE,
+    escape = FALSE
+  ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
 
@@ -454,7 +502,8 @@ comparing_n_table  %>%
 
 if(!file.exists("rds/sampling_scenarios.rds")){
   sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-    read_csv(na = "")
+    read_csv(na = "") %>% 
+    slice(1:5)
     write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
 } else {
   sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")

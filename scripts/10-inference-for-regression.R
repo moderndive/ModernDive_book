@@ -33,19 +33,19 @@ library(patchwork)
 
 
 ## ------------------------------------------------------------------------
-evals_ch6 <- evals %>%
+evals_ch5 <- evals %>%
   select(ID, score, bty_avg, age)
-glimpse(evals_ch6)
+glimpse(evals_ch5)
 
 ## ---- echo=FALSE---------------------------------------------------------
-cor_ch6 <- evals_ch6 %>%
+cor_ch6 <- evals_ch5 %>%
   summarize(correlation = cor(score, bty_avg)) %>%
   pull(correlation) %>%
   round(3)
 
 
 ## ----regline, fig.cap="Relationship with regression line."---------------
-ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
+ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score",
        title = "Relationship between teaching and beauty scores") +  
@@ -54,13 +54,13 @@ ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Fit regression model:
-## score_model <- lm(score ~ bty_avg, data = evals_ch6)
+## score_model <- lm(score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
 ## get_regression_table(score_model)
 
 ## ----regtable-11, echo=FALSE---------------------------------------------
 # Fit regression model:
-score_model <- lm(score ~ bty_avg, data = evals_ch6)
+score_model <- lm(score ~ bty_avg, data = evals_ch5)
 get_regression_table(score_model) %>%
   knitr::kable(
     digits = 3,
@@ -94,14 +94,15 @@ upper0 <- intercept_row %>% pull(upper_ci)
 
 if(!file.exists("rds/sampling_scenarios.rds")){
   sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-    read_csv(na = "")
-  write_rds(table_ch3, "rds/sampling_scenarios.rds")
+    read_csv(na = "") %>% 
+    slice(1:5)
+  write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
 } else {
   sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
 }
 
 sampling_scenarios %>%  
-  filter(Scenario %in% 1:6) %>% 
+#  filter(Scenario %in% 1:5) %>% 
   kable(
     caption = "Scenarios of sampling for inference", 
     booktabs = TRUE,
@@ -129,7 +130,7 @@ get_regression_table(score_model) %>%
 
 ## ----residual-example, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
 # Pick out one particular point to drill down on
-index <- which(evals_ch6$bty_avg == 7.333 & evals_ch6$score == 4.9)
+index <- which(evals_ch5$bty_avg == 7.333 & evals_ch5$score == 4.9)
 target_point <- score_model %>%
   get_regression_points() %>%
   slice(index)
@@ -139,7 +140,7 @@ y_hat <- target_point$score_hat
 resid <- target_point$residual
 
 # Plot residual
-best_fit_plot <- ggplot(evals_ch6, aes(x = bty_avg, y = score)) +
+best_fit_plot <- ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score",
        title = "Relationship of teaching and beauty scores") +
@@ -153,7 +154,7 @@ best_fit_plot
 
 ## ---- eval=TRUE, echo=TRUE-----------------------------------------------
 # Fit regression model:
-score_model <- lm(score ~ bty_avg, data = evals_ch6)
+score_model <- lm(score ~ bty_avg, data = evals_ch5)
 # Get regression points:
 regression_points <- get_regression_points(score_model)
 regression_points
@@ -161,7 +162,7 @@ regression_points
 
 ## ----non-linear, fig.cap="Example of clearly non-linear relationship.", echo=FALSE----
 set.seed(76)
-evals_ch6 %>% 
+evals_ch5 %>% 
   mutate(
     x = bty_avg,
     y = (x-3)*(x-6) + rnorm(n(), 0, 0.75)
@@ -191,7 +192,7 @@ ggplot(regression_points, aes(x = residual)) +
 
 ## ----normal-residuals, echo=FALSE, warning=FALSE, fig.cap="Example of clearly normal and clearly non-normal residuals."----
 sigma <- sd(regression_points$residual)
-evals_ch6 %>% 
+normal_and_not_examples <- evals_ch5 %>% 
   mutate(
     `Clearly normal` = rnorm(n = n(), 0, sd = sigma),
     `Clearly not normal` = rnorm(n = n(), mean = 0, sd = sigma)^2,
@@ -202,7 +203,16 @@ evals_ch6 %>%
   ggplot(aes(x = eps)) +
   geom_histogram(binwidth = 0.25, color = "white") +
   labs(x = "Residual") +
-  facet_wrap( ~ type, scales = "free")
+  facet_wrap(~ type, scales = "free")
+
+if(knitr::is_latex_output()){
+  normal_and_not_examples +
+    theme(strip.text = element_text(colour = 'black'),
+          strip.background = element_rect(fill = "grey93"))
+} else {
+  normal_and_not_examples
+}
+  
 
 
 ## ---- eval=FALSE, echo=TRUE----------------------------------------------
@@ -219,7 +229,7 @@ ggplot(regression_points, aes(x = bty_avg, y = residual)) +
 
 
 ## ----equal-variance-residuals, echo=FALSE, warning=FALSE, fig.cap="Example of clearly non-equal variance."----
-evals_ch6 %>% 
+evals_ch5 %>% 
   mutate(eps = (rnorm(n(), 0, 0.075 * bty_avg ^ 2)) * 0.4) %>% 
   ggplot(aes(x = bty_avg, y = eps)) +
   geom_point() +
@@ -232,7 +242,7 @@ evals_ch6 %>%
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## bootstrap_distn_slope <- evals_ch6 %>%
+## bootstrap_distn_slope <- evals_ch5 %>%
 ##   specify(formula = score ~ bty_avg) %>%
 ##   generate(reps = 1000, type = "bootstrap") %>%
 ##   calculate(stat = "slope")
@@ -311,9 +321,8 @@ if(!file.exists("rds/null_distn_slope.rds")){
 }
 
 
-## ----eval=FALSE----------------------------------------------------------
-## visualize(null_distn_slope)
-
+## ----null-distribution-slope, echo=FALSE, fig.show='hold', fig.cap="Null distribution of slopes."----
+visualize(null_distn_slope)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -337,8 +346,9 @@ null_distn_slope %>%
 
 if(!file.exists("rds/sampling_scenarios.rds")){
   sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>% 
-    read_csv(na = "")
-  write_rds(table_ch3, "rds/sampling_scenarios.rds")
+    read_csv(na = "") %>% 
+    slice(1:5)
+  write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
 } else {
   sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
 }

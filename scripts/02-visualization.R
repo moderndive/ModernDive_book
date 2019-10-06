@@ -205,16 +205,48 @@ hist_1 + hist_2
 
 
 
-## ----facethistogram, fig.cap="Faceted histogram of hourly temperatures by month."----
-ggplot(data = weather, mapping = aes(x = temp)) +
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(data = weather, mapping = aes(x = temp)) +
+##   geom_histogram(binwidth = 5, color = "white") +
+##   facet_wrap(~ month)
+
+
+## ----facethistogram, fig.cap="Faceted histogram of hourly temperatures by month.", echo=FALSE----
+month_facet <- ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(binwidth = 5, color = "white") +
   facet_wrap(~ month)
 
+if(knitr::is_latex_output()){
+  month_facet + 
+  theme(
+    strip.text = element_text(colour = 'black'),
+    strip.background = element_rect(fill = "grey93")
+  )
+} else {
+  month_facet
+}
 
-## ----facethistogram2, fig.cap="Faceted histogram with 4 instead of 3 rows."----
-ggplot(data = weather, mapping = aes(x = temp)) +
+
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(data = weather, mapping = aes(x = temp)) +
+##   geom_histogram(binwidth = 5, color = "white") +
+##   facet_wrap(~ month, nrow = 4)
+
+
+## ----facethistogram2, fig.cap="Faceted histogram with 4 instead of 3 rows.", echo=FALSE----
+month_facet_4 <- ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(binwidth = 5, color = "white") +
   facet_wrap(~ month, nrow = 4)
+
+if(knitr::is_latex_output()){
+  month_facet_4 + 
+  theme(
+    strip.text = element_text(colour = 'black'),
+    strip.background = element_rect(fill = "grey93")
+  )
+} else {
+  month_facet_4
+}
 
 
 
@@ -440,10 +472,26 @@ if(knitr::is_html_output()){
 }
 
 
-## ----facet-bar-vert, fig.cap="Faceted barplot comparing the number of flights by carrier and origin.", fig.height=7.5----
-ggplot(data = flights, mapping = aes(x = carrier)) +
+## ----eval=FALSE----------------------------------------------------------
+## ggplot(data = flights, mapping = aes(x = carrier)) +
+##   geom_bar() +
+##   facet_wrap(~ origin, ncol = 1)
+
+
+## ----facet-bar-vert, fig.cap="Faceted barplot comparing the number of flights by carrier and origin.", fig.height=7.5, echo=FALSE----
+month_facet_ncol <- ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar() +
   facet_wrap(~ origin, ncol = 1)
+
+if(knitr::is_latex_output()){
+  month_facet_ncol + 
+  theme(
+    strip.text = element_text(colour = 'black'),
+    strip.background = element_rect(fill = "grey93")
+  )
+} else {
+  month_facet_ncol
+}
 
 
 
