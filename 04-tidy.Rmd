@@ -236,7 +236,10 @@ stocks_tidy <- stocks %>%
     Amazon = `Amazon stock price`,
     Google = `Google stock price`
   ) %>% 
-  gather(`Stock name`, `Stock price`, -Date)
+#  gather(`Stock name`, `Stock price`, -Date)
+  pivot_longer(cols = -Date, 
+               names_to = "Stock Name", 
+               values_to = "Stock Price")
 stocks_tidy %>% 
   kable(
     digits = 2,
@@ -286,7 +289,7 @@ In this case, even though the variable "Boeing Price" occurs just like in our no
 
 ### Converting to "tidy" data
 
-In this book so far, you've only seen data frames that were already in "tidy" format. Furthermore, for the rest of this book, you'll mostly only see data frames that are already in "tidy" format as well. This is not always the case however with all datasets in the world. If your original data frame is in wide i.e. non-"tidy" format and you would like to use the `ggplot2` or `dplyr` packages, you will first have to convert it to "tidy" format using the \index{tidyr!gather()} `gather()` function in the `tidyr` \index{R packages!tidyr} package [@R-tidyr]. 
+In this book so far, you've only seen data frames that were already in "tidy" format. Furthermore, for the rest of this book, you'll mostly only see data frames that are already in "tidy" format as well. This is not always the case however with all datasets in the world. If your original data frame is in wide (non-"tidy") format and you would like to use the `ggplot2` or `dplyr` packages, you will first have to convert it to "tidy" format. To do so, we recommend using the \index{tidyr!pivot\_wider()} `pivot_wider()` function in the `tidyr` \index{R packages!tidyr} package [@R-tidyr]. 
 
 Going back to our `drinks_smaller` data frame from earlier:
 
@@ -294,29 +297,39 @@ Going back to our `drinks_smaller` data frame from earlier:
 drinks_smaller
 ```
 
-We convert it to "tidy" format by using the `gather()` function from the `tidyr` package as follows:
+We convert it to "tidy" format by using the `pivot_longer()` function from the `tidyr` package as follows:
 
 ```{r}
 drinks_smaller_tidy <- drinks_smaller %>% 
-  gather(key = type, value = servings, -country)
+  pivot_longer(names_to = "type", 
+               values_to = "servings", 
+               cols = -country)
 drinks_smaller_tidy
 ```
 
-We set the arguments to `gather()` as follows:
+We set the arguments to `pivot_wider()` as follows:
 
-1. `key` is the name of the variable in the new "tidy" data frame that will contain the *column names* of the original data. Observe how we set `key = type`. In the resulting `drinks_smaller_tidy`, the column `type` contains the three types of alcohol `beer`, `spirit`, and `wine`.
-1. `value` is the name of the variable in the new "tidy" data frame that will contain the *rows and columns of values* of the original data. Observe how we set `value = servings`. In the resulting `drinks_smaller_tidy`, the column `value` contains the 4 $\times$ 3 = 12 numerical values.
-1. The third argument is the columns you either want to or don't want to tidy. Observe how we set this to `-country` indicating that we don't want to tidy the `country` variable in `drinks_smaller` and rather only `beer`, `spirit`, and `wine`.
+1. `names_to` here corresponds to the name of the variable in the new tidy/long data frame that will contain the *column names* of the original data. Observe how we set `names_to = "type"`. In the resulting `drinks_smaller_tidy`, the column `type` contains the three types of alcohol `beer`, `spirit`, and `wine`. Since `type` is a variable name that doesn't appear in `drinks_smaller`, we use quotation marks around it. You'll receive an error if you just use `names_to = type` here.
+1. `values_to` here is the name of the variable in the new tidy data frame that will contain the *values* of the original data. Observe how we set `values_to = "servings"` since each of the numeric values in each of the `beer`, `wine`, and `spirit` columns of the `drinks_smaller` data corresponds to a value of `servings`. In the resulting `drinks_smaller_tidy`, the column `servings` contains the 4 $\times$ 3 = 12 numerical values. Note again that `servings` doesn't appear as a variable in `drinks_smaller` so it again needs quotation marks around it for the `values_to` argument.
+1. The third argument `cols` is the columns in the `drinks_smaller` data frame you either want to or don't want to tidy. Observe how we set this to `-country` indicating that we don't want to tidy the `country` variable in `drinks_smaller` and rather only `beer`, `spirit`, and `wine`. Since `country` is a column that appears in `drinks_smaller` we don't put quotation marks around it.
 
-The third argument is a little nuanced, so let's consider code that's written slightly differently but that produces the same output: 
+The third argument here of `cols` is a little nuanced, so let's consider code that's written slightly differently but that produces the same output: 
 
 ```{r, eval=FALSE}
-drinks_smaller_tidy <- drinks_smaller %>% 
-  gather(key = type, value = servings, c(beer, spirit, wine))
-drinks_smaller_tidy
+drinks_smaller %>% 
+  pivot_longer(names_to = "type", 
+               values_to = "servings", 
+               cols = c(beer, spirit, wine))
 ```
 
-Note that the third argument now specifies which columns we want to tidy `c(beer, spirit, wine)`, instead of the columns we don't want to tidy using `-country`. We use the `c()` function to create a vector of the columns in `drinks_smaller` that we'd like to tidy. 
+Note that the third argument now specifies which columns we want to tidy with `c(beer, spirit, wine)`, instead of the columns we don't want to tidy using `-country`. We use the `c()` function to create a vector of the columns in `drinks_smaller` that we'd like to tidy. Note that since these three columns appear one after another in the `drinks_smaller` data frame, we could also do the following for the `cols` argument:
+
+```{r, eval=FALSE}
+drinks_smaller %>% 
+  pivot_longer(names_to = "type", 
+               values_to = "servings", 
+               cols = beer:wine)
+```
 
 With our `drinks_smaller_tidy` "tidy" formatted data frame, we can now produce the barplot you saw in Figure  \@ref(fig:drinks-smaller) using `geom_col()`. Recall from Section \@ref(geombar) on barplots that we use `geom_col()` and not `geom_bar()`, since we would like to map the "pre-counted" `servings` variable to the `y`-aesthetic of the bars.
 
@@ -335,7 +348,7 @@ if(knitr::is_html_output()){
 }
 ```
 
-Converting "wide" format data to "tidy" format often confuses new R users. The only way to learn to get comfortable with the `gather()` function is with practice, practice, and more practice. For example, run `?gather` and look at the examples in the bottom of the help file. We'll show another example of using `gather()` to convert a "wide" formatted data frame to "tidy" format in Section \@ref(case-study-tidy). For other examples of converting a dataset into "tidy" format, check out the different functions available for data tidying and a case study using data from the World Health Organization in [R for Data Science](http://r4ds.had.co.nz/tidy-data.html) [@rds2016].
+Converting "wide" format data to "tidy" format often confuses new R users. The only way to learn to get comfortable with the `pivot_longer()` function is with practice, practice, and more practice using different data sets. For example, run `?pivot_longer` and look at the examples in the bottom of the help file. You can also view these examples on the [tidyverse.org](https://tidyr.tidyverse.org/dev/articles/pivot.html#pew) webpage. There's a nice example to check out the different functions available for data tidying and a case study using data from the World Health Organization on that webpage. Each week the R4DS Online Learning Community posts a data set in the weekly [`#`TidyTuesday event](https://github.com/rfordatascience/tidytuesday) that might serve as a nice place for you to find other data to explore and transform. We'll show another example of using `pivot_longer()` to convert a "wide" formatted data frame to "tidy" format in Section \@ref(case-study-tidy).
 
 
 ```{block, type='learncheck'}
@@ -393,7 +406,7 @@ The organization of the information into these five data frames follow the third
 
 ## Case study: Democracy in Guatemala {#case-study-tidy}
 
-In this section, we'll show you another example of how to convert a data frame that isn't in "tidy" format ("wide" format) to a data frame that is in "tidy" format ("long/narrow" format). We'll do this using the `gather()` function from the `tidyr` package again. 
+In this section, we'll show you another example of how to convert a data frame that isn't in "tidy" format ("wide" format) to a data frame that is in "tidy" format ("long/narrow" format). We'll do this using the `pivot_longer()` function from the `tidyr` package again. 
 
 Furthermore, we'll make use of functions from the `ggplot2` and `dplyr` packages to produce a *time-series plot* showing how the democracy scores have changed over the 40 years from 1952 to 1992 for Guatemala. Recall that we saw time-series plots in Section \@ref(linegraphs) on creating linegraphs using `geom_line()`. 
 
@@ -414,26 +427,23 @@ First we know we need to set `data = guat_dem` and use a `geom_line()` layer, bu
 
 Now we are stuck in a predicament, much like with our `drinks_smaller` example in Section \@ref(tidy-data-ex). We see that we have a variable named `country`, but its only value is `"Guatemala"`.  We have other variables denoted by different year values.  Unfortunately, the `guat_dem` data frame is not "tidy" and hence is not in the appropriate format to apply the Grammar of Graphics and thus we cannot use the `ggplot2` package just yet.  
 
-We need to take the values of the columns corresponding to years in `guat_dem` and convert them into a new "key" variable called `year`. Furthermore, we need to take the democracy score values in the inside of the data frame and turn them into a new "value" variable called `democracy_score`.  Our resulting data frame will thus have three columns:  `country`, `year`, and `democracy_score`. Recall that the `gather()` function in the `tidyr` package can complete this task for us:
+We need to take the values of the columns corresponding to years in `guat_dem` and convert them into a new "key" variable called `year`. Furthermore, we need to take the democracy score values in the inside of the data frame and turn them into a new "value" variable called `democracy_score`.  Our resulting data frame will thus have three columns:  `country`, `year`, and `democracy_score`. Recall that the `pivot_longer()` function in the `tidyr` package can complete this task for us:
 
 ```{r}
 guat_dem_tidy <- guat_dem %>% 
-  gather(key = year, value = democracy_score, -country) 
+  pivot_longer(names_to = "year", 
+               values_to = "democracy_score", 
+               cols = -country,
+               names_ptypes = list(year = integer())) 
 guat_dem_tidy
 ```
 
-We set the arguments to `gather()` as follows:
+We set the arguments to `pivot_longer()` as follows:
 
-1. `key` is the name of the variable in the new "tidy" data frame that will contain the *column names* of the original data. Observe how we set `key = year`.  In the resulting `guat_dem_tidy`, the column `year` contains the years where Guatemala's democracy scores were measured.
-1. `value` is the name of the variable in the new "tidy" data frame that will contain the *rows and columns of values* of the original data. Observe how we set `value = democracy_score`. In the resulting `guat_dem_tidy` the column `democracy_score` contains the 1 $\times$ 9 = 9 democracy scores.
-1. The third argument is the columns you either want to or don't want to tidy. Observe how we set this to `-country` indicating that we don't want to tidy the `country` variable in `guat_dem` and rather only variables `1952` through `1992`. 
-
-However, observe in the output for `guat_dem_tidy` that the `year` variable is of type `chr` or character. Before we can plot this variable on the x-axis, we need to convert it into a numerical variable using the `as.numeric()` function within the `mutate()` function, which we saw in Section \@ref(mutate) on mutating existing variables to create new ones.
-
-```{r}
-guat_dem_tidy <- guat_dem_tidy %>% 
-  mutate(year = as.numeric(year))
-```
+1. `names_to` is the name of the variable in the new "tidy" data frame that will contain the *column names* of the original data. Observe how we set `names_to = "year"`.  In the resulting `guat_dem_tidy`, the column `year` contains the years where Guatemala's democracy scores were measured.
+1. `values_to` is the name of the variable in the new "tidy" data frame that will contain the *values* of the original data. Observe how we set `values_to = "democracy_score"`. In the resulting `guat_dem_tidy` the column `democracy_score` contains the 1 $\times$ 9 = 9 democracy scores as numeric values.
+1. The third argument is the columns you either want to or don't want to tidy. Observe how we set this to `cols = -country` indicating that we don't want to tidy the `country` variable in `guat_dem` and rather only variables `1952` through `1992`. 
+1. The last argument of `names_ptypes` tells R what type of variable `year` should be set to. Without specifying that it is an `integer` as we've done here, `pivot_longer()` will set it to be a character value by default.
 
 We can now create the time-series plot to visualize how democracy scores in Guatemala have changed from 1952 to 1992 using a \index{ggplot2!geom\_line()} `geom_line()`.
 
@@ -442,6 +452,8 @@ ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
   geom_line() +
   labs(x = "Year", y = "Democracy Score")
 ```
+
+Note that if we forgot to include the `names_ptypes` argument specifying that `year` was not of character format, we would have gotten an error here since `geom_line()` wouldn't have known how to sort the characters in the right order.
 
 
 ```{block lc-tidying, type='learncheck', purl=FALSE}
