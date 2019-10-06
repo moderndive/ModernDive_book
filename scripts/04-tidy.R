@@ -100,7 +100,10 @@ stocks_tidy <- stocks %>%
     Amazon = `Amazon stock price`,
     Google = `Google stock price`
   ) %>% 
-  gather(`Stock name`, `Stock price`, -Date)
+#  gather(`Stock name`, `Stock price`, -Date)
+  pivot_longer(cols = -Date, 
+               names_to = "Stock Name", 
+               values_to = "Stock Price")
 stocks_tidy %>% 
   kable(
     digits = 2,
@@ -143,14 +146,24 @@ drinks_smaller
 
 ## ------------------------------------------------------------------------
 drinks_smaller_tidy <- drinks_smaller %>% 
-  gather(key = type, value = servings, -country)
+  pivot_longer(names_to = "type", 
+               values_to = "servings", 
+               cols = -country)
 drinks_smaller_tidy
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## drinks_smaller_tidy <- drinks_smaller %>%
-##   gather(key = type, value = servings, c(beer, spirit, wine))
-## drinks_smaller_tidy
+## drinks_smaller %>%
+##   pivot_longer(names_to = "type",
+##                values_to = "servings",
+##                cols = c(beer, spirit, wine))
+
+
+## ---- eval=FALSE---------------------------------------------------------
+## drinks_smaller %>%
+##   pivot_longer(names_to = "type",
+##                values_to = "servings",
+##                cols = beer:wine)
 
 
 ## ----eval=FALSE----------------------------------------------------------
@@ -194,13 +207,11 @@ guat_dem
 
 ## ------------------------------------------------------------------------
 guat_dem_tidy <- guat_dem %>% 
-  gather(key = year, value = democracy_score, -country) 
+  pivot_longer(names_to = "year", 
+               values_to = "democracy_score", 
+               cols = -country,
+               names_ptypes = list(year = integer())) 
 guat_dem_tidy
-
-
-## ------------------------------------------------------------------------
-guat_dem_tidy <- guat_dem_tidy %>% 
-  mutate(year = as.numeric(year))
 
 
 ## ----guat-dem-tidy, fig.cap="Democracy scores in Guatemala 1952-1992.", fig.height=3.5----
