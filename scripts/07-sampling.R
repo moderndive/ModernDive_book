@@ -389,7 +389,7 @@ p_hat_compare <- virtual_prop %>%
   ggplot( aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
   labs(x = expression(paste("Sample proportion ", hat(p))), 
-       title = expression(paste("Sampling distributions of the sample proportion ", hat(p), " based on n = 25, 50, 100.")) ) +
+       title = expression(paste("Sampling distributions of ", hat(p), " based on n = 25, 50, 100.")) ) +
   facet_wrap(~ n)
 
 if(knitr::is_latex_output()){
@@ -435,7 +435,7 @@ bowl %>%
             sum_not_red = sum(color != "red"))
 
 
-## ----comparing-sampling-distributions-3, echo=FALSE, fig.cap="Three sampling distributions with population proportion $p$ marked in red."----
+## ----comparing-sampling-distributions-3, echo=FALSE, fig.cap="Three sampling distributions with population proportion $p$ marked by vertical line."----
 p <- bowl %>% 
   summarize(mean(color == "red")) %>% 
   pull()
@@ -482,7 +482,7 @@ comparing_n_table <- virtual_prop %>%
 comparing_n_table  %>% 
   kable(
     digits = 3,
-    caption = "Three standard errors of the sample proportion based on n = 25, 50, 100. ", 
+    caption = "Three standard errors of the sample proportion based on n = 25, 50, 100", 
     booktabs = TRUE,
     escape = FALSE
   ) %>% 

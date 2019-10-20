@@ -130,7 +130,7 @@ house_prices %>%
 ##   geom_histogram(color = "white") +
 ##   labs(x = "log10 price (USD)", title = "House price: After")
 
-## ----log10-price-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House price before and after log10-transformation.", fig.width=16/2, fig.height=9/2----
+## ----log10-price-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House price before and after log10 transformation.", fig.width=16/2, fig.height=9/2----
 p1 <- ggplot(house_prices, aes(x = price)) +
   geom_histogram(color = "white") +
   labs(x = "price (USD)", title = "House price: Before")

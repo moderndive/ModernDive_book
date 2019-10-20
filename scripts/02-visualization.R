@@ -30,34 +30,29 @@ gapminder_2007 <- gapminder %>%
 
 ## ----gapminder-2007, echo=FALSE------------------------------------------
 gapminder_2007 %>% 
-  head() %>% 
+  head(3) %>% 
   kable(
-    digits=2,
-    caption = "Gapminder 2007 Data: First 6 of 142 countries"#, 
+    digits = 2,
+    caption = "Gapminder 2007 Data: First 3 of 142 countries"#, 
 #    booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
 
 
-## ----gapminder, echo=FALSE, fig.cap="Life expectancy over GDP per capita in 2007."----
+## ----gapminder, echo=FALSE, fig.cap="Life expectancy over GDP per capita in 2007.", fig.height=2.95----
+gapminder_plot <- ggplot(data = gapminder_2007, 
+                         mapping = aes(x = `GDP per Capita`, 
+                                       y = `Life Expectancy`, 
+                                       size = Population, 
+                                       color = Continent)) +
+  geom_point() +
+  labs(x = "GDP per capita", y = "Life expectancy")
+
 if(knitr::is_html_output()){
-  ggplot(data = gapminder_2007, 
-         mapping = aes(x = `GDP per Capita`, 
-                       y = `Life Expectancy`, 
-                       size = Population, 
-                       color = Continent)) +
-    geom_point() +
-    labs(x = "GDP per capita", y = "Life expectancy")
+  gapminder_plot
 } else {
-    ggplot(data = gapminder_2007, 
-         mapping = aes(x = `GDP per Capita`, 
-                       y = `Life Expectancy`, 
-                       size = Population, 
-                       color = Continent)) +
-    geom_point() +
-    labs(x = "GDP per capita", y = "Life expectancy") +
-    scale_color_grey()
+  gapminder_plot + scale_color_grey()
 }
 
 
@@ -91,12 +86,12 @@ alaska_flights <- flights %>%
 ##   geom_point()
 
 
-## ----noalpha, fig.cap="Arrival delays vs departure delays for Alaska Airlines flights from NYC in 2013.", warning=TRUE, echo=FALSE----
+## ----noalpha, fig.cap="Arrival delays versus departure delays for Alaska Airlines flights from NYC in 2013.", fig.height=2.5, warning=TRUE, echo=FALSE----
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point()
 
 
-## ----nolayers, fig.cap="A plot with no layers."--------------------------
+## ----nolayers, fig.cap="A plot with no layers.", fig.height=2.5----------
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 
@@ -104,7 +99,7 @@ ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 
 
-## ----alpha, fig.cap="Arrival vs departure delays scatterplot with alpha = 0.2."----
+## ----alpha, fig.cap="Arrival vs. departure delays scatterplot with alpha = 0.2."----
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point(alpha = 0.2)
 
@@ -125,7 +120,7 @@ jittered_plot_2 <- ggplot(data = jitter_example, mapping = aes(x = x, y = y)) +
 jittered_plot_1 + jittered_plot_2
 
 
-## ----jitter, fig.cap="Arrival vs departure delays jittered scatterplot."----
+## ----jitter, fig.cap="Arrival versus departure delays jittered scatterplot."----
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_jitter(width = 30, height = 30)
 
@@ -161,12 +156,12 @@ ggplot(data = weather, mapping = aes(x = temp, y = factor("A"))) +
 hist_title <- "Histogram of Hourly Temperature Recordings from NYC in 2013"
 
 
-## ----histogramexample, warning=FALSE, echo=FALSE, fig.cap="Example histogram."----
+## ----histogramexample, warning=FALSE, echo=FALSE, fig.cap="Example histogram.", fig.height=2----
 ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(binwidth = 10, boundary = 70, color = "white")
 
 
-## ----weather-histogram, warning=TRUE, fig.cap="Histogram of hourly temperatures at three NYC airports."----
+## ----weather-histogram, warning=TRUE, fig.cap="Histogram of hourly temperatures at three NYC airports.", fig.height=2.3----
 ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram()
 
@@ -277,7 +272,7 @@ five_number_summary <- tibble(
 )
 
 
-## ----nov1, echo=FALSE, fig.cap="November temperatures represented as jittered points."----
+## ----nov1, echo=FALSE, fig.cap="November temperatures represented as jittered points.", fig.height=2.2----
 base_plot <- weather %>% 
   filter(month %in% c(11)) %>% 
   ggplot(mapping = aes(x = factor(month), y = temp)) +
@@ -286,7 +281,7 @@ base_plot +
   geom_jitter(width = 0.075, height = 0.5, alpha = 0.1)
 
 
-## ----nov2, echo=FALSE, fig.cap="Building up a boxplot of November temperatures."----
+## ----nov2, echo=FALSE, fig.cap="Building up a boxplot of November temperatures.", fig.height=3.8----
 boxplot_1 <- base_plot +
   geom_hline(data = five_number_summary, aes(yintercept=temp), linetype = "dashed") +
   geom_jitter(width = 0.075, height = 0.5, alpha = 0.1)
@@ -299,12 +294,12 @@ boxplot_3 <- base_plot +
 boxplot_1 + boxplot_2 + boxplot_3
 
 
-## ----badbox, fig.cap="Invalid boxplot specification.", fig.height=3.5----
+## ----badbox, fig.cap="Invalid boxplot specification.", fig.height=3------
 ggplot(data = weather, mapping = aes(x = month, y = temp)) +
   geom_boxplot()
 
 
-## ----monthtempbox, fig.cap="Side-by-side boxplot of temperature split by month.", fig.height=3.7----
+## ----monthtempbox, fig.cap="Side-by-side boxplot of temperature split by month.", fig.height=4.2----
 ggplot(data = weather, mapping = aes(x = factor(month), y = temp)) +
   geom_boxplot()
 
@@ -341,7 +336,7 @@ ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
 
-## ----flightsbar, fig.cap='(ref:geombar)', fig.height=2.5-----------------
+## ----flightsbar, fig.cap='(ref:geombar)', out.height="110%"--------------
 ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
 
@@ -364,7 +359,7 @@ kable(flights_counted,
 
 
 
-## ----carrierpie, echo=FALSE, fig.cap="The dreaded pie chart.", out.width="75%"----
+## ----carrierpie, echo=FALSE, fig.cap="The dreaded pie chart.", out.width="88%"----
 if(knitr::is_html_output()){
   ggplot(flights, mapping = aes(x = factor(1), fill = carrier)) +
     geom_bar(width = 1) +
@@ -429,7 +424,7 @@ if(knitr::is_html_output()) {
 ##   geom_bar()
 
 
-## ----flights-stacked-bar-color, echo=FALSE, fig.cap="Stacked barplot with color aesthetic used instead of fill.", fig.height=3.5----
+## ----flights-stacked-bar-color, echo=FALSE, fig.cap="Stacked barplot with color aesthetic used instead of fill.", fig.height=2.2----
 if(knitr::is_html_output()){
   ggplot(data = flights, mapping = aes(x = carrier, color = origin)) +
     geom_bar()
@@ -445,7 +440,7 @@ if(knitr::is_html_output()){
 ##   geom_bar(position = "dodge")
 
 
-## ----flights-dodged-bar-color, echo=FALSE, fig.cap="Side-by-side barplot comparing number of flights by carrier and origin.", fig.height=3.5----
+## ----flights-dodged-bar-color, echo=FALSE, fig.cap="Side-by-side barplot comparing number of flights by carrier and origin.", fig.height=2.8----
 if(knitr::is_html_output()){
   ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
     geom_bar(position = "dodge")

@@ -206,7 +206,7 @@ percentile_ci <- virtual_resampled_means %>%
   get_ci(level = 0.95, type = "percentile")
 
 
-## ----percentile-method, echo=FALSE, message=FALSE, fig.cap="Percentile method 95 percent confidence interval. Interval endpoints marked by vertical lines."----
+## ----percentile-method, echo=FALSE, message=FALSE, fig.cap='(ref:perc-method)'----
 ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
   labs(x = "Resample sample mean") +
@@ -233,7 +233,7 @@ virtual_resampled_means %>%
   summarize(SE = sd(mean_year))
 
 
-## ----percentile-and-se-method, echo=FALSE, message=FALSE, fig.cap="Comparing two 95 percent confidence interval methods."----
+## ----percentile-and-se-method, echo=FALSE, message=FALSE, fig.cap='(ref:both-methods)'----
 both_CI <- bind_rows(
   percentile_ci %>% gather(endpoint, value) %>% mutate(type = "percentile"),
   standard_error_ci %>% gather(endpoint, value) %>% mutate(type = "SE")
@@ -411,6 +411,7 @@ standard_error_ci
 
 
 
+
 ## ------------------------------------------------------------------------
 bowl %>% 
   summarize(p_red = mean(color == "red"))
@@ -520,7 +521,7 @@ percentile_ci_2 <- sample_2_bootstrap %>%
 percentile_ci_2
 
 
-## ----reliable-percentile, fig.cap="100 percentile-based 95 percent confidence intervals for $p$.",echo=FALSE----
+## ----reliable-percentile, fig.cap='(ref:reliable-perc)', echo=FALSE------
 if(!file.exists("rds/balls_percentile_cis.rds")){
   set.seed(4)
 
@@ -565,16 +566,18 @@ ggplot(percentile_cis) +
   # Removed point estimates since it doesn't necessarily act as center for 
   # percentile-based CI's
   # geom_point(aes(x = sample_prop, y = replicate, color = captured)) +
-  labs(x = expression("Proportion of red balls"), y = "Confidence interval number", 
+  labs(x = expression("Proportion of red balls"), 
+       y = "Confidence interval number", 
        alpha = "Captured") +
   geom_vline(xintercept = p_red, color = "red") + 
   coord_cartesian(xlim = c(0.1, 0.7)) + 
   theme_light() + 
-  theme(panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank(),
+  theme(panel.grid.major.y = element_blank(), 
+        panel.grid.minor.y = element_blank(),
         panel.grid.minor.x = element_blank())
 
 
-## ----reliable-se, fig.cap="100 SE-based 80 percent confidence intervals for $p$ with point estimate center marked with dots.",echo=FALSE----
+## ----reliable-se, fig.cap='(ref:rel-se)',echo=FALSE----------------------
 if(!file.exists("rds/balls_se_cis.rds")){
   # Set random number generator seed value.
   set.seed(9)
@@ -711,7 +714,7 @@ if(!file.exists("rds/balls_perc_cis_80_95_99.rds")){
 ##                 latex_options = c("hold_position", "repeat_header"))
 
 
-## ----reliable-percentile-80-95-99, fig.cap="Ten 80, 95, and 99 percent confidence intervals for $p$ based on $n = 50$.", echo=FALSE----
+## ----reliable-percentile-80-95-99, fig.cap='(ref:many-percs)', echo=FALSE----
 sample_of_cis <- percentile_cis_by_level %>% 
   group_by(confidence_level) %>% 
   mutate(sample_row = 1:10)
@@ -745,7 +748,7 @@ percentile_cis_by_level %>%
   rename(`Confidence level` = confidence_level) %>% 
   kable(
     digits = 3,
-    caption = "Average width of 80, 95, and 99 percent confidence intervals.", 
+    caption = "Average width of 80, 95, and 99\\% confidence intervals.", 
     booktabs = TRUE,
     longtable = TRUE
   ) %>% 
@@ -819,7 +822,7 @@ if(!file.exists("rds/balls_perc_cis_n_25_50_100.rds")){
 }
 
 
-## ----reliable-percentile-n-25-50-100, fig.cap="Ten 95 percent confidence intervals for $p$ based on $n = 25, 50,$ and $100$.", echo=FALSE----
+## ----reliable-percentile-n-25-50-100, fig.cap='(ref:rel-perc-n)', echo=FALSE----
 sample_of_cis <- percentile_cis_by_n %>% 
   group_by(sample_size) %>% 
   mutate(sample_row = 1:10)
@@ -853,7 +856,7 @@ percentile_cis_by_n %>%
   rename(`Sample size` = sample_size) %>% 
   kable(
     digits = 3,
-    caption = "Average width of $95\\%$ confidence intervals based on $n = 25$, $50$, and $100$.", 
+    caption = "Average width of 95\\% confidence intervals based on $n = 25$, $50$, and $100$.", 
     booktabs = TRUE,
     longtable = TRUE,
     escape = FALSE
@@ -993,7 +996,8 @@ myth_ci_se
 ## ----echo=FALSE----------------------------------------------------------
 set.seed(76)
 
-## ----sampling-distribution-part-deux, fig.show='hold', fig.cap="Previously seen sampling distribution of sample proportion red for $n = 1000$."----
+
+## ----sampling-distribution-part-deux, fig.show='hold', fig.cap="Previously seen sampling distribution of sample proportion red for $n = 1000$.", echo=TRUE----
 # Take 1000 virtual samples of size 50 from the bowl:
 virtual_samples <- bowl %>% 
   rep_sample_n(size = 50, reps = 1000)
@@ -1007,7 +1011,8 @@ sampling_distribution <- virtual_samples %>%
 # Visualize sampling distribution of p-hat
 ggplot(sampling_distribution, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
-  labs(x = "Proportion of 50 balls that were red", title = "Sampling distribution")
+  labs(x = "Proportion of 50 balls that were red", 
+       title = "Sampling distribution")
 
 
 ## ------------------------------------------------------------------------
@@ -1057,7 +1062,7 @@ se_boot <- bootstrap_distribution %>%
   pull(se)
 
 
-## ----side-by-side, fig.height=7.5, fig.cap="Comparing the sampling and bootstrap distributions of $\\widehat{p}$", echo=FALSE----
+## ----side-by-side, fig.height=7.5, fig.cap="Comparing the sampling and bootstrap distributions of $\\widehat{p}$.", echo=FALSE----
 p_samp <- ggplot(sampling_distribution, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, fill = "salmon", 
                  color = "white") +
@@ -1072,7 +1077,7 @@ p_boot <- ggplot(bootstrap_distribution, aes(x = stat)) +
                  color = "white") + 
   labs(x = "Proportion of 50 balls that were red", 
        title = 
-         "Bootstrap distribution: similar shape & spread but different center"
+         "Bootstrap distribution: similar shape and spread but different center"
        ) +
   geom_vline(xintercept = 0.42, size = 1, linetype = "dashed") +
   scale_x_continuous(limits = c(0.15, 0.65), 
@@ -1126,7 +1131,7 @@ conf_ints <- tactile_prop_red %>%
 conf_ints
 
 
-## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals at the 95 percent level based on 33 tactile samples of size n = 50.", fig.height=6----
+## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals at the 95\\% level based on 33 tactile samples of size $n = 50$.", fig.height=6----
 conf_ints <- conf_ints %>% 
   mutate(
     y = 1:n(),

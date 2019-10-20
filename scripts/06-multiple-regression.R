@@ -177,7 +177,7 @@ tibble(
 ) %>% 
   knitr::kable(
     digits = 4,
-    caption = "Comparison of intercepts and slope for parallel slopes model.", 
+    caption = "Comparison of intercepts and slope for parallel slopes model", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -466,7 +466,7 @@ if(knitr::is_html_output()){
 ##        color = "School size",
 ##        title = "Parallel slopes model")
 
-## ----numxcatx-comparison-2, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for MA schools."----
+## ----numxcatx-comparison-2, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for Massachusetts schools."----
 p1 <- ggplot(MA_schools, 
              aes(x = perc_disadvan, y = average_sat_math, color = size)) +
   geom_point(alpha = 0.25) +
@@ -554,7 +554,7 @@ credit_line <- get_regression_table(debt_model) %>%
 get_regression_table(debt_model) %>% 
   knitr::kable(
     digits = 3,
-    caption = "Multiple regression table", 
+    caption = "Multiple regression results", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),

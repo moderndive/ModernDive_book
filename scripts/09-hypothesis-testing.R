@@ -35,13 +35,13 @@ promotions %>%
 ## ----eval=FALSE----------------------------------------------------------
 ## ggplot(promotions, aes(x = gender, fill = decision)) +
 ##   geom_bar() +
-##   labs(x = "Gender of name on resume")
+##   labs(x = "Gender of name on résumé")
 
 
 ## ----promotions-barplot, echo=FALSE, fig.cap="Barplot of relationship between gender and promotion decision."----
 promotions_barplot <- ggplot(promotions, aes(x = gender, fill = decision)) +
   geom_bar() +
-  labs(x = "Gender of name on resume")
+  labs(x = "Gender of name on résumé")
 if(knitr::is_html_output()){
   promotions_barplot
 } else {
@@ -70,8 +70,8 @@ promotions_sample <- promotions %>%
   slice(c(36, 39, 40, 1, 2, 22)) %>% 
   mutate(`shuffled gender` = sample(gender)) %>% 
   select(-id) %>% 
-  mutate(`resume number` = 1:n()) %>% 
-  select(`resume number`, everything())
+  mutate(`résumé number` = 1:n()) %>% 
+  select(`résumé number`, everything())
 
 promotions_sample  %>% 
   kable(
@@ -95,7 +95,7 @@ promotions_shuffled %>%
 ## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(promotions_shuffled, aes(x = gender, fill = decision)) +
 ##   geom_bar() +
-##   labs(x = "Gender of resume name")
+##   labs(x = "Gender of résumé name")
 
 ## ----promotions-barplot-permuted, fig.cap="Barplots of relationship of promotion with gender (left) and shuffled gender (right).", echo=FALSE----
 height1 <- promotions %>% 
@@ -112,12 +112,12 @@ height <- max(height1, height2)
 
 plot1 <- ggplot(promotions, aes(x = gender, fill = decision)) +
   geom_bar() +
-  labs(x = "Gender of resume name", title = "Original") +
+  labs(x = "Gender of résumé name", title = "Original") +
   theme(legend.position = "none") +
   coord_cartesian(ylim= c(0, height))
 plot2 <- ggplot(promotions_shuffled, aes(x = gender, fill = decision)) +
   geom_bar() +
-  labs(x = "Gender of resume name", y ="", title = "Shuffled") +
+  labs(x = "Gender of résumé name", y ="", title = "Shuffled") +
   coord_cartesian(ylim= c(0, height))
 if(knitr::is_html_output()){
   plot1 + plot2
@@ -388,7 +388,7 @@ se_ci
 knitr::include_graphics("images/gt_error_table.png")
 
 
-## ----eval=FALSE, echo=FALSE----------------------------------------------
+## ----hypo-test-errors, eval=FALSE, echo=FALSE----------------------------
 ## tibble(
 ##   Decision = c("Fail to reject H0", "Reject H0"),
 ##   `H0 true` = c("Correct", "Type I error"),
@@ -422,7 +422,7 @@ movies
 movies_sample
 
 
-## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs genre."----
+## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre."----
 ggplot(data = movies_sample, aes(x = genre, y = rating)) +
   geom_boxplot() +
   labs(y = "IMDb rating")
@@ -675,7 +675,7 @@ score_model <- lm(score ~ bty_avg, data = evals)
 get_regression_table(score_model) %>%
   knitr::kable(
     digits = 3,
-    caption = "Linear regression table.",
+    caption = "Linear regression table",
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),

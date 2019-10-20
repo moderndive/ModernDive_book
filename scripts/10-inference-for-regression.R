@@ -160,7 +160,7 @@ regression_points <- get_regression_points(score_model)
 regression_points
 
 
-## ----non-linear, fig.cap="Example of clearly non-linear relationship.", echo=FALSE----
+## ----non-linear, fig.cap="Example of a clearly non-linear relationship.", echo=FALSE----
 set.seed(76)
 evals_ch5 %>% 
   mutate(
@@ -190,7 +190,7 @@ ggplot(regression_points, aes(x = residual)) +
   labs(x = "Residual")
 
 
-## ----normal-residuals, echo=FALSE, warning=FALSE, fig.cap="Example of clearly normal and clearly non-normal residuals."----
+## ----normal-residuals, echo=FALSE, warning=FALSE, fig.cap="Example of clearly normal and clearly not normal residuals."----
 sigma <- sd(regression_points$residual)
 normal_and_not_examples <- evals_ch5 %>% 
   mutate(

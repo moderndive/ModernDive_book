@@ -124,8 +124,8 @@ stocks <- tibble(
 stocks %>% 
   kable(
     digits = 2,
-    caption = "Example of tidy data.", 
-    booktabs = TRUE
+    caption = "Example of tidy data"#, 
+#    booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16), 
                 latex_options = c("hold_position"))
@@ -172,7 +172,7 @@ drinks_smaller_tidy
 ##   geom_col(position = "dodge")
 
 
-## ----drinks-smaller-tidy-barplot, echo=FALSE, fig.cap="Comparing alcohol consumption in 4 countries.", fig.height=3.5----
+## ----drinks-smaller-tidy-barplot, echo=FALSE, fig.cap='(ref:drinks-col)', fig.height=3.5----
 if(knitr::is_html_output()){
   drinks_smaller_tidy_plot
 } else {
