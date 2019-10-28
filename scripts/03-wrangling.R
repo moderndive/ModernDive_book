@@ -416,6 +416,8 @@ if(knitr:::is_latex_output()){
 
 
 
+
+
 ## ----dplyr-cheatsheet, echo=FALSE, fig.cap="Data Transformation with dplyr cheatsheet."----
 if(knitr::is_html_output())
   include_graphics("images/cheatsheets/dplyr_cheatsheet-1.png")
