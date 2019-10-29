@@ -64,7 +64,7 @@ evals_ch6 %>%
 ##   geom_smooth(method = "lm", se = FALSE)
 
 
-## ----numxcatxplot1, echo=FALSE, warning=FALSE, fig.cap="Colored scatterplot of relationship of teaching and beauty scores."----
+## ----numxcatxplot1, echo=FALSE, warning=FALSE, fig.cap="Colored scatterplot of relationship of teaching and beauty scores.", fig.height=3.2----
 if(knitr::is_html_output()){
   ggplot(evals_ch6, aes(x = age, y = score, color = gender)) +
     geom_point() +
@@ -209,7 +209,7 @@ if(knitr::is_html_output()){
 }
 
 
-## ----fitted-values, echo=FALSE, warning=FALSE, fig.cap="Fitted values for two new professors."----
+## ----fitted-values, echo=FALSE, warning=FALSE, fig.cap="Fitted values for two new professors.", fig.height=3.8----
 newpoints <- evals_ch6 %>% 
   slice(c(1, 5)) %>% 
   get_regression_points(score_model_interaction, newdata = .)
@@ -238,8 +238,8 @@ regression_points %>%
   slice(1:10) %>%
   knitr::kable(
     digits = 3,
-    caption = "Regression points (First 10 out of 463 courses)",
-    booktabs = TRUE
+    caption = "Regression points (First 10 out of 463 courses)"#,
+#    booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -251,8 +251,7 @@ regression_points %>%
 
 ## ---- warning=FALSE, message=FALSE---------------------------------------
 library(ISLR)
-credit_ch6 <- Credit %>%
-  as_tibble() %>% 
+credit_ch6 <- Credit %>% as_tibble() %>% 
   select(ID, debt = Balance, credit_limit = Limit, 
          income = Income, credit_rating = Rating, age = Age)
 
@@ -420,8 +419,7 @@ get_regression_table(debt_model) %>%
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## regression_points <- get_regression_points(debt_model)
-## regression_points
+## get_regression_points(debt_model)
 
 ## ----model3-points-table, echo=FALSE-------------------------------------
 set.seed(76)

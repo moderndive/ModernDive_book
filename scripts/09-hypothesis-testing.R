@@ -88,8 +88,7 @@ promotions_sample  %>%
 
 
 ## ------------------------------------------------------------------------
-promotions_shuffled %>% 
-  slice(c(11, 26, 28, 36, 37, 46))
+promotions_shuffled %>% slice(c(11, 26, 28, 36, 37, 46))
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -97,7 +96,7 @@ promotions_shuffled %>%
 ##   geom_bar() +
 ##   labs(x = "Gender of résumé name")
 
-## ----promotions-barplot-permuted, fig.cap="Barplots of relationship of promotion with gender (left) and shuffled gender (right).", echo=FALSE----
+## ----promotions-barplot-permuted, fig.cap="Barplots of relationship of promotion with gender (left) and shuffled gender (right).", fig.height=2.4, echo=FALSE----
 height1 <- promotions %>% 
   group_by(gender, decision) %>% 
   summarize(n = n()) %>% 
@@ -294,6 +293,8 @@ obs_diff_prop <- promotions %>%
 obs_diff_prop
 
 
+## ----null-distribution-infer, fig.show='hold', fig.cap="Null distribution.", fig.height=3.5----
+visualize(null_distribution, binwidth = 0.1)
 
 
 ## ----null-distribution-infer-2, fig.cap="Shaded histogram to show $p$-value."----
@@ -422,7 +423,7 @@ movies
 movies_sample
 
 
-## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre."----
+## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre.", fig.height=2.7----
 ggplot(data = movies_sample, aes(x = genre, y = rating)) +
   geom_boxplot() +
   labs(y = "IMDb rating")
@@ -535,7 +536,7 @@ obs_diff_means
 ##   shade_p_value(obs_stat = obs_diff_means, direction = "both")
 
 
-## ----null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and $p$-value."----
+## ----null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and $p$-value.", fig.height=2.8----
 if(knitr::is_html_output()){
   visualize(null_distribution_movies, bins = 10) + 
     shade_p_value(obs_stat = obs_diff_means, direction = "both")
@@ -560,7 +561,7 @@ p_value_movies <- null_distribution_movies %>%
 
 
 
-## ----zcurve, echo=FALSE, out.width="80%", fig.cap="Standard normal z curve."----
+## ----zcurve, echo=FALSE, out.width="100%", fig.cap="Standard normal z curve."----
 ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm) +
   labs(x = "z", y = "") + 
   theme_light() +
@@ -610,7 +611,7 @@ t_stat <- movies_sample %>%
 
 
 
-## ----comparing-diff-means-t-stat, fig.align='center', out.width='100%', fig.cap="Comparing the null distributions of two test statistics.", echo=FALSE----
+## ----comparing-diff-means-t-stat, fig.align='center', fig.height=3, fig.cap="Comparing the null distributions of two test statistics.", echo=FALSE----
 # Visualize:
 null_dist_1 <- visualize(null_distribution_movies, bins = 10) +
   labs(title = "Difference in means")
@@ -619,7 +620,7 @@ null_dist_2 <- visualize(null_distribution_movies_t, bins = 10) +
 null_dist_1 + null_dist_2
 
 
-## ----t-stat-3, fig.align='center', out.width='100%', fig.cap="Null distribution using t-statistic and t-distribution."----
+## ----t-stat-3, fig.align='center', fig.cap="Null distribution using t-statistic and t-distribution.", fig.height=2.2----
 visualize(null_distribution_movies_t, bins = 10, method = "both")
 
 
@@ -630,7 +631,7 @@ obs_two_sample_t <- movies_sample %>%
 obs_two_sample_t
 
 
-## ----t-stat-4, fig.align='center', out.width='100%', fig.cap="Null distribution using t-statistic and t-distribution with $p$-value shaded.", warning=TRUE----
+## ----t-stat-4, fig.align='center', fig.cap="Null distribution using t-statistic and t-distribution with $p$-value shaded.", warning=TRUE, fig.height=1.7----
 visualize(null_distribution_movies_t, method = "both") +
   shade_p_value(obs_stat = obs_two_sample_t, direction = "both")
 

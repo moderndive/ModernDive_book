@@ -336,7 +336,7 @@ ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
 
-## ----flightsbar, fig.cap='(ref:geombar)', out.height="110%"--------------
+## ----flightsbar, fig.cap='(ref:geombar)', fig.height=2.8-----------------
 ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
 

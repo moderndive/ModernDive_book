@@ -206,7 +206,7 @@ percentile_ci <- virtual_resampled_means %>%
   get_ci(level = 0.95, type = "percentile")
 
 
-## ----percentile-method, echo=FALSE, message=FALSE, fig.cap='(ref:perc-method)'----
+## ----percentile-method, echo=FALSE, message=FALSE, fig.cap='(ref:perc-method)', fig.height=3.4----
 ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
   labs(x = "Resample sample mean") +
@@ -488,6 +488,7 @@ percentile_ci_1
 
 
 
+
 ## ------------------------------------------------------------------------
 bowl_sample_2 <- bowl %>% 
   rep_sample_n(size = 50)
@@ -521,7 +522,7 @@ percentile_ci_2 <- sample_2_bootstrap %>%
 percentile_ci_2
 
 
-## ----reliable-percentile, fig.cap='(ref:reliable-perc)', echo=FALSE------
+## ----reliable-percentile, fig.cap='(ref:reliable-perc)', echo=FALSE, fig.height=4.5----
 if(!file.exists("rds/balls_percentile_cis.rds")){
   set.seed(4)
 
@@ -714,7 +715,7 @@ if(!file.exists("rds/balls_perc_cis_80_95_99.rds")){
 ##                 latex_options = c("hold_position", "repeat_header"))
 
 
-## ----reliable-percentile-80-95-99, fig.cap='(ref:many-percs)', echo=FALSE----
+## ----reliable-percentile-80-95-99, fig.cap='(ref:many-percs)', echo=FALSE, fig.height=3----
 sample_of_cis <- percentile_cis_by_level %>% 
   group_by(confidence_level) %>% 
   mutate(sample_row = 1:10)
@@ -822,7 +823,7 @@ if(!file.exists("rds/balls_perc_cis_n_25_50_100.rds")){
 }
 
 
-## ----reliable-percentile-n-25-50-100, fig.cap='(ref:rel-perc-n)', echo=FALSE----
+## ----reliable-percentile-n-25-50-100, fig.cap='(ref:rel-perc-n)', echo=FALSE, fig.height=2.5----
 sample_of_cis <- percentile_cis_by_n %>% 
   group_by(sample_size) %>% 
   mutate(sample_row = 1:10)
@@ -899,10 +900,10 @@ sampling_scenarios %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position")) %>%
   column_spec(1, width = "0.5in") %>% 
-  column_spec(2, width = "0.7in") %>%
-  column_spec(3, width = "1in") %>%
-  column_spec(4, width = "1.1in") %>% 
-  column_spec(5, width = "1in")
+  column_spec(2, width = "1.5in") %>%
+  column_spec(3, width = "0.65in") %>%
+  column_spec(4, width = "1.6in") %>% 
+  column_spec(5, width = "0.65in")
 
 
 ## ----eval=FALSE----------------------------------------------------------
@@ -997,17 +998,15 @@ myth_ci_se
 set.seed(76)
 
 
-## ----sampling-distribution-part-deux, fig.show='hold', fig.cap="Previously seen sampling distribution of sample proportion red for $n = 1000$.", echo=TRUE----
+## ----sampling-distribution-part-deux, fig.show='hold', fig.cap="Previously seen sampling distribution of sample proportion red for $n = 1000$.", echo=TRUE, fig.height=2----
 # Take 1000 virtual samples of size 50 from the bowl:
 virtual_samples <- bowl %>% 
   rep_sample_n(size = 50, reps = 1000)
-
 # Compute the sampling distribution of 1000 values of p-hat
 sampling_distribution <- virtual_samples %>% 
   group_by(replicate) %>% 
   summarize(red = sum(color == "red")) %>% 
   mutate(prop_red = red / 50)
-
 # Visualize sampling distribution of p-hat
 ggplot(sampling_distribution, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
@@ -1016,8 +1015,7 @@ ggplot(sampling_distribution, aes(x = prop_red)) +
 
 
 ## ------------------------------------------------------------------------
-sampling_distribution %>% 
-  summarize(se = sd(prop_red))
+sampling_distribution %>% summarize(se = sd(prop_red))
 
 ## ---- echo=FALSE---------------------------------------------------------
 se_samp <- sampling_distribution %>% 
@@ -1030,7 +1028,6 @@ set.seed(76)
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## # Compute the bootstrap distribution using infer workflow:
 ## bootstrap_distribution <- bowl_sample_1 %>%
 ##   specify(response = color, success = "red") %>%
 ##   generate(reps = 1000, type = "bootstrap") %>%
@@ -1053,8 +1050,7 @@ if(!file.exists("rds/bootstrap_distribution_balls.rds")){
 
 
 ## ------------------------------------------------------------------------
-bootstrap_distribution %>% 
-  summarize(se = sd(stat))
+bootstrap_distribution %>% summarize(se = sd(stat))
 
 ## ---- echo=FALSE---------------------------------------------------------
 se_boot <- bootstrap_distribution %>% 
@@ -1062,7 +1058,7 @@ se_boot <- bootstrap_distribution %>%
   pull(se)
 
 
-## ----side-by-side, fig.height=7.5, fig.cap="Comparing the sampling and bootstrap distributions of $\\widehat{p}$.", echo=FALSE----
+## ----side-by-side, fig.height=4.5, fig.cap="Comparing the sampling and bootstrap distributions of $\\widehat{p}$.", echo=FALSE----
 p_samp <- ggplot(sampling_distribution, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, fill = "salmon", 
                  color = "white") +
@@ -1128,7 +1124,11 @@ conf_ints <- tactile_prop_red %>%
     lower_ci = p_hat - MoE,
     upper_ci = p_hat + MoE
   )
-conf_ints
+
+
+## ----echo=FALSE----------------------------------------------------------
+if(!knitr::is_latex_output())
+  conf_ints
 
 
 ## ----tactile-conf-int, echo=FALSE, message=FALSE, warning=FALSE, fig.cap= "33 confidence intervals at the 95\\% level based on 33 tactile samples of size $n = 50$.", fig.height=6----

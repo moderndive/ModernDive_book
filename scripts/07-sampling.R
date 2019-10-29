@@ -128,7 +128,7 @@ virtual_prop_red
 ##   labs(x = "Proportion of 50 balls that were red",
 ##        title = "Distribution of 33 proportions red")
 
-## ----samplingdistribution-virtual, echo=FALSE, fig.cap="Distribution of 33 proportions based on 33 samples of size 50."----
+## ----samplingdistribution-virtual, echo=FALSE, fig.cap="Distribution of 33 proportions based on 33 samples of size 50.", fig.height=3.2----
 virtual_histogram <- ggplot(virtual_prop_red, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white")
 virtual_histogram + 
@@ -136,7 +136,7 @@ virtual_histogram +
        title = "Distribution of 33 proportions red")
 
 
-## ----tactile-vs-virtual, echo=FALSE, fig.cap="Comparing 33 virtual and 33 tactile proportions red."----
+## ----tactile-vs-virtual, echo=FALSE, fig.cap="Comparing 33 virtual and 33 tactile proportions red.", fig.height=2.9----
 facet_compare <- bind_rows(
   virtual_prop_red %>% 
     mutate(type = "Virtual sampling"), 
@@ -360,7 +360,7 @@ comparing_n_table  %>%
 
 
 
-## ----comparing-sampling-distributions-1b, echo=FALSE, fig.cap="Previously seen three sampling distributions of the sample proportion $\\widehat{p}$."----
+## ----comparing-sampling-distributions-1b, echo=FALSE, fig.cap="Previously seen three sampling distributions of the sample proportion $\\widehat{p}$.", fig.height=3.1----
 comparing_sampling_distributions
 
 

@@ -53,8 +53,9 @@ dem_score
 include_graphics("images/rstudio_screenshots/read_excel.png")
 
 
-## ------------------------------------------------------------------------
-drinks
+## ---- echo=FALSE---------------------------------------------------------
+drinks %>% 
+  head(5)
 
 
 ## ------------------------------------------------------------------------
@@ -172,7 +173,7 @@ drinks_smaller_tidy
 ##   geom_col(position = "dodge")
 
 
-## ----drinks-smaller-tidy-barplot, echo=FALSE, fig.cap='(ref:drinks-col)', fig.height=3.5----
+## ----drinks-smaller-tidy-barplot, echo=FALSE, fig.cap='(ref:drinks-col)', fig.height=3.8----
 if(knitr::is_html_output()){
   drinks_smaller_tidy_plot
 } else {

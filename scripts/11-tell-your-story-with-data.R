@@ -93,7 +93,7 @@ glimpse(house_prices)
 ##   labs(x = "condition", title = "House condition")
 
 
-## ----house-prices-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Exploratory visualizations of Seattle house prices data.", fig.width=16/2, fig.height=9*2/3----
+## ----house-prices-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Exploratory visualizations of Seattle house prices data.", fig.height=4----
 p1 <- ggplot(house_prices, aes(x = price)) +
   geom_histogram(color = "white") +
   labs(x = "price (USD)", title = "House price") 
@@ -119,7 +119,7 @@ house_prices %>%
   select(price, log10_price, sqft_living, log10_size)
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## # Before log10-transformation:
 ## ggplot(house_prices, aes(x = price)) +
 ##   geom_histogram(color = "white") +
@@ -130,7 +130,8 @@ house_prices %>%
 ##   geom_histogram(color = "white") +
 ##   labs(x = "log10 price (USD)", title = "House price: After")
 
-## ----log10-price-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House price before and after log10 transformation.", fig.width=16/2, fig.height=9/2----
+
+## ----log10-price-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House price before and after log10 transformation.", fig.height=2.3----
 p1 <- ggplot(house_prices, aes(x = price)) +
   geom_histogram(color = "white") +
   labs(x = "price (USD)", title = "House price: Before")
@@ -144,16 +145,14 @@ p1 + p2
 ## # Before log10-transformation:
 ## ggplot(house_prices, aes(x = sqft_living)) +
 ##   geom_histogram(color = "white") +
-##   labs(x = "living space (square feet)",
-##        title = "House size: Before")
+##   labs(x = "living space (square feet)", title = "House size: Before")
 ## 
 ## # After log10-transformation:
 ## ggplot(house_prices, aes(x = log10_size)) +
 ##   geom_histogram(color = "white") +
-##   labs(x = "log10 living space (square feet)",
-##        title = "House size: After")
+##   labs(x = "log10 living space (square feet)", title = "House size: After")
 
-## ----log10-size-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House size before and after log10-transformation.", fig.width=16/2, fig.height=9/2----
+## ----log10-size-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House size before and after log10-transformation.", fig.height=2.3----
 p1 <- ggplot(house_prices, aes(x = sqft_living)) +
   geom_histogram(color = "white") +
   labs(x = "living space (square feet)", 
@@ -165,15 +164,18 @@ p2 <- ggplot(house_prices, aes(x = log10_size)) +
 p1 + p2
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## # Plot interaction model
 ## ggplot(house_prices,
 ##        aes(x = log10_size, y = log10_price, col = condition)) +
 ##   geom_point(alpha = 0.05) +
 ##   geom_smooth(method = "lm", se = FALSE) +
-##   labs(y = "log10 price", x = "log10 size",
+##   labs(y = "log10 price",
+##        x = "log10 size",
 ##        title = "House prices in Seattle")
-## 
+
+
+## ---- eval=FALSE---------------------------------------------------------
 ## # Plot parallel slopes model
 ## gg_parallel_slopes(y = "log10_price", num_x = "log10_size",
 ##                    cat_x = "condition", data = house_prices,
@@ -186,7 +188,9 @@ interaction <- ggplot(house_prices,
   labs(y = "log10 price", x = "log10 size") +
   geom_smooth(method = "lm", se = FALSE) +
   guides(color=FALSE) +
-  labs(title = "House prices in Seattle", x = "log10 size", y = "log10 price")
+  labs(title = "House prices in Seattle", 
+       x = "log10 size", 
+       y = "log10 price")
 parallel_slopes <- 
   gg_parallel_slopes(y = "log10_price", num_x = "log10_size", 
                      cat_x = "condition", data = house_prices, alpha = 0.05) +
@@ -204,7 +208,8 @@ if(knitr::is_html_output()){
 ##        aes(x = log10_size, y = log10_price, col = condition)) +
 ##   geom_point(alpha = 0.4) +
 ##   geom_smooth(method = "lm", se = FALSE) +
-##   labs(y = "log10 price", x = "log10 size",
+##   labs(y = "log10 price",
+##        x = "log10 size",
 ##        title = "House prices in Seattle") +
 ##   facet_wrap(~ condition)
 
@@ -288,7 +293,7 @@ US_births_1999 <- US_births_1994_2003 %>%
   filter(year == 1999)
 
 
-## ----us-births, fig.cap="Number of births in US in 1999.", fig.align='center'----
+## ----us-births, fig.cap="Number of births in US in 1999.", fig.height=5, fig.align='center'----
 ggplot(US_births_1999, aes(x = date, y = births)) +
   geom_line() +
   labs(x = "Data", y = "Number of births", title = "US Births in 1999")
@@ -319,7 +324,8 @@ if(!file.exists("rds/chapter_script_dev_files.rds")){
   chapter_script_dev_files <- read_rds("rds/chapter_script_dev_files.rds")
 }
 
-if(dev_version){
+
+if(dev_version & knitr::is_html_output()){
   chapter_script_dev_files %>% 
     select(chapter, link) %>% 
     kable()

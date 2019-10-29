@@ -103,9 +103,8 @@ evals_ch5 %>%
   get_correlation(formula = score ~ bty_avg)
 
 
-## ------------------------------------------------------------------------
-evals_ch5 %>%
-  summarize(correlation = cor(score, bty_avg))
+## ---- eval=FALSE---------------------------------------------------------
+## evals_ch5 %>% summarize(correlation = cor(score, bty_avg))
 
 
 ## ----echo=FALSE----------------------------------------------------------
@@ -121,7 +120,8 @@ cor_ch5 <- evals_ch5 %>%
 ##   labs(x = "Beauty Score", y = "Teaching Score",
 ##        title = "Scatterplot of relationship of teaching and beauty scores")
 
-## ----numxplot1, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin."----
+
+## ----numxplot1, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin.", fig.height=2.5----
 # Define orange box
 margin_x <- 0.15
 margin_y <- 0.075
@@ -143,7 +143,7 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 ##   labs(x = "Beauty Score", y = "Teaching Score",
 ##        title = "Scatterplot of relationship of teaching and beauty scores")
 
-## ----numxplot2, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin."----
+## ----numxplot2, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin.", fig.height=4.2----
 ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_jitter() +
   labs(x = "Beauty Score", y = "Teaching Score",
@@ -277,8 +277,7 @@ glimpse(gapminder2007)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## gapminder2007 %>%
-##   sample_n(size = 5)
+## gapminder2007 %>% sample_n(size = 5)
 
 ## ----model2-data-preview, echo=FALSE-------------------------------------
 gapminder2007 %>%
@@ -331,7 +330,7 @@ if(knitr::is_latex_output()) {
 }
 
 
-## ----catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007."--------
+## ----catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007.", fig.height=3.4----
 ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
   geom_boxplot() +
   labs(x = "Continent", y = "Life expectancy (years)",
@@ -371,9 +370,7 @@ gapminder2007 %>%
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## # Fit regression model:
 ## lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
-## # Get regression table:
 ## get_regression_table(lifeExp_model)
 
 ## ---- echo=FALSE---------------------------------------------------------
@@ -419,7 +416,7 @@ regression_points %>%
 knitr::include_graphics("images/shutterstock/shoes_headache.png")
 
 
-## ----moderndive-figure-causal-graph, echo=FALSE, fig.align='center', fig.cap="Causal graph."----
+## ----moderndive-figure-causal-graph, echo=FALSE, fig.align='center', out.width="50%", fig.cap="Causal graph."----
 knitr::include_graphics("images/flowcharts/flowchart.009-cropped.png")
 
 
@@ -491,11 +488,9 @@ p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
 ## ------------------------------------------------------------------------
 # Fit regression model:
 score_model <- lm(score ~ bty_avg, data = evals_ch5)
-
 # Get regression points:
 regression_points <- get_regression_points(score_model)
 regression_points
-
 # Compute sum of squared residuals
 regression_points %>%
   mutate(squared_residuals = residual^2) %>%
@@ -504,7 +499,7 @@ regression_points %>%
 
 
 
-## ----three-lines, fig.cap="Regression line and two others.", out.width="80%", echo=FALSE----
+## ----three-lines, fig.cap="Regression line and two others.", out.width="85%", echo=FALSE----
 example <- tibble(
   x = c(0, 0.5, 1),
   y = c(2, 1, 3)

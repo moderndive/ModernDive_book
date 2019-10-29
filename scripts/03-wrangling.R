@@ -54,15 +54,13 @@ library(nycflights13)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## flights %>%
-##   filter(!dest == "BTV" | dest == "SEA")
+## flights %>% filter(!dest == "BTV" | dest == "SEA")
 
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## many_airports <- flights %>%
 ##   filter(dest == "SEA" | dest == "SFO" | dest == "PDX" |
 ##          dest == "BTV" | dest == "BDL")
-## View(many_airports)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -314,13 +312,11 @@ named_dests
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## flights_no_year <- flights %>%
-##   select(-year)
+## flights_no_year <- flights %>% select(-year)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## flight_arr_times <- flights %>%
-##   select(month:day, arr_time:sched_arr_time)
+## flight_arr_times <- flights %>% select(month:day, arr_time:sched_arr_time)
 ## flight_arr_times
 
 
@@ -331,34 +327,20 @@ named_dests
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## flights_begin_a <- flights %>%
-##   select(starts_with("a"))
-## flights_begin_a
-
-
-## ---- eval=FALSE---------------------------------------------------------
-## flights_delays <- flights %>%
-##   select(ends_with("delay"))
-## flights_delays
-
-
-## ---- eval=FALSE---------------------------------------------------------
-## flights_time <- flights %>%
-##   select(contains("time"))
-## flights_time
+## flights %>% select(starts_with("a"))
+## flights %>% select(ends_with("delay"))
+## flights %>% select(contains("time"))
 
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## flights_time_new <- flights %>%
 ##   select(dep_time, arr_time) %>%
-##   rename(departure_time = dep_time,
-##          arrival_time = arr_time)
+##   rename(departure_time = dep_time, arrival_time = arr_time)
 ## glimpse(flights_time_new)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## named_dests %>%
-##   top_n(n = 10, wt = num_flights)
+## named_dests %>% top_n(n = 10, wt = num_flights)
 
 
 ## ---- eval=FALSE---------------------------------------------------------

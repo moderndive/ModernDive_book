@@ -44,7 +44,7 @@ cor_ch6 <- evals_ch5 %>%
   round(3)
 
 
-## ----regline, fig.cap="Relationship with regression line."---------------
+## ----regline, fig.cap="Relationship with regression line.", fig.height=3.2----
 ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score",
@@ -160,7 +160,7 @@ regression_points <- get_regression_points(score_model)
 regression_points
 
 
-## ----non-linear, fig.cap="Example of a clearly non-linear relationship.", echo=FALSE----
+## ----non-linear, fig.cap="Example of a clearly non-linear relationship.", echo=FALSE, fig.height=3.3----
 set.seed(76)
 evals_ch5 %>% 
   mutate(
@@ -269,6 +269,7 @@ bootstrap_distn_slope
 
 
 
+
 ## ------------------------------------------------------------------------
 percentile_ci <- bootstrap_distn_slope %>% 
   get_confidence_interval(type = "percentile", level = 0.95)
@@ -291,11 +292,12 @@ se_ci
 ## ---- eval=FALSE---------------------------------------------------------
 ## visualize(bootstrap_distn_slope) +
 ##   shade_confidence_interval(endpoints = percentile_ci, fill = NULL,
-##                             linetype = "solid", color = "black") +
+##                             linetype = "solid", color = "grey90") +
 ##   shade_confidence_interval(endpoints = se_ci, fill = NULL,
-##                             linetype = "dashed", color = "black") +
+##                             linetype = "dashed", color = "grey60") +
 ##   shade_confidence_interval(endpoints = c(0.035, 0.099), fill = NULL,
 ##                             linetype = "dotted", color = "black")
+
 
 
 
@@ -321,14 +323,13 @@ if(!file.exists("rds/null_distn_slope.rds")){
 }
 
 
-## ----null-distribution-slope, echo=FALSE, fig.show='hold', fig.cap="Null distribution of slopes."----
+## ----null-distribution-slope, echo=FALSE, fig.show='hold', fig.cap="Null distribution of slopes.", fig.height=2.5----
 visualize(null_distn_slope)
 
 
-## ---- eval=FALSE---------------------------------------------------------
-## visualize(null_distn_slope) +
-##   shade_p_value(obs_stat = observed_slope, direction = "both")
-
+## ----p-value-slope, echo=FALSE, fig.show='hold', fig.cap="Null distribution and $p$-value."----
+visualize(null_distn_slope) + 
+  shade_p_value(obs_stat = observed_slope, direction = "both")
 
 
 ## ------------------------------------------------------------------------
@@ -363,8 +364,8 @@ sampling_scenarios %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position")) %>%
   column_spec(1, width = "0.5in") %>% 
-  column_spec(2, width = "0.7in") %>%
-  column_spec(3, width = "1in") %>%
-  column_spec(4, width = "1.1in") %>% 
-  column_spec(5, width = "1in")
+  column_spec(2, width = "1.5in") %>%
+  column_spec(3, width = "0.65in") %>%
+  column_spec(4, width = "1.6in") %>% 
+  column_spec(5, width = "0.65in")
 
