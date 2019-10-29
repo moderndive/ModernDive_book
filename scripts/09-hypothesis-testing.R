@@ -75,7 +75,7 @@ promotions_sample <- promotions %>%
 
 promotions_sample  %>% 
   kable(
-    caption = "One example of shuffling gender variable.", 
+    caption = "One example of shuffling gender variable", 
     booktabs = TRUE,
     longtable = TRUE
   ) %>% 

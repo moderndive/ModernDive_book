@@ -92,7 +92,7 @@ lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
 get_regression_table(lifeExp_model) %>%
   knitr::kable(
     digits = 3,
-    caption = "Regression table for life expectancy as a function of continent.",
+    caption = "Regression table for life expectancy as a function of continent",
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -110,7 +110,7 @@ score_model_interaction <- lm(score ~ age * gender, data = evals_ch6)
 get_regression_table(score_model_interaction) %>% 
   knitr::kable(
     digits = 3,
-    caption = "Regression table for interaction model.", 
+    caption = "Regression table for interaction model", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -126,7 +126,7 @@ tibble(
 ) %>% 
   knitr::kable(
     digits = 4,
-    caption = "Comparison of intercepts and slopes for interaction model.", 
+    caption = "Comparison of intercepts and slopes for interaction model", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -161,7 +161,7 @@ score_model_parallel_slopes <- lm(score ~ age + gender, data = evals_ch6)
 get_regression_table(score_model_parallel_slopes) %>% 
   knitr::kable(
     digits = 3,
-    caption = "Regression table for parallel slopes model.", 
+    caption = "Regression table for parallel slopes model", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -270,7 +270,7 @@ credit_ch6 %>%
   sample_n(5) %>%
   knitr::kable(
     digits = 3,
-    caption = "Random sample of 5 credit card holders.",
+    caption = "Random sample of 5 credit card holders",
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -301,7 +301,7 @@ credit_ch6 %>%
   cor() %>% 
   knitr::kable(
     digits = 3,
-    caption = "Correlation coefficients between credit card debt, credit limit, and income.", 
+    caption = "Correlation coefficients between credit card debt, credit limit, and income", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -428,7 +428,7 @@ regression_points %>%
   slice(1:10) %>%
   knitr::kable(
     digits = 3,
-    caption = "Regression points (First 10 credit card holders out of 400).",
+    caption = "Regression points (First 10 credit card holders out of 400)",
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),

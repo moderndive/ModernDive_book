@@ -185,7 +185,7 @@ flights %>%
   select(dep_delay, arr_delay, gain) %>% 
   slice(1:5) %>% 
   kable(
-    caption = "First five rows of departure/arrival delay and gain variables."
+    caption = "First five rows of departure/arrival delay and gain variables"
     ) %>% 
   kable_styling(position = "center", latex_options = "hold_position")
 
@@ -374,7 +374,7 @@ if(knitr:::is_latex_output()){
       `Data wrangling operation` = str_replace_all(`Data wrangling operation`, "`", ""),
     ) %>% 
     kable(
-      caption = "Summary of data wrangling verbs.", 
+      caption = "Summary of data wrangling verbs", 
       booktabs = TRUE,
       format = "latex"
     ) %>% 
@@ -385,7 +385,7 @@ if(knitr:::is_latex_output()){
 } else {
   ch4_scenarios %>% 
     kable(
-      caption = "Summary of data wrangling verbs.", 
+      caption = "Summary of data wrangling verbs", 
       booktabs = TRUE,
       format = "html"
     )

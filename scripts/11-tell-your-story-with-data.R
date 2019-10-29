@@ -248,7 +248,7 @@ price_interaction <- lm(log10_price ~ log10_size * condition,
 get_regression_table(price_interaction) %>% 
   knitr::kable(
     digits = 3,
-    caption = "Regression table for interaction model.", 
+    caption = "Regression table for interaction model", 
     booktabs = TRUE
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),

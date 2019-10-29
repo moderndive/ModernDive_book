@@ -64,7 +64,7 @@ score_model <- lm(score ~ bty_avg, data = evals_ch5)
 get_regression_table(score_model) %>%
   knitr::kable(
     digits = 3,
-    caption = "Previously seen linear regression table.",
+    caption = "Previously seen linear regression table",
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -120,7 +120,7 @@ sampling_scenarios %>%
 ## ----score-model-part-deux, echo=FALSE-----------------------------------
 get_regression_table(score_model) %>%
   knitr::kable(
-    caption = "Previously seen regression table.", 
+    caption = "Previously seen regression table", 
     digits = 3,
     booktabs = TRUE
   ) %>%

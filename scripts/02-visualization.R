@@ -347,7 +347,7 @@ flights_counted <- flights %>%
   summarize(number = n())
 kable(flights_counted,
       digits = 3,
-      caption = "\\label{tab:flights-counted} Number of flights pre-counted for each carrier.", 
+      caption = "\\label{tab:flights-counted} Number of flights pre-counted for each carrier", 
       booktabs = TRUE,
       longtable = TRUE
 ) %>% 

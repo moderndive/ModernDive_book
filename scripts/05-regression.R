@@ -358,7 +358,7 @@ gapminder2007 %>%
   mutate(`Difference versus Africa` = mean - mean_africa) %>%
   knitr::kable(
     digits = 3,
-    caption = "Mean life expectancy by continent and relative differences from mean for Africa.",
+    caption = "Mean life expectancy by continent and relative differences from mean for Africa",
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -526,7 +526,7 @@ score_model <- lm(score ~ bty_avg, data = evals_ch5)
 get_regression_table(score_model) %>%
   knitr::kable(
     digits = 3,
-    caption = "Regression table.",
+    caption = "Regression table",
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -554,7 +554,7 @@ score_model %>%
          upper_ci = conf_high) %>%
   knitr::kable(
     digits = 3,
-    caption = "Regression table using tidy() from broom package.",
+    caption = "Regression table using tidy() from broom package",
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -581,7 +581,7 @@ score_model %>%
   slice(1:10) %>%
   knitr::kable(
     digits = 3,
-    caption = "Regression points using augment() from broom package.",
+    caption = "Regression points using augment() from broom package",
     booktabs = TRUE
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
