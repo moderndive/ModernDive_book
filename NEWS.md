@@ -6,6 +6,8 @@
 * Added Foreword by Kelly S. McConville. Thanks, @mcconvil!
 * Fixed various typos throughout the book and tried to make language consistent. For example, using "data sets" instead of "datasets" or "data-sets".
 * Switched from `gather()` and `spread()` with `tidyr` to `pivot_long()` and `pivot_wide()` following [this tidyverse article](https://tidyr.tidyverse.org/dev/articles/pivot.html)
+* Added `geom_parallel_slopes()` user-defined geom extension to `ggplot2`
+
 
 ***
 
