@@ -40,7 +40,8 @@ evals_ch6 %>%
   knitr::kable(
     digits = 3,
     caption = "A random sample of 5 out of the 463 courses at UT Austin",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -93,7 +94,8 @@ get_regression_table(lifeExp_model) %>%
   knitr::kable(
     digits = 3,
     caption = "Regression table for life expectancy as a function of continent",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -111,7 +113,8 @@ get_regression_table(score_model_interaction) %>%
   knitr::kable(
     digits = 3,
     caption = "Regression table for interaction model", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -127,7 +130,8 @@ tibble(
   knitr::kable(
     digits = 4,
     caption = "Comparison of intercepts and slopes for interaction model", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -166,7 +170,8 @@ get_regression_table(score_model_parallel_slopes) %>%
   knitr::kable(
     digits = 3,
     caption = "Regression table for parallel slopes model", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -182,7 +187,8 @@ tibble(
   knitr::kable(
     digits = 4,
     caption = "Comparison of intercepts and slope for parallel slopes model", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -275,7 +281,8 @@ credit_ch6 %>%
   knitr::kable(
     digits = 3,
     caption = "Random sample of 5 credit card holders",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -306,7 +313,8 @@ credit_ch6 %>%
   knitr::kable(
     digits = 3,
     caption = "Correlation coefficients between credit card debt, credit limit, and income", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -412,7 +420,8 @@ get_regression_table(debt_model) %>%
   knitr::kable(
     digits = 3,
     caption = "Multiple regression table", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -433,7 +442,8 @@ regression_points %>%
   knitr::kable(
     digits = 3,
     caption = "Regression points (First 10 credit card holders out of 400)",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -504,7 +514,8 @@ get_regression_table(model_2_interaction) %>%
   knitr::kable(
     digits = 3,
     caption = "Interaction model regression table", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -521,7 +532,8 @@ get_regression_table(model_2_parallel_slopes) %>%
   knitr::kable(
     digits = 3,
     caption = "Parallel slopes regression table", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -541,7 +553,8 @@ credit_ch6 %>%
   knitr::kable(
     digits = 3,
     caption = "Correlation between income (in dollars) and credit card debt", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -559,7 +572,8 @@ get_regression_table(debt_model) %>%
   knitr::kable(
     digits = 3,
     caption = "Multiple regression results", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))

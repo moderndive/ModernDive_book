@@ -41,7 +41,8 @@ evals_ch5 %>%
   knitr::kable(
     digits = 3,
     caption = "A random sample of 5 out of the 463 courses at UT Austin",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -180,7 +181,8 @@ get_regression_table(score_model) %>%
   knitr::kable(
     digits = 3,
     caption = "Linear regression table",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -215,7 +217,8 @@ evals_ch5 %>%
   knitr::kable(
     digits = 4,
     caption = "Data for the 21st course out of 463",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -247,7 +250,8 @@ regression_points %>%
   knitr::kable(
     digits = 3,
     caption = "Regression points (for only the 21st through 24th courses)",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   )
 
 
@@ -285,7 +289,8 @@ gapminder2007 %>%
   knitr::kable(
     digits = 3,
     caption = "Random sample of 5 out of 142 countries",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -347,7 +352,8 @@ lifeExp_by_continent %>%
   knitr::kable(
     digits = 3,
     caption = "Life expectancy by continent",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   )
 
 
@@ -359,7 +365,8 @@ gapminder2007 %>%
   knitr::kable(
     digits = 3,
     caption = "Mean life expectancy by continent and relative differences from mean for Africa",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -381,7 +388,8 @@ get_regression_table(lifeExp_model) %>%
   knitr::kable(
     digits = 3,
     caption = "Linear regression table",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -402,7 +410,8 @@ regression_points %>%
   knitr::kable(
     digits = 3,
     caption = "Regression points (First 10 out of 142 countries)",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -527,7 +536,8 @@ get_regression_table(score_model) %>%
   knitr::kable(
     digits = 3,
     caption = "Regression table",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -555,7 +565,8 @@ score_model %>%
   knitr::kable(
     digits = 3,
     caption = "Regression table using tidy() from broom package",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -582,7 +593,8 @@ score_model %>%
   knitr::kable(
     digits = 3,
     caption = "Regression points using augment() from broom package",
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))

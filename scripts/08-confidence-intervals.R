@@ -53,7 +53,8 @@ sampling_scenarios %>%
   kable(
     caption = "Scenarios of sampling for inference", 
     booktabs = TRUE,
-    escape = FALSE
+    escape = FALSE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position")) %>%
@@ -708,7 +709,8 @@ if(!file.exists("rds/balls_perc_cis_80_95_99.rds")){
 ##   kable(
 ##     digits = 3,
 ##     caption = "10 randomly sampled confidence intervals for p for varying confidence levels",
-##     booktabs = TRUE,
+##     booktabs = TRUE,,
+##     linesep = ""
 ##     longtable = TRUE
 ##   ) %>%
 ##   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
@@ -751,7 +753,8 @@ percentile_cis_by_level %>%
     digits = 3,
     caption = "Average width of 80, 95, and 99\\% confidence intervals", 
     booktabs = TRUE,
-    longtable = TRUE
+    longtable = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position", "repeat_header"))
@@ -860,7 +863,8 @@ percentile_cis_by_n %>%
     caption = "Average width of 95\\% confidence intervals based on $n = 25$, $50$, and $100$", 
     booktabs = TRUE,
     longtable = TRUE,
-    escape = FALSE
+    escape = FALSE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position", "repeat_header"))
@@ -895,7 +899,8 @@ sampling_scenarios %>%
   kable(
     caption = "Scenarios of sampling for inference", 
     booktabs = TRUE,
-    escape = FALSE
+    escape = FALSE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position")) %>%
@@ -1092,7 +1097,8 @@ tibble(
     caption = "Comparing standard errors", 
     digits = 3, 
     booktabs = TRUE,
-    escape = FALSE
+    escape = FALSE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position", "repeat_header"))
@@ -1108,7 +1114,8 @@ tibble(
     caption = "Comparing standard errors", 
     digits = 3, 
     booktabs = TRUE,
-    escape = FALSE
+    escape = FALSE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position", "repeat_header"))

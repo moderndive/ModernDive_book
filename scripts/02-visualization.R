@@ -64,7 +64,8 @@ tibble(
 ) %>% 
   kable(
     caption = "Summary of the Grammar of Graphics for this plot", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -349,7 +350,8 @@ kable(flights_counted,
       digits = 3,
       caption = "\\label{tab:flights-counted} Number of flights pre-counted for each carrier", 
       booktabs = TRUE,
-      longtable = TRUE
+      longtable = TRUE,
+    linesep = ""
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))

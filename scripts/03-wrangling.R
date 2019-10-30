@@ -376,6 +376,7 @@ if(knitr:::is_latex_output()){
     kable(
       caption = "Summary of data wrangling verbs", 
       booktabs = TRUE,
+      linesep = "",
       format = "latex"
     ) %>% 
     kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),

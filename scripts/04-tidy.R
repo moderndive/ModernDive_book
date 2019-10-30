@@ -109,7 +109,8 @@ stocks_tidy %>%
   kable(
     digits = 2,
     caption = "Stock prices (tidy format)", 
-    booktabs = TRUE
+    booktabs = TRUE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))

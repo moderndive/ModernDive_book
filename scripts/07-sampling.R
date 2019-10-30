@@ -345,9 +345,10 @@ comparing_n_table <- virtual_prop %>%
 comparing_n_table  %>% 
   kable(
     digits = 3,
-      caption = "Comparing standard deviations of proportions red for three different shovels", 
-      booktabs = TRUE
-) %>% 
+    caption = "Comparing standard deviations of proportions red for three different shovels", 
+    booktabs = TRUE,
+    linesep = ""
+  ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
 
@@ -373,8 +374,9 @@ comparing_n_table <- virtual_prop %>%
 comparing_n_table  %>% 
   kable(
     digits = 3,
-      caption = "Previously seen comparing standard deviations of proportions red for three different shovels", 
-      booktabs = TRUE
+    caption = "Previously seen comparing standard deviations of proportions red for three different shovels", 
+    booktabs = TRUE,
+    linesep = ""
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -419,7 +421,8 @@ comparing_n_table  %>%
     digits = 3,
     caption = "Three standard errors of the sample proportion based on sample sizes of 25, 50, and 100", 
     booktabs = TRUE,
-    escape = FALSE
+    escape = FALSE,
+    linesep = ""
 ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -484,7 +487,8 @@ comparing_n_table  %>%
     digits = 3,
     caption = "Three standard errors of the sample proportion based on n = 25, 50, 100", 
     booktabs = TRUE,
-    escape = FALSE
+    escape = FALSE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
@@ -513,7 +517,8 @@ sampling_scenarios %>%
   kable(
     caption = "\\label{tab:summarytable-ch8}Scenarios of sampling for inference", 
     booktabs = TRUE,
-    escape = FALSE
+    escape = FALSE,
+    linesep = ""
   ) %>% 
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position")) %>%
