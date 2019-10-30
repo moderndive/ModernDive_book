@@ -177,13 +177,18 @@ p1 + p2
 
 ## ---- eval=FALSE---------------------------------------------------------
 ## # Plot parallel slopes model
-## gg_parallel_slopes(y = "log10_price", num_x = "log10_size",
-##                    cat_x = "condition", data = house_prices,
-##                    alpha = 0.05)
+## ggplot(house_prices,
+##        aes(x = log10_size, y = log10_price, col = condition)) +
+##   geom_point(alpha = 0.05) +
+##   geom_parallel_slopes(se = FALSE) +
+##   labs(y = "log10 price",
+##        x = "log10 size",
+##        title = "House prices in Seattle")
 
 ## ----house-price-parallel-slopes, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction and parallel slopes models."----
-interaction <- ggplot(house_prices, 
-                      aes(x = log10_size, y = log10_price, col = condition)) +
+interaction <- 
+  ggplot(house_prices, 
+         aes(x = log10_size, y = log10_price, col = condition)) +
   geom_point(alpha = 0.05) +
   labs(y = "log10 price", x = "log10 size") +
   geom_smooth(method = "lm", se = FALSE) +
@@ -192,8 +197,10 @@ interaction <- ggplot(house_prices,
        x = "log10 size", 
        y = "log10 price")
 parallel_slopes <- 
-  gg_parallel_slopes(y = "log10_price", num_x = "log10_size", 
-                     cat_x = "condition", data = house_prices, alpha = 0.05) +
+  ggplot(house_prices, 
+         aes(x = log10_size, y = log10_price, col = condition)) +
+  geom_point(alpha = 0.05) +
+  geom_parallel_slopes(se = FALSE) +
   labs(y = NULL, x = "log10 size")
 if(knitr::is_html_output()){
   interaction + parallel_slopes

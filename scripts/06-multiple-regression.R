@@ -135,13 +135,17 @@ options(digits = 3)
 
 
 ## ----eval=FALSE----------------------------------------------------------
-## gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender",
-##                    data = evals_ch6)
+## ggplot(evals_ch6, aes(x = age, y = score, color = gender)) +
+##   geom_point() +
+##   labs(x = "Age", y = "Teaching Score", color = "Gender") +
+##   geom_parallel_slopes(se = FALSE)
 
 
 ## ----numxcatx-parallel, echo=FALSE, warning=FALSE, fig.cap="Parallel slopes model of relationship of score with age and gender."----
-par_slopes <- gg_parallel_slopes(y = "score", num_x = "age", cat_x = "gender", 
-                   data = evals_ch6)
+par_slopes <- ggplot(evals_ch6, aes(x = age, y = score, color = gender)) +
+  geom_point() +
+  labs(x = "Age", y = "Teaching Score", color = "Gender") +
+  geom_parallel_slopes(se = FALSE)
 if(knitr::is_html_output()){
   par_slopes
 } else {
@@ -191,10 +195,10 @@ interaction_plot <- ggplot(evals_ch6, aes(x = age, y = score, color = gender), s
   labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
   geom_smooth(method = "lm", se = FALSE) +
   theme(legend.position = "none")
-parallel_slopes_plot <- gg_parallel_slopes(y = "score", 
-                                           num_x = "age", 
-                                           cat_x = "gender", 
-                                           data = evals_ch6) +
+parallel_slopes_plot <- ggplot(evals_ch6, aes(x = age, y = score, color = gender), show.legend = FALSE) +
+  geom_point() +
+  labs(x = "Age", y = "Teaching Score", title = "Interaction model") +
+  geom_parallel_slopes(se = FALSE) +
   labs(x = "Age", y = "Teaching Score", title = "Parallel slopes model") +
   theme(axis.title.y = element_blank())
 
@@ -452,28 +456,30 @@ if(knitr::is_html_output()){
 ## ggplot(MA_schools,
 ##        aes(x = perc_disadvan, y = average_sat_math, color = size)) +
 ##   geom_point(alpha = 0.25) +
-##   geom_smooth(method = "lm", se = FALSE ) +
+##   geom_smooth(method = "lm", se = FALSE) +
 ##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
 ##        color = "School size", title = "Interaction model")
 ## 
 ## # Parallel slopes model
-## gg_parallel_slopes(y = "average_sat_math", num_x = "perc_disadvan",
-##                    cat_x = "size", data = MA_schools, alpha = 0.25) +
-##   labs(x = "Percent economically disadvantaged",
-##        y = "Math SAT Score",
-##        color = "School size",
-##        title = "Parallel slopes model")
+## ggplot(MA_schools,
+##        aes(x = perc_disadvan, y = average_sat_math, color = size)) +
+##   geom_point(alpha = 0.25) +
+##   geom_parallel_slopes(se = FALSE) +
+##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
+##        color = "School size", title = "Parallel slopes model")
 
 ## ----numxcatx-comparison-2, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for Massachusetts schools."----
 p1 <- ggplot(MA_schools, 
              aes(x = perc_disadvan, y = average_sat_math, color = size)) +
   geom_point(alpha = 0.25) +
-  geom_smooth(method = "lm", se = FALSE ) +
+  geom_smooth(method = "lm", se = FALSE) +
   labs(x = "Percent economically disadvantaged", y = "Math SAT Score", 
        color = "School size", title = "Interaction model") + 
   theme(legend.position = "none")
-p2 <- gg_parallel_slopes(y = "average_sat_math", num_x = "perc_disadvan", 
-                         cat_x = "size", data = MA_schools, alpha = 0.25) + 
+p2 <- ggplot(MA_schools, 
+       aes(x = perc_disadvan, y = average_sat_math, color = size)) +
+  geom_point(alpha = 0.25) +
+  geom_parallel_slopes(se = FALSE) + 
   labs(x = "Percent economically disadvantaged", y = "Math SAT Score", 
        color = "School size", title = "Parallel slopes model")  +
   theme(axis.title.y = element_blank())
