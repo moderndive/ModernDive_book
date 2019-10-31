@@ -177,6 +177,12 @@ get_regression_table(score_model_parallel_slopes) %>%
                 latex_options = c("hold_position"))
 
 
+## ----echo=FALSE----------------------------------------------------------
+age_coef <- get_regression_table(score_model_parallel_slopes) %>% 
+  filter(term == "age") %>% 
+  pull(estimate)
+
+
 ## ----parallel-slopes-summary, echo=FALSE---------------------------------
 options(digits = 4)
 tibble(
