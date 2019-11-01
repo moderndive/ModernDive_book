@@ -361,7 +361,7 @@ kable(flights_counted,
 
 
 
-## ----carrierpie, echo=FALSE, fig.cap="The dreaded pie chart.", out.width="88%"----
+## ----carrierpie, echo=FALSE, fig.cap="The dreaded pie chart.", fig.height=4.8----
 if(knitr::is_html_output()){
   ggplot(flights, mapping = aes(x = factor(1), fill = carrier)) +
     geom_bar(width = 1) +
@@ -395,7 +395,7 @@ if(knitr::is_html_output()){
 
 
 
-## ---- fig.height=2.5, eval=FALSE-----------------------------------------
+## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(data = flights, mapping = aes(x = carrier)) +
 ##   geom_bar()
 
@@ -405,7 +405,7 @@ if(knitr::is_html_output()){
 ##   geom_bar()
 
 
-## ----flights-stacked-bar, echo=FALSE, fig.cap="Stacked barplot comparing the number of flights by carrier and origin.", fig.height=3.5----
+## ----flights-stacked-bar, echo=FALSE, fig.cap="Stacked barplot of flight amount by carrier and origin.", fig.height=2.8----
 if(knitr::is_html_output()) {
   ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
     geom_bar()
@@ -442,7 +442,7 @@ if(knitr::is_html_output()){
 ##   geom_bar(position = "dodge")
 
 
-## ----flights-dodged-bar-color, echo=FALSE, fig.cap="Side-by-side barplot comparing number of flights by carrier and origin.", fig.height=2.8----
+## ----flights-dodged-bar-color, echo=FALSE, fig.cap="Side-by-side barplot comparing number of flights by carrier and origin.", fig.height=3.5----
 if(knitr::is_html_output()){
   ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
     geom_bar(position = "dodge")

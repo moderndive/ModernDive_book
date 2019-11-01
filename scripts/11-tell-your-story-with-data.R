@@ -173,9 +173,6 @@ p1 + p2
 ##   labs(y = "log10 price",
 ##        x = "log10 size",
 ##        title = "House prices in Seattle")
-
-
-## ---- eval=FALSE---------------------------------------------------------
 ## # Plot parallel slopes model
 ## ggplot(house_prices,
 ##        aes(x = log10_size, y = log10_price, col = condition)) +
@@ -246,6 +243,7 @@ if(!knitr::is_latex_output()){
 ## # Fit regression model:
 ## price_interaction <- lm(log10_price ~ log10_size * condition,
 ##                         data = house_prices)
+## 
 ## # Get regression table:
 ## get_regression_table(price_interaction)
 

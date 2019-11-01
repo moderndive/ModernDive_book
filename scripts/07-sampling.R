@@ -419,7 +419,7 @@ comparing_n_table <- virtual_prop %>%
 comparing_n_table  %>% 
   kable(
     digits = 3,
-    caption = "Three standard errors of the sample proportion based on sample sizes of 25, 50, and 100", 
+    caption = "Standard errors of the sample proportion based on sample sizes of 25, 50, and 100", 
     booktabs = TRUE,
     escape = FALSE,
     linesep = ""
@@ -485,7 +485,7 @@ comparing_n_table <- virtual_prop %>%
 comparing_n_table  %>% 
   kable(
     digits = 3,
-    caption = "Three standard errors of the sample proportion based on n = 25, 50, 100", 
+    caption = "Standard errors of $\\widehat{p}$ based on n = 25, 50, 100", 
     booktabs = TRUE,
     escape = FALSE,
     linesep = ""

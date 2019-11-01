@@ -296,7 +296,7 @@ obs_diff_prop
 
 
 ## ----null-distribution-infer, fig.show='hold', fig.cap="Null distribution.", fig.height=3.5----
-visualize(null_distribution, binwidth = 0.1)
+visualize(null_distribution, bins = 10)
 
 
 ## ----null-distribution-infer-2, fig.cap="Shaded histogram to show $p$-value."----
@@ -505,6 +505,7 @@ movies_sample %>%
 
 
 ## ----echo=FALSE----------------------------------------------------------
+set.seed(76)
 if(!file.exists("rds/movies_sample_generate.rds")){
   movies_sample_generate <- movies_sample %>% 
     specify(formula = rating ~ genre) %>% 

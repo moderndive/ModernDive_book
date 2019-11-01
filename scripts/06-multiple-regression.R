@@ -145,7 +145,7 @@ options(digits = 3)
 ##   geom_parallel_slopes(se = FALSE)
 
 
-## ----numxcatx-parallel, echo=FALSE, warning=FALSE, fig.cap="Parallel slopes model of relationship of score with age and gender."----
+## ----numxcatx-parallel, echo=FALSE, warning=FALSE, fig.cap="Parallel slopes model of score with age and gender.", fig.height=2.6----
 par_slopes <- ggplot(evals_ch6, aes(x = age, y = score, color = gender)) +
   geom_point() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
@@ -225,7 +225,7 @@ if(knitr::is_html_output()){
 }
 
 
-## ----fitted-values, echo=FALSE, warning=FALSE, fig.cap="Fitted values for two new professors.", fig.height=3.8----
+## ----fitted-values, echo=FALSE, warning=FALSE, fig.cap="Fitted values for two new professors.", fig.height=4.2----
 newpoints <- evals_ch6 %>% 
   slice(c(1, 5)) %>% 
   get_regression_points(score_model_interaction, newdata = .)
@@ -277,9 +277,7 @@ glimpse(credit_ch6)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## set.seed(9)
-## credit_ch6 %>%
-##   sample_n(size = 5)
+## credit_ch6 %>% sample_n(size = 5)
 
 ## ----model3-data-preview, echo=FALSE-------------------------------------
 credit_ch6 %>%
@@ -295,16 +293,12 @@ credit_ch6 %>%
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## credit_ch6 %>%
-##   select(debt, credit_limit, income) %>%
-##   skim()
+## credit_ch6 %>% select(debt, credit_limit, income) %>% skim()
 
 
 ## ---- eval=FALSE---------------------------------------------------------
-## credit_ch6 %>%
-##   get_correlation(debt ~ credit_limit)
-## credit_ch6 %>%
-##   get_correlation(debt ~ income)
+## credit_ch6 %>% get_correlation(debt ~ credit_limit)
+## credit_ch6 %>% get_correlation(debt ~ income)
 
 
 ## ---- eval=FALSE---------------------------------------------------------
@@ -329,17 +323,21 @@ credit_ch6 %>%
 ## ---- eval=FALSE---------------------------------------------------------
 ## ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
 ##   geom_point() +
-##   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)",
+##   labs(x = "Credit limit (in $)",
+##        y = "Credit card debt (in $)",
 ##        title = "Debt and credit limit") +
 ##   geom_smooth(method = "lm", se = FALSE)
-## 
+
+
+## ----eval=FALSE----------------------------------------------------------
 ## ggplot(credit_ch6, aes(x = income, y = debt)) +
 ##   geom_point() +
-##   labs(x = "Income (in $1000)", y = "Credit card debt (in $)",
+##   labs(x = "Income (in $1000)",
+##        y = "Credit card debt (in $)",
 ##        title = "Debt and income") +
 ##   geom_smooth(method = "lm", se = FALSE)
 
-## ----2numxplot1, echo=FALSE, fig.cap="Relationship between credit card debt and credit limit/income."----
+## ----2numxplot1, echo=FALSE, fig.cap="Relationship between credit card debt and credit limit/income.", fig.height=5.5----
 model3_balance_vs_limit_plot <- ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
   geom_point() +
   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)", 
@@ -455,7 +453,7 @@ regression_points %>%
                 latex_options = c("hold_position"))
 
 
-## ----recall-parallel-vs-interaction, fig.width=8, echo=FALSE, fig.cap="Previously seen comparison of interaction and parallel slopes models."----
+## ----recall-parallel-vs-interaction, fig.height=5, echo=FALSE, fig.cap="Previously seen comparison of interaction and parallel slopes models."----
 if(knitr::is_html_output()){
   interaction_plot + parallel_slopes_plot
 } else {
@@ -475,7 +473,9 @@ if(knitr::is_html_output()){
 ##   geom_smooth(method = "lm", se = FALSE) +
 ##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
 ##        color = "School size", title = "Interaction model")
-## 
+
+
+## ---- eval=FALSE---------------------------------------------------------
 ## # Parallel slopes model
 ## ggplot(MA_schools,
 ##        aes(x = perc_disadvan, y = average_sat_math, color = size)) +
@@ -484,7 +484,7 @@ if(knitr::is_html_output()){
 ##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
 ##        color = "School size", title = "Parallel slopes model")
 
-## ----numxcatx-comparison-2, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for Massachusetts schools."----
+## ----numxcatx-comparison-2, fig.height=4, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for Massachusetts schools."----
 p1 <- ggplot(MA_schools, 
              aes(x = perc_disadvan, y = average_sat_math, color = size)) +
   geom_point(alpha = 0.25) +

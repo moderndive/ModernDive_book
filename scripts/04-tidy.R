@@ -216,7 +216,7 @@ guat_dem_tidy <- guat_dem %>%
 guat_dem_tidy
 
 
-## ----guat-dem-tidy, fig.cap="Democracy scores in Guatemala 1952-1992.", fig.height=3.5----
+## ----guat-dem-tidy, fig.cap="Democracy scores in Guatemala 1952-1992.", fig.height=2.6----
 ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
   geom_line() +
   labs(x = "Year", y = "Democracy Score")

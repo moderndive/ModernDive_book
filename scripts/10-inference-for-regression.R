@@ -249,6 +249,7 @@ evals_ch5 %>%
 ##   specify(formula = score ~ bty_avg) %>%
 ##   generate(reps = 1000, type = "bootstrap") %>%
 ##   calculate(stat = "slope")
+## bootstrap_distn_slope
 
 ## ----echo=FALSE----------------------------------------------------------
 if(!file.exists("rds/bootstrap_distn_slope.rds")){
@@ -262,8 +263,6 @@ if(!file.exists("rds/bootstrap_distn_slope.rds")){
 } else {
   bootstrap_distn_slope <- readRDS("rds/bootstrap_distn_slope.rds")
 }
-
-## ------------------------------------------------------------------------
 bootstrap_distn_slope
 
 
@@ -330,7 +329,7 @@ if(!file.exists("rds/null_distn_slope.rds")){
 visualize(null_distn_slope)
 
 
-## ----p-value-slope, echo=FALSE, fig.show='hold', fig.cap="Null distribution and $p$-value."----
+## ----p-value-slope, echo=FALSE, fig.show='hold', fig.cap="Null distribution and $p$-value.", fig.height=3----
 visualize(null_distn_slope) + 
   shade_p_value(obs_stat = observed_slope, direction = "both")
 
