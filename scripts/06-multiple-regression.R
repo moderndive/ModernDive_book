@@ -453,7 +453,7 @@ regression_points %>%
                 latex_options = c("hold_position"))
 
 
-## ----recall-parallel-vs-interaction, fig.height=5, echo=FALSE, fig.cap="Previously seen comparison of interaction and parallel slopes models."----
+## ----recall-parallel-vs-interaction, fig.height=3.5, echo=FALSE, fig.cap="Previously seen comparison of interaction and parallel slopes models."----
 if(knitr::is_html_output()){
   interaction_plot + parallel_slopes_plot
 } else {
@@ -484,7 +484,7 @@ if(knitr::is_html_output()){
 ##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
 ##        color = "School size", title = "Parallel slopes model")
 
-## ----numxcatx-comparison-2, fig.height=4, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for Massachusetts schools."----
+## ----numxcatx-comparison-2, fig.height=3, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for Massachusetts schools."----
 p1 <- ggplot(MA_schools, 
              aes(x = perc_disadvan, y = average_sat_math, color = size)) +
   geom_point(alpha = 0.25) +
@@ -566,7 +566,7 @@ credit_ch6 %>%
                 latex_options = c("hold_position"))
 
 
-## ----2numxplot1-repeat, echo=FALSE, fig.cap="Relationship between credit card debt and income."----
+## ----2numxplot1-repeat, echo=FALSE, fig.cap="Relationship between credit card debt and income.", fig.height=3.2----
 model3_balance_vs_income_plot
 
 
@@ -585,14 +585,14 @@ get_regression_table(debt_model) %>%
                 latex_options = c("hold_position"))
 
 
-## ----credit-limit-quartiles, echo=FALSE, fig.height=4, fig.cap="Histogram of credit limits and brackets.", message=FALSE----
+## ----credit-limit-quartiles, echo=FALSE, fig.height=2.9, fig.cap="Histogram of credit limits and brackets.", message=FALSE----
 ggplot(credit_ch6, aes(x = credit_limit)) +
   geom_histogram(color = "white") +
   geom_vline(xintercept = quantile(credit_ch6$credit_limit, probs = c(0.25, 0.5, 0.75)), linetype = "dashed", size = 1) +
   labs(x = "Credit limit", title = "Credit limit and 4 credit limit brackets.")
 
 
-## ----2numxplot4, echo=FALSE, fig.cap="Relationship between credit card debt and income by credit limit bracket."----
+## ----2numxplot4, echo=FALSE, fig.cap="Relationship between credit card debt and income by credit limit bracket.", fig.height=3----
 credit_ch6 <- credit_ch6 %>% 
   mutate(limit_bracket = cut_number(credit_limit, 4)) %>% 
   mutate(limit_bracket = fct_recode(limit_bracket,
