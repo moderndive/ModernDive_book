@@ -302,7 +302,7 @@ US_births_1999 <- US_births_1994_2003 %>%
 ## ----us-births, fig.cap="Number of births in US in 1999.", fig.height=5, fig.align='center'----
 ggplot(US_births_1999, aes(x = date, y = births)) +
   geom_line() +
-  labs(x = "Data", y = "Number of births", title = "US Births in 1999")
+  labs(x = "Date", y = "Number of births", title = "US Births in 1999")
 
 
 ## ------------------------------------------------------------------------
