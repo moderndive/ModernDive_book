@@ -21,6 +21,6 @@ ModernDive is built using RStudio's [`bookdown`](https://www.rstudio.com/resourc
 
 ## More Information
 
-* Contact Albert at [albert.ys.kim@gmail.com](mailto:albert.ys.kim@gmail.com) and Chester [chester.ismay@gmail.com](mailto:chester.ismay@gmail.com).
+* Contact Albert at [albert.ys.kim@gmail.com](mailto:albert.ys.kim@gmail.com) and Chester at [chester.ismay@gmail.com](mailto:chester.ismay@gmail.com).
 * We're on Twitter at [ModernDive](https://twitter.com/ModernDive).
 * If you would like to receive periodic updates about ModernDive (roughly every 3 months), please sign up for our [mailing list](http://eepurl.com/cBkItf).
