@@ -1,10 +1,10 @@
-## ----message=FALSE-------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(nycflights13)
 library(ggplot2)
 library(dplyr)
 
 
-## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
+## ----message=FALSE, warning=FALSE, echo=FALSE---------------------------------
 # Packages needed internally, but not in book.
 library(gapminder)
 library(knitr)
@@ -15,7 +15,7 @@ library(scales)
 library(stringr)
 
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 gapminder_2007 <- gapminder %>% 
   filter(year == 2007) %>% 
   select(-year) %>% 
@@ -28,7 +28,7 @@ gapminder_2007 <- gapminder %>%
   )
 
 
-## ----gapminder-2007, echo=FALSE------------------------------------------
+## ----gapminder-2007, echo=FALSE-----------------------------------------------
 gapminder_2007 %>% 
   head(3) %>% 
   kable(
@@ -56,7 +56,7 @@ if(knitr::is_html_output()){
 }
 
 
-## ----summary-table-gapminder, echo=FALSE---------------------------------
+## ----summary-table-gapminder, echo=FALSE--------------------------------------
 tibble(
   `data variable` = c("GDP per Capita", "Life Expectancy", "Population", "Continent"),
   aes = c("x", "y", "size", "color"),
@@ -71,7 +71,7 @@ tibble(
                 latex_options = c("hold_position"))
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 alaska_flights <- flights %>% 
   filter(carrier == "AS")
 
@@ -82,7 +82,7 @@ alaska_flights <- flights %>%
 
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
 ##   geom_point()
 
@@ -92,7 +92,7 @@ ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
   geom_point()
 
 
-## ----nolayers, fig.cap="A plot with no layers.", fig.height=2.5----------
+## ----nolayers, fig.cap="A plot with no layers.", fig.height=2.5---------------
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 
@@ -130,7 +130,7 @@ ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 early_january_weather <- weather %>% 
   filter(origin == "EWR" & month == 1 & day <= 15)
 
@@ -172,17 +172,17 @@ ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(color = "white")
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 ## ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(color = "white", fill = "steelblue")
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 ## ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(bins = 40, color = "white")
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 ## ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(binwidth = 10, color = "white")
 
@@ -201,7 +201,7 @@ hist_1 + hist_2
 
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(binwidth = 5, color = "white") +
 ##   facet_wrap(~ month)
@@ -223,7 +223,7 @@ if(knitr::is_latex_output()){
 }
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(binwidth = 5, color = "white") +
 ##   facet_wrap(~ month, nrow = 4)
@@ -249,7 +249,7 @@ if(knitr::is_latex_output()){
 
 
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 n_nov <- weather %>% 
   filter(month == 11) %>% 
   nrow()
@@ -295,7 +295,7 @@ boxplot_3 <- base_plot +
 boxplot_1 + boxplot_2 + boxplot_3
 
 
-## ----badbox, fig.cap="Invalid boxplot specification.", fig.height=3------
+## ----badbox, fig.cap="Invalid boxplot specification.", fig.height=3-----------
 ggplot(data = weather, mapping = aes(x = month, y = temp)) +
   geom_boxplot()
 
@@ -309,7 +309,7 @@ ggplot(data = weather, mapping = aes(x = factor(month), y = temp)) +
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 fruits <- tibble(
   fruit = c("apple", "apple", "orange", "apple", "orange")
 )
@@ -319,11 +319,11 @@ fruits_counted <- tibble(
 )
 
 
-## ----fruits, echo=FALSE--------------------------------------------------
+## ----fruits, echo=FALSE-------------------------------------------------------
 fruits
 
 
-## ----fruitscounted, echo=FALSE-------------------------------------------
+## ----fruitscounted, echo=FALSE------------------------------------------------
 fruits_counted
 
 
@@ -337,12 +337,12 @@ ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
 
-## ----flightsbar, fig.cap='(ref:geombar)', fig.height=2.8-----------------
+## ----flightsbar, fig.cap='(ref:geombar)', fig.height=2.8----------------------
 ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
 
 
-## ----flights-counted, message=FALSE, echo=FALSE--------------------------
+## ----flights-counted, message=FALSE, echo=FALSE-------------------------------
 flights_counted <- flights %>% 
   group_by(carrier) %>% 
   summarize(number = n())
@@ -395,12 +395,12 @@ if(knitr::is_html_output()){
 
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## ggplot(data = flights, mapping = aes(x = carrier)) +
 ##   geom_bar()
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
 ##   geom_bar()
 
@@ -416,12 +416,12 @@ if(knitr::is_html_output()) {
 }
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## ggplot(data = flights, mapping = aes(x = carrier), fill = origin) +
 ##   geom_bar()
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = flights, mapping = aes(x = carrier, color = origin)) +
 ##   geom_bar()
 
@@ -437,7 +437,7 @@ if(knitr::is_html_output()){
 }
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
 ##   geom_bar(position = "dodge")
 
@@ -453,7 +453,7 @@ if(knitr::is_html_output()){
 }
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
 ##   geom_bar(position = position_dodge(preserve = "single"))
 
@@ -469,7 +469,7 @@ if(knitr::is_html_output()){
 }
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = flights, mapping = aes(x = carrier)) +
 ##   geom_bar() +
 ##   facet_wrap(~ origin, ncol = 1)
@@ -497,7 +497,7 @@ if(knitr::is_latex_output()){
 
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## # Segment 1:
 ## ggplot(data = flights, mapping = aes(x = carrier)) +
 ##   geom_bar()
@@ -524,7 +524,7 @@ if(knitr:::is_html_output()){
 }
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## alaska_flights <- flights %>%
 ##   filter(carrier == "AS")
 ## 
@@ -532,7 +532,7 @@ if(knitr:::is_html_output()){
 ##   geom_point()
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## early_january_weather <- weather %>%
 ##   filter(origin == "EWR" & month == 1 & day <= 15)
 ## 

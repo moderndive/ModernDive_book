@@ -1,4 +1,4 @@
-## ----setup_thinking_with_data, include=FALSE-----------------------------
+## ----setup_thinking_with_data, include=FALSE----------------------------------
 chap <- 11
 lc <- 0
 rq <- 0
@@ -24,13 +24,13 @@ set.seed(76)
 knitr::include_graphics("images/r4ds/data_science_pipeline.png")
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 ## library(tidyverse)
 ## library(moderndive)
 ## library(skimr)
 ## library(fivethirtyeight)
 
-## ---- message=FALSE, warning=FALSE, echo=FALSE---------------------------
+## ---- message=FALSE, warning=FALSE, echo=FALSE--------------------------------
 library(tidyverse)
 library(moderndive)
 # DO NOT load the skimr package as a whole as it will break all kable() code for 
@@ -40,7 +40,7 @@ library(moderndive)
 library(fivethirtyeight)
 
 
-## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
+## ----message=FALSE, warning=FALSE, echo=FALSE---------------------------------
 # Packages needed internally, but not in text.
 library(knitr)
 library(kableExtra)
@@ -48,15 +48,15 @@ library(patchwork)
 library(scales)
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 ## View(house_prices)
 ## glimpse(house_prices)
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 glimpse(house_prices)
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 ## gain_summary <- flights %>%
 ##   summarize(
 ##     min = min(gain, na.rm = TRUE),
@@ -70,13 +70,13 @@ glimpse(house_prices)
 ##   )
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 ## house_prices %>%
 ##   select(price, sqft_living, condition) %>%
 ##   skim()
 
 
-## ---- eval = FALSE, message=FALSE, warning=FALSE-------------------------
+## ---- eval = FALSE, message=FALSE, warning=FALSE------------------------------
 ## # Histogram of house price:
 ## ggplot(house_prices, aes(x = price)) +
 ##   geom_histogram(color = "white") +
@@ -106,7 +106,7 @@ p3 <- ggplot(house_prices, aes(x = condition)) +
 p1 + p2 + p3 + plot_layout(ncol = 2)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 house_prices <- house_prices %>%
   mutate(
     log10_price = log10(price),
@@ -114,12 +114,12 @@ house_prices <- house_prices %>%
     )
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 house_prices %>% 
   select(price, log10_price, sqft_living, log10_size)
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## # Before log10-transformation:
 ## ggplot(house_prices, aes(x = price)) +
 ##   geom_histogram(color = "white") +
@@ -141,7 +141,7 @@ p2 <- ggplot(house_prices, aes(x = log10_price)) +
 p1 + p2
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 ## # Before log10-transformation:
 ## ggplot(house_prices, aes(x = sqft_living)) +
 ##   geom_histogram(color = "white") +
@@ -164,7 +164,7 @@ p2 <- ggplot(house_prices, aes(x = log10_size)) +
 p1 + p2
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## # Plot interaction model
 ## ggplot(house_prices,
 ##        aes(x = log10_size, y = log10_price, col = condition)) +
@@ -207,7 +207,7 @@ if(knitr::is_html_output()){
 }
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(house_prices,
 ##        aes(x = log10_size, y = log10_price, col = condition)) +
 ##   geom_point(alpha = 0.4) +
@@ -239,7 +239,7 @@ if(!knitr::is_latex_output()){
 }
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## # Fit regression model:
 ## price_interaction <- lm(log10_price ~ log10_size * condition,
 ##                         data = house_prices)
@@ -247,7 +247,7 @@ if(!knitr::is_latex_output()){
 ## # Get regression table:
 ## get_regression_table(price_interaction)
 
-## ----seattle-interaction, echo=FALSE-------------------------------------
+## ----seattle-interaction, echo=FALSE------------------------------------------
 price_interaction <- lm(log10_price ~ log10_size * condition, 
                         data = house_prices)
 get_regression_table(price_interaction) %>% 
@@ -278,11 +278,11 @@ if(knitr::is_html_output()){
 }
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 2.45 + 1 * log10(1900)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 10^(2.45 + 1 * log10(1900))
 
 
@@ -290,11 +290,11 @@ if(knitr::is_html_output()){
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 glimpse(US_births_1994_2003)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 US_births_1999 <- US_births_1994_2003 %>%
   filter(year == 1999)
 
@@ -305,7 +305,7 @@ ggplot(US_births_1999, aes(x = date, y = births)) +
   labs(x = "Date", y = "Number of births", title = "US Births in 1999")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 US_births_1999 %>% 
   arrange(desc(births))
 
@@ -314,7 +314,7 @@ US_births_1999 %>%
 
 
 
-## ----script-files-table, echo=FALSE, message=FALSE-----------------------
+## ----script-files-table, echo=FALSE, message=FALSE----------------------------
 if(!file.exists("rds/chapter_script_pub_files.rds")){
   chapter_script_pub_files <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtqCUn7IdKJMgQ8LmXl7-us2DVxKCPz0w5BHhO5JLOof0gRfmv0DK1xw1PDC7PhIhUglb4Q_JA2zsg/pub?gid=0&single=true&output=csv" %>% 
     read_csv(na = "")

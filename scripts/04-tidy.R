@@ -1,4 +1,4 @@
-## ----setup_tidy, include=FALSE-------------------------------------------
+## ----setup_tidy, include=FALSE------------------------------------------------
 chap <- 4
 lc <- 0
 rq <- 0
@@ -22,7 +22,7 @@ options(knitr.kable.NA = '')
 set.seed(76)
 
 
-## ----warning=FALSE, message=FALSE----------------------------------------
+## ----warning=FALSE, message=FALSE---------------------------------------------
 library(dplyr)
 library(ggplot2)
 library(readr)
@@ -31,7 +31,7 @@ library(nycflights13)
 library(fivethirtyeight)
 
 
-## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
+## ----message=FALSE, warning=FALSE, echo=FALSE---------------------------------
 # Packages needed internally, but not in text.
 library(knitr)
 library(kableExtra)
@@ -39,26 +39,26 @@ library(stringr)
 library(scales)
 
 
-## ----message=FALSE, eval=FALSE-------------------------------------------
+## ----message=FALSE, eval=FALSE------------------------------------------------
 ## library(readr)
 ## dem_score <- read_csv("https://moderndive.com/data/dem_score.csv")
 ## dem_score
 
-## ----message=FALSE, echo=FALSE-------------------------------------------
+## ----message=FALSE, echo=FALSE------------------------------------------------
 dem_score <- read_csv("data/dem_score.csv")
 dem_score
 
 
-## ----read-excel, echo=FALSE, fig.cap="Importing an Excel file to R."-----
+## ----read-excel, echo=FALSE, fig.cap="Importing an Excel file to R."----------
 include_graphics("images/rstudio_screenshots/read_excel.png")
 
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 drinks %>% 
   head(5)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 drinks_smaller <- drinks %>% 
   filter(country %in% c("USA", "China", "Italy", "Saudi Arabia")) %>% 
   select(-total_litres_of_pure_alcohol) %>% 
@@ -82,11 +82,11 @@ if(knitr::is_html_output()){
 }
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 drinks_smaller_tidy
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 drinks_smaller
 
 
@@ -94,7 +94,7 @@ drinks_smaller
 
 
 
-## ----tidy-stocks, echo=FALSE---------------------------------------------
+## ----tidy-stocks, echo=FALSE--------------------------------------------------
 stocks_tidy <- stocks %>% 
   rename(
     Boeing = `Boeing stock price`,
@@ -116,7 +116,7 @@ stocks_tidy %>%
                 latex_options = c("hold_position"))
 
 
-## ----tidy-stocks-2, echo=FALSE-------------------------------------------
+## ----tidy-stocks-2, echo=FALSE------------------------------------------------
 stocks <- tibble(
   Date = as.Date('2009-01-01') + 0:4,
   `Boeing Price` = paste("$", c("173.55", "172.61", "173.86", "170.77", "174.29"), sep = ""),
@@ -142,11 +142,11 @@ stocks %>%
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 drinks_smaller
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 drinks_smaller_tidy <- drinks_smaller %>% 
   pivot_longer(names_to = "type", 
                values_to = "servings", 
@@ -154,21 +154,21 @@ drinks_smaller_tidy <- drinks_smaller %>%
 drinks_smaller_tidy
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## drinks_smaller %>%
 ##   pivot_longer(names_to = "type",
 ##                values_to = "servings",
 ##                cols = c(beer, spirit, wine))
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## drinks_smaller %>%
 ##   pivot_longer(names_to = "type",
 ##                values_to = "servings",
 ##                cols = beer:wine)
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(drinks_smaller_tidy,
 ##        aes(x = country, y = servings, fill = type)) +
 ##   geom_col(position = "dodge")
@@ -189,11 +189,11 @@ if(knitr::is_html_output()){
 ## \vspace{-0.25in}
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## airline_safety
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 airline_safety_smaller <- airline_safety %>% 
   select(-c(incl_reg_subsidiaries, avail_seat_km_per_week))
 airline_safety_smaller
@@ -201,13 +201,13 @@ airline_safety_smaller
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 guat_dem <- dem_score %>% 
   filter(country == "Guatemala")
 guat_dem
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 guat_dem_tidy <- guat_dem %>% 
   pivot_longer(names_to = "year", 
                values_to = "democracy_score", 
@@ -226,18 +226,18 @@ ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
 
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## library(dplyr)
 ## library(ggplot2)
 ## library(readr)
 ## library(tidyr)
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## library(tidyverse)
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## library(ggplot2)
 ## library(dplyr)
 ## library(tidyr)

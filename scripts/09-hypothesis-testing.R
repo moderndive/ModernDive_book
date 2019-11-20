@@ -1,11 +1,11 @@
-## ----appendixb, echo=FALSE, results="asis"-------------------------------
+## ----appendixb, echo=FALSE, results="asis"------------------------------------
 if(!knitr::is_latex_output()){
   cat("If you'd like more practice or you're curious to see how this framework applies to different scenarios, you can find fully-worked out examples for many common hypothesis tests and their corresponding confidence intervals in Appendix B. ")
   cat("We recommend that you carefully review these examples as they also cover how the general frameworks apply to traditional theory-based methods like the $t$-test and normal-theory confidence intervals.  You'll see there that these traditional methods are just approximations for the computer-based methods we've been focusing on. However, they also require conditions to be met for their results to be valid. Computer-based methods using randomization, simulation, and bootstrapping have much fewer restrictions. Furthermore, they help develop your computational thinking, which is one big reason they are emphasized throughout this book.")
 }
 
 
-## ----message=FALSE, warning=FALSE----------------------------------------
+## ----message=FALSE, warning=FALSE---------------------------------------------
 library(tidyverse)
 library(infer)
 library(moderndive)
@@ -13,7 +13,7 @@ library(nycflights13)
 library(ggplot2movies)
 
 
-## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
+## ----message=FALSE, warning=FALSE, echo=FALSE---------------------------------
 # Packages needed internally, but not in text.
 library(knitr)
 library(kableExtra)
@@ -22,17 +22,17 @@ library(scales)
 library(viridis)
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 set.seed(2102)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 promotions %>% 
   sample_n(size = 6) %>% 
   arrange(id)
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(promotions, aes(x = gender, fill = decision)) +
 ##   geom_bar() +
 ##   labs(x = "Gender of name on résumé")
@@ -49,13 +49,13 @@ if(knitr::is_html_output()){
 }
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 promotions %>% 
   group_by(gender, decision) %>% 
   tally()
 
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 observed_test_statistic <- promotions %>% 
   specify(decision ~ gender, success = "promoted") %>% 
   calculate(stat = "diff in props", order = c("male", "female")) %>% 
@@ -63,7 +63,7 @@ observed_test_statistic <- promotions %>%
   round(3)
 
 
-## ----compare-six, echo=FALSE---------------------------------------------
+## ----compare-six, echo=FALSE--------------------------------------------------
 set.seed(2019)
 # Pick out 6 rows
 promotions_sample <- promotions %>%
@@ -88,11 +88,11 @@ promotions_sample  %>%
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 promotions_shuffled %>% slice(c(11, 26, 28, 36, 37, 46))
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## ggplot(promotions_shuffled, aes(x = gender, fill = decision)) +
 ##   geom_bar() +
 ##   labs(x = "Gender of résumé name")
@@ -126,12 +126,12 @@ if(knitr::is_html_output()){
 }
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 promotions_shuffled %>% 
   group_by(gender, decision) %>% 
   tally() # Same as summarize(n = n())
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 # male stats
 n_men_promoted <- promotions_shuffled %>% 
   filter(decision == "promoted", gender == "male") %>% 
@@ -160,7 +160,7 @@ prop_women_promoted <- round(prop_women_promoted, 3)
 
 
 
-## ---- eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE----------------
+## ---- eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE---------------------
 # https://docs.google.com/spreadsheets/d/1Q-ENy3o5IrpJshJ7gn3hJ5A0TOWV2AZrKNHMsshQtiE/edit#gid=0
 if(!file.exists("rds/shuffled_data.rds")){
   shuffled_data <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQXLJxwSp1ALEJ1JRNn3o8K3jVdqRG_5yxpoOhIFYflbFIkb2ttH73w8mljptn12CsDyIvjr5p0IGUe/pub?gid=0&single=true&output=csv")
@@ -189,14 +189,14 @@ shuffled_data_tidy <- shuffled_data_tidy %>%
 
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## obs_diff_prop <- promotions %>%
 ##   specify(decision ~ gender, success = "promoted") %>%
 ##   calculate(stat = "diff in props", order = c("male", "female"))
 ## obs_diff_prop
 
 
-## ----echo=FALSE, eval=FALSE----------------------------------------------
+## ----echo=FALSE, eval=FALSE---------------------------------------------------
 ## set.seed(2019)
 ## tactile_permutes <- promotions %>%
 ##   specify(decision ~ gender, success = "promoted") %>%
@@ -209,7 +209,7 @@ shuffled_data_tidy <- shuffled_data_tidy %>%
 ##   scale_y_continuous(breaks = 0:10)
 
 
-## ----table-diff-prop, echo=FALSE, message=FALSE--------------------------
+## ----table-diff-prop, echo=FALSE, message=FALSE-------------------------------
 # The following Google Doc is published to CSV and loaded using read_csv():
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
@@ -242,7 +242,7 @@ sampling_scenarios %>%
 
 
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 num <- sum(shuffled_data_tidy$stat >= observed_test_statistic)
 denom <- nrow(shuffled_data_tidy)
 p_val <- round((num + 1)/(denom + 1),3)
@@ -252,22 +252,22 @@ p_val <- round((num + 1)/(denom + 1),3)
 
 
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 alpha <- 0.05
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 promotions %>% 
   specify(formula = decision ~ gender, success = "promoted") 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 promotions %>% 
   specify(formula = decision ~ gender, success = "promoted") %>% 
   hypothesize(null = "independence")
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## promotions_generate <- promotions %>%
 ##   specify(formula = decision ~ gender, success = "promoted") %>%
 ##   hypothesize(null = "independence") %>%
@@ -277,7 +277,7 @@ promotions %>%
 
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## null_distribution <- promotions %>%
 ##   specify(formula = decision ~ gender, success = "promoted") %>%
 ##   hypothesize(null = "independence") %>%
@@ -288,7 +288,7 @@ promotions %>%
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 obs_diff_prop <- promotions %>% 
   specify(decision ~ gender, success = "promoted") %>% 
   calculate(stat = "diff in props", order = c("male", "female"))
@@ -304,17 +304,17 @@ visualize(null_distribution, bins = 10) +
   shade_p_value(obs_stat = obs_diff_prop, direction = "right")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 null_distribution %>% 
   get_p_value(obs_stat = obs_diff_prop, direction = "right")
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 p_value <- null_distribution %>% 
   get_p_value(obs_stat = obs_diff_prop, direction = "right") %>% 
   mutate(p_value = round(p_value, 3))
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## null_distribution <- promotions %>%
 ##   specify(formula = decision ~ gender, success = "promoted") %>%
 ##   hypothesize(null = "independence") %>%
@@ -322,7 +322,7 @@ p_value <- null_distribution %>%
 ##   calculate(stat = "diff in props", order = c("male", "female"))
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## bootstrap_distribution <- promotions %>%
 ##   specify(formula = decision ~ gender, success = "promoted") %>%
 ##   # Change 1 - Remove hypothesize():
@@ -334,26 +334,26 @@ p_value <- null_distribution %>%
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 percentile_ci <- bootstrap_distribution %>% 
   get_confidence_interval(level = 0.95, type = "percentile")
 percentile_ci
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## visualize(bootstrap_distribution) +
 ##   shade_confidence_interval(endpoints = percentile_ci)
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 se_ci <- bootstrap_distribution %>% 
   get_confidence_interval(level = 0.95, type = "se", 
                           point_estimate = obs_diff_prop)
 se_ci
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## visualize(bootstrap_distribution) +
 ##   shade_confidence_interval(endpoints = se_ci)
 
@@ -369,7 +369,7 @@ se_ci
 
 
 
-## ----eval=FALSE, echo=FALSE----------------------------------------------
+## ----eval=FALSE, echo=FALSE---------------------------------------------------
 ## tibble(
 ##   verdict = c("Not guilty verdict", "Guilty verdict"),
 ##   `Truly not guilty` = c("Correct", "Type I error"),
@@ -391,7 +391,7 @@ se_ci
 knitr::include_graphics("images/gt_error_table.png")
 
 
-## ----hypo-test-errors, eval=FALSE, echo=FALSE----------------------------
+## ----hypo-test-errors, eval=FALSE, echo=FALSE---------------------------------
 ## tibble(
 ##   Decision = c("Fail to reject H0", "Reject H0"),
 ##   `H0 true` = c("Correct", "Type I error"),
@@ -417,11 +417,11 @@ knitr::include_graphics("images/gt_error_table_ht.png")
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 movies
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 movies_sample
 
 
@@ -431,12 +431,12 @@ ggplot(data = movies_sample, aes(x = genre, y = rating)) +
   labs(y = "IMDb rating")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 movies_sample %>% 
   group_by(genre) %>% 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 movies_genre_summaries <- movies_sample %>% 
   group_by(genre) %>% 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
@@ -455,7 +455,7 @@ n_romance <- movies_genre_summaries %>%
   pull(n)
 
 
-## ----summarytable-ch10, echo=FALSE, message=FALSE------------------------
+## ----summarytable-ch10, echo=FALSE, message=FALSE-----------------------------
 # The following Google Doc is published to CSV and loaded using read_csv():
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
@@ -485,18 +485,18 @@ sampling_scenarios %>%
   column_spec(5, width = "1in")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 movies_sample %>% 
   specify(formula = rating ~ genre)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   hypothesize(null = "independence")
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## movies_sample %>%
 ##   specify(formula = rating ~ genre) %>%
 ##   hypothesize(null = "independence") %>%
@@ -504,7 +504,7 @@ movies_sample %>%
 ##   View()
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 set.seed(76)
 if(!file.exists("rds/movies_sample_generate.rds")){
   movies_sample_generate <- movies_sample %>% 
@@ -517,7 +517,7 @@ if(!file.exists("rds/movies_sample_generate.rds")){
 }
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## null_distribution_movies <- movies_sample %>%
 ##   specify(formula = rating ~ genre) %>%
 ##   hypothesize(null = "independence") %>%
@@ -528,14 +528,14 @@ if(!file.exists("rds/movies_sample_generate.rds")){
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 obs_diff_means <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   calculate(stat = "diff in means", order = c("Action", "Romance"))
 obs_diff_means
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## visualize(null_distribution_movies, bins = 10) +
 ##   shade_p_value(obs_stat = obs_diff_means, direction = "both")
 
@@ -551,11 +551,11 @@ if(knitr::is_html_output()){
 }
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 null_distribution_movies %>% 
   get_p_value(obs_stat = obs_diff_means, direction = "both")
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 p_value_movies <- null_distribution_movies %>% 
   get_p_value(obs_stat = obs_diff_means, direction = "both") %>% 
   mutate(p_value = round(p_value, 3))
@@ -579,12 +579,12 @@ ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm) +
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 movies_sample %>% 
   group_by(genre) %>% 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 t_stat <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   calculate(stat = "t", order = c("Action", "Romance")) %>% 
@@ -592,7 +592,7 @@ t_stat <- movies_sample %>%
   round(3)
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## # Construct null distribution of xbar_a - xbar_m:
 ## null_distribution_movies <- movies_sample %>%
 ##   specify(formula = rating ~ genre) %>%
@@ -602,7 +602,7 @@ t_stat <- movies_sample %>%
 ## visualize(null_distribution_movies, bins = 10)
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Construct null distribution of t:
 ## null_distribution_movies_t <- movies_sample %>%
 ##   specify(formula = rating ~ genre) %>%
@@ -628,7 +628,7 @@ null_dist_1 + null_dist_2
 visualize(null_distribution_movies_t, bins = 10, method = "both")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 obs_two_sample_t <- movies_sample %>% 
   specify(formula = rating ~ genre) %>% 
   calculate(stat = "t", order = c("Action", "Romance"))
@@ -640,12 +640,12 @@ visualize(null_distribution_movies_t, method = "both") +
   shade_p_value(obs_stat = obs_two_sample_t, direction = "both")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 null_distribution_movies_t %>% 
   get_p_value(obs_stat = obs_two_sample_t, direction = "both")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 flights_sample <- flights %>% 
   filter(carrier %in% c("HA", "AS"))
 
@@ -656,7 +656,7 @@ ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
   labs(x = "Carrier", y = "Air Time")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 flights_sample %>% 
   group_by(carrier, dest) %>% 
   summarize(n = n(), mean_time = mean(air_time, na.rm =TRUE))
@@ -666,14 +666,14 @@ flights_sample %>%
 
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## # Fit regression model:
 ## score_model <- lm(score ~ bty_avg, data = evals)
 ## # Get regression table:
 ## get_regression_table(score_model)
 
 
-## ----regression-table-inference, echo=FALSE------------------------------
+## ----regression-table-inference, echo=FALSE-----------------------------------
 # Fit regression model:
 score_model <- lm(score ~ bty_avg, data = evals)
 # Get regression table:

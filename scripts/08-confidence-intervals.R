@@ -1,10 +1,10 @@
-## ----message=FALSE, warning=FALSE----------------------------------------
+## ----message=FALSE, warning=FALSE---------------------------------------------
 library(tidyverse)
 library(moderndive)
 library(infer)
 
 
-## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
+## ----message=FALSE, warning=FALSE, echo=FALSE---------------------------------
 # Packages needed internally, but not in the text
 library(knitr)
 library(kableExtra)
@@ -16,7 +16,7 @@ library(purrr)
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 pennies_sample
 
 
@@ -25,16 +25,16 @@ ggplot(pennies_sample, aes(x = year)) +
   geom_histogram(binwidth = 10, color = "white")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 pennies_sample %>% 
   summarize(mean_year = mean(year))
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 x_bar <- pennies_sample %>% 
   summarize(mean_year = mean(year))
 
 
-## ----table-ch8-b, echo=FALSE, message=FALSE------------------------------
+## ----table-ch8-b, echo=FALSE, message=FALSE-----------------------------------
 # The following Google Doc is published to CSV and loaded using read_csv():
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
@@ -73,7 +73,7 @@ sampling_scenarios %>%
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 pennies_resample <- tibble(
   year = c(1976, 1962, 1976, 1983, 2017, 2015, 2015, 1962, 2016, 1976, 
            2006, 1997, 1988, 2015, 2015, 1988, 2016, 1978, 1979, 1997, 
@@ -85,7 +85,7 @@ pennies_resample <- tibble(
 
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(pennies_resample, aes(x = year)) +
 ##   geom_histogram(binwidth = 10, color = "white") +
 ##   labs(title = "Resample of 50 pennies")
@@ -96,22 +96,22 @@ pennies_resample <- tibble(
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 pennies_resample %>% 
   summarize(mean_year = mean(year))
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 resample_mean <- pennies_resample %>% 
   summarize(mean_year = mean(year))
 
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 pennies_resamples
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 resampled_means <- pennies_resamples %>% 
   group_by(name) %>% 
   summarize(mean_year = mean(year))
@@ -122,27 +122,27 @@ resampled_means
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 virtual_resample <- pennies_sample %>% 
   rep_sample_n(size = 50, replace = TRUE)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 virtual_resample
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 virtual_resample %>% 
   summarize(resample_mean = mean(year))
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 virtual_resamples <- pennies_sample %>% 
   rep_sample_n(size = 50, replace = TRUE, reps = 35)
 virtual_resamples
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 virtual_resampled_means <- virtual_resamples %>% 
   group_by(replicate) %>% 
   summarize(mean_year = mean(year))
@@ -157,7 +157,7 @@ virtual_resampled_means
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Repeat resampling 1000 times
 virtual_resamples <- pennies_sample %>% 
   rep_sample_n(size = 50, replace = TRUE, reps = 1000)
@@ -168,7 +168,7 @@ virtual_resampled_means <- virtual_resamples %>%
   summarize(mean_year = mean(year))
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 virtual_resampled_means <- pennies_sample %>% 
   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>% 
   group_by(replicate) %>% 
@@ -182,11 +182,11 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
   labs(x = "sample mean")
 
 
-## ----eval=TRUE-----------------------------------------------------------
+## ----eval=TRUE----------------------------------------------------------------
 virtual_resampled_means %>% 
   summarize(mean_of_means = mean(mean_year))
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 mean_of_means <- virtual_resampled_means %>% 
   summarize(mean(mean_year)) %>% 
   pull() %>% 
@@ -199,7 +199,7 @@ mean_of_means <- virtual_resampled_means %>%
 
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 # Can also use conf_int() and get_confidence_interval() instead of get_ci(),
 # as they are aliases that work the exact same way.
 percentile_ci <- virtual_resampled_means %>% 
@@ -216,7 +216,7 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_vline(xintercept = percentile_ci[[1, 2]], size = 1)
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 # Can also use get_confidence_interval() instead of get_ci(),
 # as it is an alias that works the exact same way.
 standard_error_ci <- virtual_resampled_means %>% 
@@ -229,7 +229,7 @@ bootstrap_se <- virtual_resampled_means %>%
   pull(se)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 virtual_resampled_means %>% 
   summarize(SE = sd(mean_year))
 
@@ -249,7 +249,7 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
   geom_vline(xintercept = standard_error_ci[[1, 2]], linetype = "dashed", size = 1)
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## standard_error_ci <- bootstrap_distribution %>%
 ##   get_ci(type = "se", point_estimate = x_bar)
 ## standard_error_ci
@@ -259,30 +259,30 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
 
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## pennies_sample %>%
 ##   rep_sample_n(size = 50, replace = TRUE, reps = 1000)
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## pennies_sample %>%
 ##   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>%
 ##   group_by(replicate)
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## pennies_sample %>%
 ##   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>%
 ##   group_by(replicate) %>%
 ##   summarize(mean_year = mean(year))
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## pennies_sample %>%
 ##   summarize(stat = mean(year))
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## pennies_sample %>%
 ##   specify(response = year) %>%
 ##   calculate(stat = "mean")
@@ -290,25 +290,25 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 pennies_sample %>% 
   specify(response = year)
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## pennies_sample %>%
 ##   specify(formula = year ~ NULL)
 
 
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## pennies_sample %>%
 ##   specify(response = year) %>%
 ##   generate(reps = 1000, type = "bootstrap")
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 if(!file.exists("rds/pennies_sample_generate.rds")){
   pennies_sample_generate <- pennies_sample %>% 
     specify(response = year) %>% 
@@ -320,7 +320,7 @@ if(!file.exists("rds/pennies_sample_generate.rds")){
 pennies_sample_generate
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # infer workflow:                   # Original workflow:
 ## pennies_sample %>%                  pennies_sample %>%
 ##   specify(response = year) %>%        rep_sample_n(size = 50, replace = TRUE,
@@ -330,7 +330,7 @@ pennies_sample_generate
 
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## bootstrap_distribution <- pennies_sample %>%
 ##   specify(response = year) %>%
 ##   generate(reps = 1000) %>%
@@ -338,7 +338,7 @@ pennies_sample_generate
 ## bootstrap_distribution
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 if(!file.exists("rds/bootstrap_distribution_pennies.rds")){
   bootstrap_distribution <- pennies_sample %>% 
     specify(response = year) %>% 
@@ -351,7 +351,7 @@ if(!file.exists("rds/bootstrap_distribution_pennies.rds")){
 bootstrap_distribution
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # infer workflow:                   # Original workflow:
 ## pennies_sample %>%                  pennies_sample %>%
 ##   specify(response = year) %>%        rep_sample_n(size = 50, replace = TRUE,
@@ -362,13 +362,13 @@ bootstrap_distribution
 
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## visualize(bootstrap_distribution)
 
 
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # infer workflow:                    # Original workflow:
 ## visualize(bootstrap_distribution)    ggplot(bootstrap_distribution,
 ##                                             aes(x = stat)) +
@@ -377,32 +377,32 @@ bootstrap_distribution
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 percentile_ci <- bootstrap_distribution %>% 
   get_confidence_interval(level = 0.95, type = "percentile")
 percentile_ci
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## visualize(bootstrap_distribution) +
 ##   shade_confidence_interval(endpoints = percentile_ci)
 
 
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## visualize(bootstrap_distribution) +
 ##   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 x_bar
 standard_error_ci <- bootstrap_distribution %>% 
   get_confidence_interval(type = "se", point_estimate = x_bar)
 standard_error_ci
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## visualize(bootstrap_distribution) +
 ##   shade_confidence_interval(endpoints = standard_error_ci)
 
@@ -413,36 +413,36 @@ standard_error_ci
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 bowl %>% 
   summarize(p_red = mean(color == "red"))
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 p_red <- bowl %>% 
   summarize(prop_red = mean(color == "red")) %>% 
   pull(prop_red)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 bowl_sample_1
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## bowl_sample_1 %>%
 ##   specify(response = color)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 bowl_sample_1 %>% 
   specify(response = color, success = "red")
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## bowl_sample_1 %>%
 ##   specify(response = color, success = "red") %>%
 ##   generate(reps = 1000, type = "bootstrap")
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 if(!file.exists("rds/bowl_sample_1_generate.rds")){
    bowl_sample_1_generate <- bowl_sample_1 %>% 
     specify(response = color, success = "red") %>% 
@@ -455,7 +455,7 @@ if(!file.exists("rds/bowl_sample_1_generate.rds")){
 bowl_sample_1_generate
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## sample_1_bootstrap <- bowl_sample_1 %>%
 ##   specify(response = color, success = "red") %>%
 ##   generate(reps = 1000, type = "bootstrap") %>%
@@ -463,7 +463,7 @@ bowl_sample_1_generate
 ## sample_1_bootstrap
 
 
-## ----calculate_prop, echo=FALSE------------------------------------------
+## ----calculate_prop, echo=FALSE-----------------------------------------------
 # Note this takes a few minutes to run
 if(!file.exists("rds/sample_1_bootstrap.rds")){
   sample_1_bootstrap <- bowl_sample_1_generate %>% 
@@ -475,13 +475,13 @@ if(!file.exists("rds/sample_1_bootstrap.rds")){
 sample_1_bootstrap
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 percentile_ci_1 <- sample_1_bootstrap %>% 
   get_confidence_interval(level = 0.95, type = "percentile")
 percentile_ci_1
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## sample_1_bootstrap %>%
 ##   visualize(bins = 15) +
 ##   shade_confidence_interval(endpoints = percentile_ci_1) +
@@ -490,13 +490,13 @@ percentile_ci_1
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 bowl_sample_2 <- bowl %>% 
   rep_sample_n(size = 50)
 bowl_sample_2
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## sample_2_bootstrap <- bowl_sample_2 %>%
 ##   specify(response = color, success = "red") %>%
 ##   generate(reps = 1000, type = "bootstrap") %>%
@@ -504,7 +504,7 @@ bowl_sample_2
 ## sample_2_bootstrap
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 if(!file.exists("rds/sample_2_bootstrap.rds")){
   sample_2_bootstrap <- bowl_sample_2 %>% 
     specify(response = color, success = "red") %>% 
@@ -517,7 +517,7 @@ if(!file.exists("rds/sample_2_bootstrap.rds")){
 sample_2_bootstrap
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 percentile_ci_2 <- sample_2_bootstrap %>% 
   get_confidence_interval(level = 0.95, type = "percentile")
 percentile_ci_2
@@ -579,7 +579,7 @@ ggplot(percentile_cis) +
         panel.grid.minor.x = element_blank())
 
 
-## ----reliable-se, fig.cap='(ref:rel-se)',echo=FALSE----------------------
+## ----reliable-se, fig.cap='(ref:rel-se)',echo=FALSE---------------------------
 if(!file.exists("rds/balls_se_cis.rds")){
   # Set random number generator seed value.
   set.seed(9)
@@ -638,7 +638,7 @@ ggplot(se_cis) +
         panel.grid.minor.x = element_blank())
 
 
-## ----perc-sizes, echo=FALSE----------------------------------------------
+## ----perc-sizes, echo=FALSE---------------------------------------------------
 if(!file.exists("rds/balls_perc_cis_80_95_99.rds")){
   set.seed(9)
   
@@ -703,7 +703,7 @@ if(!file.exists("rds/balls_perc_cis_80_95_99.rds")){
 }
 
 
-## ----perc-cis-level-print, eval=FALSE, echo=FALSE------------------------
+## ----perc-cis-level-print, eval=FALSE, echo=FALSE-----------------------------
 ## percentile_cis_by_level %>%
 ##   sample_n(10) %>%
 ##   kable(
@@ -743,7 +743,7 @@ if(knitr::is_latex_output()){
 }
 
 
-## ----perc-cis-average-width, echo=FALSE----------------------------------
+## ----perc-cis-average-width, echo=FALSE---------------------------------------
 percentile_cis_by_level %>% 
   mutate(width = upper - lower) %>% 
   group_by(confidence_level) %>% 
@@ -760,7 +760,7 @@ percentile_cis_by_level %>%
                 latex_options = c("hold_position", "repeat_header"))
 
 
-## ----perc-sizes-2, echo=FALSE--------------------------------------------
+## ----perc-sizes-2, echo=FALSE-------------------------------------------------
 if(!file.exists("rds/balls_perc_cis_n_25_50_100.rds")){
   set.seed(9)
   
@@ -852,7 +852,7 @@ if(knitr::is_latex_output()){
 }
 
 
-## ----perc-cis-average-width-2, echo=FALSE--------------------------------
+## ----perc-cis-average-width-2, echo=FALSE-------------------------------------
 percentile_cis_by_n %>% 
   mutate(width = upper - lower) %>% 
   group_by(sample_size) %>% 
@@ -870,17 +870,17 @@ percentile_cis_by_n %>%
                 latex_options = c("hold_position", "repeat_header"))
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 mythbusters_yawn
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 mythbusters_yawn %>% 
   group_by(group, yawn) %>% 
   summarize(count = n())
 
 
-## ----table-ch8-c, echo=FALSE, message=FALSE------------------------------
+## ----table-ch8-c, echo=FALSE, message=FALSE-----------------------------------
 # The following Google Doc is published to CSV and loaded using read_csv():
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
@@ -911,26 +911,26 @@ sampling_scenarios %>%
   column_spec(5, width = "0.65in")
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## mythbusters_yawn %>%
 ##   specify(formula = yawn ~ group)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 mythbusters_yawn %>% 
   specify(formula = yawn ~ group, success = "yes")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 head(mythbusters_yawn)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 head(mythbusters_yawn) %>% 
   sample_n(size = 6, replace = TRUE)
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## mythbusters_yawn %>%
 ##   specify(formula = yawn ~ group, success = "yes") %>%
 ##   generate(reps = 1000, type = "bootstrap")
@@ -938,14 +938,14 @@ head(mythbusters_yawn) %>%
 
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## mythbusters_yawn %>%
 ##   specify(formula = yawn ~ group, success = "yes") %>%
 ##   generate(reps = 1000, type = "bootstrap") %>%
 ##   calculate(stat = "diff in props")
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## bootstrap_distribution_yawning <- mythbusters_yawn %>%
 ##   specify(formula = yawn ~ group, success = "yes") %>%
 ##   generate(reps = 1000, type = "bootstrap") %>%
@@ -953,7 +953,7 @@ head(mythbusters_yawn) %>%
 ## bootstrap_distribution_yawning
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 if(!file.exists("rds/bootstrap_distribution_yawning.rds")){
   bootstrap_distribution_yawning <- mythbusters_yawn %>% 
     specify(formula = yawn ~ group, success = "yes") %>% 
@@ -968,22 +968,22 @@ if(!file.exists("rds/bootstrap_distribution_yawning.rds")){
 bootstrap_distribution_yawning
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## visualize(bootstrap_distribution_yawning) +
 ##   geom_vline(xintercept = 0)
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 bootstrap_distribution_yawning %>% 
   get_confidence_interval(type = "percentile", level = 0.95)
 
-## ----include=FALSE-------------------------------------------------------
+## ----include=FALSE------------------------------------------------------------
 myth_ci_percentile <- bootstrap_distribution_yawning %>% 
   get_confidence_interval(type = "percentile", level = 0.95)
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 obs_diff_in_props <- mythbusters_yawn %>% 
   specify(formula = yawn ~ group, success = "yes") %>% 
   # generate(reps = 1000, type = "bootstrap") %>% 
@@ -991,7 +991,7 @@ obs_diff_in_props <- mythbusters_yawn %>%
 obs_diff_in_props
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 myth_ci_se <- bootstrap_distribution_yawning %>% 
   get_confidence_interval(type = "se", point_estimate = obs_diff_in_props)
 myth_ci_se
@@ -999,7 +999,7 @@ myth_ci_se
 
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 set.seed(76)
 
 
@@ -1019,27 +1019,27 @@ ggplot(sampling_distribution, aes(x = prop_red)) +
        title = "Sampling distribution")
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 sampling_distribution %>% summarize(se = sd(prop_red))
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 se_samp <- sampling_distribution %>% 
   summarize(se = sd(prop_red)) %>% 
   pull(se)
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 set.seed(76)
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## bootstrap_distribution <- bowl_sample_1 %>%
 ##   specify(response = color, success = "red") %>%
 ##   generate(reps = 1000, type = "bootstrap") %>%
 ##   calculate(stat = "prop")
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 if(!file.exists("rds/bootstrap_distribution_balls.rds")){
   bootstrap_distribution <- bowl_sample_1 %>% 
     specify(response = color, success = "red") %>% 
@@ -1054,10 +1054,10 @@ if(!file.exists("rds/bootstrap_distribution_balls.rds")){
 
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 bootstrap_distribution %>% summarize(se = sd(stat))
 
-## ---- echo=FALSE---------------------------------------------------------
+## ---- echo=FALSE--------------------------------------------------------------
 se_boot <- bootstrap_distribution %>% 
   summarize(se = sd(stat)) %>% 
   pull(se)
@@ -1088,7 +1088,7 @@ p_boot <- ggplot(bootstrap_distribution, aes(x = stat)) +
 p_samp + p_boot + plot_layout(ncol = 1, heights = c(1, 1))
 
 
-## ----comparing-se, echo=FALSE, message=FALSE-----------------------------
+## ----comparing-se, echo=FALSE, message=FALSE----------------------------------
 tibble(
   `Distribution type` = c("Sampling distribution", "Bootstrap distribution"),
   `Standard error` = c(se_samp, se_boot)
@@ -1104,7 +1104,7 @@ tibble(
                 latex_options = c("hold_position", "repeat_header"))
 
 
-## ----comparing-se-2, echo=FALSE, message=FALSE---------------------------
+## ----comparing-se-2, echo=FALSE, message=FALSE--------------------------------
 tibble(
   `Distribution type` = c("Sampling distribution", "Bootstrap distribution", 
                           "Formula approximation"),
@@ -1121,7 +1121,7 @@ tibble(
                 latex_options = c("hold_position", "repeat_header"))
 
 
-## ---- message=FALSE, warning=FALSE---------------------------------------
+## ---- message=FALSE, warning=FALSE--------------------------------------------
 conf_ints <- tactile_prop_red %>% 
   rename(p_hat = prop_red) %>% 
   mutate(
@@ -1133,7 +1133,7 @@ conf_ints <- tactile_prop_red %>%
   )
 
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 if(!knitr::is_latex_output())
   conf_ints
 
@@ -1168,7 +1168,7 @@ ggplot(conf_ints) +
         panel.grid.minor.x = element_blank())
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # First: Take 100 virtual samples of n=50 balls
 ## virtual_samples <- bowl %>%
 ##   rep_sample_n(size = 50, reps = 100)
