@@ -38,8 +38,8 @@ file.copy("krantz.cls", "docs/krantz.cls", overwrite = TRUE)
 
 # Clean up extra files
 extra_extensions <- c(".bbl", ".blg", ".idx", ".ilg", ".ind",
-                      ".log", ".synctex.gz", ".toc")
-extra_files <- paste0("docs/moderndive", extra_extensions)
+                      ".log", ".synctex.gz", ".toc", ".aux")
+extra_files <- paste0("docs/ModernDive", extra_extensions)
 file.remove(extra_files)
 
 # 5. Copy docs folder to Google Drive in moderndive_{Sys.Date()} folder
