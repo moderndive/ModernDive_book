@@ -13,11 +13,11 @@ library(scales)
 
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 ## \vspace{-0.25in}
@@ -29,11 +29,11 @@ library(scales)
 ## library(ggplot2)
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 ## \vspace{-0.25in}
@@ -51,11 +51,11 @@ library(knitr)
 flights
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 ## \vspace{-0.25in}
@@ -67,11 +67,11 @@ flights
 glimpse(flights)
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 ## \vspace{-0.25in}
@@ -92,11 +92,11 @@ glimpse(flights)
 glimpse(airports)
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 
@@ -105,9 +105,9 @@ glimpse(airports)
 ## ?flights
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 

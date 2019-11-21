@@ -66,7 +66,7 @@ drinks_smaller <- drinks %>%
 drinks_smaller
 
 
-## ----drinks-smaller, fig.cap="Comparing alcohol consumption in 4 countries.", fig.height=3.5, echo=FALSE----
+## ----drinks-smaller, fig.cap="Comparing alcohol consumption in 4 countries.", fig.height=3.9, echo=FALSE----
 drinks_smaller_tidy <- drinks_smaller %>% 
   gather(type, servings, -country)
 drinks_smaller_tidy_plot <- ggplot(
@@ -133,11 +133,11 @@ stocks %>%
                 latex_options = c("hold_position"))
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 
@@ -182,11 +182,11 @@ if(knitr::is_html_output()){
 }
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 ## ---- eval=FALSE--------------------------------------------------------------

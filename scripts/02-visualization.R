@@ -1,3 +1,13 @@
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("# (PART) (ref:tidyversepart) {-} ")
+} else {
+  cat("# (PART) Data Science with tidyverse {-} ")
+}
+
+
+
+
 ## ----message=FALSE------------------------------------------------------------
 library(nycflights13)
 library(ggplot2)
@@ -63,7 +73,7 @@ tibble(
   geom = c("point", "point", "point", "point")
 ) %>% 
   kable(
-    caption = "Summary of the Grammar of Graphics for this plot", 
+    caption = "Summary of the grammar of graphics for this plot", 
     booktabs = TRUE,
     linesep = ""
   ) %>% 
@@ -87,7 +97,7 @@ alaska_flights <- flights %>%
 ##   geom_point()
 
 
-## ----noalpha, fig.cap="Arrival delays versus departure delays for Alaska Airlines flights from NYC in 2013.", fig.height=2.5, warning=TRUE, echo=FALSE----
+## ----noalpha, fig.cap="Arrival delays versus departure delays for Alaska Airlines flights from NYC in 2013.", fig.height=1.8, warning=TRUE, echo=FALSE----
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point()
 
@@ -100,12 +110,12 @@ ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 
 
-## ----alpha, fig.cap="Arrival vs. departure delays scatterplot with alpha = 0.2."----
+## ----alpha, fig.cap="Arrival vs. departure delays scatterplot with alpha = 0.2.", fig.height=4.9----
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point(alpha = 0.2)
 
 
-## ----jitter-example-plot-1, fig.cap="Regular and jittered scatterplot.", echo=FALSE----
+## ----jitter-example-plot-1, fig.cap="Regular and jittered scatterplot.", echo=FALSE, fig.height=5----
 jitter_example <- tibble(
   x = rep(0, 4),
   y = rep(0, 4)
@@ -121,7 +131,7 @@ jittered_plot_2 <- ggplot(data = jitter_example, mapping = aes(x = x, y = y)) +
 jittered_plot_1 + jittered_plot_2
 
 
-## ----jitter, fig.cap="Arrival versus departure delays jittered scatterplot."----
+## ----jitter, fig.cap="Arrival versus departure delays jittered scatterplot.", fig.height=4.7----
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_jitter(width = 30, height = 30)
 
@@ -140,7 +150,8 @@ early_january_weather <- weather %>%
 
 
 ## ----hourlytemp, fig.cap="Hourly temperature in Newark for January 1-15, 2013."----
-ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = temp)) +
+ggplot(data = early_january_weather, 
+       mapping = aes(x = time_hour, y = temp)) +
   geom_line()
 
 
@@ -167,7 +178,7 @@ ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram()
 
 
-## ----weather-histogram-2, warning=FALSE, message=FALSE, fig.cap="Histogram of hourly temperatures at three NYC airports with white borders."----
+## ----weather-histogram-2, warning=FALSE, message=FALSE, fig.cap="Histogram of hourly temperatures at three NYC airports with white borders.", fig.height=3----
 ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(color = "white")
 
@@ -207,7 +218,7 @@ hist_1 + hist_2
 ##   facet_wrap(~ month)
 
 
-## ----facethistogram, fig.cap="Faceted histogram of hourly temperatures by month.", echo=FALSE----
+## ----facethistogram, fig.cap="Faceted histogram of hourly temperatures by month.", echo=FALSE, fig.height=3.3----
 month_facet <- ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(binwidth = 5, color = "white") +
   facet_wrap(~ month)
@@ -229,7 +240,7 @@ if(knitr::is_latex_output()){
 ##   facet_wrap(~ month, nrow = 4)
 
 
-## ----facethistogram2, fig.cap="Faceted histogram with 4 instead of 3 rows.", echo=FALSE----
+## ----facethistogram2, fig.cap="Faceted histogram with 4 instead of 3 rows.", echo=FALSE, fig.height=3.3----
 month_facet_4 <- ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(binwidth = 5, color = "white") +
   facet_wrap(~ month, nrow = 4)
@@ -273,7 +284,7 @@ five_number_summary <- tibble(
 )
 
 
-## ----nov1, echo=FALSE, fig.cap="November temperatures represented as jittered points.", fig.height=2.2----
+## ----nov1, echo=FALSE, fig.cap="November temperatures represented as jittered points.", fig.height=1.7----
 base_plot <- weather %>% 
   filter(month %in% c(11)) %>% 
   ggplot(mapping = aes(x = factor(month), y = temp)) +
@@ -282,7 +293,7 @@ base_plot +
   geom_jitter(width = 0.075, height = 0.5, alpha = 0.1)
 
 
-## ----nov2, echo=FALSE, fig.cap="Building up a boxplot of November temperatures.", fig.height=3.8----
+## ----nov2, echo=FALSE, fig.cap="Building up a boxplot of November temperatures.", fig.height=3----
 boxplot_1 <- base_plot +
   geom_hline(data = five_number_summary, aes(yintercept=temp), linetype = "dashed") +
   geom_jitter(width = 0.075, height = 0.5, alpha = 0.1)
@@ -295,7 +306,7 @@ boxplot_3 <- base_plot +
 boxplot_1 + boxplot_2 + boxplot_3
 
 
-## ----badbox, fig.cap="Invalid boxplot specification.", fig.height=3-----------
+## ----badbox, fig.cap="Invalid boxplot specification.", fig.height=2.4---------
 ggplot(data = weather, mapping = aes(x = month, y = temp)) +
   geom_boxplot()
 
@@ -327,7 +338,7 @@ fruits
 fruits_counted
 
 
-## ----geombar, fig.cap="Barplot when counts are not pre-counted.", fig.height=2.5----
+## ----geombar, fig.cap="Barplot when counts are not pre-counted.", fig.height=1.8----
 ggplot(data = fruits, mapping = aes(x = fruit)) +
   geom_bar()
 
@@ -458,7 +469,7 @@ if(knitr::is_html_output()){
 ##   geom_bar(position = position_dodge(preserve = "single"))
 
 
-## ----flights-dodged-bar-color-tweak, echo=FALSE, fig.cap="Side-by-side barplot comparing number of flights by carrier and origin (with formatting tweak).", fig.height=3.5----
+## ----flights-dodged-bar-color-tweak, echo=FALSE, fig.cap="Side-by-side barplot comparing number of flights by carrier and origin (with formatting tweak).", fig.height=2.5----
 if(knitr::is_html_output()){
   ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
     geom_bar(position = position_dodge(preserve = "single"))
@@ -475,7 +486,7 @@ if(knitr::is_html_output()){
 ##   facet_wrap(~ origin, ncol = 1)
 
 
-## ----facet-bar-vert, fig.cap="Faceted barplot comparing the number of flights by carrier and origin.", fig.height=7.5, echo=FALSE----
+## ----facet-bar-vert, fig.cap="Faceted barplot comparing the number of flights by carrier and origin.", fig.height=6, echo=FALSE----
 month_facet_ncol <- ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar() +
   facet_wrap(~ origin, ncol = 1)

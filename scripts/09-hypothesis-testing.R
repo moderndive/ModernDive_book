@@ -38,7 +38,7 @@ promotions %>%
 ##   labs(x = "Gender of name on résumé")
 
 
-## ----promotions-barplot, echo=FALSE, fig.cap="Barplot of relationship between gender and promotion decision."----
+## ----promotions-barplot, echo=FALSE, fig.cap="Barplot relating gender to promotion decision.", fig.height=1.6----
 promotions_barplot <- ggplot(promotions, aes(x = gender, fill = decision)) +
   geom_bar() +
   labs(x = "Gender of name on résumé")
@@ -97,7 +97,7 @@ promotions_shuffled %>% slice(c(11, 26, 28, 36, 37, 46))
 ##   geom_bar() +
 ##   labs(x = "Gender of résumé name")
 
-## ----promotions-barplot-permuted, fig.cap="Barplots of relationship of promotion with gender (left) and shuffled gender (right).", fig.height=2.4, echo=FALSE----
+## ----promotions-barplot-permuted, fig.cap="Barplots of relationship of promotion with gender (left) and shuffled gender (right).", fig.height=3.5, echo=FALSE----
 height1 <- promotions %>% 
   group_by(gender, decision) %>% 
   summarize(n = n()) %>% 
@@ -295,7 +295,7 @@ obs_diff_prop <- promotions %>%
 obs_diff_prop
 
 
-## ----null-distribution-infer, fig.show='hold', fig.cap="Null distribution.", fig.height=3.5----
+## ----null-distribution-infer, fig.show='hold', fig.cap="Null distribution.", fig.height=1.8----
 visualize(null_distribution, bins = 10)
 
 
@@ -540,7 +540,7 @@ obs_diff_means
 ##   shade_p_value(obs_stat = obs_diff_means, direction = "both")
 
 
-## ----null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and $p$-value.", fig.height=2.8----
+## ----null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and $p$-value.", fig.height=2.2----
 if(knitr::is_html_output()){
   visualize(null_distribution_movies, bins = 10) + 
     shade_p_value(obs_stat = obs_diff_means, direction = "both")
@@ -650,7 +650,7 @@ flights_sample <- flights %>%
   filter(carrier %in% c("HA", "AS"))
 
 
-## ----ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2013."----
+## ----ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2013.", fig.height=2.8----
 ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
   geom_boxplot() +
   labs(x = "Carrier", y = "Air Time")
@@ -659,7 +659,7 @@ ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
 ## -----------------------------------------------------------------------------
 flights_sample %>% 
   group_by(carrier, dest) %>% 
-  summarize(n = n(), mean_time = mean(air_time, na.rm =TRUE))
+  summarize(n = n(), mean_time = mean(air_time, na.rm = TRUE))
 
 
 
@@ -669,6 +669,7 @@ flights_sample %>%
 ## ---- eval=FALSE--------------------------------------------------------------
 ## # Fit regression model:
 ## score_model <- lm(score ~ bty_avg, data = evals)
+## 
 ## # Get regression table:
 ## get_regression_table(score_model)
 

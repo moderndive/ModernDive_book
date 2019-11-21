@@ -205,7 +205,7 @@ gain_summary <- flights %>%
 gain_summary
 
 
-## ----gain-hist, message=FALSE, fig.cap="Histogram of gain variable."----------
+## ----gain-hist, message=FALSE, fig.cap="Histogram of gain variable.", fig.height=3----
 ggplot(data = flights, mapping = aes(x = gain)) +
   geom_histogram(color = "white", bins = 20)
 
@@ -291,11 +291,11 @@ named_dests
 ## View(joined_flights)
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 

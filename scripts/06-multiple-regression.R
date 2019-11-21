@@ -31,8 +31,7 @@ glimpse(evals_ch6)
 
 
 ## ---- eval=FALSE--------------------------------------------------------------
-## evals_ch6 %>%
-##   sample_n(size = 5)
+## evals_ch6 %>% sample_n(size = 5)
 
 ## ----model4-data-preview, echo=FALSE------------------------------------------
 evals_ch6 %>%
@@ -104,6 +103,7 @@ get_regression_table(lifeExp_model) %>%
 ## ---- eval=FALSE--------------------------------------------------------------
 ## # Fit regression model:
 ## score_model_interaction <- lm(score ~ age * gender, data = evals_ch6)
+## 
 ## # Get regression table:
 ## get_regression_table(score_model_interaction)
 
@@ -225,7 +225,7 @@ if(knitr::is_html_output()){
 }
 
 
-## ----fitted-values, echo=FALSE, warning=FALSE, fig.cap="Fitted values for two new professors.", fig.height=4.2----
+## ----fitted-values, echo=FALSE, warning=FALSE, fig.cap="Fitted values for two new professors.", fig.height=4.7----
 newpoints <- evals_ch6 %>% 
   slice(c(1, 5)) %>% 
   get_regression_points(score_model_interaction, newdata = .)
@@ -323,21 +323,18 @@ credit_ch6 %>%
 ## ---- eval=FALSE--------------------------------------------------------------
 ## ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
 ##   geom_point() +
-##   labs(x = "Credit limit (in $)",
-##        y = "Credit card debt (in $)",
+##   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)",
 ##        title = "Debt and credit limit") +
 ##   geom_smooth(method = "lm", se = FALSE)
-
-
-## ----eval=FALSE---------------------------------------------------------------
+## 
 ## ggplot(credit_ch6, aes(x = income, y = debt)) +
 ##   geom_point() +
-##   labs(x = "Income (in $1000)",
-##        y = "Credit card debt (in $)",
+##   labs(x = "Income (in $1000)", y = "Credit card debt (in $)",
 ##        title = "Debt and income") +
 ##   geom_smooth(method = "lm", se = FALSE)
 
-## ----2numxplot1, echo=FALSE, fig.cap="Relationship between credit card debt and credit limit/income.", fig.height=5.5----
+
+## ----2numxplot1, echo=FALSE, fig.cap="Relationship between credit card debt and credit limit/income.", fig.height=3.2----
 model3_balance_vs_limit_plot <- ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
   geom_point() +
   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)", 
@@ -484,7 +481,7 @@ if(knitr::is_html_output()){
 ##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
 ##        color = "School size", title = "Parallel slopes model")
 
-## ----numxcatx-comparison-2, fig.height=3, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for Massachusetts schools."----
+## ----numxcatx-comparison-2, fig.height=3.8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for Massachusetts schools."----
 p1 <- ggplot(MA_schools, 
              aes(x = perc_disadvan, y = average_sat_math, color = size)) +
   geom_point(alpha = 0.25) +
@@ -546,8 +543,7 @@ get_regression_table(model_2_parallel_slopes) %>%
 
 
 ## ---- eval=FALSE--------------------------------------------------------------
-## credit_ch6 %>%
-##   select(debt, income) %>%
+## credit_ch6 %>% select(debt, income) %>%
 ##   mutate(income = income * 1000) %>%
 ##   cor()
 
@@ -566,7 +562,7 @@ credit_ch6 %>%
                 latex_options = c("hold_position"))
 
 
-## ----2numxplot1-repeat, echo=FALSE, fig.cap="Relationship between credit card debt and income.", fig.height=3.2----
+## ----2numxplot1-repeat, echo=FALSE, fig.cap="Relationship between credit card debt and income.", fig.height=1.8----
 model3_balance_vs_income_plot
 
 
@@ -585,7 +581,7 @@ get_regression_table(debt_model) %>%
                 latex_options = c("hold_position"))
 
 
-## ----credit-limit-quartiles, echo=FALSE, fig.height=2.9, fig.cap="Histogram of credit limits and brackets.", message=FALSE----
+## ----credit-limit-quartiles, echo=FALSE, fig.height=2.5, fig.cap="Histogram of credit limits and brackets.", message=FALSE----
 ggplot(credit_ch6, aes(x = credit_limit)) +
   geom_histogram(color = "white") +
   geom_vline(xintercept = quantile(credit_ch6$credit_limit, probs = c(0.25, 0.5, 0.75)), linetype = "dashed", size = 1) +

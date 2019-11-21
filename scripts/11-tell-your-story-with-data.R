@@ -20,7 +20,7 @@ set.seed(76)
 
 
 
-## ----pipeline-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="Data/Science Pipeline."----
+## ----pipeline-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="Data/science pipeline.", out.height="70%", out.width="70%"----
 knitr::include_graphics("images/r4ds/data_science_pipeline.png")
 
 
@@ -93,7 +93,7 @@ glimpse(house_prices)
 ##   labs(x = "condition", title = "House condition")
 
 
-## ----house-prices-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Exploratory visualizations of Seattle house prices data.", fig.height=4----
+## ----house-prices-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Exploratory visualizations of Seattle house prices data.", fig.height=4.8----
 p1 <- ggplot(house_prices, aes(x = price)) +
   geom_histogram(color = "white") +
   labs(x = "price (USD)", title = "House price") 
@@ -120,12 +120,12 @@ house_prices %>%
 
 
 ## ---- eval=FALSE--------------------------------------------------------------
-## # Before log10-transformation:
+## # Before log10 transformation:
 ## ggplot(house_prices, aes(x = price)) +
 ##   geom_histogram(color = "white") +
 ##   labs(x = "price (USD)", title = "House price: Before")
 ## 
-## # After log10-transformation:
+## # After log10 transformation:
 ## ggplot(house_prices, aes(x = log10_price)) +
 ##   geom_histogram(color = "white") +
 ##   labs(x = "log10 price (USD)", title = "House price: After")
@@ -142,17 +142,17 @@ p1 + p2
 
 
 ## ---- eval = FALSE------------------------------------------------------------
-## # Before log10-transformation:
+## # Before log10 transformation:
 ## ggplot(house_prices, aes(x = sqft_living)) +
 ##   geom_histogram(color = "white") +
 ##   labs(x = "living space (square feet)", title = "House size: Before")
 ## 
-## # After log10-transformation:
+## # After log10 transformation:
 ## ggplot(house_prices, aes(x = log10_size)) +
 ##   geom_histogram(color = "white") +
 ##   labs(x = "log10 living space (square feet)", title = "House size: After")
 
-## ----log10-size-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House size before and after log10-transformation.", fig.height=2.3----
+## ----log10-size-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House size before and after log10 transformation.", fig.height=2.3----
 p1 <- ggplot(house_prices, aes(x = sqft_living)) +
   geom_histogram(color = "white") +
   labs(x = "living space (square feet)", 
@@ -261,7 +261,7 @@ get_regression_table(price_interaction) %>%
                 latex_options = c("hold_position"))
 
 
-## ----house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction model with prediction.", fig.width=16/2, fig.height=9/2----
+## ----house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction model with prediction.", fig.height=5----
 new_house <- data_frame(log10_size = log10(1900), condition = factor(5)) %>% 
   get_regression_points(price_interaction, newdata = .)
 
@@ -299,15 +299,19 @@ US_births_1999 <- US_births_1994_2003 %>%
   filter(year == 1999)
 
 
-## ----us-births, fig.cap="Number of births in US in 1999.", fig.height=5, fig.align='center'----
+## ----us-births, fig.cap="Number of births in US in 1999.", fig.height=6.4, fig.align='center'----
 ggplot(US_births_1999, aes(x = date, y = births)) +
   geom_line() +
-  labs(x = "Date", y = "Number of births", title = "US Births in 1999")
+  labs(x = "Date", 
+       y = "Number of births", 
+       title = "US Births in 1999")
 
 
 ## -----------------------------------------------------------------------------
 US_births_1999 %>% 
   arrange(desc(births))
+
+
 
 
 

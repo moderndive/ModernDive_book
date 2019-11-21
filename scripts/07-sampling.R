@@ -1,3 +1,13 @@
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("# (PART) (ref:inferpart) {-}")
+} else {
+  cat("# (PART) Statistical Inference with infer {-} ")
+}
+
+
+
+
 ## ----message=FALSE, warning=FALSE---------------------------------------------
 library(tidyverse)
 library(moderndive)
@@ -257,7 +267,7 @@ virtual_histogram +
 ##   labs(x = "Proportion of 100 balls that were red", title = "100")
 
 
-## ----comparing-sampling-distributions, echo=FALSE, fig.cap="Comparing the distributions of proportion red for different sample sizes."----
+## ----comparing-sampling-distributions, echo=FALSE, fig.height=3, fig.cap="Comparing the distributions of proportion red for different sample sizes."----
 # n = 25
 if(!file.exists("rds/virtual_samples_25.rds")){
   virtual_samples_25 <- bowl %>% 
@@ -523,8 +533,8 @@ sampling_scenarios %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position")) %>%
   column_spec(1, width = "0.5in") %>% 
-  column_spec(2, width = "0.7in") %>%
-  column_spec(3, width = "1in") %>%
-  column_spec(4, width = "1.1in") %>% 
-  column_spec(5, width = "1in")
+  column_spec(2, width = "1.2in") %>%
+  column_spec(3, width = "0.8in") %>%
+  column_spec(4, width = "1.5in") %>% 
+  column_spec(5, width = "0.6in")
 

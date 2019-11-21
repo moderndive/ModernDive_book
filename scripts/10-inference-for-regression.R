@@ -45,9 +45,11 @@ cor_ch6 <- evals_ch5 %>%
 
 
 ## ----regline, fig.cap="Relationship with regression line.", fig.height=3.2----
-ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
+ggplot(evals_ch5, 
+       aes(x = bty_avg, y = score)) +
   geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score",
+  labs(x = "Beauty Score", 
+       y = "Teaching Score",
        title = "Relationship between teaching and beauty scores") +  
   geom_smooth(method = "lm", se = FALSE)
 

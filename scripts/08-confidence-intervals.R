@@ -234,7 +234,7 @@ virtual_resampled_means %>%
   summarize(SE = sd(mean_year))
 
 
-## ----percentile-and-se-method, echo=FALSE, message=FALSE, fig.cap='(ref:both-methods)'----
+## ----percentile-and-se-method, echo=FALSE, message=FALSE, fig.cap='(ref:both-methods)', fig.height=5.2----
 both_CI <- bind_rows(
   percentile_ci %>% gather(endpoint, value) %>% mutate(type = "percentile"),
   standard_error_ci %>% gather(endpoint, value) %>% mutate(type = "SE")
@@ -491,8 +491,7 @@ percentile_ci_1
 
 
 ## -----------------------------------------------------------------------------
-bowl_sample_2 <- bowl %>% 
-  rep_sample_n(size = 50)
+bowl_sample_2 <- bowl %>% rep_sample_n(size = 50)
 bowl_sample_2
 
 
@@ -523,7 +522,7 @@ percentile_ci_2 <- sample_2_bootstrap %>%
 percentile_ci_2
 
 
-## ----reliable-percentile, fig.cap='(ref:reliable-perc)', echo=FALSE, fig.height=4.5----
+## ----reliable-percentile, fig.cap='(ref:reliable-perc)', echo=FALSE, fig.height=3.4----
 if(!file.exists("rds/balls_percentile_cis.rds")){
   set.seed(4)
 
@@ -579,7 +578,7 @@ ggplot(percentile_cis) +
         panel.grid.minor.x = element_blank())
 
 
-## ----reliable-se, fig.cap='(ref:rel-se)',echo=FALSE---------------------------
+## ----reliable-se, fig.cap='(ref:rel-se)', echo=FALSE, fig.height=4.2----------
 if(!file.exists("rds/balls_se_cis.rds")){
   # Set random number generator seed value.
   set.seed(9)
@@ -1161,7 +1160,7 @@ ggplot(conf_ints) +
     alpha = factor(captured, levels = c("TRUE", "FALSE"))
   )) +
   scale_y_continuous(breaks = 1:33, labels = groups) +
-  labs(x = expression("Proportion of red balls"), y = "Confidence interval number", 
+  labs(x = expression("Proportion of red balls"), y = "", 
        alpha = "Captured") + 
   theme_light() + 
   theme(panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank(),

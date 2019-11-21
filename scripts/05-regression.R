@@ -1,3 +1,13 @@
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("# (PART) (ref:moderndivepart) {-}")
+} else {
+  cat("# (PART) Data Modeling with moderndive {-} ")
+}
+
+
+
+
 ## ---- eval=FALSE--------------------------------------------------------------
 ## library(tidyverse)
 ## library(moderndive)
@@ -60,7 +70,7 @@ evals_ch5 %>%
 ##   skim()
 
 
-## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients."----
+## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients.", fig.height=2.6----
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
 n_sim <- 100
 values <- NULL
@@ -100,12 +110,13 @@ if(knitr::is_latex_output()){
 
 
 ## -----------------------------------------------------------------------------
-evals_ch5 %>%
+evals_ch5 %>% 
   get_correlation(formula = score ~ bty_avg)
 
 
 ## ---- eval=FALSE--------------------------------------------------------------
-## evals_ch5 %>% summarize(correlation = cor(score, bty_avg))
+## evals_ch5 %>%
+##   summarize(correlation = cor(score, bty_avg))
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -118,11 +129,12 @@ cor_ch5 <- evals_ch5 %>%
 ## ---- eval=FALSE--------------------------------------------------------------
 ## ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 ##   geom_point() +
-##   labs(x = "Beauty Score", y = "Teaching Score",
+##   labs(x = "Beauty Score",
+##        y = "Teaching Score",
 ##        title = "Scatterplot of relationship of teaching and beauty scores")
 
 
-## ----numxplot1, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin.", fig.height=2.5----
+## ----numxplot1, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin.", fig.height=4.5----
 # Define orange box
 margin_x <- 0.15
 margin_y <- 0.075
@@ -133,7 +145,8 @@ box <- tibble(
 
 ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point() +
-  labs(x = "Beauty Score", y = "Teaching Score",
+  labs(x = "Beauty Score", 
+       y = "Teaching Score",
        title = "Scatterplot of relationship of teaching and beauty scores") +
   geom_path(data = box, aes(x=x, y=y), col = "orange", size = 1)
 
@@ -195,7 +208,7 @@ get_regression_table(score_model) %>%
 ## get_regression_table(score_model)
 
 
-## ----moderndive-figure-wrapper, echo=FALSE, fig.align='center', fig.cap="The concept of a wrapper function."----
+## ----moderndive-figure-wrapper, echo=FALSE, fig.align='center', fig.cap="The concept of a wrapper function.", out.height="70%", out.width="70%"----
 knitr::include_graphics("images/shutterstock/wrapper_function.png")
 
 
@@ -224,7 +237,7 @@ evals_ch5 %>%
                 latex_options = c("hold_position"))
 
 
-## ----numxplot4, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
+## ----numxplot4, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual.", fig.height=2.8----
 best_fit_plot <- ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point(color = "grey") +
   labs(x = "Beauty Score", y = "Teaching Score",
@@ -302,7 +315,7 @@ gapminder2007 %>%
 ##   skim()
 
 
-## ----lifeExp2007hist, echo=TRUE, warning=FALSE, fig.cap="Histogram of Life Expectancy in 2007."----
+## ----lifeExp2007hist, echo=TRUE, warning=FALSE, fig.cap="Histogram of life expectancy in 2007.", fig.height=5.2----
 ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", y = "Number of countries",
@@ -312,12 +325,13 @@ ggplot(gapminder2007, aes(x = lifeExp)) +
 ## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(gapminder2007, aes(x = lifeExp)) +
 ##   geom_histogram(binwidth = 5, color = "white") +
-##   labs(x = "Life expectancy", y = "Number of countries",
+##   labs(x = "Life expectancy",
+##        y = "Number of countries",
 ##        title = "Histogram of distribution of worldwide life expectancies") +
 ##   facet_wrap(~ continent, nrow = 2)
 
 
-## ----catxplot0b, echo=FALSE, warning=FALSE, fig.cap="Life expectancy in 2007."----
+## ----catxplot0b, echo=FALSE, warning=FALSE, fig.cap="Life expectancy in 2007.", fig.height=4.3----
 faceted_life_exp <- ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", y = "Number of countries",
@@ -345,7 +359,8 @@ ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
 ## ---- eval=TRUE---------------------------------------------------------------
 lifeExp_by_continent <- gapminder2007 %>%
   group_by(continent) %>%
-  summarize(median = median(lifeExp), mean = mean(lifeExp))
+  summarize(median = median(lifeExp), 
+            mean = mean(lifeExp))
 
 ## ----catxplot0, echo=FALSE----------------------------------------------------
 lifeExp_by_continent %>%
@@ -421,7 +436,7 @@ regression_points %>%
 
 
 
-## ----moderndive-figure-causal-graph-2, echo=FALSE, fig.align='center', fig.cap="Does sleeping with shoes on cause headaches?"----
+## ----moderndive-figure-causal-graph-2, echo=FALSE, fig.align='center', fig.cap="Does sleeping with shoes on cause headaches?", out.width="80%", out.height="80%"----
 knitr::include_graphics("images/shutterstock/shoes_headache.png")
 
 
@@ -429,7 +444,7 @@ knitr::include_graphics("images/shutterstock/shoes_headache.png")
 knitr::include_graphics("images/flowcharts/flowchart.009-cropped.png")
 
 
-## ----best-fitting-line, fig.height=8, fig.width=8, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
+## ----best-fitting-line, fig.height=5.5, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."----
 # First residual
 best_fit_plot <- ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point(size = 0.8, color = "grey") +
@@ -496,7 +511,9 @@ p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
 
 ## -----------------------------------------------------------------------------
 # Fit regression model:
-score_model <- lm(score ~ bty_avg, data = evals_ch5)
+score_model <- lm(score ~ bty_avg, 
+                  data = evals_ch5)
+
 # Get regression points:
 regression_points <- get_regression_points(score_model)
 regression_points
@@ -526,9 +543,10 @@ ggplot(example, aes(x = x, y = y)) +
 
 ## ---- eval=FALSE--------------------------------------------------------------
 ## # Fit regression model:
-## score_model <- lm(score ~ bty_avg, data = evals_ch5)
+## score_model <- lm(formula = score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
 ## get_regression_table(score_model)
+
 
 ## ----recall-table, echo=FALSE-------------------------------------------------
 score_model <- lm(score ~ bty_avg, data = evals_ch5)
@@ -550,8 +568,7 @@ get_regression_table(score_model) %>%
 ##   tidy(conf.int = TRUE) %>%
 ##   mutate_if(is.numeric, round, digits = 3) %>%
 ##   clean_names() %>%
-##   rename(lower_ci = conf_low,
-##          upper_ci = conf_high)
+##   rename(lower_ci = conf_low, upper_ci = conf_high)
 
 ## ----regtable-broom, echo=FALSE, message=FALSE, warning=FALSE-----------------
 library(broom)
