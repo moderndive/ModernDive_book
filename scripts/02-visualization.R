@@ -188,12 +188,12 @@ ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(color = "white", fill = "steelblue")
 
 
-## ---- eval = FALSE------------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(bins = 40, color = "white")
 
 
-## ---- eval = FALSE------------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(binwidth = 10, color = "white")
 
@@ -277,7 +277,7 @@ max_nov <- weather %>%
 quartiles <- weather %>% 
   filter(month == 11) %>% 
   pull(temp) %>% 
-  quantile(prob=c(0.25, 0.5, 0.75)) %>% 
+  quantile(prob = c(0.25, 0.5, 0.75)) %>% 
   round(0)
 five_number_summary <- tibble(
   temp = c(min_nov, quartiles, max_nov)
