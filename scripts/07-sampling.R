@@ -197,7 +197,7 @@ virtual_prop_red
 ##   labs(x = "Proportion of 50 balls that were red",
 ##        title = "Distribution of 1000 proportions red")
 
-## ----samplingdistribution-virtual-1000, echo=FALSE, fig.cap="Distribution of 1000 proportions based on 33 samples of size 50."----
+## ----samplingdistribution-virtual-1000, echo=FALSE, fig.cap="Distribution of 1000 proportions based on 1000 samples of size 50."----
 virtual_prop_red <- virtual_samples %>% 
   group_by(replicate) %>% 
   summarize(red = sum(color == "red")) %>% 
