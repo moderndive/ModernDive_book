@@ -664,13 +664,19 @@
 %%%                     \@ifstar{\@schapter}{\@trplarg{\@chapter}}
                      }
 
+\newif\ifappendix
+\global\appendixfalse
 
 \def\@chapter[#1]#2{%
   \ifnum\c@secnumdepth>\m@ne
     \if@mainmatter
       \refstepcounter{chapter}%
       \typeout{\@chapapp\space\thechapter.}%
+\ifappendix
+      \addcontentsline{toc}{chapter}{\protect\noindent{Appendix~\thechapter\hskip14pt}#1}%
+\else
       \addcontentsline{toc}{chapter}{\protect\numberline{\thechapter}#1}%
+\fi
     \else
       \addcontentsline{toc}{chapter}{#1}\fi
   \else
@@ -955,7 +961,7 @@
      \fi
     }
 \fi
-\newcommand\appendix{\par
+\newcommand\appendix{\par\appendixtrue
   \setcounter{chapter}{0}%
   \setcounter{section}{0}%
   \gdef\@chapapp{\appendixname}%
