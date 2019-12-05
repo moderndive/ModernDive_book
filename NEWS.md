@@ -1,7 +1,15 @@
+# ModernDive 1.0.0.9000
 
-# ModernDive 0.7.0.9000
+* 
 
-* The 0.7.0 version will correspond to tweaks made following proofreading by CRC Press.
+
+***
+
+
+
+# ModernDive 1.0.0
+
+* Version 1.0.0 corresponds to our [CRC Press print edition](https://www.crcpress.com/Statistical-Inference-via-Data-Science-A-ModernDive-into-R-and-the-Tidyverse/Ismay-Kim/p/book/9780367409821).
 * Changed word in title of book from "moderndive" to "ModernDive" for consistency with hex sticker.
 * Added Foreword by Kelly S. McConville. Thanks, @mcconvil!
 * Fixed various typos throughout the book and tried to make language consistent. For example, using "data sets" instead of "datasets" or "data-sets".
