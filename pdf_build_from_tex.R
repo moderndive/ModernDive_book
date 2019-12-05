@@ -31,9 +31,9 @@ file.copy("krantz.cls", "docs/krantz.cls", overwrite = TRUE)
 #  - Change to XeLaTeX
 # 2. Go to Tools -> Project Options -> Sweave >- Typeset LaTeX into PDF
 #  - Change to XeLaTeX
-# 3. Now open up docs/moderndive.tex and press Compile PDF
-#  - The compiled PDF will be saved as docs/moderndive.pdf
-# 4. Compare to the other moderndive_*.pdf generated above to
+# 3. Now open up docs/ModernDive.tex and press Compile PDF
+#  - The compiled PDF will be saved as docs/ModernDive.pdf
+# 4. Compare to the other ModernDive_*.pdf generated above to
 #    ensure things look OK.
 
 # Clean up extra files
