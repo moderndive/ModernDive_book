@@ -1,3 +1,12 @@
+# ModernDive 1.0.0.9000
+
+* 
+
+
+***
+
+
+
 # ModernDive 1.0.0
 
 * Version 1.0.0 corresponds to our [CRC Press print edition](https://www.crcpress.com/Statistical-Inference-via-Data-Science-A-ModernDive-into-R-and-the-Tidyverse/Ismay-Kim/p/book/9780367409821).
