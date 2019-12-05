@@ -88,16 +88,17 @@ promotions_sample  %>%
 
 
 
-## -----------------------------------------------------------------------------
-promotions_shuffled %>% slice(c(11, 26, 28, 36, 37, 46))
+## ---- eval=FALSE--------------------------------------------------------------
+## promotions_shuffled %>% slice(c(11, 26, 28, 36, 37, 46))
 
 
 ## ---- eval=FALSE--------------------------------------------------------------
-## ggplot(promotions_shuffled, aes(x = gender, fill = decision)) +
+## ggplot(promotions_shuffled,
+##        aes(x = gender, fill = decision)) +
 ##   geom_bar() +
 ##   labs(x = "Gender of résumé name")
 
-## ----promotions-barplot-permuted, fig.cap="Barplots of relationship of promotion with gender (left) and shuffled gender (right).", fig.height=3.5, echo=FALSE----
+## ----promotions-barplot-permuted, fig.cap="Barplots of relationship of promotion with gender (left) and shuffled gender (right).", fig.height=4.7, echo=FALSE----
 height1 <- promotions %>% 
   group_by(gender, decision) %>% 
   summarize(n = n()) %>% 
@@ -540,7 +541,7 @@ obs_diff_means
 ##   shade_p_value(obs_stat = obs_diff_means, direction = "both")
 
 
-## ----null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and $p$-value.", fig.height=2.2----
+## ----null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and $p$-value.", fig.height=1.8----
 if(knitr::is_html_output()){
   visualize(null_distribution_movies, bins = 10) + 
     shade_p_value(obs_stat = obs_diff_means, direction = "both")
@@ -565,7 +566,7 @@ p_value_movies <- null_distribution_movies %>%
 
 
 
-## ----zcurve, echo=FALSE, out.width="100%", fig.cap="Standard normal z curve."----
+## ----zcurve, echo=FALSE, out.width="100%", fig.cap="Standard normal z curve.", fig.height=1.3----
 ggplot(data.frame(x = c(-4, 4)), aes(x)) + stat_function(fun = dnorm) +
   labs(x = "z", y = "") + 
   theme_light() +
@@ -660,6 +661,12 @@ ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
 flights_sample %>% 
   group_by(carrier, dest) %>% 
   summarize(n = n(), mean_time = mean(air_time, na.rm = TRUE))
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+} 
 
 
 

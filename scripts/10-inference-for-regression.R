@@ -374,3 +374,9 @@ sampling_scenarios %>%
   column_spec(4, width = "1.6in") %>% 
   column_spec(5, width = "0.65in")
 
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+} 
+

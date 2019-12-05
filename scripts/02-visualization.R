@@ -110,12 +110,12 @@ ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 
 
-## ----alpha, fig.cap="Arrival vs. departure delays scatterplot with alpha = 0.2.", fig.height=4.9----
+## ----alpha, fig.cap="Arrival vs. departure delays scatterplot with alpha = 0.2.", fig.height=4.9, warning=FALSE----
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point(alpha = 0.2)
 
 
-## ----jitter-example-plot-1, fig.cap="Regular and jittered scatterplot.", echo=FALSE, fig.height=5----
+## ----jitter-example-plot-1, fig.cap="Regular and jittered scatterplot.", echo=FALSE, fig.height=5, warning=FALSE----
 jitter_example <- tibble(
   x = rep(0, 4),
   y = rep(0, 4)
@@ -131,7 +131,7 @@ jittered_plot_2 <- ggplot(data = jitter_example, mapping = aes(x = x, y = y)) +
 jittered_plot_1 + jittered_plot_2
 
 
-## ----jitter, fig.cap="Arrival versus departure delays jittered scatterplot.", fig.height=4.7----
+## ----jitter, fig.cap="Arrival versus departure delays jittered scatterplot.", fig.height=4.7, warning=FALSE----
 ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_jitter(width = 30, height = 30)
 
@@ -359,7 +359,7 @@ flights_counted <- flights %>%
   summarize(number = n())
 kable(flights_counted,
       digits = 3,
-      caption = "\\label{tab:flights-counted} Number of flights pre-counted for each carrier", 
+      caption = "Number of flights pre-counted for each carrier", 
       booktabs = TRUE,
       longtable = TRUE,
     linesep = ""
@@ -427,11 +427,6 @@ if(knitr::is_html_output()) {
 }
 
 
-## ---- eval=FALSE--------------------------------------------------------------
-## ggplot(data = flights, mapping = aes(x = carrier), fill = origin) +
-##   geom_bar()
-
-
 ## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = flights, mapping = aes(x = carrier, color = origin)) +
 ##   geom_bar()
@@ -446,6 +441,11 @@ if(knitr::is_html_output()){
     geom_bar() +
     scale_color_grey()
 }
+
+
+## ---- eval=FALSE--------------------------------------------------------------
+## ggplot(data = flights, mapping = aes(x = carrier), fill = origin) +
+##   geom_bar()
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -516,6 +516,12 @@ if(knitr::is_latex_output()){
 ## # Segment 2:
 ## ggplot(flights, aes(x = carrier)) +
 ##   geom_bar()
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+} 
 
 
 

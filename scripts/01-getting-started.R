@@ -111,3 +111,11 @@ glimpse(airports)
 
 ## \vspace{-0.1in}
 
+
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+} 
+

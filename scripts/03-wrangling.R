@@ -399,6 +399,12 @@ if(knitr:::is_latex_output()){
 
 
 
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+} 
+
+
 
 
 ## ----dplyr-cheatsheet, echo=FALSE, fig.cap="Data Transformation with dplyr cheatsheet."----

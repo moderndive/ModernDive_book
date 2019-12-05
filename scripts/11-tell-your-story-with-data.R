@@ -262,7 +262,7 @@ get_regression_table(price_interaction) %>%
 
 
 ## ----house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction model with prediction.", fig.height=5----
-new_house <- data_frame(log10_size = log10(1900), condition = factor(5)) %>% 
+new_house <- tibble(log10_size = log10(1900), condition = factor(5)) %>% 
   get_regression_points(price_interaction, newdata = .)
 
 with_prediction_plot <- ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
@@ -299,7 +299,7 @@ US_births_1999 <- US_births_1994_2003 %>%
   filter(year == 1999)
 
 
-## ----us-births, fig.cap="Number of births in US in 1999.", fig.height=6.4, fig.align='center'----
+## ----us-births, fig.cap="Number of births in the US in 1999.", fig.height=6.4, fig.align='center'----
 ggplot(US_births_1999, aes(x = date, y = births)) +
   geom_line() +
   labs(x = "Date", 

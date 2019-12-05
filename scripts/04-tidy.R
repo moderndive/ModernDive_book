@@ -86,10 +86,6 @@ if(knitr::is_html_output()){
 drinks_smaller_tidy
 
 
-## -----------------------------------------------------------------------------
-drinks_smaller
-
-
 
 
 
@@ -169,12 +165,11 @@ drinks_smaller_tidy
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(drinks_smaller_tidy,
-##        aes(x = country, y = servings, fill = type)) +
+## ggplot(drinks_smaller_tidy, aes(x = country, y = servings, fill = type)) +
 ##   geom_col(position = "dodge")
 
 
-## ----drinks-smaller-tidy-barplot, echo=FALSE, fig.cap='(ref:drinks-col)', fig.height=3.8----
+## ----drinks-smaller-tidy-barplot, echo=FALSE, fig.cap='(ref:drinks-col)', fig.height=2.5----
 if(knitr::is_html_output()){
   drinks_smaller_tidy_plot
 } else {
@@ -195,7 +190,7 @@ if(knitr::is_html_output()){
 
 ## -----------------------------------------------------------------------------
 airline_safety_smaller <- airline_safety %>% 
-  select(-c(incl_reg_subsidiaries, avail_seat_km_per_week))
+  select(airline, starts_with("fatalities"))
 airline_safety_smaller
 
 
@@ -216,7 +211,7 @@ guat_dem_tidy <- guat_dem %>%
 guat_dem_tidy
 
 
-## ----guat-dem-tidy, fig.cap="Democracy scores in Guatemala 1952-1992.", fig.height=2.6----
+## ----guat-dem-tidy, fig.cap="Democracy scores in Guatemala 1952-1992.", fig.height=3----
 ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
   geom_line() +
   labs(x = "Year", y = "Democracy Score")
@@ -227,8 +222,8 @@ ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
 
 
 ## ---- eval=FALSE--------------------------------------------------------------
-## library(dplyr)
 ## library(ggplot2)
+## library(dplyr)
 ## library(readr)
 ## library(tidyr)
 
@@ -240,12 +235,18 @@ ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
 ## ---- eval=FALSE--------------------------------------------------------------
 ## library(ggplot2)
 ## library(dplyr)
-## library(tidyr)
 ## library(readr)
+## library(tidyr)
 ## library(purrr)
 ## library(tibble)
 ## library(stringr)
 ## library(forcats)
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+} 
 
 
 

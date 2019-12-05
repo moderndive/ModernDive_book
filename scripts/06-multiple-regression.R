@@ -47,9 +47,7 @@ evals_ch6 %>%
 
 
 ## ---- eval =FALSE-------------------------------------------------------------
-## evals_ch6 %>%
-##   select(score, age, gender) %>%
-##   skim()
+## evals_ch6 %>% select(score, age, gender) %>% skim()
 
 
 ## -----------------------------------------------------------------------------
@@ -145,7 +143,7 @@ options(digits = 3)
 ##   geom_parallel_slopes(se = FALSE)
 
 
-## ----numxcatx-parallel, echo=FALSE, warning=FALSE, fig.cap="Parallel slopes model of score with age and gender.", fig.height=2.6----
+## ----numxcatx-parallel, echo=FALSE, warning=FALSE, fig.cap="Parallel slopes model of score with age and gender.", fig.height=3.5----
 par_slopes <- ggplot(evals_ch6, aes(x = age, y = score, color = gender)) +
   geom_point() +
   labs(x = "Age", y = "Teaching Score", color = "Gender") +
@@ -452,7 +450,7 @@ regression_points %>%
 
 ## ----recall-parallel-vs-interaction, fig.height=3.5, echo=FALSE, fig.cap="Previously seen comparison of interaction and parallel slopes models."----
 if(knitr::is_html_output()){
-  interaction_plot + parallel_slopes_plot
+  interaction_plot + (parallel_slopes_plot + labs(color = "gender\n(recorded\nas binary)"))
 } else {
   grey_interaction_plot <- interaction_plot +
     scale_color_grey()
@@ -481,7 +479,7 @@ if(knitr::is_html_output()){
 ##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
 ##        color = "School size", title = "Parallel slopes model")
 
-## ----numxcatx-comparison-2, fig.height=3.8, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for Massachusetts schools."----
+## ----numxcatx-comparison-2, fig.height=3.4, echo=FALSE, warning=FALSE, fig.cap="Comparison of interaction and parallel slopes models for Massachusetts schools."----
 p1 <- ggplot(MA_schools, 
              aes(x = perc_disadvan, y = average_sat_math, color = size)) +
   geom_point(alpha = 0.25) +
@@ -621,4 +619,10 @@ if(knitr::is_html_output()){
   (model3_balance_vs_income_plot + scale_color_grey()) +
     (model3_balance_vs_income_plot_colored + scale_color_grey())
 }
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+} 
 

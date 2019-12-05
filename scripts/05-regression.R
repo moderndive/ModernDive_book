@@ -65,12 +65,10 @@ evals_ch5 %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## evals_ch5 %>%
-##   select(score, bty_avg) %>%
-##   skim()
+## evals_ch5 %>% select(score, bty_avg) %>% skim()
 
 
-## ----correlation1, echo=FALSE, fig.cap="Different correlation coefficients.", fig.height=2.6----
+## ----correlation1, echo=FALSE, fig.cap="Nine different correlation coefficients.", fig.height=2.6----
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
 n_sim <- 100
 values <- NULL
@@ -208,7 +206,7 @@ get_regression_table(score_model) %>%
 ## get_regression_table(score_model)
 
 
-## ----moderndive-figure-wrapper, echo=FALSE, fig.align='center', fig.cap="The concept of a wrapper function.", out.height="70%", out.width="70%"----
+## ----moderndive-figure-wrapper, echo=FALSE, fig.align='center', fig.cap="The concept of a wrapper function.", out.height="60%", out.width="60%"----
 knitr::include_graphics("images/shutterstock/wrapper_function.png")
 
 
@@ -352,7 +350,7 @@ if(knitr::is_latex_output()) {
 ## ----catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007.", fig.height=3.4----
 ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
   geom_boxplot() +
-  labs(x = "Continent", y = "Life expectancy (years)",
+  labs(x = "Continent", y = "Life expectancy",
        title = "Life expectancy by continent")
 
 
@@ -436,7 +434,7 @@ regression_points %>%
 
 
 
-## ----moderndive-figure-causal-graph-2, echo=FALSE, fig.align='center', fig.cap="Does sleeping with shoes on cause headaches?", out.width="80%", out.height="80%"----
+## ----moderndive-figure-causal-graph-2, echo=FALSE, fig.align='center', fig.cap="Does sleeping with shoes on cause headaches?", out.width="60%", out.height="60%"----
 knitr::include_graphics("images/shutterstock/shoes_headache.png")
 
 
@@ -615,4 +613,10 @@ score_model %>%
   ) %>%
   kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
                 latex_options = c("hold_position"))
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+} 
 

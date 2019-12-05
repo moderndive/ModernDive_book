@@ -42,7 +42,7 @@ tactile_prop_red
 ##   labs(x = "Proportion of 50 balls that were red",
 ##        title = "Distribution of 33 proportions red")
 
-## ----samplingdistribution-tactile, echo=FALSE, fig.cap="Distribution of 33 proportions based on 33 samples of size 50."----
+## ----samplingdistribution-tactile, echo=FALSE, fig.cap="Distribution of 33 proportions based on 33 samples of size 50.", fig.height=3.1----
 tactile_histogram <- ggplot(tactile_prop_red, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white")
 tactile_histogram + 
@@ -371,7 +371,7 @@ comparing_n_table  %>%
 
 
 
-## ----comparing-sampling-distributions-1b, echo=FALSE, fig.cap="Previously seen three sampling distributions of the sample proportion $\\widehat{p}$.", fig.height=3.1----
+## ----comparing-sampling-distributions-1b, echo=FALSE, fig.cap="Previously seen three distributions of the sample proportion $\\widehat{p}$.", fig.height=3.1----
 comparing_sampling_distributions
 
 
@@ -537,4 +537,12 @@ sampling_scenarios %>%
   column_spec(3, width = "0.8in") %>%
   column_spec(4, width = "1.5in") %>% 
   column_spec(5, width = "0.6in")
+
+
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+} 
 

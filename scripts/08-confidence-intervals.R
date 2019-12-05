@@ -497,8 +497,10 @@ bowl_sample_2
 
 ## ----eval=FALSE---------------------------------------------------------------
 ## sample_2_bootstrap <- bowl_sample_2 %>%
-##   specify(response = color, success = "red") %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
+##   specify(response = color,
+##           success = "red") %>%
+##   generate(reps = 1000,
+##            type = "bootstrap") %>%
 ##   calculate(stat = "prop")
 ## sample_2_bootstrap
 
@@ -506,8 +508,10 @@ bowl_sample_2
 ## ----echo=FALSE---------------------------------------------------------------
 if(!file.exists("rds/sample_2_bootstrap.rds")){
   sample_2_bootstrap <- bowl_sample_2 %>% 
-    specify(response = color, success = "red") %>% 
-    generate(reps = 1000, type = "bootstrap") %>% 
+    specify(response = color, 
+            success = "red") %>% 
+    generate(reps = 1000, 
+             type = "bootstrap") %>% 
     calculate(stat = "prop")
   write_rds(sample_2_bootstrap, "rds/sample_2_bootstrap.rds")
 } else {
@@ -522,7 +526,7 @@ percentile_ci_2 <- sample_2_bootstrap %>%
 percentile_ci_2
 
 
-## ----reliable-percentile, fig.cap='(ref:reliable-perc)', echo=FALSE, fig.height=3.4----
+## ----reliable-percentile, fig.cap='(ref:reliable-perc)', echo=FALSE, fig.height=4.2----
 if(!file.exists("rds/balls_percentile_cis.rds")){
   set.seed(4)
 
@@ -578,7 +582,7 @@ ggplot(percentile_cis) +
         panel.grid.minor.x = element_blank())
 
 
-## ----reliable-se, fig.cap='(ref:rel-se)', echo=FALSE, fig.height=4.2----------
+## ----reliable-se, fig.cap='(ref:rel-se)', echo=FALSE, fig.height=6.6----------
 if(!file.exists("rds/balls_se_cis.rds")){
   # Set random number generator seed value.
   set.seed(9)
@@ -921,11 +925,12 @@ mythbusters_yawn %>%
 
 
 ## -----------------------------------------------------------------------------
-head(mythbusters_yawn)
+first_six_rows <- head(mythbusters_yawn)
+first_six_rows
 
 
 ## -----------------------------------------------------------------------------
-head(mythbusters_yawn) %>% 
+first_six_rows %>% 
   sample_n(size = 6, replace = TRUE)
 
 
@@ -1228,4 +1233,10 @@ ggplot(conf_ints) +
 ##     title = expression(paste("95% confidence intervals for ", p, sep = ""))
 ##   ) +
 ##   geom_vline(xintercept = 900 / 2400, color = "red")
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+} 
 
