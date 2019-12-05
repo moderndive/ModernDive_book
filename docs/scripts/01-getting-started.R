@@ -1,4 +1,4 @@
-## ----message=FALSE, warning=FALSE, echo=FALSE----------------------------
+## ----message=FALSE, warning=FALSE, echo=FALSE---------------------------------
 # Packages needed internally, but not in text.
 library(scales)
 
@@ -13,11 +13,11 @@ library(scales)
 
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 ## \vspace{-0.25in}
@@ -25,15 +25,15 @@ library(scales)
 ## \vspace{-0.25in}
 
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## library(ggplot2)
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 ## \vspace{-0.25in}
@@ -41,21 +41,21 @@ library(scales)
 ## \vspace{-0.25in}
 
 
-## ----message=FALSE-------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(nycflights13)
 library(dplyr)
 library(knitr)
 
 
-## ----load_flights--------------------------------------------------------
+## ----load_flights-------------------------------------------------------------
 flights
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 ## \vspace{-0.25in}
@@ -63,15 +63,15 @@ flights
 ## \vspace{-0.25in}
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 glimpse(flights)
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 ## \vspace{-0.25in}
@@ -79,35 +79,43 @@ glimpse(flights)
 ## \vspace{-0.25in}
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## airlines
 ## kable(airlines)
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## airlines$name
 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 glimpse(airports)
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
 
 
 
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ?flights
 
 
-## \vspace{-0.25in}
+## \vspace{-0.15in}
 
 ## **_Learning check_**
 
-## \vspace{-0.25in}
+## \vspace{-0.1in}
+
+
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(knitr::is_latex_output()){
+  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+} 
 
