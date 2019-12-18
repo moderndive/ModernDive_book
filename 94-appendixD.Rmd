@@ -1505,6 +1505,82 @@ library(moderndive)
 library(infer)
 ``` 
 
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Continuing with our regression using `age` as the explanatory variable and teaching `score` as the outcome variable.
+
+- Use the `get_regression_points()` function to get the observed values, fitted values, and residuals for all `r nrow(evals_ch5)` instructors. 
+
+```{r, eval=TRUE, echo=TRUE}
+evals_ch5 <- evals %>%
+  select(ID, score, bty_avg, age)
+
+# Fit regression model:
+score_age_model <- lm(score ~ age, data = evals_ch5)
+# Get regression points:
+regression_points <- get_regression_points(score_age_model)
+regression_points
+```
+
+- Perform a residual analysis and look for any systematic patterns in the residuals. Ideally, there should be little to no pattern but comment on what you find here.
+
+The first condition is that the relationship between the outcome variable $y$ and the explanatory variable $x$ must be **L**inear. 
+
+```{r non-linear2, fig.cap="Example of a clearly non-linear relationship.", echo=FALSE, fig.height=3.3}
+set.seed(76)
+evals_ch5 %>% 
+  ggplot(aes(x = age, y = score)) +
+  geom_point() +
+  labs(x = "Age", y = "Teaching Score") +  
+  geom_smooth(method = "lm", se = FALSE) +
+  expand_limits(y = 10)
+```
+The relationship between score and age does not seem to be linear. 
+
+The second condition is that the residuals must be **I**ndependent. In other words, the different observations in our data must be independent of one another. As explained in \@ref(independence-of-residuals),  "we say there exists *dependence* between observations".
+
+The third condition is that the residuals should follow a **N**ormal distribution. 
+```{r model1residualshist2, echo=FALSE, warning=FALSE, fig.cap="Histogram of residuals."}
+ggplot(regression_points, aes(x = residual)) +
+  geom_histogram(binwidth = 0.25, color = "white") +
+  labs(x = "Residual")
+```
+
+The fourth and final condition is that the residuals should exhibit **E**qual variance across all values of the explanatory variable $x$. In other words, the value and spread of the residuals should not depend on the value of the explanatory variable $x$.  
+```{r numxplot62, echo=FALSE, warning=FALSE, fig.cap="Plot of residuals over beauty score."}
+ggplot(regression_points, aes(x = age, y = residual)) +
+  geom_point() +
+  labs(x = "Beauty Score", y = "Residual") +
+  geom_hline(yintercept = 0, col = "blue", size = 1)
+```
+This plot seems to fit equality of variance. 
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the inference but this time for the correlation coefficient instead of the slope. Note the implementation of `stat = "correlation"` in the `calculate()` function of the `infer` package.
+<!--
+TODO: Clarify what the deliverable for this LC should be.
+-->
+```{r eval=FALSE}
+bootstrap_distn_slope <- evals_ch5 %>% 
+  specify(formula = score ~ bty_avg) %>%
+  generate(reps = 1000, type = "bootstrap") %>% 
+  calculate(stat = "correlation")
+
+if(!file.exists("rds/bootstrap_distn_slope.rds")){
+  set.seed(76)
+  bootstrap_distn_slope <- evals %>% 
+    specify(score ~ bty_avg) %>%
+    generate(reps = 1000, type = "bootstrap") %>% 
+    calculate(stat = "slope")
+  saveRDS(object = bootstrap_distn_slope, 
+           "rds/bootstrap_distn_slope.rds")
+} else {
+  bootstrap_distn_slope <- readRDS("rds/bootstrap_distn_slope.rds")
+}
+
+observed_slope <- evals %>% 
+  specify(score ~ bty_avg) %>% 
+  calculate(stat = "correlation")
+observed_slope
+```
+
 
 
 ***
@@ -1524,3 +1600,30 @@ library(moderndive)
 library(skimr)
 library(fivethirtyeight)
 ``` 
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the regression modeling in Subsection \@ref(house-prices-regression) and the prediction making you just did on the house of condition 5 and size 1900 square feet in Subsection \@ref(house-prices-making-predictions), but using the parallel slopes model you visualized in Figure \@ref(fig:house-price-parallel-slopes). Show that it's `r 10^5.720317 %>% dollar()`!
+
+```{r, eval=FALSE}
+house_prices <- house_prices %>%
+  mutate(
+    log10_price = log10(price),
+    log10_size = log10(sqft_living)
+    )
+# Fit regression model:
+price_interaction <- lm(log10_price ~ log10_size + condition, 
+                        data = house_prices)
+
+# Get regression table:
+get_regression_table(price_interaction)
+
+10^(2.88 + 0.096 + 0.837*log10(1900))
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What date between 1994 and 2003 has the fewest number of births in the US? What story could you tell about why this is the case?
+
+```{r}
+US_births_1994_2003 %>% 
+  arrange(births)
+```
+
+The dates with the fewest number of births in the US was 12/25 of the years of 2001, 2000, 2003, 2002, and 1999. Because it is Christmas Day and hospitals don't generally induce labor on that day. 
