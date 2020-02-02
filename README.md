@@ -1,6 +1,8 @@
 # ModernDive <img src="images/logos/hex_blue_text.png" align="right" width=125 />
 
-[![Build Status](https://travis-ci.org/moderndive/moderndive_book.svg?branch=master)](https://travis-ci.org/moderndive/moderndive_book) Note: travis-ci currently deploys the developmental version of the book into the `gh-pages` branch of this repo, which is hosted via Netlify at [moderndive.netlify.com](https://moderndive.netlify.com).
+[![Build Status](https://travis-ci.org/moderndive/moderndive_book.svg?branch=master)](https://travis-ci.org/moderndive/moderndive_book) Note: travis-ci currently deploys the developmental version of the book into the `gh-pages` branch of this repo, which is hosted via Netlify at [moderndive.netlify.com](https://moderndive.netlify.com). [![Netlify Status](https://api.netlify.com/api/v1/badges/10e04707-18d4-4081-9a9f-33d4cbaa1325/deploy-status)](https://app.netlify.com/sites/moderndive/deploys)
+
+[![https://moderndive.com/ Netlify Status](https://api.netlify.com/api/v1/badges/10e04707-18d4-4081-9a9f-33d4cbaa1325/deploy-status)](https://app.netlify.com/sites/moderndive/deploys) The `release` branch deploys to https://moderndive.com.
 
 
 ## About this book
