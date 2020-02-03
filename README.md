@@ -14,7 +14,7 @@ Welcome to the GitHub repository page for **Statistical Inference via Data Scien
 
 ## Contents of this Repository
 
-ModernDive is built using RStudio's [`bookdown`](https://www.rstudio.com/resources/webinars/introducing-bookdown/) package; for more information on how to use `bookdown` see [bookdown.org](https://bookdown.org/).
+ModernDive is built using RStudio's [`bookdown`](https://www.rstudio.com/resources/webinars/introducing-bookdown/) package; for more information on how to use `bookdown` see [bookdown.org](https://bookdown.org/). If you'd like to build the book on your own, please make sure to first install the `bookdown` package via `install.packages("bookdown")`.
 
 * The `bookdown` source code for the development version of ModernDive is above, the output of which can be previewed at [moderndive.netlify.com](https://moderndive.netlify.com) which is based on the outputted HTML files in the `docs/` folder.
 * The `bookdown` source code for all [previously released versions](https://moderndive.com/index.html#about-book) of ModernDive, including the latest version available at [ModernDive.com](https://moderndive.com/), is accessible on the [Releases](https://github.com/moderndive/moderndive_book/releases) page.
