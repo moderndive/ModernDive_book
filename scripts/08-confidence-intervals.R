@@ -485,7 +485,7 @@ percentile_ci_1
 ## sample_1_bootstrap %>%
 ##   visualize(bins = 15) +
 ##   shade_confidence_interval(endpoints = percentile_ci_1) +
-##   geom_vline(xintercept = 0.375, linetype = "dashed")
+##   geom_vline(xintercept = 0.42, linetype = "dashed")
 
 
 
