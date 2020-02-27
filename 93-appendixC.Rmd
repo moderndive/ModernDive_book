@@ -1,62 +1,343 @@
-# Reach for the Stars {#appendixC}
+# Tips and Tricks {#appendixC}
 
 ## Needed packages {-}
 
-```{r}
-library(dplyr)
-library(ggplot2)
-library(knitr)
+Let's load all the packages needed for this chapter (this assumes you've already installed them). Recall from our discussion in Section \@ref(tidyverse-package) that loading the `tidyverse` package by running `library(tidyverse)` loads the following commonly used data science packages all at once:
+
+* `ggplot2` for data visualization
+* `dplyr` for data wrangling
+* `tidyr` for converting data to "tidy" format
+* `readr` for importing spreadsheet data into R
+* As well as the more advanced `purrr`, `tibble`, `stringr`, and `forcats` packages
+
+If needed, read Section \@ref(packages) for information on how to install and load R packages. 
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(scales)
+library(janitor)
 library(dygraphs)
 library(nycflights13)
 ```
 
-## Sorted barplots
+## Data wrangling
 
-Building upon the example in Section \@ref(geombar):
+> Shout out to [Dr. Jenny Smetzer](https://www.scsparkscience.org/fellow/jennifer-smetzer/) for her work setting this up!
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, eval = TRUE, 
+                      cache = TRUE,
+                      fig.width = 16/2, fig.height = 9/2)
+
+# Why 76? https://www.youtube.com/watch?v=xjJ7FheCkCU
+set.seed(76)
+```
+
+![](images/data_ninja1.png){width=30%}      
+
+Let's load a movies dataset, pare down the rows and columns a bit, and then show the first 10 rows using `slice()`.
 
 ```{r}
-flights_table <- table(flights$carrier)
-flights_table
+movies <- read_csv("https://moderndive.com/data/movies.csv") %>% 
+  filter(type %in% c("action", "comedy", "drama", "animated", "fantasy", "rom comedy")) %>% 
+  select(-over200)
+
+movies %>% 
+  slice(1:10)
 ```
 
-```{r include=FALSE}
-#library(dplyr)
-#carrier_counts <- flights %>% count(carrier)
-#carrier_counts
-```
 
-We can sort this table from highest to lowest counts by using the `sort` function:
+
+### Dealing with missing values
+
+You see the revenue in `million`s value for the movie "2 Fast 2 Furious" is `NA` (missing). So the following occurs when computing the median revenue:
 
 ```{r}
-sorted_flights <- sort(flights_table, decreasing = TRUE)
-names(sorted_flights)
+movies %>% 
+  summarize(mean_profit = median(millions))
 ```
 
-```{r include=FALSE}
-#carrier_counts <- carrier_counts %>%
-#  arrange(desc(n))
+You should always think about why a data value might be missing and what that missingness may mean. For example, imagine you are conducting a study on the effects of smoking on lung cancer and a lot of your patients' data is missing because they died of lung cancer. If you just "sweep these patients under the rug" and ignore them, you are clearly biasing the results. 
+
+While there are statistical methods to deal with missing data they are beyond the reach of this class. The easiest thing to do is to remove all missing cases, but **you should always at the very least report to the reader if you do so, as by removing the missing values you may be biasing your results.**
+
+You can do this with a `na.rm = TRUE` argument like so:
+
+```{r}
+movies %>% 
+  summarize(mean_profit = median(millions, na.rm = TRUE))
 ```
 
-It is often preferred for barplots to be ordered corresponding to the heights of the bars.  This allows the reader to more easily compare the ordering of different airlines in terms of departed flights [@robbins2013].  We can also much more easily answer questions like "How many airlines have more departing flights than Southwest Airlines?".
+If you decide you want to remove the row with the missing data, you can use the filter function like so:
 
-We can use the sorted table giving the number of flights defined as `sorted_flights` to **reorder** the `carrier`.
+```{r}
+movies_no_missing <- movies %>%
+  filter(!is.na(millions))
 
-```{r, fig.cap="Number of flights departing NYC in 2013 by airline - Descending numbers."}
-ggplot(data = flights, mapping = aes(x = carrier)) +
-  geom_bar() +
-  scale_x_discrete(limits = names(sorted_flights))
+movies_no_missing %>% 
+  slice(1:10)
 ```
 
-```{r include=FALSE}
-#ggplot(data = carrier_counts, mapping = aes(x = carrier, y = n)) +
-#  geom_bar(stat = "identity") + 
-#  scale_x_discrete(limits = carrier)
+We see "2 Fast 2 Furious" is now gone.
+
+
+### Reordering bars in a barplot
+
+Let's compute the total revenue for each movie type and plot a barplot.
+
+```{r}
+revenue_by_type <- movies %>% 
+  group_by(type) %>% 
+  summarize(total_revenue = sum(millions))
+revenue_by_type
+ggplot(revenue_by_type, aes(x = type, y = total_revenue)) +
+  geom_col() + 
+  labs(x = "Movie genre", y = "Total boxoffice revenue (in millions of $)")
 ```
 
-The last addition here specifies the values of the horizontal `x` axis on a discrete scale to correspond to those given by the entries of `sorted_flights`.  
+Say we want to reorder the categorical variable `type` so that the bars show in a different order. We can reorder the bars by manually defining the order of the `levels` in the `factor()` command:
+
+```{r}
+type_levels <- c("rom comedy", "action", "drama", "animated", "comedy", "fantasy")
+
+revenue_by_type <- revenue_by_type %>% 
+  mutate(type = factor(type, levels = type_levels))
+
+ggplot(revenue_by_type, aes(x = type, y = total_revenue)) +
+  geom_col() + 
+  labs(x = "Movie genre", y = "Total boxoffice revenue (in millions of $)")
+```
+
+Or if you want to reorder `type` in ascending order of `total_revenue`, we use `reorder()`
+
+```{r}
+revenue_by_type <- revenue_by_type %>% 
+  mutate(type = reorder(type, total_revenue))
+
+ggplot(revenue_by_type, aes(x = type, y = total_revenue)) +
+  geom_col() + 
+  labs(
+    x = "Movie genre", y = "Total boxoffice revenue (in millions of $)"
+  )
+```
+
+Or if you want to reorder `type` in descending order of `total_revenue`, just put
+a `-` sign in front of `-total_revenue` in `reorder()`:
+
+```{r}
+revenue_by_type <- revenue_by_type %>% 
+  mutate(type = reorder(type, -total_revenue))
+
+ggplot(revenue_by_type, aes(x = type, y = total_revenue)) +
+  geom_col() + 
+  labs(
+    x = "Movie genre", y = "Total boxoffice revenue (in millions of $)"
+  )
+```
+
+For more advanced categorical variable (i.e. factor) manipulations, check out
+the [`forcats` package](https://forcats.tidyverse.org/){target="_blank"}. Note: `forcats` is an anagram of `factors`
+
+
+![](https://github.com/tidyverse/forcats/raw/master/man/figures/logo.png){width=20%} 
+
+
+
+### Showing money on an axis
+
+```{r fig.height=3, fig.width=5}
+movies <- movies %>% 
+  mutate(revenue = millions * 10^6)
+
+ggplot(data = movies, aes(x = rating, y = revenue)) + 
+  geom_boxplot() + 
+  labs(x = "rating", y = "Revenue in $", title = "Profits for different movie ratings")
+```
+
+Google "ggplot2 axis scale dollars" and click on the [first link](http://www.sthda.com/english/wiki/ggplot2-axis-scales-and-transformations) and search for the word "dollars". You'll find:
+
+```{r fig.height=3, fig.width=5}
+# Don't forget to load the scales package first!
+library(scales)
+
+ggplot(data = movies, aes(x = rating, y = revenue)) + 
+  geom_boxplot() + 
+  labs(x = "rating", y = "Profit in millions of $", title = "Profits for different movie ratings") +
+  scale_y_continuous(labels = dollar)
+```
+
+
+
+### Changing values inside cells
+
+`dplyr::rename()` renames column/variable names. To "rename" values inside cells of a particular column, you need to `mutate()` the column using one of the three functions below. There might be other ones too, but these are the three we've seen the most. In these examples, we'll change values in the variable `type`.
+
+1. `if_else()`
+1. `recode()`
+1. `case_when()`
+
+#### `if_else()` {-}
+
+Switch all instances of `rom comedy` with `romantic comedy` using `if_else()` from the `dplyr` package. If a particular row has `type == "rom comedy"`, then return `"romantic comedy"`, else return whatever was originally in `type`. Save everything in a new variable `type_new`:
+
+```{r}
+movies %>% 
+  mutate(type_new = if_else(type == "rom comedy", "romantic comedy", type)) %>% 
+  slice(1:10)
+```
+
+Do the same here, but return `"not romantic comedy"` if `type` is not `"rom comedy"` and this time overwrite the original `type` variable
+
+```{r}
+movies %>% 
+  mutate(type = if_else(type == "rom comedy", "romantic comedy", "not romantic comedy")) %>% 
+  slice(1:10)
+```
+
+#### `recode()` {-}
+
+`if_else()` is rather limited however. What if we want to "rename" all `type` so that they start with uppercase? Use `recode()`:
+
+```{r}
+movies %>% 
+  mutate(type_new = recode(type, 
+                           "action" = "Action",
+                           "animated" = "Animated",
+                           "comedy" = "Comedy",
+                           "drama" = "Drama",
+                           "fantasy" = "Fantasy",
+                           "rom comedy" = "Romantic Comedy"
+  )) %>% 
+  slice(1:10)
+```
+
+#### `case_when()` {-}
+
+`case_when()` is a little trickier, but allows you to evaluate boolean operations using `==`, `>`, `>=`, `&`, `|`, etc:
+
+```{r}
+movies %>% 
+  mutate(type_new = 
+           case_when(
+             type == "action" & millions > 40 ~ "Big budget action",
+             type == "rom comedy" & millions < 40 ~ "Small budget romcom",
+             # Need this for everything else that aren't the two cases above:
+             TRUE ~ "Rest"
+           ))
+```
+
+
+
+### Converting a numerical variable to a categorical one
+
+Sometimes we want to turn a numerical, continuous variable into a categorical variable. For instance, what if we wanted to have a variable that tells us if a movie made one hundred million dollars or more. That is to say, we can create a binary variable, which is the same thing as a categorical variable with 2 levels. We can again use the `mutate()` function:
+
+```{r}
+movies %>% 
+  mutate(big_budget = millions > 100) %>% 
+  slice(1:10)
+```
+
+What if you want to convert a numerical variable into a categorical variable with more than 2 levels? One way is to use the `cut()` command. For instance, below, we `cut()` the `score` variable, to recode it into 4 categories:
+
+1. 0 - 40 = bad
+2. 40.1 - 60 = so-so
+3. 60.1 - 80 = good
+4. 80.1+ = great
+
+We set the breaking points for cutting the numerical variable with the `c(0, 40, 60, 80, 100)` part, and set the labels for each of these bins with the `labels = c("bad", "so-so", "good", "great")` part. All this action happens inside the `mutate()` command, so the new categorical variable `score_categ` is added to the data frame. 
+
+```{r}
+movies %>% 
+  mutate(score_categ = cut(score, 
+                           breaks = c(0, 40, 60, 80, 100),
+                           labels = c("bad", "so-so", "good", "great")
+  )) %>% 
+  slice(1:10)
+```
+
+Other options with the `cut` function:
+
+*  By default, if the value is exactly the upper bound of an interval, it's
+included in the lessor category (e.g. 60.0 is 'so-so' not 'good'), to 
+flip this, include the argument `right = FALSE`.
+*  You could also have RStudio equally divide the variable into a balanced
+number of groups.  For example, specifying `breaks = 3` would create 4 groups with
+approximately the same number of values in each group.
+
+
+
+### Computing proportions {#prop}
+
+By using a `group_by()` followed not by a `summarize()` as is often the case, but rather a `mutate()`. So say we compute the total revenue millions for each movie rating and type:
+
+```{r}
+rating_by_type_millions <- movies %>% 
+  group_by(rating, type) %>% 
+  summarize(millions = sum(millions)) %>% 
+  arrange(rating, type)
+
+rating_by_type_millions
+```
+
+Say within each movie rating (G, PG, PG-13, R), we want to know the proportion of `total_millions` that made by each movie type (animated, action, comedy, etc). We can:
+
+```{r}
+rating_by_type_millions %>% 
+  group_by(rating) %>% 
+  mutate(
+    # Compute a new column of the sum of millions split by rating:
+    total_millions = sum(millions),
+    # Compute the proportion within each rating:
+    prop = millions/total_millions
+  )
+```
+
+So for example, the 4 proportions corresponding to R rated movies are 0.596 + 0.142 + 0.213 + 0.0491 = 1.
+
+
+
+
+### Dealing with %, commas, and \$ {#numerical}
+
+Say you have numerical data that are recorded as percentages, have commas, or are in dollar form and hence are character strings. How do you convert these to numerical values? Using `readr::parse_number()` inside a `mutate()`! Shout out to [Stack Overflow](https://stackoverflow.com/a/52965808/3674500){target="_blank"}
+
+```{r}
+library(readr)
+parse_number("10.5%")
+parse_number("145,897")
+parse_number("$1,234.5")
+```
+
+What about the other way around? Use the `scales` package!
+
+```{r}
+library(scales)
+percent(0.105)
+comma(145897)
+dollar(1234.5)
+```
+
+
+
+
+
+
+***
+
+
+**Congratulations. You are now an R Ninja!**
+
+![](images/Rninja.png){width=40%}  
+
+
+
+
+***
+
+
 
 ## Interactive graphics
-
 
 ### Interactive linegraphs
 
@@ -64,6 +345,7 @@ Another useful tool for viewing linegraphs such as this is the `dygraph` functio
 
 ```{r warning=FALSE, out.width="100%"}
 library(dygraphs)
+library(nycflights13)
 flights_day <- mutate(flights, date = as.Date(time_hour))
 flights_summarized <- flights_day %>% 
   group_by(date) %>%
