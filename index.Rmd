@@ -65,8 +65,8 @@ needed_CRAN_pkgs <- c(
   
   # Internally used packages:
   "webshot", "mvtnorm", "remotes", "devtools", "dygraphs", "gridExtra",
-  "kableExtra", "scales", "viridis", "ggrepel", "patchwork"
-  ) 
+  "kableExtra", "scales", "viridis", "ggrepel", "patchwork", "here"
+) 
 
 new_pkgs <- needed_CRAN_pkgs[!(needed_CRAN_pkgs %in% installed.packages())]
 if(length(new_pkgs)) {
@@ -97,7 +97,7 @@ knitr::write_bib(
     "janitor", "infer", "skimr", "kableExtra", "moderndive", "tidyverse",
     "broom"
   ),
-   "bib/packages.bib"
+  here::here("bib", "packages.bib")
 )
 
 # Add all simulation results here
@@ -105,56 +105,93 @@ if(!dir.exists("rds"))
   dir.create("rds")
 
 # Create empty docs folder
-if(!dir.exists("docs")) dir.create("docs")
+if(!dir.exists("docs")) 
+  dir.create("docs")
 
 # Make sure all images copy to docs folder
-if(!dir.exists("docs/images")) dir.create("docs/images")
-system("cp -r images/* docs/images/")
+if(!dir.exists(here::here("docs", "images"))) 
+  dir.create(here::here("docs", "images"))
+file.copy(from = "images", 
+          to = "docs",
+          recursive = TRUE)
+# system("cp -r images/* docs/images/")
 
 # These steps are only needed for generating the moderndive.com page
 # with relevant links. Not needed for PDF generation.
 if(knitr::is_html_output()){
   # Add all knitr::purl()'ed chapter R scripts here
-  system("rm -rf docs/scripts/")
-  if(!dir.exists("docs/scripts"))
-    dir.create("docs/scripts")
-  system("R CMD batch purl.R")
-  system("rm purl.Rout")
+  #  system("rm -rf docs/scripts/")
+  if(dir.exists(here::here("docs", "scripts")))
+    unlink(here::here("docs", "scripts"), recursive = TRUE)
+  if(!dir.exists(here::here("docs", "scripts")))
+    dir.create(here::here("docs", "scripts"))
+}
+```
+
+<!-- purl() all the chapter Rmd's in a new session -->
+```{bash, include=FALSE}
+Rscript -e "source('purl.R', local = TRUE)"
+```
+
+```{r set-options2, include=FALSE}
+if(knitr::is_html_output()){
+  #  system("rm purl.Rout")
+  file.remove("purl.Rout")
   
   # Copy all needed csv and txt files to docs/
   # Should switch to use purrr here at some point
-  if(!dir.exists("docs/data"))
-    dir.create("docs/data")
-  file.copy("data/dem_score.csv", "docs/data/dem_score.csv", overwrite = TRUE)
-  file.copy("data/dem_score.xlsx", "docs/data/dem_score.xlsx", overwrite = TRUE)
-  file.copy("data/le_mess.csv", "docs/data/le_mess.csv", overwrite = TRUE)
-  file.copy("data/ideology.csv", "docs/data/ideology.csv", overwrite = TRUE)
-  # For Appendix B
-  file.copy("data/ageAtMar.csv", "docs/data/ageAtMar.csv", overwrite = TRUE)
-  file.copy("data/offshore.csv", "docs/data/offshore.csv", overwrite = TRUE)
-  file.copy("data/cleSac.txt", "docs/data/cleSac.txt", overwrite = TRUE)
-  file.copy("data/zinc_tidy.csv", "docs/data/zinc_tidy.csv", overwrite = TRUE)
-  # For Appendix C
-  file.copy("data/movies.csv", "docs/data/movies.csv", overwrite = TRUE)
+  if(!dir.exists(here::here("docs", "data")))
+    dir.create(here::here("docs", "data"))
   
-  # To be updated to include the actual link to labs (likely in blogdown format?)
+  # file.copy("data/dem_score.csv", "docs/data/dem_score.csv", overwrite = TRUE)
+  # file.copy("data/dem_score.xlsx", "docs/data/dem_score.xlsx", overwrite = TRUE)
+  # file.copy("data/le_mess.csv", "docs/data/le_mess.csv", overwrite = TRUE)
+  # file.copy("data/ideology.csv", "docs/data/ideology.csv", overwrite = TRUE)
+  # # For Appendix B
+  # file.copy("data/ageAtMar.csv", "docs/data/ageAtMar.csv", overwrite = TRUE)
+  # file.copy("data/offshore.csv", "docs/data/offshore.csv", overwrite = TRUE)
+  # file.copy("data/cleSac.txt", "docs/data/cleSac.txt", overwrite = TRUE)
+  # file.copy("data/zinc_tidy.csv", "docs/data/zinc_tidy.csv", overwrite = TRUE)
+  # # For Appendix C
+  # file.copy("data/movies.csv", "docs/data/movies.csv", overwrite = TRUE)
+  data_files <- c("dem_score.csv",
+                  "dem_score.xlsx",
+                  "le_mess.csv",
+                  "ideology.csv",
+                  # For Appendix B
+                  "ageAtMar.csv",
+                  "offshore.csv",
+                  "cleSac.txt",
+                  "zinc_tidy.csv",
+                  # For Appendix C
+                  "movies.csv")
+  from_vec <- here::here("data", data_files)
+  to_vec <- here::here("docs", "data", data_files)
+  purrr::walk(from_vec, file.copy, to = to_vec, overwrite = TRUE)
+  
+  # To be updated to include the actual link to labs website
   # when Albert has those ready
-  file.copy("labs.html", "docs/labs.html", overwrite = TRUE)
-  file.copy("regression-plane.html", "docs/regression-plane.html", overwrite = TRUE)
-
+  file.copy("labs.html", here::here("docs", "labs.html"), overwrite = TRUE)
+  file.copy("regression-plane.html", 
+            here::here("docs", "regression-plane.html"), 
+            overwrite = TRUE)
+  
   # Copy previous_versions/ to docs/previous_versions/
-  # Should switch to use purrr here at some point
-  if(!dir.exists("docs/previous_versions"))
-    dir.create("docs/previous_versions/")
-  system("cp -r previous_versions/* docs/previous_versions/")
+  if(!dir.exists(here::here("docs", "previous_versions")))
+    dir.create(here::here("docs", "previous_versions"))
+  #  system("cp -r previous_versions/* docs/previous_versions/")
+  file.copy(from = "previous_versions", 
+            to = "docs",
+            recursive = TRUE)
   
   # For some reason logo needs to be done separately.
   # Loaded in _includes/logo.html
-  file.copy("images/logos/wide_format.png", "docs/wide_format.png", 
+  file.copy(here::here("images", "logos", "wide_format.png"), 
+            here::here("docs", "wide_format.png"), 
             overwrite = TRUE)
 }
 
-# Set ggplot2 theme to be light if outputing to PDF.
+# Set ggplot2 theme to be light if outputting to PDF
 library(ggplot2)
 if(knitr::is_latex_output()){
   theme_set(theme_light())
@@ -236,7 +273,7 @@ dev_version <- TRUE
 ```{r echo=FALSE, purl=FALSE, results="asis"}
 if(knitr::is_html_output()){
   include_image(path = "images/logos/book_cover.png", 
-                html_opts="width=350px")
+                html_opts = "width=350px")
 }
 ```
 </br>
@@ -248,6 +285,7 @@ This is the [website](https://moderndive.com/) for *Statistical Inference via Da
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work by [Chester Ismay](https://chester.rbind.io/) and [Albert Y. Kim](https://rudeboybert.rbind.io/) is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
 
 
-<!-- index.Rmd has to have some content in it or it won't create an index.html file. When we remove the Special Announcement, make sure to keep this in so that index.html is included. -->
+<!-- index.Rmd has to have some content in it or it won't create an index.html 
+file. Make sure to keep this in so that index.html is included. -->
 
 # Foreword {-}
