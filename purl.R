@@ -1,36 +1,38 @@
-if(!dir.exists("docs/scripts")){
-  dir.create("docs")
-  dir.create("docs/scripts")
-}
-
 # For Chapter 5
 solutions_shown <- c('')
 show_solutions <- function(section){
   return(solutions_shown == "ALL" | section %in% solutions_shown)
 }
 
-# Note order matters here:
-chapter_titles <- c("getting-started",
-                    "visualization",
-                    "wrangling",
-                    "tidy",
-                    "regression",
-                    "multiple-regression",
-                    "sampling",
-                    "confidence-intervals",
-                    "hypothesis-testing",
-                    "inference-for-regression",
-                    "tell-your-story-with-data")
-chapter_numbers <- stringr::str_pad(
-  string = 1:(length(chapter_titles)),
-  width = 2,
-  side = "left",
-  pad = "0"
-  )
-for(i in seq_len(length(chapter_numbers))){
-  Rmd_file <- stringr::str_c(chapter_numbers[i], "-",
-                             chapter_titles[i], ".Rmd")
-  R_file <- stringr::str_c("docs/scripts/", chapter_numbers[i],
-                           "-", chapter_titles[i], ".R")
-  knitr::purl(Rmd_file, R_file)
-}
+# Update this if the number of chapters in the book increases
+num_chapters <- 11
+
+# For %>%
+library(dplyr)
+# Create vector of Rmd file names
+rmds <- list.files(pattern = "*.Rmd")
+
+# Get chapter numbers from files
+file_numbers <- list.files(pattern = "*.Rmd") %>%
+  stringr::str_extract(pattern = "[0-9]+") %>%
+  as.numeric()
+
+# Get only those Rmd files that we'd like to purl()
+rmd_files <- rmds[
+    1 <= file_numbers &
+    file_numbers <= num_chapters &
+    !is.na(file_numbers)
+  ]
+
+# Replace "Rmd" with "R" to create R output file names
+r_files <- stringr::str_replace(rmd_files, "Rmd", "R")
+# Create `docs`` folder and `scripts` subfolder
+if(!dir.exists("docs"))
+  dir.create("docs")
+if(!dir.exists(here::here("docs", "scripts")))
+  dir.create(here::here("docs", "scripts"))
+# Append full path to `r_files`
+r_files <- here::here("docs", "scripts", r_files)
+# Iterate over both the `rmd_files` and `r_files` vectors
+# with `knitr::purl()`
+purrr::walk2(rmd_files, r_files, knitr::purl)
