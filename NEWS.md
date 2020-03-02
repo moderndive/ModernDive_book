@@ -1,6 +1,7 @@
 # ModernDive 1.0.0.9000
 
 * Renamed Appendix C to "Tips and Tricks" instead of "Reach for the Stars." Now has answers to the most commonly asked data wrangling questions we've encountered during student projects. Written by @smetzer180.
+* In Chapter 6 multiple regression, after Subsection 6.3.1 on Model Selection, added Subsection "R-squared" following outline suggested by @kmkinnaird
 
 
 
