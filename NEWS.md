@@ -4,6 +4,10 @@
 * Chapter 6 Multiple Regression: Per @kmkinnaird's suggestion, we split "6.3.1 Model selection" into:
     + "6.3.1 Model selection using visualizations"
     + Added "6.3.2 Model selection using R-squared"
+* Chapter 7 Sampling: Per @kmkinnaird's suggestion, refactored as follows
+    + "7.3.1 Terminology & notation": clustered definitions according to theme and connected back to sampling exercises
+    + "7.3.2 Statistical definitions": 
+    + Moved "7.5.2 Central Limit Theorem" to its own section to make it more prominent and not an after-thought
 * Appendix C:
     + Renamed from "Reach for the Stars" to "Tips and Tricks".
     + Added C.1 section on most common data wrangling questions we've encountered, mostly written by @smetzer180
