@@ -594,7 +594,7 @@ t_stat <- movies_sample %>%
 
 
 ## ---- eval=FALSE--------------------------------------------------------------
-## # Construct null distribution of xbar_a - xbar_m:
+## # Construct null distribution of xbar_a - xbar_r:
 ## null_distribution_movies <- movies_sample %>%
 ##   specify(formula = rating ~ genre) %>%
 ##   hypothesize(null = "independence") %>%

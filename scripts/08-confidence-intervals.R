@@ -26,12 +26,9 @@ ggplot(pennies_sample, aes(x = year)) +
 
 
 ## -----------------------------------------------------------------------------
-pennies_sample %>% 
-  summarize(mean_year = mean(year))
-
-## ---- echo=FALSE--------------------------------------------------------------
 x_bar <- pennies_sample %>% 
   summarize(mean_year = mean(year))
+x_bar
 
 
 ## ----table-ch8-b, echo=FALSE, message=FALSE-----------------------------------
@@ -396,7 +393,6 @@ percentile_ci
 
 
 ## -----------------------------------------------------------------------------
-x_bar
 standard_error_ci <- bootstrap_distribution %>% 
   get_confidence_interval(type = "se", point_estimate = x_bar)
 standard_error_ci
