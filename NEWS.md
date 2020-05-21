@@ -1,7 +1,9 @@
 # ModernDive 1.0.0.9000
 
-* Renamed Appendix C to "Tips and Tricks" instead of "Reach for the Stars." Now has answers to the most commonly asked data wrangling questions we've encountered during student projects. Written by @smetzer180.
-
+* Typo fixes and slight wording tweaks
+* Appendix C:
+    + Renamed from "Reach for the Stars" to "Tips and Tricks".
+    + Added C.1 section on most common data wrangling questions we've encountered, mostly written by @smetzer180
 
 
 ***
