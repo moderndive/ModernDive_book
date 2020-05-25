@@ -1,5 +1,5 @@
 ---
-name: b) all other issues
+name: All other issues
 about: Please report all other issues here
 title: ''
 labels: ''
