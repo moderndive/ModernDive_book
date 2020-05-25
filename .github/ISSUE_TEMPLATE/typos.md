@@ -1,5 +1,5 @@
 ---
-name: Typos
+name: All Typos
 about: Please report typos here
 title: Typo in book
 labels: ''
