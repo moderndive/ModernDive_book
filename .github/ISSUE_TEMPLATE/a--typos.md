@@ -13,4 +13,4 @@ Please let us know about the typo:
 * Incorrect text: 
 * Correct text: 
 
-Or if you want to learn how to fix a typo via GitHub Pull Request, watch this screencast: http://bit.ly/md_typos.
+Or if you want to learn how to fix a typo via GitHub Pull Request, watch this screencast: http://bit.ly/md_typos
