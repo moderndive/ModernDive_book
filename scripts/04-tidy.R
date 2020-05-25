@@ -207,7 +207,7 @@ guat_dem_tidy <- guat_dem %>%
   pivot_longer(names_to = "year", 
                values_to = "democracy_score", 
                cols = -country,
-               names_ptypes = list(year = integer())) 
+               names_transform = list(year = as.integer)) 
 guat_dem_tidy
 
 
