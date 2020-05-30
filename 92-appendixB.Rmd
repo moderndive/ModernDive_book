@@ -582,33 +582,16 @@ offshore <- read_csv("https://moderndive.com/data/offshore.csv")
 offshore <- read_csv("data/offshore.csv")
 ```
 
-
-```{r summarize2}
-offshore %>% tabyl(college_grad, response)
-off_summ <- offshore %>% 
-  group_by(college_grad) %>% 
-  summarize(prop_no_opinion = mean(response == "no opinion"),
-    sample_size = n())
+```{r tabyl}
+counts <- offshore %>% tabyl(college_grad, response)
+counts
 ```
-
-```{r stacked_bar}
-ggplot(offshore, aes(x = college_grad, fill = response)) +
-  geom_bar(position = "fill") +
-  coord_flip()
-```
-
-#### Guess about statistical significance {-}
-
-We are looking to see if a difference exists in the size of the bars corresponding to `no opinion` for the plot.  Based solely on the plot, we have little reason to believe that a difference exists since the bars seem to be about the same size, BUT...it's important to use statistics to see if that difference is actually statistically significant!
-
-
-
-
-### Non-traditional methods
-
-#### Collecting summary info {-}
 
 ```{r stats1, include=FALSE}
+off_summ <- offshore %>% 
+  group_by(college_grad) %>% 
+  summarize(prop_no_opinion = mean(response == "no opinion"), sample_size = n())
+
 # Next we will assign some key values to variable names in R:
 phat_nograd <- off_summ$prop_no_opinion[1]
 phat_grad <- off_summ$prop_no_opinion[2]
@@ -616,6 +599,33 @@ obs_diff <- phat_grad - phat_nograd
 n_nograd <- off_summ$sample_size[1]
 n_grad <- off_summ$sample_size[2]
 ```
+
+Observe that of the college graduates, a proportion of `r counts[2, 2]`/(`r counts[2, 2]` + `r counts[2, 3]`) = `r phat_grad` have no opinion on drilling. On the other hand, of the non-college graduates, a proportion of `r counts[1, 2]`/(`r counts[1, 2]` + `r counts[1, 3]`) = `r phat_nograd` have no opinion on drilling, whereas . The difference in these proportions is `r phat_grad` - `r phat_nograd` = `r obs_diff`.
+
+Let's visualize these in a barchart. However, we first reverse the order of the levels in the categorical variable `response` using the `fct_rev()` function from the `forcats` package. We do this because the default ordering of levels in a factor is alphanumeric. However, we are interested in proportions that have `no opinion` and not `opinion`. Thus we need to reverse the default alphanumeric order. 
+
+```{r stacked_bar}
+offshore <- offshore %>% 
+  mutate(response = fct_rev(response))
+
+ggplot(offshore, aes(x = college_grad, fill = response)) +
+  geom_bar(position = "fill") +
+  labs(x = "College grad?", y = "Proportion with no opinion on drilling") + 
+  coord_flip()
+```
+
+
+
+
+#### Guess about statistical significance {-}
+
+We are looking to see if a difference exists in the size of the bars corresponding to `no opinion` for the plot.  Based solely on the plot, we have little reason to believe that a difference exists since the bars seem to be about the same size, BUT...it's important to use statistics to see if that difference is actually statistically significant!
+
+
+
+### Non-traditional methods
+
+#### Collecting summary info {-}
 
 The observed statistic is
 
@@ -628,7 +638,7 @@ d_hat
 
 #### Randomization for hypothesis test {-}
 
-In order to look to see if the observed sample proportion of no opinion for college graduates of `r phat_nograd` is statistically different than that for graduates of `r phat_grad`, we need to account for the sample sizes.  Note that this is the same as looking to see if $\hat{p}_{grad} - \hat{p}_{nograd}$ is statistically different than 0.  We also need to determine a process that replicates how the original group sizes of `r n_nograd` and `r n_grad` were selected.  
+In order to ascertain if the observed sample proportion with no opinion for college graduates of `r phat_grad` is statistically different than the observed sample proportion with no opinion for non-college graduates of `r phat_nograd`, we need to account for the sample sizes. Note that this is the same as ascertaining if the observed difference in sample proportions `r obs_diff` is statistically different than 0.  We also need to determine a process that replicates how the original group sizes of `r n_nograd` and `r n_grad` were selected.  
 
 We can use the idea of *randomization testing* (also known as *permutation testing*) to simulate the population from which the sample came (with two groups of different sizes) and then generate samples using *shuffling* from that simulated population to account for sampling variability.  
 
@@ -1177,7 +1187,7 @@ We are looking to see if the sample paired mean difference of `r d_hat` is stati
 
 #### Bootstrapping for hypothesis test {-}
 
-In order to look to see if the observed sample mean difference $\bar{x}_{diff} = `r obs_diff`$ is statistically less than 0, we need to account for the number of pairs.  We also need to determine a process that replicates how the paired data was selected in a way similar to how we calculated our original difference in sample means.
+In order to look to see if the observed sample mean difference $\bar{x}_{diff} = `r d_hat`$ is statistically less than 0, we need to account for the number of pairs.  We also need to determine a process that replicates how the paired data was selected in a way similar to how we calculated our original difference in sample means.
 
 Treating the differences as our data of interest, we next use the process of **bootstrapping** to build other simulated samples and then calculate the mean of the bootstrap samples. We hypothesize that the mean difference is zero. 
 
