@@ -4,6 +4,8 @@
 * Appendix C (online only):
     + Renamed from "Reach for the Stars" to "Tips and Tricks". 
     + Added C.1 section on most common data wrangling questions we've encountered, mostly written by @smetzer180
+* Refactored all R Markdown code to make it easier for future bookdown users to understand. However all code seen by readers of the print edition has been left intact. See #351
+
 
 
 ***
