@@ -7,7 +7,7 @@
 
 ## About this book
 
-Welcome to the GitHub repository page for **Statistical Inference via Data Science: A ModernDive into R and the Tidyverse** available at [ModernDive.com](https://moderndive.com/).  CRC Press released [the print edition](https://www.crcpress.com/Statistical-Inference-via-Data-Science-A-ModernDive-into-R-and-the-Tidyverse/Ismay-Kim/p/book/9780367409821) of this book on December 23, 2019!
+Welcome to the GitHub repository page for **Statistical Inference via Data Science: A ModernDive into R and the Tidyverse** available at [ModernDive.com](https://moderndive.com/).  You can purchase the CRC Press print edition on their [website](https://www.crcpress.com/Statistical-Inference-via-Data-Science-A-ModernDive-into-R-and-the-Tidyverse/Ismay-Kim/p/book/9780367409821) using promo code **ASA18** for a discounted price.
 
 <img src="images/logos/book_cover.png" width="50%"/>
 
