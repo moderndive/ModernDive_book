@@ -1,62 +1,36 @@
-## ----setup_thinking_with_data, include=FALSE----------------------------------
-chap <- 11
-lc <- 0
-rq <- 0
-# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
-# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
-
-knitr::opts_chunk$set(
-  tidy = FALSE, 
-  out.width = '\\textwidth', 
-  fig.height = 4,
-  warning = FALSE
-  )
-
-options(scipen = 99, digits = 3)
-
-# Set random number generator see value for replicable pseudorandomness.
-set.seed(76)
-
-
-
-
-## ----pipeline-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="Data/science pipeline.", out.height="70%", out.width="70%"----
-knitr::include_graphics("images/r4ds/data_science_pipeline.png")
-
-
-## ---- eval = FALSE------------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## library(tidyverse)
 ## library(moderndive)
 ## library(skimr)
 ## library(fivethirtyeight)
 
-## ---- message=FALSE, warning=FALSE, echo=FALSE--------------------------------
+## ---- echo=FALSE, message=FALSE, purl=TRUE------------------------------------
+# The code presented to the reader in the chunk above is different than the code
+# in this chunk that is actually run to build the book. In particular we do not
+# load the skimr package.
+# 
+# This is because skimr v1.0.6 which we used for the book causes all
+# knitr::kable() code to break for the remaining chapters in the book. v2 might
+# fix these issues:
+# https://github.com/moderndive/ModernDive_book/issues/271
+
+# As a workaround for v1 of ModernDive, all skimr::skim() output in this chapter
+# has been hard coded.
 library(tidyverse)
 library(moderndive)
-# DO NOT load the skimr package as a whole as it will break all kable() code for 
-# the remaining chapters in the book.
-# Furthermore all skimr::skim() output in this Chapter has been hard coded. 
 # library(skimr)
 library(fivethirtyeight)
 
 
-## ----message=FALSE, warning=FALSE, echo=FALSE---------------------------------
-# Packages needed internally, but not in text.
-library(knitr)
-library(kableExtra)
-library(patchwork)
-library(scales)
 
 
-## ---- eval = FALSE------------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## View(house_prices)
 ## glimpse(house_prices)
 
-## ---- echo=FALSE--------------------------------------------------------------
-glimpse(house_prices)
 
 
-## ---- eval = FALSE------------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## gain_summary <- flights %>%
 ##   summarize(
 ##     min = min(gain, na.rm = TRUE),
@@ -70,13 +44,13 @@ glimpse(house_prices)
 ##   )
 
 
-## ---- eval = FALSE------------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## house_prices %>%
 ##   select(price, sqft_living, condition) %>%
 ##   skim()
 
 
-## ---- eval = FALSE, message=FALSE, warning=FALSE------------------------------
+## ---- eval=FALSE, message=FALSE-----------------------------------------------
 ## # Histogram of house price:
 ## ggplot(house_prices, aes(x = price)) +
 ##   geom_histogram(color = "white") +
@@ -93,17 +67,6 @@ glimpse(house_prices)
 ##   labs(x = "condition", title = "House condition")
 
 
-## ----house-prices-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Exploratory visualizations of Seattle house prices data.", fig.height=4.8----
-p1 <- ggplot(house_prices, aes(x = price)) +
-  geom_histogram(color = "white") +
-  labs(x = "price (USD)", title = "House price") 
-p2 <- ggplot(house_prices, aes(x = sqft_living)) +
-  geom_histogram(color = "white") +
-  labs(x = "living space (square feet)", title = "House size")
-p3 <- ggplot(house_prices, aes(x = condition)) +
-  geom_bar() +
-  labs(x = "condition", title = "House condition")
-p1 + p2 + p3 + plot_layout(ncol = 2)
 
 
 ## -----------------------------------------------------------------------------
@@ -131,17 +94,9 @@ house_prices %>%
 ##   labs(x = "log10 price (USD)", title = "House price: After")
 
 
-## ----log10-price-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House price before and after log10 transformation.", fig.height=2.3----
-p1 <- ggplot(house_prices, aes(x = price)) +
-  geom_histogram(color = "white") +
-  labs(x = "price (USD)", title = "House price: Before")
-p2 <- ggplot(house_prices, aes(x = log10_price)) +
-  geom_histogram(color = "white") +
-  labs(x = "log10 price (USD)", title = "House price: After")
-p1 + p2
 
 
-## ---- eval = FALSE------------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## # Before log10 transformation:
 ## ggplot(house_prices, aes(x = sqft_living)) +
 ##   geom_histogram(color = "white") +
@@ -152,16 +107,6 @@ p1 + p2
 ##   geom_histogram(color = "white") +
 ##   labs(x = "log10 living space (square feet)", title = "House size: After")
 
-## ----log10-size-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House size before and after log10 transformation.", fig.height=2.3----
-p1 <- ggplot(house_prices, aes(x = sqft_living)) +
-  geom_histogram(color = "white") +
-  labs(x = "living space (square feet)", 
-       title = "House size: Before")
-p2 <- ggplot(house_prices, aes(x = log10_size)) +
-  geom_histogram(color = "white") +
-  labs(x = "log10 living space (square feet)", 
-       title = "House size: After")
-p1 + p2
 
 
 ## ---- eval=FALSE--------------------------------------------------------------
@@ -182,29 +127,6 @@ p1 + p2
 ##        x = "log10 size",
 ##        title = "House prices in Seattle")
 
-## ----house-price-parallel-slopes, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction and parallel slopes models."----
-interaction <- 
-  ggplot(house_prices, 
-         aes(x = log10_size, y = log10_price, col = condition)) +
-  geom_point(alpha = 0.05) +
-  labs(y = "log10 price", x = "log10 size") +
-  geom_smooth(method = "lm", se = FALSE) +
-  guides(color=FALSE) +
-  labs(title = "House prices in Seattle", 
-       x = "log10 size", 
-       y = "log10 price")
-parallel_slopes <- 
-  ggplot(house_prices, 
-         aes(x = log10_size, y = log10_price, col = condition)) +
-  geom_point(alpha = 0.05) +
-  geom_parallel_slopes(se = FALSE) +
-  labs(y = NULL, x = "log10 size")
-if(knitr::is_html_output()){
-  interaction + parallel_slopes
-} else {
-  (interaction + scale_color_grey()) + 
-    (parallel_slopes + scale_color_grey())
-}
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -218,25 +140,6 @@ if(knitr::is_html_output()){
 ##   facet_wrap(~ condition)
 
 
-## ----house-price-interaction-2, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Faceted plot of interaction model."----
-interaction_2_plot <- ggplot(house_prices, 
-                             aes(x = log10_size, y = log10_price, 
-                                 col = condition)) +
-  geom_point(alpha = 0.4) +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(y = "log10 price", x = "log10 size", 
-       title = "House prices in Seattle") +
-  facet_wrap(~condition)
-
-if(!knitr::is_latex_output()){
-  interaction_2_plot
-} else {
-  interaction_2_plot + 
-    scale_color_grey() +
-    theme(strip.text = element_text(colour = 'black'),
-          strip.background = element_rect(fill = "grey93")
-    )
-}
 
 
 ## ---- eval=FALSE--------------------------------------------------------------
@@ -247,35 +150,8 @@ if(!knitr::is_latex_output()){
 ## # Get regression table:
 ## get_regression_table(price_interaction)
 
-## ----seattle-interaction, echo=FALSE------------------------------------------
-price_interaction <- lm(log10_price ~ log10_size * condition, 
-                        data = house_prices)
-get_regression_table(price_interaction) %>% 
-  knitr::kable(
-    digits = 3,
-    caption = "Regression table for interaction model", 
-    booktabs = TRUE,
-    linesep = ""
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
 
 
-## ----house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction model with prediction.", fig.height=5----
-new_house <- tibble(log10_size = log10(1900), condition = factor(5)) %>% 
-  get_regression_points(price_interaction, newdata = .)
-
-with_prediction_plot <- ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
-  geom_point(alpha = 0.05) +
-  labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
-  geom_smooth(method = "lm", se = FALSE) +
-  geom_vline(xintercept = log10(1900), linetype = "dashed", size = 1) +
-  geom_point(data = new_house, aes(y = log10_price_hat), col ="black", size = 3)
-if(knitr::is_html_output()){
-  with_prediction_plot
-} else {
-  with_prediction_plot + scale_color_grey()  
-}
 
 
 ## -----------------------------------------------------------------------------
@@ -299,7 +175,7 @@ US_births_1999 <- US_births_1994_2003 %>%
   filter(year == 1999)
 
 
-## ----us-births, fig.cap="Number of births in the US in 1999.", fig.height=6.4, fig.align='center'----
+## ----us-births, fig.cap="Number of births in the US in 1999.", fig.height=6.4----
 ggplot(US_births_1999, aes(x = date, y = births)) +
   geom_line() +
   labs(x = "Date", 
@@ -310,38 +186,4 @@ ggplot(US_births_1999, aes(x = date, y = births)) +
 ## -----------------------------------------------------------------------------
 US_births_1999 %>% 
   arrange(desc(births))
-
-
-
-
-
-
-
-
-## ----script-files-table, echo=FALSE, message=FALSE----------------------------
-if(!file.exists("rds/chapter_script_pub_files.rds")){
-  chapter_script_pub_files <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtqCUn7IdKJMgQ8LmXl7-us2DVxKCPz0w5BHhO5JLOof0gRfmv0DK1xw1PDC7PhIhUglb4Q_JA2zsg/pub?gid=0&single=true&output=csv" %>% 
-    read_csv(na = "")
-    write_rds(chapter_script_pub_files, "rds/chapter_script_pub_files.rds")
-} else {
-  chapter_script_pub_files <- read_rds("rds/chapter_script_pub_files.rds")
-}
-if(!file.exists("rds/chapter_script_dev_files.rds")){
-  chapter_script_dev_files <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtqCUn7IdKJMgQ8LmXl7-us2DVxKCPz0w5BHhO5JLOof0gRfmv0DK1xw1PDC7PhIhUglb4Q_JA2zsg/pub?gid=490443444&single=true&output=csv" %>% 
-    read_csv(na = "")
-    write_rds(chapter_script_dev_files, "rds/chapter_script_dev_files.rds")
-} else {
-  chapter_script_dev_files <- read_rds("rds/chapter_script_dev_files.rds")
-}
-
-
-if(dev_version & knitr::is_html_output()){
-  chapter_script_dev_files %>% 
-    select(chapter, link) %>% 
-    kable()
-} else {
-  chapter_script_pub_files %>% 
-    select(chapter, link) %>% 
-    kable()
-}
 

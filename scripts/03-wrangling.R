@@ -11,15 +11,8 @@ library(nycflights13)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
-## h(g(f(x)))
 
 
-## ---- eval=FALSE--------------------------------------------------------------
-## x %>%
-##   f() %>%
-##   g() %>%
-##   h()
 
 
 ## ---- eval=FALSE--------------------------------------------------------------
@@ -77,7 +70,7 @@ library(nycflights13)
 
 
 
-## ---- eval=TRUE---------------------------------------------------------------
+## -----------------------------------------------------------------------------
 summary_temp <- weather %>% 
   summarize(mean = mean(temp), std_dev = sd(temp))
 summary_temp
@@ -110,28 +103,28 @@ summary_monthly_temp <- weather %>%
 summary_monthly_temp
 
 
-## ---- eval=TRUE---------------------------------------------------------------
+## -----------------------------------------------------------------------------
 diamonds
 
 
-## ---- eval=TRUE---------------------------------------------------------------
+## -----------------------------------------------------------------------------
 diamonds %>% 
   group_by(cut)
 
 
-## ---- eval=TRUE---------------------------------------------------------------
+## -----------------------------------------------------------------------------
 diamonds %>% 
   group_by(cut) %>% 
   summarize(avg_price = mean(price))
 
 
-## ---- eval=TRUE---------------------------------------------------------------
+## -----------------------------------------------------------------------------
 diamonds %>% 
   group_by(cut) %>% 
   ungroup()
 
 
-## ---- eval=TRUE---------------------------------------------------------------
+## -----------------------------------------------------------------------------
 by_origin <- flights %>% 
   group_by(origin) %>% 
   summarize(count = n())
@@ -155,9 +148,6 @@ by_origin_monthly_incorrect
 
 
 
-## \vspace{-0.25in}
-
-## \vspace{-0.25in}
 
 
 
@@ -180,14 +170,6 @@ flights <- flights %>%
   mutate(gain = dep_delay - arr_delay)
 
 
-## ----first-five-flights, echo=FALSE-------------------------------------------
-flights %>% 
-  select(dep_delay, arr_delay, gain) %>% 
-  slice(1:5) %>% 
-  kable(
-    caption = "First five rows of departure/arrival delay and gain variables"
-    ) %>% 
-  kable_styling(position = "center", latex_options = "hold_position")
 
 
 ## -----------------------------------------------------------------------------
@@ -205,7 +187,7 @@ gain_summary <- flights %>%
 gain_summary
 
 
-## ----gain-hist, message=FALSE, fig.cap="Histogram of gain variable.", fig.height=3----
+## ----gain-hist, fig.cap="Histogram of gain variable.", message=FALSE, fig.height=3----
 ggplot(data = flights, mapping = aes(x = gain)) +
   geom_histogram(color = "white", bins = 20)
 
@@ -223,7 +205,7 @@ flights <- flights %>%
 
 
 
-## ---- eval--------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 freq_dest <- flights %>% 
   group_by(dest) %>% 
   summarize(num_flights = n())
@@ -285,17 +267,12 @@ named_dests
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 ## joined_flights <- flights %>%
 ##   inner_join(airlines, by = "carrier")
 ## View(joined_flights)
 
 
-## \vspace{-0.15in}
-
-## **_Learning check_**
-
-## \vspace{-0.1in}
 
 
 
@@ -347,67 +324,4 @@ named_dests
 ## named_dests  %>%
 ##   top_n(n = 10, wt = num_flights) %>%
 ##   arrange(desc(num_flights))
-
-
-
-
-
-
-## ----wrangle-summary-table, echo=FALSE, message=FALSE-------------------------
-# The following Google Doc is published to CSV and loaded using read_csv():
-# https://docs.google.com/spreadsheets/d/1nRkXfYMQiTj79c08xQPY0zkoJSpde3NC1w6DRhsWCss/edit#gid=0
-
-if(!file.exists("rds/ch4_scenarios.rds")){
-  ch4_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRgwl1lugQA6zxzfB6_0hM5vBjXkU7cbUVYYXLcWeaRJ9HmvNXyCjzJCgiGW8HCe1kvjLCGYHf-BvYL/pub?gid=0&single=true&output=csv" %>% 
-    read_csv(na = "") %>% 
-    select(-X1)
-  write_rds(ch4_scenarios, "rds/ch4_scenarios.rds")
-} else {
-  ch4_scenarios <- read_rds("rds/ch4_scenarios.rds")
-}
-
-if(knitr:::is_latex_output()){
-  ch4_scenarios %>% 
-    # Weird tick marks show up in PDF:
-    mutate(
-      Verb = str_replace_all(Verb, "`", ""),
-      `Data wrangling operation` = str_replace_all(`Data wrangling operation`, "`", ""),
-    ) %>% 
-    kable(
-      caption = "Summary of data wrangling verbs", 
-      booktabs = TRUE,
-      linesep = "",
-      format = "latex"
-    ) %>% 
-    kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                  latex_options = c("hold_position")) %>%
-    column_spec(1, width = "0.9in") %>% 
-    column_spec(2, width = "4in")
-} else {
-  ch4_scenarios %>% 
-    kable(
-      caption = "Summary of data wrangling verbs", 
-      booktabs = TRUE,
-      format = "html"
-    )
-}
-
-
-
-
-
-
-
-
-## ----echo=FALSE, results="asis"-----------------------------------------------
-if(knitr::is_latex_output()){
-  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
-} 
-
-
-
-
-## ----dplyr-cheatsheet, echo=FALSE, fig.cap="Data Transformation with dplyr cheatsheet."----
-if(knitr::is_html_output())
-  include_graphics("images/cheatsheets/dplyr_cheatsheet-1.png")
 

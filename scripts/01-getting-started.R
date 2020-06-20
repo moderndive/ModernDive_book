@@ -1,44 +1,9 @@
-## ----message=FALSE, warning=FALSE, echo=FALSE---------------------------------
-# Packages needed internally, but not in text.
-library(scales)
-
-
-
-
-
-
-
-
-
-
-
-
-## \vspace{-0.15in}
-
-## **_Learning check_**
-
-## \vspace{-0.1in}
-
-
-## \vspace{-0.25in}
-
-## \vspace{-0.25in}
-
-
 ## ---- eval=FALSE--------------------------------------------------------------
 ## library(ggplot2)
 
 
-## \vspace{-0.15in}
-
-## **_Learning check_**
-
-## \vspace{-0.1in}
 
 
-## \vspace{-0.25in}
-
-## \vspace{-0.25in}
 
 
 ## ----message=FALSE------------------------------------------------------------
@@ -51,32 +16,16 @@ library(knitr)
 flights
 
 
-## \vspace{-0.15in}
-
-## **_Learning check_**
-
-## \vspace{-0.1in}
 
 
-## \vspace{-0.25in}
-
-## \vspace{-0.25in}
 
 
 ## -----------------------------------------------------------------------------
 glimpse(flights)
 
 
-## \vspace{-0.15in}
-
-## **_Learning check_**
-
-## \vspace{-0.1in}
 
 
-## \vspace{-0.25in}
-
-## \vspace{-0.25in}
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -92,30 +41,10 @@ glimpse(flights)
 glimpse(airports)
 
 
-## \vspace{-0.15in}
-
-## **_Learning check_**
-
-## \vspace{-0.1in}
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
 ## ?flights
-
-
-## \vspace{-0.15in}
-
-## **_Learning check_**
-
-## \vspace{-0.1in}
-
-
-
-
-## ----echo=FALSE, results="asis"-----------------------------------------------
-if(knitr::is_latex_output()){
-  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
-} 
 
