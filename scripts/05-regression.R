@@ -24,6 +24,8 @@ library(gapminder)
 
 
 
+
+
 ## -----------------------------------------------------------------------------
 evals_ch5 <- evals %>%
   select(ID, score, bty_avg, age)
@@ -31,6 +33,8 @@ evals_ch5 <- evals %>%
 
 ## -----------------------------------------------------------------------------
 glimpse(evals_ch5)
+
+
 
 
 ## ---- eval=FALSE--------------------------------------------------------------
@@ -130,6 +134,8 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 
 
 
+
+
 ## ---- message=FALSE-----------------------------------------------------------
 library(gapminder)
 gapminder2007 <- gapminder %>%
@@ -152,6 +158,8 @@ glimpse(gapminder2007)
 ## gapminder2007 %>%
 ##   select(lifeExp, continent) %>%
 ##   skim()
+
+
 
 
 ## ----lifeExp2007hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2007.", fig.height=5.2----
@@ -193,6 +201,8 @@ lifeExp_by_continent <- gapminder2007 %>%
 
 
 
+
+
 ## ---- eval=FALSE--------------------------------------------------------------
 ## lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
 ## get_regression_table(lifeExp_model)
@@ -207,6 +217,8 @@ lifeExp_by_continent <- gapminder2007 %>%
 ## ---- eval=FALSE--------------------------------------------------------------
 ## regression_points <- get_regression_points(lifeExp_model, ID = "country")
 ## regression_points
+
+
 
 
 

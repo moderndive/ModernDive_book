@@ -33,6 +33,8 @@ evals_ch6 <- evals %>%
 glimpse(evals_ch6)
 
 
+
+
 ## ---- eval=FALSE--------------------------------------------------------------
 ## evals_ch6 %>% sample_n(size = 5)
 
@@ -52,6 +54,8 @@ evals_ch6 %>%
 ##   geom_point() +
 ##   labs(x = "Age", y = "Teaching Score", color = "Gender") +
 ##   geom_smooth(method = "lm", se = FALSE)
+
+
 
 
 
@@ -98,6 +102,8 @@ age_coef <- get_regression_table(score_model_parallel_slopes) %>%
 
 
 
+
+
 ## ---- eval=FALSE--------------------------------------------------------------
 ## regression_points <- get_regression_points(score_model_interaction)
 ## regression_points
@@ -117,6 +123,8 @@ credit_ch6 <- Credit %>% as_tibble() %>%
 
 ## -----------------------------------------------------------------------------
 glimpse(credit_ch6)
+
+
 
 
 ## ---- eval=FALSE--------------------------------------------------------------

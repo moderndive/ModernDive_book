@@ -14,6 +14,8 @@ library(dplyr)
 
 
 
+
+
 ## -----------------------------------------------------------------------------
 alaska_flights <- flights %>% 
   filter(carrier == "AS")
@@ -131,6 +133,8 @@ ggplot(data = weather, mapping = aes(x = temp)) +
 ## ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(binwidth = 5, color = "white") +
 ##   facet_wrap(~ month, nrow = 4)
+
+
 
 
 

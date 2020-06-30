@@ -8,6 +8,8 @@ library(ggplot2movies)
 
 
 
+
+
 ## ----echo=FALSE---------------------------------------------------------------
 set.seed(2102)
 
@@ -40,6 +42,8 @@ promotions %>%
 
 
 
+
+
 ## ---- eval=FALSE--------------------------------------------------------------
 ## ggplot(promotions_shuffled,
 ##        aes(x = gender, fill = decision)) +
@@ -52,6 +56,8 @@ promotions %>%
 promotions_shuffled %>% 
   group_by(gender, decision) %>% 
   tally() # Same as summarize(n = n())
+
+
 
 
 
@@ -102,6 +108,8 @@ promotions %>%
 promotions %>% 
   specify(formula = decision ~ gender, success = "promoted") %>% 
   hypothesize(null = "independence")
+
+
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -216,6 +224,8 @@ se_ci
 
 ## -----------------------------------------------------------------------------
 movies
+
+
 
 
 ## -----------------------------------------------------------------------------

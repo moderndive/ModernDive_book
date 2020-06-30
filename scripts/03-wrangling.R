@@ -112,6 +112,8 @@ diamonds %>%
   group_by(cut)
 
 
+
+
 ## -----------------------------------------------------------------------------
 diamonds %>% 
   group_by(cut) %>% 
@@ -271,6 +273,8 @@ named_dests
 ## joined_flights <- flights %>%
 ##   inner_join(airlines, by = "carrier")
 ## View(joined_flights)
+
+
 
 
 

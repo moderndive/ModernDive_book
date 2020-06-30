@@ -37,6 +37,8 @@ tactile_prop_red
 bowl
 
 
+
+
 ## -----------------------------------------------------------------------------
 virtual_shovel <- bowl %>% 
   rep_sample_n(size = 50)

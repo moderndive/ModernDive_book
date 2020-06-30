@@ -37,6 +37,12 @@ ggplot(evals_ch5,
 
 
 
+
+
+
+
+
+
 ## -----------------------------------------------------------------------------
 # Fit regression model:
 score_model <- lm(score ~ bty_avg, data = evals_ch5)
