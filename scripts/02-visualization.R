@@ -272,8 +272,6 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 
-
-
 ## ---- eval=FALSE--------------------------------------------------------------
 ## alaska_flights <- flights %>%
 ##   filter(carrier == "AS")

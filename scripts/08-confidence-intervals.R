@@ -123,10 +123,6 @@ ggplot(virtual_resampled_means, aes(x = mean_year)) +
 
 
 
-
-
-
-
 ## -----------------------------------------------------------------------------
 # Repeat resampling 1000 times
 virtual_resamples <- pennies_sample %>% 
