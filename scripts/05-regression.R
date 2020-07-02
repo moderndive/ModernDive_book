@@ -10,7 +10,7 @@
 # load the skimr package.
 # 
 # This is because skimr v1.0.6 which we used for the book causes all
-# knitr::kable() code to break for the remaining chapters in the book. v2 might
+# kable() code to break for the remaining chapters in the book. v2 might
 # fix these issues:
 # https://github.com/moderndive/ModernDive_book/issues/271
 
