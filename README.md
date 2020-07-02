@@ -1,6 +1,6 @@
 # ModernDive <img src="images/logos/hex_blue_text.png" align="right" width=125 />
 
-[![Build Status](https://travis-ci.org/moderndive/moderndive_book.svg?branch=master)](https://travis-ci.org/moderndive/moderndive_book) [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable) [![Netlify Status](https://api.netlify.app/api/v1/badges/10e04707-18d4-4081-9a9f-33d4cbaa1325/deploy-status)](https://app.netlify.app/sites/moderndive/deploys) [![https://moderndive.com/ Netlify Status](https://api.netlify.app/api/v1/badges/10e04707-18d4-4081-9a9f-33d4cbaa1325/deploy-status)](https://app.netlify.app/sites/moderndive/deploys) 
+[![Build Status](https://travis-ci.org/moderndive/moderndive_book.svg?branch=master)](https://travis-ci.org/moderndive/moderndive_book) [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable) [![Netlify Status](https://api.netlify.app/api/v1/badges/10e04707-18d4-4081-9a9f-33d4cbaa1325/deploy-status)](https://app.netlify.app/sites/moderndive/deploys)
 
 Welcome to the GitHub repository page for **Statistical Inference via Data Science: A ModernDive into R and the Tidyverse** available at [ModernDive.com](https://moderndive.com/).  You can purchase the CRC Press print edition on their [website](https://www.routledge.com/Statistical-Inference-via-Data-Science-A-ModernDive-into-R-and-the-Tidyverse/Ismay-Kim/p/book/9780367409821) using promo code **ASA18** for a discounted price.
 
@@ -13,12 +13,12 @@ ModernDive is built using RStudio's [`bookdown`](https://www.rstudio.com/resourc
 
 * The `bookdown` source code for the current version of the book is in the `master` branch of this repo. 
 * The `bookdown` source code for all [previously released versions](https://moderndive.com/index.html#about-book) of ModernDive is accessible on the [Releases](https://github.com/moderndive/moderndive_book/releases) page. A summary of all changes between versions can be found in [NEWS.md](https://github.com/moderndive/moderndive_book/blob/master/NEWS.md).
-* The contents of [moderndive.com](https://moderndive.com/) are deployed via [Netlify](https://www.netlify.com/) from the `release` branch of this repo.
+* The contents of [moderndive.com](https://moderndive.com/) are deployed via [Netlify](https://www.netlify.com/) from the `gh-pages` branch of this repo.
 
 We are also slowly working on a future version of ModernDive:
 
 * The `bookdown` source code for the future version of the book is in the `v2` branch of this repo.
-* A preview is available at [https://moderndive.netlify.app/](https://moderndive.netlify.app/).
+* A preview of the future version is available at [moderndive.netlify.app](https://moderndive.netlify.app/).
 
 
 ## More Information
