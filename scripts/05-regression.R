@@ -279,5 +279,5 @@ regression_points %>%
 ##   augment() %>%
 ##   mutate_if(is.numeric, round, digits = 3) %>%
 ##   clean_names() %>%
-##   select(-c("se_fit", "hat", "sigma", "cooksd", "std_resid"))
+##   select(-c("std_resid", "hat", "sigma", "cooksd", "std_resid"))
 
