@@ -1,6 +1,6 @@
 # ModernDive <img src="images/logos/hex_blue_text.png" align="right" width=125 />
 
-[![Build Status](https://travis-ci.org/moderndive/moderndive_book.svg?branch=master)](https://travis-ci.org/moderndive/moderndive_book) [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable) [![Netlify Status](https://api.netlify.app/api/v1/badges/10e04707-18d4-4081-9a9f-33d4cbaa1325/deploy-status)](https://app.netlify.app/sites/moderndive/deploys)
+[![DOI](https://zenodo.org/badge/66818484.svg)](https://zenodo.org/badge/latestdoi/66818484)[![Build Status](https://travis-ci.org/moderndive/moderndive_book.svg?branch=master)](https://travis-ci.org/moderndive/moderndive_book) [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable) [![Netlify Status](https://api.netlify.app/api/v1/badges/10e04707-18d4-4081-9a9f-33d4cbaa1325/deploy-status)](https://app.netlify.app/sites/moderndive/deploys)
 
 Welcome to the GitHub repository page for **Statistical Inference via Data Science: A ModernDive into R and the Tidyverse** available at [ModernDive.com](https://moderndive.com/).  You can purchase the CRC Press print edition on their [website](https://www.routledge.com/Statistical-Inference-via-Data-Science-A-ModernDive-into-R-and-the-Tidyverse/Ismay-Kim/p/book/9780367409821) using promo code **ASA18** for a discounted price.
 
