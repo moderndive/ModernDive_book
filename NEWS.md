@@ -1,5 +1,4 @@
-# ModernDive 1.0.0.9000
-
+# ModernDive 1.1.0.9000
 
 * Chapter 6 Multiple Regression: Per @kmkinnaird's suggestion, we split "6.3.1 Model selection" into:
     + "6.3.1 Model selection using visualizations"
@@ -8,13 +7,22 @@
     + "7.3.1 Terminology & notation": clustered definitions according to theme and connected back to sampling exercises
     + "7.3.2 Statistical definitions": 
     + Moved "7.5.2 Central Limit Theorem" to its own section to make it more prominent and not an after-thought
-* Appendix C:
-    + Renamed from "Reach for the Stars" to "Tips and Tricks".
-    + Added C.1 section on most common data wrangling questions we've encountered, mostly written by @smetzer180
 
 
 ***
 
+
+
+# ModernDive 1.1.0
+
+* Typo fixes and clarifying wording tweaks
+* With a big assist from @mariumtapal, we cleaned and refactored all R Markdown code to make it easier for future bookdown users to understand. However all code seen by readers of the print edition has been left intact.
+* Appendix C (online only):
+    + Renamed from "Reach for the Stars" to "Tips and Tricks". 
+    + Added C.1 section on most common data wrangling questions we've encountered, mostly written by @smetzer180
+
+
+***
 
 
 # ModernDive 1.0.0

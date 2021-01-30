@@ -1,7 +1,7 @@
 (ref:moderndivepart) Data Modeling with `moderndive`
 
-```{r echo=FALSE, results="asis"}
-if(knitr::is_latex_output()){
+```{r echo=FALSE, results="asis", purl=FALSE}
+if (is_latex_output()) {
   cat("# (PART) (ref:moderndivepart) {-}")
 } else {
   cat("# (PART) Data Modeling with moderndive {-} ")
@@ -11,29 +11,32 @@ if(knitr::is_latex_output()){
 # Basic Regression {#regression}
 
 ```{r, include=FALSE, purl=FALSE}
+# Used to define Learning Check numbers:
 chap <- 5
 lc <- 0
-rq <- 0
-# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
-# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
 
-knitr::opts_chunk$set(
+# Set R code chunk defaults:
+opts_chunk$set(
+  echo = TRUE,
+  eval = TRUE,
+  warning = FALSE,
+  message = TRUE,
   tidy = FALSE,
-  out.width = '\\textwidth',
+  purl = TRUE,
+  out.width = "\\textwidth",
   fig.height = 4,
-  fig.align='center',
-  warning = FALSE
+  fig.align = "center"
 )
 
+# Set output digit precision
 options(scipen = 99, digits = 3)
 
-# In knitr::kable printing replace all NA's with blanks
-options(knitr.kable.NA = '')
+# In kable printing replace all NA's with blanks
+options(knitr.kable.NA = "")
 
 # Set random number generator see value for replicable pseudorandomness.
 set.seed(76)
 ```
-
 
 Now that we are equipped with data visualization skills from Chapter \@ref(viz), data wrangling skills from Chapter \@ref(wrangling), and an understanding of how to import data and the concept of a "tidy" data format from Chapter \@ref(tidy), let's now proceed with data modeling. The fundamental premise of data modeling is to make explicit the relationship between:
 
@@ -49,7 +52,7 @@ For example, say you are interested in an outcome variable $y$ of whether patien
 
 In this book, we'll focus on modeling for explanation and hence refer to $x$ as *explanatory variables*. If you are interested in learning about modeling for prediction, we suggest you check out books and courses on the field of *machine learning* such as [*An Introduction to Statistical Learning with Applications in R (ISLR)*](http://www-bcf.usc.edu/~gareth/ISL/) [@islr2017]. Furthermore, while there exist many techniques for modeling, such as tree-based models and neural networks, in this book we'll focus on one particular technique: *linear regression*. \index{regression!linear} Linear regression is one of the most commonly-used and easy-to-understand approaches to modeling.
 
-Linear regression involves a *numerical* outcome variable $y$ and explanatory variables $x$ that are either *numerical* or *categorical*. Furthermore, the relationship between $y$ and $x$ is assumed to be linear, or in other words, a line. However, we'll see that what constitutes a "line" will vary depending on the nature of your explanatory variables $x$ .
+Linear regression involves a *numerical* outcome variable $y$ and explanatory variables $x$ that are either *numerical* or *categorical*. Furthermore, the relationship between $y$ and $x$ is assumed to be linear, or in other words, a line. However, we'll see that what constitutes a "line" will vary depending on the nature of your explanatory variables $x$.
 
 In Chapter \@ref(regression) on basic regression, we'll only consider models with a single explanatory variable $x$. In Section \@ref(model1), the explanatory variable will be numerical. This scenario is known as *simple linear regression*. In Section \@ref(model2), the explanatory variable will be categorical.
 
@@ -60,7 +63,7 @@ In Chapter \@ref(inference-for-regression) on inference for regression, we'll re
 Let's now begin with basic regression, \index{regression!basic} which refers to linear regression models with a single explanatory variable $x$. We'll also discuss important statistical concepts like the *correlation coefficient*, that "correlation isn't necessarily causation," and what it means for a line to be "best-fitting."
 
 
-### Needed packages {-}
+### Needed packages {-#reg-packages}
 
 Let's now load all the packages needed for this chapter (this assumes you've already installed them). In this chapter, we introduce some new packages:
 
@@ -81,18 +84,26 @@ library(moderndive)
 library(skimr)
 library(gapminder)
 ```
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, message=FALSE, purl=TRUE}
+# The code presented to the reader in the chunk above is different than the code
+# in this chunk that is actually run to build the book. In particular we do not
+# load the skimr package.
+# 
+# This is because skimr v1.0.6 which we used for the book causes all
+# kable() code to break for the remaining chapters in the book. v2 might
+# fix these issues:
+# https://github.com/moderndive/ModernDive_book/issues/271
+
+# As a workaround for v1 of ModernDive, all skimr::skim() output in this chapter
+# has been hard coded.
 library(tidyverse)
 library(moderndive)
-# DO NOT load the skimr package as a whole as it will break all kable() code for 
-# the remaining chapters in the book.
-# Furthermore all skimr::skim() output in this Chapter has been hard coded. 
 # library(skimr)
 library(gapminder)
 ```
 
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
+```{r, message=FALSE, echo=FALSE, purl=FALSE}
 # Packages needed internally, but not in text.
 library(mvtnorm)
 library(broom)
@@ -104,13 +115,16 @@ library(patchwork)
 
 
 
-
-
 ## One numerical explanatory variable {#model1}
 
 Why do some professors and instructors at universities and colleges receive high teaching evaluations scores from students while others receive lower ones? Are there differences in teaching evaluations between instructors of different demographic groups? Could there be an impact due to student biases? These are all questions that are of interest to university/college administrators, as teaching evaluations are among the many criteria considered in determining which instructors and professors get promoted.
 
-Researchers at the University of Texas in Austin, Texas (UT Austin) tried to answer the following research question: what factors explain differences in instructor teaching evaluation scores? To this end, they collected instructor and course information on 463 courses. A full description of the study can be found at [openintro.org](https://www.openintro.org/stat/data/?data=evals).
+```{r echo=FALSE, purl=FALSE}
+# This code is used for dynamic non-static in-line text output purposes
+n_courses <- evals %>% nrow()
+```
+
+Researchers at the University of Texas in Austin, Texas (UT Austin) tried to answer the following research question: what factors explain differences in instructor teaching evaluation scores? To this end, they collected instructor and course information on `r n_courses` courses. A full description of the study can be found at [openintro.org](https://www.openintro.org/stat/data/?data=evals).
 
 In this section, we'll keep things simple for now and try to explain differences in instructor teaching scores as a function of one numerical variable: the instructor's "beauty" score (we'll describe how this score was determined shortly). Could it be that instructors with higher "beauty" scores also have higher teaching evaluations? Could it be instead that instructors with higher "beauty" scores tend to have lower teaching evaluations? Or could it be that there is no relationship between "beauty" score and teaching evaluations? We'll answer these questions by modeling the relationship between teaching scores and "beauty" scores using *simple linear regression* \index{regression!simple linear} where we have:
 
@@ -120,7 +134,7 @@ In this section, we'll keep things simple for now and try to explain differences
 
 ### Exploratory data analysis {#model1EDA}
 
-The data on the 463 courses at UT Austin can be found in the `evals` data frame included in the `moderndive` package. However, to keep things simple, let's `select()` only the subset of the variables we'll consider in this chapter, and save this data in a new data frame called `evals_ch5`:
+The data on the `r n_courses` courses at UT Austin can be found in the `evals` data frame included in the `moderndive` package. However, to keep things simple, let's `select()` only the subset of the variables we'll consider in this chapter, and save this data in a new data frame called `evals_ch5`:
 
 ```{r}
 evals_ch5 <- evals %>%
@@ -141,11 +155,16 @@ You can do this by using RStudio's spreadsheet viewer or by using the `glimpse()
 glimpse(evals_ch5)
 ```
 
-Observe that `Observations: 463` indicates that there are 463 rows/observations in `evals_ch5`, where each row corresponds to one observed course at UT Austin. It is important to note that the *observational unit* \index{observational unit} is an individual course and not an individual instructor. Recall from Subsection \@ref(exploredataframes) that the observational unit is the "type of thing" that is being measured by our variables. Since instructors teach more than one course in an academic year, the same instructor will appear more than once in the data. Hence there are fewer than 463 unique instructors being represented in `evals_ch5`. We'll revisit this idea in Section \@ref(regression-conditions), when we talk about the "independence assumption" for inference for regression.
+```{r echo=FALSE, purl=FALSE}
+# This code is used for dynamic non-static in-line text output purposes
+n_courses_ch5 <- evals_ch5 %>% nrow()
+```
 
-A full description of all the variables included in `evals` can be found at [openintro.org](https://www.openintro.org/stat/data/?data=evals) or by reading the associated help file (run `?evals` in the console). However, let's fully describe only the `r ncol(evals_ch5)` variables we selected in `evals_ch5`:
+Observe that ``Observations: `r n_courses_ch5` `` indicates that there are `r n_courses_ch5` rows/observations in `evals_ch5`, where each row corresponds to one observed course at UT Austin. It is important to note that the *observational unit* \index{observational unit} is an individual course and not an individual instructor. Recall from Subsection \@ref(exploredataframes) that the observational unit is the "type of thing" that is being measured by our variables. Since instructors teach more than one course in an academic year, the same instructor will appear more than once in the data. Hence there are fewer than `r n_courses_ch5` unique instructors being represented in `evals_ch5`. We'll revisit this idea in Section \@ref(regression-conditions), when we talk about the "independence assumption" for inference for regression.
 
-1. `ID`: An identification variable used to distinguish between the 1 through 463 courses in the dataset.
+A full description of all the variables included in `evals` can be found at [openintro.org](https://www.openintro.org/stat/data/?data=evals) or by reading the associated help file (run `?evals` in the console). However, let's fully describe only the `r evals_ch5 %>% ncol()` variables we selected in `evals_ch5`:
+
+1. `ID`: An identification variable used to distinguish between the 1 through `r n_courses_ch5` courses in the dataset.
 1. `score`: A numerical variable of the course instructor's average teaching score, where the average is computed from the evaluation scores from all students in that course.  Teaching scores of 1 are lowest and 5 are highest. This is the outcome variable $y$ of interest.
 1. `bty_avg`: A numerical variable of the course instructor's average "beauty" score, where the average is computed from a separate panel of six students. "Beauty" scores of 1 are lowest and 10 are highest. This is the explanatory variable $x$ of interest.
 1. `age`: A numerical variable of the course instructor's age. This will be another explanatory variable $x$ that we'll use in the *Learning check* at the end of this subsection.
@@ -156,22 +175,24 @@ An alternative way to look at the raw data values is by choosing a random sample
 evals_ch5 %>%
   sample_n(size = 5)
 ```
-```{r five-random-courses, echo=FALSE}
+```{r five-random-courses, echo=FALSE, purl=FALSE}
 evals_ch5 %>%
   sample_n(5) %>%
-  knitr::kable(
+  kable(
     digits = 3,
     caption = "A random sample of 5 out of the 463 courses at UT Austin",
     booktabs = TRUE,
     linesep = ""
   ) %>%
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 ```
 
 Now that we've looked at the raw values in our `evals_ch5` data frame and got a preliminary sense of the data, let's move on to the next common step in an exploratory data analysis: computing summary statistics. Let's start by computing the mean and median of our numerical outcome variable `score` and our numerical explanatory variable "beauty" score denoted as `bty_avg`. We'll do this by using the `summarize()` function from `dplyr` along with the `mean()` and `median()` summary functions we saw in Section \@ref(summarize).
 
-```{r eval=TRUE}
+```{r}
 evals_ch5 %>%
   summarize(mean_bty_avg = mean(bty_avg), mean_score = mean(score),
             median_bty_avg = median(bty_avg), median_score = median(score))
@@ -184,7 +205,6 @@ Typing out all these summary statistic functions in `summarize()` would be long 
 ```{r eval=FALSE}
 evals_ch5 %>% select(score, bty_avg) %>% skim()
 ```
-
 
 ```
 Skim summary statistics
@@ -232,40 +252,41 @@ The `skim()` function only returns what are known as *univariate* \index{univari
 
 Figure \@ref(fig:correlation1) gives examples of 9 different correlation coefficient values for hypothetical numerical variables $x$ and $y$. For example, observe in the top right plot that for a correlation coefficient of -0.75 there is a negative linear relationship between $x$ and $y$, but it is not as strong as the negative linear relationship between $x$ and $y$ when the correlation coefficient is -0.9 or -1.
 
-```{r correlation1, echo=FALSE, fig.cap="Nine different correlation coefficients.", fig.height=2.6}
+```{r correlation1, echo=FALSE, fig.cap="Nine different correlation coefficients.", fig.height=2.6, purl=FALSE}
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
 n_sim <- 100
 values <- NULL
-for(i in seq_along(correlation)){
+for (i in seq_along(correlation)) {
   rho <- correlation[i]
   sigma <- matrix(c(5, rho * sqrt(50), rho * sqrt(50), 10), 2, 2)
   sim <- rmvnorm(
     n = n_sim,
-    mean = c(20,40),
+    mean = c(20, 40),
     sigma = sigma
-    ) %>%
-    as.data.frame() %>% 
+  ) %>%
+    as.data.frame() %>%
     as_tibble() %>%
-    mutate(correlation = round(rho,2))
+    mutate(correlation = round(rho, 2))
 
   values <- bind_rows(values, sim)
 }
 
 corr_plot <- ggplot(data = values, mapping = aes(V1, V2)) +
   geom_point() +
-  facet_wrap(~ correlation, ncol = 3) +
+  facet_wrap(~correlation, ncol = 3) +
   labs(x = "x", y = "y") +
   theme(
     axis.text.x = element_blank(),
     axis.text.y = element_blank(),
-    axis.ticks = element_blank())
-
-if(knitr::is_latex_output()){
-  corr_plot +
-  theme(
-    strip.text = element_text(colour = 'black'),
-    strip.background = element_rect(fill = "grey93")
+    axis.ticks = element_blank()
   )
+
+if (is_latex_output()) {
+  corr_plot +
+    theme(
+      strip.text = element_text(colour = "black"),
+      strip.background = element_rect(fill = "grey93")
+    )
 } else {
   corr_plot
 }
@@ -287,10 +308,10 @@ evals_ch5 %>%
   summarize(correlation = cor(score, bty_avg))
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, purl=FALSE}
 cor_ch5 <- evals_ch5 %>%
-  summarize(correlation = cor(score, bty_avg)) %>% 
-  round(3) %>% 
+  summarize(correlation = cor(score, bty_avg)) %>%
+  round(3) %>%
   pull()
 ```
 
@@ -306,21 +327,23 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
        title = "Scatterplot of relationship of teaching and beauty scores")
 ```
 
-```{r numxplot1, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin.", fig.height=4.5}
+```{r numxplot1, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin.", fig.height=4.5, purl=FALSE}
 # Define orange box
 margin_x <- 0.15
 margin_y <- 0.075
 box <- tibble(
   x = c(7.83, 8.17, 8.17, 7.83, 7.83) + c(-1, 1, 1, -1, -1) * margin_x,
   y = c(4.6, 4.6, 5, 5, 4.6) + c(-1, -1, 1, 1, -1) * margin_y
-  )
+)
 
 ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point() +
-  labs(x = "Beauty Score", 
-       y = "Teaching Score",
-       title = "Scatterplot of relationship of teaching and beauty scores") +
-  geom_path(data = box, aes(x=x, y=y), col = "orange", size = 1)
+  labs(
+    x = "Beauty Score",
+    y = "Teaching Score",
+    title = "Scatterplot of relationship of teaching and beauty scores"
+  ) +
+  geom_path(data = box, aes(x = x, y = y), col = "orange", size = 1)
 ```
 
 Observe that most "beauty" scores lie between 2 and 8, while most teaching scores lie between 3 and 5. Furthermore, while opinions may vary, it is our opinion that the relationship between teaching score and "beauty" score is "weakly positive." This is consistent with our earlier computed correlation coefficient of `r cor_ch5`.
@@ -333,11 +356,13 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   labs(x = "Beauty Score", y = "Teaching Score",
        title = "Scatterplot of relationship of teaching and beauty scores")
 ```
-```{r numxplot2, warning=FALSE, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin.", fig.height=4.2}
+```{r numxplot2, echo=FALSE, fig.cap="Instructor evaluation scores at UT Austin.", fig.height=4.2, purl=FALSE}
 ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_jitter() +
-  labs(x = "Beauty Score", y = "Teaching Score",
-       title = "(Jittered) Scatterplot of relationship of teaching and beauty scores") +
+  labs(
+    x = "Beauty Score", y = "Teaching Score",
+    title = "(Jittered) Scatterplot of relationship of teaching and beauty scores"
+  ) +
   geom_path(data = box, aes(x = x, y = y), col = "orange", size = 1)
 ```
 
@@ -345,7 +370,7 @@ It is now apparent that there are `r evals_ch5 %>% filter(score > 4.5 & bty_avg 
 
 Let's build on the unjittered scatterplot in Figure \@ref(fig:numxplot1) by adding a "best-fitting" line: of all possible lines we can draw on this scatterplot, it is the line that "best" fits through the cloud of points. We do this by adding a new `geom_smooth(method = "lm", se = FALSE)` layer to the `ggplot()` code that created the scatterplot in Figure \@ref(fig:numxplot1). The `method = "lm"` argument sets the line to be a "`l`inear `m`odel." The `se = FALSE` \index{ggplot2!geom\_smooth()} argument suppresses _standard error_ uncertainty bars. (We'll define the concept of _standard error_ later in Subsection \@ref(sampling-definitions).)
 
-```{r numxplot3, warning=FALSE, fig.cap="Regression line."}
+```{r numxplot3, fig.cap="Regression line.", message=FALSE}
 ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point() +
   labs(x = "Beauty Score", y = "Teaching Score",
@@ -357,7 +382,7 @@ The line in the resulting Figure \@ref(fig:numxplot3) is called a "regression li
 
 Furthermore, a regression line is "best-fitting" in that it minimizes some mathematical criteria. We present these mathematical criteria in Subsection \@ref(leastsquares), but we suggest you read this subsection only after first reading the rest of this section on regression with one numerical explanatory variable.
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
 **_Learning check_**
 \vspace{-0.1in}
@@ -371,11 +396,10 @@ Furthermore, a regression line is "best-fitting" in that it minimizes some mathe
 
 What can you say about the relationship between age and teaching scores based on this exploration?
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
 \vspace{-0.25in}
 ```
-
 
 
 ### Simple linear regression {#model1table}
@@ -397,22 +421,24 @@ score_model <- lm(score ~ bty_avg, data = evals_ch5)
 # Get regression table:
 get_regression_table(score_model)
 ```
-```{r, echo=FALSE}
+```{r, echo=FALSE, purl=FALSE}
 score_model <- lm(score ~ bty_avg, data = evals_ch5)
 evals_line <- score_model %>%
   get_regression_table() %>%
   pull(estimate)
 ```
-```{r regtable, echo=FALSE}
+```{r regtable, echo=FALSE, purl=FALSE}
 get_regression_table(score_model) %>%
-  knitr::kable(
+  kable(
     digits = 3,
     caption = "Linear regression table",
     booktabs = TRUE,
     linesep = ""
   ) %>%
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 ```
 
 Let's first focus on interpreting the regression table output in Table \@ref(tab:regtable), and then we'll later revisit the code that produced it. In the `estimate` column of Table \@ref(tab:regtable) are the intercept $b_0$ = `r evals_line[1]` and the slope $b_1$ = `r evals_line[2]` for `bty_avg`. Thus the equation of the regression line in Figure \@ref(fig:numxplot3) follows:
@@ -421,7 +447,7 @@ $$
 \begin{aligned}
 \widehat{y} &= b_0 + b_1 \cdot x\\
 \widehat{\text{score}} &= b_0 + b_{\text{bty}\_\text{avg}} \cdot\text{bty}\_\text{avg}\\
-&= 3.880 + 0.067\cdot\text{bty}\_\text{avg}
+&= `r evals_line[1] %>% round(2)` + `r evals_line[2]`\cdot\text{bty}\_\text{avg}
 \end{aligned}
 $$
 
@@ -453,16 +479,15 @@ First, we "fit" the linear regression model to the `data` using the `lm()` \inde
 
 Second, we take the saved model in `score_model` and apply the `get_regression_table()` function from the `moderndive` package to it to obtain the regression table in Table \@ref(tab:regtable). This function is an example of what's known in computer programming as a *wrapper function*. \index{functions!wrapper} They take other pre-existing functions and "wrap" them into a single function that hides its inner workings.  This concept is illustrated in Figure \@ref(fig:moderndive-figure-wrapper).
 
-```{r moderndive-figure-wrapper, echo=FALSE, fig.align='center', fig.cap="The concept of a wrapper function.", out.height="60%", out.width="60%"}
-knitr::include_graphics("images/shutterstock/wrapper_function.png")
+```{r moderndive-figure-wrapper, echo=FALSE, fig.cap="The concept of a wrapper function.", out.height="60%", out.width="60%", purl=FALSE}
+include_graphics("images/shutterstock/wrapper_function.png")
 ```
 
 So all you need to worry about is what the inputs look like and what the outputs look like; you leave all the other details "under the hood of the car." In our regression modeling example, the `get_regression_table()` function takes a saved `lm()` linear regression model as input and returns a data frame of the regression table as output. If you're interested in learning more about the `get_regression_table()` function's inner workings, check out Subsection \@ref(underthehood).
 
 Lastly, you might be wondering what the remaining five columns in Table \@ref(tab:regtable) are: `std_error`, `statistic`, `p_value`, `lower_ci` and `upper_ci`. They are the _standard error_, _test statistic_, _p-value_, _lower 95% confidence interval bound_, and _upper 95% confidence interval bound_. They tell us about both the *statistical significance* and *practical significance* of our results. This is loosely the "meaningfulness" of our results from a statistical perspective. Let's put aside these ideas for now and revisit them in Chapter \@ref(inference-for-regression) on (statistical) inference for regression. We'll do this after we've had a chance to cover standard errors in Chapter \@ref(sampling), confidence intervals in Chapter \@ref(confidence-intervals), and hypothesis testing and $p$-values in Chapter \@ref(hypothesis-testing).
 
-
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
 **_Learning check_**
 \vspace{-0.1in}
@@ -470,18 +495,17 @@ Lastly, you might be wondering what the remaining five columns in Table \@ref(ta
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Fit a new simple linear regression using `lm(score ~ age, data = evals_ch5)` where `age` is the new explanatory variable $x$. Get information about the "best-fitting" line from the regression table by applying the `get_regression_table()` function. How do the regression results match up with the results from your earlier exploratory data analysis?
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
 \vspace{-0.25in}
 ```
 
 
-
 ### Observed/fitted values and residuals {#model1points}
 
-We just saw how to get the value of the intercept and the slope of a regression line from the `estimate` column of a regression table generated by the `get_regression_table()` function. Now instead say we want information on individual observations. For example, let's focus on the 21st of the 463 courses in the `evals_ch5` data frame in Table \@ref(tab:instructor-21):
+We just saw how to get the value of the intercept and the slope of a regression line from the `estimate` column of a regression table generated by the `get_regression_table()` function. Now instead say we want information on individual observations. For example, let's focus on the 21st of the `r n_courses_ch5` courses in the `evals_ch5` data frame in Table \@ref(tab:instructor-21):
 
-```{r instructor-21, echo=FALSE}
+```{r instructor-21, echo=FALSE, purl=FALSE}
 index <- which(evals_ch5$bty_avg == 7.333 & evals_ch5$score == 4.9)
 target_point <- score_model %>%
   get_regression_points() %>%
@@ -492,14 +516,16 @@ y_hat <- target_point$score_hat
 resid <- target_point$residual
 evals_ch5 %>%
   slice(index) %>%
-  knitr::kable(
+  kable(
     digits = 4,
     caption = "Data for the 21st course out of 463",
     booktabs = TRUE,
     linesep = ""
   ) %>%
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 ```
 
 What is the value $\widehat{y}$ on the regression line corresponding to this instructor's `bty_avg` "beauty" score of `r x`? In Figure \@ref(fig:numxplot4) we mark three values corresponding to the instructor for this 21st course and give their statistical names:
@@ -511,58 +537,70 @@ $$\widehat{y} = b_0 + b_1 \cdot x = `r evals_line[1]` + `r evals_line[2]` \cdot 
 
 * Arrow: The length of this arrow is the *residual* \index{regression!residual} and is computed by subtracting the fitted value $\widehat{y}$ from the observed value $y$. The residual can be thought of as a model's error or "lack of fit" for a particular observation.  In the case of this course's instructor, it is $y - \widehat{y}$ = `r y` - `r y_hat` = `r resid`.
 
-```{r numxplot4, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual.", fig.height=2.8}
+```{r numxplot4, echo=FALSE, fig.cap="Example of observed value, fitted value, and residual.", fig.height=2.8, message=FALSE, purl=FALSE}
 best_fit_plot <- ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point(color = "grey") +
-  labs(x = "Beauty Score", y = "Teaching Score",
-       title = "Relationship of teaching and beauty scores") +
+  labs(
+    x = "Beauty Score", y = "Teaching Score",
+    title = "Relationship of teaching and beauty scores"
+  ) +
   geom_smooth(method = "lm", se = FALSE) +
   annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 4) +
-  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
-           arrow = arrow(type = "closed", length = unit(0.04, "npc"))) +
+  annotate("segment",
+    x = x, xend = x, y = y, yend = y_hat, color = "blue",
+    arrow = arrow(type = "closed", length = unit(0.04, "npc"))
+  ) +
   annotate("point", x = x, y = y, col = "red", size = 4)
 best_fit_plot
 ```
 
-Now say we want to compute both the fitted value $\widehat{y} = b_0 + b_1 \cdot x$ and the residual $y - \widehat{y}$ for *all* 463 courses in the study. Recall that each course corresponds to one of the 463 rows in the `evals_ch5` data frame and also one of the 463 points in the regression plot in Figure \@ref(fig:numxplot4).
+Now say we want to compute both the fitted value $\widehat{y} = b_0 + b_1 \cdot x$ and the residual $y - \widehat{y}$ for *all* `r n_courses_ch5` courses in the study. Recall that each course corresponds to one of the `r n_courses_ch5` rows in the `evals_ch5` data frame and also one of the `r n_courses_ch5` points in the regression plot in Figure \@ref(fig:numxplot4).
 
-We could repeat the previous calculations we performed by hand 463 times, but that would be tedious and time consuming. Instead, let's do this using a computer with the `get_regression_points()` function. Just like the `get_regression_table()` function, the `get_regression_points()` function is a "wrapper" function. However, this function returns a different output. Let's apply the `get_regression_points()` function to `score_model`, which is where we saved our `lm()` model in the previous section. In Table \@ref(tab:regression-points-1) we present the results of only the 21st through 24th courses for brevity's sake.
+We could repeat the previous calculations we performed by hand `r n_courses_ch5` times, but that would be tedious and time consuming. Instead, let's do this using a computer with the `get_regression_points()` function. Just like the `get_regression_table()` function, the `get_regression_points()` function is a "wrapper" function. However, this function returns a different output. Let's apply the `get_regression_points()` function to `score_model`, which is where we saved our `lm()` model in the previous section. In Table \@ref(tab:regression-points-1) we present the results of only the 21st through 24th courses for brevity's sake.
 
 ```{r, eval=FALSE}
 regression_points <- get_regression_points(score_model)
 regression_points
 ```
 
-```{r regression-points-1, echo=FALSE}
+```{r regression-points-1, echo=FALSE, purl=FALSE}
 set.seed(76)
 regression_points <- get_regression_points(score_model)
 regression_points %>%
   slice(c(index, index + 1, index + 2, index + 3)) %>%
-  knitr::kable(
+  kable(
     digits = 3,
     caption = "Regression points (for only the 21st through 24th courses)",
     booktabs = TRUE,
     linesep = ""
   )
+
+# This code is used for dynamic non-static in-line text output purposes
+n_regression_points <- regression_points %>% nrow()
+score_24 <- regression_points$score[24]
+bty_avg_24 <- regression_points$bty_avg[24] %>% format(round(2), nsmall = 2)
+score_hat_24 <- regression_points$score_hat[24] %>% format(round(2), nsmall = 2)
+residual_24 <- regression_points$residual[24]
+
 ```
 
 Let's inspect the individual columns and match them with the elements of Figure \@ref(fig:numxplot4):
 
-* The `score` column represents the observed outcome variable $y$. This is the y-position of the `r nrow(regression_points)` black points.
-* The `bty_avg` column represents the values of the explanatory variable $x$. This is the x-position of the `r nrow(regression_points)` black points.
-* The `score_hat` column represents the fitted values $\widehat{y}$. This is the corresponding value on the regression line for the `r nrow(regression_points)` $x$ values.
-* The `residual` column represents the residuals $y - \widehat{y}$. This is the `r nrow(regression_points)` vertical distances between the `r nrow(regression_points)` black points and the regression line.
+* The `score` column represents the observed outcome variable $y$. This is the y-position of the `r n_regression_points` black points.
+* The `bty_avg` column represents the values of the explanatory variable $x$. This is the x-position of the `r n_regression_points` black points.
+* The `score_hat` column represents the fitted values $\widehat{y}$. This is the corresponding value on the regression line for the `r n_regression_points` $x$ values.
+* The `residual` column represents the residuals $y - \widehat{y}$. This is the `r n_regression_points` vertical distances between the `r n_regression_points` black points and the regression line.
 
 Just as we did for the instructor of the 21st course in the `evals_ch5` dataset (in the first row of the table), let's repeat the calculations for the instructor of the 24th course (in the fourth row of Table \@ref(tab:regression-points-1)):
 
-* `score` = 4.4 is the observed teaching `score` $y$ for this course's instructor.
-* `bty_avg` = 5.50 is the value of the explanatory variable `bty_avg` $x$ for this course's instructor.
-* `score_hat` = 4.25 = `r evals_line[1]` + `r evals_line[2]` $\cdot$ 5.50 is the fitted value $\widehat{y}$ on the regression line for this course's instructor.
-* `residual` = 0.153 =  4.4 - 4.25 is the value of the residual for this instructor. In other words, the model's fitted value was off by 0.153 teaching score units for this course's instructor.
+* `score` = `r score_24` is the observed teaching `score` $y$ for this course's instructor.
+* `bty_avg` = `r bty_avg_24` is the value of the explanatory variable `bty_avg` $x$ for this course's instructor.
+* `score_hat` = `r score_hat_24` = `r evals_line[1]` + `r evals_line[2]` $\cdot$ `r bty_avg_24` is the fitted value $\widehat{y}$ on the regression line for this course's instructor.
+* `residual` = `r residual_24` =  `r score_24` - `r score_hat_24` is the value of the residual for this instructor. In other words, the model's fitted value was off by `r residual_24` teaching score units for this course's instructor.
 
 At this point, you can skip ahead if you like to Subsection \@ref(leastsquares) to learn about the processes behind what makes "best-fitting" regression lines. As a primer, a "best-fitting" line refers to the line that minimizes the *sum of squared residuals* out of all possible lines we can draw through the points. In Section \@ref(model2), we'll discuss another common scenario of having a categorical explanatory variable and a numerical outcome variable.
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
 **_Learning check_**
 \vspace{-0.1in}
@@ -570,12 +608,10 @@ At this point, you can skip ahead if you like to Subsection \@ref(leastsquares) 
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Generate a data frame of the residuals of the model where you used `age` as the explanatory $x$ variable.
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
 \vspace{-0.25in}
 ```
-
-
 
 
 
@@ -588,7 +624,20 @@ It's an unfortunate truth that life expectancy is not the same across all countr
 1. Differences between continents: Are there significant differences in average life expectancy between the five populated continents of the world: Africa, the Americas, Asia, Europe, and Oceania?
 1. Differences within continents: How does life expectancy vary within the world's five continents? For example, is the spread of life expectancy among the countries of Africa larger than the spread of life expectancy among the countries of Asia?
 
-To answer such questions, we'll use the `gapminder` data frame included in the `gapminder` \index{R packages!gapminder!gapminder data frame} package. This dataset has international development statistics such as life expectancy, GDP per capita, and population for 142 countries for 5-year intervals between 1952 and 2007. Recall we visualized some of this data in Figure \@ref(fig:gapminder) in Subsection \@ref(gapminder) on the grammar of graphics.
+```{r echo=FALSE, purl=FALSE}
+# This code is used for dynamic non-static in-line text output purposes
+n_countries <- gapminder %>%
+  select(country) %>%
+  n_distinct()
+year_start <- gapminder %>%
+  select(year) %>%
+  min()
+year_end <- gapminder %>%
+  select(year) %>%
+  max()
+```
+
+To answer such questions, we'll use the `gapminder` data frame included in the `gapminder` \index{R packages!gapminder!gapminder data frame} package. This dataset has international development statistics such as life expectancy, GDP per capita, and population for `r n_countries` countries for 5-year intervals between `r year_start` and `r year_end`. Recall we visualized some of this data in Figure \@ref(fig:gapminder) in Subsection \@ref(gapminder) on the grammar of graphics.
 
 We'll use this data for basic regression again, but now using an explanatory variable $x$ that is categorical, as opposed to the numerical explanatory variable model we used in the previous Section \@ref(model1).
 
@@ -600,16 +649,16 @@ When the explanatory variable $x$ is categorical, the concept of a "best-fitting
 
 ### Exploratory data analysis {#model2EDA}
 
-The data on the 142 countries can be found in the `gapminder` data frame included in the `gapminder` package. However, to keep things simple, let's `filter()` for only those observations/rows corresponding to the year 2007. Additionally, let's `select()` only the subset of the variables we'll consider in this chapter. We'll save this data in a new data frame called `gapminder2007`:
+The data on the `r n_countries` countries can be found in the `gapminder` data frame included in the `gapminder` package. However, to keep things simple, let's `filter()` for only those observations/rows corresponding to the year 2007. Additionally, let's `select()` only the subset of the variables we'll consider in this chapter. We'll save this data in a new data frame called `gapminder2007`:
 
-```{r, warning=FALSE, message=FALSE}
+```{r, message=FALSE}
 library(gapminder)
 gapminder2007 <- gapminder %>%
   filter(year == 2007) %>%
   select(country, lifeExp, continent, gdpPercap)
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, purl=FALSE}
 # Hidden: internally compute mean and median life expectancy
 lifeExp_worldwide <- gapminder2007 %>%
   summarize(median = median(lifeExp), mean = mean(lifeExp))
@@ -617,6 +666,9 @@ mean_africa <- gapminder2007 %>%
   filter(continent == "Africa") %>%
   summarize(mean_africa = mean(lifeExp)) %>%
   pull(mean_africa)
+
+# This code is used for dynamic non-static in-line text output purposes
+gapminder2007_rows <- gapminder2007 %>% nrow()
 ```
 
 Let's perform the first common step in an exploratory data analysis: looking at the raw data values. You can do this by using RStudio's spreadsheet viewer or by using the `glimpse()` command as introduced in Subsection \@ref(exploredataframes) on exploring data frames:
@@ -625,7 +677,7 @@ Let's perform the first common step in an exploratory data analysis: looking at 
 glimpse(gapminder2007)
 ```
 
-Observe that `Observations: 142` indicates that there are 142 rows/observations in `gapminder2007`, where each row corresponds to one country. In other words, the *observational unit* is an individual country. Furthermore, observe that the variable `continent` is of type `<fct>`, which stands for _factor_, which is R's way of encoding categorical variables.
+Observe that ``Observations: `r gapminder2007_rows` `` indicates that there are `r gapminder2007_rows` rows/observations in `gapminder2007`, where each row corresponds to one country. In other words, the *observational unit* is an individual country. Furthermore, observe that the variable `continent` is of type `<fct>`, which stands for _factor_, which is R's way of encoding categorical variables.
 
 A full description of all the variables included in `gapminder` can be found by reading the associated help file (run `?gapminder` in the console). However, let's fully describe only the `r ncol(gapminder2007)` variables we selected in `gapminder2007`:
 
@@ -634,22 +686,24 @@ A full description of all the variables included in `gapminder` can be found by 
 1. `continent`: A categorical variable with five levels. Here "levels" correspond to the possible categories: Africa, Asia, Americas, Europe, and Oceania. This is the explanatory variable $x$ of interest.
 1. `gdpPercap`: A numerical variable of that country's GDP per capita in US inflation-adjusted dollars that we'll use as another outcome variable $y$ in the *Learning check* at the end of this subsection.
 
-Let's look at a random sample of five out of the `r nrow(gapminder2007)` countries in Table \@ref(tab:model2-data-preview). 
+Let's look at a random sample of five out of the `r gapminder2007_rows` countries in Table \@ref(tab:model2-data-preview). 
 
 ```{r, eval=FALSE}
 gapminder2007 %>% sample_n(size = 5)
 ```
-```{r model2-data-preview, echo=FALSE}
+```{r model2-data-preview, echo=FALSE, purl=FALSE}
 gapminder2007 %>%
   sample_n(5) %>%
-  knitr::kable(
+  kable(
     digits = 3,
     caption = "Random sample of 5 out of 142 countries",
     booktabs = TRUE,
     linesep = ""
   ) %>%
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 ```
 
 Note that random sampling will likely produce a different subset of 5 rows for you than what's shown. Now that we've looked at the raw values in our `gapminder2007` data frame and got a sense of the data, let's move on to computing summary statistics. Let's once again apply the `skim()` function from the `skimr` package. Recall from our previous EDA that this function takes in a data frame, "skims" it, and returns commonly used summary statistics. Let's take our `gapminder2007` data frame, `select()` only the outcome and explanatory variables `lifeExp` and `continent`, and pipe them into the `skim()` function:
@@ -673,7 +727,6 @@ Skim summary statistics
   lifeExp       0      142 142 67.01 12.07 39.61 57.16 71.94 76.41 82.6
 ```
 
-
 The `skim()` output now reports summaries for categorical variables (`Variable type:factor`) separately from the numerical variables (`Variable type:numeric`). For the categorical variable `continent`, it reports:
 
 - `missing`, `complete`, and `n`,  which are the number of missing, complete, and total number of values as before, respectively.
@@ -681,11 +734,17 @@ The `skim()` output now reports summaries for categorical variables (`Variable t
 - `top_counts`: In this case, the top four counts: `Africa` has 52 countries, `Asia` has 33, `Europe` has 30, and `Americas` has 25. Not displayed is `Oceania` with 2 countries.
 - `ordered`: This tells us whether the categorical variable is "ordinal": whether there is an encoded hierarchy (like low, medium, high). In this case, `continent` is not ordered.
 
-Turning our attention to the summary statistics of the numerical variable `lifeExp`, we observe that the global median life expectancy in 2007 was `r lifeExp_worldwide$median %>% round(2)`. Thus, half of the world's countries (71 countries) had a life expectancy less than `r lifeExp_worldwide$median %>% round(2)`. The mean life expectancy of `r lifeExp_worldwide$mean %>% round(2)` is lower, however. Why is the mean life expectancy lower than the median?
+```{r, echo=FALSE, purl=FALSE}
+# This code is used for dynamic non-static in-line text output purposes
+median_life_exp <- lifeExp_worldwide$median %>% round(2)
+mean_life_exp <- lifeExp_worldwide$mean %>% round(2)
+```
+
+Turning our attention to the summary statistics of the numerical variable `lifeExp`, we observe that the global median life expectancy in 2007 was `r median_life_exp`. Thus, half of the world's countries (`r n_countries/2` countries) had a life expectancy less than `r median_life_exp`. The mean life expectancy of `r mean_life_exp` is lower, however. Why is the mean life expectancy lower than the median?
 
 We can answer this question by performing the last of the three common steps in an exploratory data analysis: creating data visualizations. Let's visualize the distribution of our outcome variable $y$ = `lifeExp` in Figure \@ref(fig:lifeExp2007hist).
 
-```{r lifeExp2007hist, echo=TRUE, warning=FALSE, fig.cap="Histogram of life expectancy in 2007.", fig.height=5.2}
+```{r lifeExp2007hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2007.", fig.height=5.2}
 ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", y = "Number of countries",
@@ -705,31 +764,32 @@ ggplot(gapminder2007, aes(x = lifeExp)) +
   facet_wrap(~ continent, nrow = 2)
 ```
 
-```{r catxplot0b, echo=FALSE, warning=FALSE, fig.cap="Life expectancy in 2007.", fig.height=4.3}
+```{r catxplot0b, echo=FALSE, fig.cap="Life expectancy in 2007.", fig.height=4.3, purl=FALSE}
 faceted_life_exp <- ggplot(gapminder2007, aes(x = lifeExp)) +
   geom_histogram(binwidth = 5, color = "white") +
-  labs(x = "Life expectancy", y = "Number of countries",
-       title = "Histogram of distribution of worldwide life expectancies") +
-  facet_wrap(~ continent, nrow = 2)
+  labs(
+    x = "Life expectancy", y = "Number of countries",
+    title = "Histogram of distribution of worldwide life expectancies"
+  ) +
+  facet_wrap(~continent, nrow = 2)
 
 # Make the text black and reduce darkness of the grey in the facet labels
-if(knitr::is_latex_output()) {
-  faceted_life_exp + 
-    theme(strip.text = element_text(colour = 'black'),
-          strip.background = element_rect(fill = "grey93")
+if (is_latex_output()) {
+  faceted_life_exp +
+    theme(
+      strip.text = element_text(colour = "black"),
+      strip.background = element_rect(fill = "grey93")
     )
 } else {
   faceted_life_exp
 }
 ```
 
-
-
 Observe that unfortunately the distribution of African life expectancies is much lower than the other continents, while in Europe life expectancies tend to be higher and furthermore do not vary as much. On the other hand, both Asia and Africa have the most variation in life expectancies. There is the least variation in Oceania, but keep in mind that there are only two countries in Oceania: Australia and New Zealand.
 
 Recall that an alternative method to visualize the distribution of a numerical variable split by a categorical variable is by using a side-by-side boxplot. We map the categorical variable `continent` to the $x$-axis and the different life expectancies within each continent on the $y$-axis in Figure \@ref(fig:catxplot1).
 
-```{r catxplot1, warning=FALSE, fig.cap="Life expectancy in 2007.", fig.height=3.4}
+```{r catxplot1, fig.cap="Life expectancy in 2007.", fig.height=3.4}
 ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
   geom_boxplot() +
   labs(x = "Continent", y = "Life expectancy",
@@ -748,9 +808,9 @@ lifeExp_by_continent <- gapminder2007 %>%
   summarize(median = median(lifeExp), 
             mean = mean(lifeExp))
 ```
-```{r catxplot0, echo=FALSE}
+```{r catxplot0, echo=FALSE, purl=FALSE}
 lifeExp_by_continent %>%
-  knitr::kable(
+  kable(
     digits = 3,
     caption = "Life expectancy by continent",
     booktabs = TRUE,
@@ -760,30 +820,71 @@ lifeExp_by_continent %>%
 
 Observe the order of the second column `median` life expectancy: Africa is lowest, the Americas and Asia are next with similar medians, then Europe, then Oceania. This ordering corresponds to the ordering of the solid black lines inside the boxes in our side-by-side boxplot in Figure \@ref(fig:catxplot1). 
 
-Let's now turn our attention to the values in the third column `mean`. Using Africa's mean life expectancy of 54.8 as a *baseline for comparison*, let's start making comparisons to the mean life expectancies of the other four continents and put these values in Table \@ref(tab:continent-mean-life-expectancies), which we'll revisit later on in this section.
+```{r echo=FALSE, purl=FALSE}
+# This code is used for dynamic non-static in-line text output purposes
+# Coding model earlier to calculate the intercepts etc below
+lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
 
-1. For the Americas, it is 73.6 - 54.8 = 18.8 years higher.
-1. For Asia, it is 70.7 - 54.8 = 15.9 years higher.
-1. For Europe, it is 77.6 - 54.8 = 22.8 years higher.
-1. For Oceania, it is 80.7 - 54.8 = 25.9 years higher.
+# Africa / Intercept
+intercept <- get_regression_table(lifeExp_model) %>%
+  filter(term == "intercept") %>%
+  pull(estimate) %>%
+  round(1)
 
-```{r continent-mean-life-expectancies, echo=FALSE}
+# Americas
+offset_americas <- get_regression_table(lifeExp_model) %>%
+  filter(term == "continentAmericas") %>%
+  pull(estimate) %>%
+  round(1)
+mean_americas <- intercept + offset_americas
+
+# Asia
+offset_asia <- get_regression_table(lifeExp_model) %>%
+  filter(term == "continentAsia") %>%
+  pull(estimate) %>%
+  round(1)
+mean_asia <- intercept + offset_asia
+
+# Europe
+offset_europe <- get_regression_table(lifeExp_model) %>%
+  filter(term == "continentEurope") %>%
+  pull(estimate) %>%
+  round(1)
+mean_europe <- intercept + offset_europe
+
+# Oceania
+offset_oceania <- get_regression_table(lifeExp_model) %>%
+  filter(term == "continentOceania") %>%
+  pull(estimate) %>%
+  round(1)
+mean_oceania <- intercept + offset_oceania
+```
+
+Let's now turn our attention to the values in the third column `mean`. Using Africa's mean life expectancy of `r intercept` as a *baseline for comparison*, let's start making comparisons to the mean life expectancies of the other four continents and put these values in Table \@ref(tab:continent-mean-life-expectancies), which we'll revisit later on in this section.
+
+1. For the Americas, it is `r mean_americas` - `r intercept` = `r offset_americas` years higher.
+1. For Asia, it is `r mean_asia` - `r intercept` = `r offset_asia` years higher.
+1. For Europe, it is `r mean_europe` - `r intercept` = `r offset_europe` years higher.
+1. For Oceania, it is `r mean_oceania` - `r intercept` = `r offset_oceania` years higher.
+
+```{r continent-mean-life-expectancies, echo=FALSE, purl=FALSE}
 gapminder2007 %>%
   group_by(continent) %>%
   summarize(mean = mean(lifeExp)) %>%
   mutate(`Difference versus Africa` = mean - mean_africa) %>%
-  knitr::kable(
+  kable(
     digits = 3,
     caption = "Mean life expectancy by continent and relative differences from mean for Africa",
     booktabs = TRUE,
     linesep = ""
   ) %>%
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 ```
 
-
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
 **_Learning check_**
 \vspace{-0.1in}
@@ -791,10 +892,11 @@ gapminder2007 %>%
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Conduct a new exploratory data analysis with the same explanatory variable $x$ being `continent` but with `gdpPercap` as the new outcome variable $y$. What can you say about the differences in GDP per capita between continents based on this exploration?
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
 \vspace{-0.25in}
 ```
+
 
 ### Linear regression {#model2table}
 
@@ -809,28 +911,30 @@ As we did in Subsection \@ref(model1table) when studying the relationship betwee
 lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
 get_regression_table(lifeExp_model)
 ```
-```{r, echo=FALSE}
+```{r, echo=FALSE, purl=FALSE}
 lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
 ```
-```{r catxplot4b, echo=FALSE}
+```{r catxplot4b, echo=FALSE, purl=FALSE}
 get_regression_table(lifeExp_model) %>%
-  knitr::kable(
+  kable(
     digits = 3,
     caption = "Linear regression table",
     booktabs = TRUE,
     linesep = ""
   ) %>%
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 ```
 
 Let's once again focus on the values in the `term` and `estimate` columns of Table \@ref(tab:catxplot4b). Why are there now 5 rows? Let's break them down one-by-one:
 
-1. `intercept` corresponds to the mean life expectancy of countries in Africa of 54.8 years.
-1. `continentAmericas` corresponds to countries in the Americas and the value +18.8 is the same difference in mean life expectancy relative to Africa we displayed in Table \@ref(tab:continent-mean-life-expectancies). In other words, the mean life expectancy of countries in the Americas is $54.8 + 18.8 = 73.6$.
-1. `continentAsia` corresponds to countries in Asia and the value +15.9 is the same difference in mean life expectancy relative to Africa we displayed in Table \@ref(tab:continent-mean-life-expectancies). In other words, the mean life expectancy of countries in Asia is $54.8 + 15.9 = 70.7$.
-1. `continentEurope` corresponds to countries in Europe and the value +22.8 is the same difference in mean life expectancy relative to Africa we displayed in Table \@ref(tab:continent-mean-life-expectancies). In other words, the mean life expectancy of countries in Europe is $54.8 + 22.8 = 77.6$.
-1. `continentOceania` corresponds to countries in Oceania and the value +25.9 is the same difference in mean life expectancy relative to Africa we displayed in Table \@ref(tab:continent-mean-life-expectancies). In other words, the mean life expectancy of countries in Oceania is $54.8 + 25.9 = 80.7$.
+1. `intercept` corresponds to the mean life expectancy of countries in Africa of `r intercept` years.
+1. `continentAmericas` corresponds to countries in the Americas and the value +`r offset_americas` is the same difference in mean life expectancy relative to Africa we displayed in Table \@ref(tab:continent-mean-life-expectancies). In other words, the mean life expectancy of countries in the Americas is $`r intercept` + `r offset_americas` = `r mean_americas`$.
+1. `continentAsia` corresponds to countries in Asia and the value +`r offset_asia` is the same difference in mean life expectancy relative to Africa we displayed in Table \@ref(tab:continent-mean-life-expectancies). In other words, the mean life expectancy of countries in Asia is $`r intercept` + `r offset_asia` = `r mean_asia`$.
+1. `continentEurope` corresponds to countries in Europe and the value +`r offset_europe` is the same difference in mean life expectancy relative to Africa we displayed in Table \@ref(tab:continent-mean-life-expectancies). In other words, the mean life expectancy of countries in Europe is $`r intercept` + `r offset_europe` = `r mean_europe`$.
+1. `continentOceania` corresponds to countries in Oceania and the value +`r offset_oceania` is the same difference in mean life expectancy relative to Africa we displayed in Table \@ref(tab:continent-mean-life-expectancies). In other words, the mean life expectancy of countries in Oceania is $`r intercept` + `r offset_oceania` = `r mean_oceania`$.
 
 To summarize, the 5 values in the `estimate` column in Table \@ref(tab:catxplot4b) correspond to the "baseline for comparison" continent Africa (the intercept) as well as four "offsets" from this baseline for the remaining 4 continents: the Americas, Asia, Europe, and Oceania.
 
@@ -838,12 +942,16 @@ You might be asking at this point why was Africa chosen as the "baseline for com
 
 Let's now write the equation for our fitted values $\widehat{y} = \widehat{\text{life exp}}$.
 
+<!--
+Note: Even though markdown preview of the following LaTeX looks garbled, it
+comes out correct in the HTML output.
+-->
 $$
 \begin{aligned}
 \widehat{y} = \widehat{\text{life exp}} &= b_0 + b_{\text{Amer}}\cdot\mathbb{1}_{\text{Amer}}(x) + b_{\text{Asia}}\cdot\mathbb{1}_{\text{Asia}}(x) + \\
 & \qquad b_{\text{Euro}}\cdot\mathbb{1}_{\text{Euro}}(x) + b_{\text{Ocean}}\cdot\mathbb{1}_{\text{Ocean}}(x)\\
-&= 54.8 + 18.8\cdot\mathbb{1}_{\text{Amer}}(x) + 15.9\cdot\mathbb{1}_{\text{Asia}}(x) + \\
-& \qquad 22.8\cdot\mathbb{1}_{\text{Euro}}(x) + 25.9\cdot\mathbb{1}_{\text{Ocean}}(x)
+&= `r intercept` + `r offset_americas`\cdot\mathbb{1}_{\text{Amer}}(x) + `r offset_asia`\cdot\mathbb{1}_{\text{Asia}}(x) + \\
+& \qquad `r offset_europe`\cdot\mathbb{1}_{\text{Euro}}(x) + `r offset_oceania`\cdot\mathbb{1}_{\text{Ocean}}(x)
 \end{aligned}
 $$
 
@@ -876,51 +984,50 @@ $$
 \widehat{\text{life exp}} &= b_0 + b_{\text{Amer}}\cdot\mathbb{1}_{\text{Amer}}(x) + b_{\text{Asia}}\cdot\mathbb{1}_{\text{Asia}}(x)
 + \\
 & \qquad b_{\text{Euro}}\cdot\mathbb{1}_{\text{Euro}}(x) + b_{\text{Ocean}}\cdot\mathbb{1}_{\text{Ocean}}(x)\\
-&= 54.8 + 18.8\cdot\mathbb{1}_{\text{Amer}}(x) + 15.9\cdot\mathbb{1}_{\text{Asia}}(x)
+&= `r intercept` + `r offset_americas`\cdot\mathbb{1}_{\text{Amer}}(x) + `r offset_asia`\cdot\mathbb{1}_{\text{Asia}}(x)
 + \\
-& \qquad 22.8\cdot\mathbb{1}_{\text{Euro}}(x) + 25.9\cdot\mathbb{1}_{\text{Ocean}}(x)\\
-&= 54.8 + 18.8\cdot 0 + 15.9\cdot 0 + 22.8\cdot 0 + 25.9\cdot 0\\
-&= 54.8
+& \qquad `r offset_europe`\cdot\mathbb{1}_{\text{Euro}}(x) + `r offset_oceania`\cdot\mathbb{1}_{\text{Ocean}}(x)\\
+&= `r intercept` + `r offset_americas`\cdot 0 + `r offset_asia`\cdot 0 + `r offset_europe`\cdot 0 + `r offset_oceania`\cdot 0\\
+&= `r intercept`
 \end{aligned}
 $$
 
-In other words, all that's left is the intercept $b_0$, corresponding to the average life expectancy of African countries of 54.8 years. Next, say we are considering a country in the Americas. In this case, only the indicator function $\mathbb{1}_{\text{Amer}}(x)$ for the Americas will equal 1, while all the others will equal 0, and thus:
+In other words, all that's left is the intercept $b_0$, corresponding to the average life expectancy of African countries of `r intercept` years. Next, say we are considering a country in the Americas. In this case, only the indicator function $\mathbb{1}_{\text{Amer}}(x)$ for the Americas will equal 1, while all the others will equal 0, and thus:
 
 $$
 \begin{aligned}
-\widehat{\text{life exp}} &= 54.8 + 18.8\cdot\mathbb{1}_{\text{Amer}}(x) + 15.9\cdot\mathbb{1}_{\text{Asia}}(x)
-+ 22.8\cdot\mathbb{1}_{\text{Euro}}(x) + \\
-& \qquad 25.9\cdot\mathbb{1}_{\text{Ocean}}(x)\\
-&= 54.8 + 18.8\cdot 1 + 15.9\cdot 0 + 22.8\cdot 0 + 25.9\cdot 0\\
-&= 54.8 + 18.8 \\
-& = 73.6
+\widehat{\text{life exp}} &= `r intercept` + `r offset_americas`\cdot\mathbb{1}_{\text{Amer}}(x) + `r offset_asia`\cdot\mathbb{1}_{\text{Asia}}(x)
++ `r offset_europe`\cdot\mathbb{1}_{\text{Euro}}(x) + \\
+& \qquad `r offset_oceania`\cdot\mathbb{1}_{\text{Ocean}}(x)\\
+&= `r intercept` + `r offset_americas`\cdot 1 + `r offset_asia`\cdot 0 + `r offset_europe`\cdot 0 + `r offset_oceania`\cdot 0\\
+&= `r intercept` + `r offset_americas` \\
+& = `r mean_americas`
 \end{aligned}
 $$
 
-which is the mean life expectancy for countries in the Americas of 73.6 years in Table \@ref(tab:continent-mean-life-expectancies). Note the "offset from the baseline for comparison" is +18.8 years. 
+which is the mean life expectancy for countries in the Americas of `r mean_americas` years in Table \@ref(tab:continent-mean-life-expectancies). Note the "offset from the baseline for comparison" is +`r offset_americas` years. 
 
 Let's do one more. Say we are considering a country in Asia. In this case, only the indicator function $\mathbb{1}_{\text{Asia}}(x)$ for Asia will equal 1, while all the others will equal 0, and thus:
 
 $$
 \begin{aligned}
-\widehat{\text{life exp}} &= 54.8 + 18.8\cdot\mathbb{1}_{\text{Amer}}(x) + 15.9\cdot\mathbb{1}_{\text{Asia}}(x)
-+ 22.8\cdot\mathbb{1}_{\text{Euro}}(x) + \\
-& \qquad 25.9\cdot\mathbb{1}_{\text{Ocean}}(x)\\
-&= 54.8 + 18.8\cdot 0 + 15.9\cdot 1 + 22.8\cdot 0 + 25.9\cdot 0\\
-&= 54.8 + 15.9 \\
-& = 70.7
+\widehat{\text{life exp}} &= `r intercept` + `r offset_americas`\cdot\mathbb{1}_{\text{Amer}}(x) + `r offset_asia`\cdot\mathbb{1}_{\text{Asia}}(x)
++ `r offset_europe`\cdot\mathbb{1}_{\text{Euro}}(x) + \\
+& \qquad `r offset_oceania`\cdot\mathbb{1}_{\text{Ocean}}(x)\\
+&= `r intercept` + `r offset_americas`\cdot 0 + `r offset_asia`\cdot 1 + `r offset_europe`\cdot 0 + `r offset_oceania`\cdot 0\\
+&= `r intercept` + `r offset_asia` \\
+& = `r mean_asia`
 \end{aligned}
 $$
 
-which is the mean life expectancy for Asian countries of 70.7 years in Table \@ref(tab:continent-mean-life-expectancies). The "offset from the baseline for comparison" here is +15.9 years.
+which is the mean life expectancy for Asian countries of `r mean_asia` years in Table \@ref(tab:continent-mean-life-expectancies). The "offset from the baseline for comparison" here is +`r offset_asia` years.
 
 Let's generalize this idea a bit. If we fit a linear regression model using a categorical explanatory variable $x$ that has $k$ possible categories, the regression table will return an intercept and $k - 1$ "offsets." In our case, since there are $k = 5$ continents, the regression model returns an intercept corresponding to the baseline for comparison group of Africa and $k - 1 = 4$ offsets corresponding to the Americas, Asia, Europe, and Oceania.
 
-<!--Phew! That was a lot of work! --> Understanding a regression table output when you're using a categorical explanatory variable is a topic those new to regression often struggle with. The only real remedy for these struggles is practice, practice, practice. However, once you equip yourselves with an understanding of how to create regression models using categorical explanatory variables, you'll be able to incorporate many new variables into your models, given the large amount of the world's data that is categorical. If you feel like you're still struggling at this point, however, we suggest you closely compare Tables \@ref(tab:continent-mean-life-expectancies) and \@ref(tab:catxplot4b) and note how you can compute all the values from one table using the values in the other.
+Understanding a regression table output when you're using a categorical explanatory variable is a topic those new to regression often struggle with. The only real remedy for these struggles is practice, practice, practice. However, once you equip yourselves with an understanding of how to create regression models using categorical explanatory variables, you'll be able to incorporate many new variables into your models, given the large amount of the world's data that is categorical. If you feel like you're still struggling at this point, however, we suggest you closely compare Tables \@ref(tab:continent-mean-life-expectancies) and \@ref(tab:catxplot4b) and note how you can compute all the values from one table using the values in the other.
 
 
-
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
 **_Learning check_**
 \vspace{-0.1in}
@@ -928,7 +1035,7 @@ Let's generalize this idea a bit. If we fit a linear regression model using a ca
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Fit a new linear regression using `lm(gdpPercap ~ continent, data = gapminder2007)` where `gdpPercap` is the new outcome variable $y$. Get information about the "best-fitting" line from the regression table by applying the `get_regression_table()` function. How do the regression results match up with the results from your previous exploratory data analysis?
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
 \vspace{-0.25in}
 ```
@@ -948,26 +1055,36 @@ We obtained these values and other values using the `get_regression_points()` fu
 regression_points <- get_regression_points(lifeExp_model, ID = "country")
 regression_points
 ```
-```{r model2-residuals, echo=FALSE}
+```{r model2-residuals, echo=FALSE, purl=FALSE}
 regression_points <- get_regression_points(lifeExp_model, ID = "country")
 regression_points %>%
   slice(1:10) %>%
-  knitr::kable(
+  kable(
     digits = 3,
     caption = "Regression points (First 10 out of 142 countries)",
     booktabs = TRUE,
     linesep = ""
   ) %>%
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+```{r echo=FALSE, purl=FALSE}
+# This code is for inline dynamic coding
+afghanistan_life_exp <- regression_points %>%
+  filter(country == "Afghanistan") %>%
+  pull(lifeExp) %>%
+  round(1)
+afghanistan_offset <- (afghanistan_life_exp - mean_asia) %>% round(1)
 ```
 
 Observe in Table \@ref(tab:model2-residuals) that `lifeExp_hat` contains the fitted values $\widehat{y}$ = $\widehat{\text{lifeExp}}$. If you look closely, there are only 5 possible values for `lifeExp_hat`. These correspond to the five mean life expectancies for the 5 continents that we displayed in Table \@ref(tab:continent-mean-life-expectancies) and computed using the values in the `estimate` column of the regression table in Table \@ref(tab:catxplot4b).
 
-The `residual` column is simply $y - \widehat{y}$ = `lifeExp - lifeExp_hat`. These values can be interpreted as the deviation of a country's life expectancy from its continent's average life expectancy. For example, look at the first row of Table \@ref(tab:model2-residuals) corresponding to Afghanistan. The residual of $y - \widehat{y} = 43.8 - 70.7 = -26.9$ is telling us that Afghanistan's life expectancy is a whopping 26.9 years lower than the mean life expectancy of all Asian countries. This can in part be explained by the many years of war that country has suffered.
+The `residual` column is simply $y - \widehat{y}$ = `lifeExp - lifeExp_hat`. These values can be interpreted as the deviation of a country's life expectancy from its continent's average life expectancy. For example, look at the first row of Table \@ref(tab:model2-residuals) corresponding to Afghanistan. The residual of $y - \widehat{y} = `r afghanistan_life_exp` - `r mean_asia` = `r afghanistan_offset`$ is telling us that Afghanistan's life expectancy is a whopping `r -1 * afghanistan_offset` years lower than the mean life expectancy of all Asian countries. This can in part be explained by the many years of war that country has suffered.
 
-
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
 **_Learning check_**
 \vspace{-0.1in}
@@ -977,7 +1094,7 @@ The `residual` column is simply $y - \widehat{y}$ = `lifeExp - lifeExp_hat`. The
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat this process, but identify the five countries with the five largest (most positive) residuals. What do these positive residuals say about their life expectancy relative to their continents' life expectancy?
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
 \vspace{-0.25in}
 ```
@@ -986,16 +1103,14 @@ The `residual` column is simply $y - \widehat{y}$ = `lifeExp - lifeExp_hat`. The
 
 
 
-
-
-## Related topics
+## Related topics {#reg-related-topics}
 
 ### Correlation is not necessarily causation {#correlation-is-not-causation}
 
 Throughout this chapter we've been cautious when interpreting regression slope coefficients. We always discussed the "associated" effect of an explanatory variable $x$ on an outcome variable $y$. For example, our statement from Subsection \@ref(model1table) that "for every increase of 1 unit in `bty_avg`, there is an *associated* increase of on average `r evals_line[2]` units of `score`." We include the term "associated" to be extra careful not to suggest we are making a *causal* statement. So while "beauty" score of `bty_avg` is positively correlated with teaching `score`, we can't necessarily make any statements about "beauty" scores' direct causal effect  on teaching score without more information on how this study was conducted. Here is another example: a not-so-great medical doctor goes through medical records and finds that patients who slept with their shoes on tended to wake up more with headaches. So this doctor declares, "Sleeping with shoes on causes headaches!"
 
-```{r moderndive-figure-causal-graph-2, echo=FALSE, fig.align='center', fig.cap="Does sleeping with shoes on cause headaches?", out.width="60%", out.height="60%"}
-knitr::include_graphics("images/shutterstock/shoes_headache.png")
+```{r moderndive-figure-causal-graph-2, echo=FALSE, fig.cap="Does sleeping with shoes on cause headaches?", out.width="60%", out.height="60%", purl=FALSE}
+include_graphics("images/shutterstock/shoes_headache.png")
 ```
 
 However, there is a good chance that if someone is sleeping with their shoes on, it's potentially because they are intoxicated from alcohol. Furthermore, higher levels of drinking leads to more hangovers, and hence more headaches. The amount of alcohol consumption here is what's known as a *confounding/lurking* variable\index{confounding variable}. It "lurks" behind the scenes, confounding the causal relationship (if any) of "sleeping with shoes on" with "waking up with a headache." We can summarize this in Figure \@ref(fig:moderndive-figure-causal-graph) with a *causal graph* where:
@@ -1003,8 +1118,8 @@ However, there is a good chance that if someone is sleeping with their shoes on,
 * Y is a *response* variable; here it is "waking up with a headache." \index{variables!response / outcome / dependent}
 * X is a *treatment* variable whose causal effect we are interested in; here it is "sleeping with shoes on."\index{variables!treatment}
 
-```{r moderndive-figure-causal-graph, echo=FALSE, fig.align='center', out.width="50%", fig.cap="Causal graph."}
-knitr::include_graphics("images/flowcharts/flowchart.009-cropped.png")
+```{r moderndive-figure-causal-graph, echo=FALSE, out.width="50%", fig.cap="Causal graph.", purl=FALSE}
+include_graphics("images/flowcharts/flowchart.009-cropped.png")
 ```
 
 To study the relationship between Y and X, we could use a regression model where the outcome variable is set to Y and the explanatory variable is set to be X, as you've been doing throughout this chapter. However, Figure \@ref(fig:moderndive-figure-causal-graph) also includes a third variable with arrows pointing at both X and Y:
@@ -1022,7 +1137,7 @@ As you read news stories, be careful not to fall into the trap of thinking that 
 
 Regression lines are also known as "best-fitting" lines. But what do we mean by "best"? Let's unpack the criteria that is used in regression to determine "best." Recall Figure \@ref(fig:numxplot4), where for an instructor with a beauty score of $x = 7.333$ we mark the *observed value* $y$ with a circle, the *fitted value* $\widehat{y}$ with a square, and the *residual* $y - \widehat{y}$ with an arrow. We re-display Figure \@ref(fig:numxplot4) in the top-left plot of Figure \@ref(fig:best-fitting-line) in addition to three more arbitrarily chosen course instructors:
 
-```{r best-fitting-line, fig.height=5.5, echo=FALSE, warning=FALSE, fig.cap="Example of observed value, fitted value, and residual."}
+```{r best-fitting-line, fig.height=5.5, echo=FALSE, fig.cap="Example of observed value, fitted value, and residual.", purl=FALSE, message=FALSE}
 # First residual
 best_fit_plot <- ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_point(size = 0.8, color = "grey") +
@@ -1030,8 +1145,10 @@ best_fit_plot <- ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
   geom_smooth(method = "lm", se = FALSE) +
   annotate("point", x = x, y = y, col = "red", size = 2) +
   annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 2) +
-  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
-           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
+  annotate("segment",
+    x = x, xend = x, y = y, yend = y_hat, color = "blue",
+    arrow = arrow(type = "closed", length = unit(0.02, "npc"))
+  )
 p1 <- best_fit_plot + labs(title = "First instructor's residual")
 
 # Second residual
@@ -1046,8 +1163,10 @@ resid <- target_point$residual
 best_fit_plot <- best_fit_plot +
   annotate("point", x = x, y = y, col = "red", size = 2) +
   annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 2) +
-  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
-           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
+  annotate("segment",
+    x = x, xend = x, y = y, yend = y_hat, color = "blue",
+    arrow = arrow(type = "closed", length = unit(0.02, "npc"))
+  )
 p2 <- best_fit_plot + labs(title = "Adding second instructor's residual")
 
 # Third residual
@@ -1063,9 +1182,11 @@ resid <- target_point$residual
 best_fit_plot <- best_fit_plot +
   annotate("point", x = x, y = y, col = "red", size = 2) +
   annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 2) +
-  annotate("segment", x = x, xend = x, y = y, yend = y_hat,
-           color = "blue",
-           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
+  annotate("segment",
+    x = x, xend = x, y = y, yend = y_hat,
+    color = "blue",
+    arrow = arrow(type = "closed", length = unit(0.02, "npc"))
+  )
 p3 <- best_fit_plot + labs(title = "Adding third instructor's residual")
 
 index <- which(evals_ch5$bty_avg == 6 & evals_ch5$score == 3.8)
@@ -1080,8 +1201,10 @@ resid <- target_point$residual
 best_fit_plot <- best_fit_plot +
   annotate("point", x = x, y = y, col = "red", size = 2) +
   annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 2) +
-  annotate("segment", x = x, xend = x, y = y, yend = y_hat, color = "blue",
-           arrow = arrow(type = "closed", length = unit(0.02, "npc")))
+  annotate("segment",
+    x = x, xend = x, y = y, yend = y_hat, color = "blue",
+    arrow = arrow(type = "closed", length = unit(0.02, "npc"))
+  )
 p4 <- best_fit_plot + labs(title = "Adding fourth instructor's residual")
 
 p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
@@ -1089,16 +1212,15 @@ p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
 
 The three other plots refer to:
 
-1. A course whose instructor had a "beauty" score $x$ = 2.333 and teaching score $y$ = 2.7. The residual in this case is $2.7 - 4.036 = -1.336$, which we mark with a new `r if_else(!knitr::is_latex_output(), "blue", "")` arrow in the top-right plot.
-1. A course whose instructor had a "beauty" score $x = 3.667$ and teaching score $y = 4.4$. The residual in this case is $4.4 - 4.125 = 0.2753$, which we mark with a new `r if_else(!knitr::is_latex_output(), "blue", "")` arrow in the bottom-left plot.
-1. A course whose instructor had a "beauty" score $x = 6$ and teaching score $y = 3.8$. The residual in this case is $3.8 - 4.28 = -0.4802$, which we mark with a new `r if_else(!knitr::is_latex_output(), "blue", "")` arrow in the bottom-right plot.
+1. A course whose instructor had a "beauty" score $x$ = 2.333 and teaching score $y$ = 2.7. The residual in this case is $2.7 - 4.036 = -1.336$, which we mark with a new `r if_else(!is_latex_output(), "blue", "")` arrow in the top-right plot.
+1. A course whose instructor had a "beauty" score $x = 3.667$ and teaching score $y = 4.4$. The residual in this case is $4.4 - 4.125 = 0.2753$, which we mark with a new `r if_else(!is_latex_output(), "blue", "")` arrow in the bottom-left plot.
+1. A course whose instructor had a "beauty" score $x = 6$ and teaching score $y = 3.8$. The residual in this case is $3.8 - 4.28 = -0.4802$, which we mark with a new `r if_else(!is_latex_output(), "blue", "")` arrow in the bottom-right plot.
 
-
-Now say we repeated this process of computing residuals for all 463 courses' instructors, then we squared all the residuals, and then we summed them. We call this quantity the *sum of squared residuals*\index{sum of squared residuals}; it is a measure of the _lack of fit_ of a model. Larger values of the sum of squared residuals indicate a bigger lack of fit. This corresponds to a worse fitting model.
+Now say we repeated this process of computing residuals for all `r n_courses_ch5` courses' instructors, then we squared all the residuals, and then we summed them. We call this quantity the *sum of squared residuals*\index{sum of squared residuals}; it is a measure of the _lack of fit_ of a model. Larger values of the sum of squared residuals indicate a bigger lack of fit. This corresponds to a worse fitting model.
 
 If the regression line fits all the points perfectly, then the sum of squared residuals is 0. This is because if the regression line fits all the points perfectly, then the fitted value $\widehat{y}$ equals the observed value $y$ in all cases, and hence the residual $y-\widehat{y}$ = 0 in all cases, and the sum of even a large number of 0's is still 0. 
 
-Furthermore, of all possible lines we can draw through the cloud of 463 points, the regression line minimizes this value. In other words, the regression and its corresponding fitted values $\widehat{y}$ minimizes the sum of the squared residuals:
+Furthermore, of all possible lines we can draw through the cloud of `r n_courses_ch5` points, the regression line minimizes this value. In other words, the regression and its corresponding fitted values $\widehat{y}$ minimizes the sum of the squared residuals:
 
 $$
 \sum_{i=1}^{n}(y_i - \widehat{y}_i)^2
@@ -1123,7 +1245,7 @@ regression_points %>%
 Any other straight line drawn in the figure would yield a sum of squared residuals greater than 132. This is a mathematically guaranteed fact that you can prove using calculus and linear algebra. That's why alternative names for the linear regression line are the *best-fitting line* and the *least-squares line*. Why do we square the residuals (i.e., the arrow lengths)? So that both positive and negative deviations of the same amount are treated equally.
 
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
 **_Learning check_**
 \vspace{-0.1in}
@@ -1131,11 +1253,11 @@ Any other straight line drawn in the figure would yield a sum of squared residua
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Note in Figure \@ref(fig:three-lines) there are 3 points marked with dots and:
 
-* The "best" fitting solid regression line `r if_else(knitr::is_latex_output(), "", "in blue")`
-* An arbitrarily chosen dotted `r if_else(knitr::is_latex_output(), "", "red")` line 
-* Another arbitrarily chosen dashed `r if_else(knitr::is_latex_output(), "", "green")` line
+* The "best" fitting solid regression line `r if_else(is_latex_output(), "", "in blue")`
+* An arbitrarily chosen dotted `r if_else(is_latex_output(), "", "red")` line 
+* Another arbitrarily chosen dashed `r if_else(is_latex_output(), "", "green")` line
 
-```{r three-lines, fig.cap="Regression line and two others.", out.width="85%", echo=FALSE}
+```{r three-lines, fig.cap="Regression line and two others.", out.width="85%", echo=FALSE, purl=FALSE, message=FALSE}
 example <- tibble(
   x = c(0, 0.5, 1),
   y = c(2, 1, 3)
@@ -1144,15 +1266,16 @@ example <- tibble(
 ggplot(example, aes(x = x, y = y)) +
   geom_smooth(method = "lm", se = FALSE, fullrange = TRUE) +
   geom_hline(yintercept = 2.5, col = "red", linetype = "dotted", size = 1) +
-  geom_abline(intercept = 2, slope = -1, col = "forestgreen", 
-              linetype = "dashed", size = 1) +
+  geom_abline(
+    intercept = 2, slope = -1, col = "forestgreen",
+    linetype = "dashed", size = 1
+  ) +
   geom_point(size = 4)
 ```
 
-Compute the sum of squared residuals by hand for each line and show that of these three lines, the regression line `r if_else(knitr::is_latex_output(), "", "in blue")` has the smallest value.
+Compute the sum of squared residuals by hand for each line and show that of these three lines, the regression line `r if_else(is_latex_output(), "", "in blue")` has the smallest value.
 
-
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
 \vspace{-0.25in}
 ```
@@ -1176,17 +1299,19 @@ score_model <- lm(formula = score ~ bty_avg, data = evals_ch5)
 get_regression_table(score_model)
 ```
 
-```{r recall-table, echo=FALSE}
+```{r recall-table, echo=FALSE, purl=FALSE}
 score_model <- lm(score ~ bty_avg, data = evals_ch5)
 get_regression_table(score_model) %>%
-  knitr::kable(
+  kable(
     digits = 3,
     caption = "Regression table",
     booktabs = TRUE,
     linesep = ""
   ) %>%
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 ```
 
 The `get_regression_table()` wrapper function takes two pre-existing functions in other R packages:
@@ -1194,7 +1319,7 @@ The `get_regression_table()` wrapper function takes two pre-existing functions i
 * `tidy()` \index{R packages!broom!tidy()} from the [`broom` package](https://broom.tidyverse.org/) [@R-broom] and 
 * `clean_names()` \index{R packages!janitor!clean\_names()} from the [`janitor` package](https://github.com/sfirke/janitor) [@R-janitor]
 
-and "wraps" them into a single function that takes in a saved `lm()` linear model model, here `score_model`, and returns a regression table saved as a "tidy" data frame. Here is how we used the `tidy()` and `clean_names()` functions to produce Table \@ref(tab:regtable-broom):
+and "wraps" them into a single function that takes in a saved `lm()` linear model, here `score_model`, and returns a regression table saved as a "tidy" data frame. Here is how we used the `tidy()` and `clean_names()` functions to produce Table \@ref(tab:regtable-broom):
 
 ```{r, eval=FALSE}
 library(broom)
@@ -1205,23 +1330,27 @@ score_model %>%
   clean_names() %>%
   rename(lower_ci = conf_low, upper_ci = conf_high)
 ```
-```{r regtable-broom, echo=FALSE, message=FALSE, warning=FALSE}
+```{r regtable-broom, echo=FALSE, message=FALSE, purl=FALSE}
 library(broom)
 library(janitor)
 score_model %>%
   tidy(conf.int = TRUE) %>%
   mutate_if(is.numeric, round, digits = 3) %>%
   clean_names() %>%
-  rename(lower_ci = conf_low,
-         upper_ci = conf_high) %>%
-  knitr::kable(
+  rename(
+    lower_ci = conf_low,
+    upper_ci = conf_high
+  ) %>%
+  kable(
     digits = 3,
     caption = "Regression table using tidy() from broom package",
     booktabs = TRUE,
     linesep = ""
   ) %>%
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 ```
 
 Yikes! That's a lot of code! So, in order to simplify your lives, we made the editorial decision to "wrap" all the code into `get_regression_table()`, freeing you from the need to understand the inner workings of the function. Note that the `mutate_if()` function is from the `dplyr` package and applies the `round()` function to three significant digits precision only to those variables that are numerical.
@@ -1235,25 +1364,27 @@ score_model %>%
   augment() %>%
   mutate_if(is.numeric, round, digits = 3) %>%
   clean_names() %>%
-  select(-c("se_fit", "hat", "sigma", "cooksd", "std_resid"))
+  select(-c("std_resid", "hat", "sigma", "cooksd", "std_resid"))
 ```
-```{r regpoints-augment, echo=FALSE}
+```{r regpoints-augment, echo=FALSE, purl=FALSE}
 library(broom)
 library(janitor)
 score_model %>%
   augment() %>%
   mutate_if(is.numeric, round, digits = 3) %>%
   clean_names() %>%
-  select(-c("se_fit", "hat", "sigma", "cooksd", "std_resid")) %>%
+  select(-c("std_resid", "hat", "sigma", "cooksd", "std_resid")) %>%
   slice(1:10) %>%
-  knitr::kable(
+  kable(
     digits = 3,
     caption = "Regression points using augment() from broom package",
     booktabs = TRUE,
     linesep = ""
   ) %>%
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 ```
 
 In this case, it outputs only the variables of interest to students learning regression: the outcome variable $y$ (`score`), all explanatory/predictor variables (`bty_avg`), all resulting `fitted` values $\hat{y}$ used by applying the equation of the regression line to `bty_avg`, and the `resid`ual $y - \hat{y}$.
@@ -1264,16 +1395,14 @@ If you're even more curious about how these and other wrapper functions work, ta
 
 
 
-
-
-## Conclusion
+## Conclusion {#reg-conclusion}
 
 ### Additional resources {#additional-resources-basic-regression}
 
-```{r echo=FALSE, results="asis"}
-if(knitr::is_latex_output()){
+```{r echo=FALSE, results="asis", purl=FALSE}
+if (is_latex_output()) {
   cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
-} 
+}
 ```
 
 ```{r echo=FALSE, purl=FALSE, results="asis"}
@@ -1284,10 +1413,9 @@ As we suggested in Subsection \@ref(model1EDA), interpreting coefficients that a
 
 (ref:guess-corr) Preview of "Guess the Correlation" game.
 
-```{r guess-the-correlation, echo=FALSE, fig.cap='(ref:guess-corr)', purl=FALSE, out.width = "70%"}
-knitr::include_graphics("images/copyright/guess_the_correlation.png")
+```{r guess-the-correlation, echo=FALSE, fig.cap="(ref:guess-corr)", purl=FALSE, out.width="70%", purl=FALSE}
+include_graphics("images/copyright/guess_the_correlation.png")
 ```
-
 
 
 ### What's to come?
