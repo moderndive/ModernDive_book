@@ -2,20 +2,25 @@
 
 # Tell Your Story with Data {#thinking-with-data}
 
-```{r setup_thinking_with_data, include=FALSE}
+```{r setup_thinking_with_data, include=FALSE, purl=FALSE}
+# Used to define Learning Check numbers:
 chap <- 11
 lc <- 0
-rq <- 0
-# **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**
-# **`r paste0("(RQ", chap, ".", (rq <- rq + 1), ")")`**
 
-knitr::opts_chunk$set(
-  tidy = FALSE, 
-  out.width = '\\textwidth', 
+# Set R code chunk defaults:
+opts_chunk$set(
+  echo = TRUE,
+  eval = TRUE,
+  warning = FALSE,
+  message = TRUE,
+  tidy = FALSE,
+  purl = TRUE,
+  out.width = "\\textwidth",
   fig.height = 4,
-  warning = FALSE
-  )
+  fig.align = "center"
+)
 
+# Set output digit precision
 options(scipen = 99, digits = 3)
 
 # Set random number generator see value for replicable pseudorandomness.
@@ -26,9 +31,13 @@ Recall in the Preface and at the end of chapters throughout this book, we displa
 
 (ref:finalflowchart) *ModernDive* flowchart.
 
-```{r moderndive-figure-conclusion, echo=FALSE, fig.align='center', out.width="100%", out.height="100%", fig.cap="(ref:finalflowchart)", purl=FALSE}
-knitr::include_graphics("images/flowcharts/flowchart/flowchart.002.png")
+```{r moderndive-figure-conclusion, echo=FALSE, out.width="100%", out.height="100%", fig.cap="(ref:finalflowchart)", purl=FALSE}
+include_graphics("images/flowcharts/flowchart/flowchart.002.png")
 ```
+
+
+
+
 
 ## Review
 
@@ -59,36 +68,43 @@ This philosophy is also well-summarized in ["Practical Data Science for Stats"](
 
 In other words, to be equipped to "think with data" in the 21st century, analysts need practice going through the ["data/science pipeline"](http://r4ds.had.co.nz/explore-intro.html) we saw in the Preface (re-displayed in Figure \@ref(fig:pipeline-figure-conclusion)). It is our opinion that, for too long, statistics education has only focused on parts of this pipeline, instead of going through it in its *entirety*. 
 
-```{r pipeline-figure-conclusion, echo=FALSE, fig.align='center', fig.cap="Data/science pipeline.", out.height="70%", out.width="70%"}
-knitr::include_graphics("images/r4ds/data_science_pipeline.png")
+```{r pipeline-figure-conclusion, fig.cap="Data/science pipeline.", out.height="70%", out.width="70%", echo=FALSE, purl = FALSE}
+include_graphics("images/r4ds/data_science_pipeline.png")
 ```
 
 To conclude this book, we'll present you with some additional case studies of working with data. In Section \@ref(seattle-house-prices) we'll take you through a full-pass of the "Data/Science Pipeline" in order to analyze the sale price of houses in Seattle, WA, USA. In Section \@ref(data-journalism), we'll present you with some examples of effective data storytelling drawn from the data journalism website, [FiveThirtyEight.com](https://fivethirtyeight.com/)\index{FiveThirtyEight}. We present these case studies to you because we believe that you should not only be able to "think with data," but also be able to "tell your story with data." Let's explore how to do this!
 
 
-### Needed packages {-}
+### Needed packages {-#story-packages}
 
 Let's load all the packages needed for this chapter (this assumes you've already installed them). Read Section \@ref(packages) for information on how to install and load R packages.
 
-```{r, eval = FALSE}
+```{r, eval=FALSE}
 library(tidyverse)
 library(moderndive)
 library(skimr)
 library(fivethirtyeight)
 ```
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, purl=TRUE}
+# The code presented to the reader in the chunk above is different than the code
+# in this chunk that is actually run to build the book. In particular we do not
+# load the skimr package.
+# 
+# This is because skimr v1.0.6 which we used for the book causes all
+# kable() code to break for the remaining chapters in the book. v2 might
+# fix these issues:
+# https://github.com/moderndive/ModernDive_book/issues/271
+
+# As a workaround for v1 of ModernDive, all skimr::skim() output in this chapter
+# has been hard coded.
 library(tidyverse)
 library(moderndive)
-# DO NOT load the skimr package as a whole as it will break all kable() code for 
-# the remaining chapters in the book.
-# Furthermore all skimr::skim() output in this Chapter has been hard coded. 
 # library(skimr)
 library(fivethirtyeight)
 ```
 
-```{r message=FALSE, warning=FALSE, echo=FALSE}
+```{r message=FALSE, echo=FALSE, purl=FALSE}
 # Packages needed internally, but not in text.
-library(knitr)
 library(kableExtra)
 library(patchwork)
 library(scales)
@@ -98,18 +114,17 @@ library(scales)
 
 
 
-
-
 ## Case study: Seattle house prices {#seattle-house-prices}
 
 [Kaggle.com](https://www.kaggle.com/) is a machine learning and predictive modeling competition website that hosts datasets uploaded by companies, governmental organizations, and other individuals. One of their datasets is the ["House Sales in King County, USA"](https://www.kaggle.com/harlfoxem/housesalesprediction). It consists of sale prices of homes sold between May 2014 and May 2015 in King County, Washington, USA, which includes the greater Seattle metropolitan area. This dataset is in the `house_prices` data frame included in the `moderndive` package.
 
-The dataset consists of 21,613 houses and 21 variables describing these houses (for a full list and description of these variables, see the help file by running `?house_prices` in the console). In this case study, we'll create a multiple regression model where:
+The dataset consists of `r house_prices %>% nrow() %>% comma()` houses and `r house_prices %>% ncol()` variables describing these houses (for a full list and description of these variables, see the help file by running `?house_prices` in the console). In this case study, we'll create a multiple regression model where:
 
 - The outcome variable $y$ is the sale `price` of houses.
 - Two explanatory variables:
     1. A numerical explanatory variable $x_1$: house size `sqft_living` as measured in square feet of living space. Note that 1 square foot is about 0.09 square meters.
     1. A categorical explanatory variable $x_2$: house `condition`, a categorical variable with five levels where `1` indicates "poor" and `5` indicates "excellent."
+
 
 ### Exploratory data analysis: Part I {#house-prices-EDA-I}
 
@@ -123,11 +138,11 @@ Recall the three common steps in an exploratory data analysis we introduced in S
 
 First, let's look at the raw data using `View()` to bring up RStudio's spreadsheet viewer and the `glimpse()` function from the `dplyr` package:
 
-```{r, eval = FALSE}
+```{r, eval=FALSE}
 View(house_prices)
 glimpse(house_prices)
 ```
-```{r, echo=FALSE}
+```{r, echo=FALSE, purl=FALSE}
 glimpse(house_prices)
 ```
 
@@ -139,7 +154,7 @@ Let's now perform the second step in an EDA: computing summary statistics. Recal
 
 We could do this using the `summarize()` function in the `dplyr` package along with R's built-in *summary functions*, like `mean()` and `median()`. However, recall in Section \@ref(mutate), we saw the following code that computes a variety of summary statistics of the variable `gain`, which is the amount of time that a flight makes up mid-air:
 
-```{r, eval = FALSE}
+```{r, eval=FALSE}
 gain_summary <- flights %>% 
   summarize(
     min = min(gain, na.rm = TRUE),
@@ -155,7 +170,7 @@ gain_summary <- flights %>%
 
 To repeat this for all three `price`, `sqft_living`, and `condition` variables would be tedious to code up. So instead, let's use the convenient `skim()` function from the `skimr` package we first used in Subsection \@ref(model4EDA)\index{R packages!skimr!skim()}, being sure to only `select()` the variables of interest for our model:
 
-```{r, eval = FALSE}
+```{r, eval=FALSE}
 house_prices %>% 
   select(price, sqft_living, condition) %>% 
   skim()
@@ -184,7 +199,7 @@ However, the median is not as sensitive to such outlier house prices. This is wh
 
 Let's now perform the last of the three common steps in an exploratory data analysis: creating data visualizations. Let's first create *univariate* visualizations. These are plots focusing on a single variable at a time. Since `price` and `sqft_living` are numerical variables, we can visualize their distributions using a `geom_histogram()` as seen in Section \@ref(histograms) on histograms. On the other hand, since `condition` is categorical, we can visualize its distribution using a `geom_bar()`. Recall from Section \@ref(geombar) on barplots that since `condition` is not "pre-counted", we use a `geom_bar()` and not a `geom_col()`.
 
-```{r, eval = FALSE, message=FALSE, warning=FALSE}
+```{r, eval=FALSE, message=FALSE}
 # Histogram of house price:
 ggplot(house_prices, aes(x = price)) +
   geom_histogram(color = "white") +
@@ -203,10 +218,10 @@ ggplot(house_prices, aes(x = condition)) +
 
 In Figure \@ref(fig:house-prices-viz), we display all three of these visualizations at once. 
 
-```{r house-prices-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Exploratory visualizations of Seattle house prices data.", fig.height=4.8}
+```{r house-prices-viz, echo=FALSE, message=FALSE, fig.cap="Exploratory visualizations of Seattle house prices data.", fig.height=4.8, purl=FALSE}
 p1 <- ggplot(house_prices, aes(x = price)) +
   geom_histogram(color = "white") +
-  labs(x = "price (USD)", title = "House price") 
+  labs(x = "price (USD)", title = "House price")
 p2 <- ggplot(house_prices, aes(x = sqft_living)) +
   geom_histogram(color = "white") +
   labs(x = "living space (square feet)", title = "House size")
@@ -243,7 +258,7 @@ house_prices %>%
   select(price, log10_price, sqft_living, log10_size)
 ```
 
-Observe in particular the houses in the sixth and third rows. The house in the sixth row has `price` \$1,225,000, which is just above one million dollars. Since $10^6$ is one million, its `log10_price` is around 6.09. 
+Observe in particular the houses in the sixth and third rows. The house in the sixth row has `price` \$`r house_prices$price[6] %>% comma()`, which is just above one million dollars. Since $10^6$ is one million, its `log10_price` is around `r house_prices$log10_price[6] %>% round(2)`. 
 
 Contrast this with all other houses with `log10_price` less than six, since they all have `price` less than \$1,000,000. The house in the third row is the only house with `sqft_living` less than 1000. Since $1000 = 10^3$, it's the lone house with `log10_size` less than 3. 
 
@@ -261,7 +276,7 @@ ggplot(house_prices, aes(x = log10_price)) +
   labs(x = "log10 price (USD)", title = "House price: After")
 ```
 
-```{r log10-price-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House price before and after log10 transformation.", fig.height=2.3}
+```{r log10-price-viz, echo=FALSE, message=FALSE, fig.cap="House price before and after log10 transformation.", fig.height=2.3, purl=FALSE}
 p1 <- ggplot(house_prices, aes(x = price)) +
   geom_histogram(color = "white") +
   labs(x = "price (USD)", title = "House price: Before")
@@ -275,7 +290,7 @@ Observe that after the transformation, the distribution is much less skewed, and
 
 Let's do the same for house size, where the variable `sqft_living` was log10 transformed to `log10_size`. 
 
-```{r, eval = FALSE}
+```{r, eval=FALSE}
 # Before log10 transformation:
 ggplot(house_prices, aes(x = sqft_living)) +
   geom_histogram(color = "white") +
@@ -286,15 +301,19 @@ ggplot(house_prices, aes(x = log10_size)) +
   geom_histogram(color = "white") +
   labs(x = "log10 living space (square feet)", title = "House size: After")
 ```
-```{r log10-size-viz, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="House size before and after log10 transformation.", fig.height=2.3}
+```{r log10-size-viz, echo=FALSE, message=FALSE, fig.cap="House size before and after log10 transformation.", fig.height=2.3, purl=FALSE}
 p1 <- ggplot(house_prices, aes(x = sqft_living)) +
   geom_histogram(color = "white") +
-  labs(x = "living space (square feet)", 
-       title = "House size: Before")
+  labs(
+    x = "living space (square feet)",
+    title = "House size: Before"
+  )
 p2 <- ggplot(house_prices, aes(x = log10_size)) +
   geom_histogram(color = "white") +
-  labs(x = "log10 living space (square feet)", 
-       title = "House size: After")
+  labs(
+    x = "log10 living space (square feet)",
+    title = "House size: After"
+  )
 p1 + p2
 ```
 
@@ -336,27 +355,33 @@ ggplot(house_prices,
        x = "log10 size", 
        title = "House prices in Seattle")
 ```
-```{r house-price-parallel-slopes, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction and parallel slopes models."}
-interaction <- 
-  ggplot(house_prices, 
-         aes(x = log10_size, y = log10_price, col = condition)) +
+```{r house-price-parallel-slopes, echo=FALSE, message=FALSE, fig.cap="Interaction and parallel slopes models.", purl=FALSE}
+interaction <-
+  ggplot(
+    house_prices,
+    aes(x = log10_size, y = log10_price, col = condition)
+  ) +
   geom_point(alpha = 0.05) +
   labs(y = "log10 price", x = "log10 size") +
   geom_smooth(method = "lm", se = FALSE) +
-  guides(color=FALSE) +
-  labs(title = "House prices in Seattle", 
-       x = "log10 size", 
-       y = "log10 price")
-parallel_slopes <- 
-  ggplot(house_prices, 
-         aes(x = log10_size, y = log10_price, col = condition)) +
+  guides(color = FALSE) +
+  labs(
+    title = "House prices in Seattle",
+    x = "log10 size",
+    y = "log10 price"
+  )
+parallel_slopes <-
+  ggplot(
+    house_prices,
+    aes(x = log10_size, y = log10_price, col = condition)
+  ) +
   geom_point(alpha = 0.05) +
   geom_parallel_slopes(se = FALSE) +
   labs(y = NULL, x = "log10 size")
-if(knitr::is_html_output()){
+if (is_html_output()) {
   interaction + parallel_slopes
 } else {
-  (interaction + scale_color_grey()) + 
+  (interaction + scale_color_grey()) +
     (parallel_slopes + scale_color_grey())
 }
 ```
@@ -377,29 +402,35 @@ ggplot(house_prices,
 ```
 
 
-```{r house-price-interaction-2, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Faceted plot of interaction model."}
-interaction_2_plot <- ggplot(house_prices, 
-                             aes(x = log10_size, y = log10_price, 
-                                 col = condition)) +
+```{r house-price-interaction-2, echo=FALSE, message=FALSE, fig.cap="Faceted plot of interaction model.", purl=FALSE}
+interaction_2_plot <- ggplot(
+  house_prices,
+  aes(
+    x = log10_size, y = log10_price,
+    col = condition
+  )
+) +
   geom_point(alpha = 0.4) +
   geom_smooth(method = "lm", se = FALSE) +
-  labs(y = "log10 price", x = "log10 size", 
-       title = "House prices in Seattle") +
+  labs(
+    y = "log10 price", x = "log10 size",
+    title = "House prices in Seattle"
+  ) +
   facet_wrap(~condition)
 
-if(!knitr::is_latex_output()){
+if (!is_latex_output()) {
   interaction_2_plot
 } else {
-  interaction_2_plot + 
+  interaction_2_plot +
     scale_color_grey() +
-    theme(strip.text = element_text(colour = 'black'),
-          strip.background = element_rect(fill = "grey93")
+    theme(
+      strip.text = element_text(colour = "black"),
+      strip.background = element_rect(fill = "grey93")
     )
 }
 ```
 
 Which exploratory visualization of the interaction model is better, the one in the left-hand plot of Figure \@ref(fig:house-price-parallel-slopes) or the faceted version in Figure \@ref(fig:house-price-interaction-2)? There is no universal right answer. You need to make a choice depending on what you want to convey, and own that choice, with including and discussing both also as an option as needed.
-
 
 
 ### Regression modeling {#house-prices-regression}
@@ -418,18 +449,21 @@ price_interaction <- lm(log10_price ~ log10_size * condition,
 # Get regression table:
 get_regression_table(price_interaction)
 ```
-```{r seattle-interaction, echo=FALSE}
-price_interaction <- lm(log10_price ~ log10_size * condition, 
-                        data = house_prices)
-get_regression_table(price_interaction) %>% 
-  knitr::kable(
+```{r seattle-interaction, echo=FALSE, purl=FALSE}
+price_interaction <- lm(log10_price ~ log10_size * condition,
+  data = house_prices
+)
+get_regression_table(price_interaction) %>%
+  kable(
     digits = 3,
-    caption = "Regression table for interaction model", 
+    caption = "Regression table for interaction model",
     booktabs = TRUE,
     linesep = ""
-  ) %>% 
-  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
-                latex_options = c("hold_position"))
+  ) %>%
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 ```
 
 Recall we saw in Subsection \@ref(model4interactiontable) how to interpret a regression table when there are both numerical and categorical explanatory variables. Let's now do the same for all 10 values in the `estimate` column of Table \@ref(tab:seattle-interaction).
@@ -441,17 +475,54 @@ Let's simplify this by writing out the equation of each of the five regression l
 $$
 \widehat{\log10(\text{price})} = \hat{\beta}_0 + \hat{\beta}_{\text{size}} \cdot \log10(\text{size})
 $$
+```{r echo=FALSE, purl=FALSE}
+# This code is used for dynamic non-static in-line text output purposes
+intercept <- get_regression_table(price_interaction) %>%
+  filter(term == "intercept") %>%
+  pull(estimate)
+offset_log10_size <- get_regression_table(price_interaction) %>%
+  filter(term == "log10_size") %>%
+  pull(estimate)
+offset_condition2 <- get_regression_table(price_interaction) %>%
+  filter(term == "condition2") %>%
+  pull(estimate)
+offset_log10_size_condition2 <- get_regression_table(price_interaction) %>%
+  filter(term == "log10_size:condition2") %>%
+  pull(estimate)
+offset_condition3 <- get_regression_table(price_interaction) %>%
+  filter(term == "condition3") %>%
+  pull(estimate)
+offset_log10_size_condition3 <- get_regression_table(price_interaction) %>%
+  filter(term == "log10_size:condition3") %>%
+  pull(estimate)
+offset_condition4 <- get_regression_table(price_interaction) %>%
+  filter(term == "condition4") %>%
+  pull(estimate)
+offset_log10_size_condition4 <- get_regression_table(price_interaction) %>%
+  filter(term == "log10_size:condition4") %>%
+  pull(estimate)
+offset_condition5 <- get_regression_table(price_interaction) %>%
+  filter(term == "condition5") %>%
+  pull(estimate)
+offset_log10_size_condition5 <- get_regression_table(price_interaction) %>%
+  filter(term == "log10_size:condition5") %>%
+  pull(estimate)
+```
 
 1. Condition 1: 
 
-$$\widehat{\log10(\text{price})} = 3.33 + 0.69 \cdot \log10(\text{size})$$
+<!--
+Note: Even though markdown preview of the following LaTeX looks garbled, it
+comes out correct in the HTML output.
+-->
+$$\widehat{\log10(\text{price})} = `r intercept` + `r offset_log10_size` \cdot \log10(\text{size})$$
 
 2. Condition 2: 
 
 $$
 \begin{aligned} 
-\widehat{\log10(\text{price})} &= (3.33 + 0.047) + (0.69 - 0.024) \cdot \log10(\text{size}) \\ 
-                               &= 3.377 + 0.666 \cdot \log10(\text{size})
+\widehat{\log10(\text{price})} &= (`r intercept` + `r offset_condition2`) + (`r offset_log10_size` - `r -1*offset_log10_size_condition2`) \cdot \log10(\text{size}) \\ 
+                               &= `r intercept + offset_condition2` + `r offset_log10_size + offset_log10_size_condition2` \cdot \log10(\text{size})
 \end{aligned}
 $$
 
@@ -459,8 +530,8 @@ $$
 
 $$
 \begin{aligned} 
-\widehat{\log10(\text{price})} &= (3.33 - 0.367) + (0.69 + 0.133) \cdot \log10(\text{size}) \\
-                               &= 2.963 + 0.823 \cdot \log10(\text{size})
+\widehat{\log10(\text{price})} &= (`r intercept` - `r -1*offset_condition3`) + (`r offset_log10_size` + `r offset_log10_size_condition3`) \cdot \log10(\text{size}) \\
+                               &= `r intercept + offset_condition3` + `r offset_log10_size + offset_log10_size_condition3` \cdot \log10(\text{size})
 \end{aligned}
 $$
 
@@ -468,8 +539,8 @@ $$
 
 $$
 \begin{aligned}
-\widehat{\log10(\text{price})} &= (3.33 - 0.398) + (0.69 + 0.146) \cdot \log10(\text{size}) \\
-                               &= 2.932 + 0.836 \cdot \log10(\text{size})
+\widehat{\log10(\text{price})} &= (`r intercept` - `r -1*offset_condition4`) + (`r offset_log10_size` + `r offset_log10_size_condition4`) \cdot \log10(\text{size}) \\
+                               &= `r intercept + offset_condition4` + `r offset_log10_size + offset_log10_size_condition4` \cdot \log10(\text{size})
 \end{aligned}
 $$
 
@@ -477,24 +548,33 @@ $$
 
 $$
 \begin{aligned}
-\widehat{\log10(\text{price})} &= (3.33 - 0.883) + (0.69 + 0.31) \cdot \log10(\text{size}) \\
-                               &= 2.447 + 1 \cdot \log10(\text{size})
+\widehat{\log10(\text{price})} &= (`r intercept` - `r -1*offset_condition5`) + (`r offset_log10_size` + `r offset_log10_size_condition5`) \cdot \log10(\text{size}) \\
+                               &= `r intercept + offset_condition5` + `r offset_log10_size + offset_log10_size_condition5` \cdot \log10(\text{size})
 \end{aligned}
 $$
 
-These correspond to the regression lines in the left-hand plot of Figure \@ref(fig:house-price-parallel-slopes) and the faceted plot in Figure \@ref(fig:house-price-interaction-2). For homes of all five condition types, as the size of the house increases, the price increases. This is what most would expect. However, the rate of increase of price with size is fastest for the homes with conditions 3, 4, and 5 of 0.823, 0.836, and 1, respectively. These are the three largest slopes out of the five.
+These correspond to the regression lines in the left-hand plot of Figure \@ref(fig:house-price-parallel-slopes) and the faceted plot in Figure \@ref(fig:house-price-interaction-2). For homes of all five condition types, as the size of the house increases, the price increases. This is what most would expect. However, the rate of increase of price with size is fastest for the homes with conditions 3, 4, and 5 of `r offset_log10_size + offset_log10_size_condition3`, `r offset_log10_size + offset_log10_size_condition4`, and `r offset_log10_size + offset_log10_size_condition5`, respectively. These are the three largest slopes out of the five.
+
 
 ### Making predictions {#house-prices-making-predictions}
 
-Say you're a realtor and someone calls you asking you how much their home will sell for. They tell you that it's in condition = 5 and is sized 1900 square feet. What do you tell them? Let's use the interaction model we fit to make predictions!
+```{r echo=FALSE, purl=FALSE}
+# This code is used for dynamic non-static in-line text output purposes
+ex_condition <- 5L
+ex_size <- 1900L
+ex_size_log10 <- log10(ex_size) %>% round(2)
+ex_log10_price_prediction <- 5.75
+```
+
+Say you're a realtor and someone calls you asking you how much their home will sell for. They tell you that it's in condition = `r ex_condition` and is sized `r ex_size` square feet. What do you tell them? Let's use the interaction model we fit to make predictions!
 
 We first make this prediction visually in Figure \@ref(fig:house-price-interaction-3). The predicted `log10_price` of this house is marked with a black dot. This is where the following two lines intersect:
 
-* The regression line for the condition = 5 homes and
-* The vertical dashed black line at `log10_size` equals 3.28, since our predictor variable is the log10 transformed square feet of living space of $\log10(1900) = 3.28$.
+* The regression line for the condition = `r ex_condition` homes and
+* The vertical dashed black line at `log10_size` equals `r ex_size_log10`, since our predictor variable is the log10 transformed square feet of living space of $\log10(`r ex_size`) = `r ex_size_log10`$.
 
-```{r house-price-interaction-3, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Interaction model with prediction.", fig.height=5}
-new_house <- tibble(log10_size = log10(1900), condition = factor(5)) %>% 
+```{r house-price-interaction-3, echo=FALSE, message=FALSE, fig.cap="Interaction model with prediction.", fig.height=5, purl=FALSE}
+new_house <- tibble(log10_size = log10(1900), condition = factor(5)) %>%
   get_regression_points(price_interaction, newdata = .)
 
 with_prediction_plot <- ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) +
@@ -502,30 +582,30 @@ with_prediction_plot <- ggplot(house_prices, aes(x = log10_size, y = log10_price
   labs(y = "log10 price", x = "log10 size", title = "House prices in Seattle") +
   geom_smooth(method = "lm", se = FALSE) +
   geom_vline(xintercept = log10(1900), linetype = "dashed", size = 1) +
-  geom_point(data = new_house, aes(y = log10_price_hat), col ="black", size = 3)
-if(knitr::is_html_output()){
+  geom_point(data = new_house, aes(y = log10_price_hat), col = "black", size = 3)
+if (is_html_output()) {
   with_prediction_plot
 } else {
-  with_prediction_plot + scale_color_grey()  
+  with_prediction_plot + scale_color_grey()
 }
 ```
 
-Eyeballing it, it seems the predicted `log10_price` seems to be around 5.75. Let's now obtain the exact numerical value for the prediction using the equation of the regression line for the condition = 5 houses, being sure to `log10()` the square footage first.
+Eyeballing it, it seems the predicted `log10_price` seems to be around `r ex_log10_price_prediction`. Let's now obtain the exact numerical value for the prediction using the equation of the regression line for the condition = `r ex_condition` houses, being sure to `log10()` the square footage first.
 
 ```{r}
 2.45 + 1 * log10(1900)
 ```
 
-This value is very close to our earlier visually made prediction of 5.75. But wait! Is our prediction for the price of this house \$5.75? No! Remember that we are using `log10_price` as our outcome variable! So, if we want a prediction in dollar units of `price`, we need to unlog this by taking a power of 10 as described in Appendix \@ref(appendix-log10-transformations).
+This value is very close to our earlier visually made prediction of `r ex_log10_price_prediction`. But wait! Is our prediction for the price of this house \$`r ex_log10_price_prediction`? No! Remember that we are using `log10_price` as our outcome variable! So, if we want a prediction in dollar units of `price`, we need to unlog this by taking a power of 10 as described in Appendix \@ref(appendix-log10-transformations).
 
 ```{r}
 10^(2.45 + 1 * log10(1900))
 ```
 
-So our predicted price for this home of condition 5 and of size 1900 square feet is `r 10^(2.45 + 1*log10(1900)) %>% dollar()`.
+So our predicted price for this home of condition `r ex_condition` and of size `r ex_size` square feet is `r 10^(2.45 + 1*log10(ex_size)) %>% dollar()`.
 
 <!--
-TODO: Inference for regression for Seattle house prices
+v2 TODO: Inference for regression for Seattle house prices
 
 ### Inference for regression {#house-prices-inference-for-regression}
 
@@ -535,26 +615,25 @@ TODO: Inference for regression for Seattle house prices
 
 -->
 
-
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
 **_Learning check_**
 \vspace{-0.1in}
 ```
 
 <!--
+v2 TODO: Inference for regression for Seattle house prices
+
 **` paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Check that the LINE conditions are met for inference to be made in this Seattle house prices example.
 -->
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the regression modeling in Subsection \@ref(house-prices-regression) and the prediction making you just did on the house of condition 5 and size 1900 square feet in Subsection \@ref(house-prices-making-predictions), but using the parallel slopes model you visualized in Figure \@ref(fig:house-price-parallel-slopes). Show that it's `r 10^5.72 %>% dollar()`!
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the regression modeling in Subsection \@ref(house-prices-regression) and the prediction making you just did on the house of condition `r ex_condition` and size `r ex_size` square feet in Subsection \@ref(house-prices-making-predictions), but using the parallel slopes model you visualized in Figure \@ref(fig:house-price-parallel-slopes). Show that it's `r 10^5.72 %>% dollar()`!
 
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
 \vspace{-0.25in}
 ```
-
-
 
 
 
@@ -566,15 +645,17 @@ As we've progressed throughout this book, you've seen how to work with data in a
 
 We now present another set of case studies, but this time on the "effective data storytelling" done by data journalists around the world. Great data stories don't mislead the reader, but rather engulf them in understanding the importance that data plays in our lives through storytelling.
 
+
 ### Bechdel test for Hollywood gender representation
 
 We recommend you read and analyze Walt Hickey's\index{Hickey, Walt} FiveThirtyEight.com article, ["The Dollar-And-Cents Case Against Hollywood’s Exclusion of Women."](http://fivethirtyeight.com/features/the-dollar-and-cents-case-against-hollywoods-exclusion-of-women/) In it, Walt completed a multidecade study of how many movies pass the [Bechdel test](https://bechdeltest.com/), an informal test of gender representation in a movie that was created by \index{Bechdel, Alison} Alison Bechdel.
 
 As you read over the article, think carefully about how Walt Hickey is using data, graphics, and analyses to tell the reader a story. In the spirit of reproducibility, FiveThirtyEight have also shared the [data and R code](https://github.com/fivethirtyeight/data/tree/master/bechdel) that they used for this article. You can also find the data used in many more of their articles on their [GitHub](https://github.com/fivethirtyeight/data) page.
 
-*ModernDive* co-authors Chester Ismay and Albert Y. Kim along with Jennifer Chunn went one step further by creating the `fivethirtyeight` package which provides access to these datasets more easily in R. For a complete list of all `r nrow(data(package = "fivethirtyeight")[[3]])` datasets included in the `fivethirtyeight` package, check out the package webpage at <https://fivethirtyeight-r.netlify.com/articles/fivethirtyeight.html>.\index{R packages!fivethirtyeight}
+*ModernDive* co-authors Chester Ismay and Albert Y. Kim along with Jennifer Chunn went one step further by creating the `fivethirtyeight` package which provides access to these datasets more easily in R. For a complete list of all `r nrow(data(package = "fivethirtyeight")[[3]])` datasets included in the `fivethirtyeight` package, check out the package webpage at <https://fivethirtyeight-r.netlify.app/articles/fivethirtyeight.html>.\index{R packages!fivethirtyeight}
 
-Furthermore, example "vignettes" of fully reproducible start-to-finish analyses of some of these data using `dplyr`, `ggplot2`, and other packages in the `tidyverse` are available [here](https://fivethirtyeight-r.netlify.com/articles/). For example, a vignette showing how to reproduce one of the plots at the end of the article on the Bechdel test is available [here](https://fivethirtyeight-r.netlify.com/articles/bechdel.html). 
+Furthermore, example "vignettes" of fully reproducible start-to-finish analyses of some of these data using `dplyr`, `ggplot2`, and other packages in the `tidyverse` are available [here](https://fivethirtyeight-r.netlify.app/articles/). For example, a vignette showing how to reproduce one of the plots at the end of the article on the Bechdel test is available [here](https://fivethirtyeight-r.netlify.app/articles/bechdel.html). 
+
 
 ### US Births in 1999
 
@@ -595,7 +676,7 @@ US_births_1999 <- US_births_1994_2003 %>%
 
 As discussed in Section \@ref(linegraphs), since `date` is a notion of time and thus has sequential ordering to it, a linegraph would be a more appropriate visualization to use than a scatterplot. In other words, we should use a `geom_line()` instead of `geom_point()`. Recall that such plots are called \index{time series plots} *time series* plots.
 
-```{r us-births, fig.cap="Number of births in the US in 1999.", fig.height=6.4, fig.align='center'}
+```{r us-births, fig.cap="Number of births in the US in 1999.", fig.height=6.4}
 ggplot(US_births_1999, aes(x = date, y = births)) +
   geom_line() +
   labs(x = "Date", 
@@ -614,7 +695,7 @@ US_births_1999 %>%
 
 The date with the highest number of births (14,540) is in fact 1999-09-09. If we write down this date in month/day/year format (a standard format in the US), the date with the highest number of births is 9/9/99! All nines! Could it be that parents deliberately induced labor at a higher rate on this date? Maybe? Whatever the cause may be, this fact makes a fun story!
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
 **_Learning check_**
 \vspace{-0.1in}
@@ -622,7 +703,7 @@ The date with the highest number of births (14,540) is in fact 1999-09-09. If we
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What date between 1994 and 2003 has the fewest number of births in the US? What story could you tell about why this is the case?
 
-```{block, type='learncheck', purl=FALSE}
+```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
 \vspace{-0.25in}
 ```
@@ -633,6 +714,7 @@ Remember to get in touch with us via our contact info in the Preface. We’d lov
 
 Please check out additional problem sets and labs at <https://moderndive.com/labs> as well.
 
+
 ### Scripts of R code
 
 ```{r echo=FALSE, purl=FALSE, results="asis"}
@@ -641,34 +723,36 @@ generate_r_file_link("11-tell-your-story-with-data.R")
 
 R code files saved as *.R files for all relevant chapters throughout the entire book are in the following table.
 
-
-```{r script-files-table, echo=FALSE, message=FALSE}
-if(!file.exists("rds/chapter_script_pub_files.rds")){
-  chapter_script_pub_files <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtqCUn7IdKJMgQ8LmXl7-us2DVxKCPz0w5BHhO5JLOof0gRfmv0DK1xw1PDC7PhIhUglb4Q_JA2zsg/pub?gid=0&single=true&output=csv" %>% 
+```{r script-files-table, echo=FALSE, message=FALSE, purl=FALSE}
+if (!file.exists("rds/chapter_script_pub_files.rds")) {
+  chapter_script_pub_files <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtqCUn7IdKJMgQ8LmXl7-us2DVxKCPz0w5BHhO5JLOof0gRfmv0DK1xw1PDC7PhIhUglb4Q_JA2zsg/pub?gid=0&single=true&output=csv" %>%
     read_csv(na = "")
-    write_rds(chapter_script_pub_files, "rds/chapter_script_pub_files.rds")
+  write_rds(chapter_script_pub_files, "rds/chapter_script_pub_files.rds")
 } else {
   chapter_script_pub_files <- read_rds("rds/chapter_script_pub_files.rds")
 }
-if(!file.exists("rds/chapter_script_dev_files.rds")){
-  chapter_script_dev_files <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtqCUn7IdKJMgQ8LmXl7-us2DVxKCPz0w5BHhO5JLOof0gRfmv0DK1xw1PDC7PhIhUglb4Q_JA2zsg/pub?gid=490443444&single=true&output=csv" %>% 
+if (!file.exists("rds/chapter_script_dev_files.rds")) {
+  chapter_script_dev_files <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtqCUn7IdKJMgQ8LmXl7-us2DVxKCPz0w5BHhO5JLOof0gRfmv0DK1xw1PDC7PhIhUglb4Q_JA2zsg/pub?gid=490443444&single=true&output=csv" %>%
     read_csv(na = "")
-    write_rds(chapter_script_dev_files, "rds/chapter_script_dev_files.rds")
+  write_rds(chapter_script_dev_files, "rds/chapter_script_dev_files.rds")
 } else {
   chapter_script_dev_files <- read_rds("rds/chapter_script_dev_files.rds")
 }
 
 
-if(dev_version & knitr::is_html_output()){
-  chapter_script_dev_files %>% 
-    select(chapter, link) %>% 
+if (dev_version & is_html_output()) {
+  chapter_script_dev_files %>%
+    select(chapter, link) %>%
     kable()
 } else {
-  chapter_script_pub_files %>% 
-    select(chapter, link) %>% 
+  chapter_script_pub_files %>%
+    select(chapter, link) %>%
     kable()
 }
 ```
+
+
+
 
 
 ## Concluding remarks {-}
