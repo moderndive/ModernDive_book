@@ -202,6 +202,16 @@ se_ci
 
 
 
+## ---- eval=FALSE--------------------------------------------------------------
+## library(moderndive)
+## library(infer)
+## null_distribution_mean <- promotions %>%
+##   specify(formula = decision ~ gender, success = "promoted") %>%
+##   hypothesize(null = "independence") %>%
+##   generate(reps = 1000, type = "permute") %>%
+##   calculate(stat = "diff in means", order = c("male", "female"))
+
+
 
 
 
