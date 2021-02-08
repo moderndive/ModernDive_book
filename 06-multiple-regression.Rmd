@@ -959,7 +959,7 @@ regression_points %>%
 
 ## Related topics {#mult-reg-related-topics}
 
-### Model selection {#model-selection}
+### Model selection using visualizations {#model-selection}
 
 When should we use an interaction model versus a parallel slopes model? Recall in Sections \@ref(model4interactiontable) and \@ref(model4table) we fit both interaction and parallel slopes models for the outcome variable $y$ (teaching score) using a numerical explanatory variable $x_1$ (age) and a categorical explanatory variable $x_2$ (gender recorded as a binary variable). We compared these models in Figure \@ref(fig:numxcatx-comparison), which we display again now. 
 
@@ -1099,7 +1099,135 @@ Observe how the regression table for the interaction model has 2 more rows (6 ve
 
 Furthermore, note in Table \@ref(tab:model2-interaction) how the *offsets for the slopes* `perc_disadvan:sizemedium` being 0.146 and `perc_disadvan:sizelarge` being 0.189 are small relative to the *slope for the baseline group* of small schools of $-2.932$. In other words, all three slopes are similarly negative: $-2.932$ for small schools, $-2.786$ $(=-2.932 + 0.146)$ for medium schools, and $-2.743$ $(=-2.932 + 0.189)$ for large schools. These results are suggesting that irrespective of school size, the relationship between average math SAT scores and the percent of the student body that is economically disadvantaged is similar and, alas, quite negative.
 
-What you have just performed is a rudimentary *model selection*\index{model selection}: choosing which model fits data best among a set of candidate models. While the model selection approach we just took was visual in nature and hence somewhat qualitative, more statistically rigorous methods for model selection exist in the fields of multiple regression and statistical/machine learning. 
+What you have just performed is a rudimentary *model selection*\index{model selection}: choosing which model fits data best among a set of candidate models. The model selection we performed used the "eyeball test": qualitatively looking at visualizations to choose a model. In the next subsection, you'll once again perform the same model selection, but this time using a numerical approach via the $R^2$ (pronounced "R-squared") value. 
+
+<!--
+TODO: Make this into a learning check
+Given that intercepts in the parallel slopes model in the right-hand plot of Figure \@ref(fig:numxcatx-comparison-2) are also similar as well, it can be argued that an even better model is one without the categorical variable school size. 
+-->
+
+
+### Model selection using R-squared {#rsquared}
+
+At the end of the previous section in Figure \@ref(fig:numxcatx-comparison-2) you compared an interaction model with a parallel slopes model, where both models attempted to explain $y$ = the average math SAT score for various high schools in Massachusetts. In Tables \@ref(tab:model2-interaction) and \@ref(tab:model2-parallel-slopes), we observed that the interaction model was "more complex" in that the regression table had 6 rows versus the 4 rows of the parallel slopes model. 
+
+Most importantly however, when comparing the left and right-hand plots of Figure \@ref(fig:numxcatx-comparison-2), we observed that the three lines corresponding to small, medium, and large high schools were not that different. Given this similarity, we stated it could be argued that the "simpler" parallel slopes model should be favored. 
+
+In this section, we'll mimic the model selection we just performed using the qualitative "eyeball test", but this time using a numerical and quantitative approach. Specifically, we'll use the $R^2$ summary statistic (pronounced "R-squared"), also called the "coefficient of determination". But first, we must introduce one new concept: the *variance* of a numerical variable. 
+
+We've previously studied two summary statistics of the *spread* (or *variation*) of a numerical variable: the standard deviation when studying the normal distribution in \@ref(appendix-normal-curve) and the interquartile range (IQR) when studying boxplots in Section \@ref(geomboxplot). We now introduce a third summary statistic of spread: the *variance*. The variance is merely the standard deviation squared and it can be computed in R using the `var()` summary function within `summarize()`. If you would like to see the formula, see \@ref(appendix-sd-variance). 
+
+Recall that to get: 1) the observed values $y$, 2) the fitted values $\widehat{y}$ from a regression model, and 3) the resulting residuals $y - \widehat{y}$, we can apply the `get_regression_points()` function our saved model, in this case `model_2_interaction`:
+
+```{r}
+get_regression_points(model_2_interaction) 
+```
+
+Let's now use the `var()` summary function within a `summarize()` to compute the variance of these three terms:
+
+```{r}
+get_regression_points(model_2_interaction) %>% 
+  summarize(var_y = var(average_sat_math), 
+                      var_y_hat = var(average_sat_math_hat), 
+                      var_residual = var(residual))
+```
+
+Observe that the variance of $y$ is equal to the variance of $\widehat{y}$ plus the variance of the residuals. But what do these three terms tell us individually?
+
+First, the variance of $y$ (denoted as $var(y)$) tells us how much do Massachusetts high schools differ in average math SAT scores. The goal of regression modeling is to fit a model that hopefully *explains* this variation. In other words, we want to understand what factors explain why certain schools have high math SAT scores, while others have low scores. This is independent of the model; this is just data. In other words, whether we fit an interaction or parallel slopes model, $var(y)$ remains the same. 
+
+Second, the variance of $\widehat{y}$ (denoted as $var(\widehat{y})$) tells us how much the fitted values from our interaction model vary. That is to say, after accounting for (1) the percentage of the study body that is socioeconomically disadvantaged and (2) school size in an interaction model, how much do our model's explanations of average math SAT scores vary?
+
+Third, the variance of the residuals tells us how much do "the left-overs" from the model vary. Observe how the points in the left-hand plot of Figure \@ref(fig:numxcatx-comparison-2) scatter around the three lines. Say instead all the points fell *exactly* on one of the three lines. Then all residuals would be zero and hence the variance of the residuals would be zero. 
+
+We're now ready to introduce $R^2$:
+
+$$
+R^2 = \frac{var(\widehat{y})}{var(y)}
+$$
+
+It is *the proportion of the spread/variation of the outcome variable $y$ that is explained by our model*, where our model's explanatory power is embedded in the fitted values $\widehat{y}$. Furthermore, since it can be mathematically proven that $0 \leq var(\widehat{y}) \leq var(y)$ (a fact we leave for an advanced class on regression), we are guaranteed that:
+
+$$
+0 \leq R^2 \leq 1
+$$
+
+$R^2$ can be interpreted as follows:
+
+1. $R^2$ values of 0 tell us that our model explains 0% of the variation in $y$. Say we fit a model to the Massachusetts high school data and obtained $R^2 = 0$. This would be telling us that the combination of explanatory variables $x$ we used and model form we chose (interaction or parallel slopes) tell us *nothing* about average math SAT scores. The model is a poor fit.
+1. $R^2$ values of 1 tell us that our model explains 100% of the variation in $y$. Say we fit a model to the Massachusetts high school data and obtained $R^2 = 1$. This would be telling us that the combination of explanatory variables $x$ we used and model form we chose (interaction or parallel slopes) tell us *everything we need to know* about average math SAT scores. 
+
+In practice however, $R^2$ values of 1 almost never occur. Think about it in the context of Massachusetts high schools. There are an infinite number of factors that influence why certain high schools perform well on SAT's on average while others don't perform well. The idea that a human-designed statistical model can capture all the heterogeneity of all high school students in Massachusetts is bordering on hubris. However, even if such models are not perfect, they may still prove useful in determining educational policy. A general principle of modeling we should keep in mind is a famous quote by eminent statistician George Box: ["All models are wrong, but some are useful."](https://jamesclear.com/all-models-are-wrong)
+
+Let's repeat the above calculations for the parallel slopes model and compare them in Table \@ref(tab:model2-r-squared).
+
+```{r model2-r-squared, echo=FALSE}
+variances_interaction <- get_regression_points(model_2_interaction) %>% 
+  summarize(var_y = var(average_sat_math), 
+                      var_y_hat = var(average_sat_math_hat), 
+                      var_residual = var(residual)) %>% 
+  mutate(model = "Interaction", r_squared = var_y_hat/var_y)
+variances_parallel_slopes <- get_regression_points(model_2_parallel_slopes) %>% 
+  summarize(var_y = var(average_sat_math), 
+                      var_y_hat = var(average_sat_math_hat), 
+                      var_residual = var(residual)) %>% 
+  mutate(model = "Parallel slopes", r_squared = var_y_hat/var_y)
+
+bind_rows(
+  variances_interaction,
+  variances_parallel_slopes
+) %>% 
+  select(model, var_y, var_y_hat, var_residual, r_squared) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Comparing variances from interaction and parallel slopes models for MA school data", 
+    booktabs = TRUE,
+    linesep = ""
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("hold_position"))
+```
+
+Observe how the $R^2$ values are near identical at around `r variances_parallel_slopes %>% pull(r_squared)` = `r variances_parallel_slopes %>% pull(r_squared) %>% "*"(100) %>% round(1)`%. In other words, the *additional complexity* of the interaction model only improves our $R^2$ value by a near zero amount. Thus, we are inclined to favor the "simpler" parallel slopes model.
+
+Now let's repeat this $R^2$ comparison between interaction and parallel slopes model for our models of $y$ = teaching score for UT Austin professors which you visually compared in Figure \@ref(fig:recall-parallel-vs-interaction). We compare these values in Table \@ref(tab:model1-r-squared)
+
+```{r model1-r-squared, echo=FALSE}
+variances_interaction <- get_regression_points(score_model_interaction) %>% 
+  summarize(var_y = var(score), var_y_hat = var(score_hat), var_residual = var(residual)) %>% 
+  mutate(model = "Interaction", r_squared = var_y_hat/var_y)
+variances_parallel_slopes <- get_regression_points(score_model_parallel_slopes) %>% 
+  summarize(var_y = var(score), var_y_hat = var(score_hat), var_residual = var(residual)) %>% 
+  mutate(model = "Parallel slopes", r_squared = var_y_hat/var_y)
+
+bind_rows(
+  variances_interaction,
+  variances_parallel_slopes
+) %>% 
+  select(model, var_y, var_y_hat, var_residual, r_squared) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Comparing variances from interaction and parallel slopes models for UT Austin data", 
+    booktabs = TRUE,
+    linesep = ""
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("hold_position"))
+```
+
+Observe how the $R^2$ values are now very different! In other words, since the *additional complexity* of the interaction model over the parallel slopes model improves our $R^2$ value by a relatively large amount (`r variances_interaction$r_squared` versus `r variances_parallel_slopes$r_squared`, which is an increase of about `r round(100*((variances_interaction$r_squared)/(variances_parallel_slopes$r_squared)-1), 1)`%), it could be argued that the additional complexity is warranted. 
+
+As a final note, we can also use the third of our `get_regression()` wrapper functions, `get_regression_summaries()`, to quickly automate calculating $R^2$ for both the interaction and parallels slopes models for $y$ = average math SAT score for Massachusetts high schools.
+
+```{r}
+# R-squared for interaction model:
+get_regression_summaries(model_2_interaction)
+# R-squared for parallel slopes model:
+get_regression_summaries(model_2_parallel_slopes)
+```
+
+
+
 
 
 ### Correlation coefficient {#correlationcoefficient2}
