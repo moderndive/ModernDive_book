@@ -225,6 +225,74 @@ glimpse(credit_ch6)
 
 
 
+## -----------------------------------------------------------------------------
+get_regression_points(model_2_interaction) 
+
+
+## -----------------------------------------------------------------------------
+get_regression_points(model_2_interaction) %>% 
+  summarize(var_y = var(average_sat_math), 
+                      var_y_hat = var(average_sat_math_hat), 
+                      var_residual = var(residual))
+
+
+## ----model2-r-squared, echo=FALSE---------------------------------------------
+variances_interaction <- get_regression_points(model_2_interaction) %>% 
+  summarize(var_y = var(average_sat_math), 
+                      var_y_hat = var(average_sat_math_hat), 
+                      var_residual = var(residual)) %>% 
+  mutate(model = "Interaction", r_squared = var_y_hat/var_y)
+variances_parallel_slopes <- get_regression_points(model_2_parallel_slopes) %>% 
+  summarize(var_y = var(average_sat_math), 
+                      var_y_hat = var(average_sat_math_hat), 
+                      var_residual = var(residual)) %>% 
+  mutate(model = "Parallel slopes", r_squared = var_y_hat/var_y)
+
+bind_rows(
+  variances_interaction,
+  variances_parallel_slopes
+) %>% 
+  select(model, var_y, var_y_hat, var_residual, r_squared) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Comparing variances from interaction and parallel slopes models for MA school data", 
+    booktabs = TRUE,
+    linesep = ""
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("hold_position"))
+
+
+## ----model1-r-squared, echo=FALSE---------------------------------------------
+variances_interaction <- get_regression_points(score_model_interaction) %>% 
+  summarize(var_y = var(score), var_y_hat = var(score_hat), var_residual = var(residual)) %>% 
+  mutate(model = "Interaction", r_squared = var_y_hat/var_y)
+variances_parallel_slopes <- get_regression_points(score_model_parallel_slopes) %>% 
+  summarize(var_y = var(score), var_y_hat = var(score_hat), var_residual = var(residual)) %>% 
+  mutate(model = "Parallel slopes", r_squared = var_y_hat/var_y)
+
+bind_rows(
+  variances_interaction,
+  variances_parallel_slopes
+) %>% 
+  select(model, var_y, var_y_hat, var_residual, r_squared) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Comparing variances from interaction and parallel slopes models for UT Austin data", 
+    booktabs = TRUE,
+    linesep = ""
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("hold_position"))
+
+
+## -----------------------------------------------------------------------------
+# R-squared for interaction model:
+get_regression_summaries(model_2_interaction)
+# R-squared for parallel slopes model:
+get_regression_summaries(model_2_parallel_slopes)
+
+
 ## ---- eval=FALSE--------------------------------------------------------------
 ## credit_ch6 %>% select(debt, income) %>%
 ##   mutate(income = income * 1000) %>%
