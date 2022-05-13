@@ -1,5 +1,7 @@
 # ModernDive 1.1.0.9000
 
+* Chapter 2 Data Visualization: Remove soft introduction to `%>%` operator (from Ch 3 Data Wrangling) since this only confused readers.
+Instead we now use a prepared `alaska_flights` and `early_january_weather` data frames from `moderndive` version 0.5.3
 * Chapter 6 Multiple Regression: Per @kmkinnaird's suggestion, we split "6.3.1 Model selection" into:
     + "6.3.1 Model selection using visualizations"
     + Added "6.3.2 Model selection using R-squared"
