@@ -9,7 +9,7 @@ Instead we now use a prepared `alaska_flights` and `early_january_weather` data 
     + "7.3.1 Terminology & notation": clustered definitions according to theme and connected back to sampling exercises
     + "7.3.2 Statistical definitions": 
     + Moved "7.5.2 Central Limit Theorem" to its own section to make it more prominent and not an after-thought
-
+    + Created a new "7.6.2 Theory-based standard errors" which split "8.7.2 Theory-based confidence intervals" into two parts and moved the earlier part to Chapter 7 Sampling. That way all 4 statistical inference chapters (Ch 7-11) each of their own "theory-based X" subsection at the end bridging the gap between simulation based and traditional methods. 
 
 ***
 
