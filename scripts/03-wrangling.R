@@ -1,8 +1,3 @@
-## ---- eval=FALSE--------------------------------------------------------------
-## alaska_flights <- flights %>%
-##   filter(carrier == "AS")
-
-
 ## ---- message=FALSE-----------------------------------------------------------
 library(dplyr)
 library(ggplot2)

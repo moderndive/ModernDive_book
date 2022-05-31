@@ -1,7 +1,7 @@
 ## ----message=FALSE------------------------------------------------------------
 library(nycflights13)
 library(ggplot2)
-library(dplyr)
+library(moderndive)
 
 
 
@@ -12,13 +12,6 @@ library(dplyr)
 
 
 
-
-
-
-
-## -----------------------------------------------------------------------------
-alaska_flights <- flights %>% 
-  filter(carrier == "AS")
 
 
 
@@ -56,11 +49,6 @@ ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
 
 
 
-
-
-## -----------------------------------------------------------------------------
-early_january_weather <- weather %>% 
-  filter(origin == "EWR" & month == 1 & day <= 15)
 
 
 
@@ -272,7 +260,11 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 
+
+
 ## ---- eval=FALSE--------------------------------------------------------------
+## library(dplyr)
+## 
 ## alaska_flights <- flights %>%
 ##   filter(carrier == "AS")
 ## 
