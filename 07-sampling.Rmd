@@ -217,7 +217,8 @@ fruit_basket <- tibble(
 -->
 
 
-```{r}
+```{r echo=-1}
+set.seed(76)
 virtual_shovel <- bowl |> 
   rep_slice_sample(n = 50)
 virtual_shovel
@@ -246,36 +247,33 @@ n_red_virtual_shovel <- virtual_shovel |>
   mutate(is_red = (color == "red")) |>
   summarize(num_red = sum(is_red)) |>
   pull(num_red)
-
 ```
 
 Since R treats `TRUE` like the number `1` and `FALSE` like the number `0`, the number of `TRUE`s and `FALSE`s is equivalent to summing `1`'s and `0`'s. In the end, the `sum()` operation counts the number of balls where `color` is `red`. In our case, `r n_red_virtual_shovel` of the 50 balls were red. However, you might have gotten a different number of red balls because of the randomness of the virtual sampling.
 
 
-Third and lastly, we compute the proportion of the 50 sampled balls that are red by dividing `num_red` by 50:
+Alternatively, we can compute the proportion of the 50 sampled balls by using `mean()` of these `1`'s and `0`'s instead of `sum()`:
 
 ```{r}
 virtual_shovel |> 
   mutate(is_red = color == "red") |> 
-  summarize(num_red = sum(is_red)) |> 
-  mutate(prop_red = num_red / 50)
+  summarize(prop_red = mean(is_red))
 ```
 ```{r, echo=FALSE, purl=FALSE}
 virtual_shovel_prop_red <- virtual_shovel |>
   mutate(is_red = color == "red") |>
-  summarize(num_red = sum(is_red)) |>
-  mutate(prop_red = num_red / 50) |>
+  summarize(prop_red = mean(is_red)) |>
   pull(prop_red)
 virtual_shovel_perc_red <- virtual_shovel_prop_red * 100
-
 ```
 
-In other words, `r virtual_shovel_perc_red`% of this virtual sample's balls were red. We make this code a little more compact and succinct by combining the first `mutate()` and the `summarize()` as follows:
+In other words, `r virtual_shovel_perc_red`% of this virtual sample's balls were red. One of the advantage of `dplyr()` is that we can produce all this in a succinct way by combining all this code at once, from obtaining the sample to getting the sample proportion, as follows:
 
-```{r}
-virtual_shovel |> 
-  summarize(num_red = sum(color == "red")) |> 
-  mutate(prop_red = num_red / 50)
+```{r echo=-1}
+set.seed(76)
+bowl |> 
+  rep_slice_sample(n = 50) |>
+  summarize(num_red = mean(color == "red"))
 ```
 
 Great! `r virtual_shovel_perc_red`% of the `virtual_shovel`'s 50 balls were red! Based on this particular random sample of 50 balls, our estimated proportion of red balls in the bowl is `r virtual_shovel_perc_red`%. But remember that if we obtain another random sample of 50 balls the sample proportion of red balls may be different due to sampling variation. 
@@ -284,7 +282,8 @@ Great! `r virtual_shovel_perc_red`% of the `virtual_shovel`'s 50 balls were red!
 
 In our tactile activity in Section \@ref(sampling-activity), students got 33 samples and computed 33 sample proportions. They repeated/replicated the sampling process 33 times. We do this virtually by again using the function `rep_slice_sample()`, but this time adding the `reps = 33` argument; this tells R that we want to repeat the sampling 33 times. We save these samples in the data frame `virtual_samples`, as shown below, and then provide a preview of its first 10 rows. We may want to inspect the entire `virtual_samples` data frame by using RStudio's spreadsheet viewer by running `View(virtual_samples)`. 
 
-```{r}
+```{r echo=-1}
+set.seed(76)
 virtual_samples <- bowl |> 
   rep_slice_sample(n = 50, reps = 33)
 virtual_samples
@@ -292,22 +291,23 @@ virtual_samples
 
 Observe in the spreadsheet viewer that the first 50 rows of `replicate` are equal to `1` while the next 50 rows of `replicate` are equal to `2`. This is telling us that the first 50 rows correspond to the first sample of 50 balls while the next 50 rows correspond to the second sample of 50 balls. This pattern continues for all `reps = 33` replicates and thus `virtual_samples` has 33 $\cdot$ 50 = 1650 rows. 
 
-Using `virtual_samples` we obtain the proportion of red balls for each replicate. We use the same `dplyr` verbs as before, but this time adding `group_by()` of the `replicate` variable. Recall from Section \@ref(groupby) that by assigning the grouping variable "meta-data" before `summarize()`, we perform the calculations needed for each replicate separately. The other lines of code, as explained in the case of one sample, calculate the sum and proportion of red balls. We display a preview of the first 10 rows below:
+Using `virtual_samples` we obtain the proportion of red balls for each replicate. We use the same `dplyr` verbs as before. In particular, we add `group_by()` of the `replicate` variable. Recall from Section \@ref(groupby) that by assigning the grouping variable "meta-data" before `summarize()`, we perform the calculations needed for each replicate separately. The other line of code, as explained in the case of one sample, calculates the proportion of red balls. We display a preview of the first 10 rows below:
 
 ```{r}
 virtual_prop_red <- virtual_samples |> 
   group_by(replicate) |> 
-  summarize(red = sum(color == "red")) |> 
-  mutate(prop_red = red / 50)
+  summarize(prop_red = mean(color == "red")) 
 virtual_prop_red
 ```
 
-The function `rep_slice_sample()` actually already groups the data by replicate directly, so we don't need to include `group_by()` anymore. In addition, we can use the `mean()` function to obtain the sample proportions directly. The code can be simplified as follows:
+Actually, the function `rep_slice_sample()` already groups the data by replicate, so we do not need to include `group_by()` anymore. As we did in the case of a single sample, we simplify the code, from getting the needed samples to getting the sample proportions for each samples. Here is the code:
 
-```{r}
-virtual_prop_red1 <- virtual_samples |> 
+```{r echo=-1}
+set.seed(76)
+virtual_prop_red <- bowl |>
+  rep_slice_sample(n = 50, reps = 33) |>
   summarize(prop_red = mean(color == "red"))
-virtual_prop_red1
+virtual_prop_red
 ```
 
 As was the case in the tactile activity, there is variation in the resulting 33 proportions from virtual samples. As shown in Figure \@ref(fig:samplingdistribution-virtual) a histogram helps us visualize this sampling variation. As we did in Section \@ref{#sampling-activity}, we construct the histogram using `ggplot()`, `geom_histogram()`, and including the arguments `binwidth = 0.05` and `boundary = 0.4`. This creates the appropriate bins with boundaries at 0.3, 0.35, 0.4, 0.45, etc., as shown below:
