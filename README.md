@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/66818484.svg)](https://zenodo.org/badge/latestdoi/66818484) [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable) [![Netlify Status](https://api.netlify.app/api/v1/badges/10e04707-18d4-4081-9a9f-33d4cbaa1325/deploy-status)](https://app.netlify.app/sites/moderndive/deploys) [![GitHub Actions Deployment](https://github.com/moderndive/ModernDive_book/actions/workflows/deploy_bookdown.yml/badge.svg)](https://github.com/moderndive/ModernDive_book/actions/workflows/deploy_bookdown.yml)
 
-Welcome to the GitHub repository page for **Statistical Inference via Data Science: A ModernDive into R and the Tidyverse** available at [ModernDive.com](https://moderndive.com/).  You can purchase the CRC Press print edition on their [website](https://www.routledge.com/Statistical-Inference-via-Data-Science-A-ModernDive-into-R-and-the-Tidyverse/Ismay-Kim/p/book/9780367409821) using promo code **ADC22** for a discounted price.
+Welcome to the GitHub repository page for **Statistical Inference via Data Science: A ModernDive into R and the Tidyverse** available at [ModernDive.com](https://moderndive.com/).  You can purchase the CRC Press print edition on their [website](https://www.routledge.com/Statistical-Inference-via-Data-Science-A-ModernDive-into-R-and-the-Tidyverse/Ismay-Kim/p/book/9780367409821).
 
 <img src="images/logos/book_cover.png" width="50%"/>
 
