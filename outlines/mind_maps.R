@@ -1,4 +1,5 @@
-# install.packages("mindr")
+# install.packages("remotes")
+# remotes::install_github("pzhaonet/mindr")
 library(mindr)
 
 create_mindmaps <- function(input_file) {
