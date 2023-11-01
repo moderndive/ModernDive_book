@@ -8,6 +8,9 @@ if (is_latex_output()) {
 }
 ```
 
+\newcommand{\overbar}[1]{\mkern 1.5mu\overline{\mkern-1.5mu#1\mkern-1.5mu}\mkern 1.5mu}
+
+
 # Sampling {#sampling}
 
 ```{r setup_infer, include=FALSE, purl=FALSE}
@@ -31,13 +34,11 @@ opts_chunk$set(
 # Set output digit precision
 options(scipen = 99, digits = 3)
 
-# Set random number generator see value for replicable pseudorandomness
+# Set random number generator seed value for replicable pseudorandomness
 set.seed(76)
 ```
 
-The third portion of this book introduces statistical inference. This chapter is about *sampling*. Sampling involves drawing repeated random samples from a population and then using the information from those samples to learn more about the entire population. In Section \@ref(sampling-activity) we illustrate sampling using a tactile example and simultaneously introducing key concepts and terminology. In Section \@ref(sampling-simulation) we extend this by performing virtual sampling via simulations. The tools used in the data science portion of this book, in particular data visualization and data wrangling, continue to be useful in this context. In Section \@ref(sampling-framework) we introduce more definitions, terminology, and a theoretical framework to introduce one of the fundamental theoretical results in Statistics: the *Central Limit Theorem*. In Section \@ref(sampling-case-study) we tie the contents of this chapter to the real world by presenting a case study: a 2023 Gallup poll conducted in US asking whether coronavirus pre-pandemic normalcy was attainable.
-
-The concepts behind *sampling* form the basis for constructing confidence intervals and performing tests of significance also called hypothesis tests; these are the best-known and used inferential methods and are presented in Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing).
+The third portion of this book introduces statistical inference. This chapter is about *sampling*. Sampling involves drawing repeated random samples from a population. In Section \@ref(sampling-activity) we illustrate sampling by working with samples of white and red balls and the proportion of red balls in these samples. In Section \@ref(sampling-framework) we present a theoretical framework and define what is the sampling distribution. In Section \@ref(sampling-activity-mean) we present a second sampling activity, this time working with samples of chocolate-covered almonds and the average weight of these samples. In Section \@ref(central-limit-theorem) we introduce one of the fundamental theoretical results in Statistics: the *Central Limit Theorem*. In Section \@ref(sampling-other-scenarios) we present the sampling distribution in other scenarios. The concepts behind *sampling* form the basis of inferential methods, in particular confidence intervals and hypothesis tests; methods that are studied in Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing).
 
 ### Needed packages {-#sampling-packages}
 
@@ -49,7 +50,7 @@ library(moderndive)
 library(infer)
 ```
 
-Recall that loading the `tidyverse` package loads many commonly used data science packages that are needed here and we have encountered earlier. For details refer to Section \@ref(tidyverse-package).
+Recall that loading the `tidyverse` package loads many packages that we have encountered earlier. For details refer to Section \@ref(tidyverse-package). The packages `moderndive` and `infer` contain functions and data frames that will be used in this chapter.
 
 
 ```{r message=FALSE, echo=FALSE, purl=FALSE}
@@ -68,21 +69,71 @@ prop_red <- num_red / num_balls
 percent_red_chr <- prop_red |> percent(accuracy = 0.1)
 ```
 
-## Sampling bowl activity {#sampling-activity}
+## First Bowl Activity: Red Balls {#sampling-activity}
 
-Take a look at the bowl in Figure \@ref(fig:sampling-exercise-1). It has a certain number of red balls and a certain number of white balls all of equal size. `r if_else(is_latex_output(), '(Note that in this printed version of the book "red" corresponds to the darker-colored balls, and "white" corresponds to the lighter-colored balls. We kept the reference to "red" and "white" throughout this book since those are the actual colors of the balls as seen in the background of the image on our book\'s [cover](https://moderndive.com/images/logos/book_cover.png).)', '')` The balls have been mixed beforehand and there does not seem to be any particular pattern for the location of red and white balls inside the bowl. Our task is to determine, adequately, the proportion of red balls in the bowl. 
+Take a look at the bowl in Figure \@ref(fig:sampling-exercise-1). It has red and white balls of equal size. `r if_else(is_latex_output(), '(Note that in this printed version of the book "red" corresponds to the darker-colored balls, and "white" corresponds to the lighter-colored balls. We kept the reference to "red" and "white" throughout this book since those are the actual colors of the balls as seen in the background of the image on our book\'s [cover](https://moderndive.com/images/logos/book_cover.png).)', '')` The balls have been mixed beforehand and there does not seem to be any particular pattern for the location of red and white balls inside the bowl. 
 
 ```{r sampling-exercise-1, echo=FALSE, fig.cap="A bowl with red and white balls.", purl=FALSE, out.width = "95%", purl=FALSE}
 include_graphics("images/sampling/balls/sampling_bowl_1.jpg")
 ```
 
-One way to do this is to perform an exhaustive count: remove each ball individually, count the number of red balls and divide the number of red balls by the total number of balls. Doing this carefully can determine the exact proportion of red balls in the bowl, but it requires a long and tedious process.
+### The proportion of red balls in the bowl {#population-proportion}
+
+We are interested in finding the proportion of red balls in the bowl, so we could count the number of red balls, and divide this number by the total number of balls. The bowl seen in Figure \@ref(fig:sampling-exercise-1) is represented virtually by the data frame `bowl` included in the `moderndive` package. The first ten rows are shown here for illustration purposes:
+
+```{r}
+bowl
+```
+
+The  `bowl` has `r num_balls` rows representing the `r num_balls` balls in the bowl shown in Figure \@ref(fig:sampling-exercise-1). You can view and scroll through the entire contents of the `bowl` in RStudio's data viewer by running `View(bowl)`. The first variable `ball_ID` is used as an *identification variable* as discussed in Subsection \@ref(identification-vs-measurement-variables); none of the balls in the actual bowl are marked with numbers. The second variable `color` indicates whether a particular virtual ball is red or white. We compute the proportion of red balls in the bowl using the `dplyr` data wrangling verbs presented in Chapter \@ref(wrangling). A few steps are needed in order to obtain this proportion. We present these steps separately to remind you how they work but later introduce all the steps together and simplify some of the code. First, for each of the balls, we identify if it is red or not using a test for equality with the logical operator `==`. We do this by using the `mutate()` function from Section \@ref(mutate) that allows us to create a new Boolean variable called `is_red`.
+
+```{r}
+bowl |> 
+  mutate(is_red = (color == "red"))
+```
+
+The variable `is_red` returns the Boolean (logical) value `TRUE` for each row where `color == "red"` and `FALSE` for every row where `color` is not equal to `"red"`. Since R treats `TRUE` like the number `1` and `FALSE` like the number `0`, accounting for `TRUE`s and `FALSE`s is equivalent to working with `1`'s and `0`'s. In particular, adding all the `1`'s and `0`'s is equivalent to counting how many red balls are in the bowl.
+
+We compute this using the `sum()` function inside the `summarize()` function. Recall from Section \@ref(summarize) that `summarize()` takes a data frame with many rows and returns a data frame with a single row containing summary statistics such as the `sum()`:
+
+```{r}
+bowl |> 
+  mutate(is_red = (color == "red")) |> 
+  summarize(num_red = sum(is_red))
+900/2400
+```
+
+The `sum()` has added all the `1`'s and `0`'s and has effectively counted the number of red balls. There are `r num_red` red balls in the bowl and since the bowl contains `r num_balls` balls, the proportion of red balls is `r num_red`/`r num_balls` = `r num_red/num_balls`. We could ask R to obtain the proportion directly by replacing the `sum()` for the `mean()` function inside `summarize()`. The average of `1`'s and `0`'s is precisely the proportion of red balls in the bowl:
+
+```{r}
+bowl |> 
+  mutate(is_red = (color == "red")) |> 
+  summarize(prop_red = mean(is_red))
+```
+
+This code works well but can be simplified once more. Instead of creating a new Boolean variable `is_red` before finding the proportion, we could write both steps simultaneously in a single line of code:
+
+```{r}
+bowl |> 
+  summarize(prop_red = mean(color == "red"))
+```
+
+This type of calculation will be used often in the next subsections.
+
+### Manual sampling {#sampling-manual}
+
+
+In the previous section we were able to obtain the proportion of red balls in the bowl using R only because we had the information of the entire bowl as a data frame. Otherwise, we would have to obtain this manually. If the bowl contained a large number of balls, this could be a long and tedious process. How long do you think it would take to do this manually if the bowl had thousands of balls? Or tens of thousands? Or even more? 
+
+In real-life situations, we are often interested in finding the proportion of a very large number of objects, or subjects, and obtaining an exhaustive count could be tedious, costly, impractical, or even impossible.
+
+Because of these limitations, we typically do not perform exhaustive counts; rather, we randomly select a sample of balls from the bowl, find the proportion of red balls in this sample, and use this proportion to learn more about the proportion of red balls in the entire bowl.
 
 
 
-### One sample
+#### One sample {#one-sample}
 
-Instead of performing an exhaustive count, we insert a shovel into the bowl as seen in Figure \@ref(fig:sampling-exercise-2) and collect $5 \cdot 10 = 50$ balls as shown in Figure \@ref(fig:sampling-exercise-3). The set of balls obtained is called a _sample_. 
+We start by inserting a shovel into the bowl as seen in Figure \@ref(fig:sampling-exercise-2) and collect $5 \cdot 10 = 50$ balls as shown in Figure \@ref(fig:sampling-exercise-3). The set of balls obtained is called a _sample_. 
 
 ```{r sampling-exercise-2, echo=FALSE, fig.cap="Inserting a shovel into the bowl.", purl=FALSE, out.width = "100%", purl=FALSE}
 include_graphics("images/sampling/balls/sampling_bowl_2.jpg")
@@ -93,14 +144,11 @@ include_graphics("images/sampling/balls/sampling_bowl_2.jpg")
 include_graphics("images/sampling/balls/sampling_bowl_3_cropped.jpg")
 ```
 
-Observe that 17 of the balls are red and thus the proportion of red balls in the sample is 17/50 = 0.34 or 34%. Think of the proportion or red balls in the sample as a guess of the proportion of red balls in the entire bowl. It is likely that the proportion of red balls in the entire bowl is not exactly 34% but, as we show later, this is probably a good guess and it took much less time and energy to obtain.
+Observe that 17 of the balls are red and thus the proportion of red balls in the sample is 17/50 = 0.34 or 34%. Compare this to the proportion of red balls in the entire bowl, `r prop_red`, that we obtained in Section \@ref(population-proportion). The proportion obtained from the sample seems actually pretty good, and it did not take much time or energy to obtain. But, was this approximate proportion just a lucky outcome? Could we be this lucky the next time we take a sample from the bowl? In the next subsection we take more samples from the bowl and obtain the proportions of red balls.
 
+#### Thirty-three samples {#student-shovels}
 
-
-
-### Thirty-three samples {#student-shovels}
-
-To understand why this works well, we repeat this activity many times as shown in Figure \@ref(fig:sampling-exercise-3b). Each time we do the following: 
+We now take many more random sample as shown in Figure \@ref(fig:sampling-exercise-3b). Each time we do the following: 
 
 - Return the 50 balls used earlier back into the bowl and mix the contents of the bowl. This is done to ensure that each new sample is not influenced in any way by the previous sample.
 - Take a new sample with the shovel and obtain a new proportion of red balls.
@@ -122,9 +170,9 @@ Recall from Section \@ref(histograms) that histograms help us visualize the *dis
 include_graphics("images/sampling/balls/tactile_3_c.jpg")
 ```
 
-By looking at the histogram observe that the lowest proportion of red balls obtained was between 0.20 and 0.25 while the highest was between 0.45 and 0.5. More importantly, the most frequently occurring proportions were between 0.30 and 0.35, right in the middle of the distribution.
+By looking at the histogram, we observe that the lowest proportion of red balls obtained was between 0.20 and 0.25 while the highest was between 0.45 and 0.5. More importantly, the most frequently occurring proportions were between 0.30 and 0.35.
 
-This activity was performed by 33 students, the results are stored in the `tactile_prop_red` data frame included in the `moderndive` package. The first 10 rows are printed below:
+This activity performed by 33 students has the results stored in the `tactile_prop_red` data frame included in the `moderndive` package. The first 10 rows are printed below:
 
 ```{r}
 tactile_prop_red
@@ -132,12 +180,14 @@ tactile_prop_red
 
 <!--
 Note: first 10 values on tactile_prop_red do not match the first 10 values of hand-drawn histogram tactile_3_c.jpg, consider updating one of them. AV
+Also, names are not homogeneously formatted, Julia doesn't have last names. Should we remove last names altogether? AV 8-31-23
+In addition, why don't we change `group` for `student` or `name`? AV 9-13-23
 -->
 
 
-Observe that for each student (`group`) the data frame provides their names, the number of `red_balls` in the sample, and the corresponding proportion of red balls in the sample (`prop_red`). We also have a `replicate` variable enumerating each of the 33 groups. We chose this name because each row can be viewed as one instance of a replicated (in other words repeated) activity.
+Observe that for each student `group` the data frame provides their names, the number of `red_balls` observed in the sample, and the calculated proportion of red balls in the sample, `prop_red`. We also have a `replicate` variable enumerating each of the 33 groups. We chose this name because each row can be viewed as one instance of a replicated (in other words repeated) activity.
 
-Using the R data visualization techniques introduced in Chapter \@ref(viz), we construct the histogram for all 33 proportions as shown in Figure \@ref(fig:samplingdistribution-tactile). The histogram was constructed using `ggplot()`  with `geom_histogram()`. To align the bins in the computerized histogram version to those in the hand-drawn histogram shown in Figure \@ref(fig:sampling-exercise-5), the arguments `boundary = 0.4` and `binwidth = 0.05` were used. The former indicates that we want a binning scheme, such that, one of the bins' boundaries is at 0.4; the latter fixes the width of the bin to 0.05 units.
+Using again the R data visualization techniques introduced in Chapter \@ref(viz), we construct the histogram for all 33 sample proportions as shown in Figure \@ref(fig:samplingdistribution-tactile). Recall that each student has obtained a sample of 50 balls using the same procedure and has calculated the proportion of red balls in each sample. The histogram is built using only those sample proportions, we do not need the individual information of each student or the number of red balls obtained. We contructed the histogram using `ggplot()`  with `geom_histogram()`. To align the bins in the computerized histogram version so it matches the hand-drawn histogram shown in Figure \@ref(fig:sampling-exercise-5), the arguments `boundary = 0.4` and `binwidth = 0.05` were used. The former indicates that we want a binning scheme, such that, one of the bins' boundaries is at 0.4; the latter fixes the width of the bin to 0.05 units.
 
 ```{r eval=FALSE}
 ggplot(tactile_prop_red, aes(x = prop_red)) +
@@ -151,18 +201,22 @@ tactile_histogram <- ggplot(tactile_prop_red, aes(x = prop_red)) +
 tactile_histogram +
   labs(
     x = "Proportion of red balls in each sample",
-    title = "Histogram of 33 proportions of red balls for each sample"
+    title = "Histogram of 33 proportions"
   )
 ```
 
 
-### Recap and additional remarks {#sampling-what-did-we-just-do}
-
-Recall that the goal of our bowl activity was to determine the proportion of red balls in a bowl. Since the bowl had many balls, performing an exhaustive count of red and white balls was impractical. Instead, we first took a *sample* of 50 balls and determined that the proportion of red balls in this sample, or *sample proportion*, was 34%. This was an *estimate* of the proportion of red balls in the entire bowl. We then took more samples and obtained more sample proportions, 33 in total. This activity introduced what in statistics we call \index{sampling} *sampling*.
-
-We can introduce other statistical terms that we have used in this activity. Since we return the observed balls to the bowl before getting another sample, we are *sampling with replacement* and because we mix the balls before taking a new sample, the samples were *randomly drawn* and are called *random samples*. As shown in Figure \@ref(fig:samplingdistribution-tactile), different random samples produce different sample proportions. This phenomenon is called *sampling variation* and it is central to the ideas we develop later in this chapter. \index{sampling!variation}
+When studying the histogram we can see that some proportions are lower than 25% and others are greater than 45%, but most of the sample proportions obtained are between 30% and 45%.
 
 
+We can also use this activity to introduce some statistical terminology. The process of taking repeated *samples* of 50 balls and obtaining the corresponding *sample proportions* is called \index{sampling} *sampling*. Since we returned the observed balls to the bowl before getting another sample, we say that we performed *sampling with replacement* and because we mixed the balls before taking a new sample, the samples were *randomly drawn* and are called *random samples*. 
+
+As shown in Figure \@ref(fig:samplingdistribution-tactile), different random samples produce different sample proportions. This phenomenon is called *sampling variation*\index{sampling!variation}. Furthermore, the histogram is a graphical representation of the *distribution* of sample proportions, it describes the sample proportions that have been obtained and how often they appear. The distribution of all possible sample proportions that can be obtained from random samples is called, appropriately, the *sampling distribution* of the sample proportion. The sampling distribution is central to the ideas we develop in this chapter. 
+
+
+<!--
+Need to review Learning checks AV 9-13-23
+-->
 
 
 ```{block, type="learncheck", purl=FALSE}
@@ -184,24 +238,16 @@ We can introduce other statistical terms that we have used in this activity. Sin
 
 
 
-## Virtual sampling {#sampling-simulation}
+### Virtual sampling {#sampling-simulation}
 
-In the previous Section \@ref(sampling-activity), we performed a *tactile* sampling activity: we asked you to take physical samples using a real shovel from a bowl with colored balls by hand. This activity helps us develop the appropriate intuition about sampling. We are ready to extend the entire process using simulations on a computer, a sort of *virtual* sampling activity.
+In the previous Section \@ref(sampling-activity), we performed a *tactile* sampling activity: we asked students to take physical samples using a real shovel from a bowl with white and red balls by hand. We now extend the entire process using simulations on a computer, a sort of *virtual* sampling activity.
 
-The use of simulations permits us to study *sampling variation* not only for 33 random samples but for thousands, tens of thousands, or even more samples. In addition, we do not need to restrict the samples to 50 balls, we can change the size of the virtual shovel to any size. As we show later in this section, the sample size of the samples taken has a direct effect on the magnitude of the *sampling variation*.
+The use of simulations permits us to study not only 33 random samples but thousands, tens of thousands, or even more samples. When a large number of random samples is obtained, we can gain a better understanding of the *sampling distribution* and the *sampling variation* of sample proportions. In addition, we are not limited by samples of 50 balls, as we can simulate sampling with any desired sample size. We are going to do all this in this subsection. We start by mimicking are manual activity.
 
 
-### One virtual sample
+#### One virtual sample
 
-To construct the virtual analog of the tactile sampling exercise presented in Section \@ref(sampling-activity), the bowl seen in Figure \@ref(fig:sampling-exercise-1) is represented by the data frame `bowl` included in the `moderndive` package. The rows of `bowl` correspond exactly to the contents of the actual bowl. 
-
-```{r}
-bowl
-```
-
-The data frame `bowl` has `r num_balls` rows, each representing a ball in the bowl. The first variable `ball_ID` is used as an *identification variable* as discussed in Subsection \@ref(identification-vs-measurement-variables); none of the balls in the actual bowl are marked with numbers. The second variable `color` indicates whether a particular virtual ball is red or white. View the contents of the bowl in RStudio's data viewer and scroll through the contents to convince yourself that `bowl` is indeed a virtual analog of the actual bowl in Figure \@ref(fig:sampling-exercise-1).
-
-The virtual analog to the 50-ball shovel seen in Figure \@ref(fig:sampling-exercise-2) is obtained using the `rep_slice_sample()` function included in the `moderndive` package. This function allows us to take `rep`eated (or `rep`licated) random `samples` of size `n`. We start by obtaining a single sample of 50 balls: 
+Recall that the bowl seen in Figure \@ref(fig:sampling-exercise-1) is represented by the data frame `bowl` included in the `moderndive` package. The virtual analog to the 50-ball shovel seen in Figure \@ref(fig:sampling-exercise-2) can be obtained using the `rep_slice_sample()` function included in the `moderndive` package. This function allows us to take `rep`eated (or `rep`licated) random `samples` of size `n`. We start by obtaining a single sample of 50 balls: 
 
 <!--
 Note: Put this back in if people have trouble understanding rep_slice_sample() at first:
@@ -224,63 +270,25 @@ virtual_shovel <- bowl |>
 virtual_shovel
 ```
 
-Observe that `virtual_shovel` has 50 rows corresponding to our virtual sample of size 50. The `ball_ID` variable identifies which of the `r num_balls` balls from `bowl` are included in our sample of 50 balls while `color` denotes its color. The `replicate` variable is equal to 1 for all 50 rows because we have decided to take only one sample right now. Later on, we take more samples and `replicate` would take more values. 
+Observe that `virtual_shovel` has 50 rows corresponding to our virtual sample of size 50. The `ball_ID` variable identifies which of the `r num_balls` balls from `bowl` are included in our sample of 50 balls while `color` denotes its color. The `replicate` variable is equal to 1 for all 50 rows because we have decided to take only one sample right now. Later on, we take more samples, and `replicate` will take more values. 
 
-We compute the proportion of red balls in our virtual sample using the `dplyr` data wrangling verbs you learned in Chapter \@ref(wrangling). First, for each of our 50 sampled balls, we identify if it is red or not using a test for equality with `==`. We then create a new Boolean variable `is_red` using the `mutate()` function from Section \@ref(mutate):
-
-```{r}
-virtual_shovel |> 
-  mutate(is_red = (color == "red"))
-```
-
-Observe that for every row where `color == "red"`, the Boolean (logical)  value `TRUE` is returned and for every row where `color` is not equal to `"red"`, the Boolean `FALSE` is returned.
-
-We now compute the number of balls out of 50 that are red using the `summarize()` function. Recall from Section \@ref(summarize) that `summarize()` takes a data frame with many rows and returns a data frame with a single row containing summary statistics, like the `mean()` or `median()`. In this case, we use the `sum()`:
-
-```{r}
-virtual_shovel |> 
-  mutate(is_red = (color == "red")) |> 
-  summarize(num_red = sum(is_red))
-```
-```{r, echo=FALSE, purl=FALSE}
-n_red_virtual_shovel <- virtual_shovel |>
-  mutate(is_red = (color == "red")) |>
-  summarize(num_red = sum(is_red)) |>
-  pull(num_red)
-```
-
-Since R treats `TRUE` like the number `1` and `FALSE` like the number `0`, the number of `TRUE`s and `FALSE`s is equivalent to summing `1`'s and `0`'s. In the end, the `sum()` operation counts the number of balls where `color` is `red`. In our case, `r n_red_virtual_shovel` of the 50 balls were red. However, you might have gotten a different number of red balls because of the randomness of the virtual sampling.
+We compute the proportion of red balls in our virtual sample. The code we use is similar to the one used for finding the proportion of red balls in the entire bowl in Subsection \@ref(population-proportion):
 
 
-Alternatively, we can compute the proportion of the 50 sampled balls by using `mean()` of these `1`'s and `0`'s instead of `sum()`:
-
-```{r}
-virtual_shovel |> 
-  mutate(is_red = color == "red") |> 
-  summarize(prop_red = mean(is_red))
-```
-```{r, echo=FALSE, purl=FALSE}
-virtual_shovel_prop_red <- virtual_shovel |>
-  mutate(is_red = color == "red") |>
-  summarize(prop_red = mean(is_red)) |>
+```{r echo=-c(1, 2)}
+# Neat way to remove from output particular code pieces!
+prop_red_sample1 <- virtual_shovel |> 
+  summarize(prop_red = mean(color == "red")) |> 
   pull(prop_red)
-virtual_shovel_perc_red <- virtual_shovel_prop_red * 100
+virtual_shovel |> 
+ summarize(prop_red = mean(color == "red"))
 ```
 
-In other words, `r virtual_shovel_perc_red`% of this virtual sample's balls were red. One of the advantages of `dplyr` is that we can produce all this in a succinct way by combining all this code at once, from obtaining the sample to getting the sample proportion, as follows:
+Based on this random sample, `r prop_red_sample1*100`% of the `virtual_shovel`'s 50 balls were red! We proceed finding the sample proportion for more random samples.
 
-```{r echo=-1}
-set.seed(76)
-bowl |> 
-  rep_slice_sample(n = 50) |>
-  summarize(num_red = mean(color == "red"))
-```
+#### Thirty-three virtual samples {#shovel-33-times}
 
-Great! `r virtual_shovel_perc_red`% of the `virtual_shovel`'s 50 balls were red! Based on this particular random sample of 50 balls, our estimated proportion of red balls in the bowl is `r virtual_shovel_perc_red`%. But remember that if we obtain another random sample of 50 balls the sample proportion of red balls may be different due to sampling variation. 
-
-### Thirty-three virtual samples {#shovel-33-times}
-
-In our tactile activity in Section \@ref(sampling-activity), students got 33 samples and computed 33 sample proportions. They repeated/replicated the sampling process 33 times. We do this virtually by again using the function `rep_slice_sample()`, but this time adding the `reps = 33` argument; this tells R that we want to repeat the sampling 33 times. We save these samples in the data frame `virtual_samples`, as shown below, and then provide a preview of its first 10 rows. We may want to inspect the entire `virtual_samples` data frame by using RStudio's spreadsheet viewer by running `View(virtual_samples)`. 
+In Section \@ref(sampling-activity), students got 33 samples and sample proportions. They repeated/replicated the sampling process 33 times. We do this virtually by again using the function `rep_slice_sample()` and this time adding the `reps = 33` argument as we want to obtain 33 random samples. We save these samples in the data frame `virtual_samples`, as shown below, and then provide a preview of its first 10 rows. If you want to inspect the entire `virtual_samples` data frame, use RStudio's data viewer by running `View(virtual_samples)`. 
 
 ```{r echo=-1}
 set.seed(76)
@@ -289,9 +297,9 @@ virtual_samples <- bowl |>
 virtual_samples
 ```
 
-Observe in the spreadsheet viewer that the first 50 rows of `replicate` are equal to `1` while the next 50 rows of `replicate` are equal to `2`. This is telling us that the first 50 rows correspond to the first sample of 50 balls while the next 50 rows correspond to the second sample of 50 balls. This pattern continues for all `reps = 33` replicates and thus `virtual_samples` has 33 $\cdot$ 50 = 1650 rows. 
+Observe in the data viewer that the first 50 rows of `replicate` are equal to `1`, the next 50 rows of `replicate` are equal to `2`, and so on. The first 50 rows correspond to the first sample of 50 balls while the next 50 rows correspond to the second sample of 50 balls. This pattern continues for all `reps = 33` replicates, and thus `virtual_samples` has 33 $\cdot$ 50 = 1650 rows. 
 
-Using `virtual_samples` we obtain the proportion of red balls for each replicate. We use the same `dplyr` verbs as before. In particular, we add `group_by()` of the `replicate` variable. Recall from Section \@ref(groupby) that by assigning the grouping variable "meta-data" before `summarize()`, we perform the calculations needed for each replicate separately. The other line of code, as explained in the case of one sample, calculates the proportion of red balls. We display a preview of the first 10 rows below:
+Using `virtual_samples` we obtain the proportion of red balls for each replicate. We use the same `dplyr` verbs as before. In particular, we add `group_by()` of the `replicate` variable. Recall from Section \@ref(groupby) that by assigning the grouping variable "meta-data" before `summarize()`, we perform the calculations needed for each replicate separately. The other line of code, as explained in the case of one sample, calculates the sample proportion of red balls. A preview of the first 10 rows is presented below:
 
 ```{r}
 virtual_prop_red <- virtual_samples |> 
@@ -300,17 +308,22 @@ virtual_prop_red <- virtual_samples |>
 virtual_prop_red
 ```
 
-Actually, the function `rep_slice_sample()` already groups the data by replicate, so we do not need to include `group_by()` anymore. As we did in the case of a single sample, we simplify the code, from getting the needed samples to getting the sample proportions for each samples. Here is the code:
+Actually, the function `rep_slice_sample()` already groups the data by replicate, so it is not necessary to include `group_by()` in the code. Moreover, using `dplyr` pipes in R we could simplify the work and write everything at once: 
+- using `rep_slice_sample()` we obtain 33 replicates, 
+- each is a random sample of 50 balls, and 
+- using `summarize()` with `mean()` on the Boolean values, we obtain the proportion of red balls for each sample. 
+
+We store these proportions on the data frame `virtual_prop_red` and print the first 10 sample proportions (for the first 10 samples) as an illustration:
 
 ```{r echo=-1}
 set.seed(76)
-virtual_prop_red <- bowl |>
+virtual_prop_red <- bowl |> 
   rep_slice_sample(n = 50, reps = 33) |>
   summarize(prop_red = mean(color == "red"))
 virtual_prop_red
 ```
 
-As was the case in the tactile activity, there is variation in the resulting 33 proportions from virtual samples. As shown in Figure \@ref(fig:samplingdistribution-virtual) a histogram helps us visualize this sampling variation. As we did in Section \@ref{#sampling-activity}, we construct the histogram using `ggplot()`, `geom_histogram()`, and including the arguments `binwidth = 0.05` and `boundary = 0.4`. This creates the appropriate bins with boundaries at 0.3, 0.35, 0.4, 0.45, etc., as shown below:
+As was the case in the tactile activity, there is sampling variation in the resulting 33 proportions obtained from the virtual samples. As we did manually in Subsection \@ref(sampling-simulation), we construct a histogram with these sample proportions as shown in Figure \@ref(fig:samplingdistribution-virtual). The histogram helps us visualize the sampling distribution of the sample proportion. Observe again the histogram was constructed using `ggplot()`, `geom_histogram()`, and including the arguments `binwidth = 0.05` and `boundary = 0.4`.
 
 ```{r eval=FALSE}
 ggplot(virtual_prop_red, aes(x = prop_red)) +
@@ -328,17 +341,17 @@ virtual_histogram +
   )
 ``` 
 
-Observe that some proportions are less than 30% and others are greater than 45%, but the most frequently occurring proportions were between 35% and 40% (for 11 out of 33 samples). We can also compare the virtual results with the tactile ones from the previous section in Figure \@ref(fig:tactile-vs-virtual). Observe that both histograms are somewhat similar in their center and variation, although not identical. These slight differences are again due to *sampling variation*.
+When observing the histogram we can see that some proportions are lower than 25% and others are greater than 45%. Also, the sample proportions observed more frequently are between 35% and 40% (for 11 out of 33 samples). We have obtained similar results when sampling was done by hand in Subsection \@ref(sampling-manual) and the histogram was presented in Figure \@ref(fig:samplingdistribution-tactile). We present both histograms side by side in Figure  \@ref(fig:tactile-vs-virtual) for an easy comparison. Note that they are somewhat similar in their center and variation, although not identical. The differences are also due to *sampling variation*.
 
-```{r tactile-vs-virtual, echo=FALSE, fig.cap="We illustrate sampling variation showing a histogram for virtual sample proportions (left) and another histogram for tactile sample proportions (right).", fig.height=2.9, purl=FALSE}
+```{r tactile-vs-virtual, echo=FALSE, fig.cap="We illustrate the sampling distribution of the sample proportion and sampling variation by showing a histogram for virtual sample proportions (left) and another histogram for tactile sample proportions (right).", fig.height=2.9, purl=FALSE}
 facet_compare <- bind_rows(
   virtual_prop_red |>
     mutate(type = "Virtual sampling"),
   tactile_prop_red |>
     select(replicate, red = red_balls, prop_red) |>
-    mutate(type = "Tactile sampling")
+    mutate(type = "Physical sampling")
 ) |>
-  mutate(type = factor(type, levels = c("Virtual sampling", "Tactile sampling"))) |>
+  mutate(type = factor(type, levels = c("Virtual sampling", "Physical sampling"))) |>
   ggplot(aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
   facet_wrap(~type) +
@@ -358,6 +371,13 @@ if (is_latex_output()) {
 }
 ```
 
+
+
+
+<!--
+Need to review Learning checks AV 9-13-23
+-->
+
 ```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
 **_Learning check_**
@@ -372,24 +392,17 @@ if (is_latex_output()) {
 ```
 
 
-### One thousand virtual samples {#shovel-1000-times}
+#### One thousand virtual samples {#shovel-1000-times}
 
-We now study the effects of sampling variation with 1000 random samples. Trying to do this manually would be impractical while obtaining virtual samples can be done quickly and efficiently. We repeat the steps performed in Subsection \@ref(shovel-33-times) using the `rep_slice_sample()` function with a sample `size` set to be 50, but now the number of replicates `reps` is set to `1000`. Be sure to scroll through the contents of `virtual_samples` in RStudio's viewer. 
 
-```{r}
-virtual_samples <- bowl |> 
-  rep_slice_sample(n = 50, reps = 1000)
-virtual_samples
-```
+It was helpful to observe how sampling variation affects sample proportions in 33 samples. It was also interesting to note that while the 33 virtual samples provide different sample proportions than the 33 physical samples, the overall patterns were fairly similar. Because the samples were obtained at random in both cases, any other set of 33 samples, virtual or physical, would provide a different set of sample proportions due to sampling variation, but the overall patterns would still be similar. Still, 33 samples are not enough to fully understand these patterns.
 
-Observe that now `virtual_samples` has 1000 $\cdot$ 50 = 50,000 rows. Using the same data wrangling code as in Subsection \@ref(shovel-33-times), we obtain `virtual_prop_red` with the count of red balls and corresponding sample proportion for all 1000 random samples. 
+This is why we now study the sampling distribution and the effects of sampling variation with 1000 random samples. Trying to do this manually could be impractical but obtaining virtual samples can be done quickly and efficiently. Additionally, we have already developed the tools for this. We repeat the steps performed earlier using the `rep_slice_sample()` function with a sample `size` set to be 50. This time however, we set the number of replicates `reps` to `1000`, and `summarize()` and `mean()` used again on the Boolean values to obtain the sample proportions. We obtain `virtual_prop_red` with the count of red balls and the corresponding sample proportion for all 1000 random samples. The proportions for the first 10 samples are shown below:
 
-```{r}
-#virtual_prop_red <- virtual_samples |> 
-#  group_by(replicate) |> 
-#  summarize(red = sum(color == "red")) |> 
-#  mutate(prop_red = red / 50)
-virtual_prop_red <- virtual_samples |> 
+```{r echo=-1}
+set.seed(76)
+virtual_prop_red <- bowl |> 
+  rep_slice_sample(n = 50, reps = 1000) |> 
   summarize(prop_red = mean(color == "red"))
 virtual_prop_red
 ```
@@ -398,17 +411,13 @@ As we did before, we construct a histogram for these 1000 sample proportions. It
 
 ```{r eval=FALSE}
 ggplot(virtual_prop_red, aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
+  geom_histogram(binwidth = 0.04, boundary = 0.4, color = "white") +
   labs(x = "Sample proportion", 
        title = "Histogram of 1000 sample proportions") 
 ```
 ```{r samplingdistribution-virtual-1000, echo=FALSE, fig.cap="The distribution of 1000 proportions based on 1000 random samples of size 50.", purl=FALSE}
-virtual_prop_red <- virtual_samples |>
-  group_by(replicate) |>
-  summarize(red = sum(color == "red")) |>
-  mutate(prop_red = red / 50)
 virtual_histogram <- ggplot(virtual_prop_red, aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white")
+  geom_histogram(binwidth = 0.04, boundary = 0.4, color = "white")
 virtual_histogram +
   labs(
     x = "Sample proportion",
@@ -416,8 +425,11 @@ virtual_histogram +
   )
 ``` 
 
-The sample proportions observed in the histogram could be as low as 15% or as high as 60%, but those extreme proportions are rare. The most frequent proportions obtained are those between 35% and 40%. Furthermore, the histogram shows now a symmetric and bell-shaped distribution that can be approximated well by a normal distribution. Please read the "Normal distribution" section (Appendix \@ref(appendix-normal-curve)) for a brief discussion of this distribution and its properties.
+The sample proportions represented by the histogram could be as low as 15% or as high as 60%, but those extreme proportions are rare. The most frequent proportions obtained are those between 35% and 40%. Furthermore, the histogram shows now a symmetric and bell-shaped distribution that can be approximated well by a normal distribution. Please read the "Normal distribution" section (Appendix \@ref(appendix-normal-curve)) for a brief discussion of this distribution and its properties.
 
+<!-- 
+Learning checks need to be updated. AV 8/17/23
+-->
 
 ```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
@@ -435,9 +447,11 @@ The sample proportions observed in the histogram could be as low as 15% or as hi
 ```
 
 
-### Different sample sizes {#different-shovels}
+#### Different sample sizes {#different-shovels}
 
-We consider again the goal of our activity in Section \@ref(sampling-activity); we want to determine the proportion of red balls in the bowl. But now, assume that we can use three shovels of sizes 25, 50, and 100; as shown in Figure \@ref(fig:three-shovels). That is, we can take samples of different sizes. As we show later in this subsection, the size of the sample has a direct effect on the magnitude of sampling variation.
+Another advantage of using simulations is that we can also study how the sampling distribution of the sample proportion changes if we obtain the sample proportions from samples smaller than or larger than 50 balls. We do need to be careful to not mix results though:  we build the sampling distribution using sample proportions obtained from samples of the **same** size, but the size chosen does not have to be 50 balls. 
+
+We must first decide the sample size we want to use, and then obtain samples using that size. As an illustration, we can perform the sampling activity three times, for each activity using a different sample size, think of having three shovels of sizes 25, 50, and 100 as shown in Figure \@ref(fig:three-shovels). Of course, we do this virtually: with each shovel we gather many random samples, calculate the corresponding sample proportions, and plot those proportions in a histogram. Therefore we obtain three histograms, each one describing the sampling distribution for sample proportions obtained from samples of size 25, 50, and 100, respectively. As we show later in this subsection, the size of the sample has a direct effect on the sampling distribution and the magnitude of its sampling variation.
 
 <!--
 A shovel with 25 slots          |  A shovel with 50 slots  | A shovel with 100 slots
@@ -449,121 +463,89 @@ A shovel with 25 slots          |  A shovel with 50 slots  | A shovel with 100 s
 include_graphics("images/sampling/balls/three_shovels.png")
 ```
 
-We follow the same process performed in subsection \@ref(shovel-1000-times): we generate 1000 samples, obtain the sample proportions, and use them to draw a histogram. We do this three times with the `size` argument set to `25`, `50`, and `100`, respectively. Run each of the following code segments individually and then compare the resulting histograms.
+We follow the same process performed in subsection \@ref(shovel-1000-times): we generate 1000 samples, obtain the sample proportions, and use them to draw a histogram. We follow this process three different times, setting the `size` argument in the code equal to `25`, `50`, and `100`, respectively. We run each of the following code segments individually and then compare the resulting histograms.
 
 ```{r, eval=FALSE}
 # Segment 1: sample size = 25 ------------------------------
-# 1.a) Virtually use shovel 1000 times
-virtual_samples_25 <- bowl |> 
-  rep_slice_sample(n = 25, reps = 1000)
+# 1.a) Compute sample proportions for 1000 samples, each sample of size 25
+virtual_prop_red_25 <- bowl |> 
+  rep_slice_sample(n = 25, reps = 1000) |> 
+  summarize(prop_red = mean(color == "red"))
 
-# 1.b) Compute resulting 1000 replicates of proportion red
-virtual_prop_red_25 <- virtual_samples_25 |> 
-  group_by(replicate) |> 
-  summarize(red = sum(color == "red")) |> 
-  mutate(prop_red = red / 25)
-
-# 1.c) Plot distribution via a histogram
+# 1.b) Plot a histogram to represent the distribution of the sample proportions
 ggplot(virtual_prop_red_25, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
   labs(x = "Proportion of 25 balls that were red", title = "25") 
 
 
 # Segment 2: sample size = 50 ------------------------------
-# 2.a) Virtually use shovel 1000 times
-virtual_samples_50 <- bowl |> 
-  rep_slice_sample(n = 50, reps = 1000)
+# 2.a) Compute sample proportions for 1000 samples, each sample of size 50
+virtual_prop_red_50 <- bowl |> 
+  rep_slice_sample(n = 50, reps = 1000) |> 
+  summarize(prop_red = mean(color == "red"))
 
-# 2.b) Compute resulting 1000 replicates of proportion red
-virtual_prop_red_50 <- virtual_samples_50 |> 
-  group_by(replicate) |> 
-  summarize(red = sum(color == "red")) |> 
-  mutate(prop_red = red / 50)
-
-# 2.c) Plot distribution via a histogram
+# 2.b) Plot a histogram to represent the distribution of the sample proportions
 ggplot(virtual_prop_red_50, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
   labs(x = "Proportion of 50 balls that were red", title = "50")  
 
 
 # Segment 3: sample size = 100 ------------------------------
-# 3.a) Virtually using shovel with 100 slots 1000 times
-virtual_samples_100 <- bowl |> 
-  rep_slice_sample(n = 100, reps = 1000)
+# 2.a) Compute sample proportions for 1000 samples, each sample of size 100
+virtual_prop_red_100 <- bowl |> 
+  rep_slice_sample(n = 100, reps = 1000) |> 
+  summarize(prop_red = mean(color == "red"))
 
-# 3.b) Compute resulting 1000 replicates of proportion red
-virtual_prop_red_100 <- virtual_samples_100 |> 
-  group_by(replicate) |> 
-  summarize(red = sum(color == "red")) |> 
-  mutate(prop_red = red / 100)
-
-# 3.c) Plot distribution via a histogram
+# 3.b) Plot a histogram to represent the distribution of the sample proportions
 ggplot(virtual_prop_red_100, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
   labs(x = "Proportion of 100 balls that were red", title = "100") 
-
-
-#virtual_prop_red_50 <- bowl |> 
-#  rep_slice_sample(n = 50, reps = 1000)|>
-#  summarize(prop_red = mean(color == "red"), n = n())
 ```
 
 For easy comparison, we present the three resulting histograms in a single row with matching x and y axes in Figure \@ref(fig:comparing-sampling-distributions).
 
 ```{r comparing-sampling-distributions, echo=FALSE, fig.height=3, fig.cap="Histograms of sample proportions for different sample sizes.", purl=FALSE}
 # n = 25
-if (!file.exists("rds/virtual_samples_25.rds")) {
-  virtual_samples_25 <- bowl |>
-    rep_slice_sample(n = 25, reps = 1000)
-  write_rds(virtual_samples_25, "rds/virtual_samples_25.rds")
+if (!file.exists("rds/virtual_prop_red_25.rds")) {
+  virtual_prop_red_25 <- bowl |>
+    rep_slice_sample(n = 25, reps = 1000) |>
+    summarize(prop_red = mean(color == "red"), n = n())
+  write_rds(virtual_prop_red_25, "rds/virtual_prop_red_25.rds")
 } else {
-  virtual_samples_25 <- read_rds("rds/virtual_samples_25.rds")
+  virtual_prop_red_25 <- read_rds("rds/virtual_prop_red_25.rds")
 }
-virtual_prop_red_25 <- virtual_samples_25 |>
-  group_by(replicate) |>
-  summarize(red = sum(color == "red")) |>
-  mutate(prop_red = red / 25) |>
-  mutate(n = 25)
 
 # n = 50
-if (!file.exists("rds/virtual_samples_50.rds")) {
-  virtual_samples_50 <- bowl |>
-    rep_slice_sample(n = 50, reps = 1000)
-  write_rds(virtual_samples_50, "rds/virtual_samples_50.rds")
+if (!file.exists("rds/virtual_prop_red_50.rds")) {
+  virtual_prop_red_50 <- bowl |>
+    rep_slice_sample(n = 50, reps = 1000) |>
+    summarize(prop_red = mean(color == "red"), n = n())
+  write_rds(virtual_prop_red_50, "rds/virtual_prop_red_50.rds")
 } else {
-  virtual_samples_50 <- read_rds("rds/virtual_samples_50.rds")
+  virtual_prop_red_50 <- read_rds("rds/virtual_prop_red_50.rds")
 }
-virtual_prop_red_50 <- virtual_samples_50 |>
-  group_by(replicate) |>
-  summarize(red = sum(color == "red")) |>
-  mutate(prop_red = red / 50) |>
-  mutate(n = 50)
 
 # n = 100
-if (!file.exists("rds/virtual_samples_100.rds")) {
-  virtual_samples_100 <- bowl |>
-    rep_slice_sample(n = 100, reps = 1000)
-  write_rds(virtual_samples_100, "rds/virtual_samples_100.rds")
+if (!file.exists("rds/virtual_prop_red_100.rds")) {
+  virtual_prop_red_100 <- bowl |>
+    rep_slice_sample(n = 100, reps = 1000) |>
+    summarize(prop_red = mean(color == "red"), n = n())
+  write_rds(virtual_prop_red_100, "rds/virtual_prop_red_100.rds")
 } else {
-  virtual_samples_100 <- read_rds("rds/virtual_samples_100.rds")
+  virtual_prop_red_100 <- read_rds("rds/virtual_prop_red_100.rds")
 }
-virtual_prop_red_100 <- virtual_samples_100 |>
-  group_by(replicate) |>
-  summarize(red = sum(color == "red")) |>
-  mutate(prop_red = red / 100) |>
-  mutate(n = 100)
 
-virtual_prop <- bind_rows(
+virtual_prop_red <- bind_rows(
   virtual_prop_red_25,
   virtual_prop_red_50,
   virtual_prop_red_100
 )
 
-comparing_sampling_distributions <- ggplot(virtual_prop, aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
+comparing_sampling_distributions <- ggplot(virtual_prop_red, aes(x = prop_red)) +
+  geom_histogram(binwidth = 0.04, boundary = 0.4, color = "white") +
   labs(
     x = "Sample proportions for red balls",
-    title = "Comparing histograms of sample proportions for three different sample sizes"
+    title = "Histograms for three different sample sizes"
   ) +
   facet_wrap(~n)
 
@@ -579,46 +561,21 @@ if (is_latex_output()) {
 ```
 
 
-Observe that all three histograms are bell-shaped and appear to center around a middle value, somewhere between 35% and 40%. In addition, as the sample size increases, the variation among the 1000 sample proportions decreases and there are fewer differences due to sampling variation.
+Observe that all three histograms are:
 
-Moreover, the amount of sampling variation is actually proportional to the sample size used. To see this, we measure the amount of variation explicitly using a summary statistic called the \index{standard deviation} *standard deviation* (see Appendix \@ref(appendix-stat-terms) for a brief discussion on the properties of the standard deviation). The following data wrangling code introduces the `sd()` summary function to calculate the standard deviation of 1000 sample proportions of the same sample size. Therefore, three standard deviations are obtained, one for each sample size, as shown below.
 
-```{r, eval=FALSE}
-# n = 25
-virtual_prop_red_25 |> 
-  summarize(sd = sd(prop_red))
+- centered around the same middle value, which appears to be a value slightly below 0.4,
+- exhibit *sampling variation* that is different for each sample size. In particular, as the sample size increases from 25 to 50 to 100, the sample proportions do not vary as much and they seem to get closer to the middle value.
+- somewhat bell-shaped
 
-# n = 50
-virtual_prop_red_50 |> 
-  summarize(sd = sd(prop_red))
+These are important characteristic of the *sampling distribution* of the sample proportion: the first observation relates to the shape of the distribution, the second to the center of the distribution, and the last one to the *sampling variation* and how it is affected by the sample size.
+These results are not coincidental or isolated to the example of sample proportions of red balls in a bowl. In the next subsection, a theoretical framework is introduced that helps explain with precise mathematical equations the behavior of sample proportions obtained from random samples.
 
-# n = 100
-virtual_prop_red_100 |> 
-  summarize(sd = sd(prop_red))
-```
 
-Let's compare these three measures of distributional variation in Table \@ref(tab:comparing-n).
+<!-- 
+Learning checks need to be updated. AV 8/17/23
+-->
 
-```{r comparing-n, echo=FALSE, purl=FALSE}
-comparing_n_table <- virtual_prop |>
-  group_by(n) |>
-  summarize(sd = sd(prop_red)) |>
-  rename(`Sample size` = n, `Standard deviation of sample proportions` = sd)
-
-comparing_n_table |>
-  kable(
-    digits = 3,
-    caption = "Comparing standard deviations of sample proportions for three different sample sizes",
-    booktabs = TRUE,
-    linesep = ""
-  ) |>
-  kable_styling(
-    font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
-  )
-```
-
-As we observed in Figure \@ref(fig:comparing-sampling-distributions), as the sample size increases, the sampling variation decreases. If this variation becomes really small, each sample proportion of red balls is not that different from any other sample proportion of red balls. So as the sample size increases, our guesses at the true proportion of red balls in the bowl get more precise. 
 
 ```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
@@ -626,17 +583,21 @@ As we observed in Figure \@ref(fig:comparing-sampling-distributions), as the sam
 \vspace{-0.1in}
 ```
 
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** As shown in Figure \@ref(fig:comparing-sampling-distributions) the histograms of sample proportions are somewhat bell-shaped. What can you say about the center of the histograms?
+
+- A. The larger the sample size the greater the center of the histogram.
+- B. The larger the sample size the smaller the center of the histogram.
+- C. The center of each histogram seems to be about the same, regardless of the sample size.
+
+
+
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** As shown in Figure \@ref(fig:comparing-sampling-distributions) as the sample size increases, the histogram gets narrower. What happens with the sample proportions?
 
 - A. They vary less.
 - B. They vary by the same amount.
 - C. They vary more.
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What summary statistic did we use to quantify how much the 1000 sample proportions of red balls varied?
 
-- A. The interquartile range
-- B. The standard deviation
-- C. The range: the largest value minus the smallest.
 
 ```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
@@ -644,92 +605,44 @@ As we observed in Figure \@ref(fig:comparing-sampling-distributions), as the sam
 
 
 
+## Sampling Framework {#sampling-framework}
+
+<!--
+This section may need to be modified/cut and a similar content should appear after the second activity
+-->
+
+In Section \@ref(sampling-activity) we gained some intuition about sampling and its characteristics. In this section we introduce some statistical definitions and terminology related to sampling. We conclude by introducing key characteristics that will be formally studied in the rest of the chapter.
 
 
-## Sampling framework {#sampling-framework}
-
-In both our tactile and virtual sampling activities, we obtain samples in order to guess or *estimate* the proportion of red balls in the bowl. We use sampling for the purpose of *estimation*, because it is a less cumbersome approach than performing an exhaustive count of all the balls. The virtual sampling activity concludes with the results shown in Figure \@ref(fig:comparing-sampling-distributions) and Table \@ref(tab:comparing-n): comparing 1000 sample proportions of red balls using samples of sizes 25, 50, and 100. The conclusions of these activities can be considered our first attempt at understanding two key concepts relating to sampling for estimation:
-
-1. The effect of *sampling variation* on our estimates.
-1. The effect of sample size on *sampling variation*.
-
-Now that we have acquired some intuition about sampling, we introduce statistical definitions, terminology, and notation related to sampling. We use those to succinctly summarize and refer to the ideas behind sampling in the rest of this book. 
+### Population, sample, and the sampling distribution {#terminology-and-notation}
 
 
-### Statistical inference, terminology, and notation {#terminology-and-notation}
+A **population** or **study population** is a collection of all individuals or observations of interest. In the bowl activities the **population** is the collection of all the balls in the bowl. A **sample** is a subsets of the population. **Sampling** is the act of collecting samples from the population. **Simple random sampling** is *sampling* where each member of the population has the same chance of being selected, for example, by using a shovel to select balls from a bowl. A **random sample** is a sample obtained using simple random sampling. In the bowl activities, physical and virtual, we use simple random sampling to obtain random samples from the bowl. 
+
+A **population parameter** or simply a **parameter** is a numerical summary, a number, that represents some characteristic of the population. A **sample statistic** or simply a **statistic** is a numerical summary computed from a sample. In the bowl activities the parameter of interest was the population proportion $p$=`r prop_red`. Similarly, in subsection \@ref(one-sample) a sample of 50 balls was obtained and 17 were red. A statistic is the *sample proportion* which in this example was equal to $\widehat{p}= 0.34$. Observe how we use $p$ to represent the population proportion (parameter) and $\widehat{p}$ for the sample proportion (statistic).
+
+The **distribution** of a list of numbers is the set of the possible values in the list and how often they occur. The **sampling distribution of the sample proportion** is the **distribution**  of sample proportions obtained from **each possible** random samples of a given size. \index{sampling distributions} To illustrate this concept recall that in Subsection \@ref(different-shovels) we obtained three histograms shown in Figure \@ref(fig:comparing-sampling-distributions). The histogram on the left, for example, was constructed by obtaining 1000 random samples of size $n=25$, then finding the sample proportion for each sample and using these proportions to draw the histogram. This histogram is a good visual approximation of the **sampling distribution** of the sample proportion.
+
+The *sampling distribution* is not an easy concept to grasp right away: 
+
+- The *sampling distribution of the sample proportion* is the distribution of *sample proportions*; it is constructed using exclusively *sample proportions*.
+- Be careful as people learning this terminology sometimes confuse the term *sampling distribution* with a *sample's distribution*. The latter can be understood as the distribution of the values in a given sample.
+- A histogram obtained from a simulation of sample proportions is only a visual approximation of the sampling distribution. It is not the exact distribution. Still, when the simulations produce a large number of sample proportions, the resulting histogram provides a good approximation of the sampling distribution. This was the case in Subsection \@ref(different-shovels) and the three histograms shown in Figure \@ref(fig:comparing-sampling-distributions). 
+
+The lessons we learned by performing the activities in Section \@ref(sampling-activity) contribute to gaining insights about key characteristics of the *sampling distribution* of the *sample proportion*, namely:
+
+
+1. The center of the *sampling distribution*
+1. The effect of *sampling variation* on the *sampling distribution* and the effect of the sample size on this *sampling variation*
+1. The shape of the *sampling distribution* 
+
+The first two points relate to measures of central tendency and dispersion, respectively. The last one provides a connection to one of the most important theorems in statistics: the Central Limit Theorem. In the next section, we formally study these characteristics.
 
 
 
-We introduce additional terminology and some mathematical notation. We illustrate these concepts by connecting them to different elements of the sampling bowl activities described in previous sections. 
+<!-- 
+Learning checks need to be updated. AV 8/17/23
 
-The first set of terms and notations relate to **populations**:
-
-1. A **population** or **study population** is a collection of all individuals or observations that we are interested in. 
-    - We use upper-case $N$ to represent the size of the population.
-    - In our sampling activities, the **population** is the collection of balls in the bowl shown in Figure \@ref(fig:sampling-exercise-1). Since we also have the virtual `bowl` that represents this population, we know that the population has  $N$ = `r num_balls` balls in the bowl.
-    - Depending of the problem, the size of the population can be in the thousands, millions, or even more. Theoretical populations can also be infinity or have an infinite number of outcomes. 
-1. A **population parameter** or simply **parameter** is a numerical summary, a number, that represents some characteristic of the population.
-    - One of the most relevant parameters in our work is the average (or mean) of the population. We call it *population mean* and use the Greek letter $\mu$ to denote it. Another relevant parameter is the proportion of the population, or *population proportion*, and use the letter $p$ to denote it. Interestingly enough, the population proportion can be viewed as a special case of the population mean, as we show in the next section. 
-    - In our sampling activities, we were interested in the proportion of red balls in the entire bowl. The parameter of interest was $p$, the *population proportion* of red balls. 
-    - In our sampling bowl activities, we can calculate $p$ exactly by conducting a **census**: we inspect all $N$ = `r num_balls` balls, determine how many are red, and divide this number by `r num_balls`. 
-    
-
-We conduct this "virtual" census by using the same `dplyr` verbs used earlier but this time for the entire population, `bowl`, as shown below:
-
-```{r}
-bowl |> 
-  summarize(red = sum(color == "red")) 
-```
-
-Since `r num_red` of the `r num_balls` are red, then `r num_red`/`r num_balls` = `r prop_red` = `r percent_red_chr`. The *population proportion*, $p$, is equal to `r prop_red`.
-
-A clever reader may be now wondering why did we do any sampling if we already had a way of knowing that the exact proportion of red balls in the bowl was `r percent_red_chr`. This is correct, if our goal was to determine the population proportion of red ball in the bowl, sampling was not necessary. The real purpose of our activities was to learn about sampling variation, how *sampling variation* effects our estimates and how the sample size and other characteristics of the sample affect sampling variation.
-
-Furthermore, in real-life scenarios, typically, we do not have information about the entire population of interest, and we can often take only one sample. But our knowledge of sampling variation will allow us to learn a great deal about the population and population parameters based entirely on a single sample.
-
-The second set of terms and notations relate to **samples**:
-
-1. **Samples** are subsets of the population. **Random samples** are those samples obtained where each member in the population has the same chance of being selected as any other. **Sampling** is the act of collecting random samples from the population and using them to estimate population parameters. We mathematically denote the sample size using lowercase $n$. Typically the sample size $n$ is much smaller than the population size $N$. Thus taking a sample or a few samples is easier and cheaper than completing a census.
-      - All our bowl activities, tactile and virtual, are examples of sampling.
-1. A **sample statistic** or simply a **statistic** is a numerical summary, a number, computed from a sample. When this statistic is used to estimate a *population parameter* we also call it a **point estimate**.
-    - Two point estimates that are often used are the average (or mean) and the proportion of the sample. We call them *sample mean* and *sample proportion* and use $\widehat {\mu}$  and $\widehat{p}$ to denote them, respectively. The hat above the letter is a common convention in statistics to differentiate point estimates (samples) from parameters (populations). As in the case of population parameters, the sample proportion can be viewed as a special type of sample mean. 
-
-As we did in our virtual sampling activity, we take a random sample of $n$=50 balls from the virtual `bowl` and use it to obtain the sample proportion of red balls, $\widehat{p}$. We use the same `dplyr` verbs used earlier, as shown below:
-
-```{r}
-bowl |>
-  rep_slice_sample(n = 50) |> 
-  summarize(prop_red = mean(color == "red"))
-```
-
-The sample proportion, $\widehat{p}$, is given by the value of `prop_red`. It is also called a point estimate because is used to estimate the population proportion, $p$.
-
-The third set of terms relates to **sampling methodology**: the method used to collect samples.\index{sampling methodology} You'll see here and throughout the rest of the book that the *way* you collect samples directly influences their quality.
-
-1. A sample is said to be **representative** if it roughly "resembles" the population; if the characteristics found in the sample are a "good" representation of the characteristics found in the population.
-1. We say a sample is **generalizable** if any results based on the sample can be generalized to the population. In particular, information or conclusions obtained from the sample can be used as information or conclusions that apply to the entire population.
-1. We say a sampling procedure is **biased** if the samples obtained using this procedure have characteristics that systematically differ from those in the population. 
-    - Using our bowl sampling activity, if for each sample of 50 balls we take from the bowl, we remove three white balls and replace them with red balls, the samples obtained would be **biased** and the sample proportions would no longer be representative of the proportion of red balls in the bowl.
-1. **Random sampling** is a sampling procedure in which any group of individuals has an equal chance of being chosen than any other group of individuals of the same size. A sample obtained using random sampling is called a **random sample**
-
-
-Let's now put all three sets of terms and notation together, keeping our sampling activities in mind:
-
-* For the tactile activity, we extracted a sample of $n$ = 50 because we mixed all of the equally sized balls before using the shovel. For the virtual activity, we did the same by using the `rep_slice_sample()` function that takes advantage of the computer's [random number generator](https://en.wikipedia.org/wiki/Random_number_generation). In both cases we obtained *random samples*
-* the contents of the sample obtained are *unbiased* and *representative* of the contents of the bowl, thus
-* any result based on the sample can be *generalized* to the bowl, thus
-* The sample proportion $\widehat{p}$ of the $n$ = 50 balls in the shovel that are red is a "good guess" of the population proportion $p$ of the bowl's $N$ = `r num_balls` balls that are red, thus
-* we can **infer** about the bowl using the sample from the shovel.
-
-What we have done is **statistical inference**. **Inference** is the act of "making a guess" about some unknown. **Statistical inference** is the act of making a guess about a population using a random sample. This is one of the most important concepts in all of statistics. It is so important that this book is titled: "Statistical Inference via Data Science". More generally speaking, 
-
-* If the sampling of a sample of size $n$ is done at *random*, then
-* the sample is *unbiased* and *representative* of the population of size $N$, thus
-* any result based on the sample can *generalize* to the population, thus
-* the point estimate is a "good guess" of the unknown population parameter, thus
-* instead of performing a census, we can *infer* about the population using sampling.
-
-In the upcoming Chapter \@ref(confidence-intervals) on confidence intervals, we introduce the `infer` package, which makes statistical inference "tidy" and transparent.
 
 ```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
@@ -739,15 +652,8 @@ In the upcoming Chapter \@ref(confidence-intervals) on confidence intervals, we 
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** In the case of our bowl activity, what is the *population parameter*? Do we know its value?
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What would performing a census in our bowl activity correspond to? Why did we not perform a census?
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What purpose do *point estimates* serve in general? What is the name of the point estimate specific to our bowl activity? What is its mathematical notation?
-
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How did we ensure that our tactile samples using the shovel were random?
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why is it important that sampling be done *at random*?
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What are we *inferring* about the bowl based on the samples using the shovel?
 
 
 ```{block, type="learncheck", purl=FALSE}
@@ -755,45 +661,74 @@ In the upcoming Chapter \@ref(confidence-intervals) on confidence intervals, we 
 \vspace{-0.25in}
 ```
 
-
-
-### Sampling distributions {#sampling-definitions}
-
-We now introduce some important statistical definitions related to sampling. As a refresher of our 1000 repeated/replicated virtual samples of size $n$ = 25, $n$ = 50, and $n$ = 100 in Section \@ref(sampling-simulation), let's display Figure \@ref(fig:comparing-sampling-distributions) again as Figure \@ref(fig:comparing-sampling-distributions-1b).  
-
-```{r comparing-sampling-distributions-1b, fig.cap="Previously seen histograms as a graphical representation of three distributions of the sample proportion $\\widehat{p}$.", fig.height=3.1, echo=FALSE, purl=FALSE}
-comparing_sampling_distributions
-```
-
-These histograms are the graphical representation of the distribution of sample proportions. They are called **sampling distributions** of the sample proportion or more generally **sampling distributions** of point estimates. \index{sampling distributions} Their visualization displays the effect of sampling variation on the distribution of any point estimate, in this case, the sample proportion $\widehat{p}$. Using these sampling distributions, for a given sample size $n$, we can make statements about what values we can typically expect. Be careful, people learning this terminology sometimes confuse the term *sampling distribution* with a *sample's distribution* which is merely the distribution of the values in a single sample. 
-
-<!--
-TODO: Insert table distinguishing "sampling distribution of point estimates" vs "a sample's distribution"
 -->
 
-Observe the centers of all three sampling distributions: they are all roughly centered somewhere between 0.35 and 0.4 (or between 35% and 40%). Recall from earlier that the value of the population proportion $p$ of the $N$ = `r num_balls` balls in the bowl was `r num_red`/`r num_balls` = `r prop_red` = `r percent_red_chr`. We computed this value by performing a virtual census of `bowl`. Let's re-display our sampling distributions from Figure \@ref(fig:comparing-sampling-distributions-1b), but now with a vertical red line marking the true population proportion $p$ of red balls = `r percent_red_chr` in Figure \@ref(fig:comparing-sampling-distributions-3). We see that while there is a certain amount of error in the sample proportions $\widehat{p}$ for all three sampling distributions, on average the $\widehat{p}$ are centered at the true population proportion red $p$.
+## The Central Limit Theorem {#central-limit-theorem}
+
+A fascinating result in statistics is that, when obtaining random samples from any population, the corresponding sample means follow a typical behavior: their histogram is bell-shaped and has very unique features. This is true regardless of the distribution of the population values and forms the basis of what we know as the Central Limit Theorem. Before fully describing it, we introduce a theoretical framework to construct this and other characteristics related to sampling.
+
+
+### Random variables
+
+A simple theoretical framework can help us formalize important properties of the sampling distribution of the sample proportion. To do this we modify the bowl activity slightly. Instead of using a shovel to select all 25 balls at once, we randomly select one ball at a time, 25 times. If the ball is red we call it a success and record a 1 (one); if it is not red we call it a failure and record a 0 (zero). Then, we return the ball to the bowl so the proportion of red balls in the bowl doesn't change. 
+This process is called a trial or a Bernoulli trial in honor of Jacob Bernoulli, a 17th-century mathematician who is among the first ones to work with these trials. 
+Getting a sample of 25 balls is running 25 trials and obtaining 25 numbers, ones or zeros, representing whether or not we have observed red balls on each trial, respectively. 
+The average of these 25 numbers (zeros or ones) represents precisely the proportion or red balls in a sample of 25 balls.
+
+
+It is useful to represent a trial as a random variable. We use the uppercase letter $X_1$ to denote the random variable for the first trial. After the first trial is completed, so the color of the first ball is observed, the value of $X_1$ is realized as 1 if the ball is red or 0 if the ball is white. For example, if the first ball is red, we write $X_1 = 1$. Similarly we use $X_2$ to represent the second trial. For example if the second ball is white, $X_2$ is realized as $X_2=0$, and so on. Clearly $X_1, X_2, \dots$ are random variables only before the trials have been performed. After the trials, they are just the *ones* or *zeros* representing red or white balls, respectively.
+
+Moreover, since our experiment is to perform 25 trials and then find the average of them, this average or mean, before the trials are carried out, can also be expressed as a random variable: $$\overbar X = \frac{X_1+X_2+\dots+X_{25}}{25}.$$
+Here $\overbar X$ is the random variable that represents the average, or mean, of these 25 trials. This is why we call $\overbar X$ the **sample mean**. Again, $\overbar X$ is a random variable before the 25 trials have been performed. After the trials, $\overbar X$ is realized as the average of 25 zeros and ones. 
+For example, if the results of the trials are: $$\{0,0,0,1,0,1,0,1,0,0,1,0,0,1,1,0,0,0,1,1,0,1,0,0,0,1 \}$$  The observed value of $\overbar X$ will be 
+$$\overbar X = \frac{0+0+0+1+0+1+\dots+1+0+0+0+1}{25} = \frac{10}{25}=0.4.$$ 
+So, for this particular example, the sample mean is $\overbar X = 0.4$ which happens to be the sample proportion of red balls in this sample of 25 balls. In the context of Bernoulli trials, because we are finding averages of zeros and ones, **sample means** are **sample proportions**! Connecting with the notation used earlier, observe that after the trials have been completed, $\overbar X = \widehat{p}$.
+
+### The sampling distribution using random variables
+
+
+Suppose that we want to obtain the sample proportion for another random sample of 25 balls. In terms of the random variable $\overbar X$, this is performing 25 trials and obtaining another 25 values, ones and zeros, for $X_1, X_2, \dots, X_{25}$ and finding their average. For example we might get: $$\{1,0,0,1,0,0,0,1,0,0,1,0,1,0,1,1,0,0,0,1,0,1,0,0,0,0\}$$ 
+then, the realization of $\overbar X$ will be $\overbar X = 9/25 = 0.36$. Clearly this sample proportion was different than the one obtained earlier, 0.4. The possible values of $\overbar X$ are the possible proportions of red balls for sample of 25 balls. In other words, the value that $\overbar X$ takes after the trials have been completed is the sample proportion for the observed sample of red and white balls.
+
+Moreover, while any given trial can result in choosing a red ball or not (1 or 0), the chances or getting a red ball are influenced by the proportion of red balls in the bowl. For example, if a bowl has more red balls than white, the chances of getting a red ball on any given trial are higher than getting a white ball and because 1 is the realization of a trial when a red ball is observed, the sample proportion also would tend to be higher.
+
+Sampling variation does produce different sample proportions for different random samples, but they are influenced by the proportion of red and white balls in the bowl. This is why understanding the sampling distribution of the sample proportion is learning which sample proportions are possible and which proportions are more or less likely to be observed. Since the realization of $\overbar X$ is the observe sample proportion, the sampling distribution of the sample proportion is precisely the distribution of $\overbar X$. In the rest of this section, we use both expressions interchangeably. We recall the key characteristics of the *sampling distribution* of the sample proportion, now in terms of $\overbar X$:
+
+
+1. The center of the *distribution* of $\overbar X$
+1. The effect of *sampling variation* on the *distribution* of $\overbar X$ and the effect of the sample size on *sampling variation*
+1. The shape of the *distribution* of $\overbar X$
+
+To address these points, we use simulations. Simulations seldom provide the exact structure of the distribution, because an infinite number of samples may be needed for this. A large number of replications often produces a really good approximation of the distribution though and can be used to understand well the distribution's characteristics. Let's use the output obtained in Subsection \@ref(different-shovels); namely, the sample proportions for samples of size 25, 50, and 100. If we focus on size 25, think of each sample proportion from samples of size 25 as a possible value of $\overbar X$. We now use these sample proportions to illustrate properties of the distribution of $\bf X$, the sampling distribution of the sample proportion.
+
+### The center of the distribution: the expected value
+
+Since the distribution of $\overbar X$ is composed of all the sample proportions that can be obtained for a given sample size, the center of this distribution can be understood as the average of all these proportions. This is the value we would *expect* to get, on average, from all these sample proportions. This is why the center value of the sampling distribution is called the **expected value** of the sample proportion, and we write $E(\overbar X)$. Based on probability theory, the mean of $\overbar X$ happens to be equal to the population proportion of red balls in the bowl. In Subsection \@ref(population-proportion) we determined that the population proportion was `r num_red`/`r num_balls` = `r prop_red`, therefore $$E(\overbar X) = p = `r prop_red`.$$ 
+
+As an illustration, we noted in Subsection \@ref(different-shovels) when looking at the histograms in Figure \@ref(fig:comparing-sampling-distributions) that all three histograms were centered at some value between 0.35 and 0.4 (or between 35% and 40%). As we have established now, they are centered exactly at the expected value of $\overbar X$, which is the population proportion. Figure \@ref(fig:comparing-sampling-distributions-3) displays these histograms again, but this time adds a vertical red line on each of them at the location of the population proportion value, $p$ = `r prop_red`.
 
 ```{r comparing-sampling-distributions-3, echo=FALSE, fig.cap="Three sampling distributions with population proportion $p$ marked by vertical line.", purl=FALSE}
 p <- bowl |>
   summarize(mean(color == "red")) |>
   pull()
-samp_distn_compare <- virtual_prop |>
+samp_distn_compare <- virtual_prop_red |>
   mutate(
     n = str_c("n = ", n),
     n = factor(n, levels = c("n = 25", "n = 50", "n = 100"))
   ) |>
   ggplot(aes(x = prop_red)) +
   geom_histogram(
-    binwidth = 0.05, boundary = 0.4,
-    color = "black", fill = "white"
+    binwidth = 0.04, boundary = 0,
+    color = "white"
   ) +
   labs(
-    x = expression(paste("Sample proportion ", hat(p))),
+    x = expression(paste("Sample proportion ", (bar(X)))),
     title = expression(paste(
-      "Sampling distributions of ", hat(p),
+      "Distributions of ", bar(X),
       " based on n = 25, 50, 100."
     ))
   ) +
+  scale_x_continuous(breaks = c(0.1, 0.3, 0.4, 0.6)) +
   facet_wrap(~n) +
   geom_vline(xintercept = p, col = "red", size = 1)
 
@@ -809,271 +744,502 @@ if (is_latex_output()) {
 ```
 
 
-Moreover, observe that:
-
-- When the sample size used is 25 (left histogram) it is somewhat likely to obtain sample proportions of red balls that are less than 0.2 = 20% or greater than 0.55 = 55%. 
-- When the sample size is 50 (middle histogram) it is unlikely, although still possible, to get that extreme sample proportions.
-- When the sample size is 100 (right histogram) we have not observed a single sample proportion that is that extreme. 
-
-As the sample size $n$ increases from 25 to 50 to 100, \index{sampling distributions!relationship to sample size} the variation of the sampling distribution decreases, and thus the values cluster more and more tightly around the same center between 35% and 40%. We quantified this variation using the standard deviation of our sample proportions in Table \@ref(tab:comparing-n), which we display again as Table \@ref(tab:comparing-n-repeat):
-
-```{r comparing-n-repeat, echo=FALSE, purl=FALSE}
-comparing_n_table <- virtual_prop |>
-  group_by(n) |>
-  summarize(sd = sd(prop_red)) |>
-  rename(`Number of slots in shovel` = n, `Standard deviation of sample proportions` = sd)
-
-comparing_n_table |>
-  kable(
-    digits = 3,
-    caption = "Previously seen comparing standard deviations of sample proportions for three different sample sizes",
-    booktabs = TRUE,
-    linesep = ""
-  ) |>
-  kable_styling(
-    font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
-  )
-```
-
-The standard deviation can be thought of "roughly" as how far, on average, the values are from the center of their distribution. In the context of sampling distributions, this is equivalent to thinking of how far, on average, a point estimate is from the population parameter it is trying to estimate, since the parameter is equal to the center of the sampling distribution as shown in Figure \@ref(fig:comparing-sampling-distributions-3). Because of this relationship, the standard deviation of a sampling distribution is called the \index{standard error} **standard error** of a point estimate, where "error" can be thought of as the estimation error, on average, between a point estimate and the population parameter. For example, using \@ref(tab:comparing-n), when the sample size is 100, the standard error for the sampling distribution of sample proportions is 0.045 = 4.5%. If we were to take a random sample of 100 balls from the bowl, we expect the sample proportion of red balls to be, on average, 4.5% away from the population proportion of red balls.
-
-
-In addition, standard errors quantify the effect of sampling variation induced on our estimates. In other words, they also quantify how much we can expect different sample proportions of red balls *to vary* from one sample to another. As a general rule, as the sample size increases, the standard error decreases.
-
-Students sometimes confuse the *standard error* with the *standard deviation*. While you can always obtain the standard deviation from a list of values, the standard error is the standard deviation of the sampling distribution of sample statistics (or point estimates). All standard errors are standard deviations, but not every standard deviation is necessarily a standard error. 
-
-To help reinforce these concepts, let's re-display Figure \@ref(fig:comparing-sampling-distributions) but using our new terminology, notation, and definitions relating to sampling in Figure \@ref(fig:comparing-sampling-distributions-2). 
-
-```{r comparing-sampling-distributions-2, echo=FALSE, fig.cap="Three sampling distributions of the sample proportion $\\widehat{p}$.", purl=FALSE}
-p_hat_compare <- virtual_prop |>
-  mutate(
-    n = str_c("n = ", n),
-    n = factor(n, levels = c("n = 25", "n = 50", "n = 100"))
-  ) |>
-  ggplot(aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
-  labs(
-    x = expression(paste("Sample proportion ", hat(p))),
-    title = expression(paste("Sampling distributions of ", hat(p), " based on n = 25, 50, 100."))
-  ) +
-  facet_wrap(~n)
-
-if (is_latex_output()) {
-  p_hat_compare +
-    theme(
-      strip.text = element_text(colour = "black"),
-      strip.background = element_rect(fill = "grey93")
-    )
-} else {
-  p_hat_compare
-}
-```
-
-Furthermore, let's re-display Table \@ref(tab:comparing-n) using our new terminology, notation, and definitions relating to sampling in Table \@ref(tab:comparing-n-2).
-
-```{r comparing-n-2, echo=FALSE, purl=FALSE}
-comparing_n_table <- virtual_prop |>
-  group_by(n) |>
-  summarize(sd = sd(prop_red)) |>
-  mutate(
-    n = str_c("n = ", n),
-    n = factor(n, levels = c("n = 25", "n = 50", "n = 100"))
-  ) |>
-  rename(`Sample size (n)` = n, `Standard error of $\\widehat{p}$` = sd)
-
-comparing_n_table |>
-  kable(
-    digits = 3,
-    caption = "Standard errors of the sample proportion based on sample sizes of 25, 50, and 100",
-    booktabs = TRUE,
-    escape = FALSE,
-    linesep = ""
-  ) |>
-  kable_styling(
-    font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
-  )
-```
-
-Remember the key message of this last table: that as the sample size $n$ goes up, the "typical" error of your point estimate will go down, as quantified by the *standard error*. In section \@ref(central-limit-theorem) we introduce a theoretical framework to formalize these ideas, present atheory-based formula to estimate the standard error, and introduce one of the most important results in statistics, the Central Limit Theorem. 
-
-```{block, type="learncheck", purl=FALSE}
-\vspace{-0.15in}
-**_Learning check_**
-\vspace{-0.1in}
-```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What purpose did the *sampling distributions* serve?
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What does the *standard error* of the sample proportion $\widehat{p}$ quantify? 
-
-```{block, type="learncheck", purl=FALSE}
-\vspace{-0.25in}
-\vspace{-0.25in}
-```
-
-
-
-
-
-### Random Variables
-
-We now introduce a simple theoretical approach to understanding some important properties of the sample proportion. To do this we modify the bowl activity slightly. Instead of using a shovel to select all 25 balls at once, we randomly select one ball at a time. If the ball is red we call it a success and record a 1 (one); if it is not red we call it a failure and record a 0 (zero). Then, we return the ball to the bowl so the proportion of red balls in the bowl doesn't change. 
-This process is called a trial or a Bernoulli trial in honor of Jacob Bernoulli, a 17th-century mathematician who is among the first ones to work with these trials. 
-Getting a sample of 25 balls is running 25 trials and obtaining 25 numbers, ones or zeros, representing whether we have observed red balls or not on each trial, respectively. 
-The average of these 25 numbers (zeros or ones) represents precisely the proportion or red balls in a sample of 25 balls.
-
-It is useful to represent a trial as a random variable that takes the value of 1 if the ball is red or the value of 0 if the ball is not red. 
-We denote the first trial $X_1$, the second trial $X_2$, and so on. 
-After the first trial is completed, if the ball observed is red then $X_1 = 1$ otherwise $X_1=0$. Observe that after the first trial, $X_1$ is no longer a random variable, it is either 0 or 1. After the second trial, $X_2$ is 0 or 1, etc.
-Since our experiment is to perform 25 trials and then find the average of them, this average or mean, before the trials are carried out, can also be expressed as a random variable: $$\bar X = \frac{X_1+X_2+\dots+X_{25}}{25}.$$
-Observe that $\bar X$ is the average, or mean, of these 25 trials. Be we also know that this average represents the proportion of red balls in our sample. In the context of Bernoulli trials, **sample proportions** are **sample means**!
-This is why $\bar X$ is called the **sample mean** and in our context here, also the **sample proportion**, because it represents the sample proportions or red balls. Using the notation introduced earlier, observe that $\bar X = \widehat{p}$.
-
-For example, if the results of the trials are: $$\{0,0,0,1,0,1,0,1,0,0,1,0,0,1,1,0,0,0,1,1,0,1,0,0,0,1 \}$$  The observed value of $\bar X$ will be 
-$$\bar X = \frac{0+0+0+1+0+1+\dots+1+0+0+0+1}{25} = \frac{10}{25}=0.4.$$ 
-So, for this particular example, the sample proportion is $\bar X = 0.4$. If you perform this experiment again and you now get: $$\{1,0,0,1,0,0,0,1,0,0,1,0,1,0,1,1,0,0,0,1,0,1,0,0,0,0\}$$ 
-then, the realization of $\bar X$ will be $\bar X = 9/25 = 0.36$.
-Observe that the possible values of $\bar X$ are all the possible means of 25 trials or, equivalently, all the possible sample proportions of red balls.
-
-Moreover, while any given trial can result in choosing a red ball or not (1 or 0), the chances or getting a red ball are determined by the proportion of red balls in the bowl, the population proportion. The higher the population proportion is, the higher the chances of getting a red ball (or 1) in any trial.
-
-
-### The sampling distribution of the sample proportion
-
-The distribution of $\bar X$, when constructed using Bernoulli trials, is also called the **sampling distribution of the sample proportion**. An intuitive way to think about this distribution is by answering these questions: what are the sample proportions that can be obtained? and how likely are those sample proportions of happening?
-
-A very useful way to answer those questions is using simulations. 
-Simulations seldom provide the exact structure of the distribution, because we would need an infinite number of samples for this, but a large number of replications often produce a really good approximation of the distribution and can be used to study the distribution's characteristics. As we did in earlier sections, we obtain sample proportions of red balls from samples of 25 balls, but this time we perform the experiment 10,000 times. 
+The results shown seem to agree with the theory. We can further check, using the simulation results, by finding the average of the 1,000 sample proportions obtained. We start with the histogram on the left:
 
 ```{r}
-simul_X_bar_25 <- bowl |>
-  rep_slice_sample(n = 25, replace = TRUE, reps = 10000) |>
-  summarize(prop_red = mean(color == "red"))
+virtual_prop_red_25
+virtual_prop_red_25 |> 
+  summarize(E_Xbar_25 = mean(prop_red))
 ```
 
-The object `simul_X_bar` contains 10,000 sample proportions, each replicate was obtained following the experiment described earlier, so each sample proportion is a possible value of $\bar X$. 
+The variable `prop_red` in data frame `virtual_prop_red_25` contains the sample proportions for each of the 1,000 samples obtained. The average of these sample proportion is presented as object `E_Xbar_25` which represents the estimated expected value of $\overbar X$, by using the average of the 1,000 sample proportions. Each of the sample proportions is obtained from random samples of 25 balls from the bowl. This average happens to be precisely the same as the population proportion.
 
-### Theory-based standard-errors {#theory-se}
+It is worth spending a moment understanding this result. If we take one random sample of a given size, we know that the sample proportion from this sample would be somewhat different than the population proportion due to sampling variation; however, if we take many random samples of the same size, the average of the sample proportions obtained are expected to be about the same as the population proportion.
 
-
-
-
-
-
-### The mean and standard deviation of $\bar X$
-
-The mean of $\bar X$ represents what sample proportion we would expect to get, on average, if we were to perform the experiment a large number of times. Based on probability theory, the mean of $\bar X$ happens to be equal to the population proportion of red balls in the bowl, that is $p = 900/2400 = 0.375$. We can check, using our simulation, whether this results holds:
+We present the equivalent results with samples of size 50 and 100:
 
 ```{r}
-simul_X_bar_25 |> summarise(mean_Xbar = mean(prop_red))
+virtual_prop_red_50 |> summarize(E_Xbar_50 = mean(prop_red))
+virtual_prop_red_100 |> summarize(E_Xbar_100 = mean(prop_red))
 ```
 
-Indeed, the results of our simulation is very close to the theoretical population proportion. Similarly, the standard deviation of $\bar X$ can be understood as how far, on average, the sample proportion observed may be from the population proportion. Theoretical results show that the standard deviation of $\bar X$, also called the standard error, can be obtained using the formula: $$SE_{\bar X} = \sqrt{\frac{p(1-p)}{n}}$$ where $p$ is the population proportion and $n$ is the size of our sample. In our example, the standard error is $$SE_{\bar X} = \sqrt{\frac{0.375\cdot(1-0.375)}{25}} = 0.0968$$
+Indeed, the results obtained are about the same as the population proportion. Do note that the average of 1,000 sample proportions for samples of size 50 was actually 0.374, slightly smaller than 0.375. This happens because the simulations only approximate the sampling distribution and the expected value. When using simulations we do not expect to obtain the exact theoretical results, rather values that are close enough to support our understanding of the theoretical results.
+
+### Sampling variation: standard deviation and standard error
+
+Another relevant characteristic observed in Figure \@ref(fig:comparing-sampling-distributions-3) is how the amount of dispersion or *sampling variation* changes when the sample size changes. While all the histograms have a similar bell-shaped configuration and are centered at the same value, observe that when...
+
+- the sample size is $n=25$ (left histogram) the observed sample proportions are about as low as 0.1 and as high as 0.65. 
+- the sample size is $n=50$ (middle histogram) the observed sample proportions are about as low as 0.15 and as high as 0.55.
+- the sample size is $n=100$ (right histogram) the observed sample proportions are about as low as 0.20 and as high as 0.5.
+
+As the sample size $n$ increases from 25 to 50 to 100, \index{sampling distributions!relationship to sample size} the variation of the sampling distribution decreases. Thus, the values are clustered more and more tightly around the center of the distribution. In other words, the histogram on the left of Figure \@ref(fig:comparing-sampling-distributions-3) is more spread out than the one in the middle, which in turn is more spread out than the one on the right.
+
+We know that the center of the distribution is the expected value of $\overbar X$, which is the population proportion. From this, we can quantify this variation by calculating how far the sample proportions are, on average, from the population proportion. A well-known statistical measurement to quantify dispersion is the *standard deviation*. We discuss how it works before we continue with the sampling variation problem.
+
+#### The standard deviation
+
+We start with an example and introduce some special notation. As an illustration, given four values $y_1=3, y_2=-1, y_3=5,$ and $y_4= 9$, their average is given by $$\bar y = \frac14\sum_{i=1}^4y_i =\frac14 (y_1 + y_2 + y_3 + y_4)=  \frac{3-1+5+9}{4}= 2.$$ 
+
+The capital Greek letter $\Sigma$ represents the summation of values and it is useful when large number of values need to be added. The letter $i$ underneath $\Sigma$ is the index of summation, it starts at $i=1$, so the first value we are adding is $y_{\bf 1} = 3$. Afterwards $i=2$, so we add $y_{\bf 2}=-1$ to our previous result, an so on, as shown in the equation above. The summation symbol can be very useful when adding many numbers or making more complicated operations, such as defining the standard deviation.
 
 
-We use the simulation again to check if this result holds:
+To construct the standard deviation of a list of values, we first find the deviations of each value from their average, then find the average of the squared deviations, and finally take the square root of this average. In our example, the standard deviation is given by $$SD = \sqrt{\frac14\sum_{i=1}^4(y_i - \bar y)^2} = \sqrt{\frac{(3-2)^2+(-1-2)^2+(5-2)^2+(9-2)^2}{4}} = \sqrt{\frac{1+9+9+49}{4}}=\sqrt{17} = 4.12$$ 
+
+
+
+We present another example, this time using R. We use again our bowl activity with red and white balls in the bowl. We create a Boolean variable `is_red`  that corresponds to `TRUE`s or `1`s for red balls and `FALSE`s or `0`s for white balls and using these numbers, we compute the proportion (average of `1`s and `0`s) using `mean()` function and the standard deviation using `sd()` function^[^1]  inside `summarize()`:
+
+[^1]: The `sd()` function actually calculates the sample standard deviation, which divides the sum of squared deviations by $n-1$ instead of $n$. The difference is noticeable for small lists of values but almost irrelevant, for practical purposes, when using large lists of values. It is used here for simplicity.
 
 ```{r}
-simul_X_bar_25 |> summarise(SE_Xbar = sd(prop_red))
+bowl |> 
+  mutate(is_red = color == "red") |> 
+  summarize(p = mean(is_red), st_dev = sd(is_red))
 ```
 
-where the R function `sd()` produces the sample standard deviation of all our simulations. Again, this result is really close to the theoretical value of the standard error.
-The simulations are used first to check that in fact the results obtained agree with the theory. 
-Moreover, the theoretical results rely on the knowledge of the population proportion, $p$; by contrast, the simulations obtain values based only on samples and sample proportions. 
+So, the proportion of red balls is 0.375 with a standard deviation of 0.484. The intuition behind the standard deviation can be expressed as follows: if you were to select many balls, with replacement, from the bowl, we would expect the proportion of red balls to be about 0.375 give or take 0.484. 
 
-A key observation to make in the formula of the standard error is that there is an $n$ in the denominator. As the sample size $n$ increases, the standard error decreases. To see this, we repeat the simulation another 10,000 times, but this time obtaining bigger samples, of 100 balls each time. 
-Based on the theory of the sample proportion, the mean of $\bar X$ should not change, it should still be 0.375. By contrast, the standard error should now be smaller: $$SE_{\bar X} = \sqrt{\frac{p(1-p)}{n}} = \sqrt{\frac{0.375\cdot(1-0.375)}{100}} = 0.0484$$ 
-The simulation provides the following results:
+In addition, when dealing with proportions, the formula for the standard deviation can be expressed directly in terms of the population proportion, $p$, using the formula: $$SD = \sqrt{p(1-p)}.$$ Here is the value of the standard deviation using this alternative formula in R:
+```{r}
+p <- 0.375
+sqrt(p * (1 - p))
+```
+
+The value is the same as using the general formula. Now that we have gained a better understanding of the standard deviation, we can discuss the standard deviation in the context of sampling variation for the sample proportion.
+
+#### The standard error
+
+Recall that we want to measure the magnitude of the sampling variation for the distribution of $\overbar X$ (the sampling distribution of the sample proportion) and want to use the standard deviation for this purpose. We have shown earlier that the center of the distribution of $\overbar X$ is the expected value of $\overbar X$. In our case, this is the population proportion $p = 0.375$. The standard deviation will then indicate how far, on average, each possible sample proportion roughly is from the population proportion. If we were to consider using a sample proportion as an estimate of the population proportion, this deviation could be considered the error in estimation. Because of this particular relationship, the standard deviation of the sampling distribution receives a special name: the **standard error**. Note that all *standard errors* are standard deviations but not all standard deviations are standard errors.
+
+We work again with simulations and the bowl of red and white balls. We obtain 10,000 random samples of size $n=100$, obtain the sample proportion for each sample, and calculate the average and standard deviation for these sample proportions. This simulation produces a histogram similar to the one presented on the right in Figure \@ref(fig:comparing-sampling-distributions-3). To produce this data we again use the `rep_slice_sample()` function and `mean()` and `sd()` function inside `summarize()` to produce the desired results:
 
 ```{r}
 bowl |>
   rep_slice_sample(n = 100, replace = TRUE, reps = 10000) |>
-  summarise(prop_red = mean(color == "red")) |>
-  summarise(mean_Xbar = mean(prop_red), SE_Xbar = sd(prop_red))
+  summarize(prop_red = mean(color == "red")) |>
+  summarize(p = mean(prop_red), SE_Xbar = sd(prop_red))
 ```
-
-We repeat the simulation one more time, now with samples of size 400. Based on the theory, the mean should still be $0.375$ but the standard error is now: $$SE_{\bar X} = \sqrt{\frac{p(1-p)}{n}} = \sqrt{\frac{0.375\cdot(1-0.375)}{400}} = 0.0242$$ The simulation provides the following results:
+Observe that `p` is the estimated expected value and `SE_Xbar` is the estimated standard error based on the simulation of obtaining sample proportions for random samples of size $n=100$. Compare this value with the standard deviation for the entire bowl, obtained earlier. It is one tenth the size! This is not a coincidence: the standard error of $\overbar X$ is equal to the standard deviation of the population (the bowl) divided by the square root of the sample size. In the case of sample proportions, the standard error of $\overbar X$ can also be obtained using the formula: $$SE_{\overbar X} = \sqrt{\frac{p(1-p)}{n}}$$ where $p$ is the population proportion and $n$ is the size of our sample. This formula shows that the standard error is inversely proportional to the square root of the sample size: as the sample size increase, the standard error decreases. In our example, the standard error is $$SE_{\overbar X} = \sqrt{\frac{0.375\cdot(1-0.375)}{100}} = 0.0484$$
 
 ```{r}
-bowl |>
-  rep_slice_sample(n = 400, replace = TRUE, reps = 10000) |>
-  summarise(prop_red = mean(color == "red")) |>
-  summarise(mean_Xbar = mean(prop_red), SE_Xbar = sd(prop_red))
+p = 0.375
+sqrt(p*(1-p)/100)
+```
+
+This value is nearly identical to the result obtained on the simulation above. We repeat this exercise, this time finding the estimated standard error of $\overbar X$ from the simulations obtained earlier. These simulations are stored in data frames `virtual_prop_red_25` and `virtual_prop_red_50`, when the sample sizes used are $n=25$ and $n=50$, respectively:
+
+```{r}
+virtual_prop_red_25 |> summarize(SE_Xbar_50 = sd(prop_red))
+virtual_prop_red_50 |> summarize(SE_Xbar_100 = sd(prop_red))
+```
+
+The standard errors for these examples, based on the proportion of red balls in the bowl and the sample sizes, are given below:
+
+```{r}
+sqrt(p * (1 - p) / 25)
+sqrt(p * (1 - p) / 50)
+```
+
+The simulations support the standard errors obtained using mathematical formulas. The simulations are used to check that in fact the results obtained agree with the theory. Observe also that the theoretical results are constructed based on the knowledge of the population proportion, $p$; by contrast, the simulations produce samples based on the population of interest but produce results only based on information obtained from samples and sample proportions. 
+
+The formula for the standard error of the sample proportion given here can actually be derived using facts in probability theory, but its development goes beyond the scope of this book. To learn more about it, please consult more advanced treatments in probability and statistics such as [this one](http://onlinestatbook.com/2/sampling_distributions/samp_dist_p.html).
+
+
+
+#### The sampling distribution of the sample proportion
+
+So far we have shown some of the properties of the sampling distribution for the sampling proportion; namely, the expected value and standard error of $\overbar X$. We now turn our attention to the shape of the sampling distribution.
+
+As mentioned before, histograms, such as those seen earlier provide a good approximation of the sampling distribution of the sample proportion, the distribution of $\overbar X$. Since we are interested in the shape of the distribution, we redraw again the histogram obtained using sample proportions from random samples of size $n=25$, $n=50$, and $n=100$, but this time we add a smooth curve that appears to connect the top parts of each bar in the histogram. These histograms are presented in Figures \@ref(fig:sample-proportion-25-with-normal-pdf), \@ref(fig:sample-proportion-50-with-normal-pdf), and \@ref(fig:sample-proportion-100-with-normal-pdf). The figures represent density histograms where the area of each bar represents the percentage or proportion of observations for the corresponding bin and the total area of each histogram is 1 (or 100%). The ranges for the $x-$ and $y-$axis on all these plots have been kept constant for appropriate comparisons among them. 
+
+
+```{r sample-proportion-25-with-normal-pdf, echo=FALSE, fig.height=3, fig.cap="Histogram of the distribution of the sample proportion and the normal curve.", purl=FALSE}
+n = 25
+p=9/24
+sd.p = sqrt(p*(1-p)/n)
+
+
+if (!file.exists("rds/virtual_prop_red_25.rds")) {
+  virtual_prop_red_25 <- bowl |>
+    rep_slice_sample(n = 25, replace = TRUE, reps = 1000) |>
+    summarize(prop_red = mean(color == "red"), n = n())
+  write_rds(virtual_prop_red_25, "rds/virtual_prop_red_25.rds")
+} else {
+  virtual_prop_red_25 <- read_rds("rds/virtual_prop_red_25.rds")
+}
+
+
+ggplot(virtual_prop_red_25, aes(x = prop_red)) +
+  geom_histogram(aes(y=..density..), binwidth = 0.04, color = "white") + 
+  stat_function(fun = dnorm,  args = list(mean = p, sd = sd.p), col="red") + xlim(0,0.8) + ylim(0,10) +
+  labs(
+    x = "Sample proportions with n=25"
+  )
+
+
+virtual_prop_red <- virtual_prop_red |>
+  mutate(p = 0.375, SE = sqrt(p*(1-p)/n))
+```
+
+```{r sample-proportion-50-with-normal-pdf, echo=FALSE, fig.height=3, fig.cap="Histogram of the distribution of the sample proportion and the normal curve.", purl=FALSE}
+n = 50
+p=9/24
+sd.p = sqrt(p*(1-p)/n)
+
+if (!file.exists("rds/virtual_prop_red_50.rds")) {
+  virtual_prop_red_50 <- bowl |>
+    rep_slice_sample(n = 50, replace = TRUE, reps = 1000) |>
+    summarize(prop_red = mean(color == "red"), n = n())
+  write_rds(virtual_prop_red_50, "rds/virtual_prop_red_50.rds")
+} else {
+  virtual_prop_red_50 <- read_rds("rds/virtual_prop_red_50.rds")
+}
+
+
+ggplot(virtual_prop_red_50, aes(x = prop_red)) +
+  geom_histogram(aes(y=..density..), binwidth = 0.02, color = "white") + 
+  stat_function(fun = dnorm,  args = list(mean = p, sd = sd.p), col="red") + xlim(0,0.8) + ylim(0,10) +
+  labs(
+    x = "Sample proportions with n=50"
+  )
 ```
 
 
-In all the cases the simulations approximate really well the expected values for the mean and standard error, and in particular, they show how increasing the sample size reduces the standard error of the distribution of $\bar X$.
+```{r sample-proportion-100-with-normal-pdf, echo=FALSE, fig.height=3, fig.cap="Histogram of the sampling distribution of the sample proportion and the normal curve.", purl=FALSE}
+n = 100
+p=9/24
+sd.p = sqrt(p*(1-p)/n)
 
-The formula for the standard error of the sample proportion can actually be derived using facts in probability theory, but its development goes beyond the scope of this book. To learn more about it, please consult more advanced treatments in probability and statistics such as [this one](http://onlinestatbook.com/2/sampling_distributions/samp_dist_p.html).
+if (!file.exists("rds/virtual_prop_red_100.rds")) {
+  virtual_prop_red_100 <- bowl |>
+    rep_slice_sample(n = 100, replace = TRUE, reps = 1000) |>
+    summarize(prop_red = mean(color == "red"), n = n())
+  write_rds(virtual_prop_red_100, "rds/virtual_prop_red_100.rds")
+} else {
+  virtual_prop_red_100 <- read_rds("rds/virtual_prop_red_100.rds")
+}
+
+
+ggplot(virtual_prop_red_100, aes(x = prop_red)) +
+  geom_histogram(aes(y=..density..), binwidth = 0.01, color = "white") + 
+  stat_function(fun = dnorm,  args = list(mean = p, sd = sd.p), col="red") + xlim(0,0.8) + ylim(0,10) +
+  labs(
+    x = "Sample proportions with n=100"
+  )
+```
 
 
 
-### The Central Limit Theorem {#central-limit-theorem}
+The curves in red seem to be a fairly good representation of the top bars of the histograms. However, we have not used the simulated data to draw these curves, these bell-shaped curves were extracted from the normal distribution with mean equal to $p=0.375$ and standard deviation equal to $\sqrt{{p(1-p)/n}}$ where $n$ changes for each histogram. This is a fascinating result due to an application of one of the most important results in Statistics: the Central Limit Theorem (CLT).
+
+The CLT states that when the sample size, $n$, tends to infinity, the distribution of $\overbar X$ tends to the normal distribution (with the appropriate mean and standard deviation). 
+Moreover, it does not depend on the population distribution; the population can be a bowl with red and white balls or anything else.
+
+The observant reader may have noticed that, in practice, we cannot take samples of size equal to infinity. 
+What makes the CLT even more relevant for practical purposes is that the distribution of $\overbar X$ approximates normality even when the sample size used is fairly small. As you can see in Figure \@ref(fig:sample-proportion-25-with-normal-pdf), even when using random samples of size $n=25$ are used, the distribution of $\overbar X$ already seems to follow a normal distribution.
+
+Observe also that all the curves follow the bell-shaped form of the normal curve but the spread is greater when a smaller sample size has been used and is consistent with the standard error for $\overbar X$ obtained earlier for each case.
 
 
-Learning about the mean and standard deviation of the sample proportion, $\bar X$, is very useful. But this is also true for other essential characteristics of the distribution. 
-In particular, histograms of these simulations will approximate visually really well the distribution of $\bar X$ for the different sample sizes. 
-Figure \@ref(fig:comparing-sampling-distributions-for-clt) presents the histograms for all three simulations performed. The histograms reflect precisely what we have shown earlier about the mean and standard error of $\bar X$, the mean is equal to the population proportion $p=0.375$ and the standard error gets smaller for larger sample sizes following the equation $$SE_{\bar X} = \sqrt{\frac{p(1-p)}{n}}$$ 
+### Summary
 
-```{r comparing-sampling-distributions-for-clt, echo=FALSE, fig.height=3, fig.cap="Histogram of the distribution of the sample proportion and the normal curve.", purl=FALSE}
+We now present a summary of the relevant information learned about the sampling distribution of the sample proportion
 
+
+1. The mean of all the sample proportions will be exactly the same as the population proportion.
+2. The standard deviation of the sample proportions, also called the standard error, is inversely proportional to the square root of the sample size: the larger the sample size used to obtain sample proportions, the closer those sample proportions will be from the population proportion, on average.
+3. As long as the random samples used are large enough, the sampling distribution of the sample proportion, or simply the distribution of $\overbar X$, will approximate the normal distribution. This is true for sample proportions regardless of the structure of the underlying population distribution; that is, regardless of how many red and white balls are in the bowl, or whether you are performing any other experiment that deals with sample proportions.
+
+In case you want to reinforce these ideas a little more, Shuyi Chiou, Casey Dunn, and Pathikrit Bhattacharyya created a 3-minute and 38-second video at <https://youtu.be/jvoxEYmQHNM> explaining this crucial statistical theorem using the average weight of wild bunny rabbits and the average wingspan of dragons as examples. Figure \@ref(fig:CLT-video-preview) shows a preview of this video.
+
+```{r CLT-video-preview, echo=FALSE, fig.cap="Preview of Central Limit Theorem video.", purl=FALSE, out.width = "75%"}
+include_graphics("images/copyright/CLT_video_preview.png")
+```
+
+
+
+
+## Second Bowl Activity: Chocolate-Covered Almonds {#sampling-activity-mean}
+
+We want to extend the results obtained for the sample proportion to a more general case: the **sample mean**. In this section we show how 
+most of the results obtained for sample proportions extend directly to sample means, but we also highlight important differences when working with the **sampling distribution of the sample mean**.
+
+As we did with sample proportions, we start by illustrating these results with another activity: sampling from a bowl of chocolate-covered almonds, as seen in Figure \@ref(fig:bowl-almond). 
+
+```{r bowl-almond, echo=FALSE, fig.cap="A bowl of chocolate-covered almonds.", purl=FALSE, out.width = "40%", purl=FALSE}
+knitr::include_graphics("images/sampling/almonds/almond-bowl-aux.png")
+```
+
+For ease of exposition we refer to each chocolate-covered almond simply as an almond. We are now interested in the average weight in grams of *all*  the almonds in the bowl; this is the *population average* weight or *population mean* weight.
+
+### The population mean weight of almonds in the bowl {#population-mean}
+
+The population of interest is given by all the almonds in the bowl. The bowl is represented virtually by the data frame `almonds_bowl` included in the `moderndive` package. The first ten rows are shown here for illustration purposes:
+
+<!--
+need to add almonds_bowl to the moderndive package. AV 9-1-23
+-->
+
+```{r echo=2}
+almonds_bowl <- read_rds("rds/almonds_bowl.rds")
+almonds_bowl
+num_pop_almonds = length(almonds_bowl$weight)
+```
+
+The first variable `ID` represents a virtual ID number given to each almond, and the variable `weight` contains the weight in grams for each almond in the bowl. The **population mean** weight of almonds, a population parameter, can be obtained in R using again the `dplyr` data wrangling verbs presented in Chapter \@ref(wrangling). Observe, in particular, inside the function `summarize()` the use of the `mean()`, `sd()`, and `n()` functions for the mean weight, the weight's standard deviation[^2], and the number of almonds in the bowl:
+
+[^2]: As explained earlier, this function produces the sample standard deviation, which divides the sum of square deviations by n-1 instead of n, but for a list of 5000 observation the difference is not relevant, for practical purposes.
+
+```{r}
+almonds_bowl |> 
+  summarize(mean_weight = mean(weight), 
+            sd_weight = sd(weight), 
+            length = n())
+```
+
+We have 5,000 almonds in the bowl, the population mean weight is 3.64 grams, and the weight's standard deviation is 0.392 grams. We use R to obtain the mean and standard deviation, but we could have used the formulas instead. If we call $x_1$ the first almond in the bowl, $x_2$ the second, and so on, the mean is given by $$\mu = \sum_{i=1}^{5000}\frac{x_i}{5000}=3.64.$$ and the standard deviation is given by $$\sigma = \sum_{i=1}^{5000} \frac{(x_i - \mu)^2}{5000}=0.392.$$
+
+The Greek letters $\mu$ and $\sigma$ are used to represent the population mean and population standard deviation (the parameters of interest). In addition, since we know the information of the entire bowl, we can draw the distribution of weights of the entire population (bowl) using a histogram:
+
+```{r almonds-bowl-histogram, fig.cap="Distribution of weights for the entire bowl of almonds."}
+ggplot(almonds_bowl, aes(x = weight)) +
+  geom_histogram(binwidth = .1, color = "white")
+```
+
+We can see that the weight of almonds ranges from 2.6 to 4.6 grams and the most common weights observed are between 3.6 and 4.0 grams, but the distribution is not symmetric and does not follow any typical pattern.
+
+Now that we have a clear understanding of our population of interest and the parameters of interest, we can continue our exploration of the **sampling distribution of the sample mean** weights of almonds by constructing samples.
+
+### Manual sampling and sample means {#resampling-tactile-bowl}
+
+If we randomly select one almond from the bowl, we could determine its weight using a scale, as shown in Figure \@ref(fig:one-almond)
+
+```{r one-almond, echo=FALSE, fig.show="hold", fig.cap="One almond on a scale.", purl=FALSE, out.width = "40%"}
+include_graphics("images/sampling/almonds/one-almond.png")
+```
+
+Let's now obtain a random sample of 25 almonds, as shown in Figure \@ref(fig:twenty-five-almonds), and determine the sample average weight, or *sample mean* weight, in grams.
+
+```{r twenty-five-almonds, echo=FALSE, fig.cap="A random sample of 25 almonds on a scale.",  out.width = "40%", purl=FALSE}
+include_graphics("images/sampling/almonds/twenty-five-almonds.png")
+```
+
+Since the total weight is 88.6 grams, as shown in the Figure \@ref(fig:twenty-five-almonds), the sample mean weight will be $88.6/25 = 3.544$. The `moderndive` \index{moderndive!almonds\_sample} package contains the information of this sample in the `almonds_sample` data frame. Here, we present the weight of the first 10 almonds in the sample:
+ 
+<!--
+Info about almonds needs to be added onto the moderndive package. AV 9-1-23
+-->
+
+```{r echo=2}
+almonds_sample <- read_rds("rds/almonds_sample.rds")
+almonds_sample
+num_almonds <- length(almonds_sample$weight)
+```
+
+The `almonds_sample` data frame has $n=$ `r num_almonds` rows corresponding to each almond in the sample shown in Figure \@ref(fig:twenty-five-almonds).
+The first variable `replicate` indicates this is the first and only replicate since it is a single sample, while the second variable `weight` gives the corresponding weight for each almond in grams as a numeric variable, also known as a double (`dbl`). 
+
+The distribution of the weights of these `r num_almonds` are shown in the histogram in Figure \@ref(fig:almonds-sample-histogram).
+
+```{r almonds-sample-histogram, fig.cap="Distribution of weight on a sample of 25 almonds."}
+ggplot(almonds_sample, aes(x = weight)) +
+  geom_histogram(binwidth = .1, color = "white")
+```
+
+The weights of almonds in this sample range from 2.9 to 4.1 grams. There is not an obvious pattern in the distribution of this sample. The weight that appears the most is 3.7 grams as eight almonds out of 25 weigh this much, but no almond weighs 3.6 grams. We now compute the sample mean using our data wrangling tools from Chapter \@ref(wrangling).
+
+```{r}
+almonds_sample |>
+  summarize(sample_mean_weight = mean(weight))
+```
+
+The sample mean weight was 3.54 grams, not too far from the population mean weight of 3.64 grams. The difference between the statistic (sample mean weight) and the parameter (population mean weight) was due to sampling variation.
+
+### Virtual sampling {#virtual-samples-mean-bowl}
+
+We now perform sampling virtually. The data frame `almonds_bowl` has `r num_pop_almonds` rows, each representing an almond in the bowl. As we did in Section \@ref(sampling-simulation) we use again the `rep_slice_sample()` function to obtain 1000 random samples with a sample `size` set to be 25, and with the number of replicates `reps` set to `1000`. Be sure to scroll through the contents of `virtual_samples` in RStudio's viewer. 
+
+```{r}
+virtual_samples_almonds <- almonds_bowl |> 
+  rep_slice_sample(n = 25, reps = 1000)
+virtual_samples_almonds
+```
+
+Observe that now `virtual_samples_almonds` has 1,000 $\cdot$ 25 = 25,000 rows. Using the appropriate data wrangling code, the `virtual_mean_weight` data frame produces the sample mean almond weight for each random sample, a total of 1,000 sample means.
+
+```{r}
+virtual_mean_weight <- virtual_samples_almonds |> 
+  summarize(mean_weight = mean(weight))
+virtual_mean_weight
+```
+
+Figure \@ref(fig:sampling-mean-virtual-1000) presents the histogram for these sample means:
+
+```{r eval=FALSE}
+ggplot(virtual_mean_weight, aes(x = mean_weight)) +
+  geom_histogram(binwidth = 0.04, boundary = 3.5, color = "white") +
+  labs(x = "Sample mean", 
+       title = "Histogram of 1000 sample means") 
+```
+
+```{r sampling-mean-virtual-1000, echo=FALSE, fig.cap="The distribution of 1000 means based on 1000 random samples of size 25.", purl=FALSE}
+virtual_mean_weight <- virtual_samples_almonds |> 
+  summarize(mean_weight = mean(weight))
+virtual_histogram <- ggplot(virtual_mean_weight, aes(x = mean_weight)) +
+  geom_histogram(binwidth = 0.04, boundary = 0.4, color = "white")
+virtual_histogram +
+  labs(x = "Sample mean", 
+       title = "Histogram of 1000 sample means")
+``` 
+
+The sample mean weights observed in the histogram appear to go below 3.4 grams and above 3.85 grams, but those extreme sample means are rare. The most frequent sample means obtained seem to be those above 3.5 or below 3.8 grams. 
+Furthermore, the histogram is almost symmetric and showing that bell-shaped form, although the left tail of the histogram appears to be slightly longer than the right tail. While we are dealing with sample means now, the conclusions obtained are strikingly similar to those presented in Subsection \@ref(resampling-tactile-bowl) when discussing the sampling distribution for the sample proportion.
+
+### The sampling distribution of the sample mean  
+
+As we did in the case of the sample proportion, we are interested in learning key characteristics of the **sampling distribution of the sample mean**, namely:
+
+1. The center of the *sampling distribution*
+1. The effect of *sampling variation* on the *sampling distribution* and the effect of the sample size on *sampling variation*
+1. The shape of the *sampling distribution* 
+
+### Random variables
+
+Once again, we use random variable to formalize our understanding of the sample distribution of the sample mean. Instead of using Bernoulli trials as we did in the case of sample proportions, our trials will record the almond weights. We again modify the bowl activity slightly. In lieu of selecting a sample of almonds all at once, we randomly select one almond at a time, we record the weight of the almond and return it to the bowl before selecting another almond, so the configuration of weights and the chances of any of the almonds to be selected is the same every time we choose one.
+Getting a sample of 25 almonds is performing these trials 25 times to obtain 25 weights. Then, the average of these 25 numbers is the average weight or mean weight of a sample of 25 almonds. This is what we call a sample mean.
+
+Using random variables, we now let uppercase $X_1$ to be the random variable that represents the weight of the first almond before it has been selected, $X_2$ the weight of the second almond, and so on. These are random variables because they can take any possible almond weight value from the bowl.
+After the first trial is completed, the value of $X_1$ is realized as the weight in grams of the first almond selected. We can represent this value by the lowercase $x_1$ as it is no longer a random variable but a number and we can write $X_1 = x_1$. After the second trial is completed, $X_2 = x_2$, where lowercase $x_2$ is the observe almond weight, and so on.
+Since our experiment is to perform 25 trials and then find the average of them, this average or mean, before the trials are carried out, can also be expressed as a random variable: $$\overbar X = \frac{X_1+X_2+\dots+X_{25}}{25}.$$
+Observe that $\overbar X$ is the average, or mean, of these 25 trials. This is why $\overbar X$ is called the **sample mean**. Recall that when dealing with proportions, the trials are Bernoulli trials, represented only with zeros or ones. In this context, **sample proportions** are a special case of **sample means**. The trials we use now are not restricted to zeros and ones, and the sample means are no longer sample proportions.
+
+For example, let's focus on the sample of 25 almond weights used earlier and their sample mean:
+
+
+```{r}
+almonds_sample
+```
+
+By looking at the weights in the data frame `almonds_sample`, observe that $X_1 = 4.0$ grams, $X_2 = 3.7$ grams, $X_3 = 3.7$ grams, and so on. If you view the entire data frame, for example running `View(almonds_sample)` in R, you could check that $X_{23} = 4.0$, $X_{24} = 3.8$, and $X_{25} = 3.7$, so the sample mean would be
+$$\overbar X = \frac{4.0+3.7+3.7+4.1+\dots+4.0+3.8+3.7}{25} = \frac{88.6}{25}=3.54.$$ 
+In R:
+
+```{r}
+almonds_sample |>
+  summarize(sample_mean_weight = mean(weight))
+```
+
+So, once this sample was observed, the random variable $\overbar X$ was realized as $\overbar X = 3.54$, the **sample mean** was 3.54 grams.
+Note that the possible values that $\overbar X$ can take are all the possible sample means from samples of 25 almonds from the bowl. The chances of getting these sample means are determined by the configuration of almond weights in the bowl.
+
+
+When $\overbar X$ is constructed as the sample mean of a given random sample, the sampling distribution of the sample mean is precisely the distribution of $\overbar X$. In this context, recall what we are interested in determining:
+
+
+1. The center of the *distribution* of $\overbar X$
+1. The effect of *sampling variation* on the *distribution* of $\overbar X$ and the effect of the sample size on *sampling variation*
+1. The shape of the *distribution* of $\overbar X$
+
+As we did when dealing with sample proportions, we use simulations again to produce good approximations of the distribution of $\overbar X$, the sample mean weight of almonds. We also work with samples of size 25, 50, and 100 to learn about changes in sample variation when the sample size changes. 
+
+This is the process we follow: 
+- we generate 1000 samples, 
+- obtain the sample means of almond weights, and 
+- use them to draw histograms. 
+
+We do this three times with the `size` argument set to `25`, `50`, and `100`, respectively. We run each of the following code segments individually and then compare the resulting histograms.
+
+```{r, eval=FALSE}
+# Segment 1: sample size = 25 ------------------------------
+# 1.a) Obtaining the 1000 sample means, each from random samples of size 25
+virtual_mean_weight_25 <- almonds_bowl |> 
+  rep_slice_sample(n = 25, reps = 1000)|>
+  summarize(mean_weight = mean(weight), n = n())
+
+# 1.b) Plot distribution via a histogram
+ggplot(virtual_mean_weight_25, aes(x = mean_weight)) +
+  geom_histogram(binwidth = 0.02, boundary = 3.6, color = "white") +
+  labs(x = "Sample mean weights for random samples of 25 almonds", title = "25") 
+
+
+# Segment 2: sample size = 50 ------------------------------
+# 2.a) Obtaining the 1000 sample means, each from random samples of size 50
+virtual_mean_weight_50 <- almonds_bowl |> 
+  rep_slice_sample(n = 50, reps = 1000)|>
+  summarize(mean_weight = mean(weight), n = n())
+
+# 2.b) Plot distribution via a histogram
+ggplot(virtual_mean_weight_50, aes(x = mean_weight)) +
+  geom_histogram(binwidth = 0.02, boundary = 3.6, color = "white") +
+  labs(x = "Sample mean weights for random samples of 50 almonds", title = "50") 
+
+# Segment 3: sample size = 100 ------------------------------
+# 3.a) Obtaining the 1000 sample means, each from random samples of size 100
+virtual_mean_weight_100 <- almonds_bowl |> 
+  rep_slice_sample(n = 100, reps = 1000)|>
+  summarize(mean_weight = mean(weight), n = n())
+
+# 3.b) Plot distribution via a histogram
+ggplot(virtual_mean_weight_100, aes(x = mean_weight)) +
+  geom_histogram(binwidth = 0.02, boundary = 3.6, color = "white") +
+  labs(x = "Sample mean weights for random samples of 100 almonds", title = "100") 
+```
+
+We present the three resulting histograms in a single row with matching x and y axes in Figure \@ref(fig:comparing-sampling-distributions-means) so the comparison among them is clear.
+
+```{r comparing-sampling-distributions-means, echo=FALSE, fig.height=3, fig.cap="Comparing histograms of sample means when using different sample sizes.", purl=FALSE}
 # n = 25
-if (!file.exists("rds/virtual_samples_25r.rds")) {
-  virtual_samples_25r <- bowl |>
-    rep_slice_sample(n = 25, replace = TRUE, reps = 10000)
-  write_rds(virtual_samples_25r, "rds/virtual_samples_25r.rds")
+if (!file.exists("rds/virtual_sample_means_25.rds")) {
+  virtual_samples_almonds_25 <- almonds_bowl |>
+    rep_slice_sample(n = 25, reps = 1000)
+  write_rds(virtual_samples_almonds_25, "rds/virtual_sample_means_25.rds")
 } else {
-  virtual_samples_25r<- read_rds("rds/virtual_samples_25r.rds")
+  virtual_sample_means_25 <- read_rds("rds/virtual_sample_means_25.rds")
 }
-virtual_prop_red_25r <- virtual_samples_25r |>
-  summarize(red = sum(color == "red")) |>
-  mutate(prop_red = red / 25) |>
-  mutate(n = 25)
+virtual_mean_weight_25 <- almonds_bowl |> 
+  rep_slice_sample(n = 25, reps = 1000)|>
+  summarize(mean_weight = mean(weight), n = n())
+
+# n = 50
+if (!file.exists("rds/virtual_sample_means_50.rds")) {
+  virtual_sample_means_50 <- almonds_bowl |>
+    rep_slice_sample(n = 50, reps = 1000)
+  write_rds(virtual_sample_means_50, "rds/virtual_sample_means_50.rds")
+} else {
+  virtual_sample_means_50 <- read_rds("rds/virtual_sample_means_50.rds")
+}
+virtual_mean_weight_50 <- almonds_bowl |> 
+  rep_slice_sample(n = 50, reps = 1000)|>
+  summarize(mean_weight = mean(weight), n = n())
+
 # n = 100
-if (!file.exists("rds/virtual_samples_100r.rds")) {
-  virtual_samples_100r <- bowl |>
-    rep_slice_sample(n = 100, replace = TRUE, reps = 10000)
-  write_rds(virtual_samples_100r, "rds/virtual_samples_100r.rds")
+if (!file.exists("rds/virtual_sample_means_100.rds")) {
+  virtual_sample_means_100 <- almonds_bowl |>
+    rep_slice_sample(n = 100, reps = 1000)
+  write_rds(virtual_sample_means_100, "rds/virtual_sample_means_100.rds")
 } else {
-  virtual_samples_100r <- read_rds("rds/virtual_samples_100r.rds")
+  virtual_sample_means_100 <- read_rds("rds/virtual_sample_means_100.rds")
 }
-virtual_prop_red_100r <- virtual_samples_100r |>
-  group_by(replicate) |>
-  summarize(red = sum(color == "red")) |>
-  mutate(prop_red = red / 100) |>
-  mutate(n = 100)
+virtual_mean_weight_100 <- virtual_sample_means_100 |>
+  summarize(mean_weight = mean(weight), n = n())
 
-# n = 400
-if (!file.exists("rds/virtual_samples_400r.rds")) {
-  virtual_samples_400r <- bowl |>
-    rep_slice_sample(n = 400, replace = TRUE, reps = 10000)
-  write_rds(virtual_samples_400r, "rds/virtual_samples_400r.rds")
-} else {
-  virtual_samples_400r <- read_rds("rds/virtual_samples_400r.rds")
-}
-virtual_prop_red_400r <- virtual_samples_400r |>
-  group_by(replicate) |>
-  summarize(red = sum(color == "red")) |>
-  mutate(prop_red = red / 400) |>
-  mutate(n = 400)
 
-virtual_prop <- bind_rows(
-  virtual_prop_red_25r,
-  virtual_prop_red_100r,
-  virtual_prop_red_400r
+virtual_mean <- bind_rows(
+  virtual_mean_weight_25,
+  virtual_mean_weight_50,
+  virtual_mean_weight_100
 )
 
-comparing_sampling_distributions <- ggplot(virtual_prop, aes(x = prop_red)) +
-  geom_histogram(aes(y = ..density..), binwidth = 0.04, boundary = 0.4, color = "white") +
+comparing_sampling_distributions <- ggplot(virtual_mean, aes(x = mean_weight)) +
+  geom_histogram(aes(y=..density..), binwidth = 0.03, boundary = 3.65, color = "white") +
   labs(
-    x = "The distribution of sample proportions for red balls",
-    title = "Comparing histograms of sample proportions for three different sample sizes"
+    x = "Sample means (almonds weights)",
+    title = "Histograms of sample means for three sample sizes"
   ) +
   facet_wrap(~n)
 
-if (is_latex_output()) {
+if (knitr::is_latex_output()) {
   comparing_sampling_distributions +
     theme(
       strip.text = element_text(colour = "black"),
@@ -1084,306 +1250,210 @@ if (is_latex_output()) {
 }
 ```
 
- 
-Moreover, the shape of the histograms provides a really good approximation of the shape of the distribution of the sample proportion. If we were to draw a single smooth curve that connects the top of each bar on a histogram with each adjacent bar, the curves for each histogram would look similar to the ones presented in Figures  \@ref(fig:sample-proportion-25-with-normal-pdf), \@ref(fig:sample-proportion-100-with-normal-pdf), and \@ref(fig:sample-proportion-400-with-normal-pdf). However, the curves were not drawn using simulated data; these bell-shaped curves are curves for the normal distribution with mean equal to $p=0.375$ and standard deviation equal to $\sqrt{\frac{p(1-p)}{n}}$ where $n$ changes for each histogram. This is a fascinating result but it is not unexpected. It relies on an application of one of the most important results in Statistics: the Central Limit Theorem (CLT).
 
-The CLT states that when the sample size, $n$, tends to infinity, the distribution of $\bar X$ tends to the normal distribution (with the appropriate mean and standard deviation). 
-Moreover, it does not depend on the population distribution; the population can be a bowl with red and white balls, the number of daily births in the US, or anything else. As long as we work with the sample mean (or sample proportion), $\bar X$, the CLT will provide the same solution.
+Observe that all three histograms are bell-shaped and appear to center around the same middle value. In addition, the magnitude of the sampling variation decreases when the sample size used to obtain the sample mean increases. As it happened with the sampling distribution of the sample proportion, the measures of center and dispersion of these distributions are directly related to the parameters of the population: the population mean, $\mu$, and the population standard deviation, $\sigma$. We print these parameters one more time here:
 
-The observant reader may have noticed that, while this result seems really fascinating, in practice we cannot take samples of size equal to infinity. 
-What makes the CLT even more relevant, in practice, is that even for small sample sizes, the distribution of $\bar X$ approximates normality very quickly. As you can see in Figure  \@ref(fig:sample-proportion-25-with-normal-pdf), even for a sample of size $n=25$ the distribution of sample proportions already appears to follow a normal distribution.
-
-
-```{r sample-proportion-25-with-normal-pdf, echo=FALSE, fig.height=3, fig.cap="Histogram of the distribution of the sample proportion and the normal curve.", purl=FALSE}
-n = 25
-p=9/24
-sd.p = sqrt(p*(1-p)/n)
-
-if (!file.exists("rds/virtual_samples_25r.rds")) {
-  virtual_samples_25r <- bowl |>
-    rep_slice_sample(n = 25, replace = TRUE, reps = 10000)
-  write_rds(virtual_samples_25, "rds/virtual_samples_25r.rds")
-} else {
-  virtual_samples_25r<- read_rds("rds/virtual_samples_25r.rds")
-}
-
-ggplot(virtual_prop_red_25r, aes(x = prop_red)) +
-  geom_histogram(aes(y=..density..), binwidth = 0.04, color = "white") + 
-  stat_function(fun = dnorm,  args = list(mean = p, sd = sd.p)) + xlim(0,0.75) + ylim(0,18) +
-  labs(
-    x = "Sample proportions for red balls from samples of size 25",
-    title = "Histogram for the sample proportions"
-  )
+```{r}
+almonds_bowl |>
+  summarize(mu = mean(weight), sigma = sd(weight))
 ```
 
-```{r sample-proportion-100-with-normal-pdf, echo=FALSE, fig.height=3, fig.cap="Histogram of the distribution of the sample proportion and the normal curve.", purl=FALSE}
-n = 100
-p=9/24
-sd.p = sqrt(p*(1-p)/n)
+And we do the same for our simulations next. Recall that the expected value of $\overbar X$ is the value we would expect to observe, on average, when we take many sample means from random samples of a given size. It is located at the center of the distribution of $\overbar X$. Similarly, the standard error of $\overbar X$ is the measure of dispersion or magnitude of sampling variation. It is the standard deviation of the sample means obtained from all possible random samples of a given size. Using the data wrangling code `mean()` and `sd()`[^2] functions inside `summarize()` and applied to our simulation values, we can estimate the expected value and standard error of $\overbar X$. Three sets of values are obtained, each for the corresponding sample sizes and presented in Table \@ref(tab:comparing-n1).
 
-if (!file.exists("rds/virtual_samples_100r.rds")) {
-  virtual_samples_100r <- bowl |>
-    rep_slice_sample(n = 100, replace = TRUE, reps = 10000)
-  write_rds(virtual_samples_100r, "rds/virtual_samples_100r.rds")
-} else {
-  virtual_samples_100r<- read_rds("rds/virtual_samples_100r.rds")
-}
+[^2]: As explained earlier we use `sd()` for convenience, even though is not calculating the standard deviation but the sample standard deviation.
 
-ggplot(virtual_prop_red_100r, aes(x = prop_red)) +
-  geom_histogram(aes(y=..density..), binwidth = 0.01, color = "white") + 
-  stat_function(fun = dnorm,  args = list(mean = p, sd = sd.p)) + xlim(0,0.75) + ylim(0,18)+
-  labs(
-    x = "Sample proportions for red balls from samples of size 100",
-    title = "Histogram for the sample proportions"
-  )
-```
+```{r, eval=FALSE}
+# n = 25
+virtual_mean_weight_25 |> 
+  summarize(E_Xbar_25 = mean(mean_weight), sd = sd(mean_weight))
 
-```{r sample-proportion-400-with-normal-pdf, echo=FALSE, fig.height=3, fig.cap="Histogram of the distribution of the sample proportion and the normal curve.", purl=FALSE}
-n = 400
-p=9/24
-sd.p = sqrt(p*(1-p)/n)
+# n = 50
+virtual_mean_weight_50 |> 
+  summarize(E_Xbar_50 = mean(mean_weight), sd = sd(mean_weight))
 
-if (!file.exists("rds/virtual_samples_400r.rds")) {
-  virtual_samples_400r <- bowl |>
-    rep_slice_sample(n = 400, replace = TRUE, reps = 10000)
-  write_rds(virtual_samples_400r, "rds/virtual_samples_400r.rds")
-} else {
-  virtual_samples_400r<- read_rds("rds/virtual_samples_400r.rds")
-}
-
-ggplot(virtual_prop_red_400r, aes(x = prop_red)) +
-  geom_histogram(aes(y=..density..), binwidth = 0.0025, color = "white") + 
-  stat_function(fun = dnorm,  args = list(mean = p, sd = sd.p)) + xlim(0,0.75) + ylim(0,18)+
-  labs(
-    x = "Sample proportions for red balls from samples of size 400",
-    title = "Histogram for the sample proportions"
-  )
-```
-
-The same happened in Figures \@ref(fig:sample-proportion-100-with-normal-pdf) and \@ref(fig:sample-proportion-400-with-normal-pdf) when sample proportions of larger sample sizes are obtained. The range of the $x-$ and $y-$axis on all these figures has been kept constant for appropriate comparisons. The figures represent density histograms where the area of each bar represents the percentage or proportion of observations for the corresponding class and the total area of each histogram is 1 (or 100%). Observe also that all the curves follow the bell-shaped form of the normal curve but the spread is greater the smaller the sample size used. The spread observed are consistent with the value of the standard deviation for $\bar X$ (or standard error) that we obtained earlier for each case.
-
-
-
-We can also refer to the simulations performed for the number of births in the US between 2001 and 2014. The histogram for the sample means for samples of size $n=20$ and $n= 50$ are given below.
-
-Clearly, these samples also follow the normal distribution.
-
-
-Let's summarize the important information learned in this section
-
-1. As long as the random samples used are large enough, the sampling distribution of sample means or sample proportions, will approximate the normal distribution. This is true regardless of the underlying population distribution.
-2. The mean of the sample means will be exactly the same as the population mean.
-3. The standard deviation of the sample means, also called the standard error, will be equal to the standard deviation of the underlying population distribution, divided by the square root of the sample size.
-
-
-If you still need some convincing, Shuyi Chiou, Casey Dunn, and Pathikrit Bhattacharyya created a 3-minute and 38-second video at <https://youtu.be/jvoxEYmQHNM> explaining this crucial statistical theorem using the average weight of wild bunny rabbits and the average wingspan of dragons as examples. Figure \@ref(fig:CLT-video-preview) shows a preview of this video.
-
-```{r CLT-video-preview, echo=FALSE, fig.cap="Preview of Central Limit Theorem video.", purl=FALSE, out.width = "75%"}
-knitr::include_graphics("images/copyright/CLT_video_preview.png")
+# n = 100
+virtual_mean_weight_100 |> 
+  summarize(E_Xbar_100 = mean(mean_weight), sd = sd(mean_weight))
 ```
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-### Precision and Accuracy {#moral-of-the-story}
-
-Let's recap what we have learned so far. If a sample is generated at random, the resulting point estimate is a "good guess" of the true unknown population parameter. In our sampling activities, the sample proportion $\widehat{p}$ of red balls was a "good guess" of the population proportion $p$ of red balls in the bowl. 
-
-A "good guess" is not a perfect guess. A point estimate can be smaller or greater than the population parameter due to sampling variation. However, the estimates "on average" will be equal to the center of the sampling distribution, thus equal to the population parameter. In our sampling activities, as shown in Figure \@ref(fig:comparing-sampling-distributions-3), the sample proportion $\widehat{p}$ was sometimes less than, other times greater than the true population proportion $p$. Still, on average, they were equal to the population proportion $p$. This is also known as having an *accurate* estimate\index{accuracy}.
-
-We also saw that as the sample size $n$ increases, the point estimates vary less and are more concentrated around the true population parameter, thus the *standard error* gets smaller and the typical error of the point estimates also decreases. In our sampling exercise, as the sample size increased, the variation of our sample proportions $\widehat{p}$ decreased as seen in Figures \@ref(fig:comparing-sampling-distributions-3) and \@ref(fig:comparing-sampling-distributions-2). This is also known as having a *precise* estimate\index{precision}. 
-
-
-In conclusion, random sampling ensures our point estimates are *accurate*, while on the other hand having a large sample size ensures our point estimates are *precise*. Accuracy describes how "on target" our estimates are, whereas precision describes how "consistent" they are. Figure \@ref(fig:accuracy-vs-precision) illustrates the difference.
-
-```{r accuracy-vs-precision, echo=FALSE, fig.cap="Comparing accuracy and precision.", purl=FALSE, out.width="75%", out.height="75%", purl=FALSE}
-include_graphics("images/accuracy_vs_precision.jpg")
-```
-
-Observe that taking 1000 repeated random samples of different sizes was useful to illustrate how the sampling distribution of point estimates works, and what are the best practices to obtain accurate and precise estimates. In a real-life situation when getting the best estimate is the main task, we try to get a single random sample that is as large as we can afford because we know that the resulting point estimate will be the most accurate and precise. 
-
-In Section \@ref(sampling-case-study), we're going to study a real-life example of sampling: polls.
-
-```{block, type="learncheck", purl=FALSE}
-\vspace{-0.15in}
-**_Learning check_**
-\vspace{-0.1in}
-```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** The table that follows is a version of Table \@ref(tab:comparing-n-2) matching sample sizes $n$ to different *standard errors* of the sample proportion $\widehat{p}$, but with the rows randomly re-ordered and the sample sizes removed. Fill in the table by matching the correct sample sizes to the correct standard errors.
-
-```{r comparing-n-3, echo=FALSE, purl=FALSE}
-set.seed(76)
-comparing_n_table <- virtual_prop |>
+```{r comparing-n1, echo=FALSE, purl=FALSE}
+comparing_n_table <- virtual_mean |>
   group_by(n) |>
-  summarize(sd = sd(prop_red)) |>
-  mutate(
-    n = str_c("n = ")
-  ) |>
-  rename(`Sample size` = n, `Standard error of $\\widehat{p}$` = sd) |>
-  sample_frac(1)
+  summarize(E_Xbar = mean(mean_weight), SE_Xbar = sd(mean_weight)) |>
+  rename(`Sample size` = n, `Expected Value` = E_Xbar,  `Standard Error` = SE_Xbar)
 
 comparing_n_table |>
   kable(
     digits = 3,
-    caption = "Standard errors of $\\widehat{p}$ based on n = 25, 50, 100",
+    caption = "Comparing expected values and standard errors for three different sample sizes",
     booktabs = TRUE,
-    escape = FALSE,
     linesep = ""
   ) |>
   kable_styling(
-    font_size = ifelse(is_latex_output(), 10, 16),
+    font_size = ifelse(knitr::is_latex_output(), 10, 16),
     latex_options = c("hold_position")
   )
 ```
 
-For the following four *Learning checks*, let the *estimate* be the sample proportion $\widehat{p}$: the proportion of a shovel's balls that were red. It estimates the population proportion $p$: the proportion of the bowl's balls that were red.
+In summary:
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is the difference between an *accurate* and a *precise* estimate? 
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How do we ensure that an estimate is *accurate*? How do we ensure that an estimate is *precise*?
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** In a real-life situation, we would not take 1000 different samples to infer about a population, but rather only one. Then, what was the purpose of our exercises where we took 1000 different samples?
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Figure \@ref(fig:accuracy-vs-precision) with the targets shows four combinations of "accurate versus precise" estimates. Draw four corresponding *sampling distributions* of the sample proportion $\widehat{p}$, like the one in the leftmost plot in Figure \@ref(fig:comparing-sampling-distributions-3).
-
-```{block, type="learncheck", purl=FALSE}
-\vspace{-0.25in}
-\vspace{-0.25in}
-```
-
-## Case study: Views of return to pre-pandemic normalcy {#sampling-case-study}
-
-A more realistic sampling scenario than our bowl activity is a survey. In practice, polling organizations do not take thousands of repeated samples as we did in our previous simulations. They take only one *sample*.
-
-Gallup is a company that conducts public opinion polls. An article published on March 12, 2023, ["Return to Pre-Pandemic Normalcy."](https://news.gallup.com/poll/471953/not-expect-return-pre-pandemic-normalcy.aspx) presented the results of a poll conducted by Gallup, asking questions about perceptions of life three years after the coronavirus pandemic. Based on these results, 47% of people living in the US believed that pre-pandemic normalcy was not attainable for them. While the article didn't share the number of people who participated in this poll, Gallup states that they interview at least 1,000 US adults aged 18 and older for these types of polls, ["How Does the Gallup Poll Social Series Work?"](https://www.gallup.com/175307/gallup-poll-social-series-methodology.aspx). 
-For simplicity, we assume that the poll asked 1,000 people.
+1. The estimated expected value was the same for all three simulations, 3.64. This is exactly equal to $\mu$ the population mean weight of almonds in the entire bowl.
+2. The Standard Error decreases when the sample size increases. If we focus on the result obtained for $n=100$, the standard error was 0.039. When compared with the population standard deviation $\sigma = 0.392$ this standard error is about one tenth the value of $\sigma$. Similarly when $n=25$ the standard error (0.079) is about one fifth the value of $\sigma$ and that pattern also holds when $n=50$. As it was the case in for the sample proportion, the standard error is inversely proportional to the squared sample size used to construct the distribution of $\overbar X$. This is also a theoretical result that can be expressed as: $$SE_{\overbar X} = \frac{\sigma}{\sqrt {n}}$$ where $n$ is the sample size and $\sigma$ is the population standard deviation.
 
 
+### The Central Limit Theorem revisited {#CLT-mean}
+
+Finally, observe that the shapes of the histograms in Figure \@ref(fig:comparing-sampling-distributions-means) are bell-shaped and seem to approximate the normal distribution. As we did with proportions, in Figures \@ref(fig:sample-mean-25-with-normal)  and \@ref(fig:sample-mean-100-with-normal) we compare our histograms with the theoretical curve for the normal distribution. 
+
+```{r sample-mean-25-with-normal, echo=FALSE, fig.height=3, fig.cap="The distribution of the sample mean.", purl=FALSE}
+n = 25
+x = almonds_bowl$weight
+mu = mean(x)
+sigma = sqrt(mean(x^2)-mean(x)^2)
+if (!file.exists("rds/virtual_mean_weight_25.rds")) {
+  virtual_mean_weight_25 <- almonds_bowl |>
+    rep_slice_sample(n = 25, replace = TRUE, reps = 1000) |>
+    summarize(mean_weight = mean(weight), n = n())
+  write_rds(virtual_mean_weight_25, "rds/virtual_mean_weight_25.rds")
+} else {
+  virtual_mean_weight_25 <- read_rds("rds/virtual_mean_weight_25.rds")
+}
 
 
-We can compare the real-life poll in this news article with our _bowl activity_ from Sections \@ref(sampling-activity) and \@ref(sampling-simulation). 
+ggplot(virtual_mean_weight_25, aes(x = mean_weight)) +
+  geom_histogram(aes(y=..density..), binwidth = 0.02, color = "white") + 
+  stat_function(fun = dnorm,  args = list(mean = mu, sd = sigma/sqrt(n)), col="red") + xlim(3.4,4) + ylim(0,12) +
+  labs(
+    x = "Sample means with n=25"
+  )
 
-We show that the former is an idealized version of the latter.
-
-First, who is the **(study) population** of $N$ individuals or observations of interest? \index{sampling!population}
-
-* Bowl: $N$ = `r num_balls` identically sized red and white balls
-* Gallup poll: The population of interest is all people living in the US that are 18 years of age or older. Based on the 2021 census, $N$ is approximately 258 million people. In the following paragraphs, when we refer to people living in the US we refer to those 18 years or older.
-
-Second, what is the **population parameter**? \index{sampling!population parameter}
-
-* Bowl: The population proportion $p$ of *all* the balls in the bowl that are red.
-* Gallup poll: The population proportion $p$ is the proportion of *all* those people living in the US who believe that pre-pandemic normalcy is not attainable.
-
-Third, what would a **census** look like? \index{sampling!census}
-
-* Bowl: Manually going over all $N$ = `r num_balls` balls and exactly computing the  proportion $p$ of red balls in the entire bowl.
-* Gallup poll: Locating all people living in the US and asking them whether they believe that pre-pandemic normalcy is attainable. As you can imagine, this would be a very costly and impractical activity.
-
-Fourth, how do you perform **sampling** to obtain a sample of size $n$? \index{sampling}
-
-* Bowl: Using a shovel with $n=50$ slots. 
-* Gallup poll: The sample will be of size $n=1,000$. One possible method to obtain a random sample would be to get a list of phone numbers of all people living in the US and pick out $n$ phone numbers. This is not a perfect method, as some people in the US may not have phone numbers, share phone numbers with other household members, not answer when called, answer but decide not to participate, etc. It is not easy to obtain a proper random sample from this population and those are real-life limitation polling organizations, such as Gallup, need to deal with.
-
-Fifth, what is your **point estimate** also known as the **sample statistic** of the unknown population parameter?
-
-* Bowl: The sample proportion $\widehat{p}$ of red balls. 
-* Gallup poll: The sample proportion $\widehat{p}$ of $1,000$ people selected in the sample who believed that pre-pandemic normalcy was not attainable. In this poll's case, $\widehat{p} = 0.47 = 47\%$, the quoted percentage in the article. \index{point estimate} \index{sample statistic}
-
-Sixth, is the sampling procedure **representative**? \index{sampling!representative}
-
-* Bowl: Are the contents of the shovel representative of the contents of the bowl? Because we mixed the bowl before sampling, we can feel confident that they are. 
-* Gallup poll: Is the sample of $n = 1,000$ people representative of *all* people living in the US? While Gallup had to overcome many limitations and obstacles that put in risk the ability for the poll to be a proper random sample, the methodology and theoretical considerations they use when studying polls such as this, typically, make the random sample obtained representative of the population of interest. 
-
-Seventh, are the samples **generalizable** to the greater population? \index{generalizability}
-
-* Bowl: Is the sample proportion $\widehat{p}$ of the shovel's balls that are red a "good guess" of the population proportion $p$ of the bowl's balls that are red? Given that the sample was representative, the answer is yes.
-* Gallup poll: Is the sample proportion $\widehat{p}$ = 0.47 of people living in the US who believed that pre-pandemic normalcy was not attainable a "good guess" of the population proportion $p$ of all people living in the US? In other words, can we confidently say that roughly 47% of *all* people living in the US believe that pre-pandemic normalcy was not attainable? Again, this depends on whether the sampling was random.
-
-Eighth, is the sampling procedure **unbiased**? In other words, do all observations have an equal chance of being included in the sample? \index{bias}
-
-* Bowl: Since each ball was equally sized and we mixed the bowl before using the shovel, each ball had an equal chance of being included in a sample and hence the sampling was unbiased. 
-* Gallup poll: Did all young Americans have an equal chance at being represented in this poll? Likely not, in real-life polls, the sample obtained will have some amount of bias. What polling company such as Gallup do, is to account for the potential bias by giving a higher weight to those observations that likely have been misrepresented. The methodology that they use likely helps provide results that are less biased, but some level of bias will likely remain.
-
-Ninth and lastly, was the sampling done at **random**? \index{sampling!random}
-
-* Bowl: As long as you mixed the bowl sufficiently before sampling, your samples would be random.
-* Gallup poll: Was the sample conducted at random? We can't answer this question without knowing about the *sampling methodology*\index{sampling methodology} used by Gallup. We will discuss this more at the end of this section.
-
-In other words, the poll by Gallup can be thought of as *an instance* of using the shovel to sample balls from the bowl. Furthermore, if another polling company conducted a similar poll of young Americans at roughly the same time, they would likely get a different estimate than 47%. This is due to *sampling variation*.
-
-Let's now revisit the sampling paradigm from Subsection \@ref(terminology-and-notation):
-
-**In general**: 
-
-* If the sampling of a sample of size $n$ is done at *random*, then
-* the sample is *unbiased* and *representative* of the population of size $N$, thus
-* any result based on the sample can *generalize* to the population, thus
-* the point estimate is a "good guess" of the unknown population parameter, thus
-* instead of performing a census, we can *infer* about the population using sampling.
-
-**Specific to the bowl:**
-
-* Since we extracted a sample of $n$ = 50 balls at *random*, in other words we mixed all of the equally sized balls before using the shovel, then
-* the contents of the shovel are *unbiased* and *representative* of the contents of the bowl, thus
-* any result based on the shovel can *generalize* to the bowl, thus
-* the sample proportion $\widehat{p}$ of the $n$ = 50 balls in the shovel that are red is a "good guess" of the population proportion $p$ of the bowl's $N$ = `r num_balls` balls that are red, thus
-* instead of conducting a *census* of the `r num_balls` balls in the bowl, we can **infer** about the bowl using the sample from the shovel.
-
-**Specific to the Gallup poll:**
-
-* If we had a way of obtaining a *randomly* chosen sample of 1,000 people living in the US and determining who believed that pre-pandemic normalcy was not attainable, then
-* these 1,000 people would be an *unbiased* and *representative* sample of all people living in the US, thus 
-* any results based on this sample could *generalize* to the entire population of all people living in the US, thus
-* the reported sample approval rating of 47% of these 1,000 people would be a *good guess* of the true proportion of people living in the US who believe that pre-pandemic normalcy was not attainable, thus
-* instead of asking all people in the US, we could *infer* about them using polling.
-
-So as you can see, it was critical for the sample obtained by Gallup to be truly random in order to infer about *all* people living in the US. Was their sample truly random? It is hard to answer such questions without knowing about the *sampling methodology* they used\index{sampling methodology}. For example, if this poll was conducted using only mobile phone numbers, people without mobile phones would be left out and therefore not represented in the sample. What about if Gallup conducted this poll on an internet news site? Then people who don't read this particular internet news site would be left out. Ensuring that our samples were random was easy to do in our sampling bowl exercises; however, in a real-life situation like the Gallup poll, this is much harder to do.
-
-```{block, type="learncheck", purl=FALSE}
-\vspace{-0.15in}
-**_Learning check_**
-\vspace{-0.1in}
-```
-
-Comment on the representativeness of the following *sampling methodologies*:
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** The Royal Air Force wants to study how resistant all their airplanes are to bullets. They study the bullet holes on all the airplanes on the tarmac after an air battle against the Luftwaffe (German Air Force).
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Imagine it is 1993, a time when almost all households had landlines. You want to know the average number of people in each household in your city. You randomly pick out 500 phone numbers from the phone book and conduct a phone survey.
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** You want to know the prevalence of illegal downloading of TV shows among students at a local college.  You get the emails of 100 randomly chosen students and ask them, "How many times did you download a pirated TV show last week?".
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** A local college administrator wants to know the average income of all graduates in the last 10 years. So they get the records of five randomly chosen graduates, contact them, and obtain their answers. 
-
-```{block, type="learncheck", purl=FALSE}
-\vspace{-0.25in}
-\vspace{-0.25in}
 ```
 
 
+```{r sample-mean-100-with-normal, echo=FALSE, fig.height=3, fig.cap="The distribution of the sample mean.", purl=FALSE}
+n = 100
+x = almonds_bowl$weight
+mu = mean(x)
+sigma = sqrt(mean(x^2)-mean(x)^2)
+if (!file.exists("rds/virtual_mean_weight_100.rds")) {
+  virtual_mean_weight_100 <- almonds_bowl |>
+    rep_slice_sample(n = 100, replace = TRUE, reps = 1000) |>
+    summarize(mean_weight = mean(weight), n = n())
+  write_rds(virtual_mean_weight_100, "rds/virtual_mean_weight_100.rds")
+} else {
+  virtual_mean_weight_100 <- read_rds("rds/virtual_mean_weight_100.rds")
+}
 
 
- 
+ggplot(virtual_mean_weight_100, aes(x = mean_weight)) +
+  geom_histogram(aes(y=..density..), binwidth = 0.01, color = "white") + 
+  stat_function(fun = dnorm,  args = list(mean = mu, sd = sigma/sqrt(n)), col="red") + xlim(3.4,4) + ylim(0,12) +
+  labs(
+    x = "Sample means with n=100"
+  )
+
+```
+
+We conclude that the distribution of $\overbar X$, that is, the sampling distribution of the sample mean, when the sample size is large enough, follows approximately a normal distribution with mean equal to the population mean, $\mu$, and standard deviation equal to the population standard deviation divided by the square root of the sample size, $\sigma/\sqrt{n}$. We can write this as $$\overbar X \sim Normal \left(\mu, \frac{\sigma}{\sqrt n}\right)$$
 
 
-## Conclusion {#sampling-conclusion}
 
-### Sampling scenarios {#sampling-conclusion-table}
+## The Sampling Distribution in Other Scenarios{#sampling-other-scenarios}
 
-In this chapter, we performed both tactile and virtual sampling exercises to infer about an unknown proportion. We also presented a case study of sampling in real life with polls. In each case, we used the sample proportion, $\bar X$ or $\widehat{p}$, to estimate the population proportion $p$. However, we are not just limited to scenarios related to proportions. In other words, we can use sampling to estimate other population parameters using other point estimates as well. We present four more such scenarios in Table \@ref(tab:table-ch8). 
+In Sections \@ref(sampling-activity), \@ref(central-limit-theorem), and \@ref(sampling-activity-mean), we have provided information about the expected value, the standard error, and the shape of the sampling distribution when the statistic of interest are sample proportions or sample means. It is possible to study the sampling distribution of other statistics. In the section we explore some of them.
+
+
+### Sampling distribution for two samples
+
+Assume that we would like to compare the parameters of two populations, for example the means or proportion of those populations. To do this a random sample is taken from the first population and another random sample, independent from the first, is obtained from the second population. Then we can use a statistic from each sample, such as the sample mean or sample proportion, and use them to produce sampling distributions that depend on two independent samples. We provide two examples to illustrate how the sampling distributions are affected.
+
+#### Difference in sample means
+
+The problem at hand could be that the chocolate-covered almonds' weight for almonds in a bowl need to be compared with the chocolate-covered coffee beans' weight for coffee beans in a different bowl. The statistic we now consider is the difference in the sample means for samples obtained from these two bowls. As it happens, most of the properties we have presented for a single sample mean or sample proportion can be extended directly to two-sample problems.
+
+We now provide the mathematical details for this problem. We assume that for the chocolate-covered almonds' weight the population mean and standard deviation are given by $\mu_1$ and $\sigma_1$ and for the chocolate-covered coffee beans' weight the population mean and standard deviation are given by $\mu_2$ and $\sigma_2$. 
+
+Our sampling exercise has now two components. First, we take a random sample of size $n_1$ from the almonds' bowl and find the sample mean. As we did before, we can let $\overbar X_1$ represent the possible values that the sample mean can take for each possible sample. Second, we let $n_2$ represent the sample size used for samples from the coffee beans' bowl and the random variable $\overbar X_2$ represent the possible values that the sample mean can take for each possible sample. To compare these two sample means, we obtain the difference, $\overbar X_1 - \overbar X_2$. The distribution of $\overbar X_1 - \overbar X_2$ is the sampling distribution of the difference in sample means. The expected value and standard error of $\overbar X_1 - \overbar X_2$ is given by $\mu_1 - \mu_2$ and $$\sqrt{\frac{\sigma_1^2}{n_1} + \frac{\sigma^2_2}{n_2}},$$ respectively. If the distributions of $X_1$ and $X_2$ are approximately normal due to the CLT, so is the distribution of $\overbar X_1 - \overbar X_2$. We can write all these properties at once:$$\overbar X - \overbar Y \sim Normal \left(\mu_1 - \mu_2, \sqrt{\frac{\sigma_1^2}{n_1} + \frac{\sigma^2_2}{n_2}} \right)$$
+
+Observe how the standard deviation of the difference is the sum of squared standard deviations from each sample mean. The reason we add standard deviations instead of subtract is because whether you add or subtract statistics, you are effectively adding more uncertainty into your results and the dispersion increases because of it.
+
+
+#### Difference in sample proportions
+
+Comparing two sample proportions can be very useful. We may be interested in comparing the proportion of patients that improve using one treatment versus the proportion of patients that improve using a different treatment, or the proportion of winter accidents in a highway using on type of tire versus another. 
+
+To illustrate how the sampling distribution works for the difference in sample proportions, we modify the examples used earlier. 
+Assume that we want to compare the proportion of red balls in the first bowl with the proportion of almonds that are heavier than 3.8 grams, in the second bowl. 
+The statistic we now consider is the difference in these sample proportions for samples obtained from these two bowls. 
+The samples obtained from each ball do not need to be of the same size; for example, we can obtain samples of size $n_1 = 50$ from the first ball and samples of size $n_2 = 60$ from the second bowl.
+We proceed as follows, we get a random sample from the first bowl and obtain the sample proportion of red balls, we get a random sample from the second bowl and obtain the proportion of almonst heavier than 3.8 grams, we find the difference in sample proportion of red balls minus sample proportion of almonds greater than 3.8 grams, this is the resulting statistic. 
+
+We can use R to produce the require virtual samples and differences. We then use them to approximate the sampling distribution of the difference in sample proportions
+
+
+
+
+
+Our sampling exercise has again two components. First, we take a random sample of $n_1 = 50$ balls from the bowl of red balls and calculate the sample proportion or red balls. As we did before, we let $\overbar X_1$ represent the possible values that the sample proportion can take for each possible sample. Recall that $\overbar X_1$ is the sample proportion in this context, which is also the sample mean of Bernoulli trials. Second, we let $n_2 = 60$ represent the sample size used for samples from the almonds' bowl and the random variable $\overbar X_2$ represent the possible values that the sample proportion can take for each possible sample. 
+
+To compare these two sample proportions, we obtain the difference, $\overbar X_1 - \overbar X_2$. The distribution of $\overbar X_1 - \overbar X_2$ is the sampling distribution of the difference in sample proportions. We use virtual sampling to approximate this distribution. We use the `rep_slice_sample` and `summarize` functions to produce the random samples and the necessary sample proportions, respectively. A total of 1000 random samples and sample proportions are obtained from each bowl with the appropriate sample sizes, 50 and 60, respectively. Moreover, the `inner_join` function introduce in section \@ref(joing) is used here to merge the sample proportions in a single data frame and the difference in these sample proportions is obtained for each replication. 
+
+
+```{r echo=-1}
+set.seed(76)
+n1 <- 50
+n2<- 60
+virtual_prop_red <- bowl |> 
+  rep_slice_sample(n = 50, reps = 1000) |> 
+  summarize(prop_red = mean(color == "red"))
+virtual_prop_almond <- almonds_bowl |>
+  rep_slice_sample(n = 60, reps = 1000) |>
+  summarise(prop_almond = mean(weight > 3.8))
+prop_joined <- virtual_prop_red |>
+  inner_join(virtual_prop_almond, by = "replicate") |>
+  mutate(prop_diff = prop_red - prop_almond)
+```
+
+
+The results are stored in data frame `prop_joined`. The variable `prop_diff` in this data frame represents the difference in sample proportions. We present here the first 10 values of this data frame:
+
+```{r}
+prop_joined
+```
+
+As we did before, we construct a histogram for these 1000 differences. It is shown in Figure \@ref(fig:samplingdistribution-virtual-diff-1000).
+
+```{r eval=FALSE}
+ggplot(prop_joined, aes(x = prop_diff)) +
+  geom_histogram(binwidth = 0.04, boundary = 0, color = "white") +
+  labs(x = "Difference in sample proportions", 
+       title = "Histogram of 1000 differences in sample proportions") 
+```
+```{r samplingdistribution-virtual-diff-1000, echo=FALSE, fig.cap="The distribution of 1000 difference in sample proportions based on 1000 random samples of size 50 from the first bowl and 1000 random sample of size 60 from the second bowl.", purl=FALSE}
+virtual_histogram_diff <- ggplot(prop_joined, aes(x = prop_diff)) +
+  geom_histogram(binwidth = 0.04, boundary = 0, color = "white")
+virtual_histogram_diff +
+  labs(x = "Difference in sample proportions", 
+       title = "Histogram of 1000 differences in sample proportions") 
+``` 
+
+
+Clearly, the sampling distribution of the difference in sample proportions looks also bell-shaped and it appears to be centered at some negative value somewhere around -0.05. As it happened with a single sample proportion or a sample mean, the sampling distribution of the difference in sample proportions also follows a normal distribution and the expected difference as well as the standard error rely on information from the population and the sample size.
+
+Here are the mathematical details: $\overbar X_1$ is the random variable that represents the sample proportion of red balls of size $n_1 = 50$, $\overbar X_2$ is the random variable that represents the sample proportion of almonds heavier than 3.8 grams, taken from samples of size $n_2 = 60$. The proportion of red balls the population proportion and standard deviation are given by $p_1$ and $\sigma_1 = \sqrt{p_1(1-p_1)}$ and for the almonds' weight the population proportion and standard deviation are given by $p_2$ and $\sigma_2 = \sqrt{p_2(1-p_2)}$. 
+
+The expected value and standard error of the difference, $\overbar X_1 - \overbar X_2$ is given by $p_1 - p_2$ and $$\sqrt{\frac{p_1(1-p_1)}{n_1} + \frac{p_2(1-p_2)}{n_2}},$$ respectively. If the distributions of $X_1$ and $X_2$ are approximately normal due to the CLT, so is the distribution of $\overbar X_1 - \overbar X_2$. We can write all these properties at once: $$\overbar X - \overbar Y \sim Normal \left(p_1 - p_2, \sqrt{\frac{p_1(1-p_1)}{n_1} + \frac{p_2(1-p_2)}{n_2}} \right)$$
+
+### Summary of scenarios
+
+These are not the only cases where the sampling distribution can be obtained. For example, when performing linear regression, we can obtain the sampling distribution for the slope of the regression line and the behavior will be similar to what we have described here. We will discuss inference in the context of linear regression in Chapter \@(inference-for-regression). For now, we present a summary of the difference scenarios presented in this chapter.
+
+
+
+<!-- This section needs to be completed
+-->
+
 
 ```{r table-ch8, echo=FALSE, message=FALSE, purl=FALSE}
 # The following Google Doc is published to CSV and loaded using read_csv():
@@ -1395,7 +1465,7 @@ if (!file.exists("rds/sampling_scenarios.rds")) {
     slice(1:5)
   write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
 } else {
-  sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
+  sampling_scenarios <- readRDS("rds/sampling_scenarios.rds")
 }
 
 sampling_scenarios |>
@@ -1416,31 +1486,10 @@ sampling_scenarios |>
   column_spec(5, width = "0.6in")
 ```
 
-In the rest of this book, we will cover all the remaining scenarios as follows:
 
-* In Chapter \@ref(confidence-intervals), we will cover examples of statistical inference for
-    + Scenario 2: The mean age $\mu$ of all pennies in circulation in the US.
-    + Scenario 3: The difference $p_1 - p_2$ in the proportion of people who yawn *when seeing someone else yawn first* minus the proportion of people who yawn *without seeing someone else yawn first*. This is an example of *two-sample* inference\index{two-sample inference}.
-* In Chapter \@ref(hypothesis-testing), we will cover an example of statistical inference for
-    + Scenario 4: The difference $\mu_1 - \mu_2$ in mean IMDb ratings for action and romance movies. This is another example of *two-sample* inference.
-* In Chapter \@ref(inference-for-regression), we will cover an example of statistical inference for regression by revisiting the regression models for teaching score as a function of various instructor demographic variables you saw in Chapters \@ref(regression) and \@ref(multiple-regression).
-    + Scenario 5: The slope $\beta_1$ of the population regression line.
+## Summary and Final Remarks {#sampling-final-remarks}
 
 
-### Additional resources
+<!-- This section needs to be completed
+-->
 
-```{r echo=FALSE, results="asis", purl=FALSE}
-if (is_latex_output()) {
-  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
-}
-```
-
-```{r echo=FALSE, purl=FALSE, results="asis", eval = FALSE}
-generate_r_file_link("07-sampling.R")
-```
-
-
-### What's to come?
-
-Recall that in the bowl activity in Section \@ref(sampling-simulation) we obtained samples that produced sample proportions of red balls that were fairly close to, but not exactly equal to the population proportion. Similarly, our Gallup poll case study in Section \@ref(sampling-case-study) suggested that, based on a sample of at least 1,000 people living in the US, about 47% of them believed that pre-pandemic normalcy was not attainable. However, as good of an estimate this sample proportion may be, it is likely not exactly equal to the population proportion. Samples of balls or opinion polls will not produce *statistics* that are exactly equal to population *parameters*; there will be differences caused by *sampling variation*. So, instead of proposing *point* estimates, we could instead propose interval estimates for these population *parameters*. For example, we could instead say that the population proportion of people living in the US who believe that pre-pandemic normalcy is not attainable is about 47%, with a **margin of error* of about 2.1%, or equivalently $$(47\% - 2.1\%, 47\% + 2.1\%) = (46.9\%, 49.1\%)$$
-this is, with some high degree of confidence, the population proportion is somewhere between 46.9% and 49.1%. The study of these types of intervals is presented in the next chapter, where intervals, such as this one, are known as *confidence intervals*.
