@@ -20,7 +20,7 @@ library(moderndive)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
 ##   geom_point()
 
@@ -88,17 +88,17 @@ ggplot(data = weather, mapping = aes(x = temp)) +
   geom_histogram(color = "white")
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(color = "white", fill = "steelblue")
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(bins = 40, color = "white")
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = weather, mapping = aes(x = temp)) +
 ##   geom_histogram(binwidth = 10, color = "white")
 
@@ -170,7 +170,7 @@ ggplot(data = fruits, mapping = aes(x = fruit)) +
   geom_bar()
 
 
-## ---- geomcol, fig.cap="Barplot when counts are pre-counted.", fig.height=2.5----
+## ----geomcol, fig.cap="Barplot when counts are pre-counted.", fig.height=2.5----
 ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
@@ -192,7 +192,7 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = flights, mapping = aes(x = carrier)) +
 ##   geom_bar()
 
@@ -211,7 +211,7 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(data = flights, mapping = aes(x = carrier), fill = origin) +
 ##   geom_bar()
 
@@ -244,7 +244,7 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Segment 1:
 ## ggplot(data = flights, mapping = aes(x = carrier)) +
 ##   geom_bar()
@@ -262,7 +262,7 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## library(dplyr)
 ## 
 ## alaska_flights <- flights %>%
@@ -272,7 +272,7 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 ##   geom_point()
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## early_january_weather <- weather %>%
 ##   filter(origin == "EWR" & month == 1 & day <= 15)
 ## 

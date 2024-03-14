@@ -44,7 +44,7 @@ promotions %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(promotions_shuffled,
 ##        aes(x = gender, fill = decision)) +
 ##   geom_bar() +
@@ -67,7 +67,7 @@ promotions_shuffled %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## obs_diff_prop <- promotions %>%
 ##   specify(decision ~ gender, success = "promoted") %>%
 ##   calculate(stat = "diff in props", order = c("male", "female"))
@@ -202,7 +202,7 @@ se_ci
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## library(moderndive)
 ## library(infer)
 ## null_distribution_mean <- promotions %>%
@@ -307,7 +307,7 @@ obs_diff_means
 null_distribution_movies %>% 
   get_p_value(obs_stat = obs_diff_means, direction = "both")
 
-## ---- echo=FALSE--------------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 p_value_movies <- null_distribution_movies %>%
   get_p_value(obs_stat = obs_diff_means, direction = "both") %>%
   mutate(p_value = round(p_value, 3))
@@ -328,7 +328,7 @@ movies_sample %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Construct null distribution of xbar_a - xbar_r:
 ## null_distribution_movies <- movies_sample %>%
 ##   specify(formula = rating ~ genre) %>%
@@ -397,7 +397,7 @@ flights_sample %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## score_model <- lm(score ~ bty_avg, data = evals)
 ## 

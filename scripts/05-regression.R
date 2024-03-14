@@ -1,10 +1,10 @@
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## library(tidyverse)
 ## library(moderndive)
 ## library(skimr)
 ## library(gapminder)
 
-## ---- echo=FALSE, message=FALSE, purl=TRUE------------------------------------
+## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
 # The code presented to the reader in the chunk above is different than the code
 # in this chunk that is actually run to build the book. In particular we do not
 # load the skimr package.
@@ -37,7 +37,7 @@ glimpse(evals_ch5)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## evals_ch5 %>%
 ##   sample_n(size = 5)
 
@@ -60,14 +60,14 @@ evals_ch5 %>%
   get_correlation(formula = score ~ bty_avg)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## evals_ch5 %>%
 ##   summarize(correlation = cor(score, bty_avg))
 
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 ##   geom_point() +
 ##   labs(x = "Beauty Score",
@@ -77,7 +77,7 @@ evals_ch5 %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 ##   geom_jitter() +
 ##   labs(x = "Beauty Score", y = "Teaching Score",
@@ -97,7 +97,7 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## score_model <- lm(score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
@@ -106,7 +106,7 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## score_model <- lm(score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
@@ -123,7 +123,7 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## regression_points <- get_regression_points(score_model)
 ## regression_points
 
@@ -136,7 +136,7 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 
 
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(gapminder)
 gapminder2007 <- gapminder %>%
   filter(year == 2007) %>%
@@ -149,7 +149,7 @@ gapminder2007 <- gapminder %>%
 glimpse(gapminder2007)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## gapminder2007 %>% sample_n(size = 5)
 
 
@@ -187,7 +187,7 @@ ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
        title = "Life expectancy by continent")
 
 
-## ---- eval=TRUE---------------------------------------------------------------
+## ----eval=TRUE----------------------------------------------------------------
 lifeExp_by_continent <- gapminder2007 %>%
   group_by(continent) %>%
   summarize(median = median(lifeExp), 
@@ -203,7 +203,7 @@ lifeExp_by_continent <- gapminder2007 %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
 ## get_regression_table(lifeExp_model)
 
@@ -214,7 +214,7 @@ lifeExp_by_continent <- gapminder2007 %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## regression_points <- get_regression_points(lifeExp_model, ID = "country")
 ## regression_points
 
@@ -252,7 +252,7 @@ regression_points %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## score_model <- lm(formula = score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
@@ -261,7 +261,7 @@ regression_points %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## library(broom)
 ## library(janitor)
 ## score_model %>%
@@ -272,7 +272,7 @@ regression_points %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## library(broom)
 ## library(janitor)
 ## score_model %>%

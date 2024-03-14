@@ -1,10 +1,10 @@
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## library(tidyverse)
 ## library(moderndive)
 ## library(skimr)
 ## library(ISLR)
 
-## ---- echo=FALSE, message=FALSE, purl=TRUE------------------------------------
+## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
 # The code presented to the reader in the chunk above is different than the code
 # in this chunk that is actually run to build the book. In particular we do not
 # load the skimr package.
@@ -35,12 +35,12 @@ glimpse(evals_ch6)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## evals_ch6 %>% sample_n(size = 5)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## evals_ch6 %>% select(score, age, gender) %>% skim()
 
 
@@ -62,7 +62,7 @@ evals_ch6 %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## score_model_interaction <- lm(score ~ age * gender, data = evals_ch6)
 ## 
@@ -82,7 +82,7 @@ evals_ch6 %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## score_model_parallel_slopes <- lm(score ~ age + gender, data = evals_ch6)
 ## # Get regression table:
@@ -104,7 +104,7 @@ age_coef <- get_regression_table(score_model_parallel_slopes) %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## regression_points <- get_regression_points(score_model_interaction)
 ## regression_points
 
@@ -114,7 +114,7 @@ age_coef <- get_regression_table(score_model_parallel_slopes) %>%
 
 
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(ISLR)
 credit_ch6 <- Credit %>% as_tibble() %>% 
   select(ID, debt = Balance, credit_limit = Limit, 
@@ -127,28 +127,28 @@ glimpse(credit_ch6)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## credit_ch6 %>% sample_n(size = 5)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## credit_ch6 %>% select(debt, credit_limit, income) %>% skim()
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## credit_ch6 %>% get_correlation(debt ~ credit_limit)
 ## credit_ch6 %>% get_correlation(debt ~ income)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## credit_ch6 %>%
 ##   select(debt, credit_limit, income) %>%
 ##   cor()
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
 ##   geom_point() +
 ##   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)",
@@ -172,7 +172,7 @@ glimpse(credit_ch6)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## debt_model <- lm(debt ~ credit_limit + income, data = credit_ch6)
 ## # Get regression table:
@@ -184,14 +184,14 @@ glimpse(credit_ch6)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## get_regression_points(debt_model)
 
 
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Interaction model
 ## ggplot(MA_schools,
 ##        aes(x = perc_disadvan, y = average_sat_math, color = size)) +
@@ -201,7 +201,7 @@ glimpse(credit_ch6)
 ##        color = "School size", title = "Interaction model")
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Parallel slopes model
 ## ggplot(MA_schools,
 ##        aes(x = perc_disadvan, y = average_sat_math, color = size)) +
@@ -212,13 +212,13 @@ glimpse(credit_ch6)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size,
 ##                           data = MA_schools)
 ## get_regression_table(model_2_interaction)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## model_2_parallel_slopes <- lm(average_sat_math ~ perc_disadvan + size,
 ##                               data = MA_schools)
 ## get_regression_table(model_2_parallel_slopes)
@@ -293,7 +293,7 @@ get_regression_summaries(model_2_interaction)
 get_regression_summaries(model_2_parallel_slopes)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## credit_ch6 %>% select(debt, income) %>%
 ##   mutate(income = income * 1000) %>%
 ##   cor()

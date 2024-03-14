@@ -1,4 +1,4 @@
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(dplyr)
 library(ggplot2)
 library(nycflights13)
@@ -10,48 +10,48 @@ library(nycflights13)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## alaska_flights <- flights %>%
 ##   filter(carrier == "AS")
 
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## portland_flights <- flights %>%
 ##   filter(dest == "PDX")
 ## View(portland_flights)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## btv_sea_flights_fall <- flights %>%
 ##   filter(origin == "JFK" & (dest == "BTV" | dest == "SEA") & month >= 10)
 ## View(btv_sea_flights_fall)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## btv_sea_flights_fall <- flights %>%
 ##   filter(origin == "JFK", (dest == "BTV" | dest == "SEA"), month >= 10)
 ## View(btv_sea_flights_fall)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## not_BTV_SEA <- flights %>%
 ##   filter(!(dest == "BTV" | dest == "SEA"))
 ## View(not_BTV_SEA)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## flights %>% filter(!dest == "BTV" | dest == "SEA")
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## many_airports <- flights %>%
 ##   filter(dest == "SEA" | dest == "SFO" | dest == "PDX" |
 ##          dest == "BTV" | dest == "BDL")
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## many_airports <- flights %>%
 ##   filter(dest %in% c("SEA", "SFO", "PDX", "BTV", "BDL"))
 ## View(many_airports)
@@ -149,7 +149,7 @@ by_origin_monthly_incorrect
 
 
 
-## ---- eval=TRUE---------------------------------------------------------------
+## ----eval=TRUE----------------------------------------------------------------
 weather <- weather %>% 
   mutate(temp_in_C = (temp - 32) / 1.8)
 
@@ -238,7 +238,7 @@ freq_dest %>%
 ## View(airports)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## flights_with_airport_names <- flights %>%
 ##   inner_join(airports, by = c("dest" = "faa"))
 ## View(flights_with_airport_names)
@@ -254,7 +254,7 @@ named_dests <- flights %>%
 named_dests
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## flights_weather_joined <- flights %>%
 ##   inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
 ## View(flights_weather_joined)
@@ -264,7 +264,7 @@ named_dests
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## joined_flights <- flights %>%
 ##   inner_join(airlines, by = "carrier")
 ## View(joined_flights)
@@ -278,48 +278,48 @@ named_dests
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## glimpse(flights)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## flights %>%
 ##   select(carrier, flight)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## flights_no_year <- flights %>% select(-year)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## flight_arr_times <- flights %>% select(month:day, arr_time:sched_arr_time)
 ## flight_arr_times
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## flights_reorder <- flights %>%
 ##   select(year, month, day, hour, minute, time_hour, everything())
 ## glimpse(flights_reorder)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## flights %>% select(starts_with("a"))
 ## flights %>% select(ends_with("delay"))
 ## flights %>% select(contains("time"))
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## flights_time_new <- flights %>%
 ##   select(dep_time, arr_time) %>%
 ##   rename(departure_time = dep_time, arrival_time = arr_time)
 ## glimpse(flights_time_new)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## named_dests %>% top_n(n = 10, wt = num_flights)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## named_dests  %>%
 ##   top_n(n = 10, wt = num_flights) %>%
 ##   arrange(desc(num_flights))

@@ -58,14 +58,14 @@ drinks_smaller_tidy <- drinks_smaller %>%
 drinks_smaller_tidy
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## drinks_smaller %>%
 ##   pivot_longer(names_to = "type",
 ##                values_to = "servings",
 ##                cols = c(beer, spirit, wine))
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## drinks_smaller %>%
 ##   pivot_longer(names_to = "type",
 ##                values_to = "servings",
