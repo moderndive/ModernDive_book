@@ -1,10 +1,10 @@
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## library(tidyverse)
 ## library(moderndive)
 ## library(skimr)
 ## library(gapminder)
 
-## ---- echo=FALSE, message=FALSE, purl=TRUE------------------------------------
+## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
 # The code presented to the reader in the chunk above is different than the code
 # in this chunk that is actually run to build the book. In particular we do not
 # load the skimr package.
@@ -27,7 +27,7 @@ library(gapminder)
 
 
 ## -----------------------------------------------------------------------------
-evals_ch5 <- evals %>%
+evals_ch5 <- evals |>
   select(ID, score, bty_avg, age)
 
 
@@ -37,37 +37,37 @@ glimpse(evals_ch5)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
-## evals_ch5 %>%
+## ----eval=FALSE---------------------------------------------------------------
+## evals_ch5 |>
 ##   sample_n(size = 5)
 
 
 
 ## -----------------------------------------------------------------------------
-evals_ch5 %>%
+evals_ch5 |>
   summarize(mean_bty_avg = mean(bty_avg), mean_score = mean(score),
             median_bty_avg = median(bty_avg), median_score = median(score))
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## evals_ch5 %>% select(score, bty_avg) %>% skim()
+## evals_ch5 |> select(score, bty_avg) |> skim()
 
 
 
 
 ## -----------------------------------------------------------------------------
-evals_ch5 %>% 
+evals_ch5 |> 
   get_correlation(formula = score ~ bty_avg)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
-## evals_ch5 %>%
+## ----eval=FALSE---------------------------------------------------------------
+## evals_ch5 |>
 ##   summarize(correlation = cor(score, bty_avg))
 
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 ##   geom_point() +
 ##   labs(x = "Beauty Score",
@@ -77,7 +77,7 @@ evals_ch5 %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 ##   geom_jitter() +
 ##   labs(x = "Beauty Score", y = "Teaching Score",
@@ -97,7 +97,7 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## score_model <- lm(score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
@@ -106,7 +106,7 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## score_model <- lm(score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
@@ -123,7 +123,7 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## regression_points <- get_regression_points(score_model)
 ## regression_points
 
@@ -136,10 +136,10 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 
 
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(gapminder)
-gapminder2007 <- gapminder %>%
-  filter(year == 2007) %>%
+gapminder2007 <- gapminder |>
+  filter(year == 2007) |>
   select(country, lifeExp, continent, gdpPercap)
 
 
@@ -149,14 +149,14 @@ gapminder2007 <- gapminder %>%
 glimpse(gapminder2007)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
-## gapminder2007 %>% sample_n(size = 5)
+## ----eval=FALSE---------------------------------------------------------------
+## gapminder2007 |> sample_n(size = 5)
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## gapminder2007 %>%
-##   select(lifeExp, continent) %>%
+## gapminder2007 |>
+##   select(lifeExp, continent) |>
 ##   skim()
 
 
@@ -187,9 +187,9 @@ ggplot(gapminder2007, aes(x = continent, y = lifeExp)) +
        title = "Life expectancy by continent")
 
 
-## ---- eval=TRUE---------------------------------------------------------------
-lifeExp_by_continent <- gapminder2007 %>%
-  group_by(continent) %>%
+## ----eval=TRUE----------------------------------------------------------------
+lifeExp_by_continent <- gapminder2007 |>
+  group_by(continent) |>
   summarize(median = median(lifeExp), 
             mean = mean(lifeExp))
 
@@ -203,7 +203,7 @@ lifeExp_by_continent <- gapminder2007 %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
 ## get_regression_table(lifeExp_model)
 
@@ -214,7 +214,7 @@ lifeExp_by_continent <- gapminder2007 %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## regression_points <- get_regression_points(lifeExp_model, ID = "country")
 ## regression_points
 
@@ -241,8 +241,8 @@ score_model <- lm(score ~ bty_avg,
 regression_points <- get_regression_points(score_model)
 regression_points
 # Compute sum of squared residuals
-regression_points %>%
-  mutate(squared_residuals = residual^2) %>%
+regression_points |>
+  mutate(squared_residuals = residual^2) |>
   summarize(sum_of_squared_residuals = sum(squared_residuals))
 
 
@@ -252,7 +252,7 @@ regression_points %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## score_model <- lm(formula = score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
@@ -261,23 +261,23 @@ regression_points %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## library(broom)
 ## library(janitor)
-## score_model %>%
-##   tidy(conf.int = TRUE) %>%
-##   mutate_if(is.numeric, round, digits = 3) %>%
-##   clean_names() %>%
+## score_model |>
+##   tidy(conf.int = TRUE) |>
+##   mutate_if(is.numeric, round, digits = 3) |>
+##   clean_names() |>
 ##   rename(lower_ci = conf_low, upper_ci = conf_high)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## library(broom)
 ## library(janitor)
-## score_model %>%
-##   augment() %>%
-##   mutate_if(is.numeric, round, digits = 3) %>%
-##   clean_names() %>%
+## score_model |>
+##   augment() |>
+##   mutate_if(is.numeric, round, digits = 3) |>
+##   clean_names() |>
 ##   select(-c("std_resid", "hat", "sigma", "cooksd", "std_resid"))
 
