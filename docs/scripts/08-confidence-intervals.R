@@ -83,7 +83,7 @@ resampled_means
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## virtual_shovel <- bowl %>%
 ##   rep_sample_n(size = 50)
 
@@ -208,12 +208,12 @@ virtual_resampled_means %>%
 ##   summarize(mean_year = mean(year))
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## pennies_sample %>%
 ##   summarize(stat = mean(year))
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## pennies_sample %>%
 ##   specify(response = year) %>%
 ##   calculate(stat = "mean")
@@ -226,7 +226,7 @@ pennies_sample %>%
   specify(response = year)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## pennies_sample %>%
 ##   specify(formula = year ~ NULL)
 
@@ -316,7 +316,7 @@ bowl_sample_1
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## bowl_sample_1 %>%
 ##   specify(response = color)
 
@@ -441,7 +441,7 @@ first_six_rows %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## mythbusters_yawn %>%
 ##   specify(formula = yawn ~ group, success = "yes") %>%
 ##   generate(reps = 1000, type = "bootstrap") %>%
@@ -537,7 +537,7 @@ bootstrap_distribution %>% summarize(se = sd(stat))
 
 
 
-## ---- message=FALSE-----------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 conf_ints <- tactile_prop_red %>% 
   rename(p_hat = prop_red) %>% 
   mutate(

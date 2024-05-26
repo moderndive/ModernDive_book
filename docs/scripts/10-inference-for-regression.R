@@ -23,7 +23,7 @@ ggplot(evals_ch5,
   geom_smooth(method = "lm", se = FALSE)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## score_model <- lm(score ~ bty_avg, data = evals_ch5)
 ## # Get regression table:
@@ -58,7 +58,7 @@ evals %>%
   select(ID, prof_ID, score, bty_avg)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(regression_points, aes(x = residual)) +
 ##   geom_histogram(binwidth = 0.25, color = "white") +
 ##   labs(x = "Residual")
@@ -67,7 +67,7 @@ evals %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(regression_points, aes(x = bty_avg, y = residual)) +
 ##   geom_point() +
 ##   labs(x = "Beauty Score", y = "Residual") +
@@ -113,7 +113,7 @@ se_ci <- bootstrap_distn_slope %>%
 se_ci
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## visualize(bootstrap_distn_slope) +
 ##   shade_confidence_interval(endpoints = percentile_ci, fill = NULL,
 ##                             linetype = "solid", color = "grey90") +

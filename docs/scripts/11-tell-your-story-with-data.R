@@ -1,10 +1,10 @@
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## library(tidyverse)
 ## library(moderndive)
 ## library(skimr)
 ## library(fivethirtyeight)
 
-## ---- echo=FALSE, message=FALSE, purl=TRUE------------------------------------
+## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
 # The code presented to the reader in the chunk above is different than the code
 # in this chunk that is actually run to build the book. In particular we do not
 # load the skimr package.
@@ -24,13 +24,13 @@ library(fivethirtyeight)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## View(house_prices)
 ## glimpse(house_prices)
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## gain_summary <- flights %>%
 ##   summarize(
 ##     min = min(gain, na.rm = TRUE),
@@ -44,13 +44,13 @@ library(fivethirtyeight)
 ##   )
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## house_prices %>%
 ##   select(price, sqft_living, condition) %>%
 ##   skim()
 
 
-## ---- eval=FALSE, message=FALSE-----------------------------------------------
+## ----eval=FALSE, message=FALSE------------------------------------------------
 ## # Histogram of house price:
 ## ggplot(house_prices, aes(x = price)) +
 ##   geom_histogram(color = "white") +
@@ -82,7 +82,7 @@ house_prices %>%
   select(price, log10_price, sqft_living, log10_size)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Before log10 transformation:
 ## ggplot(house_prices, aes(x = price)) +
 ##   geom_histogram(color = "white") +
@@ -96,7 +96,7 @@ house_prices %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Before log10 transformation:
 ## ggplot(house_prices, aes(x = sqft_living)) +
 ##   geom_histogram(color = "white") +
@@ -109,7 +109,7 @@ house_prices %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Plot interaction model
 ## ggplot(house_prices,
 ##        aes(x = log10_size, y = log10_price, col = condition)) +
@@ -142,7 +142,7 @@ house_prices %>%
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
 ## price_interaction <- lm(log10_price ~ log10_size * condition,
 ##                         data = house_prices)
