@@ -1,7 +1,13 @@
-# ModernDive 1.1.0.9000
+# ModernDive 2.0.0.9000
 
-* Chapter 2 Data Visualization: Remove soft introduction to `%>%` operator (from Ch 3 Data Wrangling) since this only confused readers.
-Instead we now use a prepared `alaska_flights` and `early_january_weather` data frames from `moderndive` version 0.5.3
+* Use base-pipe `|>` instead of `%>%` in all code chunks except for Chapters 7-10 since those are in other updates. Some inline functions like `"*"()` were kept using `%>%` since they are more readable than converting to the base-pipe functionality.
+* Address the warning message explicitly for `group_by()` in text and fix `index.Rmd` to remove `options(dplyr.summarise.inform = FALSE)`
+* Add `relocate()` to end of Chapter 3
+* Add `envoy_flights` and `early_january_2023_weather` to `{moderndive}` package
+* Explain that `{nycflights23}` is an updated version of `{nycflights13}` using the `{anyflights}` package
+* Updated code and discussion throughout the book to use `{nycflights23}` instead of `{nycflights13}`
+
+* Chapter 2 Data Visualization: Remove soft introduction to `%>%` operator (from Ch 3 Data Wrangling) since this only confused readers. Instead we now use a prepared `alaska_flights` and `early_january_weather` data frames from `moderndive` version 0.5.3
 * Chapter 6 Multiple Regression: Per @kmkinnaird's suggestion, we split "6.3.1 Model selection" into:
     + "6.3.1 Model selection using visualizations"
     + Added "6.3.2 Model selection using R-squared"
