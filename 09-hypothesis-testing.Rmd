@@ -1,6 +1,8 @@
 # Hypothesis Testing {#hypothesis-testing}  
     
 ```{r setup_hypo, include=FALSE, purl=FALSE}
+library(knitr)
+
 # Used to define Learning Check numbers:
 chap <- 9
 lc <- 0
@@ -25,18 +27,18 @@ options(scipen = 99) # , digits = 3)
 set.seed(76)
 ```
 
-Now that we've studied confidence intervals in Chapter \@ref(confidence-intervals), let's study another commonly used method for statistical inference: hypothesis testing. Hypothesis tests allow us to take a sample of data from a population and infer about the plausibility of competing hypotheses. For example, in the upcoming "promotions" activity in Section \@ref(ht-activity), you'll study the data collected from a psychology study in the 1970s to investigate whether gender-based discrimination in promotion rates existed in the banking industry at the time of the study. 
+Now that we've studied confidence intervals in Chapter \@ref(confidence-intervals), let's study another commonly used method for statistical inference: hypothesis testing. Hypothesis tests allow us to take a sample of data from a population and infer about the plausibility of competing hypotheses. For example, in the upcoming music popularity activity by genre in Section \@ref(ht-activity), you'll study data collected from Spotify to investigate whether metal music is more popular than deep-house music. 
 
 The good news is we've already covered many of the necessary concepts to understand hypothesis testing in Chapters \@ref(sampling) and \@ref(confidence-intervals). We will expand further on these ideas here and also provide a general framework for understanding hypothesis tests. By understanding this general framework, you'll be able to adapt it to many different scenarios.
 
-The same can be said for confidence intervals. There was one general framework that applies to *all* confidence intervals and the `infer` package was designed around this framework. While the specifics may change slightly for different types of confidence intervals, the general framework stays the same. 
+The same can be said for confidence intervals. There was one general framework that applies to confidence intervals, and the `infer` package was designed around this framework. While the specifics may change slightly for different types of confidence intervals, the general framework stays the same. 
 
 We believe that this approach is much better for long-term learning than focusing on specific details for specific confidence intervals using theory-based approaches. As you'll now see, we prefer this general framework for hypothesis tests as well.
 
 ```{r appendixb, echo=FALSE, results="asis", purl=FALSE}
 if (!is_latex_output()) {
   cat("If you'd like more practice or you're curious to see how this framework applies to different scenarios, you can find fully-worked out examples for many common hypothesis tests and their corresponding confidence intervals in Appendix B. ")
-  cat("We recommend that you carefully review these examples as they also cover how the general frameworks apply to traditional theory-based methods like the $t$-test and normal-theory confidence intervals.  You'll see there that these traditional methods are just approximations for the computer-based methods we've been focusing on. However, they also require conditions to be met for their results to be valid. Computer-based methods using randomization, simulation, and bootstrapping have much fewer restrictions. Furthermore, they help develop your computational thinking, which is one big reason they are emphasized throughout this book.")
+  cat("We recommend that you carefully review these examples as they also cover how the general frameworks apply to traditional theory-based methods like the $t$-test and normal-theory confidence intervals. You'll see there that these traditional methods are just approximations for the computer-based methods we've been focusing on. However, they also require conditions to be met for their results to be valid. Computer-based methods using randomization, simulation, and bootstrapping have much fewer restrictions. Furthermore, they help develop your computational thinking, which is one big reason they are emphasized throughout this book.")
 }
 ```
 
@@ -52,6 +54,10 @@ Let's load all the packages needed for this chapter (this assumes you've already
 * As well as the more advanced `purrr`, `tibble`, `stringr`, and `forcats` packages
 
 If needed, read Section \@ref(packages) for information on how to install and load R packages. 
+
+```{r include=FALSE}
+# remotes::install_github("moderndive/moderndive", ref = "add-more-data")
+```
 
 ```{r message=FALSE}
 library(tidyverse)
@@ -74,87 +80,93 @@ library(ggrepel)
 
 
 
-## Promotions activity {#ht-activity}
+## Music popularity activity {#ht-activity}
 
-Let's start with an activity studying the effect of gender on promotions at a bank. 
+Let's start with an activity studying the effect of music genre on Spotify song popularity. 
 
 
-### Does gender affect promotions at a bank?
+### Is metal music more popular than deep house music?
 
-Say you are working at a bank in the 1970s and you are submitting your résumé to apply for a promotion. Will your gender affect your chances of getting promoted? To answer this question, we'll focus on data from a study published in the _Journal of Applied Psychology_ in 1974. This data is also used in the [*OpenIntro*](https://www.openintro.org/) series of statistics textbooks. 
+Imagine you're a music analyst for Spotify, and you're curious about whether fans of metal or deep house are more passionate about their favorite genres. You want to determine if there’s a significant difference in the popularity of these two genres. Popularity, in this case, is measured by Spotify, say, as the average number of streams and recent user interactions on tracks classified under each genre. (Note that Spotify doesn't actually disclose how this metric is calculated, so we have to take our best guess.) This question sets the stage for our exploration into hypothesis testing.
+
+Metal music, characterized by its aggressive sounds, powerful vocals, and complex instrumentals, has cultivated a loyal fanbase that often prides itself on its deep appreciation for the genre's intensity and technical skill. On the other hand, deep house music, with its smooth, soulful rhythms and steady beats, attracts listeners who enjoy the genre's calming and immersive vibe, often associated with late-night clubs and chill-out sessions.
+
+By comparing the popularity metrics between these two genres, we can determine if one truly resonates more with listeners on Spotify. This exploration not only deepens our understanding of musical preferences but also serves as a practical introduction to the principles of hypothesis testing.
 
 ```{r echo=FALSE, purl=FALSE}
 # This code is used for dynamic non-static in-line text output purposes
-n_resumes <- promotions %>% nrow()
+n_songs <- spotify_by_genre |> 
+  filter(track_genre %in% c("metal", "deep-house")) |> 
+  nrow()
 # Assumes 50/50 (binary) gender split
-n_resumes_gender <- n_resumes / 2
+n_songs_genre <- n_songs / 2
 ```
 
-To begin the study, `r n_resumes` bank supervisors were asked to assume the role of a hypothetical director of a bank with multiple branches. Every one of the bank supervisors was given a résumé and asked whether or not the candidate on the résumé was fit to be promoted to a new position in one of their branches. 
+To begin the analysis, `r n_songs` were selected at random from Spotify's song archive. There were `r songs_by_genre` metal songs and `r songs_by_genre` deep house songs selected. 
 
-However, each of these `r n_resumes` résumés were identical in all respects except one: the name of the applicant at the top of the résumé. Of the supervisors, `r n_resumes_gender` were randomly given résumés with stereotypically "male" names, while `r n_resumes_gender` of the supervisors were randomly given résumés with stereotypically "female" names. Since only (binary) gender varied from résumé to résumé, researchers could isolate the effect of this variable in promotion rates. 
-
-While many people today (including us, the authors) disagree with such binary views of gender, it is important to remember that this study was conducted at a time where more nuanced views of gender were not as prevalent. Despite this imperfection, we decided to still use this example as we feel it presents ideas still relevant today about how we could study discrimination in the workplace.
-
-The `moderndive` package contains the data on the `r n_resumes` applicants in the `promotions` data frame. Let’s explore this data by looking at six randomly selected rows:
+The `moderndive` package contains the data on the songs by genre in the `spotify_by_genre` data frame. There are six genres selected in that data (`country`, `deep-house`, `dubstep`, `hip-hop`, `metal`, and `rock`). You'll have the opportunity to explore relationships with the other genres and popularity in the Learning Checks. Let’s explore this data by focusing on just `metal` and `deep-house` by looking at twelve randomly selected rows and our columns of interest. Note here that we also group our selection so that three songs of each of the four possible groupings of `track_genre` and `popular_or_not` are selected.
 
 ```{r echo=FALSE}
 set.seed(2102)
 ```
 
 ```{r}
-promotions %>% 
-  sample_n(size = 6) %>% 
-  arrange(id)
+spotify_metal_deephouse <- spotify_by_genre |> 
+  filter(track_genre %in% c("metal", "deep-house")) |> 
+  select(track_id, track_genre, artists, track_name, popularity, popular_or_not) 
+spotify_metal_deephouse |>
+  group_by(track_genre, popular_or_not) |> 
+  sample_n(size = 3) |> 
+  arrange(track_id)
 ```
 
-The variable `id` acts as an identification variable for all `r n_resumes` rows, the `decision` variable indicates whether the applicant was selected for promotion or not, while the `gender` variable indicates the gender of the name used on the résumé. Recall that this data does not pertain to `r n_resumes_gender` actual men and `r n_resumes_gender` actual women, but rather `r n_resumes` identical résumés of which `r n_resumes_gender` were assigned stereotypically "male" names and `r n_resumes_gender` were assigned stereotypically "female" names.
+The variable `track_id` acts as an identification variable for all `r n_songs` rows, the `track_genre` variable indicates what genre the song is classified under, the `artists` and `track_name` columns provide additional information about the track by providing the artist and the name of the song, `popularity` is the metric mentioned earlier given by Spotify, and `popular_or_not` is a categorical representation of the `popularity` column with any value of 50 (the 75th percentile of `popularity`) referring to `popular` and anything at or below 50 as `not_popular`. The decision made by the authors to call a song "popular" if it is above the 75th percentile (3rd quartile) of `popularity` is arbitrary and could be changed to any other value.)
 
-Let's perform an exploratory data analysis of the relationship between the two categorical variables `decision` and `gender`. Recall that we saw in Subsection \@ref(two-categ-barplot) that one way we can visualize such a relationship is by using a stacked barplot. 
+Let's perform an exploratory data analysis of the relationship between the two categorical variables `track_genre` and `popular_or_not`. Recall that we saw in Subsection \@ref(two-categ-barplot) that one way we can visualize such a relationship is by using a stacked barplot. 
 
 ```{r eval=FALSE}
-ggplot(promotions, aes(x = gender, fill = decision)) +
+ggplot(spotify_metal_deephouse, aes(x = track_genre, fill = popular_or_not)) +
   geom_bar() +
-  labs(x = "Gender of name on résumé")
+  labs(x = "Genre of track")
 ```
 
-```{r promotions-barplot, echo=FALSE, fig.cap="Barplot relating gender to promotion decision.", fig.height=1.6, purl=FALSE}
-promotions_barplot <- ggplot(promotions, aes(x = gender, fill = decision)) +
+```{r spotify-genre-barplot, echo=FALSE, fig.cap="Barplot relating genre to popularity.", fig.height=1.6, purl=FALSE}
+spotify_genre_barplot <- ggplot(spotify_metal_deephouse, aes(x = track_genre, fill = popular_or_not)) +
   geom_bar() +
-  labs(x = "Gender of name on résumé")
+  labs(x = "Genre of track")
 if (is_html_output()) {
-  promotions_barplot
+  spotify_genre_barplot
 } else {
-  promotions_barplot + scale_fill_grey()
+  spotify_genre + scale_fill_grey()
 }
 ```
 
-Observe in Figure \@ref(fig:promotions-barplot) that it appears that résumés with female names were much less likely to be accepted for promotion.  Let's quantify these promotion rates by computing the proportion of résumés accepted for promotion for each group using the `dplyr` package for data wrangling. Note the use of the `tally()` function here which is a shortcut for `summarize(n = n())` to get counts.
+Observe in Figure \@ref(fig:spotify-genre-barplot) that, in this sample, metal songs are only slightly more popular than deep house songs by looking at the height of the `popular` bars. Let's quantify these popularity rates by computing the proportion of songs classified as `popular` for each of the two genres using the `dplyr` package for data wrangling. Note the use of the `tally()` function here which is a shortcut for `summarize(n = n())` to get counts.
 
 ```{r}
-promotions %>% 
-  group_by(gender, decision) %>% 
-  tally()
+spotify_metal_deephouse |> 
+  group_by(track_genre, popular_or_not) |>
+  tally() # Same as summarize(n = n())
 ```
 
 ```{r, echo=FALSE, purl=FALSE}
-observed_test_statistic <- promotions %>%
-  specify(decision ~ gender, success = "promoted") %>%
-  calculate(stat = "diff in props", order = c("male", "female")) %>%
-  pull(stat) %>%
+observed_test_statistic <- spotify_metal_deephouse |> 
+  observe(formula = popular_or_not ~ track_genre, success = "popular", 
+          stat = "diff in props", order = c("metal", "deep-house")) |>
+  pull(stat) |>
   round(3)
 ```
 
 ```{r echo=FALSE, purl=FALSE}
 # This code is used for dynamic non-static in-line text output purposes
-n_men_promoted_original <- promotions %>%
-  filter(gender == "male" & decision == "promoted") %>%
+n_men_promoted_original <- promotions |>
+  filter(gender == "male" & decision == "promoted") |>
   nrow()
-n_women_promoted_original <- promotions %>%
-  filter(gender == "female" & decision == "promoted") %>%
+n_women_promoted_original <- promotions |>
+  filter(gender == "female" & decision == "promoted") |>
   nrow()
 p_men_promoted <- n_men_promoted_original / n_resumes_gender
-p_women_promoted <- (n_women_promoted_original / n_resumes_gender) %>% round(3)
+p_women_promoted <- (n_women_promoted_original / n_resumes_gender) |> round(3)
 ```
 
 So of the `r n_resumes_gender` résumés with male names, `r n_men_promoted_original` were selected for promotion, for a proportion of `r n_men_promoted_original`/`r n_resumes_gender` = `r p_men_promoted` = `r p_men_promoted*100`%. On the other hand, of the `r n_resumes_gender` résumés with female names, `r n_women_promoted_original` were selected for promotion, for a proportion of `r n_women_promoted_original`/`r n_resumes_gender` = `r p_women_promoted` = `r p_women_promoted*100`%. Comparing these two rates of promotion, it appears that résumés with male names were selected for promotion at a rate `r p_men_promoted` - `r p_women_promoted` = `r observed_test_statistic` = `r observed_test_statistic*100`% higher than résumés with female names. This is suggestive of an advantage for résumés with a male name on it. 
@@ -173,20 +185,20 @@ However, in our hypothesized universe of no gender discrimination, gender is irr
 ```{r compare-six, echo=FALSE, purl=FALSE}
 set.seed(2019)
 # Pick out 6 rows
-promotions_sample <- promotions %>%
-  slice(c(36, 39, 40, 1, 2, 22)) %>%
-  mutate(`shuffled gender` = sample(gender)) %>%
-  select(-id) %>%
-  mutate(`résumé number` = 1:n()) %>%
+promotions_sample <- promotions |>
+  slice(c(36, 39, 40, 1, 2, 22)) |>
+  mutate(`shuffled gender` = sample(gender)) |>
+  select(-id) |>
+  mutate(`résumé number` = 1:n()) |>
   select(`résumé number`, everything())
 
-promotions_sample %>%
-  kable(
+promotions_sample |>
+  kbl(
     caption = "One example of shuffling gender variable",
     booktabs = TRUE,
     longtable = TRUE,
     linesep = ""
-  ) %>%
+  ) |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
     latex_options = c("hold_position", "repeat_header")
@@ -216,15 +228,15 @@ ggplot(promotions_shuffled,
   labs(x = "Gender of résumé name")
 ```
 ```{r promotions-barplot-permuted, fig.cap="Barplots of relationship of promotion with gender (left) and shuffled gender (right).", fig.height=4.7, echo=FALSE, purl=FALSE}
-height1 <- promotions %>%
-  group_by(gender, decision) %>%
-  summarize(n = n()) %>%
-  pull(n) %>%
+height1 <- promotions |>
+  group_by(gender, decision) |>
+  summarize(n = n()) |>
+  pull(n) |>
   max()
-height2 <- promotions_shuffled %>%
-  group_by(gender, decision) %>%
-  summarize(n = n()) %>%
-  pull(n) %>%
+height2 <- promotions_shuffled |>
+  group_by(gender, decision) |>
+  summarize(n = n()) |>
+  pull(n) |>
   max()
 height <- max(height1, height2)
 
@@ -249,26 +261,26 @@ It appears the difference in "male names" versus "female names" promotion rates 
 Let's also compute the proportion of résumés accepted for promotion for each group:
 
 ```{r}
-promotions_shuffled %>% 
-  group_by(gender, decision) %>% 
+promotions_shuffled |> 
+  group_by(gender, decision) |> 
   tally() # Same as summarize(n = n())
 ```
 ```{r, echo=FALSE, purl=FALSE}
 # male stats
-n_men_promoted <- promotions_shuffled %>%
-  filter(decision == "promoted", gender == "male") %>%
+n_men_promoted <- promotions_shuffled |>
+  filter(decision == "promoted", gender == "male") |>
   nrow()
-n_men_not_promoted <- promotions_shuffled %>%
-  filter(decision == "not", gender == "male") %>%
+n_men_not_promoted <- promotions_shuffled |>
+  filter(decision == "not", gender == "male") |>
   nrow()
 prop_men_promoted <- n_men_promoted / (n_men_promoted + n_men_not_promoted)
 
 # female stats
-n_women_promoted <- promotions_shuffled %>%
-  filter(decision == "promoted", gender == "female") %>%
+n_women_promoted <- promotions_shuffled |>
+  filter(decision == "promoted", gender == "female") |>
   nrow()
-n_women_not_promoted <- promotions_shuffled %>%
-  filter(decision == "not", gender == "female") %>%
+n_women_not_promoted <- promotions_shuffled |>
+  filter(decision == "not", gender == "female") |>
   nrow()
 prop_women_promoted <- n_women_promoted / (n_women_promoted + n_women_not_promoted)
 
@@ -310,20 +322,20 @@ if (!file.exists("rds/shuffled_data.rds")) {
 }
 n_replicates <- ncol(shuffled_data) - 2
 
-shuffled_data_tidy <- shuffled_data %>%
-  gather(team, gender, -c(id, decision)) %>%
+shuffled_data_tidy <- shuffled_data |>
+  gather(team, gender, -c(id, decision)) |>
   mutate(replicate = rep(1:n_replicates, each = 48))
 
 # Sanity check results
-# shuffled_data_tidy %>% group_by(replicate) %>% count(gender) %>% filter(n != 24) %>% View()
+# shuffled_data_tidy |> group_by(replicate) |> count(gender) |> filter(n != 24) |> View()
 
-shuffled_data_tidy <- shuffled_data_tidy %>%
-  group_by(replicate) %>%
-  count(gender, decision) %>%
-  filter(decision == "promoted") %>%
-  mutate(prop = n / 24) %>%
-  select(replicate, gender, prop) %>%
-  spread(gender, prop) %>%
+shuffled_data_tidy <- shuffled_data_tidy |>
+  group_by(replicate) |>
+  count(gender, decision) |>
+  filter(decision == "promoted") |>
+  mutate(prop = n / 24) |>
+  select(replicate, gender, prop) |>
+  spread(gender, prop) |>
   mutate(stat = m - f)
 ```
 
@@ -340,7 +352,7 @@ Before we discuss the distribution of the histogram, we emphasize the key thing 
 
 Observe first that the histogram is roughly centered at 0. Saying that the difference in promotion rates is 0 is equivalent to saying that both genders had the same promotion rate. In other words, the center of these `r n_shuffle` values is consistent with what we would expect in our hypothesized universe of no gender discrimination. 
 
-However, while the values are centered at 0, there is variation about 0. This is because even in a hypothesized universe of no gender discrimination, you will still likely observe small differences in promotion rates because of chance *sampling variation*. Looking at the histogram in Figure \@ref(fig:null-distribution-1), such differences could even be as extreme as `r shuffled_data_tidy$stat %>% min() %>% round(3)` or `r shuffled_data_tidy$stat %>% max() %>% round(3)`.
+However, while the values are centered at 0, there is variation about 0. This is because even in a hypothesized universe of no gender discrimination, you will still likely observe small differences in promotion rates because of chance *sampling variation*. Looking at the histogram in Figure \@ref(fig:null-distribution-1), such differences could even be as extreme as `r shuffled_data_tidy$stat |> min() |> round(3)` or `r shuffled_data_tidy$stat |> max() |> round(3)`.
 
 Turning our attention to what we observed in real life: the difference of `r observed_test_statistic` = `r observed_test_statistic*100`% is marked with a vertical dark line.  Ask yourself: in a hypothesized world of no gender discrimination, how likely would it be that we observe this difference? While opinions here may differ, in our opinion not often! Now ask yourself: what do these results say about our hypothesized universe of no gender discrimination?
 
@@ -364,18 +376,18 @@ Now each of our 33 friends does the following:
 Let's see what this leads to for our friends in terms of results and label where the observed test statistic falls in relation to our friends' statistics:
 
 ```{r, eval=FALSE}
-obs_diff_prop <- promotions %>% 
-  specify(decision ~ gender, success = "promoted") %>% 
+obs_diff_prop <- promotions |> 
+  specify(decision ~ gender, success = "promoted") |> 
   calculate(stat = "diff in props", order = c("male", "female"))
 obs_diff_prop
 ```
 
 ```{r echo=FALSE, eval=FALSE}
 set.seed(2019)
-tactile_permutes <- promotions %>%
-  specify(decision ~ gender, success = "promoted") %>%
-  hypothesize(null = "independence") %>%
-  generate(reps = 33, type = "permute") %>%
+tactile_permutes <- promotions |>
+  specify(decision ~ gender, success = "promoted") |>
+  hypothesize(null = "independence") |>
+  generate(reps = 33, type = "permute") |>
   calculate(stat = "diff in props", order = c("male", "female"))
 ggplot(data = tactile_permutes, aes(x = stat)) +
   geom_histogram(binwidth = 0.05, boundary = -0.2, color = "white") +
@@ -404,31 +416,31 @@ Recall our case study on whether yawning is contagious from Section \@ref(case-s
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
 if (!file.exists("rds/sampling_scenarios.rds")) {
-  sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>%
-    read_csv(na = "") %>%
+  sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" |>
+    read_csv(na = "") |>
     slice(1:5)
   write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
 } else {
   sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
 }
 
-sampling_scenarios %>%
+sampling_scenarios |>
   # Only first two scenarios
-  filter(Scenario <= 3) %>%
-  kable(
+  filter(Scenario <= 3) |>
+  kbl(
     caption = "Scenarios of sampling for inference",
     booktabs = TRUE,
     escape = FALSE,
     linesep = ""
-  ) %>%
+  ) |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
     latex_options = c("hold_position")
-  ) %>%
-  column_spec(1, width = "0.5in") %>%
-  column_spec(2, width = "0.7in") %>%
-  column_spec(3, width = "1in") %>%
-  column_spec(4, width = "1.1in") %>%
+  ) |>
+  column_spec(1, width = "0.5in") |>
+  column_spec(2, width = "0.7in") |>
+  column_spec(3, width = "1in") |>
+  column_spec(4, width = "1.1in") |>
   column_spec(5, width = "1in")
 ```
 
@@ -552,7 +564,7 @@ Recall that we use the `specify()` \index{infer!specify()} verb to specify the r
 Furthermore, since we are interested in the proportion of résumés `"promoted"`, and not the proportion of résumés `not` promoted, we set the argument `success` to `"promoted"`.
 
 ```{r}
-promotions %>% 
+promotions |> 
   specify(formula = decision ~ gender, success = "promoted") 
 ```
 
@@ -577,8 +589,8 @@ In other words, the null hypothesis $H_0$ corresponding to our "hypothesized uni
 In our case, since we have two samples (the résumés with "male" and "female" names), we set `null = "independence"`.
 
 ```{r}
-promotions %>% 
-  specify(formula = decision ~ gender, success = "promoted") %>% 
+promotions |> 
+  specify(formula = decision ~ gender, success = "promoted") |> 
   hypothesize(null = "independence")
 ```
 
@@ -606,18 +618,18 @@ n_reps <- 1000L
 After we `hypothesize()` the null hypothesis, we `generate()` replicates of "shuffled" datasets assuming the null hypothesis is true. We do this by repeating the shuffling exercise you performed in Section \@ref(ht-activity) several times. Instead of merely doing it `r n_shuffle` times as our groups of friends did, let's use the computer to repeat this `r n_reps` times by setting ``reps = `r n_reps` `` in the `generate()` \index{infer!generate()} function. However, unlike for confidence intervals where we generated replicates using `type = "bootstrap"` resampling with replacement, we'll now perform shuffles/permutations by setting `type = "permute"`. Recall that shuffles/permutations are a kind of resampling, but unlike the bootstrap method, they involve resampling *without* replacement. 
 
 ```{r eval=FALSE}
-promotions_generate <- promotions %>% 
-  specify(formula = decision ~ gender, success = "promoted") %>% 
-  hypothesize(null = "independence") %>% 
+promotions_generate <- promotions |> 
+  specify(formula = decision ~ gender, success = "promoted") |> 
+  hypothesize(null = "independence") |> 
   generate(reps = 1000, type = "permute")
 nrow(promotions_generate)
 ```
 
 ```{r echo=FALSE, purl=FALSE}
 if (!file.exists("rds/promotions_generate.rds")) {
-  promotions_generate <- promotions %>%
-    specify(formula = decision ~ gender, success = "promoted") %>%
-    hypothesize(null = "independence") %>%
+  promotions_generate <- promotions |>
+    specify(formula = decision ~ gender, success = "promoted") |>
+    hypothesize(null = "independence") |>
     generate(reps = 1000, type = "permute")
   write_rds(promotions_generate, "rds/promotions_generate.rds")
 } else {
@@ -634,7 +646,7 @@ to explain given how we set up the cards tactile example before. I think it's be
 here since it has `decision` shuffled. 
 -->
 
-Observe that the resulting data frame has `r (n_resumes*n_reps) %>% comma()` rows. This is because we performed shuffles/permutations for each of the `r n_resumes` rows `r n_reps` times and $`r (n_resumes*n_reps) %>% comma()` = `r n_reps` \cdot `r n_resumes`$. If you explore the `promotions_generate` data frame with `View()`, you'll notice that the variable `replicate` indicates which resample each row belongs to. So it has the value `1` `r n_resumes` times, the value `2` `r n_resumes` times, all the way through to the value `` `r n_reps` `` `r n_resumes` times. 
+Observe that the resulting data frame has `r (n_resumes*n_reps) |> comma()` rows. This is because we performed shuffles/permutations for each of the `r n_resumes` rows `r n_reps` times and $`r (n_resumes*n_reps) |> comma()` = `r n_reps` \cdot `r n_resumes`$. If you explore the `promotions_generate` data frame with `View()`, you'll notice that the variable `replicate` indicates which resample each row belongs to. So it has the value `1` `r n_resumes` times, the value `2` `r n_resumes` times, all the way through to the value `` `r n_reps` `` `r n_resumes` times. 
 
 #### 4. `calculate` summary statistics {-}
 
@@ -645,17 +657,17 @@ For each of our `r n_reps` shuffles, we can calculate this test statistic by set
 Let's save the result in a data frame called `null_distribution`:
 
 ```{r eval=FALSE}
-null_distribution <- promotions %>% 
-  specify(formula = decision ~ gender, success = "promoted") %>% 
-  hypothesize(null = "independence") %>% 
-  generate(reps = 1000, type = "permute") %>% 
+null_distribution <- promotions |> 
+  specify(formula = decision ~ gender, success = "promoted") |> 
+  hypothesize(null = "independence") |> 
+  generate(reps = 1000, type = "permute") |> 
   calculate(stat = "diff in props", order = c("male", "female"))
 null_distribution
 ```
 
 ```{r echo=FALSE, purl=FALSE}
 if (!file.exists("rds/null_distribution_promotions.rds")) {
-  null_distribution <- promotions_generate %>%
+  null_distribution <- promotions_generate |>
     calculate(stat = "diff in props", order = c("male", "female"))
   write_rds(null_distribution, "rds/null_distribution_promotions.rds")
 } else {
@@ -669,8 +681,8 @@ Observe that we have `r n_reps` values of `stat`, each representing one  instanc
 What was the *observed* difference in promotion rates? In other words, what was the *observed test statistic* $\widehat{p}_{m} - \widehat{p}_{f}$? Recall from Section \@ref(ht-activity) that we computed this observed difference by hand to be `r p_men_promoted` - `r p_women_promoted` = `r observed_test_statistic` = `r observed_test_statistic*100`%. We can also compute this value using the previous `infer` code but with the `hypothesize()` and `generate()` steps removed. Let's save this in `obs_diff_prop`:
 
 ```{r}
-obs_diff_prop <- promotions %>% 
-  specify(decision ~ gender, success = "promoted") %>% 
+obs_diff_prop <- promotions |> 
+  specify(decision ~ gender, success = "promoted") |> 
   calculate(stat = "diff in props", order = c("male", "female"))
 obs_diff_prop
 ```
@@ -705,12 +717,12 @@ So judging by the shaded region in Figure \@ref(fig:null-distribution-infer-2), 
 What fraction of the null distribution is shaded? In other words, what is the exact value of the $p$-value? We can compute it using the `get_p_value()` \index{infer!get\_p\_value()} function with the same arguments as the previous `shade_p_value()` code:
 
 ```{r}
-null_distribution %>% 
+null_distribution |> 
   get_p_value(obs_stat = obs_diff_prop, direction = "right")
 ```
 ```{r, echo=FALSE, purl=FALSE}
-p_value <- null_distribution %>%
-  get_p_value(obs_stat = obs_diff_prop, direction = "right") %>%
+p_value <- null_distribution |>
+  get_p_value(obs_stat = obs_diff_prop, direction = "right") |>
   mutate(p_value = round(p_value, 3))
 ```
 
@@ -722,33 +734,33 @@ Keeping the definition of a $p$-value in mind, the probability of observing a di
 One of the great things about the `infer` package is that we can jump seamlessly between conducting hypothesis tests and constructing confidence intervals with minimal changes! Recall the code from the previous section that creates the null distribution, which in turn is needed to compute the $p$-value:
 
 ```{r eval=FALSE}
-null_distribution <- promotions %>% 
-  specify(formula = decision ~ gender, success = "promoted") %>% 
-  hypothesize(null = "independence") %>% 
-  generate(reps = 1000, type = "permute") %>% 
+null_distribution <- promotions |> 
+  specify(formula = decision ~ gender, success = "promoted") |> 
+  hypothesize(null = "independence") |> 
+  generate(reps = 1000, type = "permute") |> 
   calculate(stat = "diff in props", order = c("male", "female"))
 ```
 
 To create the corresponding bootstrap distribution needed to construct a 95% confidence interval for $p_{m} - p_{f}$, we only need to make two changes. \index{infer!switching between tests and confidence intervals} First, we remove the `hypothesize()` step since we are no longer assuming a null hypothesis $H_0$ is true. We can do this by deleting or commenting out the `hypothesize()` line of code. Second, we switch the `type` of resampling in the `generate()` step to be `"bootstrap"` instead of `"permute"`.
 
 ```{r eval=FALSE}
-bootstrap_distribution <- promotions %>% 
-  specify(formula = decision ~ gender, success = "promoted") %>% 
+bootstrap_distribution <- promotions |> 
+  specify(formula = decision ~ gender, success = "promoted") |> 
   # Change 1 - Remove hypothesize():
-  # hypothesize(null = "independence") %>% 
+  # hypothesize(null = "independence") |> 
   # Change 2 - Switch type from "permute" to "bootstrap":
-  generate(reps = 1000, type = "bootstrap") %>% 
+  generate(reps = 1000, type = "bootstrap") |> 
   calculate(stat = "diff in props", order = c("male", "female"))
 ```
 
 ```{r echo=FALSE, purl=FALSE}
 if (!file.exists("rds/bootstrap_distribution_promotions.rds")) {
-  bootstrap_distribution <- promotions %>%
-    specify(formula = decision ~ gender, success = "promoted") %>%
+  bootstrap_distribution <- promotions |>
+    specify(formula = decision ~ gender, success = "promoted") |>
     # Change 1 - Remove hypothesize():
-    # hypothesize(null = "independence") %>%
+    # hypothesize(null = "independence") |>
     # Change 2 - Switch type from "permute" to "bootstrap":
-    generate(reps = 1000, type = "bootstrap") %>%
+    generate(reps = 1000, type = "bootstrap") |>
     calculate(stat = "diff in props", order = c("male", "female"))
   write_rds(
     bootstrap_distribution,
@@ -762,12 +774,12 @@ if (!file.exists("rds/bootstrap_distribution_promotions.rds")) {
 Using this `bootstrap_distribution`, let's first compute the percentile-based confidence intervals, as we did in Section \@ref(bootstrap-process):
 
 ```{r}
-percentile_ci <- bootstrap_distribution %>% 
+percentile_ci <- bootstrap_distribution |> 
   get_confidence_interval(level = 0.95, type = "percentile")
 percentile_ci
 ```
 
-Using our shorthand interpretation for 95% confidence intervals from Subsection \@ref(shorthand), we are 95% "confident" that the true difference in population proportions $p_{m} - p_{f}$ is between (`r percentile_ci[["lower_ci"]] %>% round(3)`, `r percentile_ci[["upper_ci"]] %>% round(3)`). Let's visualize `bootstrap_distribution` and this percentile-based 95% confidence interval for $p_{m} - p_{f}$ in Figure \@ref(fig:bootstrap-distribution-two-prop-percentile).
+Using our shorthand interpretation for 95% confidence intervals from Subsection \@ref(shorthand), we are 95% "confident" that the true difference in population proportions $p_{m} - p_{f}$ is between (`r percentile_ci[["lower_ci"]] |> round(3)`, `r percentile_ci[["upper_ci"]] |> round(3)`). Let's visualize `bootstrap_distribution` and this percentile-based 95% confidence interval for $p_{m} - p_{f}$ in Figure \@ref(fig:bootstrap-distribution-two-prop-percentile).
 
 ```{r eval=FALSE}
 visualize(bootstrap_distribution) + 
@@ -791,7 +803,7 @@ Notice a key value that is not included in the 95% confidence interval for $p_{m
 Since the bootstrap distribution appears to be roughly normally shaped, we can also use the standard error method as we did in Section \@ref(bootstrap-process). In this case, we must specify the `point_estimate` argument as the observed difference in promotion rates `r observed_test_statistic` = `r observed_test_statistic*100`% saved in `obs_diff_prop`. This value acts as the center of the confidence interval.
 
 ```{r}
-se_ci <- bootstrap_distribution %>% 
+se_ci <- bootstrap_distribution |> 
   get_confidence_interval(level = 0.95, type = "se", 
                           point_estimate = obs_diff_prop)
 se_ci
@@ -830,10 +842,10 @@ if (is_html_output()) {
 ```{r, eval=FALSE}
 library(moderndive)
 library(infer)
-null_distribution_mean <- promotions %>%
-  specify(formula = decision ~ gender, success = "promoted") %>% 
-  hypothesize(null = "independence") %>% 
-  generate(reps = 1000, type = "permute") %>% 
+null_distribution_mean <- promotions |>
+  specify(formula = decision ~ gender, success = "promoted") |> 
+  hypothesize(null = "independence") |> 
+  generate(reps = 1000, type = "permute") |> 
   calculate(stat = "diff in means", order = c("male", "female"))
 ```
 
@@ -932,16 +944,16 @@ tibble(
   verdict = c("Not guilty verdict", "Guilty verdict"),
   `Truly not guilty` = c("Correct", "Type I error"),
   `Truly guilty` = c("Type II error", "Correct")
-) %>%
-  gt(rowname_col = "verdict") %>%
+) |>
+  gt(rowname_col = "verdict") |>
   #  tab_header(title = "Type I and Type II errors in US trials",
-  #             label="tab:trial-errors-table") %>%
-  tab_row_group(group = "Verdict") %>%
+  #             label="tab:trial-errors-table") |>
+  tab_row_group(group = "Verdict") |>
   tab_spanner(
     label = "Truth",
     columns = vars(`Truly not guilty`, `Truly guilty`)
-  ) %>%
-  cols_align(align = "center") %>%
+  ) |>
+  cols_align(align = "center") |>
   tab_options(table.width = pct(90))
 ```
 
@@ -956,16 +968,16 @@ tibble(
   Decision = c("Fail to reject H0", "Reject H0"),
   `H0 true` = c("Correct", "Type I error"),
   `HA true` = c("Type II error", "Correct")
-) %>%
-  gt(rowname_col = "Decision") %>%
+) |>
+  gt(rowname_col = "Decision") |>
   #  tab_header(title = "Type I and Type II errors hypothesis tests",
-  #                          label="tab:trial-errors-table-ht") %>%
-  tab_row_group(group = "Verdict") %>%
+  #                          label="tab:trial-errors-table-ht") |>
+  tab_row_group(group = "Verdict") |>
   tab_spanner(
     label = "Truth",
     columns = vars(`H0 true`, `HA true`)
-  ) %>%
-  cols_align(align = "center") %>%
+  ) |>
+  cols_align(align = "center") |>
   tab_options(table.width = pct(90))
 ```
 
@@ -1023,7 +1035,7 @@ Let's apply our knowledge of hypothesis testing to answer the question: "Are act
 
 ### IMDb ratings data {#imdb-data}
 
-The `movies` dataset in the `ggplot2movies` package contains information on `r movies %>% nrow() %>% comma()` movies that have been rated by users of IMDb.com. 
+The `movies` dataset in the `ggplot2movies` package contains information on `r movies |> nrow() |> comma()` movies that have been rated by users of IMDb.com. 
 
 ```{r}
 movies
@@ -1031,7 +1043,7 @@ movies
 
 ```{r echo=FALSE, purl=FALSE}
 # This code is used for dynamic non-static in-line text output purposes
-n_movies_sample <- movies_sample %>% nrow()
+n_movies_sample <- movies_sample |> nrow()
 ```
 
 We'll focus on a random sample of `r n_movies_sample` movies that are classified as either "action" or "romance" movies but not both. We disregard movies that are classified as both so that we can assign all `r n_movies_sample` movies into either category. Furthermore, since the original `movies` dataset was a little messy, we provide a pre-wrangled version of our data in the `movies_sample` data frame included in the `moderndive` package. If you're curious, you can look at the necessary data wrangling code to do this on [GitHub](https://github.com/moderndive/moderndive/blob/master/data-raw/process_data_sets.R).
@@ -1057,30 +1069,30 @@ However, there is a large amount of overlap between the boxes. Recall that the m
 Let's calculate some summary statistics split by the binary categorical variable `genre`: the number of movies, the mean rating, and the standard deviation split by `genre`. We'll do this using `dplyr` data wrangling verbs. Notice in particular how we count the number of each type of movie using the `n()` summary function. 
 
 ```{r}
-movies_sample %>% 
-  group_by(genre) %>% 
+movies_sample |> 
+  group_by(genre) |> 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 ```
 ```{r, echo=FALSE, purl=FALSE}
-movies_genre_summaries <- movies_sample %>%
-  group_by(genre) %>%
+movies_genre_summaries <- movies_sample |>
+  group_by(genre) |>
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 
-x_bar_action <- movies_genre_summaries %>%
-  filter(genre == "Action") %>%
+x_bar_action <- movies_genre_summaries |>
+  filter(genre == "Action") |>
   pull(mean_rating)
-x_bar_romance <- movies_genre_summaries %>%
-  filter(genre == "Romance") %>%
+x_bar_romance <- movies_genre_summaries |>
+  filter(genre == "Romance") |>
   pull(mean_rating)
-n_action <- movies_genre_summaries %>%
-  filter(genre == "Action") %>%
+n_action <- movies_genre_summaries |>
+  filter(genre == "Action") |>
   pull(n)
-n_romance <- movies_genre_summaries %>%
-  filter(genre == "Romance") %>%
+n_romance <- movies_genre_summaries |>
+  filter(genre == "Romance") |>
   pull(n)
 ```
 
-Observe that we have `r n_romance` movies with an average rating of `r x_bar_romance %>% round(3)` stars and `r n_action` movies with an average rating of `r x_bar_action %>% round(3)` stars. The difference in these average ratings is thus `r x_bar_romance %>% round(3)` - `r x_bar_action %>% round(3)` = `r (x_bar_romance - x_bar_action) %>% round(3)`. So there appears to be an edge of `r (x_bar_romance - x_bar_action) %>% round(3)` stars in favor of romance movies. The question is, however, are these results indicative of a true difference for *all* romance and action movies? Or could we attribute this difference to chance *sampling variation*? 
+Observe that we have `r n_romance` movies with an average rating of `r x_bar_romance |> round(3)` stars and `r n_action` movies with an average rating of `r x_bar_action |> round(3)` stars. The difference in these average ratings is thus `r x_bar_romance |> round(3)` - `r x_bar_action |> round(3)` = `r (x_bar_romance - x_bar_action) |> round(3)`. So there appears to be an edge of `r (x_bar_romance - x_bar_action) |> round(3)` stars in favor of romance movies. The question is, however, are these results indicative of a true difference for *all* romance and action movies? Or could we attribute this difference to chance *sampling variation*? 
 
 
 ### Sampling scenario
@@ -1094,38 +1106,38 @@ Since this sample was randomly taken from the population `movies`, it is represe
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
 if (!file.exists("rds/sampling_scenarios.rds")) {
-  sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" %>%
-    read_csv(na = "") %>%
+  sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" |>
+    read_csv(na = "") |>
     slice(1:5)
   write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
 } else {
   sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
 }
 
-sampling_scenarios %>%
-  filter(Scenario %in% c(1:4)) %>%
-  kable(
+sampling_scenarios |>
+  filter(Scenario %in% c(1:4)) |>
+  kbl(
     caption = "Scenarios of sampling for inference",
     booktabs = TRUE,
     escape = FALSE,
     linesep = ""
-  ) %>%
+  ) |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
     latex_options = c("hold_position")
-  ) %>%
-  column_spec(1, width = "0.5in") %>%
-  column_spec(2, width = "0.7in") %>%
-  column_spec(3, width = "1in") %>%
-  column_spec(4, width = "1.1in") %>%
+  ) |>
+  column_spec(1, width = "0.5in") |>
+  column_spec(2, width = "0.7in") |>
+  column_spec(3, width = "1in") |>
+  column_spec(4, width = "1.1in") |>
   column_spec(5, width = "1in")
 ```
 
 So, whereas the sampling bowl exercise in Section \@ref(sampling-activity) concerned *proportions*, the pennies exercise in Section \@ref(resampling-tactile) concerned *means*, the case study on whether yawning is contagious in Section \@ref(case-study-two-prop-ci) and the promotions activity in Section \@ref(ht-activity) concerned *differences in proportions*, we are now concerned with *differences in means*. 
 
-In other words, the population parameter of interest is the difference in population mean ratings $\mu_a - \mu_r$, where $\mu_a$ is the mean rating of all action movies on IMDb and similarly $\mu_r$ is the mean rating of all romance movies. Additionally the point estimate/sample statistic of interest is the difference in sample means $\overline{x}_a - \overline{x}_r$, where $\overline{x}_a$ is the mean rating of the $n_a$ = `r n_action` movies in our sample and $\overline{x}_r$ is the mean rating of the $n_r$ = `r n_romance` in our sample. Based on our earlier exploratory data analysis, our estimate $\overline{x}_a - \overline{x}_r$ is $`r x_bar_action %>% round(3)` - `r x_bar_romance %>% round(3)` = `r (x_bar_action - x_bar_romance) %>% round(3)`$. 
+In other words, the population parameter of interest is the difference in population mean ratings $\mu_a - \mu_r$, where $\mu_a$ is the mean rating of all action movies on IMDb and similarly $\mu_r$ is the mean rating of all romance movies. Additionally the point estimate/sample statistic of interest is the difference in sample means $\overline{x}_a - \overline{x}_r$, where $\overline{x}_a$ is the mean rating of the $n_a$ = `r n_action` movies in our sample and $\overline{x}_r$ is the mean rating of the $n_r$ = `r n_romance` in our sample. Based on our earlier exploratory data analysis, our estimate $\overline{x}_a - \overline{x}_r$ is $`r x_bar_action |> round(3)` - `r x_bar_romance |> round(3)` = `r (x_bar_action - x_bar_romance) |> round(3)`$. 
 
-So there appears to be a slight difference of `r (x_bar_action - x_bar_romance) %>% round(3)` in favor of romance movies. The question is, however, could this difference of `r (x_bar_action - x_bar_romance) %>% round(3)` be merely due to chance and sampling variation? Or are these results indicative of a true difference in mean ratings for *all* romance and action movies on IMDb?  To answer this question, we'll use hypothesis testing. 
+So there appears to be a slight difference of `r (x_bar_action - x_bar_romance) |> round(3)` in favor of romance movies. The question is, however, could this difference of `r (x_bar_action - x_bar_romance) |> round(3)` be merely due to chance and sampling variation? Or are these results indicative of a true difference in mean ratings for *all* romance and action movies on IMDb?  To answer this question, we'll use hypothesis testing. 
 
 
 ### Conducting the hypothesis test
@@ -1149,7 +1161,7 @@ Furthermore, we'll pre-specify a low significance level of $\alpha$ = 0.001. By 
 Let's now perform all the steps of the `infer` workflow. We first `specify()` the variables of interest in the `movies_sample` data frame using the formula `rating ~ genre`. This tells `infer` that the numerical variable `rating` is the outcome variable, while the binary variable `genre` is the explanatory variable. Note that unlike previously when we were interested in proportions, since we are now interested in the mean of a numerical variable, we do not need to set the `success` argument.
 
 ```{r}
-movies_sample %>% 
+movies_sample |> 
   specify(formula = rating ~ genre)
 ```
 
@@ -1160,8 +1172,8 @@ Observe at this point that the data in `movies_sample` has not changed. The only
 We set the null hypothesis $H_0: \mu_a - \mu_r = 0$ by using the `hypothesize()` function. Since we have two samples, action and romance movies, we set `null` to be `"independence"` as we described in Section \@ref(ht-infer).
 
 ```{r}
-movies_sample %>% 
-  specify(formula = rating ~ genre) %>% 
+movies_sample |> 
+  specify(formula = rating ~ genre) |> 
   hypothesize(null = "independence")
 ```
 
@@ -1172,19 +1184,19 @@ After we have set the null hypothesis, we generate "shuffled" replicates assumin
 We'll repeat this resampling without replacement of `type = "permute"` a total of ``reps = `r n_reps` `` times. Feel free to run the code below to check out what the `generate()` step produces.
 
 ```{r eval=FALSE}
-movies_sample %>% 
-  specify(formula = rating ~ genre) %>% 
-  hypothesize(null = "independence") %>% 
-  generate(reps = 1000, type = "permute") %>% 
+movies_sample |> 
+  specify(formula = rating ~ genre) |> 
+  hypothesize(null = "independence") |> 
+  generate(reps = 1000, type = "permute") |> 
   View()
 ```
 
 ```{r echo=FALSE, purl=FALSE}
 set.seed(76)
 if (!file.exists("rds/movies_sample_generate.rds")) {
-  movies_sample_generate <- movies_sample %>%
-    specify(formula = rating ~ genre) %>%
-    hypothesize(null = "independence") %>%
+  movies_sample_generate <- movies_sample |>
+    specify(formula = rating ~ genre) |>
+    hypothesize(null = "independence") |>
     generate(reps = 1000, type = "permute")
   write_rds(movies_sample_generate, "rds/movies_sample_generate.rds")
 } else {
@@ -1199,17 +1211,17 @@ Now that we have `r n_reps` replicated "shuffles" assuming the null hypothesis $
 For each of our `r n_reps` shuffles, we can calculate this test statistic by setting `stat = "diff in means"`. Furthermore, since we are interested in $\overline{x}_{a} - \overline{x}_{r}$, we set `order = c("Action", "Romance")`. Let's save the results in a data frame called `null_distribution_movies`:
 
 ```{r eval=FALSE}
-null_distribution_movies <- movies_sample %>% 
-  specify(formula = rating ~ genre) %>% 
-  hypothesize(null = "independence") %>% 
-  generate(reps = 1000, type = "permute") %>% 
+null_distribution_movies <- movies_sample |> 
+  specify(formula = rating ~ genre) |> 
+  hypothesize(null = "independence") |> 
+  generate(reps = 1000, type = "permute") |> 
   calculate(stat = "diff in means", order = c("Action", "Romance"))
 null_distribution_movies
 ```
 
 ```{r echo=FALSE, purl=FALSE}
 if (!file.exists("rds/null_distribution_movies.rds")) {
-  null_distribution_movies <- movies_sample_generate %>%
+  null_distribution_movies <- movies_sample_generate |>
     calculate(stat = "diff in means", order = c("Action", "Romance"))
   write_rds(null_distribution_movies, "rds/null_distribution_movies.rds")
 } else {
@@ -1218,18 +1230,18 @@ if (!file.exists("rds/null_distribution_movies.rds")) {
 null_distribution_movies
 ```
 
-Observe that we have `r n_reps` values of `stat`, each representing one instance of $\overline{x}_{a} - \overline{x}_{r}$. The `r n_reps` values form the *null distribution*, which is the technical term for the sampling distribution of the difference in sample means $\overline{x}_{a} - \overline{x}_{r}$ assuming $H_0$ is true. What happened in real life? What was the observed difference in promotion rates? What was the *observed test statistic* $\overline{x}_{a} - \overline{x}_{r}$? Recall from our earlier data wrangling, this observed difference in means was $`r x_bar_action %>% round(3)` - `r x_bar_romance %>% round(3)` = `r (x_bar_action - x_bar_romance) %>% round(3)`$. We can also achieve this using the code that constructed the null distribution `null_distribution_movies` but with the `hypothesize()` and `generate()` steps removed. Let's save this in `obs_diff_means`:
+Observe that we have `r n_reps` values of `stat`, each representing one instance of $\overline{x}_{a} - \overline{x}_{r}$. The `r n_reps` values form the *null distribution*, which is the technical term for the sampling distribution of the difference in sample means $\overline{x}_{a} - \overline{x}_{r}$ assuming $H_0$ is true. What happened in real life? What was the observed difference in promotion rates? What was the *observed test statistic* $\overline{x}_{a} - \overline{x}_{r}$? Recall from our earlier data wrangling, this observed difference in means was $`r x_bar_action |> round(3)` - `r x_bar_romance |> round(3)` = `r (x_bar_action - x_bar_romance) |> round(3)`$. We can also achieve this using the code that constructed the null distribution `null_distribution_movies` but with the `hypothesize()` and `generate()` steps removed. Let's save this in `obs_diff_means`:
 
 ```{r}
-obs_diff_means <- movies_sample %>% 
-  specify(formula = rating ~ genre) %>% 
+obs_diff_means <- movies_sample |> 
+  specify(formula = rating ~ genre) |> 
   calculate(stat = "diff in means", order = c("Action", "Romance"))
 obs_diff_means
 ```
 
 #### 5. `visualize` the p-value {-}
 
-Lastly, in order to compute the $p$-value, we have to assess how "extreme" the observed difference in means of `r obs_diff_means$stat %>% round(3)` is. We do this by comparing `r obs_diff_means$stat %>% round(3)` to our null distribution, which was constructed in a hypothesized universe of no true difference in movie ratings. Let's visualize both the null distribution and the $p$-value in Figure \@ref(fig:null-distribution-movies-2). Unlike our example in Subsection \@ref(infer-workflow-ht) involving promotions, since we have a two-sided $H_A: \mu_a - \mu_r \neq 0$, we have to allow for both possibilities for _more extreme_, so we set `direction = "both"`.
+Lastly, in order to compute the $p$-value, we have to assess how "extreme" the observed difference in means of `r obs_diff_means$stat |> round(3)` is. We do this by comparing `r obs_diff_means$stat |> round(3)` to our null distribution, which was constructed in a hypothesized universe of no true difference in movie ratings. Let's visualize both the null distribution and the $p$-value in Figure \@ref(fig:null-distribution-movies-2). Unlike our example in Subsection \@ref(infer-workflow-ht) involving promotions, since we have a two-sided $H_A: \mu_a - \mu_r \neq 0$, we have to allow for both possibilities for _more extreme_, so we set `direction = "both"`.
 
 ```{r eval=FALSE}
 visualize(null_distribution_movies, bins = 10) + 
@@ -1249,21 +1261,21 @@ if (is_html_output()) {
 }
 ```
 
-Let's go over the elements of this plot. First, the histogram is the *null distribution*. Second, the solid line is the *observed test statistic*, or the difference in sample means we observed in real life of $`r x_bar_action %>% round(3)` - `r x_bar_romance %>% round(3)` = `r (x_bar_action - x_bar_romance) %>% round(3)`$. Third, the two shaded areas of the histogram form the *$p$-value*, or the probability of obtaining a test statistic just as or more extreme than the observed test statistic *assuming the null hypothesis $H_0$ is true*.
+Let's go over the elements of this plot. First, the histogram is the *null distribution*. Second, the solid line is the *observed test statistic*, or the difference in sample means we observed in real life of $`r x_bar_action |> round(3)` - `r x_bar_romance |> round(3)` = `r (x_bar_action - x_bar_romance) |> round(3)`$. Third, the two shaded areas of the histogram form the *$p$-value*, or the probability of obtaining a test statistic just as or more extreme than the observed test statistic *assuming the null hypothesis $H_0$ is true*.
 
 What proportion of the null distribution is shaded? In other words, what is the numerical value of the $p$-value? We use the `get_p_value()` function to compute this value:
 
 ```{r}
-null_distribution_movies %>% 
+null_distribution_movies |> 
   get_p_value(obs_stat = obs_diff_means, direction = "both")
 ```
 ```{r, echo=FALSE}
-p_value_movies <- null_distribution_movies %>%
-  get_p_value(obs_stat = obs_diff_means, direction = "both") %>%
+p_value_movies <- null_distribution_movies |>
+  get_p_value(obs_stat = obs_diff_means, direction = "both") |>
   mutate(p_value = round(p_value, 3))
 ```
 
-This $p$-value of `r p_value_movies$p_value` is very small. In other words, there is a very small chance that we'd observe a difference of `r x_bar_action %>% round(3)` - `r x_bar_romance %>% round(3)` = `r (x_bar_action - x_bar_romance) %>% round(3)` in a hypothesized universe where there was truly no difference in ratings. 
+This $p$-value of `r p_value_movies$p_value` is very small. In other words, there is a very small chance that we'd observe a difference of `r x_bar_action |> round(3)` - `r x_bar_romance |> round(3)` = `r (x_bar_action - x_bar_romance) |> round(3)` in a hypothesized universe where there was truly no difference in ratings. 
 
 But this $p$-value is larger than our (even smaller) pre-specified $\alpha$ significance level of 0.001. Thus, we are inclined to fail to reject the null hypothesis $H_0: \mu_a - \mu_r = 0$. In non-statistical language, the conclusion is: we do not have the evidence needed in this sample of data to suggest that we should reject the hypothesis that there is no difference in mean IMDb ratings between romance and action movies. We, thus, cannot say that a difference exists in romance and action movie ratings, on average, for all IMDb movies.
 
@@ -1355,8 +1367,8 @@ all_points <- tibble(
   `t: df = 3` = dt(x = domain, df = 3),
   `t: df = 10` = dt(x = domain, df = 10),
   `z` = dnorm(x = domain)
-) %>%
-  gather(key = "Distribution", value = "value", -domain) %>%
+) |>
+  gather(key = "Distribution", value = "value", -domain) |>
   mutate(
     type = ifelse(Distribution == "z", "z", "t"),
     Distribution = factor(
@@ -1365,7 +1377,7 @@ all_points <- tibble(
     )
   )
 
-for_labels <- all_points %>%
+for_labels <- all_points |>
   filter(
     between(domain, -1.205, -1.195) & Distribution == "t: df = 1" |
       between(domain, -0.205, -0.195) & Distribution == "t: df = 3" |
@@ -1373,7 +1385,7 @@ for_labels <- all_points %>%
       domain == 2.2 & Distribution == "z"
   )
 
-all_points %>%
+all_points |>
   ggplot(aes(x = domain, y = value, color = Distribution)) +
   geom_line(aes(linetype = type)) +
   scale_color_viridis(discrete = TRUE, begin = 0, end = 0.7) +
@@ -1407,15 +1419,15 @@ $$t = \dfrac{ (\bar{x}_a - \bar{x}_r) - 0}{ \sqrt{\dfrac{{s_a}^2}{n_a} + \dfrac{
 Let's compute the values necessary for this two-sample $t$-statistic. Recall the summary statistics we computed during our exploratory data analysis in Section \@ref(imdb-data).
 
 ```{r}
-movies_sample %>% 
-  group_by(genre) %>% 
+movies_sample |> 
+  group_by(genre) |> 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 ```
 ```{r, echo=FALSE, purl=FALSE}
-t_stat <- movies_sample %>%
-  specify(formula = rating ~ genre) %>%
-  calculate(stat = "t", order = c("Action", "Romance")) %>%
-  pull(stat) %>%
+t_stat <- movies_sample |>
+  specify(formula = rating ~ genre) |>
+  calculate(stat = "t", order = c("Action", "Romance")) |>
+  pull(stat) |>
   round(3)
 ```
 
@@ -1435,10 +1447,10 @@ Let's revisit the null distribution for the test statistic $\bar{x}_a - \bar{x}_
 
 ```{r, eval=FALSE}
 # Construct null distribution of xbar_a - xbar_r:
-null_distribution_movies <- movies_sample %>% 
-  specify(formula = rating ~ genre) %>% 
-  hypothesize(null = "independence") %>% 
-  generate(reps = 1000, type = "permute") %>% 
+null_distribution_movies <- movies_sample |> 
+  specify(formula = rating ~ genre) |> 
+  hypothesize(null = "independence") |> 
+  generate(reps = 1000, type = "permute") |> 
   calculate(stat = "diff in means", order = c("Action", "Romance"))
 visualize(null_distribution_movies, bins = 10)
 ```
@@ -1447,10 +1459,10 @@ The `infer` package also includes some built-in theory-based test statistics as 
 
 ```{r eval=FALSE}
 # Construct null distribution of t:
-null_distribution_movies_t <- movies_sample %>% 
-  specify(formula = rating ~ genre) %>% 
-  hypothesize(null = "independence") %>% 
-  generate(reps = 1000, type = "permute") %>% 
+null_distribution_movies_t <- movies_sample |> 
+  specify(formula = rating ~ genre) |> 
+  hypothesize(null = "independence") |> 
+  generate(reps = 1000, type = "permute") |> 
   # Notice we switched stat from "diff in means" to "t"
   calculate(stat = "t", order = c("Action", "Romance"))
 visualize(null_distribution_movies_t, bins = 10)
@@ -1458,10 +1470,10 @@ visualize(null_distribution_movies_t, bins = 10)
 
 ```{r echo=FALSE, purl=FALSE}
 if (!file.exists("rds/null_distribution_movies_t.rds")) {
-  null_distribution_movies_t <- movies_sample %>%
-    specify(formula = rating ~ genre) %>%
-    hypothesize(null = "independence") %>%
-    generate(reps = 1000, type = "permute") %>%
+  null_distribution_movies_t <- movies_sample |>
+    specify(formula = rating ~ genre) |>
+    hypothesize(null = "independence") |>
+    generate(reps = 1000, type = "permute") |>
     # Notice we switched stat from "diff in means" to "t"
     calculate(stat = "t", order = c("Action", "Romance"))
   write_rds(
@@ -1484,7 +1496,7 @@ null_dist_1 + null_dist_2
 
 Observe that while the shape of the null distributions of both the difference in means $\bar{x}_a - \bar{x}_r$ and the two-sample $t$-statistics are similar, the scales on the x-axis are different. The two-sample $t$-statistic values are spread out over a larger range.
 
-However, a traditional theory-based $t$-test doesn't look at the simulated histogram in `null_distribution_movies_t`, but instead it looks at the $t$-distribution curve with degrees of freedom equal to roughly `r attr(null_distribution_movies_t, "distr_param") %>% round(4)`. This calculation is based on the complicated formula referenced previously, which we approximated with $df = n_a + n_r - 2 = `r n_action` + `r n_romance` - 2 = `r n_action +  n_romance - 2`$. Let's overlay this $t$-distribution curve over the top of our simulated two-sample $t$-statistics using the `method = "both"` argument in `visualize()`.
+However, a traditional theory-based $t$-test doesn't look at the simulated histogram in `null_distribution_movies_t`, but instead it looks at the $t$-distribution curve with degrees of freedom equal to roughly `r attr(null_distribution_movies_t, "distr_param") |> round(4)`. This calculation is based on the complicated formula referenced previously, which we approximated with $df = n_a + n_r - 2 = `r n_action` + `r n_romance` - 2 = `r n_action +  n_romance - 2`$. Let's overlay this $t$-distribution curve over the top of our simulated two-sample $t$-statistics using the `method = "both"` argument in `visualize()`.
 
 ```{r t-stat-3, fig.cap="Null distribution using t-statistic and t-distribution.", fig.height=2.2}
 visualize(null_distribution_movies_t, bins = 10, method = "both")
@@ -1495,13 +1507,13 @@ Observe that the curve does a good job of approximating the histogram here. To c
 We first compute the observed two-sample $t$-statistic using `infer` verbs. This shortcut calculation further assumes that the null hypothesis is true: that the population of action and romance movies have an equal average rating. 
 
 ```{r}
-obs_two_sample_t <- movies_sample %>% 
-  specify(formula = rating ~ genre) %>% 
+obs_two_sample_t <- movies_sample |> 
+  specify(formula = rating ~ genre) |> 
   calculate(stat = "t", order = c("Action", "Romance"))
 obs_two_sample_t
 ```
 
-We want to find the percentage of values that are at or below `obs_two_sample_t` $= `r pull(obs_two_sample_t) %>% round(3)`$ or at or above `-obs_two_sample_t` $= `r -pull(obs_two_sample_t) %>% round(3)`$. We use the `shade_p_value()` function with the `direction` argument set to `"both"` to do this:
+We want to find the percentage of values that are at or below `obs_two_sample_t` $= `r pull(obs_two_sample_t) |> round(3)`$ or at or above `-obs_two_sample_t` $= `r -pull(obs_two_sample_t) |> round(3)`$. We use the `shade_p_value()` function with the `direction` argument set to `"both"` to do this:
 
 ```{r t-stat-4, fig.cap="Null distribution using t-statistic and t-distribution with $p$-value shaded.", warning=TRUE, fig.height=1.7}
 visualize(null_distribution_movies_t, method = "both") +
@@ -1511,7 +1523,7 @@ visualize(null_distribution_movies_t, method = "both") +
 (We'll discuss this warning message shortly.) What is the $p$-value? We apply `get_p_value()` to our null distribution saved in `null_distribution_movies_t`:
 
 ```{r}
-null_distribution_movies_t %>% 
+null_distribution_movies_t |> 
   get_p_value(obs_stat = obs_two_sample_t, direction = "both")
 ```
 
@@ -1541,7 +1553,7 @@ We've now walked through several different examples of how to use the `infer` pa
 Let's consider an example. Say we're interested in the following question: Of *all* flights leaving a New York City airport, are Hawaiian Airlines flights in the air for longer than Alaska Airlines flights? Furthermore, let's assume that 2023 flights are a representative sample of all such flights. Then we can use the `flights` data frame in the `nycflights23` \index{R packages!nycflights23} package we introduced in Section \@ref(nycflights) to answer our question. Let's filter this data frame to only include Hawaiian and Alaska Airlines using their `carrier` codes `HA` and `AS`:
 
 ```{r}
-flights_sample <- flights %>% 
+flights_sample <- flights |> 
   filter(carrier %in% c("HA", "AS"))
 ```
 
@@ -1560,8 +1572,8 @@ This is what we like to call "no PhD in Statistics needed" moments. You don't ha
 Let's investigate why we observe such a clear cut difference between these two airlines using data wrangling. Let's first group by the rows of `flights_sample` not only by `carrier` but also by destination `dest`. Subsequently, we'll compute two summary statistics: the number of observations using `n()` and the mean airtime:
 
 ```{r}
-flights_sample %>% 
-  group_by(carrier, dest) %>% 
+flights_sample |> 
+  group_by(carrier, dest) |> 
   summarize(n = n(), mean_time = mean(air_time, na.rm = TRUE))
 ```
 
@@ -1624,13 +1636,13 @@ get_regression_table(score_model)
 # Fit regression model:
 score_model <- lm(score ~ bty_avg, data = evals)
 # Get regression table:
-get_regression_table(score_model) %>%
-  kable(
+get_regression_table(score_model) |>
+  kbl(
     digits = 3,
     caption = "Linear regression table",
     booktabs = TRUE,
     linesep = ""
-  ) %>%
+  ) |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
     latex_options = c("hold_position")
