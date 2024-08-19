@@ -392,17 +392,3 @@ flights_sample |>
   group_by(carrier, dest) |> 
   summarize(n = n(), mean_time = mean(air_time, na.rm = TRUE))
 
-
-
-
-
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## score_model <- lm(score ~ bty_avg, data = evals)
-## 
-## # Get regression table:
-## get_regression_table(score_model)
-
