@@ -6,58 +6,35 @@ library(infer)
 
 
 
-## ----echo=FALSE---------------------------------------------------------------
-if (!file.exists("rds/almonds_sample_100.rds")) {
-  set.seed(20)
-  almonds_sample_100 <- almonds_bowl |>
-    rep_slice_sample(n = 100, replace = TRUE, reps = 1)
-  write_rds(almonds_sample_100, "rds/almonds_sample_100.rds")
-} else {
-  almonds_sample_100 <- read_rds("rds/almonds_sample_100.rds")
-}
+## ----echo=-1, eval=FALSE------------------------------------------------------
+## set.seed(20)
+## almonds_sample_100 <- almonds_bowl |>
+##   rep_slice_sample(n = 100, replace = TRUE, reps = 1)
+
+
+## -----------------------------------------------------------------------------
 almonds_sample_100
-
-
-## ----echo=FALSE---------------------------------------------------------------
-num_almonds <- nrow(almonds_bowl)
-almonds_sample <- read_rds("rds/almonds_sample.rds")
 
 
 
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
-    summarize(sample_mean = mean(weight))
+  summarize(sample_mean = mean(weight))
 
 
-## ----echo=F-------------------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 xbar <- mean(almonds_sample_100$weight)
 
 
 ## ----echo=FALSE---------------------------------------------------------------
 num_almonds <- nrow(almonds_bowl)
-almonds_sample <- read_rds("rds/almonds_sample.rds")
-
-
-## ----echo=-1------------------------------------------------------------------
-pop_sd <- function(x) sqrt(mean(x^2) - mean(x)^2)
 
 
 ## -----------------------------------------------------------------------------
 almonds_bowl |> 
   summarize(population_mean = mean(weight), 
             population_sd = pop_sd(weight))
-
-
-## ----echo=FALSE---------------------------------------------------------------
-if (!file.exists("rds/almonds_sample_100.rds")) {
-  set.seed(20)
-  almonds_sample_100 <- almonds_bowl |>
-    rep_slice_sample(n = 100, replace = TRUE, reps = 1)
-  write_rds(almonds_sample_100, "rds/almonds_sample_100.rds")
-} else {
-  almonds_sample_100 <- read_rds("rds/almonds_sample_100.rds")
-}
 
 
 ## -----------------------------------------------------------------------------
@@ -76,88 +53,32 @@ almonds_sample_100 |>
 
 
 ## ----normal-curve-shaded-1a, echo=FALSE, fig.height=2, fig.width=3------------
- ggplot(NULL, aes(c(-4,4))) +
+ggplot(NULL, aes(c(-4,4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1)) +
-    geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1, 1)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1, 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(1, 4)) +
   labs(x = "z", y = "") +
   scale_y_continuous(breaks = NULL) +
-  scale_x_continuous(breaks = c(-1,1))
+  scale_x_continuous(breaks = c(-1,1)) 
 
 
 ## ----normal-curve-shaded-2a, echo=FALSE, fig.height=2, fig.width=3------------
- ggplot(NULL, aes(c(-4,4))) +
+ggplot(NULL, aes(c(-4,4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -2)) +
-    geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-2, 2)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-2, 2)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(2, 4)) +
   labs(x = "z", y = "") +
   scale_y_continuous(breaks = NULL) +
   scale_x_continuous(breaks = c(-2,2))
 
 
-## -----------------------------------------------------------------------------
-pnorm(1)
-
-
-## ----normal-curve-shaded-1----------------------------------------------------
- ggplot(NULL, aes(c(-4,4))) +
-  geom_area(stat = "function", fun = dnorm, fill = "grey50", xlim = c(-4, 1)) +
-  geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(1, 4)) +
-  labs(x = "z", y = "") +
-  scale_y_continuous(breaks = NULL) +
-  scale_x_continuous(breaks = 1)
-
-
-## ----normal-curve-shaded-2----------------------------------------------------
- ggplot(NULL, aes(c(-4,4))) +
-  geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1)) +
-    geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1, 1)) +
-  geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(1, 4)) +
-  labs(x = "z", y = "") +
-  scale_y_continuous(breaks = NULL) +
-  scale_x_continuous(breaks = c(-1,1))
-
-
-## -----------------------------------------------------------------------------
-pnorm(1) - pnorm(-1)
-
-
-## -----------------------------------------------------------------------------
-pnorm(2) - pnorm(-2)
-
-
-## -----------------------------------------------------------------------------
-qnorm(0.84)
-
-
-## ----normal-curve-shaded-3----------------------------------------------------
- ggplot(NULL, aes(c(-4,4))) +
-  geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -2)) +
-    geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-2, 2)) +
-  geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(2, 4)) +
-  labs(x = "z", y = "") +
-  scale_y_continuous(breaks = NULL) +
-  scale_x_continuous(breaks = NULL) + 
-  annotate(geom="text", x=2, y=-0.01, label="q",
-              color="blue")
-
-
-## -----------------------------------------------------------------------------
-q <- qnorm(0.975)
-q
-
-
-## -----------------------------------------------------------------------------
-qnorm(0.99)
-
-
 
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
-    summarize(sample_mean = mean(weight),
-              lower_bound = mean(weight) - 1.96*0.323/sqrt(length(weight)),
-              upper_bound = mean(weight) + 1.96*0.323/sqrt(length(weight)))
+  summarize(sample_mean = mean(weight),
+            lower_bound = mean(weight) - 1.96*0.323/sqrt(length(weight)),
+            upper_bound = mean(weight) + 1.96*0.323/sqrt(length(weight)))
 
 
 ## ----echo=F-------------------------------------------------------------------
@@ -173,23 +94,23 @@ c(lower_bound, upper_bound)
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
-    summarize(sample_mean = mean(weight),
-              sample_sd = sd(weight))
+  summarize(sample_mean = mean(weight),
+            sample_sd = sd(weight))
 
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
-    summarize(sample_mean = mean(weight),
-              sample_sd = sd(weight),
-              lower_bound = mean(weight) - 1.98*sd(weight)/sqrt(length(weight)),
-              upper_bound = mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
+  summarize(sample_mean = mean(weight),
+            sample_sd = sd(weight),
+            lower_bound = mean(weight) - 1.98*sd(weight)/sqrt(length(weight)),
+            upper_bound = mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
 
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |> 
-  summarize(mean_weight = mean(weight),
-            sd_weight = sd(weight),
-            sample_size = n())
+summarize(mean_weight = mean(weight),
+sd_weight = sd(weight),
+sample_size = n())
 
 
 ## -----------------------------------------------------------------------------
@@ -207,9 +128,9 @@ c(lower_bound, upper_bound)
 
 
 ## ----normal-curve-shaded-3a, echo=FALSE, fig.height=2, fig.width=3------------
- ggplot(NULL, aes(c(-4,4))) +
+ggplot(NULL, aes(c(-4,4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1.96)) +
-    geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1.96, 1.96)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1.96, 1.96)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(1.96, 4)) +
   labs(x = "z", y = "") +
   scale_y_continuous(breaks = NULL) +scale_x_continuous(breaks = NULL) + 
@@ -217,11 +138,11 @@ c(lower_bound, upper_bound)
   geom_point(aes(x=-1.96, y=0), color="red") +
   geom_point(aes(x=1.96, y=0), color="red") +
   annotate(geom="text", x=-1.96, y=-0.03, label=bquote("-q"),
-              color="red") +
+           color="red") +
   annotate(geom="text", x=1.96, y=-0.03, label=bquote("q"),
-              color="red") +
+           color="red") +
   annotate(geom="text", x=0, y=-0.04, label=bquote("0"),
-              color="red")
+           color="red")
 
 
 
@@ -239,9 +160,9 @@ qnorm(0.99)
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
-    summarize(sample_mean = mean(weight),
-              lower_bound = mean(weight) - qnorm(0.99)*0.323/sqrt(length(weight)),
-              upper_bound = mean(weight) + qnorm(0.99)*0.323/sqrt(length(weight)))
+  summarize(sample_mean = mean(weight),
+            lower_bound = mean(weight) - qnorm(0.99)*0.323/sqrt(length(weight)),
+            upper_bound = mean(weight) + qnorm(0.99)*0.323/sqrt(length(weight)))
 
 
 ## -----------------------------------------------------------------------------
@@ -447,8 +368,8 @@ SE_boot
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
-    summarize(lower_bound = mean(weight) - 1.96*SE_boot,
-              upper_bound = mean(weight) + 1.96*SE_boot)
+  summarize(lower_bound = mean(weight) - 1.96*SE_boot,
+            upper_bound = mean(weight) + 1.96*SE_boot)
 
 
 ## -----------------------------------------------------------------------------

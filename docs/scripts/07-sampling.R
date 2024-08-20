@@ -273,17 +273,15 @@ ggplot(almonds_bowl, aes(x = weight)) +
 
 
 
-## ----echo=2:4-----------------------------------------------------------------
-set.seed(2024)
-almonds_sample <- almonds_bowl |> 
-  rep_slice_sample(n = 25, reps = 1)
-almonds_sample
-num_almonds <- length(almonds_sample$weight)
-write_rds(almonds_sample, "rds/almonds_sample.rds")
+## ----echo=2:4, eval=FALSE-----------------------------------------------------
+## set.seed(2024)
+## almonds_sample <- almonds_bowl |>
+##   rep_slice_sample(n = 25, reps = 1)
+## almonds_sample
 
 
 ## ----echo=FALSE---------------------------------------------------------------
-almonds_sample <- read_rds("rds/almonds_sample.rds")
+num_almonds <- length(almonds_sample$weight)
 
 
 ## ----almonds-sample-histogram, fig.cap="Distribution of weight on a sample of 25 almonds."----
