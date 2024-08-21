@@ -29,6 +29,8 @@ xbar <- mean(almonds_sample_100$weight)
 
 ## ----echo=FALSE---------------------------------------------------------------
 num_almonds <- nrow(almonds_bowl)
+mu <- mean(almonds_bowl$weight)
+sigma <- pop_sd(almonds_bowl$weight)
 
 
 ## -----------------------------------------------------------------------------
@@ -72,21 +74,30 @@ ggplot(NULL, aes(c(-4,4))) +
   scale_x_continuous(breaks = c(-2,2))
 
 
+## ----echo=FALSE---------------------------------------------------------------
+se_xbar <- sigma / sqrt(num_almonds_sample)
+
+
+
+
+## ----echo=FALSE---------------------------------------------------------------
+sample_mean <- mean(almonds_sample_100$weight)
+deviance <- sample_mean - mu
+z_almond <- deviance / se_xbar
+z_almond
+
+
+## ----echo=FALSE---------------------------------------------------------------
+lower_bound <- sample_mean - 1.96 * sigma / sqrt(100)
+upper_bound <- sample_mean + 1.96 * sigma / sqrt(100)
 
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
   summarize(sample_mean = mean(weight),
-            lower_bound = mean(weight) - 1.96*0.323/sqrt(length(weight)),
-            upper_bound = mean(weight) + 1.96*0.323/sqrt(length(weight)))
+            lower_bound = mean(weight) - 1.96*sigma/sqrt(length(weight)),
+            upper_bound = mean(weight) + 1.96*sigma/sqrt(length(weight)))
 
-
-## ----echo=F-------------------------------------------------------------------
-xbar <- 3.578 
-se_xbar <- 0.323/sqrt(100)
-lower_bound <- xbar - 1.96 *  se_xbar
-upper_bound <- xbar + 1.96 *  se_xbar
-c(lower_bound, upper_bound)
 
 
 
@@ -98,31 +109,20 @@ almonds_sample_100 |>
             sample_sd = sd(weight))
 
 
+## ----echo=FALSE---------------------------------------------------------------
+sample_s <- sd(almonds_sample_100$weight)
+lower_bound_t <- with(almonds_sample,
+                     mean(weight) - 1.98*sd(weight)/sqrt(length(weight)))
+upper_bound_t <- with(almonds_sample,
+                     mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
+
+
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
   summarize(sample_mean = mean(weight),
             sample_sd = sd(weight),
             lower_bound = mean(weight) - 1.98*sd(weight)/sqrt(length(weight)),
             upper_bound = mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
-
-
-## -----------------------------------------------------------------------------
-almonds_sample_100 |> 
-summarize(mean_weight = mean(weight),
-sd_weight = sd(weight),
-sample_size = n())
-
-
-## -----------------------------------------------------------------------------
-qt(0.975, df = 100 - 1)
-
-
-## -----------------------------------------------------------------------------
-xbar <- 3.682 
-se_xbar <- 0.362/sqrt(100)
-lower_bound <- xbar - 1.98 *  se_xbar
-upper_bound <- xbar + 1.98 *  se_xbar
-c(lower_bound, upper_bound)
 
 
 
@@ -145,7 +145,6 @@ ggplot(NULL, aes(c(-4,4))) +
            color="red")
 
 
-
 ## -----------------------------------------------------------------------------
 qnorm(0.025)
 
@@ -155,14 +154,14 @@ qnorm(0.975)
 
 
 ## -----------------------------------------------------------------------------
-qnorm(0.99)
+qnorm(0.95)
 
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
   summarize(sample_mean = mean(weight),
-            lower_bound = mean(weight) - qnorm(0.99)*0.323/sqrt(length(weight)),
-            upper_bound = mean(weight) + qnorm(0.99)*0.323/sqrt(length(weight)))
+            lower_bound = mean(weight) - qnorm(0.95)*sigma/sqrt(length(weight)),
+            upper_bound = mean(weight) + qnorm(0.95)*sigma/sqrt(length(weight)))
 
 
 ## -----------------------------------------------------------------------------
@@ -185,7 +184,7 @@ almonds_sample_100
 
 
 ## ----echo=-1------------------------------------------------------------------
-set.seed(20)
+set.seed(202)
 boot_sample <- almonds_sample_100 |> 
   rep_sample_n(size = 100, replace = TRUE, reps = 1)
 
@@ -423,6 +422,10 @@ mythbusters_yawn %>%
 ## -----------------------------------------------------------------------------
 first_six_rows <- head(mythbusters_yawn)
 first_six_rows
+
+
+## ----echo=FALSE---------------------------------------------------------------
+set.seed(22)
 
 
 ## -----------------------------------------------------------------------------
