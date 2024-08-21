@@ -165,6 +165,8 @@ We now revisit the almond activity and study how the sampling distribution of th
 
 ```{r echo=FALSE}
 num_almonds <- nrow(almonds_bowl)
+mu <- mean(almonds_bowl$weight)
+sigma <- pop_sd(almonds_bowl$weight)
 ```
 
 ### Revisiting the Almond Activity for Estimation {#revisit-almond}
@@ -178,7 +180,7 @@ almonds_bowl |>
             population_sd = pop_sd(weight))
 ```
 
-The total number of almonds in the bowl is 5,000. The population mean is $$\mu = \sum_{i=1}^{5000}\frac{x_i}{5000}=3.54$$ and the population standard deviation defined in the `moderndive` package as `pop_sd()` is $$\sigma = \sum_{i=1}^{5000} \frac{(x_i - \mu)^2}{5000}=0.32.$$
+The total number of almonds in the bowl is 5,000. The population mean is $$\mu = \sum_{i=1}^{5000}\frac{x_i}{5000}=`r mu`$$ and the population standard deviation defined in the `moderndive` package as `pop_sd()` is $$\sigma = \sum_{i=1}^{5000} \frac{(x_i - \mu)^2}{5000}=`r sigma`.$$
 
 We keep those numbers for future reference to determine how well our methods of estimation are doing, but recall that in real-life situations we do not have access to the population values and the population mean $\mu$ is unknown. All we have is the information from one random sample. In our example, we assume that all we know is the `almonds_sample_100` object stored in package `moderndive`. We show the contents of the first few rows here:
 
@@ -199,12 +201,10 @@ We redraw Figure \@ref(fig:sample-mean-100-with-normal) here as Figure \@ref(fig
 
 
 ```{r sample-mean-100-with-normal-redraw, echo=FALSE, fig.height=3, fig.cap="The distribution of the sample mean.", purl=FALSE}
-num_almonds_sample = length(almonds_sample_100$weight)
-x = almonds_bowl$weight
-mu = mean(x)
+num_almonds_sample <- length(almonds_sample_100$weight)
 xbar <- mean(almonds_sample_100$weight)
-sigma = sqrt(mean(x^2)-mean(x)^2)
 if (!file.exists("rds/virtual_mean_weight_100.rds")) {
+  set.seed(2)
   virtual_mean_weight_100 <- almonds_bowl |>
     rep_slice_sample(n = num_almonds_sample, replace = TRUE, reps = 1000) |>
     summarize(mean_weight = mean(weight), n = n())
@@ -340,11 +340,15 @@ We are now ready to return to the our main goal: how to obtain an interval estim
 
 ### The confidence interval{#CI-general}
 
+```{r echo=FALSE}
+se_xbar <- sigma / sqrt(num_almonds_sample)
+```
+
 
 We continue using the example where we try to estimate the population mean weight of almonds with a random sample of 100 almonds. We showed in Chapter \@ref(sampling) that the sampling distribution of the sample mean weight of almonds approximates a normal distribution with expected value equal to the population mean weight of almonds and a standard error equal to $$SE_{\bar x} = \frac{\sigma}{\sqrt {100}}.$$ 
-In Subsection \@ref(revisit-almond) we showed that for the population of almonds, $\mu =3.54$ grams and $\sigma = 0.323$ so the standard error for the sampling distribution is $$SE_{\bar x} = \frac{\sigma}{\sqrt {100}} = \frac{0.323}{\sqrt{100}} = 0.0323$$ grams. In Figure \@ref(fig:normal-curve-1) we plot the density curve for this distribution using these values.
+In Subsection \@ref(revisit-almond) we showed that for the population of almonds, $\mu =`r mu`$ grams and $\sigma = `r sigma`$, so the standard error for the sampling distribution is $$SE_{\bar x} = \frac{\sigma}{\sqrt{100}} = \frac{`r sigma`}{\sqrt{100}} = `r se_xbar`$$ grams. In Figure \@ref(fig:normal-curve-1) we plot the density curve for this distribution using these values.
 
-```{r normal-curve-1, echo=FALSE, fig.cap="The normal density curve for the sample mean weight of almonds.", purl=FALSE, out.width="90%"}
+```{r normal-curve-1, echo=FALSE, fig.cap="The normal density curve for the sample mean weight of almonds.", purl=FALSE, out.width="90%", warning=FALSE}
 p1 <- ggplot(data = data.frame(x = c(3.4, 3.7)), aes(x)) +
   stat_function(fun = dnorm,  args = list(mean = mu, sd = sigma/sqrt(num_almonds_sample)), col="red") + ylab("") +
   scale_y_continuous(breaks = NULL) + 
@@ -356,53 +360,50 @@ p1 <- ggplot(data = data.frame(x = c(3.4, 3.7)), aes(x)) +
   annotate(geom="text", x=mu, y=-0.5, label=bquote("\u03BC = 3.54"),
            color="red") +
   annotate(geom="text", x=mean(almonds_sample_100$weight), y=-0.5, label=bquote(bar(x) == 3.58),
-           color="blue")+
+           color="blue") +
   geom_hline(yintercept = 0, col="red", lty=2)
 p1
 ```
 
 ```{r echo=FALSE}
-mu <- 3.54
-se_bar_x <- 0.0323
 sample_mean <- mean(almonds_sample_100$weight)
 deviance <- sample_mean - mu
-z_almond <- deviance / se_bar_x
+z_almond <- deviance / se_xbar
 z_almond
 ```
 
 
-The horizontal axis (X-axis) represents the sample means that we can obtain from all the possible random samples of 100 almonds. The red dot represents the expected value of the sampling distribution, $\mu = 3.54$, located on the X-axis at the center of the distribution. The density curve's height can be thought of as how likely those sample means are to be observed. For example, it is more likely to get a random sample with a sample mean around $`r mu`$ grams (which corresponds to the highest point of the curve) than it is to get a sample with a sample mean at around $3.4$ grams, since the curve's height is almost zero at that value. The blue dot is the sample mean from our sample of 100 almonds, $\overline{x} = `r sample_mean`$ grams. It is located `r deviance` grams above the population mean weight. How far is `r deviance` grams? It is helpful to express this distance in standardized values: $$\frac{`r mean(almonds_sample_100$weight)` - 3.54}{0.0323} = `r (mean(almonds_sample_100$weight) - 3.54) / 0.0323`$$
-so 0.04 more grams is about 1.24 standard errors above the population mean.
+The horizontal axis (X-axis) represents the sample means that we can obtain from all the possible random samples of 100 almonds. The red dot represents the expected value of the sampling distribution, $\mu = 3.54$, located on the X-axis at the center of the distribution. The density curve's height can be thought of as how likely those sample means are to be observed. For example, it is more likely to get a random sample with a sample mean around $`r mu`$ grams (which corresponds to the highest point of the curve) than it is to get a sample with a sample mean at around $3.4$ grams, since the curve's height is almost zero at that value. The blue dot is the sample mean from our sample of 100 almonds, $\overline{x} = `r sample_mean`$ grams. It is located `r deviance` grams above the population mean weight. How far is `r deviance` grams? It is helpful to express this distance in standardized values: $$\frac{`r sample_mean` - `r mu`}{`r se_xbar`} = `r z_almond`$$
+so `r deviance` more grams is about `r z_almond` standard errors above the population mean.
 
 In real-life situations, the population mean, $\mu$, is unknown so the distance from the sample mean to $\mu$ is also unknown. 
-On the other hand, the sampling distribution of the sample mean follows a normal distribution. Based on our earlier discussion about areas under the normal curve, there is a 95% chance that the value observed is within 1.96 standard deviations from the mean. In the context of our problem, there is a 95% chance that the sample mean weight obtained is within 1.96 standard errors from the population mean weight. As shown earlier, the sample mean obtained in our example was 1.24 standard errors above the population mean, well within the reasonable range. 
+On the other hand, the sampling distribution of the sample mean follows a normal distribution. Based on our earlier discussion about areas under the normal curve, there is a 95% chance that the value observed is within 1.96 standard deviations from the mean. In the context of our problem, there is a 95% chance that the sample mean weight obtained is within 1.96 standard errors from the population mean weight. As shown earlier, the sample mean obtained in our example was `r z_almond` standard errors above the population mean, well within the reasonable range. 
 
 Think about this result. If we were to take a different random sample of 100 almonds, the sample mean will likely be different, but you still have a 95% chance that the new sample mean will be within 1.96 standard errors from the population mean.
 
 We can finally construct an interval estimate that takes advantage of this configuration. We center our interval in the sample mean observed and then extend to each side the magnitude equivalent to 1.96 standard errors. The lower and upper bounds of this interval are:
 
-$$\begin{aligned}\left(\overline{x} - 1.96 \frac{\sigma}{\sqrt{n}},\quad \overline{x} + 1.96 \frac{\sigma}{\sqrt{n}}\right) &= \left(3.578 - 1.96 \cdot \frac{0.323}{\sqrt{100}},\quad 3.578 + 1.96 \cdot \frac{0.323}{\sqrt{100}}\right)\\
-&= (3.515, 3.641)\end{aligned}$$ 
+```{r echo=FALSE}
+lower_bound <- sample_mean - 1.96 * sigma / sqrt(100)
+upper_bound <- sample_mean + 1.96 * sigma / sqrt(100)
+```
+
+
+$$\begin{aligned}\left(\overline{x} - 1.96 \frac{\sigma}{\sqrt{n}},\quad \overline{x} + 1.96 \frac{\sigma}{\sqrt{n}}\right) &= \left(`r sample_mean` - 1.96 \cdot \frac{`r sigma`}{\sqrt{100}},\quad `r sample_mean` + 1.96 \cdot \frac{`r sigma`}{\sqrt{100}}\right)\\
+&= (`r round(lower_bound, 3)`, `r round(upper_bound, 3))\end{aligned}$$ 
 
 Here is R code that can be used to calculate the lower and upper bounds of this interval
 
 ```{r}
 almonds_sample_100 |>
   summarize(sample_mean = mean(weight),
-            lower_bound = mean(weight) - 1.96*0.323/sqrt(length(weight)),
-            upper_bound = mean(weight) + 1.96*0.323/sqrt(length(weight)))
+            lower_bound = mean(weight) - 1.96*sigma/sqrt(length(weight)),
+            upper_bound = mean(weight) + 1.96*sigma/sqrt(length(weight)))
 ```
-The functions `mean()` and `length()` find the sample mean weight and sample size, respectively, from the sample of almonds' weights in `almonds_sample_100`. The number 1.96 corresponds to the number of standard errors needed to obtain a 95% area under the normal distribution and the population standard deviation 0.323 was found in Subsection \@ref(revisit-almond). Figure \@ref(fig: normal-curve-2) shows this interval as a horizontal blue line. Observe how the population mean $\mu$ is part of this interval.
 
+The functions `mean()` and `length()` find the sample mean weight and sample size, respectively, from the sample of almonds' weights in `almonds_sample_100`. The number 1.96 corresponds to the number of standard errors needed to obtain a 95% area under the normal distribution and the population standard deviation `sigma` of `r sigma` was found in Subsection \@ref(revisit-almond). Figure \@ref(fig: normal-curve-2) shows this interval as a horizontal blue line. Observe how the population mean $\mu$ is part of this interval.
 
-```{r echo=F}
-xbar <- 3.578 
-se_xbar <- 0.323/sqrt(100)
-lower_bound <- xbar - 1.96 *  se_xbar
-upper_bound <- xbar + 1.96 *  se_xbar
-c(lower_bound, upper_bound)
-```
-```{r normal-curve-2, echo=FALSE, fig.cap="The normal density curve for the sample mean weight of almonds.", purl=FALSE, out.width="90%"}
+```{r normal-curve-2, echo=FALSE, fig.cap="The normal density curve for the sample mean weight of almonds.", purl=FALSE, out.width="90%", warning=FALSE}
 df <- data.frame(x1 = lower_bound, x2 = upper_bound, y1 = 0, y2 = 0)
 p1 <- ggplot(data = data.frame(x = c(3.4, 3.7)), aes(x)) +
   stat_function(fun = dnorm,  args = list(mean = mu, sd = sigma/sqrt(num_almonds_sample)), col="red") + ylab("") +
@@ -420,7 +421,8 @@ p1 <- ggplot(data = data.frame(x = c(3.4, 3.7)), aes(x)) +
   geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "segment"), data = df, col="blue")
 p1
 ```
-Since 1.96 standard errors were used on the construction of this interval, we call this a 95% confidence interval. A confidence interval can be viewed as an interval estimator of the population mean. Compare an interval estimator with the sample mean that is a point estimator. The latter estimates the parameter with a single number, the former provides and entire interval to account for the location of the parameter. An apt analogy involves fishing. Imagine that there is a single fish swimming in murky water. The fish is not visible but its movement produces ripples on the surface that can provide some limited information about the fish's location. To capture the fish, one could use a spear or a net. Because the information is limited, throwing the spear at the ripples may capture the fish but likely miss it. Throwing a net around the ripples, on the other hand, may give a much higher likelihood of capturing the fish. Using the sample mean only to estimate the population mean is like throwing a spear to the ripples in the hopes of capturing the fish. Constructing a confidence interval that may include the population mean is like throwing a net to surround the ripples. Keep this analogy in mind, as we will revisit it in future sections.
+
+Since 1.96 standard errors were used on the construction of this interval, we call this a 95% confidence interval. A confidence interval can be viewed as an interval estimator of the population mean. Compare an interval estimator with the sample mean that is a point estimator. The latter estimates the parameter with a single number, the former provides an entire interval to account for the location of the parameter. An apt analogy involves fishing. Imagine that there is a single fish swimming in murky water. The fish is not visible but its movement produces ripples on the surface that can provide some limited information about the fish's location. To capture the fish, one could use a spear or a net. Because the information is limited, throwing the spear at the ripples may capture the fish but likely miss it. Throwing a net around the ripples, on the other hand, may give a much higher likelihood of capturing the fish. Using the sample mean only to estimate the population mean is like throwing a spear to the ripples in the hopes of capturing the fish. Constructing a confidence interval that may include the population mean is like throwing a net to surround the ripples. Keep this analogy in mind, as we will revisit it in future sections.
 
 
 ### The t distribution {#t-distribution-CI}
@@ -428,12 +430,12 @@ Since 1.96 standard errors were used on the construction of this interval, we ca
 
 Recall that due to the Central Limit Theorem, the sampling distribution of the sample mean was approximately normal with mean equal to the population mean $\mu$ and standard deviation given by the standard error $SE_{\overline X} = \sigma/\sqrt{n}$. We can standardize this for any sample mean $\overline{x}$ such that $$z = \frac{\overline{x} - \mu}{\sigma/\sqrt{n}}$$ is the corresponding value of the standard normal distribution.
 
-In the construction of the interval in Figure \@ref(fig: normal-curve-2) we have assumed the population standard deviation, $\sigma$, was known, and therefore we have use it to obtain the confidence interval. Nevertheless, in real-life applications, the population standard deviation is also unknown. 
+In the construction of the interval in Figure \@ref(fig: normal-curve-2) we have assumed the population standard deviation, $\sigma$, was known, and therefore we have used it to obtain the confidence interval. Nevertheless, in real-life applications, the population standard deviation is also unknown. 
 Instead, we use the sample standard deviation, $s$, from the sample we have obtained, as an estimator of the population standard deviation $\sigma$. Our estimated standard error is given by $$\widehat{SE}_{\overline X} = \frac{s}{\sqrt n}.$$
 
 When using the sample standard deviation to estimate the standard error, we are introducing additional uncertainty in our model. For example, if we try to standardize this value we get $$t = \frac{\overline{x} - \mu}{s/\sqrt{n}}$$. Because we are using the sample standard deviation in this equation and since the sample standard deviation changes from sample to sample, the additional uncertainty makes the values $t$ no longer normal. Instead they follow a new distribution called the $t$ distribution.
 
-The $t$ distribution is similar to the standard normal; its density curve is also bell-shaped and it is symmetric around zero, but the tails of the $t$ distribution are a little thicker than those of the standard normal.
+The $t$ distribution is similar to the standard normal; its density curve is also bell-shaped, and it is symmetric around zero, but the tails of the $t$ distribution are a little thicker than those of the standard normal.
 In addition, the $t$ distribution requires one additional parameter, the degrees of freedom. For the sample mean problems, the degrees of freedom needed are exactly $n-1$, the size of the sample minus one. Figure \@ref(fig: t-curve-1) shows the density curves of 
 
 - the standard normal density curve, in black, 
@@ -453,10 +455,10 @@ p1 <- ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   ) 
 p1
 ```
+
 Observe how the $t$ density curve in red (t with 10 degrees of freedom) gets closer to the standard normal density curve, or $z$-curve, in black, than the $t$ curve in blue (t with 2 degrees of freedom). The greater the number of degrees of freedom, the closer the $t$ density curve is from the $z$ curve. This change make our calculations slightly different.
 
-Please see Appendix ?? for calculations of probabilities for $t$ density curves with different degrees of freedom. The calculation for our specific example show that 95% of the sample means are within 1.98 standard errors of the population mean weight. The number of standard errors needed is not that different from before, 1.98 versus 1.96, because the degrees of freedom are fairly large.
-
+Please see the Section \@ref(appendix-normal-curve) in the Appendices for calculations of probabilities for $t$ density curves with different degrees of freedom. Using that knowledge, the calculation for our specific example shows that 95% of the sample means are within 1.98 standard errors from the population mean weight. The number of standard errors needed is not that different from before, 1.98 versus 1.96, because the degrees of freedom are fairly large.
 
 Using this information, we can construct the 95% confidence interval based entirely on our sample information and using the sample mean and sample standard deviation. We calculate those values again for `almonds_sample_100`:
 
@@ -465,9 +467,19 @@ almonds_sample_100 |>
   summarize(sample_mean = mean(weight),
             sample_sd = sd(weight))
 ```
-Observe that the sample standard deviation is $s = 0.3218$ which is not that different form the population standard deviation. We again center the confidence interval in the observed sample mean but now extend the interval by 1.98 standard errors to each side. The lower and upper bounds of this confidence interval are:
 
-$$\left(\overline{x} - 1.98 \frac{s}{\sqrt{n}},\quad \overline{x} + 1.98 \frac{s}{\sqrt{n}}\right) = \left(3.578 - 1.98 \cdot \frac{0.3218}{\sqrt{100}}, 3.578 + 1.98 \cdot \frac{0.3218}{\sqrt{100}}\right)= (3.514, 3.642)$$ 
+```{r echo=FALSE}
+sample_s <- sd(almonds_sample_100$weight)
+lower_bound_t <- with(almonds_sample,
+                     mean(weight) - 1.98*sd(weight)/sqrt(length(weight)))
+upper_bound_t <- with(almonds_sample,
+                     mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
+```
+
+
+Observe that the sample standard deviation is $s = `r sample_s`$ which is not that different from the population standard deviation of $\sigma = `r sigma`$. We again center the confidence interval at the observed sample mean but now extend the interval by 1.98 standard errors to each side. The lower and upper bounds of this confidence interval are:
+
+$$\left(\overline{x} - 1.98 \frac{s}{\sqrt{n}},\quad \overline{x} + 1.98 \frac{s}{\sqrt{n}}\right) = \left(`r sample_mean` - 1.98 \cdot \frac{`r sample_s`}{\sqrt{100}}, `r sample_mean` + 1.98 \cdot \frac{`sample_s}{\sqrt{100}}\right)= (`r round(lower_bound_t, 3)`, `r round(upper_bound_t, 3)`))$$ 
 Here is the R code that can be used to found the lower and upper bounds on this interval
 
 ```{r}
@@ -478,65 +490,27 @@ almonds_sample_100 |>
             upper_bound = mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
 ```
 
-The confidence interval obtained here, using the sample standard deviation and a $t$ distribution, is almost the same to the one obtained using the population standard deviation and the standard normal distribution, the difference is about 0.001 units for the upper and lower bound. This happens because with a sample size of 100, the t-curve and z-curve are almost identical and also because the sample standard deviation was very similar to the population standard deviation. This does not have to be always the case and occasionally we can observe greater differences; but, in general, the results are fairly similar.
+The confidence interval obtained here, using the sample standard deviation and a $t$ distribution, is almost the same as the one obtained using the population standard deviation and the standard normal distribution, the difference is about 0.005 units for the upper and lower bound. This happens because with a sample size of 100, the t-curve and z-curve are almost identical and also because the sample standard deviation was very similar to the population standard deviation. This does not have to be always the case and occasionally we can observe greater differences; but, in general, the results are fairly similar.
 
-More importantly, the confidence interval constructed here contains the population mean, which is the result we needed. Recall that a confidence interval is an interval estimate of the parameter of interest, the population mean weight of almonds. 
+More importantly, the confidence interval constructed here contains the population mean of $\mu = `r mu`$, which is the result we needed. Recall that a confidence interval is an interval estimate of the parameter of interest, the population mean weight of almonds. 
 We can summarize the results so far:
 
 - If the size used for your random sample is large enough, the sampling distribution of the sample mean follows, approximately, the normal distribution.
 - Using the sample mean observed and the standard error of the sampling distribution, we can construct 95% confidence intervals for the population mean. The formula for these intervals is given by $$\left(\overline{x} - 1.96 \frac{\sigma}{\sqrt{n}},\quad \overline{x} + 1.96 \frac{\sigma}{\sqrt{n}}\right)$$ where $n$ is the sample size used.
-- When the population standard deviation is unknown, the sample standard deviation is used to estimate the standard error. This produces additional variability and the standardized values follow a $t$ distribution with $n-1$ degrees of freedom. The formula for 95% confidence intervals when the sample size is $n=100$ is given by $$\left(\overline{x} - 1.98 \frac{s}{\sqrt{100}},\quad \overline{x} + 1.98 \frac{s}{\sqrt{100}}\right)$$  
+- When the population standard deviation is unknown (which is almost always the case), the sample standard deviation is used to estimate the standard error. This produces additional variability and the standardized values follow a $t$ distribution with $n-1$ degrees of freedom. The formula for 95% confidence intervals when the sample size is $n=100$ is given by $$\left(\overline{x} - 1.98 \frac{s}{\sqrt{100}},\quad \overline{x} + 1.98 \frac{s}{\sqrt{100}}\right)$$  
 - The method to construct 95% confidence intervals guarantees that for 95% of the possible samples, the intervals obtained will include the population mean. It also guarantees that 5% of the possible samples will lead to intervals that do not include the population mean.
-- As we have constructed intervals with a 95% level of confidence, we can construct intervals with any level of confidence. The only change in the equations will be the number of standard errors needed. Please see Appendix ?? if you need to calculate the number of standard errors for other confidence levels.
-
-<!--
-This also needs to be added to the appendix AV 5-24-24
-
-The syntax in R for the $t$ distribution is analogous to the standard normal distribution. We use the function `pt()` instead of `pnorm()` and `qt()` instead of `qnorm()`.
-In addition, the $t$ distribution requires one additional parameter, the degrees of freedom. For the sample mean problems, the degrees of freedom needed are exactly $n-1$, the size of the samples minus one.
-
-We construct again a 95% confidence interval for the population mean, but this time using the sample standard deviation to estimate the standard error and the $t$ distribution to determine how wide the confidence interval should be.
-
-We start by obtaining the sample statistics:
-
-
-```{r}
-almonds_sample_100 |> 
-summarize(mean_weight = mean(weight),
-sd_weight = sd(weight),
-sample_size = n())
-```
-To obtain the number of standard deviations on the $t$ distribution to account for 95% of the values, we proceed as we did in the normal case: the area in the middle is 0.95, so the area on the tails is 1-0.95 = 0.05. Since the $t$ distribution is also symmetric, the area on each tail is 0.05/2 - 0.025. The number of standard deviation around the center is given by the value $q$ such as the area under the $t$ curve to the left of $q$ is exactly $0.95 + 0.025 = 0.975$. Using R we get:
-
-```{r}
-qt(0.975, df = 100 - 1)
-```
-So, in order to account for 95% of the observations around the mean, we need to take into account all the values within 1.98 standard deviation from the mean. Compare this number with the 1.96 obtained for the standard normal; the difference is due to the fact that the $t$ curve has thicker tails than the standard normal.
-We can now construct the 95% confidence interval
-
-```{r}
-xbar <- 3.682 
-se_xbar <- 0.362/sqrt(100)
-lower_bound <- xbar - 1.98 *  se_xbar
-upper_bound <- xbar + 1.98 *  se_xbar
-c(lower_bound, upper_bound)
-```
-We are 95% confident that the population mean weight of almonds is a number between 3.61 and 3.75 grams.
--->
+- As we have constructed intervals with a 95% level of confidence, we can construct intervals with any level of confidence. The only change in the equations will be the number of standard errors needed.
 
 
 ### Interpreting Confidence Intervals
 
 We have used the sample `almonds_sample_100`, constructed a 95% confidence interval for the population mean weight of almonds, and showed that the interval contained this population. This result is not surprising as we expect intervals such as this to include the population mean for 95% of the possible random samples. We repeat this interval construction for many random samples. Figure \@ref(fig:almong-mean-cis) presents the results for eighty 95% confidence intervals.
 
-
-
 ```{r almond-mean-cis, fig.cap="(ref:almond-mean-ci)", echo=FALSE, fig.height=4.2, purl=FALSE}
-
-set.seed(13)
+set.seed(202)
 # Compute data frame with sampled data, sample means, and ci
 almond_mean_cis <- almonds_bowl |>
-  rep_sample_n(size = 100, reps = 80, replace = FALSE) |>
+  rep_sample_n(size = 100, reps = 100, replace = FALSE) |>
   summarize(sample_mean = mean(weight), sample_sd = sd(weight), size = n()) |>
   mutate(lower_bound = sample_mean - qt(.975,size-1)*sample_sd/sqrt(size), 
          upper_bound = sample_mean + qt(.975,size-1)*sample_sd/sqrt(size),
@@ -554,7 +528,7 @@ ggplot(almond_mean_cis) +
     alpha = "Captured"
   ) +
   geom_vline(xintercept = mu, color = "red") +
-  coord_cartesian(xlim = c(3.34, 3.7)) +
+#  coord_cartesian(xlim = c(3.45, 3.8)) +
   theme_light() +
   theme(
     panel.grid.major.y = element_blank(),
@@ -562,20 +536,19 @@ ggplot(almond_mean_cis) +
     panel.grid.minor.x = element_blank()
   )
 ```
-Note that each interval was build using a different random sample. The red vertical line is drawn at the location of the population mean weight, $\mu = 3.54$. The horizontal lines represent the eighty 95% confidence intervals obtained. The gray confidence intervals cross the red line so they contain the population mean. The black confidence intervals do not.
+
+Note that each interval was build using a different random sample. The red vertical line is drawn at the location of the population mean weight, $\mu = `r mu`$. The horizontal lines represent the 100 95% confidence intervals obtained. The gray confidence intervals cross the red line so they contain the population mean. The black confidence intervals do not.
 
 This result motivates the meaning of a 95% confidence interval: If you could construct intervals using the procedure described earlier for every possible random sample, then 95% of these intervals will include the population mean and 5% of them will not. 
 
-Of course, in most situations it would impractical or impossible to obtain every possible random sample. Still, for a large number of random samples, this results is approximately correct. In Figure \@ref(fig:almond-mean-cis), for example, 5 out of 80 confidence intervals, or 6.25%, do not include the population mean, and 93.75% do.
+Of course, in most situations it would be impractical or impossible to obtain every possible random sample. Still, for a large number of random samples, this result is approximately correct. In Figure \@ref(fig:almond-mean-cis), for example, 5 out of 100 confidence intervals, do not include the population mean, and 95% do. It won't always match up perfectly like this, but the proportions should match pretty close to the confidence level chosen.
 
-The term 95% confidence invites to think we are talking about probabilities or chances. Indeed we are, but in a subtle way. Before a random sample has been obtained, there is a 95% chance that when a confidence interval is constructed using the prospective random sample, this interval will contain the population mean. The moment a random sample has been obtained, the interval constructed either contains the population mean or does not, with certainty, there is no longer a chance involved. This is true even if we do not know what the population mean is.
+The term "95% confidence" invites us to think we are talking about probabilities or chances. Indeed we are, but in a subtle way. Before a random sample has been obtained, there is a 95% chance that when a confidence interval is constructed using the prospective random sample, this interval will contain the population mean. The moment a random sample has been obtained, the interval constructed either contains the population mean or it does not, with certainty, there is no longer a chance involved. This is true even if we do not know what the population mean is.
 So the 95% confidence refers to the method or process to be used on a prospective sample. We are confident that if we follow the process to construct the interval, 95% of the time the random sample obtained will lead us to produce an interval that contains the population mean.
 
 On the other hand, it would be improper to say that... "there is a 95% chance that the confidence interval obtained contains the population mean."  Looking at Figure \@ref(fig:almond-mean-cis), each of the confidence intervals either does or does not contain $\mu$. Once the confidence interval is determined, either the population mean is included or not. 
 
-In the literature, this explanation has been encapsulated in a short-hand version: we are 95% confident that the interval contains the population parameter. For example, in Subsection \@ref(t-distribution-CI) the 95% confidence interval for the population mean weight of almonds was (3.516, 3.644) and we would say: "We are 95% confident that the population mean weight of almonds is between 3.516 and 3.644 grams". It is perfectly acceptable to use the short-hand statement, but always remember that the 95% confidence refers to the process, or method, and can be thought of as a chance or probability only before the random sample has been obtained.
-
-
+In the literature, this explanation has been encapsulated in a short-hand version: we are 95% confident that the interval contains the population parameter. For example, in Subsection \@ref(t-distribution-CI) the 95% confidence interval for the population mean weight of almonds was (`r round(lower_bound_t, 3)`, `r round(upper_bound_t, 3)`), and we would say: "We are 95% confident that the population mean weight of almonds is between `r round(lower_bound_t, 3)` and `r round(upper_bound_t, 3)` grams". It is perfectly acceptable to use the short-hand statement, but always remember that the 95% confidence refers to the process, or method, and can be thought of as a chance or probability only before the random sample has been obtained. To further ensure that the probability-type of language is not misused, quotation marks are sometimes put around "95% confident" to emphasize that it is a short-hand version of the more accurate explanation.
 
 #### Understanding the width of a confidence interval {#ci-width}
 
@@ -583,15 +556,15 @@ A confidence interval is an estimator of a population parameter. In the case of 
 
 $$\left(\overline{x} - 1.96 \frac{\sigma}{\sqrt{n}}, \overline{x} + 1.96 \frac{\sigma}{\sqrt{n}}\right)$$ 
 Observe that the confidence interval is centered at the sample mean and it extends to each side 1.96 standard errors $$1.96\cdot \frac{\sigma}{\sqrt{n}}$$
-This quantity is exactly half the width of your confidence interval and it is called margin of error. The value of the population standard deviation, $\sigma$, is beyond our control, as it is determined by the distribution of the experiment or phenomenon studied and the sample mean, $\overline{x}$, is a result that depends on your random sample exclusively. On the other hand, the number 1.96 or the sample size, $n$, are value that can be changed by the researcher or practitioner and they play an important role on the width of the confidence interval. We study each of them separately.
+This quantity is exactly half the width of your confidence interval, and it is called the **margin of error**. The value of the population standard deviation, $\sigma$, is beyond our control, as it is determined by the distribution of the experiment or phenomenon studied. The sample mean, $\overline{x}$, is a result that depends on your random sample exclusively. On the other hand, the number 1.96 and the sample size, $n$, are values that can be changed by the researcher or practitioner. They play an important role on the width of the confidence interval. We study each of them separately.
 
 ##### The confidence level {-}
 
-We mentioned earlier that the number 1.96 relates to a 95% confidence process but we did not show how to obtain this value. The level of confidence is a decision of the practitioner. If you want to be more confident, say 98% or 99% confident, you just need to adjust the appropriate number of standard errors needed. We show how to determine this number and use Figure \@ref(fig:normal-curve-shaded-3a) to illustrate this process.  You can find more details in Appendix ??
+We mentioned earlier that the number 1.96 relates to a 95% confidence process but we did not show how to obtain this value. The level of confidence is a decision of the practitioner. If you want to be more confident, say 98% or 99% confident, you just need to adjust the appropriate number of standard errors needed. We show how to determine this number, and use Figure \@ref(fig:normal-curve-shaded-3a) to illustrate this process.
 
 - If the confidence level is 0.95 (or 95%), the area in the middle of the standard normal distribution is 0.95. This area is shaded in the Figure \@ref(fig:normal-curve-shaded-3a).
 - We construct $\alpha = 1 - \text{confidence level} = 1 - 0.95 = 0.05$. Think of $\alpha$ as the total area on both tails.
-- Since the normal distribution is symmetric, the area on each tail is $\alpha/2 = 0.05/2 = 0.025$
+- Since the normal distribution is symmetric, the area on each tail is $\alpha/2 = 0.05/2 = 0.025$.
 - We need the exact number of standard deviations that produces the shaded area. Since the center of a standard normal density curve is zero, as shown in Figure \@ref(fig:normal-curve-shaded-3a), and the normal curve is symmetric, the number of standard deviations can be represented by $-q$ and $q$, the same magnitude but one positive and the other negative.
 
 ```{r normal-curve-shaded-3a, echo=FALSE, fig.height=2, fig.width=3}
@@ -610,7 +583,6 @@ ggplot(NULL, aes(c(-4,4))) +
            color="red") +
   annotate(geom="text", x=0, y=-0.04, label=bquote("0"),
            color="red")
-
 ```
 
 In R, the function `qnorm()` finds the value of $q$ when the area under this curve to the left of this value $q$ is given. In our example the area to the left of $-q$ is $\alpha/2 = 0.05/2 = 0.025$, so
@@ -618,58 +590,61 @@ In R, the function `qnorm()` finds the value of $q$ when the area under this cur
 ```{r}
 qnorm(0.025)
 ```
+
 or 1.96 standard deviation below the mean. Similarly, the total area under the curve to the left of $q$ is the total shaded area, 0.95, plus the the small white area on the left tail, $0.025$, and $0.95 + 0.025 = 0.975$, so
 
 ```{r}
 qnorm(0.975)
 ```
-That is the reason we use 1.96 standard deviation when calculating 95% confidence intervals. What if we want to obtain a 98% confidence interval? We follow the same procedure:
 
-- The confidence level is 0.98, 
-- $\alpha = 1 - \text{confidence level} = 1 - 0.98 = 0.02$. .
-- The area on each tail is $\alpha/2 = 0.02/2 = 0.01$
-- The area needed to obtain $q$ is 0.98+0.01 = 0.99
+That is the reason we use 1.96 standard deviation when calculating 95% confidence intervals. What if we want to obtain a 90% confidence interval? We follow the same procedure:
+
+- The confidence level is 0.90, 
+- $\alpha = 1 - \text{confidence level} = 1 - 0.90 = 0.05$. .
+- The area on each tail is $\alpha/2 = 0.10/2 = 0.05$
+- The area needed to obtain $q$ is 0.90+0.05 = 0.95
 
 ```{r}
-qnorm(0.99)
+qnorm(0.95)
 ```
-If we want to obtain a 98% confidence interval, we need to use 2.33 standard errors in our calculations. We can update the R code to calculate the lower and upper bounds of a 98% confidence interval:
+If we want to obtain a 90% confidence interval, we need to use `r qnorm(0.95)` standard errors in our calculations. We can update the R code to calculate the lower and upper bounds of a 98% confidence interval:
 
 ```{r}
 almonds_sample_100 |>
   summarize(sample_mean = mean(weight),
-            lower_bound = mean(weight) - qnorm(0.99)*0.323/sqrt(length(weight)),
-            upper_bound = mean(weight) + qnorm(0.99)*0.323/sqrt(length(weight)))
+            lower_bound = mean(weight) - qnorm(0.95)*sigma/sqrt(length(weight)),
+            upper_bound = mean(weight) + qnorm(0.95)*sigma/sqrt(length(weight)))
 ```
 
-Let us do one more. If we want an 80% confidence interval, 1 - 0.8 = 0.2, 0.2/2 = 0.1, and 0.8+0.1 = 0.9, so
+Let us do one more. If we want an 80% confidence interval, $1 - 0.8 = 0.2$, $0.2/2 = 0.1$, and $0.8+0.1 = 0.9$, so
 
 ```{r}
 qnorm(0.9)
 ```
-When you want to obtain an 80%, 95%, or 98% confidence intervals, you need to construct your interval using 1.28, 1.96, or 2.33 standard errors, respectively. The more confident you want to be, the larger number of standard errors you need to use, and the wider your confidence interval becomes. But a confidence interval is an estimator of the population mean, the narrower it is, the more useful for practical reasons. So there is a trade off between the width of a confidence interval and the confidence you want to have.
+
+When you want to obtain an 80%, 90, or 95% confidence intervals, you need to construct your interval using `r qnorm(0.9)`, `r qnorm(0.95)`, or `r qnorm(0.975)` standard errors, respectively. The more confident you want to be, the larger the number of standard errors you need to use, and the wider your confidence interval becomes. But a confidence interval is an estimator of the population mean, the narrower it is, the more useful it is for practical reasons. So there is a trade-off between the width of a confidence interval and the confidence you want to have.
 
 
 ##### The sample size {-}
 
-As we studied changes to the confidence level, the researcher can determine how big is the random sample to be used. The margin of error for a 955 confidence interval is $$1.96\cdot \frac{\sigma}{\sqrt{n}}.$$
+As we studied changes to the confidence level, the researcher can determine how big is the random sample to be used. The margin of error for a 95% confidence interval is $$1.96\cdot \frac{\sigma}{\sqrt{n}}.$$
 If the sample size increases, the margin of error decreases proportional to the square root of the sample size. For example, if we obtain a random sample of size 25, $1/sqrt(25) = 0.2$, and if we obtain a sample of size 100, $1/sqrt(100) = 0.1$. By choosing a larger sample size, four times larger, we produce a confidence interval that is half the width. This result is worth considering.
 
-A confidence interval is an estimator of the parameter of interest, such as the population mean weight of almonds. Ideally we would like to build a confidence interval with a high level of confidence, for example 95% confidence, but we also want an interval that is narrow enough to provide useful information. For example, assume we get the following 95% confidence intervals for the population mean weight of almonds, 
+A confidence interval is an estimator of the parameter of interest, such as the population mean weight of almonds. Ideally we would like to build a confidence interval with a high level of confidence, for example 95% confidence. But we also want an interval that is narrow enough to provide useful information. For example, assume we get the following 95% confidence intervals for the population mean weight of almonds:
 
 - between 2 and 4 grams, or 
 - between 3.51 and 3.64 grams, or 
-- between 3.539 and 3.545.
+- between 3.539 and 3.545 grams.
 
-The first interval does not seem useful at all, the second works better, and the third is tremendously accurate, as we are 95% confident that the population mean is within 0.006 grams. Obviously, we alway prefer narrower intervals, but there are trade offs we need to consider. We always prefer high levels of confidence, but the more confident we want to be the wider the interval will be. In addition, the larger the random sample used, the narrower the confidence interval will be. Obtaining a large sample is always a preferred choice, but the trade off are external, collecting large samples could be expensive and time consuming. The construction of confidence intervals need to take into account all these considerations.
+The first interval does not seem useful at all, the second works better, and the third is tremendously accurate, as we are 95% confident that the population mean is within 0.006 grams. Obviously, we always prefer narrower intervals, but there are trade-offs we need to consider. We always prefer high levels of confidence, but the more confident we want to be the wider the interval will be. In addition, the larger the random sample used, the narrower the confidence interval will be. Obtaining a large sample is always a preferred choice, but the trade-offs are often external, collecting large samples could be expensive and time-consuming. The construction of confidence intervals needs to take into account all these considerations.
 
-We have concluded the theory-based approach to construct confidence intervals. In the next section we explore a completely different approach to construct confidence intervals and in later sections we will make comparison of these methods.
+We have concluded the theory-based approach to construct confidence intervals. In the next section we explore a completely different approach to construct confidence intervals and in later sections we will make comparisons of these methods.
 
 ## Estimation with the Bootstrap {#simulation-based-CI}
 
-In 1979 Brad Efron published an article introducing a method called the bootstrap\index{bootstrap!statistical reference}. The idea is the following: a random sample of size $n$ is obtained from the population. 
-This sample is used to obtain another sample, with replacement, also of size $n$. This is called *resampling with replacement*  \index{resampling} and the resulting sample is called a *bootstrap sample*\index{bootstrap}. For example, if the original sample is $$\{4,2,5,4,1,3,7,4,6,1\},$$ 
-a bootstrap sample could be  $$\{6, 4, 7, 4, 2, 7, 2, 5, 4, 1\}.$$
+In 1979, Brad Efron published an article introducing a method called the bootstrap\index{bootstrap!statistical reference}. The idea is the following: a random sample of size $n$ is obtained from the population. 
+This sample is used to obtain another sample, with replacement, also of size $n$. This is called *resampling with replacement*\index{resampling} and the resulting sample is called a *bootstrap sample*\index{bootstrap}. For example, if the original sample is $$\{4,2,5,4,1,3,7,4,6,1\},$$ 
+one particular bootstrap sample could be  $$\{6, 4, 7, 4, 2, 7, 2, 5, 4, 1\}.$$
 Observe that the number 7 appears once in the original sample, but twice in the bootstrap sample; 
 similarly, the number 3 in the original sample does not appear in the bootstrap sample. This is not uncommon for a bootstrap sample, some of the numbers in the original sample are repeated and others are not included. 
 
@@ -677,22 +652,22 @@ The basic idea of the bootstrap is to obtain a large number of bootstrap samples
 
 This method takes advantage of the large number of bootstrap samples that can be obtained. In several respects, this exercise is not different from the sampling distribution explained in Chapter \@ref(sampling). The only difference, albeit an important one, is that we are not sampling from the population, we are sampling from the original sample. 
 How many different bootstrap samples could we get from a single sample? A very large number, actually. If the original sample has 10 numbers, as the one shown above, each possible bootstrap sample of size 10 is obtained by sampling 10 times with replacement, so the total number of bootstrap samples is $10^{10}$ or 10 billion different bootstrap samples. If the original sample has 20 numbers, the number of bootstrap samples is $20^{20}$, a number greater than the total number of stars in the universe.
-Even with modern powerful computers, it would be an onerous task to obtain every possible bootstrap sample. Instead, a few thousand bootstrap samples are obtained, similar to the simulations performed in Chapter \@ref(sampling), in this number is large enough to provide useful results.
+Even with modern powerful computers, it would be an onerous task to obtain every possible bootstrap sample. Instead, a few thousand bootstrap samples are obtained, similar to the simulations performed in Chapter \@ref(sampling), and this number is often large enough to provide useful results.
 
 Since Efron proposed the bootstrap, the statistical community embraced this method. During the 1980s and 1990s, many theoretical and empirical results were presented showing the strength of bootstrap methods. As an illustration, Efron (1979), Hall (1986), Efron and Tibshirani (1986), and Hall (1988) showed that bootstrapping, was at least as good if not better than existent methods, when the goal was to estimate the standard error of an estimator or find the confidence intervals of a parameter. Modifications were proposed to improve the algorithm in situations where the basic method was not producing accurate results. With the continuous improvement of computing power and speed, and the advantages of having ready to use statistical software for its implementation, the use of the bootstrap is more and more popular in many fields.
 
-As an illustration, if we are interested in the mean of the population, $\mu$, and we have collected one random sample, we can obtain a large number of bootstrap samples from this original sample, use them to obtain sample means, order the sample means from smallest to largest and choose the interval that contains the middle 95% of these sample means. This will be the simplest way to obtain a confidence interval based on the bootstrap. 
+As an illustration, if we are interested in the mean of the population, $\mu$, and we have collected one random sample, we can obtain a large number of bootstrap samples from this original sample, use them to obtain sample means, order the sample means from smallest to largest, and choose the interval that contains the middle 95% of these sample means. This will be the simplest way to obtain a confidence interval based on the bootstrap. 
 
-In the next sections we explore how to incorporate this and similar methods to construct confidence intervals.
+In the next few subsections, we explore how to incorporate this and similar methods to construct confidence intervals.
 
 
 
 ### Bootstrap samples: Revisiting the Almond Activity {#revisit-almond-bootstrap}
 
 
-To study and understand the behavior of bootstrap samples, we return to our example of the chocolate covered almonds in a bowl. Recall that the bowl is considered the population of almonds and we are interested in estimating the population mean weight of almonds.
+To study and understand the behavior of bootstrap samples, we return to our example of the chocolate-covered almonds in a bowl. Recall that the bowl is considered the population of almonds, and we are interested in estimating the population mean weight of almonds.
 
-As we did before, we only have access to a single random sample. In this section, we use the data frame `almonds_sample_100`, a random sample of 100 almonds obtained earlier. We call this the original sample and it is used in this section to create the bootstrap samples.
+As we did before, we only have access to a single random sample. In this section, we use the data frame `almonds_sample_100`, a random sample of 100 almonds obtained earlier. We call this the original sample, and it is used in this section to create the bootstrap samples.
 The first 10 rows are shown below:
 
 ```{r}
@@ -723,7 +698,7 @@ include_graphics("images/sampling/pennies/tactile_simulation/4_put_it_back.png")
 
 **Step 5**: Repeat Steps 2 and 3 a total of `r num_almonds_sample - 1` more times, resulting in `r num_almonds_sample` weights.
 
-These steps describe *resampling with replacement* \index{resampling} and the resulting sample is called a *bootstrap sample*. This procedure results in some almonds to be chosen more than once others almonds not to be chosen at all. Resampling with replacement induces *sampling variation* so every bootstrap sample can be different than any other.
+These steps describe *resampling with replacement*\index{resampling}, and the resulting sample is called a *bootstrap sample*. This procedure results in some almonds being chosen more than once and others almonds not to being chosen at all. Resampling with replacement induces *sampling variation*, so every bootstrap sample can be different than any other.
 
 This activity can be performed manually following the steps described above. We can also take advantage of the R code we have introduced in Chapter \@ref(sampling) and do this virtually.
 The data frame `almonds_sample_100` contains the random sample of almonds obtained from the population. We show selected rows from this sample. 
@@ -738,15 +713,15 @@ almonds_sample_100
 We use `ungroup()` and `select` to eliminate the variable `replicate` from the `almonds_sample_100` as this variable may create clutter when resampling. We can now create a bootstrap sample also of size `r num_almonds_sample` by resampling with replacement once.
 
 ```{r echo=-1}
-set.seed(20)
+set.seed(202)
 boot_sample <- almonds_sample_100 |> 
   rep_sample_n(size = 100, replace = TRUE, reps = 1)
 ```
 
 We have used this type of R syntax many times in Chapter \@ref(sampling).
 We first select the data frame `almonds_sample_100` that contains the almonds' weights in the original sample. 
-We then perform resampling with replacement once: we resample by using `rep_sample_n()`, a sample of size `r `almonds_sample_100` by setting `size = 100`, with replacement by adding the argument `replace = TRUE`, and one time by setting `reps = 1`.
-The object `boot_sample` is a bootstrap sample of `r num_almonds_sample` almonds' weights obtained from the original sample of `r num_almonds_sample` almonds' weights. We show the first ten rows of `boot_sample` 
+We then perform resampling with replacement once: we resample by using `rep_sample_n()`, a sample of size `r num_almonds_sample` by setting `size = 100`, with replacement by adding the argument `replace = TRUE`, and one time by setting `reps = 1`.
+The object `boot_sample` is a bootstrap sample of `r num_almonds_sample` almonds' weights obtained from the original sample of `r num_almonds_sample` almonds' weights. We show the first ten rows of `boot_sample`:
 
 
 ```{r}
@@ -764,7 +739,7 @@ resample_mean <- boot_sample |>
   summarize(mean_weight = mean(weight))
 ```
 
-By using `summarize()` and `mean()` on the bootrstrap sample `boot_sample` we determine that the mean weight is `r resample_mean |> pull(mean_weight) |> round(2)` grams. Recall that the sample mean of the original sample was obtained in the previous Section; it was `r x_bar |> round(2)`. So, the sample mean of the bootstrap sample is different than the sample mean of the original sample. This variation is induced by resampling with replacement, the method used to obtain the bootstrap sample.
+By using `summarize()` and `mean()` on the bootstrap sample `boot_sample`, we determine that the mean weight is `r resample_mean |> pull(mean_weight) |> round(2)` grams. Recall that the sample mean of the original sample was obtained in the previous subsection as `r x_bar |> round(2)`. So, the sample mean of the bootstrap sample is different than the sample mean of the original sample. This variation is induced by resampling with replacement, the method used to obtain the bootstrap sample.
 
 We can also compare the histogram of `weight`s for the bootstrap sample with the histogram of `weight`s for the original sample.
 
@@ -794,12 +769,12 @@ p1 + p2
 ```
 
 Observe in Figure \@ref(fig:origandresample) that while the general shapes of both distributions of `weight`s are roughly similar, they are not identical. 
-This is the typical behavior of bootstrap samples. They are samples that have been obtained from the original sample, but because replacement is used before each new observation is obtained, some values appear more than once while others do not appear at all.
+This is the typical behavior of bootstrap samples. They are samples that have been obtained from the original sample, but because replacement is used before each new observation is obtained, some values often appear more than once while others often do not appear at all.
 
 #### Many bootstrap samples: Resampling multiple {#bootstrap-many-replicates}
 
 
-In this Subsection we take full advantage of resampling with replacement by obtaining many bootstrap samples and study relevant information obtained, such as the variability of their sample means. We can start by using the R syntax we used before, this time for `r n_manual_rep` replications.
+In this subsection we take full advantage of resampling with replacement by obtaining many bootstrap samples and study relevant information obtained, such as the variability of their sample means. We can start by using the R syntax we used before, this time for `r n_manual_rep` replications.
 
 ```{r echo= -1}
 set.seed(20)
@@ -856,11 +831,11 @@ ggplot(boot_means, aes(x = mean_weight)) +
   labs(x = "sample mean weight in grams")
 ```
 
-The histogram is a graphical approximation of the  *bootstrap distribution of the sample mean*. This distribution is constructed by getting all the sample means from every possible bootstrap sample constructed based on the original sample. Since the total number of possible bootstrap is really large, we have not used all of them here, but `r num_almonds_sample` of them that already provide a good visual approximation.
+The histogram is a graphical approximation of the *bootstrap distribution of the sample mean*. This distribution is constructed by getting all the sample means from every bootstrap sample constructed based on the original sample. Since the total number of possible bootstraps is really large, we have not used all of them here, but `r num_almonds_sample` of them already provides a good visual approximation.
 
-Observe also that the bootstrap distribution itself can approximate the *sampling distribution* of the sample mean, a concept we studied in Chapter \@ref(sampling) where we took multiple samples from the population. The key difference here is that we resample form a single sample, the original sample, not from the entire population.
+Observe also that the bootstrap distribution itself can approximate the *sampling distribution* of the sample mean, a concept we studied in Chapter \@ref(sampling) where we took multiple samples from the population. The key difference here is that we resample from a single sample, the original sample, not from the entire population.
 
-By inspecting the histogram in Figure \@ref(fig:one-thousand-sample-means), the bell shape is apparent. We can also approximate the center or the spread of this distribution by computing the mean or the standard deviation of these `r n_virtual_resample` bootstrap sample means:
+By inspecting the histogram in Figure \@ref(fig:one-thousand-sample-means), the bell-shape is apparent. We can also approximate the center and the spread of this distribution by computing the mean and the standard deviation of these `r n_virtual_resample` bootstrap sample means:
 
 ```{r}
 boot_means |> 
@@ -906,10 +881,9 @@ We can estimate population parameters such as the mean, median, or standard devi
 
 In this subsection, we focus on the latter and construct confidence intervals based on bootstrap samples. For this, we review the R syntax and workflow we have already used in previous section and also introduce a new package: the `infer` package for "tidy" and transparent statistical inference. 
 
-
 #### Original workflow
 
-Recall that in Section \@ref(bootstrap-many-replicates), we obtained bootstrap samples, then calculate the sample means from these samples. Let us revisit the original workflow using `dplyr` verbs and the `|>` pipe operator.
+Recall that in Section \@ref(bootstrap-many-replicates), we obtained bootstrap samples, then calculated the sample means from these samples. Let us revisit the original workflow using `dplyr` verbs and the `|>` pipe operator.
 
 First, we use the `rep_sample_n()` function to resample from the original sample `almonds_sample_100` of `r num_almonds` almonds. We set  ``size = `r num_almonds_sample` `` to general bootstrap samples of the same size as the original sample and we resample with replacement by setting `replace = TRUE`. We create `r n_virtual_resample` bootstrap samples by setting ``reps = `r n_virtual_resample` ``:
 
@@ -918,7 +892,7 @@ almonds_sample_100 |>
   rep_sample_n(size = 100, replace = TRUE, reps = 1000)
 ```
 
-Second, we add another pipe followed by using `summarize()` to compute the sample `mean()` weight for each `replicate`:
+Second, we add another pipe followed by `summarize()` to compute the sample `mean()` weight for each `replicate`:
 
 ```{r eval=FALSE}
 almonds_sample_100 |> 
@@ -930,19 +904,6 @@ For this simple case, all we needed was to use the `rep_sample_n()` function and
 
 
 ### The `infer` package workflow: {#infer-workflow}
-
-<!--
-v2 TODO: Using infer to compute observed point estimate
-
-1. Showing `dplyr` code to compute observed point estimate
-1. Showing `infer` verbs to compute observed point estimate. i.e. no generate()
-step.
-1. Only after these two steps, showing `infer` verb pipeline to construct
-bootstrap distribution of point estimate. i.e. with generate() and showing
-diagram.
-
-This seems to be incorportated already AV
--->
 
 The `infer` package is an R package for statistical inference. It makes efficient use of the `|>` pipe operator we introduced in Section \@ref(piping) to spell out the sequence of steps necessary to perform statistical inference in a "tidy" and transparent fashion.\index{operators!pipe} Just as the `dplyr` package provides functions with verb-like names to perform data wrangling, the `infer` package provides functions with intuitive verb-like names to perform statistical inference, such as constructing confidence intervals or performing hypothesis testing. We have discussed the theory-based implementation of the former in section \@ref(CI-general) and we introduce the latter in Chapter \@ref(hypothesis-testing).
 
@@ -960,13 +921,14 @@ almonds_sample_100 |>
   specify(response = weight) |> 
   calculate(stat = "mean")
 ```
+
 The new structure using `infer` seems slightly more complicated than the one using `dplyr` for this simple calculation, but these functions will provide three chief benefits moving forward.
 
 First, the `infer` verb names better align with the overall resampling framework you need to understand to construct confidence intervals and to conduct hypothesis tests (in Chapter \@ref(hypothesis-testing)). We will see flowchart diagrams of this framework in the upcoming Figure \@ref(fig:infer-workflow-ci) and in Chapter \@ref(hypothesis-testing) with Figure \@ref(fig:htdowney).
 
 Second, you can transition seamlessly between confidence intervals and hypothesis testing with minimal changes to your code. This becomes apparent in Subsection \@ref(comparing-infer-workflows) when we compare the `infer` code for both of these inferential methods.
 
-Third, the `infer` workflow is much simpler for conducting inference when you have *more than one variable*. We introduce *two-sample* inference\index{two-sample inference} where the sample data is collected from two groups, such as in Section \@ref(case-study-two-prop-ci) where we study the contagiousness of yawning and in Section \@ref(ht-activity) where we compare promotion rates of two groups at banks in the 1970s. Then in Section \@ref(infer-regression), we see situations of *inference for regression* using the regression models you fit in Chapter \@ref(regression). 
+Third, the `infer` workflow is much simpler for conducting inference when you have *more than one variable*. We introduce *two-sample* inference\index{two-sample inference} where the sample data is collected from two groups, such as in Section \@ref(case-study-two-prop-ci) where we study the contagiousness of yawning and in Section \@ref(ht-activity) where we compare the popularity of music genres. Then in Section \@ref(infer-regression), we see situations of *inference for regression* using the regression models you fit in Chapter \@ref(regression). 
 
 We now illustrate the sequence of verbs necessary to construct a confidence interval for $\mu$, the population mean weight of almonds.
 
@@ -1003,7 +965,7 @@ In cases where inference is focused on a single sample, as it is the almonds' we
 knitr::include_graphics("images/flowcharts/infer/generate.png")
 ```
 
-After we `specify()` the variables of interest, we pipe the results into the `generate()` function to generate replicates. This is the function that produces the bootstrap samples or performs similar resampling process a large number of times, based on the variable(s) specified previously, as shown in Figure \@ref(fig:infer-generate) . Recall in Section \@ref(bootstrap-many-replicates) we did this `r n_virtual_resample` times.
+After we `specify()` the variables of interest, we pipe the results into the `generate()` function to generate replicates. This is the function that produces the bootstrap samples or performs the similar resampling process a large number of times, based on the variable(s) specified previously, as shown in Figure \@ref(fig:infer-generate). Recall in Section \@ref(bootstrap-many-replicates) we did this `r n_virtual_resample` times.
 
 The `generate()` \index{infer!generate()} function's first argument is `reps`, which sets the number of replicates we would like to generate. Since we want to resample the `r num_almonds_sample` almonds in `almonds_sample_100` with replacement `r n_virtual_resample` times, we set ``reps = `r n_virtual_resample` ``. The second argument `type` determines the type of computer simulation used. Setting this to `type = "bootstrap"` produces bootstrap samples using resampling with replacement. We present different options for `type` in Chapter \@ref(hypothesis-testing). 
 
@@ -1034,9 +996,9 @@ The variable `replicate` indicates the bootstrap sample each row belongs to, fro
 
 ```{r eval=FALSE, purl=FALSE}
 # infer workflow:                   # Original workflow:
-almonds_sample_100 |>                  almonds_sample_100 |> 
+almonds_sample_100 |>               almonds_sample_100 |> 
   specify(response = weight) |>        rep_sample_n(size = 100, replace = TRUE, 
-                                                    generate(reps = 1000)                            reps = 1000)              
+  generate(reps = 1000)                             reps = 1000)              
 
 ```
 
@@ -1082,9 +1044,8 @@ Observe that the resulting data frame has `r n_virtual_resample` rows and 2 colu
 # infer workflow:                   # Original workflow:
 almonds_sample_100 |>                  almonds_sample_100 |> 
   specify(response = weight) |>        rep_sample_n(size = 100, replace = TRUE, 
-                                                    generate(reps = 1000) |>                        reps = 1000) |>              
+  generate(reps = 1000) |>                          reps = 1000) |>              
   calculate(stat = "mean")             summarize(stat = mean(weight))
-
 ```
 
 #### 4. `visualize` the results {-}
@@ -1099,22 +1060,19 @@ The `visualize()` \index{infer!visualize()} verb provides a quick way to visuali
 visualize(bootstrap_means)
 ```
 
-```{r boostrap-distribution-infer, echo=FALSE, fig.show="hold", fig.cap="Bootstrap distribution.", purl=FALSE}
-# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here (added to `develop` branch on 2019-10-26)
-visualize(bootstrap_means) #+
-#  ggtitle("Simulation-Based Bootstrap Distribution")
+```{r bootstrap-distribution-infer, echo=FALSE, fig.show="hold", fig.cap="Bootstrap distribution.", purl=FALSE}
+visualize(bootstrap_means)
 ```
 
 **Comparing with original workflow**: In fact, `visualize()` is a *wrapper function* for the `ggplot()` function that uses a `geom_histogram()` layer. Recall that we illustrated the concept of a wrapper function in Figure \@ref(fig:moderndive-figure-wrapper) in Subsection \@ref(model1table).
 
 ```{r eval=FALSE, purl=FALSE}
 # infer workflow:                    # Original workflow:
-visualize(bootstrap_means)    ggplot(bootstrap_means, 
-                                     aes(x = stat)) +
-  geom_histogram()
+visualize(bootstrap_means)           ggplot(bootstrap_means, aes(x = stat)) +
+                                        geom_histogram()
 ```
 
-The `visualize()` function can take many other arguments to customize the plot further. In future section we take advantage of this flexibility. In addition, it works with helper functions to add shading of the histogram values corresponding to the confidence interval values.
+The `visualize()` function can take many other arguments to customize the plot further. In future sections we take advantage of this flexibility. In addition, it works with helper functions to add shading of the histogram values corresponding to the confidence interval values.
 We have introduced the different elements on the `infer` workflow for constructing a bootstrap distribution and visualizing it. A summary of these steps is presented in Figure \@ref(fig:infer-workflow-ci).
 
 ```{r infer-workflow-ci, out.width="100%", echo=FALSE, fig.cap="infer package workflow for confidence intervals.", purl=FALSE}
@@ -1131,13 +1089,13 @@ We are ready to introduce confidence intervals using the bootstrap via `infer`. 
 
 #### Percentile method {#percentile-method-infer}
 
-Recall that in Subsection \@ref(infer-workflow) we have generated `r n_virtual_resample` bootrstrap samples and store them in data frame `bootstrap_means`:
+Recall that in Subsection \@ref(infer-workflow) we have generated `r n_virtual_resample` bootstrap samples and stored them in data frame `bootstrap_means`:
 
 ```{r}
 bootstrap_means
 ```
 
-The sample means stored in `bootstrap_means` represent a good approximation to the bootstrap distribution of all possible bootstrap samples. The percentile method for constructing 95% confidence intervals sets the lower endpoint of the confidence interval at the 2.5th percentile of `bootstrap_means` and similarly sets the upper endpoint at the 97.5th percentile. The resulting interval captures the middle 95% of the values of the sample mean weights of almonds in  `bootstrap_means`. This is the interval estimate of the population mean weight of almonds in the entire bowl.
+The sample means stored in `bootstrap_means` represent a good approximation to the bootstrap distribution of all possible bootstrap samples. The percentile method for constructing 95% confidence intervals sets the lower endpoint of the confidence interval at the 2.5th percentile of `bootstrap_means` and similarly sets the upper endpoint at the 97.5th percentile. The resulting interval captures the middle 95% of the values of the sample mean weights of almonds in `bootstrap_means`. This is the interval estimate of the population mean weight of almonds in the entire bowl.
 
 We can compute the 95% confidence interval by piping `bootstrap_means` into the `get_confidence_interval()` \index{infer!get\_confidence\_interval()} function from the `infer` package, with the confidence `level` set to 0.95 and the confidence interval `type` to be `"percentile"`. We save the results in `percentile_ci`.
 
@@ -1160,15 +1118,13 @@ visualize(bootstrap_means) +
 # Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here (added to `develop` branch on 2019-10-26)
 if (knitr::is_html_output()) {
   visualize(bootstrap_means) +
-    shade_confidence_interval(endpoints = percentile_ci) #+
-  #  ggtitle("Simulation-Based Bootstrap Distribution")
+    shade_confidence_interval(endpoints = percentile_ci)
 } else {
   visualize(bootstrap_means) +
     shade_confidence_interval(
       endpoints = percentile_ci,
       fill = "grey40", color = "grey30"
-    ) #+
-  #  ggtitle("Simulation-Based Bootstrap Distribution")
+    )
 }
 ```
 
@@ -1210,7 +1166,6 @@ SE_boot
 ```
 and then use the original sample mean to obtain the 95% confidence interval:
 
-
 ```{r}
 almonds_sample_100 |>
   summarize(lower_bound = mean(weight) - 1.96*SE_boot,
@@ -1219,13 +1174,13 @@ almonds_sample_100 |>
 
 Alternatively, computation of the 95% confidence interval can once again be done via `infer`. We obtain the sample mean of the original sample and store it in variable `x_bar`
 
-
 ```{r}
 x_bar <- almonds_sample_100 |> 
   specify(response = weight) |> 
   calculate(stat = "mean")
 x_bar
 ```
+
 Now, we pipe the `bootstrap_means` data frame we created into the `get_confidence_interval()` function. We set the `type` argument to be `"se"` and specify the `point_estimate` argument to be `x_bar` in order to set the center of the confidence interval to the sample mean of the original sample.
 
 ```{r}
@@ -1233,7 +1188,8 @@ standard_error_ci <- bootstrap_means |>
   get_confidence_interval(type = "se", point_estimate = x_bar)
 standard_error_ci
 ```
-The results is the same whether `dplyr` or `infer` is used, but as explained earlier, the latter provides more flexbility for other tests.
+
+The results are the same whether `dplyr` or `infer` is used, but as explained earlier, the latter provides more flexibility for other tests.
 
 If we would like to visualize the interval (`r standard_error_ci[["lower_ci"]] |> round(2)`, `r standard_error_ci[["upper_ci"]] |> round(2)`), we can once again pipe the `bootstrap_means` data frame into the `visualize()` function and add a `shade_confidence_interval()` layer to our plot. We set the `endpoints` argument to be `standard_error_ci`. The resulting standard-error method based on a 95% confidence interval for $\mu$ can be seen in Figure \@ref(fig:se-ci-viz).
 
@@ -1245,23 +1201,17 @@ visualize(bootstrap_means) +
 ```
 
 ```{r se-ci-viz, echo=FALSE, fig.show="hold", fig.cap="(ref:se-viz)", purl=FALSE, fig.height=3.4}
-# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here
-# (added to `develop` branch on 2019-10-26)
-
 if (knitr::is_html_output()) {
   visualize(bootstrap_means) +
-    shade_confidence_interval(endpoints = standard_error_ci) #+
-  #    ggtitle("Simulation-Based Bootstrap Distribution")
+    shade_confidence_interval(endpoints = standard_error_ci)
 } else {
   visualize(bootstrap_means) +
     shade_confidence_interval(
       endpoints = standard_error_ci,
       fill = "grey40", color = "grey30"
-    ) #+
-  #    ggtitle("Simulation-Based Bootstrap Distribution")
+    )
 }
 ```
-
 
 Because we are using bootstrap samples to construct these intervals, we call the percentile and standard error methods simulation-based methods. We can compare the 95% confidence intervals obtained using both simulation-based methods as well as the one obtained using the theory-based method described in \@ref(CI-general):
 
@@ -1385,7 +1335,7 @@ Let's now focus on the `"seed"` group participants who were exposed to yawning w
 
 Let's review the terminology and notation related to sampling we studied in Subsection \@ref(terminology-and-notation). In Chapter \@ref(sampling) our *study population* was the bowl of $N$ = `r nrow(bowl)` balls. Our *population parameter* of interest was the *population proportion* of these balls that were red, denoted mathematically by $p$. In order to estimate $p$, we extracted a sample of 50 balls using the shovel and computed the relevant *point estimate*: the *sample proportion* that were red, denoted mathematically by $\widehat{p}$.
 
-Who is the study population here? All humans? All the people who watch the show *Mythbusters*? It's hard to say! This question can only be answered if we know how the show's hosts recruited participants! In other words, what was the *sampling methodology*\index{sampling methodology} used by the *Mythbusters* to recruit participants? We alas are not provided with this information. Only for the purposes of this case study, however, we'll *assume* that the 50 participants are a representative sample of all Americans given the popularity of this show. Thus, we'll be assuming that any results of this experiment will generalize to all $N$ = 327 million Americans (2018 population). 
+Who is the study population here? All humans? All the people who watch the show *Mythbusters*? It's hard to say! This question can only be answered if we know how the show's hosts recruited participants! In other words, what was the *sampling methodology*\index{sampling methodology} used by the *Mythbusters* to recruit participants? We alas are not provided with this information. Only for the purposes of this case study, however, we'll *assume* that the 50 participants are a representative sample of all Americans given the popularity of this show. Thus, we'll be assuming that any results of this experiment will generalize to all $N$ = 346 million Americans (2024 population estimate). 
 
 Just like with our sampling bowl, the population parameter here will involve proportions. However, in this case it will be the *difference in population proportions* $p_{seed} - p_{control}$, where $p_{seed}$ is the proportion of *all* Americans who if exposed to yawning will yawn themselves, and $p_{control}$ is the proportion of *all* Americans who if not exposed to yawning still yawn themselves. Correspondingly, the point estimate/sample statistic based the *Mythbusters*' sample of participants will be the *difference in sample proportions* $\widehat{p}_{seed} - \widehat{p}_{control}$. Let's extend Table \@ref(tab:table-ch8) of scenarios of sampling for inference to include our latest scenario. 
 
@@ -1467,7 +1417,7 @@ mythbusters_yawn %>%
 
 #### 2. `generate` replicates {-}
 
-Our next step is to perform *bootstrap resampling with replacement* like we did with the slips of paper in our pennies activity in Section \@ref(resampling-tactile). We saw how it works with both a single variable in computing bootstrap means in Section \@ref(bootstrap-process) and in computing bootstrap proportions in Section \@ref(one-prop-ci), but we haven't yet worked with bootstrapping involving multiple variables. 
+Our next step is to perform *bootstrap resampling with replacement* like we did with the almonds in the activity in Section \@ref(resampling-tactile). We saw how it works with both a single variable in computing bootstrap means in Section \@ref(bootstrap-process) and in computing bootstrap proportions in Section \@ref(one-prop-ci), but we haven't yet worked with bootstrapping involving multiple variables. 
 
 In the `infer` package, bootstrapping with multiple variables means that each *row* is potentially resampled. Let's investigate this by focusing only on the first six rows of `mythbusters_yawn`:
 
@@ -1477,6 +1427,10 @@ first_six_rows
 ```
 
 When we bootstrap this data, we are potentially pulling the subject's readings multiple times. Thus, we could see the entries of `"seed"` for `group` and `"no"` for `yawn` together in a new row in a bootstrap sample. This is further seen by exploring the `sample_n()` function in `dplyr` on this smaller 6-row data frame comprised of `head(mythbusters_yawn)`. The `sample_n()` function can perform this bootstrapping procedure and is similar to the `rep_sample_n()` function in `infer`, except that it is not repeated, but rather only performs one sample with or without replacement.
+
+```{r echo=FALSE}
+set.seed(22)
+```
 
 ```{r}
 first_six_rows %>% 
@@ -1524,11 +1478,13 @@ mythbusters_yawn %>%
   calculate(stat = "diff in props")
 ```
 ```
-Error: Statistic is based on a difference; specify the `order` in which to
-subtract the levels of the explanatory variable.
+Warning message:
+The statistic is based on a difference or ratio; by default, for difference-based statistics, the explanatory
+variable is subtracted in the order "control" - "seed", or divided in the order "control" / "seed" for ratio-based
+statistics. To specify this order yourself, supply `order = c("control", "seed")` to the calculate() function. 
 ```
 
-We see another error here. We need to specify the order of the subtraction. Is it $\widehat{p}_{seed} - \widehat{p}_{control}$ or $\widehat{p}_{control} - \widehat{p}_{seed}$. We specify it to be $\widehat{p}_{seed} - \widehat{p}_{control}$ by setting `order = c("seed", "control")`.  Note that you could've also set `order = c("control", "seed")`. As we stated earlier, the order of the subtraction does not matter, so long as you stay consistent throughout your analysis and tailor your interpretations accordingly. 
+We see another warning here. We need to specify the order of the subtraction. Is it $\widehat{p}_{seed} - \widehat{p}_{control}$ or $\widehat{p}_{control} - \widehat{p}_{seed}$. We specify it to be $\widehat{p}_{seed} - \widehat{p}_{control}$ by setting `order = c("seed", "control")`.  Note that you could've also set `order = c("control", "seed")`. As we stated earlier, the order of the subtraction does not matter, so long as you stay consistent throughout your analysis and tailor your interpretations accordingly. 
 
 Let's save the output in a data frame `bootstrap_distribution_yawning`:
 
@@ -1569,9 +1525,7 @@ visualize(bootstrap_distribution_yawning) +
   geom_vline(xintercept = 0)
 ```
 ```{r bootstrap-distribution-mythbusters, echo=FALSE, fig.show="hold", fig.cap="Bootstrap distribution.", purl=FALSE, fig.height=3.5}
-# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here (added to `develop` branch on 2019-10-26)
 visualize(bootstrap_distribution_yawning) +
-  #  ggtitle("Simulation-Based Bootstrap Distribution") +
   geom_vline(xintercept = 0)
 ```
 
