@@ -54,7 +54,7 @@ almonds_sample_100 |>
 
 
 
-## ----normal-curve-shaded-1a, echo=FALSE, fig.height=2, fig.width=3------------
+## ----normal-curve-shaded-1a, echo=FALSE, fig.height=2, fig.width=3, fig.cap="Normal area within one standard deviation"----
 ggplot(NULL, aes(c(-4,4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1, 1)) +
@@ -64,7 +64,7 @@ ggplot(NULL, aes(c(-4,4))) +
   scale_x_continuous(breaks = c(-1,1)) 
 
 
-## ----normal-curve-shaded-2a, echo=FALSE, fig.height=2, fig.width=3------------
+## ----normal-curve-shaded-2a, echo=FALSE, fig.height=2, fig.width=3, fig.cap="Normal area within two standard deviations"----
 ggplot(NULL, aes(c(-4,4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -2)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-2, 2)) +
@@ -127,8 +127,8 @@ almonds_sample_100 |>
 
 
 
-## ----normal-curve-shaded-3a, echo=FALSE, fig.height=2, fig.width=3------------
-ggplot(NULL, aes(c(-4,4))) +
+## ----normal-curve-shaded-3a, echo=FALSE, fig.cap="Normal curve with the shaded middle area being 0.95", fig.height=2, fig.width=3----
+ggplot(NULL, aes(c(-4, 4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1.96)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1.96, 1.96)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(1.96, 4)) +
@@ -137,11 +137,11 @@ ggplot(NULL, aes(c(-4,4))) +
   geom_point(aes(x=0, y=0), color="red") +
   geom_point(aes(x=-1.96, y=0), color="red") +
   geom_point(aes(x=1.96, y=0), color="red") +
-  annotate(geom="text", x=-1.96, y=-0.03, label=bquote("-q"),
+  annotate(geom="text", x=-1.96, y=-0.03, label = bquote("-q"),
            color="red") +
-  annotate(geom="text", x=1.96, y=-0.03, label=bquote("q"),
+  annotate(geom="text", x=1.96, y=-0.03, label = bquote("q"),
            color="red") +
-  annotate(geom="text", x=0, y=-0.04, label=bquote("0"),
+  annotate(geom="text", x=0, y=-0.04, label = bquote("0"),
            color="red")
 
 

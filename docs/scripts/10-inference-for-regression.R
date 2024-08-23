@@ -143,6 +143,7 @@ q = round(qt(p = (1 - (1-0.95)/2), df = 114 - 2),3)
 s <- round(sigma(model_1),3)
 x <- old_faithful_2024$duration
 n <- length(x)
+n_eruptions <- n
 #beta1
 b1 <- round(coef(model_1)[[2]],3)
 denom_se_b1 <- round(sqrt(sum((x - mean(x))^2)),3)
@@ -159,7 +160,7 @@ t_stat <- round(b1/se_b1,3)
 p_value <- round(2*(1 - pt(abs(t_stat), n-2)),3)
 
 
-## ----pvalue1, echo=F, fig.height=3--------------------------------------------
+## ----pvalue1, echo=F, fig.height=3, fig.cap="Illustration of the p-value for a two-sided test"----
 shade <- function(t, a,b) {
   z = dt(t, df = n-2)
   z[abs(t) < b & -abs(t)>a] <- NA
@@ -185,7 +186,7 @@ ggplot(data.frame(x = c(-4, 4)), aes(x = x)) +
 
 ## -----------------------------------------------------------------------------
 # Fit regression model:
-simple_model <- lm(fert_rate ~ life_exp, data = UN_data_ch10)
+simple_model <- lm(waiting ~ duration, data = old_faithful_2024)
 # Get regression points:
 regression_points <- get_regression_points(simple_model)
 regression_points
@@ -195,16 +196,16 @@ regression_points
 
 ## ----model1residualshist, fig.cap="Histogram of residuals."-------------------
 ggplot(regression_points, aes(x = residual)) +
-  geom_histogram(binwidth = 0.25, color = "white") +
+  geom_histogram(bins = 12, color = "white") +
   labs(x = "Residual")
 
 
 
 
 ## ----numxplot6, fig.cap="Plot of residuals over beauty score."----------------
-ggplot(regression_points, aes(x = life_exp, y = residual)) +
+ggplot(regression_points, aes(x = duration, y = residual)) +
   geom_point() +
-  labs(x = "Life Expectancy", y = "Residual") +
+  labs(x = "Duration", y = "Residual") +
   geom_hline(yintercept = 0, col = "blue", linewidth = 1)
 
 
@@ -212,6 +213,42 @@ ggplot(regression_points, aes(x = life_exp, y = residual)) +
 
 
 
+
+
+## -----------------------------------------------------------------------------
+n_reps <- 1000
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## bootstrap_distn_slope <- old_faithful_2024 %>%
+##   specify(formula = waiting ~ duration) %>%
+##   generate(reps = 1000, type = "bootstrap") %>%
+##   calculate(stat = "slope")
+## bootstrap_distn_slope
+
+
+
+## ----bootstrap-distribution-slope, fig.show="hold", fig.cap="Bootstrap distribution of slope.", fig.height=2.2----
+visualize(bootstrap_distn_slope)
+
+
+## -----------------------------------------------------------------------------
+percentile_ci <- bootstrap_distn_slope %>% 
+  get_confidence_interval(type = "percentile", level = 0.95)
+percentile_ci
+
+
+## -----------------------------------------------------------------------------
+observed_slope <- old_faithful_2024 %>% 
+  specify(waiting ~ duration) %>% 
+  calculate(stat = "slope")
+observed_slope
+
+
+## -----------------------------------------------------------------------------
+se_ci <- bootstrap_distn_slope %>% 
+  get_ci(level = 0.95, type = "se", point_estimate = observed_slope)
+se_ci
 
 
 ## ----eval=FALSE---------------------------------------------------------------
