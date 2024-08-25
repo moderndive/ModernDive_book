@@ -284,7 +284,7 @@ ggplot(almonds_bowl, aes(x = weight)) +
 num_almonds <- length(almonds_sample$weight)
 
 
-## ----almonds-sample-histogram, fig.cap="Distribution of weight on a sample of 25 almonds."----
+## ----almonds-sample-histogram, fig.cap="Distribution of weight for a sample of 25 almonds."----
 ggplot(almonds_sample, aes(x = weight)) +
   geom_histogram(binwidth = 0.1, color = "white")
 
