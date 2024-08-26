@@ -1,7 +1,7 @@
 ## ----eval=FALSE---------------------------------------------------------------
 ## library(tidyverse)
 ## library(moderndive)
-## library(skimr)
+## #library(skimr)
 ## library(fivethirtyeight)
 
 ## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
