@@ -25,20 +25,20 @@ options(scipen = 99, digits = 3)
 set.seed(76)
 ```
 
-In this chapter, we revisit the regression model studied in Chapters \@ref(regression) and \@ref(multiple-regression). We do it by taking into account the inferential statistics methods introduced in  Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing), and show that when applying the linear regression methods introduced earlier on sample data, we can gain insight into the relationships between the response and explanatory variables of an entire population.
+In this chapter, we revisit the regression model studied in Chapters \@ref(regression) and \@ref(multiple-regression). 
+We do it by taking into account the inferential statistics methods introduced in Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing), and show that when applying the linear regression methods introduced earlier on sample data, we can gain insight into the relationships between the response and explanatory variables of an entire population.
 
-
-## Needed packages {-#inf-packages}
+## Needed packages {#inf-packages .unnumbered}
 
 We load all the packages needed for this chapter (this assumes you've already installed them). Recall from our discussion in Section \@ref(tidyverse-package) that loading the `tidyverse` package by running `library(tidyverse)` loads the following commonly used data science packages all at once:
 
-* `ggplot2` for data visualization
-* `dplyr` for data wrangling
-* `tidyr` for converting data to "tidy" format
-* `readr` for importing spreadsheet data into R
-* As well as the more advanced `purrr`, `tibble`, `stringr`, and `forcats` packages
+-   `ggplot2` for data visualization
+-   `dplyr` for data wrangling
+-   `tidyr` for converting data to "tidy" format
+-   `readr` for importing spreadsheet data into R
+-   As well as the more advanced `purrr`, `tibble`, `stringr`, and `forcats` packages
 
-If needed, read Section \@ref(packages) for information on how to install and load R packages. 
+If needed, read Section \@ref(packages) for information on how to install and load R packages.
 
 ```{r message=FALSE}
 library(tidyverse)
@@ -51,14 +51,13 @@ library(infer)
 library(tidyr)
 library(kableExtra)
 library(patchwork)
+library(gridExtra)
+library(GGally)
 ```
 
+## The Simple Linear Regression Model
 
-
-## The Linear Model
-
-### Linear Regression revisited: UN member states
-
+### UN member states revisited
 
 We briefly review the example of UN member states covered in Section \@ref(model1). The data on the current UN member states, as of 2024, can be found in the `un_member_states_2024` data frame included in the `moderndive` package. As we did in Section \@ref(model1), we save these data as a new data frame called `UN_data_ch10`, include rows without missing data using `na.omit()` and `select()` the required variables:
 
@@ -102,7 +101,7 @@ As we did in Section \@ref(model1), we fit the linear regression model. By "fit"
 ```{r, eval=FALSE}
 # Fit regression model:
 simple_model <- lm(fert_rate ~ life_exp, 
-                   data = UN_data_ch10)
+                         data = UN_data_ch10)
 # Get regression coefficients
 coef(simple_model)
 ```
@@ -110,7 +109,7 @@ coef(simple_model)
 ```{r, echo=FALSE, purl=FALSE}
 # Fit regression model:
 simple_model <- lm(fert_rate ~ life_exp, 
-                   data = UN_data_ch10)
+                         data = UN_data_ch10)
 b0 <- round(coef(simple_model),2)
 # Get the coefficients of the model
 lm_data <- data.frame("Coefficients" = c("b0", "b1"),
@@ -121,26 +120,26 @@ kbl(lm_data)|>
     latex_options = c("hold_position")
   )
 ```
+
 The regression line is:
 
 $$
 \begin{aligned}
 \widehat{y}_i &= b_0 + b_1 \cdot x_i\\
-&= `r lm_data$Values[1]` - `r abs(lm_data$Values[2])` \cdot x_i\\
+ &= `r lm_data$Values[1]` - `r abs(lm_data$Values[2])` \cdot x_i\\
 \end{aligned}
-$$
-where $x_i$ is the life expectancy for the $i$th country and $\widehat{y}_i$ is the corresponding fitted fertility rate. The $b_0$ coefficient is the intercept and has a meaning only if the range of values of the regressor, $x_i$, includes zero. Since life expectancy is always a positive value, we do not provide any interpretation to the intercept in this example. The $b_1$ coefficient is the slope of the regression line; if for any country the life expectancy were to increase by about one year, we would expect an associated reduction of the fertility rate by about 0.137 units.
+$$ where $x_i$ is the life expectancy for the $i$th country and $\widehat{y}_i$ is the corresponding fitted fertility rate. The $b_0$ coefficient is the intercept and has a meaning only if the range of values of the regressor, $x_i$, includes zero. Since life expectancy is always a positive value, we do not provide any interpretation to the intercept in this example. The $b_1$ coefficient is the slope of the regression line; if for any country the life expectancy were to increase by about one year, we would expect an associated reduction of the fertility rate by about 0.137 units.
 
-We visualize the relationship of the data observed in Figure \@ref(fig:regline-ch10) by plotting the scatterplot of fertility rate against life expectancy for all the UN member states with complete data. We also include the regression line obtained using the least-squares criterion explained above:
+We visualize the relationship of the data observed in Figure \@ref(fig:regline_ch10) by plotting the scatterplot of fertility rate against life expectancy for all the UN member states with complete data. We also include the regression line obtained using the least-squares criterion explained above:
 
-```{r regline-ch10, fig.cap="Relationship with regression line.", fig.height=3.2, message=FALSE}
+```{r regline_ch10, fig.cap="Relationship with regression line.", fig.height=3.2, message=FALSE}
 ggplot(UN_data_ch10, 
        aes(x = life_exp, y = fert_rate)) +
   geom_point() +
   labs(x = "Life Expectancy (x)", 
        y = "Fertility Rate (y)",
        title = "Relationship between fertility rate and life expectancy") +  
-  geom_smooth(method = "lm", se = FALSE)
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.5)
 ```
 
 Finally, we review how to obtain the fitted values and residuals for observations in the data set. As an illustration, France is one of the UN member states, and we want to determine the fitted fertility rate for France based on the linear regression. We start by determining what is the location of France in the `UN_data_ch10` data frame, using `rowid_to_column()` and `filter()` with the variable country equal to "France". The `pull()` function converts the row number to a single value:
@@ -179,8 +178,7 @@ fitted_france <- lm_data$Values[1] - abs(lm_data$Values[2]) * france_data$life_e
 resid_france <- actual_france - fitted_france
 ```
 
-
-France's life expectancy is $x_{`r france_id`} = `r france_data$life_exp[1]`$ years and the fertility rate is $y_{`r france_id`} = `r france_data$fert_rate[1]`$. Using the regression line obtained earlier, we can determine France's fitted fertility rate:
+France's life expectancy is $x_{`r france_id`} = `r france_data$life_exp[1]`$ years and the fertility rate is $y_{`r france_id`} =`r france_data$fert_rate[1]`$. Using the regression line obtained earlier, we can determine France's fitted fertility rate:
 
 $$
 \begin{aligned}
@@ -188,8 +186,7 @@ $$
 &= `r lm_data$Values[1]` - `r abs(lm_data$Values[2])` \cdot `r france_data$life_exp[1]`\\
 &= `r fitted_france`.
 \end{aligned}
-$$
-Based on our regression line we would expect France's fertility rate to be `r lm_data$Values[1] - abs(lm_data$Values[2]) * france_data$life_exp[1]`. The observed fertility rate for France was `r france_data$fert_rate[1]`, so the residual for France is $y_{`r france_id`} - \widehat{y}_{`r france_id`} = `r actual_france` - `r fitted_france` = `r resid_france`$.
+$$ Based on our regression line we would expect France's fertility rate to be `r lm_data$Values[1] - abs(lm_data$Values[2]) * france_data$life_exp[1]`. The observed fertility rate for France was `r france_data$fert_rate[1]`, so the residual for France is $y_{`r france_id`} - \widehat{y}_{`r france_id`} = `r actual_france` - `r fitted_france` = `r resid_france`$.
 
 Using R we are not required to manually obtain the fitted values and residual for each UN member state. We do this directly using the regression model `simple_model` and the `get_regression_points()` function. To do this only for France, we `filter()` the `r france_id`th observation in the data frame.
 
@@ -198,7 +195,6 @@ simple_model |>
   get_regression_points() |>
   filter(ID == 57)
 ```
-
 
 ```{r fittedtable-ch10, echo=FALSE, purl= FALSE}
 get_regression_points(simple_model) |>
@@ -226,102 +222,28 @@ get_regression_points(simple_model) |>
   )
 ```
 
-
 This concludes our review of material covered in Section \@ref(model1). We now explain how to use this information for statistical inference.
 
-<!--
+### The model {#simple-linear-model}
 
-```{r, eval=FALSE}
-# Fit regression model:
-simple_model <- lm(fert_rate ~ life_exp, data = UN_data_ch10)
-# Get regression table:
-get_regression_table(simple_model)
-```
-```{r regtable-11, echo=FALSE, purl=FALSE}
-# Fit regression model:
-simple_model <- lm(fert_rate ~ life_exp, data = UN_data_ch10)
-get_regression_table(simple_model) |>
-kable(
-digits = 3,
-caption = "Previously seen linear regression table",
-booktabs = TRUE,
-linesep = ""
-) |>
-kable_styling(
-font_size = ifelse(is_latex_output(), 10, 16),
-latex_options = c("hold_position")
-)
-
-# slope:
-slope_row <- get_regression_table(simple_model) |>
-filter(term == "life_exp_avg")
-b1 <- slope_row |> pull(estimate)
-se1 <- slope_row |> pull(std_error)
-t1 <- slope_row |> pull(statistic)
-lower1 <- slope_row |> pull(lower_ci)
-upper1 <- slope_row |> pull(upper_ci)
-
-# intercept:
-intercept_row <- get_regression_table(simple_model) |>
-filter(term == "intercept")
-b0 <- intercept_row |> pull(estimate)
-se0 <- intercept_row |> pull(std_error)
-t0 <- intercept_row |> pull(statistic)
-lower0 <- intercept_row |> pull(lower_ci)
-upper0 <- intercept_row |> pull(upper_ci)
-
-# keep trailing zero for b0 for consistency with print edition
-b0_trailing <- intercept_row |> 
-pull(estimate) |> 
-round(3) |> 
-format(nsmall = 3)
-```
-
--->
-
-<!--
-Using the values in the `estimate` column of the resulting regression table in Table \@ref(tab:regtable-11), we could then obtain the equation of the "best-fitting" regression line in Figure \@ref(fig:regline): 
--->
-
-<!--
-$$
-\begin{aligned}
-\widehat{y} &= b_0 + b_1 \cdot x\\
-\widehat{\text{fert_rate}} &= b_0 + b_{\text{life_exp}\_\text{avg}} \cdot\text{life_exp}\_\text{avg}\\
-&= `r b0_trailing` + `r b1`\cdot\text{life_exp}\_\text{avg}
-\end{aligned}
-$$
-
-where $b_0$ is the fitted intercept and $b_1$ is the fitted slope for `life_exp_avg`. Recall the interpretation of the $b_1$ = `r b1` value of the fitted slope:
-
-> For one additional year of life expectancy, there is an associated decrease, on average, of `r b1` units of fertility rate.
-
-Thus, the slope value quantifies the relationship between the $y$ variable `fert_rate` and the $x$ variable `life_exp_avg`. We also discussed the intercept value of $b_0$ = `r b0` and its lack of practical interpretation, since the range of possible life expectancy values does not include 0. 
-
--->
-
-### The model {#linear-model}
-
-As we did in Chapters \@ref(confidence-intervals) on confidence intervals and \@ref(hypothesis-testing) on hypothesis testing, we present this problem in the context of a population and associated parameters of interest. We then collect a random sample from this population and use it to estimate these parameters. 
+As we did in Chapters \@ref(confidence-intervals) on confidence intervals and \@ref(hypothesis-testing) on hypothesis testing, we present this problem in the context of a population and associated parameters of interest. We then collect a random sample from this population and use it to estimate these parameters.
 
 We assume that this population has a response variable ($Y$) an explanatory variable ($X$), and there is a *statistical linear relationship* between these variables, given by the linear model
 
-$$Y = \beta_0 + \beta_1 \cdot X + \epsilon$$
-where $\beta_0$ is the population intercept and $\beta_1$ is the population slope. These are now the parameters of the model that, alongside the explanatory variable ($X$) produce the equation of a line.
-The statistical part of this relationship is given by $\epsilon$, a random variable called the *error term*. The error term accounts for the portion of $Y$ that is not explained by the line. 
+$$Y = \beta_0 + \beta_1 \cdot X + \epsilon$$ where $\beta_0$ is the population intercept and $\beta_1$ is the population slope. These are now the parameters of the model that, alongside the explanatory variable ($X$) produce the equation of a line. The statistical part of this relationship is given by $\epsilon$, a random variable called the *error term*. The error term accounts for the portion of $Y$ that is not explained by the line.
 
 We make additional assumptions about the distribution of the error term, $\epsilon$. The assumed expected value of the error term is zero and the assumed standard deviation is equal to a positive constant called $\sigma$, or in mathematical terms:
 
-- $E(\epsilon) = 0$, 
-- $SD(\epsilon) = \sigma$ 
+-   $E(\epsilon) = 0$,
+-   $SD(\epsilon) = \sigma$
 
 We review the meaning of these quantities. In simple terms, if you were to take a large number of observations from this population, we would expect the error terms sometimes to be greater than zero and sometimes less than zero, but on average, be equal to zero. Similarly, some error terms will be very close to zero and others very far from zero, but on average, we would expect them to be roughly $\sigma$ units away from zero.
 
-Recall the square of the standard deviation is called the variance, so $Var(\epsilon) = \sigma^2$. The variance of the error term is equal to $\sigma^2$ regardless of the value of $X$. This property is called *heteroskedasticity* or constancy of the variance and will be useful later on in our analysis.
+Recall the square of the standard deviation is called the variance, so $Var(\epsilon) = \sigma^2$. The variance of the error term is equal to $\sigma^2$ regardless of the value of $X$. This property is called *homoskedasticity* or constancy of the variance and will be useful later on in our analysis.
 
-### Using a sample for inference
+### Using a sample for inference {#sample-regression-inference}
 
-As we did in Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing), we use a sample to estimate the parameters in the population. We use data collected from the Old Faithful Geyser in Yellowstone National Park in Wyoming, USA. This data set contains the `duration` of the geyser eruption in seconds and the `waiting` time to the next eruption in minutes. These data have been used often as an example for regression, because the duration of the current eruption can help determine fairly well the waiting time to the next eruption. For this example, we use a sample of data collected by volunteers and saved on the website *https://geysertimes.org/* between June 1st, 2024 and August 19th, 2024. These data are stored on the `old_faithful_2024` data frame in the `moderndive` package. The first ten rows are shown here for illustration purposes:
+As we did in Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing), we use a sample to estimate the parameters in the population. We use data collected from the Old Faithful Geyser in Yellowstone National Park in Wyoming, USA. This data set contains the `duration` of the geyser eruption in seconds and the `waiting` time to the next eruption in minutes. These data have been used often as an example for regression, because the duration of the current eruption can help determine fairly well the waiting time to the next eruption. For this example, we use a sample of data collected by volunteers and saved on the website [*https://geysertimes.org/*](https://geysertimes.org/){.uri} between June 1st, 2024 and August 19th, 2024. These data are stored on the `old_faithful_2024` data frame in the `moderndive` package. While data collected by volunteers are not a random sample, as the volunteers could introduce some sort of bias, the eruptions selected by the volunteers had no specific patterns and beyond the individual skill of each volunteer measuring the times appropriately, no response bias or preference seems to be present. Therefore, for illustration purposes, it seems safe to consider the data a random sample. The first ten rows are shown here for illustration purposes:
 
 ```{r}
 old_faithful_2024
@@ -346,10 +268,14 @@ $$\begin{array}{c}
 (x_n, y_n)\\
 \end{array}$$
 
-where, for example, $(x_1,y_1)$ is the pair of explanatory and response values, respectively, for the first observation in the sample. More generally, we denote the $i$th pair by $(x_i, y_i)$, where $x_i$ is the observed value of the explanatory variable $X$ and $y_i$ is the observed value of the response variable $Y$. Since the sample has $n$ observations we let $i=1$, $\dots$, $n$. 
+where, for example, $(x_2,y_2)$ is the pair of explanatory and response values, respectively, for the second observation in the sample. More generally, we denote the $i$th pair by $(x_i, y_i)$, where $x_i$ is the observed value of the explanatory variable $X$ and $y_i$ is the observed value of the response variable $Y$. Since the sample has $n$ observations we let $i=1$, $\dots$, $n$.
 
-In our example $n = 114$, and $(x_1,y_1) = (235, 180)$. Figure \@ref(fig:geyserplot1) shows the scatterplot for the entire sample:
+```{r echo=F}
+# This code is used for dynamic non-static in-line text output purposes
+n_old_faithful <- dim(old_faithful_2024)[1]
+```
 
+In our example $n = `r n_old_faithful`$, and $(x_2,y_2) = (`r old_faithful_2024[2,6][[1]]`, `r old_faithful_2024[2,4][[1]]`)$. Figure \@ref(fig:geyserplot1) shows the scatterplot for the entire sample:
 
 ```{r geyserplot1, echo=F, fig.cap="Scatterplot of relationship of eruption duration and waiting time", fig.height=4.5}
 ggplot(old_faithful_2024, 
@@ -360,10 +286,9 @@ ggplot(old_faithful_2024,
 
 The relationship seems positive and, to some extent, linear.
 
-
 ### The method of least squares {#least-squares}
 
-If our assumption that the relationship between these variables is linear, we can apply the linear model described in Subsection \@ref(theory-regression) to each observation in the sample:
+If the association of these variables is linear or approximately linear, we can apply the linear model described in Subsection \@ref(simple-linear-model) to each observation in the sample:
 
 $$\begin{aligned}
 y_1 &= \beta_0 + \beta_1 \cdot x_1 + \epsilon_1\\
@@ -386,7 +311,6 @@ $$\begin{aligned}
 s &= \sqrt{\frac{\sum_{i=1}^n \left[y_i - (b_0 + b_1 \cdot x_i)\right]^2}{n-2}}\\
 &= \sqrt{\frac{\sum_{i=1}^n \left(y_i - \widehat{y}_i\right)^2}{n-2}}
 \end{aligned}$$
-
 
 These or equivalent calculations are done in R when using the `lm()` function. For the `old_faithful_2024` we get:
 
@@ -420,28 +344,19 @@ lm_data |>
 
 Based on these data and assuming the linear model is appropriate, we can say that for every additional second that an eruption lasts, the waiting time to the next eruption increases, on average, in 0.37 minutes. Any eruption lasts longer than zero seconds so the intercept has no meaningful interpretation in this example. Finally, we roughly expect the waiting time for the next eruption to be 20.37 minutes away from the regression line value, on average.
 
-
-
 ### Properties of the least squares estimators {#properties-least-squares}
 
 The least squares method produces the *best-fitting* line by selecting the least squares estimators, $b_0$ and $b_1$, that make the sum of residual squares the smallest possible. But the choice of $b_0$ and $b_1$ depends on the sample observed. For every random sample obtained from the data, different values for $b_0$ and $b_1$ will be obtained.
 
 In that sense, the least squares estimators, $b_0$ and $b_1$, are random variables and as such, they have very useful properties:
 
-- $b_0$ and $b_1$, are unbiased estimators of $\beta_0$ and $\beta_1$, or using mathematical notation: $E(b_0) = \beta_0$ and$E(b_1) = \beta_1$. This means that, for some random samples, $b_1$ will be greater than $\beta_1$ and for others less than $\beta_1$. On average, $b_1$ will be equal to $\beta_1$.
-- $b_0$ and $b_1$ are linear combinations of the observed responses $y_1$, $y_2$, $\dots$, $y_n$. This means that, for example for $b_1$, there are known constants $c_1$, $c_2$, $\dots$, $c_n$ such that $$b_1 = \sum_{i=1}^n c_iy_i$$
-- $s^2$ is an unbiased estimator of the variance, $\sigma^2$. 
+-   $b_0$ and $b_1$, are unbiased estimators of $\beta_0$ and $\beta_1$, or using mathematical notation: $E(b_0) = \beta_0$ and$E(b_1) = \beta_1$. This means that, for some random samples, $b_1$ will be greater than $\beta_1$ and for others less than $\beta_1$. On average, $b_1$ will be equal to $\beta_1$.
+-   $b_0$ and $b_1$ are linear combinations of the observed responses $y_1$, $y_2$, $\dots$, $y_n$. This means that, for example for $b_1$, there are known constants $c_1$, $c_2$, $\dots$, $c_n$ such that $$b_1 = \sum_{i=1}^n c_iy_i$$
+-   $s^2$ is an unbiased estimator of the variance, $\sigma^2$.
 
 These properties will be useful in the next subsection, once we perform theory-based inference for regression.
 
-
-
-
-
-
-
-
-
+```{=html}
 <!--
 Equivalently, a __multiple linear regression__ model relates $Y$ to $p \ge 2$ predictors, with mean function
 $$E(Y|X_1=x_1, \dots, X_p = x_p) = \beta_0 + \beta_1 x_1 + \dots  + \beta_p x_p$$
@@ -449,17 +364,20 @@ and variance function $$Var(Y|X_1=x_1, \dots, X_p = x_p) = \sigma^2.$$
 
 Many key characteristics apply to both simple and multiple linear regression. 
 -->
+```
+## Theory-based inference for simple linear regression {#theory-simple-regression}
 
-## Theory-based inference for regression {#theory-regression}
+This section introduces the conceptual framework needed to understand the theory-based inference for regression (see Subsections \@ref(framework-simple-lm) and \@ref(se-simple-lm)) and discusses the two most prominent methods for inference: confidence intervals (Subsection \@ref(conf-intervals-b0-b1)) and hypothesis tests (Subsection \@ref(hypo-test-simple-lm)).
 
-### The theoretical framework
+Some of this material is slightly more technical than other sections in this Chapter, but most of the material is illustrated by working with a real example and interpretations and explanations complement the theory.
 
-This subsection presents the theoretical framework for the theory-based inference for regression, and it is slightly more technical than other sections in this Chapter. You can safely skip to Subsection \@ref(regression-table) where we show how to calculate relevant quantities in R and interpret the results of the inferential statistic procedure if you'd prefer to skip the theory for now.
+Subsection \@ref(regression-table) presents the R code needed to calculate relevant quantities for inference. Feel free to read this section first.
 
-We start by reviewing the assumptions of the linear model. We continue using the `old_faithful_2024` to illustrate some of this framework. Recall that a random sample of $n = 114$ observations is obtained. Since we assume a linear relationship between the `duration` of an eruption and the `waiting` time to the next eruption, we can express the linear relationship for the $i$th observation as: 
+### Conceptual framework {#framework-simple-lm}
 
-$$y_i = \beta_0 + \beta_1 \cdot x_i + \epsilon_i$$
-for $i=1,\dots,n$. Observe that $x_i$ is the `duration` of the $i$th eruption in the sample, $y_i$ is the `waiting` time to the next eruption, and $\beta_0$ and $\beta_1$ are the population parameters that are considered constant. The error term, $\epsilon_i$, is a random variable that represents how different the observed response $y_i$ is from the expected response $\beta_0 + \beta_1 \cdot x_i$. 
+We start by reviewing the assumptions of the linear model. We continue using the `old_faithful_2024` to illustrate some of this framework. Recall that a random sample of $n = 114$ observations is obtained. Since we assume a linear relationship between the `duration` of an eruption and the `waiting` time to the next eruption, we can express the linear relationship for the $i$th observation as:
+
+$$y_i = \beta_0 + \beta_1 \cdot x_i + \epsilon_i$$ for $i=1,\dots,n$. Observe that $x_i$ is the `duration` of the $i$th eruption in the sample, $y_i$ is the `waiting` time to the next eruption, and $\beta_0$ and $\beta_1$ are the population parameters that are considered constant. The error term, $\epsilon_i$, is a random variable that represents how different the observed response $y_i$ is from the expected response $\beta_0 + \beta_1 \cdot x_i$.
 
 We can illustrate the role of the error term using two observations from our `old_faithful_2024` data set. We assume for now that the linear model is appropriate and truly represents the relationship between `duration` and `waiting` times. We select the 49th and 51st observations in our sample by using the function `slice()` with the corresponding rows:
 
@@ -479,62 +397,46 @@ but $y_{49} = 139$ and $y_{51} = 176$. The difference in responses is due to the
 
 In the linear model the error term, $\epsilon_i$, has expected value $E(\epsilon_i) = 0$ and standard deviation $SD(\epsilon_i) = \sigma$. Since a random sample is obtained, we assume that any two error terms, $\epsilon_i$ and $\epsilon_j$, for any two different eruptions, $i$ and $j$, are independent.
 
-In order to perform the theory-based inference we require one additional assumption. We let the error term be normally distributed with an expected value (mean) equal to zero and a standard deviation equal to $\sigma$:
-$$\epsilon_i \sim Normal(0, \sigma).$$
-The population parameters $\beta_0$ and $\beta_1$ are constants. Similarly, the `duration` of the $i$th eruption, $x_i$, is known and also a constant. Therefore, the expression $\beta_0 + \beta_1 \cdot x_i$ is a constant. By contrast, $\epsilon_i$ is a normally distributed random variable. 
+In order to perform the theory-based inference we require one additional assumption. We let the error term be normally distributed with an expected value (mean) equal to zero and a standard deviation equal to $\sigma$: $$\epsilon_i \sim Normal(0, \sigma).$$ The population parameters $\beta_0$ and $\beta_1$ are constants. Similarly, the `duration` of the $i$th eruption, $x_i$, is known and also a constant. Therefore, the expression $\beta_0 + \beta_1 \cdot x_i$ is a constant. By contrast, $\epsilon_i$ is a normally distributed random variable.
 
-The response $y_i$, the `waiting` time for the $i$th eruption to the next, is the sum of the constant $\beta_0 + \beta_1 \cdot x_i$ and the normally distributed random variable $\epsilon_i$. Based on properties of random variables and the normal distribution, we can state that $y_i$ is also a normally distribution random variable with mean equal to $\beta_0 + \beta_1 \cdot x_i$ and standard deviation equal to $\sigma$:
-$$y_i \sim Normal(\beta_0 + \beta_1 x_i\,,\, \sigma)$$
-for $i=1,\dots,n$. Since $\epsilon_i$ and $\epsilon_j$ are independent, $y_i$ and $y_j$ are also independent for any $i \ne j$. 
+The response $y_i$, the `waiting` time for the $i$th eruption to the next, is the sum of the constant $\beta_0 + \beta_1 \cdot x_i$ and the normally distributed random variable $\epsilon_i$. Based on properties of random variables and the normal distribution, we can state that $y_i$ is also a normally distribution random variable with mean equal to $\beta_0 + \beta_1 \cdot x_i$ and standard deviation equal to $\sigma$: $$y_i \sim Normal(\beta_0 + \beta_1 x_i\,,\, \sigma)$$ for $i=1,\dots,n$. Since $\epsilon_i$ and $\epsilon_j$ are independent, $y_i$ and $y_j$ are also independent for any $i \ne j$.
 
 In addition, as stated in Subsection \@ref(properties-least-squares) the least-squares estimator, $b_1$, is a linear combination of the random variables $y_1, \dots, y_n$. So $b_1$ is also a random variable! What does this mean? The coefficient for the slope results from *a particular sample* of $n$ pairs of `duration` and `waiting` times. If we collected a different sample of $n$ pairs the coefficient for the slope would likely be different due to *sampling variation*.
 
-Say we hypothetically collect many random samples of pairs of `duration` and `waiting` times, and using the least-squares method obtain the slope $b_1$ for each of these samples. These slopes would form the sampling distribution of $b_1$, which we discussed in Subsection \@ref(sampling-variation) in the context of sample proportions. What we would learn is that, because $y_1, \dots, y_n$ are normally distributed and $b_1$ is a linear combination of these random variables, $b_1$ is also normally distributed. After some calculations that go beyond the scope of this book but take into account properties of the expected value and standard deviation of the responses $y_1, \dots, y_n$, it can be shown that:
+Say we hypothetically collect many random samples of pairs of `duration` and `waiting` times, and using the least-squares method obtain the slope $b_1$ for each of these samples. These slopes would form the sampling distribution of $b_1$, which we discussed in Subsection \@ref(sampling-definitions) in the context of sample means. What we would learn is that, because $y_1, \dots, y_n$ are normally distributed and $b_1$ is a linear combination of these random variables, $b_1$ is also normally distributed. After some calculations that go beyond the scope of this book but take into account properties of the expected value and standard deviation of the responses $y_1, \dots, y_n$, it can be shown that:
 
-$$b_1 \sim Normal \left(\beta_1\,,\, \frac{\sigma}{\sqrt{\sum_{i=1}^n(x_i - \bar x)^2}}\right).$$
-that is, $b_1$ is normally distributed with expected value $\beta_1$ and standard deviation equal to the expression above (inside the parentheses and after the comma). Similarly, $b_0$ is a linear combination of $y_1, \dots, y_n$ and using properties of the expected value and standard deviation of the responses, we get:
+$$b_1 \sim Normal \left(\beta_1\,,\, \frac{\sigma}{\sqrt{\sum_{i=1}^n(x_i - \bar x)^2}}\right).$$ that is, $b_1$ is normally distributed with expected value $\beta_1$ and standard deviation equal to the expression above (inside the parentheses and after the comma). Similarly, $b_0$ is a linear combination of $y_1, \dots, y_n$ and using properties of the expected value and standard deviation of the responses, we get:
 
-$$b_0 \sim Normal \left(\beta_0\,,\, \sigma\sqrt{\frac1n + \frac{\bar x^2}{\sum_{i=1}^n(x_i - \bar x)^2}}\right)$$
-We can also standardize the least-square estimators such that $$z_0 = \frac{b_0 - \beta_0}{\left(\sigma\sqrt{\frac1n + \frac{\bar x^2}{\sum_{i=1}^n(x_i - \bar x)^2}}\right)}\qquad\text{ and }\qquad z_1 = \frac{b_1 - \beta_1}{\left(\frac{\sigma}{\sqrt{\sum_{i=1}^n(x_i - \bar x)^2}}\right)}$$ 
-are the corresponding standard normal distributions.
+$$b_0 \sim Normal \left(\beta_0\,,\, \sigma\sqrt{\frac1n + \frac{\bar x^2}{\sum_{i=1}^n(x_i - \bar x)^2}}\right)$$ We can also standardize the least-square estimators such that $$z_0 = \frac{b_0 - \beta_0}{\left(\sigma\sqrt{\frac1n + \frac{\bar x^2}{\sum_{i=1}^n(x_i - \bar x)^2}}\right)}\qquad\text{ and }\qquad z_1 = \frac{b_1 - \beta_1}{\left(\frac{\sigma}{\sqrt{\sum_{i=1}^n(x_i - \bar x)^2}}\right)}$$ are the corresponding standard normal distributions.
 
-### Standard errors for least-squares estimators {#se-regression}
+### Standard errors for least-squares estimators {#se-simple-lm}
 
-Recall that in Chapter \@ref(sampling) and in Subsection \@ref(CLT-mean) we have discussed that, due to the Central Limit Theorem, the distribution of the sample mean, $\overline X$ was approximately normal with mean equal to the parameter $\mu$ and standard deviation equal to  $\sigma/\sqrt n$. We had then used the estimated standard error of $\overline X$ to construct confidence intervals and hypothesis tests.
+Recall that in Chapter \@ref(sampling) and in Subsection \@ref(CLT-mean) we have discussed that, due to the Central Limit Theorem, the distribution of the sample mean, $\overline X$ was approximately normal with mean equal to the parameter $\mu$ and standard deviation equal to $\sigma/\sqrt n$. We had then used the estimated standard error of $\overline X$ to construct confidence intervals and hypothesis tests.
 
-An analogous treatment is now used to construct confidence intervals and hypothesis tests for $b_0$ and $b_1$. Observe in the equations above that the standard deviations for $b_0$ and $b_1$ are constructed using the sample size $n$, the values of the explanatory variables, their means, and the standard deviation of $y_i$, $\sigma$. While most of these values are known to us, $\sigma$ is typically not. 
+An analogous treatment is now used to construct confidence intervals and hypothesis tests for $b_0$ and $b_1$. Observe in the equations above that the standard deviations for $b_0$ and $b_1$ are constructed using the sample size $n$, the values of the explanatory variables, their means, and the standard deviation of $y_i$, $\sigma$. While most of these values are known to us, $\sigma$ is typically not.
 
-Instead, we estimate $\sigma$ using the estimator of the standard deviation, $s$, introduced in Subsection \@ref(least-squares). The estimated standard deviation of $b_1$ is called the *standard error* of $b_1$ and it is given by:
-$$SE(b_1) = \frac{s}{\sqrt{\sum_{i=1}^n(x_i - \bar x)^2}}.$$
-Recall that the *standard error* is the standard deviation of any point estimate computed from a sample. The *standard error* of $b_1$ quantifies how much variation the estimator of the slope, $b_1$, may have for different random samples. The larger the standard error, the more variation we would expect in the estimated slope, $b_1$. Similarly, the *standard error* of $b_0$ is:
+Instead, we estimate $\sigma$ using the estimator of the standard deviation, $s$, introduced in Subsection \@ref(least-squares). The estimated standard deviation of $b_1$ is called the *standard error* of $b_1$ and it is given by: $$SE(b_1) = \frac{s}{\sqrt{\sum_{i=1}^n(x_i - \bar x)^2}}.$$ Recall that the *standard error* is the standard deviation of any point estimate computed from a sample. The *standard error* of $b_1$ quantifies how much variation the estimator of the slope, $b_1$, may have for different random samples. The larger the standard error, the more variation we would expect in the estimated slope, $b_1$. Similarly, the *standard error* of $b_0$ is:
 
 $$SE(b_0) = s\sqrt{\frac1n + \frac{\bar x^2}{\sum_{i=1}^n(x_i - \bar x)^2}}$$
 
-As was discussed in Subsection \@ref(t-distribution-CI), when using the estimator $s$ instead of the parameter $\sigma$, we are introducing additional uncertainty in our calculations. For example, we can standardize $b_1$ using $$t = \frac{b_1 - \beta_1}{SE(b_1)}.$$
-Because we are using $s$ to obtain $SE(b_1)$, the value of the standard error changes from sample to sample and this additional uncertainty makes the distribution of the test statistic, $t$, no longer normal. Instead, it follows a $t$-distribution with $n-2$ degrees of freedom. The loss of two degrees of freedom relates to the fact that we are trying to estimate two parameters in the linear model: $\beta_0$ and $\beta_1$.
+As was discussed in Subsection \@ref(t-distribution-CI), when using the estimator $s$ instead of the parameter $\sigma$, we are introducing additional uncertainty in our calculations. For example, we can standardize $b_1$ using $$t = \frac{b_1 - \beta_1}{SE(b_1)}.$$ Because we are using $s$ to obtain $SE(b_1)$, the value of the standard error changes from sample to sample and this additional uncertainty makes the distribution of the test statistic, $t$, no longer normal. Instead, it follows a $t$-distribution with $n-2$ degrees of freedom. The loss of two degrees of freedom relates to the fact that we are trying to estimate two parameters in the linear model: $\beta_0$ and $\beta_1$.
 
-We are ready to use this information to perform inference for the least-square estimators, $b_0$ and $b_1$. 
+We are ready to use this information to perform inference for the least-square estimators, $b_0$ and $b_1$.
 
-
-
-
+```{=html}
 <!--
-In Section \@ref(infer-regression), we'll perform a simulation using the `infer` package to construct the bootstrap distribution for $b_1$ in this case. Recall from Subsection \@ref(revisit-almond-bootstrap) that the bootstrap distribution is an *approximation* to the sampling distribution in that they have a similar shape. Since they have a similar shape, they have similar *standard errors*. However, unlike the sampling distribution, the bootstrap distribution is constructed from a *single* sample, which is a practice more aligned with what's done in real life. 
+In Section \@ref(infer-regression), we'll perform a simulation using the `infer` package to construct the bootstrap distribution for $b_1$ in this case. Recall from Subsection \@ref(bootstrap-vs-sampling) that the bootstrap distribution is an *approximation* to the sampling distribution in that they have a similar shape. Since they have a similar shape, they have similar *standard errors*. However, unlike the sampling distribution, the bootstrap distribution is constructed from a *single* sample, which is a practice more aligned with what's done in real life. 
 -->
+```
+### Confidence intervals for the least-squares estimators {#conf-intervals-b0-b1}
 
-
-
-### Confidence intervals for the least-squares estimators
-
-A 95% confidence interval for $\beta_1$ can be thought of as a range of plausible values for the population slope $\beta_1$ of the linear relationship between `duration` and `waiting` times. 
+A 95% confidence interval for $\beta_1$ can be thought of as a range of plausible values for the population slope $\beta_1$ of the linear relationship between `duration` and `waiting` times.
 
 In general, if the sampling distribution of an estimator is normal or approximately normal, the confidence interval for the relevant parameter is
 
 $$\text{point estimate} \pm \text{margin of error} = \text{point estimate} \pm (\text{critical value} \cdot \text{standard error}).$$
 
-
-The formula for a 95% confidence interval for $\beta_1$ is given by 
-$b_1 \pm q \cdot SE(b_1)$ where the critical value $q$ is determined by the level of confidence required, the sample size used, and the corresponding degrees of freedom needed for the $t$-distribution. We now illustrate how to find the 95% confidence interval for the slope in the Geyser example manually, but we show later how to do this directly in R using the function `get_regression_table()`. First, observe that $n = 114$, so the degrees of freedom are $n-2 = 112$. The critical value for a 95% confidence interval on a $t$-distribution with 112 degrees of freedom is $q = 1.981$. Second, the estimates $b_0$, $b_1$, and $s$ were obtained earlier and are shown here again:
+The formula for a 95% confidence interval for $\beta_1$ is given by $b_1 \pm q \cdot SE(b_1)$ where the critical value $q$ is determined by the level of confidence required, the sample size used, and the corresponding degrees of freedom needed for the $t$-distribution. We now illustrate how to find the 95% confidence interval for the slope in the Geyser example manually, but we show later how to do this directly in R using the function `get_regression_table()`. First, observe that $n = 114$, so the degrees of freedom are $n-2 = 112$. The critical value for a 95% confidence interval on a $t$-distribution with 112 degrees of freedom is $q = 1.981$. Second, the estimates $b_0$, $b_1$, and $s$ were obtained earlier and are shown here again:
 
 ```{r regtable-ch10-2, echo=FALSE, purl=FALSE}
 # Fit regression model:
@@ -555,7 +457,6 @@ lm_data |>
   )
 ```
 
-
 Third, the standard error for $b_1$ using the formula presented earlier is:
 
 ```{r echo=F}
@@ -563,8 +464,7 @@ Third, the standard error for $b_1$ using the formula presented earlier is:
 q = round(qt(p = (1 - (1-0.95)/2), df = 114 - 2),3)
 s <- round(sigma(model_1),3)
 x <- old_faithful_2024$duration
-n <- length(x)
-n_eruptions <- n
+n_old_faithful <- length(x)
 #beta1
 b1 <- round(coef(model_1)[[2]],3)
 denom_se_b1 <- round(sqrt(sum((x - mean(x))^2)),3)
@@ -581,9 +481,7 @@ t_stat <- round(b1/se_b1,3)
 p_value <- round(2*(1 - pt(abs(t_stat), n-2)),3)
 ```
 
-
-$$SE(b_1) = \frac{s}{\sqrt{\sum_{i=1}^n(x_i - \bar x)^2}} = \frac{`r s`}{`r denom_se_b1`} = `r se_b1`$$
-Finally, the 95% confidence interval for $\beta_1$ is given by:
+$$SE(b_1) = \frac{s}{\sqrt{\sum_{i=1}^n(x_i - \bar x)^2}} = \frac{`r s`}{`r denom_se_b1`} = `r se_b1`$$ Finally, the 95% confidence interval for $\beta_1$ is given by:
 
 $$\begin{aligned}
 b_1 &\pm q \cdot SE(b_1)\\
@@ -591,7 +489,7 @@ b_1 &\pm q \cdot SE(b_1)\\
 (`r lb1` &, `r ub1`)
 \end{aligned}$$
 
-We are 95% confident that the population slope, $\beta_1$ is a number between `r lb1` and `r ub1`. 
+We are 95% confident that the population slope, $\beta_1$ is a number between `r lb1` and `r ub1`.
 
 The construction of a 95% confidence interval for $\beta_0$ follows exactly the same steps using $b_0$, $SE(b_0)$, and the same critical value $q$ as the degrees of freedom for the $t$-distribution are exactly the same, $n-2$:
 
@@ -601,66 +499,61 @@ b_0 &\pm q \cdot SE(b_0)\\
 (`r lb0` &, `r ub0`)
 \end{aligned}$$
 
-
 The results of the confidence intervals are valid only if the linear model assumptions are satisfied. We discuss in Section \@ref(model-fit) about these assumptions.
 
-### Hypothesis test
+### Hypothesis test {#hypo-test-simple-lm}
 
-
-To perform a hypothesis test for $\beta_1$, the general formulation of a two-sided test is 
+To perform a hypothesis test for $\beta_1$, the general formulation of a two-sided test is
 
 $$\begin{aligned}
-H_0: \beta_1 = k\\
-H_A: \beta_1 \ne k
+H_0: \beta_1 = B\\
+H_A: \beta_1 \ne B
 \end{aligned}$$
 
-where $k$ is the hypothesized value for $\beta_1$. Recall the terminology, notation, and definitions related to hypothesis tests we introduced in Section \@ref(understanding-ht).
-A *hypothesis test* consists of a test between two competing hypotheses: (1) a *null hypothesis* $H_0$ versus (2) an *alternative hypothesis* $H_A$.
+where $B$ is the hypothesized value for $\beta_1$. Recall the terminology, notation, and definitions related to hypothesis tests we introduced in Section \@ref(understanding-ht). A *hypothesis test* consists of a test between two competing hypotheses: (1) a *null hypothesis* $H_0$ versus (2) an *alternative hypothesis* $H_A$.
 
-#### Test statistic {#t-test-stat}
+#### Test statistic {#t-test-stat-simple-lm}
 
 A *test statistic* is a point estimator used for hypothesis testing. Here, the *t-test statistic* is given by
 
-$$t = \frac{b_1 - k}{SE(b_1)}.$$ This test statistic follows, under the null hypothesis, a $t$-distribution with ${n-2}$ degrees of freedom. A particularly useful test is whether there is a linear association between the explanatory variable and the response, which is equivalent to test:
+$$t = \frac{b_1 - B}{SE(b_1)}.$$ This test statistic follows, under the null hypothesis, a $t$-distribution with ${n-2}$ degrees of freedom. A particularly useful test is whether there is a linear association between the explanatory variable and the response, which is equivalent to test:
 
 $$\begin{aligned}
 H_0: \beta_1 = 0\\
 H_1: \beta_1 \ne 0
 \end{aligned}$$
 
-For example, we may use this test to determine whether there is a linear relationship between the duration of the Old Faithful geyser eruptions (`duration`) and the waiting time to the next eruption (`waiting`). The *null hypothesis* $H_0$ assumes that the population slope $\beta_1$ is 0. If this is true, then there is *no linear relationship* between the `duration` and `waiting` times. As customary when performing a hypothesis test, we assume that the null hypothesis $H_0: \beta_1 = 0$ is true and try to find evidence against it based on the data observed.
+For example, we may use this test to determine whether there is a linear relationship between the duration of the Old Faithful geyser eruptions, `duration`, and the waiting time to the next eruption, `waiting`. The *null hypothesis* $H_0$ assumes that the population slope $\beta_1$ is 0. If this is true, then there is *no linear relationship* between the `duration` and `waiting` times. As customary when performing a hypothesis test, we assume that the null hypothesis $H_0: \beta_1 = 0$ is true and try to find evidence against it based on the data observed.
 
 The *alternative hypothesis* $H_A$, on the other hand, assumes that the population slope $\beta_1$ is not 0, meaning that longer eruption `duration` may result in greater or smaller `waiting` times to the next eruption. This suggests either a positive or negative linear relationship between the explanatory variable and the response. Since evidence against the null hypothesis may happen in either direction, we call this a *two-sided* test. The *t-test* statistic for this problem is given by:
 
 $$t = \frac{b_1 - 0}{SE(b_1)} = \frac{`r b1` - 0}{`r se_b1`} = `r t_stat`$$
 
-
 #### The $p$-value
 
 Recall the terminology, notation, and definitions related to hypothesis tests we introduced in Section \@ref(understanding-ht). The definition of the $p$-value is:
 
-A *$p$-value* is the probability of obtaining a test statistic just as extreme as or more extreme than the one observed, *assuming the null hypothesis $H_0$ is true*.
-We can intuitively think of the $p$-value as quantifying how "extreme" the estimated slope is, $b_1$ = `r b1`, assuming that there is no relationship between `duration` and `waiting` times. 
+A $p$-value is the probability of obtaining a test statistic just as extreme as or more extreme than the one observed, *assuming the null hypothesis* $H_0$ is true. We can intuitively think of the $p$-value as quantifying how "extreme" the estimated slope is, $b_1$ = `r b1`, assuming that there is no relationship between `duration` and `waiting` times.
 
 As an illustration for a two-sided test, if the test statistic is $t = 2$, the $p$-value is obtained as the area under the $t$-curve to the left of $-2$ and to the right of $2$ as shown in Figure \@ref(fig:pvalue1).
 
-```{r pvalue1, echo=F, fig.height=3, fig.cap="Illustration of the p-value for a two-sided test"}
+```{r pvalue1, echo=F, fig.height=3}
 shade <- function(t, a,b) {
-  z = dt(t, df = n-2)
-  z[abs(t) < b & -abs(t)>a] <- NA
-  return(z)
+    z = dt(t, df = n-2)
+    z[abs(t) < b & -abs(t)>a] <- NA
+    return(z)
 }
 
 ggplot(data.frame(x = c(-4, 4)), aes(x = x)) + 
-  stat_function(fun = dt, args = list(df = n-2)) + 
-  stat_function(fun = shade, args = list(a = -2, b = 2), 
-                geom = "area", fill = "blue", alpha = .2)+
-  scale_x_continuous(name = "t", breaks = seq(-4, 4, 2))+
-  scale_y_continuous(labels = NULL)+
-  theme(axis.title.y = element_blank(), axis.ticks.y = element_blank())
+    stat_function(fun = dt, args = list(df = n-2)) + 
+    stat_function(fun = shade, args = list(a = -2, b = 2), 
+                  geom = "area", fill = "blue", alpha = .2)+
+    scale_x_continuous(name = "t", breaks = seq(-4, 4, 2))+
+      scale_y_continuous(labels = NULL)+
+   theme(axis.title.y = element_blank(), axis.ticks.y = element_blank())
 ```
-In our geyser eruptions example, the test statistic for the test $H_0: \beta_1 = 0$ was $t = `r t_stat`$. The $p$-value was so small that R simply shows that it is equal to zero.  
 
+In our geyser eruptions example, the test statistic for the test $H_0: \beta_1 = 0$ was $t = `r t_stat`$. The $p$-value was so small that R simply shows that it is equal to zero.
 
 #### Conclusion and Interpretation
 
@@ -668,7 +561,7 @@ Following the hypothesis testing procedure we outlined in Section \@ref(ht-inter
 
 ### The regression table in R {#regression-table}
 
-We can summarize all the results obtained for inference for regression by using the R wrapper function `get_regression_table()` from the `moderndive` package on `model_1`. The output is presented in Table \@ref(tab:simple-model-part-deux).
+The least-square estimates, standard errors, test statistics, $p$-values, and confidence interval bounds discussed in Section \@ref(theory-simple-regression) and Subsections \@ref(framework-simple-lm), \@ref(se-simple-lm), \@ref(conf-intervals-b0-b1), and \@ref(hypo-test-simple-lm) can be calculated, all at once, using the R wrapper function `get_regression_table()` from the `moderndive` package. For `model_1`, the output is presented in Table \@ref(tab:simple-model-part-deux).
 
 ```{r eval=FALSE}
 get_regression_table(model_1)
@@ -690,11 +583,13 @@ get_regression_table(model_1) |>
 
 Note that the first row in Table \@ref(tab:simple-model-part-deux) addresses inferences for the intercept, $\beta_0$, and the second row deals with inference for the slope, $\beta_1$. The headers of the table present the information obtain for inference:
 
-- The `estimate` column contains the least-squares estimates, $b_0$ (first row) and $b_1$ (second row).
-- The `std_error` contains $SE(b_0)$ and $SE(b_1)$, the standard errors for $b_0$ and $b_1$, respectively. We have defined these standard errors in Subsection \@ref(se-regression).
-- The `statistic` column contains the $t$-test statistic for $b_0$ (first row) and $b_1$ (second row). If we focus on $b_1$, the $t$-test statistic was constructed using the equation $$t = \frac{b_1 - 0}{SE(b_1)} = `r t_stat`$$ which corresponds to the hypotheses $H_0: \beta_1 = 0$  versus $H_A: \beta_1 \ne 0$.
-- The `p_value` is the probability of obtaining a test statistic just as extreme as or more extreme than the one observed, assuming the null hypothesis is true. For this hypothesis test, the $t$-test statistic was equal to `r t_stat` and, therefore, the $p$-value was near zero, suggesting to reject the null hypothesis in favor of the alternative.
-- The values `lower_ci` and `upper_ci` are the lower and upper bound of a 95% confidence interval about $beta_1$.
+-   The `estimate` column contains the least-squares estimates, $b_0$ (first row) and $b_1$ (second row).
+-   The `std_error` contains $SE(b_0)$ and $SE(b_1)$, the standard errors for $b_0$ and $b_1$, respectively. We have defined these standard errors in Subsection \@ref(se-simple-lm).
+-   The `statistic` column contains the $t$-test statistic for $b_0$ (first row) and $b_1$ (second row). If we focus on $b_1$, the $t$-test statistic was constructed using the equation $$t = \frac{b_1 - 0}{SE(b_1)} = `r t_stat`$$ which corresponds to the hypotheses $H_0: \beta_1 = 0$ versus $H_A: \beta_1 \ne 0$.
+-   The `p_value` is the probability of obtaining a test statistic just as extreme as or more extreme than the one observed, assuming the null hypothesis is true. For this hypothesis test, the $t$-test statistic was equal to `r t_stat` and, therefore, the $p$-value was near zero, suggesting to reject the null hypothesis in favor of the alternative.
+-   The values `lower_ci` and `upper_ci` are the lower and upper bounds of a 95% confidence interval about $beta_1$.
+
+Please refer to previous subsections for the conceptual framework and a more detailed description of these quantities.
 
 ### Model fit and model assumptions {#model-fit}
 
@@ -702,34 +597,28 @@ We have introduced the linear model alongside assumptions about many of its elem
 
 Of course, we do not expect the linear model described in this chapter, or any other model, to be a perfect representation of a phenomenon presented in nature. Models are simplifications of reality, they do not intent to represent exactly the relationship in question but rather provide useful approximations that help improve our understanding of this relationship. Even more, we want models that are as simple as possible and still capture relevant features of the natural phenomenon we are studying. This approach is known as the *principle of parsimony* or *Occam's razor*.
 
-Even with a simple model like a linear one, we still want to know if it accurately represents the relationship in the data. This is called *model fit*. In addition, we want to determine whether or not the model assumptions have been met.
+But even with a simple model like a linear one, we still want to know if it accurately represents the relationship in the data. This is called *model fit*. In addition, we want to determine whether or not the model assumptions have been met.
 
-There are four elements in the linear model we want to check. To help you remember, we can use the following acroynym:
+There are four elements in the linear model we want to check. To help you remember, we can use the following acrostic:
 
-1. **L**inearity of relationship between variables
-- Is the relationship between $y_i$ and $x_i$ truly linear for each $i = 1, \dots, n$? In other words, is the linear model $y_i = \beta_0 + \beta_1 \cdot x_i + \epsilon_i$ a good fit?
-1. **I**ndependence of the response $y_i$ (and its error term $\epsilon_i$)
-- Are $y_i$ and $y_j$ independent for any $i \ne j$?
-1. **N**ormality of the error terms
-- Is the distribution of the error terms normal, or at least, approximately normal?
-1. **E**quality or constancy of variance for $y_i$ (and its error term $\epsilon_i$)
-- Is the variance, or standard deviation, of the response $y_i$ always the same, regardless of the value of $x_i$
+1.  **L**inearity of relationship between variables
+    -   Is the relationship between $y_i$ and $x_i$ truly linear for each $i = 1, \dots, n$? In other words, is the linear model $y_i = \beta_0 + \beta_1 \cdot x_i + \epsilon_i$ a good fit?
+2.  **I**ndependence of the response $y_i$ (and of its error term $\epsilon_i$)
+    -   Are $y_i$ and $\y_j$ independent for any $i \ne j$?
+3.  **N**ormality of the error terms
+    -   Is the distribution of the error terms normal, or at least, approximately normal?
+4.  **E**quality or constancy of the variance for $y_i$ (and for the error term $\epsilon_i$)
+    -   Is the variance, or standard deviation, of the response $y_i$ always the same, regardless of the fitted value ($\widehat{y}_i$) or the regressor value ($x_i$)?
 
+The acrostic follows **LINE**. This can serve as a nice reminder of what to check when using linear regression. \index{regression!model fit (LINE)} To check for **L**inearity, **N**ormality, and **E**qual or contant variance, we use the residuals of the linear regression via *residual diagnostics*\index{residual analysis} as we explain in the next subsection. To check for **I**ndependence we can use the residuals if the data was collected using a time sequence or other type of sequencez. Otherwise, independence may be achieved by obtaining a random sample, which eliminates a sequential type of dependency.
 
-The acronym follows as **LINE**. This can serve as a nice reminder of what to check for whenever you perform linear regression. \index{regression!model fit (LINE)}
-To check for **L**inearity, **N**ormality, and **E**qual variance, we use the residuals of the linear regression via *residual diagnostics*\index{residual analysis} as we explain in the next subsection. To check for **I**ndependence, we need to learn how the data was collected. 
-
-We start by reviewing how residuals are obtained, introduce residual diagnostics via visualizations, and use the example of the geyser eruptions to determine whether each of the four **LINE** elements are met, and discuss the implications. 
+We start by reviewing how residuals are obtained, introduce residual diagnostics via visualizations, use the example of the geyser eruptions to determine whether each of the four **LINE** elements are met, and discuss the implications.
 
 #### Residuals
 
 Recall that given a random sample of $n$ pairs $(x_1, y_1), \dots, (x_n,y_n)$ the linear regression was given by:
 
-$$\widehat{y}_i = b_0 + b_1 \cdot x_i$$
-for all the observations $i = 1, dots,n$. Recall that the residual, as defined in Subsection \@ref(model1points), is the *observed response* minus the *fitted value*. If we denote the residuals with the letter $e$ we get:
-$$e_i = y_i - \widehat{y}_i$$ 
-for $i = 1, \dots, n$. Combining these two formulas we get
-$$\begin{aligned}
+$$\widehat{y}_i = b_0 + b_1 \cdot x_i$$ for all the observations $i = 1, dots,n$. Recall that the residual, as defined in Subsection \@ref(model1points), is the *observed response* minus the *fitted value*. If we denote the residuals with the letter $e$ we get: $$e_i = y_i - \widehat{y}_i$$ for $i = 1, \dots, n$. Combining these two formulas we get $$\begin{aligned}
 y_i &= \underline{\widehat{y}_i} + e_i\\ 
 &= \underline{b_0 + b_1 \cdot x_i} + e_i
 \end{aligned}$$
@@ -741,7 +630,6 @@ $$y_i = \beta_0 + \beta_1 \cdot x_i + \epsilon_i$$
 In this context, residuals can be thought of as rough estimates of the error terms. Since many of the assumptions of the linear model are related to the error term, we can check these assumptions by studying the residuals.
 
 In Figure \@ref(fig:residual-example), we illustrate one particular residual for the geyser eruption where `duration` time is the explanatory variable and `waiting` time is the response. We use an arrow to connect the observed waiting time (a circle) with the fitted waiting time (a square). The vertical distance between these two points (or equivalently, the magnitude of the arrow) is the value of the residual for this observation.
-
 
 ```{r residual-example, echo=FALSE, fig.cap="Example of observed value, fitted value, and residual.", purl=FALSE, message=FALSE}
 # Pick out one particular point to drill down on
@@ -758,10 +646,10 @@ resid <- target_point$residual
 best_fit_plot <- ggplot(old_faithful_2024, aes(x = duration, y = waiting)) +
   geom_point() +
   labs(
-    x = "Duration", y = "Waiting",
-    title = "Relationship of Duration and Waiting times"
+    x = "duration", y = "waiting",
+    title = "Relationship of duration and waiting times"
   ) +
-  geom_smooth(method = "lm", se = FALSE) +
+  geom_smooth(method = "lm", se = FALSE,  linewidth = 0.5) +
   annotate("point", x = x, y = y, col = "red", size = 4) +
   annotate("point", x = x, y = y_hat, col = "red", shape = 15, size = 4) +
   annotate("segment",
@@ -771,142 +659,233 @@ best_fit_plot <- ggplot(old_faithful_2024, aes(x = duration, y = waiting)) +
 best_fit_plot
 ```
 
-We can obtain all the $n = `r n`$ residuals by applying the `get_regression_points()` function to the regression model `model_1`. Observe how the resulting values of `residual` are roughly equal to `waiting - waiting_hat` (there may be a slight difference due to rounding error).
+We can obtain all the $n = `r n_old_faithful`$ residuals by applying the `get_regression_points()` function to the regression model `model_1`. Observe how the resulting values of `residual` are roughly equal to `waiting - waiting_hat` (there may be a slight difference due to rounding error).
 
 ```{r}
 # Fit regression model:
-simple_model <- lm(waiting ~ duration, data = old_faithful_2024)
+model_1 <- lm(waiting ~ duration, data = old_faithful_2024)
 # Get regression points:
-regression_points <- get_regression_points(simple_model)
-regression_points
+fitted_and_residuals <- get_regression_points(model_1)
+fitted_and_residuals
 ```
 
 #### Residual diagnostics
 
-A *residual diagnostics* are used to verify conditions **L**, **N**, and **E**. While there are sophisticated statistical approaches that can be used, we focus on data visualization.
+*Residual diagnostics* are used to verify conditions **L**, **N**, and **E**. While there are sophisticated statistical approaches that can be used, we focus on data visualization.
+
+One of the most useful plots is a *residual plot* which is a scatterplot of the residuals against the fitted values. We use the `fitted_and_residuals` object to draw the scatterplot using `geom_point()` with the fitted values (`waiting_hat`) in the x-axis and the residuals (`residual`) in the y-axis. In addition, we add titles to our axes with `labs()` and draw a horizontal line at 0 for reference using `geom_hline()` and `yintercept = 0`, as shown in the following code:
+
+```{r eval=FALSE}
+fitted_and_residuals |>
+  ggplot(aes(x = waiting_hat, y = residual)) +
+  geom_point() +
+  labs(x = "duration", y = "residual") +
+  geom_hline(yintercept = 0, col = "blue")
+```
+
+In Figure \@ref(fig:scatt-and-residual) we show this residual plot (right plot) alongside the scatterplot for `duration` vs `waiting` (left plot). Note how the residuals on the left plot are determined by the vertical distance between the observed response and the linear regression. On the right plot (residuals) we have removed the effect of the linear regression and the effect of the residuals is seen as the vertical distance from each point to the zero line (y-axis). Using this plot it is easier to spot patterns or trends that may be in conflict with the assumptions of the model, as we describe below.
+
+```{r scatt-and-residual, echo=FALSE, fig.cap="The scatterplot and residual plot for the Old Faithful data.", purl=FALSE, message=FALSE}
+g1 <- ggplot(old_faithful_2024, aes(x = duration, y = waiting)) +
+  geom_point(alpha=0.6) +
+  labs(
+    x = "duration", y = "waiting"  ) +
+  geom_smooth(method = "lm", color="blue",  se = FALSE, linewidth = 0.5)
+
+g2 <- fitted_and_residuals |>
+  ggplot(aes(x = waiting_hat, y = residual)) +
+  geom_point(alpha=0.6) +
+  geom_hline(yintercept = 0, color="blue")
+library(GGally)
+grid.arrange(g1, g2, ncol=2)
+```
+
+In what follows we show how the residual plot can be used to determine whether the linear model assumptions are met.
 
 ##### Linearity of relationship
 
-We want to check whether the association between the response $y_i$ and the explanatory variable $x_i$ is **L**inear. Recall the scatterplot in Figure \@ref(fig:geyserplot1) where we had the explanatory variable $x$ as duration and the outcome variable $y$ as waiting time. Would you say that the relationship between $x$ and $y$ is linear? It's hard to say because of the scatter of the points about the line. In the authors' opinions, we feel this relationship is "linear enough."
+We want to check whether the association between the response $y_i$ and the explanatory variable $x_i$ is **L**inear. We do expect, due the error term in the model, that the scatteplot of residuals against fitted values shows some random variation, but the variation should not be systematic in any direction and the trend should not show non-linear patterns. Actually, a scatterplot of residuals against fitted showing no patterns but simply a cloud of points that seems randomly assigned in every direction, with the residuas' variation (y-axis) about the same for any fitted values (x-axis) and with points located as much above as below the zero line, is called a *null* plot. Plots of residuals against fitted values or regressors that are *null* plots do not show any evidence against the assumptions of the model. In other words, if we want our linear model to be adequate, we hope to see *null* plots when plotting residuals against fitted values.
 
-Let's present an example where the relationship between $x$ and $y$ is clearly not linear in Figure \@ref(fig:non-linear). In this case, the points clearly do not form a line, but rather a U-shaped polynomial curve. In this case, any results from an inference for regression would not be valid. 
+This is largely the case for the geyser example, with the residuals against the fitted values (`waiting_hat`) shown in the right-plot of Figure \@ref(fig:scatt-and-residual). The residual plot is not a *null* plot as it appears there are some clusters of points as opposed to a complete random assignment, but there are not systematic trends in any direction or the appearance of a non-linear relationship. So, based on this plot, we believe that the data does not violate the assumption of linearity.
 
-```{r non-linear, echo=FALSE, fig.cap="Example of a clearly non-linear relationship.", fig.height=3.3, message=FALSE, purl=FALSE}
+By contrast, assume now that the scatterplot of `waiting` against `duration` and associated residual plot are shown in Figure \@ref(fig:non-linear). We are not using the real data here, but a simulated data. A quick look at the scatterplot and regression line (left plot) could lead some of us to believe that the regression line is an appropriate summary of the relationship. But if we look carefully, you may notice that the residuals for low values of `duration` are mostly below the regression line, residuals for values in the middle range of `duration` are mostly above the regression line, and residuals for large values of `duration` are again below the regression line. This is the reason we prefer to use plots of residuals against fitted values (right plot) as we have removed the effect of the regression and can focus entirely on the residuals. It is easy to see that the points clearly do not form a line, but rather a U-shaped polynomial curve. If this was the real data observe, using the linear regression with these data would produce results that are not valid or adequate.
+
+```{r non-linear, echo=FALSE, fig.cap="Example of a non-linear relationship.", fig.height=3.3, message=FALSE, purl=FALSE}
 set.seed(76)
+data_aux <- old_faithful_2024 |>
+  mutate(x = duration, y = 150+( (((x/2 - min(old_faithful_2024$duration)) * (x/2 - max(old_faithful_2024$duration)))) / (max(old_faithful_2024$duration) - min(old_faithful_2024$duration)))*(-1/2) + rnorm(n(), 0, 1.5))
+
+g1 <- data_aux |> ggplot(aes(x = x, y = y)) +
+  geom_point(alpha = 0.6) +
+  labs(x = "duration", y = "waiting") +
+  geom_smooth(method = "lm", color = "blue", alpha = 0.3, se = FALSE, linewidth = 0.5) 
+
+g2 <-  get_regression_points(lm(y ~ x, data_aux))|>
+  ggplot(aes(x = y_hat, y = residual)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, color="blue") +
+    labs(x = "waiting_hat", y = "residual") 
+
+
+grid.arrange(g1, g2, ncol=2)
+```
+
+##### Independence of the response
+
+Another assumption we want to check is the **I**ndependence of the error terms and the response values. If they are not independent, some patterns of dependency may appear in the observed data.
+
+The residuals could be used for this purpose too as they are a rough approximation of the error terms. If data was collected in a time sequence or other type of sequence, the residuals may also help us determine lack of independence by plotting the residuals against time. As it happens, the geyser eruption example does have a time component we can use: the `old_faithful_2024` data set contains the `date` variable. We show the plot of `residuals` against `date` (time)
+
+```{r time-plot, echo=FALSE, fig.cap="Scatterplot of date (time) vs residuals for the Old Faithful example.", fig.height=3.3, message=FALSE, purl=FALSE}
 old_faithful_2024 |>
-  mutate(
-    x = duration,
-    y = 150 + (((x - min(old_faithful_2024$duration)) * (x - max(old_faithful_2024$duration)))) / (max(old_faithful_2024$duration) - min(old_faithful_2024$duration)) + rnorm(n(), 0, 0.75)
-  ) |>
-  ggplot(aes(x = x, y = y)) +
-  geom_point() +
-  labs(x = "Duration", y = "Waiting") +
-  geom_smooth(method = "lm", se = FALSE) #+
-#  expand_limits(y = c(min(old_faithful_2024$waiting), max(old_faithful_2024$waiting)))
+  mutate(residual = resid(model_1)) |>
+  ggplot(aes(y = residual, x = date)) +
+  geom_point()
 ```
 
-##### Independence of residuals
+The plot of residuals against time (`date`) seems a null plot. Based on this plot we could say that the residuals do not exhibit any evidence of dependency.
 
-The second condition is that the residuals must be **I**ndependent. This means that the residuals for different observations should not be influenced by each other, and the observations themselves should be independent.
+Now, the observations in this data set are only a subset of all the geyser eruptions that happen during this time frame and most or all of them are eruptions that do not happened sequentially, one after the next. Each observation in this dataset represents a unique eruption of Old Faithful, with `waiting` times and `duration` recorded separately for each event. Since these eruptions occur independently of one another, the residuals derived from the regression of `waiting` versus `duration` are also expected to be independent. As discussed in Subsection \@ref(sample-regression-inference), we can consider this a random sample for illustration purposes.
 
-For the `old_faithful_2024` dataset, where we're analyzing the relationship between the `waiting` time and the `duration` of eruptions, we can reasonably assume that the residuals are independent. Each observation in this dataset represents a unique eruption of Old Faithful, with `waiting` times and `duration` recorded separately for each event. Since these eruptions occur independently of one another, the residuals derived from the regression of `waiting` versus `duration` are also expected to be independent.
+In this case, the assumption of independence seems acceptable. Note that the `old_faithful_2024` data do not involve repeated measurements or grouped observations that could lead to dependency issues. Therefore, we can proceed with the regression analysis as we believe that the error terms are not systematically related to one another.
 
-In this case, the independence condition **is** met. The `old_faithful_2024` data does not involve repeated measurements or grouped observations that could lead to dependency issues. Therefore, we can proceed with our regression analysis with confidence that the residuals are not systematically related to one another, fulfilling the assumption of independence. This is an important aspect, as violating the independence assumption could lead to misleading conclusions in the analysis.
+While determining lack of independence may not be easy in certain settings, in particular if no time sequence or other sequence measurements are involved, obtaining a random sample is the golden standard.
 
-This contrasts with situations where repeated measures or other dependencies might exist, such as data collected from the same individuals or groups multiple times. Here, since each eruption is a distinct entity, we do not have to account for repeated measures or related observations, simplifying our analysis.
+##### Normality of the error terms
 
-We'll move on to check the remaining two conditions in our analysis to ensure that all assumptions are met before drawing any conclusions.
+The third assumption we want to check is whether the error terms follow **N**ormal distributions with expected value equal to zero.
 
-##### Normality of residuals
+Using the residuals as a rough estimate of the error term values, we have seen in the right plot of Figure \@ref(fig:scatt-and-residual) that sometimes the residuals are positive and other times negative. We want to see if, *on average*, the errors should equal zero and the shape of their distribution approximate a bell shaped curve.
 
-The third condition is that the residuals should follow a **N**ormal distribution. Furthermore, the center of this distribution should be 0. In other words, sometimes the regression model will make positive errors: $y - \widehat{y} > 0$. Other times, the regression model will make equally negative errors: $y - \widehat{y} < 0$. However, *on average* the errors should equal 0 and their shape should be similar to that of a bell.
+We can use a histogram to visualize the distribution of the residuals:
 
-The simplest way to check the normality of the residuals is to look at a histogram, which we visualize in Figure \@ref(fig:model1residualshist).
-
-```{r model1residualshist, fig.cap="Histogram of residuals."}
-ggplot(regression_points, aes(x = residual)) +
-  geom_histogram(bins = 12, color = "white") +
-  labs(x = "Residual")
+```{r eval = FALSE}
+fitted_and_residuals |>
+  ggplot(aes(residual)) +
+  geom_histogram(binwidth = 10, color = "white")
 ```
 
-This histogram appears to be pretty close to symmetric with the model tending to not underestimate or overestimate waiting times dramatically. The histogram also looks roughly normal in shape as the bell-shaped pattern is emerging. However, there are some deviations from normality, such as the highest bin value appearing just to the right of center. This doesn't appear to be much of an issue though from the authors' perspective.
+We can also use a *quantile-to-quantile* plot or *QQ-plot*. The QQ-plot create a scatterplot of the quantiles (or percentiles) of the residuals against the quantiles of a normal distribution. If the residuals follow approximately a normal distribution the scatterplot would be a straight line of 45 degrees. To draw a QQ-plot for the geyser eruptions example we use the `fitted_and_residuals` data frame that contains the residuals of the regression, `ggplot()` with `aes(sample = residual)` and the `geom_qq()` function for drawing the QQ-plot. We also include the function `geom_qq_line()` to add a 45 degree line for comparison. The code to obtain a QQ-plot is shown below:
 
-Let's present examples where the residuals clearly do and don't follow a normal distribution in Figure \@ref(fig:normal-residuals). In this case of the model yielding the clearly non-normal residuals on the right, any results from an inference for regression would not be valid. 
-
-```{r normal-residuals, echo=FALSE, fig.cap="Example of clearly normal and clearly not normal residuals.", purl=FALSE}
-sigma <- sd(regression_points$residual)
-normal_and_not_examples <- UN_data_ch10 |>
-  mutate(
-    `Clearly normal` = rnorm(n = n(), 0, sd = sigma),
-    `Clearly not normal` = rnorm(n = n(), mean = 0, sd = sigma)^2,
-    `Clearly not normal` = `Clearly not normal` - mean(`Clearly not normal`)
-  ) |>
-  select(life_exp, `Clearly normal`, `Clearly not normal`) |>
-  gather(type, eps, -life_exp) |>
-  ggplot(aes(x = eps)) +
-  geom_histogram(bins=12, color = "white") +
-  labs(x = "Residual") +
-  facet_wrap(~type, scales = "free")
-
-if (is_latex_output()) {
-  normal_and_not_examples +
-    theme(
-      strip.text = element_text(colour = "black"),
-      strip.background = element_rect(fill = "grey93")
-    )
-} else {
-  normal_and_not_examples
-}
+```{r eval = FALSE}
+fitted_and_residuals |>
+  ggplot(aes(sample = residual)) +
+  geom_qq() +
+  geom_qq_line()
 ```
 
+In Figure \@ref(fig:model1residualshist) we include both, a histogram of the residuals including a normal curve for comparison (left plot) and a QQ-plot (right plot)
 
-##### Equality of variance
+```{r model1residualshist, echo = FALSE, fig.cap="Histogram of residuals."}
+g1 <- ggplot(fitted_and_residuals, aes(x = residual)) +
+  geom_histogram(aes(y=after_stat(density)), binwidth = 10, color = "white") + 
+  stat_function(fun = dnorm,  args = list(mean = 0, sd = s), col="blue") + xlim(-50,50) +
+  labs(x = "residual")
 
-The fourth and final condition is that the residuals should exhibit **E**qual variance across all values of the explanatory variable $x$. In other words, the value and spread of the residuals should not depend on the value of the explanatory variable $x$.  
+g2 <- ggplot(fitted_and_residuals, aes(sample = residual)) +
+  geom_qq() +
+  geom_qq_line(col="blue", linewidth = 0.5)
 
-Recall the scatterplot in Figure \@ref(fig:geyserplot1): we had the explanatory variable $x$ of `duration` on the x-axis and the outcome variable $y$ of `waiting` on the y-axis. Instead, let's create a scatterplot that has the same values on the x-axis, but now with the residual $y-\widehat{y}$ on the y-axis as seen in Figure \@ref(fig:numxplot6).
-
-```{r numxplot6, fig.cap="Plot of residuals over beauty score."}
-ggplot(regression_points, aes(x = duration, y = residual)) +
-  geom_point() +
-  labs(x = "Duration", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue", linewidth = 1)
+grid.arrange(g1, g2, ncol=2)
 ```
 
-You can think of Figure \@ref(fig:numxplot6) as a modified version of the plot with the regression line in Figure \@ref(fig:geyserplot1), but with the regression line flattened out to $y=0$. Looking at this plot, would you say that the spread of the residuals around the line at $y=0$ is constant across all values of the explanatory variable $x$ of duration? This question is rather qualitative and subjective in nature, thus different people may respond with different answers. For example, some people might say that there is slightly more variation in the residuals for larger values of $x$ than for smaller ones. However, it can be argued that there isn't a *drastic* non-constancy.
+The histogram of the residuals shown in Figure \@ref(fig:model1residualshist) (left plot) does not appear exactly normal as there are some deviations, such as the highest bin value appearing just to the right of the center. But the histograms does not seem too far from normality either. The QQ-plot (right plot) supports this conclusion. The scatteplot is not exactly on the 45 degree line but it does not deviate much from it either.
 
-In Figure \@ref(fig:equal-variance-residuals) let's present an example where the residuals clearly do not have equal variance across all values of the explanatory variable $x$. 
+We compare these results with residuals, obtained by simulation, that do not appear to follow normality, as shown in Figure \@ref(fig:not-normal-residuals). In this case of the model yielding the clearly non-normal residuals on the right, any results from an inference for regression would not be valid.
+
+```{r not-normal-residuals, echo = FALSE, fig.cap="Histogram of residuals."}
+set.seed(3)
+g1 <- fitted_and_residuals |>
+    mutate(
+    `Not normal` = rnorm(n = n(), mean = 0, sd = s)^2/40 - mean(rnorm(n = n(), 0, sd = s))-10)|>
+  ggplot(aes(x = `Not normal`)) +
+  geom_histogram(aes(y=after_stat(density)), binwidth = 10, color = "white") + 
+  stat_function(fun = dnorm,  args = list(mean = 0, sd = s), col="blue") + xlim(-50,50) +
+  labs(x = "residual")
+
+g2 <- fitted_and_residuals |>
+    mutate(
+    `Not normal` = rnorm(n = n(), mean = 0, sd = s)^2/40 - mean(rnorm(n = n(), 0, sd = s))-10)|>
+  ggplot(aes(sample = `Not normal`)) +
+  geom_qq() +
+  geom_qq_line(col="blue", linewidth = 0.5)
+
+grid.arrange(g1, g2, ncol=2)
+```
+
+##### Equality or constancy of variance for the response (and its error term)
+
+The final assumption we check is the **E**quality or constancy of the variance for the error term (and for the response) across all fitted values or regressor values. Constancy of variance is also known as \index{homoskedasticity} *homoskedasticity*.
+
+Using the residuals, again, as rough estimates of the error terms, we want to check that the dispersion of the residuals is the same for any fitted value $\widehat{y}_i$ or regressor $x_i$. In Figure \@ref(fig:scatt-and-residual) we showed the scatterplot of residuals against fitted values (right plot). We can also produce the scatterplot of residuals against the regressor `duration` using the following code:
+
+```{r eval=F}
+fitted_and_residuals |>
+  ggplot(aes(x = duration, y = residual)) +
+  labs(x = "duration", y = "residual") +
+  geom_hline(yintercept = 0)
+```
+
+In Figure \@ref(fig:residual-plot) we produce the scatterplot of residuals against the regressor `duration`. With the exception of the change of scale on the x-axis, it is equivalent, for visualization purposes, producing a plot of residuals ($e_i$) against either the fitted values ($\widehat{y}_i$) or the regressor values ($x_i$). This happens because the fitted values are a linear transformation of the regressor values, $\widehat{y}_i = b_0 + b_1\cdot x_i$.
+
+```{r residual-plot, echo=FALSE, fig.cap="Plot of residuals against the regressor.", purl=FALSE, message=FALSE}
+fitted_and_residuals |>
+  ggplot(aes(x = duration, y = residual)) +
+  geom_point(alpha=0.6) +
+  labs(x = "duration", y = "residual") +
+  geom_hline(yintercept = 0, color="blue", linewidth = 0.5)
+```
+
+Observe the vertical dispersion or spread of the residuals for different values of `duration`:
+
+-   For `duration` values between 100 and 150 seconds, the residual values are somewhere between -25 and 40, a spread of about 65 units.
+-   For `duration` values between 150 and 200 seconds, there are only a handful of observations and it is not clear what the spread is.
+-   For `duration` values between 200 and 250 seconds, the residual values are somewhere between -37 and 32, a spread of about 69 units.
+-   For `duration` values between 250 and 300 seconds, the residual values are somewhere between -42 and 27, a spread of about 69 units.
+
+The spread is not exactly constant across all values of `duration`. It seems to be slightly higher for greater values of `duration` but there seems to be a larger number of observations for higher values of `duration` as well. Observe also that there are two or three cluster of points and the dispersion of residuals is not completely uniform. While the residual plot is not exactly a null plot, there is not clear evidence against the assumption of homoskedasticity.
+
+We are not surprised to see plots such as this one when dealing with real data. It is possible that the residual plot is not exactly a *null* plot because there may be some information we are missing that could improve our model, for example another regressor. Do not forget that we are using a linear model to approximate the relationship between `duration` and `waiting` times, we do not expect the model to perfectly describe this relationship. When you look at these plots, you trying to find clear evidence of the data not meeting the assumptions used. In this example, it does not believe we are violating the assumption of constant variance.
+
+In Figure \@ref(fig:equal-variance-residuals) we present an example, using simulated data, where there is evidence for non-constant variance.
 
 ```{r equal-variance-residuals, echo=FALSE, fig.cap="Example of clearly non-equal variance.", purl=FALSE}
 old_faithful_2024 |>
   mutate(eps = (rnorm(n(), 0, 0.075 * duration^2)) * 0.4) |>
   ggplot(aes(x = duration, y = eps)) +
   geom_point() +
-  labs(x = "Duration", y = "Residual") +
-  geom_hline(yintercept = 0, col = "blue", linewidth = 1)
+  labs(x = "duration", y = "residual") +
+  geom_hline(yintercept = 0, col = "blue", linewidth = 0.5)
 ```
 
-Observe how the spread of the residuals increases as the value of $x$ increases. This is a situation known as \index{heteroskedasticity} *heteroskedasticity*. Any inference for regression based on a model yielding such a pattern in the residuals would not be valid. 
+Observe how the spread of the residuals increases as the regressor value increases. Lack of constant variance is also known as \index{heteroskedasticity} *heteroskedasticity*. When heteroskedasticity is present, some of the results obtained such as the standard error of the least-square estimators, confidence intervals, or conclusion for hypothesis test would not be valid.
 
+##### What is the conclusion? {#what-is-the-conclusion}
 
-##### What's the conclusion? {#what-is-the-conclusion}
+We did not find conclusive evidence against any of the assumptions of the model:
 
-Let's list our four conditions for inference for regression again and indicate whether or not they were satisfied in our analysis:
+1.  **L**inearity of relationship between variables
+2.  **I**ndependence of the error terms
+3.  **N**ormality of the error terms
+4.  **E**quality or constancy of the variance
 
-1. **L**inearity of relationship between variables: Yes
-1. **I**ndependence of residuals: Yes
-1. **N**ormality of residuals: Yes
-1. **E**quality of variance: Yes
+This does not mean that our model was perfectly adequate. The residual plot was not a *null* plot and had some clusters of points that cannot be explained by the model. But overall, there were no trends that could be considered clear violations of the assumptions and the conclusions we get from this model may be valid.
 
-So what does this mean for the results of our confidence intervals and hypothesis tests?
+What to do when the assumptions are not met?
 
-First, the **I**ndependence condition. It seems that the data was collected in a way such that it leads to an independence of each row. Thus, the condition is likely to be satisfied.
+When there are clear violations of the assumptions in the model, all the results obtained may be suspect. In addition, there may be some remedial measures that can be taken to improve the model. None of these measures will be addressed here as this material extend beyond the scope of this book, but we briefly discuss potential solutions for future reference.
 
-Second, when conditions **L**, **N**, **E** are not met, it often means there is a shortcoming in our model. In our example, it appears that conditions **L**, **N**, **E** are met. But what if they weren't? For example, it may be the case that using only a single explanatory variable is insufficient, as we did with duration. We may need to incorporate more explanatory variables in a multiple regression model as we did in Chapter \@ref(multiple-regression), or perhaps use a transformation of one or more of your variables, or use an entirely different modeling technique. To learn more about addressing such shortcomings, you'll have to take a class on or read up on more advanced regression modeling methods. 
+When the **L**inearity of relationship between variables is not met, a simple transformation of the regressor, the response, or both variables may solve the problem. If not, alternative methods such as *spline regression*, *generalized linear models*, or *non-linear models* may be used to address these situations. When additional regressors are available, including other regressors as in *multiple linear regression* may produce better results.
 
-The conditions for inference in regression problems are a key part of regression analysis that are of vital importance to the processes of constructing confidence intervals and conducting hypothesis tests. However, it is often the case with regression analysis in the real world that not all the conditions are completely met. Furthermore, as you saw, there is a level of subjectivity in the residual analyses to verify the **L**, **N**, and **E** conditions. So what can you do? We as authors advocate for transparency in communicating all results. This lets the stakeholders of any analysis know about a model's shortcomings or whether the model is "good enough." So while this checking of assumptions has lead to some fuzzy "it depends" results, we decided as authors to show you these scenarios to help prepare you for difficult statistical decisions you may need to make down the road while also viewing situations where the assumptions are clearly violated.
+If the **I**ndependence assumption is not met, but the dependency is established by a variable within the data at hand, *linear mixed-effects models*, also known as *hierarchical* or *multilevel models* can be used.
 
-<!-- CI: Need to replace -->
+Small departures of the **N**ormality of the error terms assumption is not too concerning and most of the results we obtain, including those related to confidence intervals and hypothesis tests, may still be valid. On the other hand, when the violations to the normality assumption are large, many of the results obtained may no longer be valid. Using the advanced methods suggested early may correct these problems too.
+
+When the **E**quality or constancy of the variance is not met, adjusting the variance by adding weights to individual observations may be possible if relevant information is available that makes those weights known. The method is called *weighted linear regression* or *weighted least squares* and it is a direct extension to the model we have studied. If information of the weights is not available, some methods can be used to provide an estimator for the internal structure of the variance in the model. One of the most popular of these methods is called the *sandwich estimator*.
+
+Checking that the assumptions of the model are satisfied is a key component of regression analysis. Constructing and interpreting confidence intervals as well as conducting hypothesis tests and providing conclusions are directly affected by whether or not assumptions are satisfied. At the same time, it is often the case with regression analysis the level of subjectivity when visualizing and interpreting plots is present and sometimes we are faced with difficult statistical decisions.
+
+So what can be done? We suggest transparency and clarity in communicating results. It is important to highlight important elements that may suggest departures from relevant assumptions, and then provide pertinent conclusions. In this way, the stakeholders of any analysis are aware of the model's shortcomings and can decide whether or not to agree with the conclusions presented to them.
 
 ```{block, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
@@ -914,24 +893,636 @@ The conditions for inference in regression problems are a key part of regression
 \vspace{-0.1in}
 ```
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Continuing with our regression using `age` as the explanatory variable and teaching `waiting` as the outcome variable.
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Use the the `un_member_states_2024` data frame included in the `moderndive` package with response variable fertility rate (`fert_rate`) and the regressor life expectancy (`life_exp`).
 
-- Use the `get_regression_points()` function to get the observed values, fitted values, and residuals for all `r n_UN_data_ch10` instructors. 
-- Perform a residual analysis and look for any systematic patterns in the residuals. Ideally, there should be little to no pattern but comment on what you find here.
+-   Use the `get_regression_points()` function to get the observed values, fitted values, and residuals for all UN member countries.
+-   Perform a residual analysis and look for any systematic patterns in the residuals. Ideally, there should be little to no pattern but comment on what you find here.
 
 ```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
 \vspace{-0.25in}
 ```
 
+## The Multiple Linear Regression Model
 
+### The model {#multiple-linear-model}
+
+The extension from a simple to a multiple regression model is straightforward. We assume that a population has a response variable ($Y$) an two or more explanatory variables ($X_1, X_2, \dots, X_p$) with $p \ge 2$. The *statistical linear relationship* between these variables is given by
+
+$$Y = \beta_0 + \beta_1 \cdot X_1 + \dots + \beta_p X_p + \epsilon$$ where $\beta_0$ is the population intercept and $\beta_j$ is the population partial slope related to regressor $X_j$. The error term $\epsilon$ accounts for the portion of $Y$ that is not explained by the line. As in the simple case, we assume that the expected value is $E(\epsilon) = 0$, the standard deviation is $SD(\epsilon) = \sigma$, and the variance is $Var(\epsilon) = \sigma^2$. The variance and standard deviation are constant regardless of the value of $X_1, X_2, \dots, X_p$.
+
+If you were to take a large number of observations from this population, we expect the error terms sometimes to be greater than zero and other times less than zero, but on average equal to zero, give or take $\sigma$ units away from zero.
+
+### Example: coffee scores
+
+As in the case of simple linear regression we use a random sample to estimate the parameters in the population. To illustrate these method we use the `coffee_quality` data frame from package `moderndive`. This data set contains information about coffee scores based on 10 different attributes: `aroma`, `flavor`, `aftertaste`, `acidity`, `body`, `balance`, `uniformity`, `clean_cup`, `sweetness`, and `overall.` In addition, the data frame contains other information such as the `moisture_percentage` or the coffee's `country` and `continent_of_origin`. We can assume that this is a random sample.
+
+We plan to regress `total_cup_points` (response variable) on the numerical explanatory variables `aroma`, `flavor`, and `moisture_percentage`; and the categorical explanatory variable with four categories; `Africa`, `Asia`, `North America`, and `South America`. Before proceeding, we construct a new data frame called `coffee_data` by keeping the variables of interest. In addition, The variable `continent_of_origin` has been read in R with type `character` and we want to make it type `factor`. We do this by using `dplyr` verbs and including the command `as.factor()` inside `mutate()` to make `continent_of_origin` a factor.
+
+```{r}
+coffee_data <- coffee_quality |>
+  select(aroma, flavor, moisture_percentage, 
+         continent_of_origin, total_cup_points) |>
+  mutate(continent_of_origin =  as.factor(continent_of_origin))
+```
+
+The first ten rows of `coffee_data` are shown here for illustration purposes:
+
+```{r}
+coffee_data
+```
+
+By looking at the fourth row we can tell, for example, that the `total_cup_points` were `r coffee_data[4,"total_cup_points"][[1]]` with `aroma` score equal to `r coffee_data[4,"aroma"][[1]]` points, `flavor` score equal to `r coffee_data[4,"flavor"][[1]]` points, `moisture_percentage` equal to `r coffee_data[4,"moisture_percentage"][[1]]`% and `r as.character(coffee_data[4,"continent_of_origin"][[1]])` was the `country_of_origin`. We also display the summary for these variables:
+
+```{r}
+coffee_data |>
+  tidy_summary()
+coffee_data[1,"total_cup_points"][[1]]
+```
+
+```{r echo=F}
+# This code is used for dynamic non-static in-line text output purposes
+n_coffee <- length(coffee_data$total_cup_points)
+table_coffee <-coffee_data |>
+  tidy_summary()
+tcp <-table_coffee[1,]
+aroma <-table_coffee[2,]
+flavor <-table_coffee[3,]
+```
+
+As an illustration, observe that we have a sample of `r n_coffee` observations, the `total_cup_points` ranges from `r tcp[5][[1]]` to `r tcp[10][[1]]`, the average `aroma` score was `r aroma[7][[1]]`, and the median `flavor` score was `r flavor[8][[1]]`.
+
+Note that each observation is composed of $p+1$ values, the values for the explanatory variables ($X_1, \dots, X_p$) and the value for the response ($Y$). The sample takes the form:
+
+$$\begin{array}{c}
+(x_{11}, x_{12},\dots, x_{1p}, y_1)\\
+(x_{21}, x_{22},\dots, x_{2p}, y_2)\\
+\vdots\\
+(x_{n1}, x_{n2},\dots, x_{np}, y_n)\\
+\end{array}$$
+
+where $(x_{i1}, x_{i2},\dots, x_{ip}, y_i)$ are the values of the $i$th observation in the sample for $i=1$, $\dots$, $n$. Using this notation, for example, $x_{i2}$ is the value of the $i$th observation in the data for the second explanatory variable $X_2$.
+
+In the coffee example $n = `r n_coffee`$ and the value of the second explanatory variable (`flavor`) for the 4th observation is $x_{42} = `r coffee_data[4,3][[1]]`$.
+
+We can now create data visualizations. When performing multiple regression it is useful to construct a scatterplot matrix, a matrix that contains the scatterplots for all the variable pair combinations. In R, we can use the function `ggpairs()` from package `GGally` to generate a scatterplot matrix and some useful additional information. Here is the code:
+
+```{r eval=FALSE}
+coffee_data |>
+  ggpairs()
+```
+
+In Figure \@ref(fig:coffee-scatter-matrix) we present the scatterplot matrix for all the variables of interest.
+
+```{r coffee-scatter-matrix, echo=F, fig.cap="Scatterplot of relationship of eruption duration and waiting time", fig.height=4.5, purl=FALSE, message=FALSE}
+# Update to ggpairs() by adding and loading package GGally
+coffee_data |>
+  ggpairs()
+```
+
+We first comment on the plots with the response (`total_cup_points`) on the vertical axis. They are located in the last row of plots in the figure. When plotting `total_cup_points` against `aroma` (bottom row, rightmost plot) or `total_cup_points` against `flavor` (bottom row, second plot from the left) we observe a strong and positive linear relationship. The plot of `total_cup_points` against `moisture_percentage` (bottom row, third plot from the left) does not provide much information and it appears that these variables are not associated in any way, but we observe an outlying observation for `moisture_percentage` around zero. The plot of `total_cup_points` versus `continent_of_origin` (bottom row, four plot from the left) shows four histograms, one for each factor level; the fourth group seems to have a larger dispersion, even though the number of observations seems smaller. The associated boxplots connecting these two variables (fourth row, rightmost plot) suggests that the first factor level has a higher mean cup points than the other three. It is often useful to also find linear association between numerical regressors as it is the case for the scatterplot for `aroma` against `flavor` which suggest a strong positive linear association. By contrast, almost no relationship can be found when observing `moisture_percentage` against either `aroma` or `flavor`.
+
+```{r echo=FALSE}
+# This code is used for dynamic non-static in-line text output purposes
+corr_table <- coffee_data |>
+  select(-continent_of_origin) |>
+  cor() |>
+  round(digits = 2)
+```
+
+The function `ggpairs()` not only produces these plots, but includes the correlation coefficient for any pair of numerical variables. In this example, the correlation coefficients supports the findings obtained using the scatterplot matrix. The correlations between `total_cup_points` and `aroma` (`r corr_table[4,1]`) and `total_cup_points` and `flavor` (`r corr_table[4,2]`) are positive and close to one, suggesting a strong positive linear association. Recall that the correlation coefficient is relevant if the association is approximately linear. The correlation between `moisture_percentage` and any other variable is close to zero, suggesting that `moisture_percentage` is likely not linearly associated with any other variable, response or regressor. Note also that the correlation between `aroma` and `flavor` (`r corr_table[2,1]`) supports our conclusion of a strong positive association.
+
+### Least squares for multiple regression {#least-squares-multiple}
+
+Observe that we have three numerical regressors and one factor (`continent_of_origin`) with four factor levels: `Africa`, `Asia`, `North America`, and `South America`. To introduce the factor levels in the linear model we represent the factor levels using dummy variables as described in Subsection \@ref(model4interactiontable). These are the dummy variable that we need:
+
+$$\begin{array}{}
+D_1 = \left\{
+\begin{array}{ll}
+1 & \text{if the continent of origin is Africa} \phantom{afdasfd} \\
+0 & \text{otherwise}\end{array}
+\right.\\
+D_2 = \left\{
+\begin{array}{ll}
+1 & \text{if the continent of origin is Asia}\phantom{asdfasdfa} \\
+0 & \text{otherwise}\end{array}
+\right.\\
+D_3 = \left\{
+\begin{array}{ll}
+1 & \text{if the continent of origin is North America}\phantom{} \\
+0 & \text{otherwise}\end{array}
+\right.\\
+D_4 = \left\{
+\begin{array}{ll}
+1 & \text{if the continent of origin is South America} \phantom{}\\
+0 & \text{otherwise}\end{array}
+\right.\\
+\end{array}$$
+
+Recall also that we drop the first level as this level will be accounted by the intercept in the model. As we did in the simple linear case, we assume that linearity between the response and the regressors holds and apply the linear model described in Subsection \@ref(multiple-linear-model) to each observation in the sample. If we express the model in terms of the $i$th observation we get
+
+$$\begin{aligned}{y_i} 
+= 
+\beta_0 &+ \beta_1 x_{i1} + \beta_2 x_{i2} + \beta_3 x_{i3}+ \beta_{02}D_{i2} + \beta_{03}D_{i3} + \beta_{04}D_{i4} + \epsilon_i
+\end{aligned}$$
+
+where, for the $i$th observation in the sample, $x_{i1}$ represents the `aroma` score, $x_{i2}$ the `flavor` score, $x_{i3}$ the `moisture_percentage`, $D_{i2}$ the dummy variable for`Asia`, $D_{i3}$ the dummy variable for `North America`, and $D_{i4}$ the dummy variable for `South America`. Recall that $i$ is the subscript that represents any one observation in the sample. Alternatively, we could present the model for all the observations:
+
+$$\begin{aligned}
+y_1 
+&= 
+\beta_0 + \beta_1 x_{11} + \beta_2 x_{12} + \beta_3 x_{13}+ \beta_{02}D_{12} + \beta_{03}D_{13} + \beta_{04}D_{14} + \epsilon_1\\
+y_2 
+&= 
+\beta_0 + \beta_1 x_{21} + \beta_2 x_{22} + \beta_3 x_{23}+ \beta_{02}D_{22} + \beta_{03}D_{23} + \beta_{04}D_{24} + \epsilon_2\\
+& \phantom{  a}\vdots \\
+y_n 
+&= 
+\beta_0 + \beta_1 x_{n1} + \beta_2 x_{n2} + \beta_3 x_{n3}+ \beta_{02}D_{n2} + \beta_{03}D_{n3} + \beta_{04}D_{n4} + \epsilon_n
+\end{aligned}$$
+
+The extension of the least-squares method applied to multiple regression is straightforward. We want to obtain the coefficient estimators that minimize the *sum of squared residuals*:
+
+$$\sum_{i=1}^n \left[y_i - (\beta_0 + \beta_1 x_{i1} + \beta_2 x_{i2} + \beta_3 x_{i3}+ \beta_{02}D_{i2} + \beta_{03}D_{i3} + \beta_{04}D_{i4} )\right]^2.$$
+
+This optimization problem is similar to the simple linear case and it is solved using calculus. We have more equations to deal with now; seven equation in our coffee example, each connected with the coefficient estimators that need to be estimated. In general, any $p \ge 2$ coefficient may be needed estimates over other real-life examples. The solutions to this problem are reached by using matrices and matrix calculus but this treatment goes beyond the scope of this book. The solutions are the regression coefficients introduced in Chapter \@ref(multiple-regression) and Subsection \@ref(model4interactiontable) and are called the *least-squares estimators*: $b_0$ is the least-square estimator of $\beta_0$, $b_1$ is the least-square estimator of $\beta_1$, etc.
+
+The fitted values, residuals, estimator of the variance ($s^2$), and standard deviation ($s$), are direct extensions to the simple linear case. In the general case, with $p$ regressors, the fitted values are
+
+$$\widehat{y}_i = b_0 + b_1 x_{i1} + b_2 x_{i2} + \dots + b_p x_{ip},$$
+
+the residuals are $e_i = y_i - \widehat{y}_i$, and the model variance estimator is
+
+$$\begin{aligned}
+s^2 = \frac{\sum_{i=1}^n \left(y_i - \widehat{y}_i\right)^2}{n-p}
+\end{aligned}$$
+
+where $p$ is the number of coefficients. When applying these formulas to the coffee scores example, the fitted values are
+
+$$\widehat{y}_i = b_0 + b_1 x_{i1} + b_2 x_{i2} + b_3 x_{i3}+ b_{02}D_{i2} + b_{03}D_{i3} + b_{04}D_{i4}\,\,,$$ the variance estimator is
+
+$$\begin{aligned}
+s^2 &= \frac{\sum_{i=1}^n \left[y_i - (b_0 + b_1 x_{i1} + b_2 x_{i2} + b_3 x_{i3}+ b_{02}D_{i2} + b_{03}D_{i3} + b_{04}D_{i4} )\right]^2}{n-7}\\
+&= \frac{\sum_{i=1}^n \left(y_i - \widehat{y}_i\right)^2}{n-7}
+\end{aligned}$$
+
+and the standard deviation estimator is
+
+$$\begin{aligned}
+s = \sqrt{\frac{\sum_{i=1}^n \left(y_i - \widehat{y}_i\right)^2}{n-7}}
+\end{aligned}$$
+
+When we think about the least-square estimators as random variables that depend on the random sample taken, the properties of these estimators are a direct extension of the properties presented for the simple linear case; namely,
+
+-   The least-square estimators are unbiased estimators of the parameters of the model. For example, if we choose $\beta_1$, the estimator for the partial slope for `aroma`, then the expected value is equal to the parameter, $E(b_1) = \beta_1$. This means that for some random samples the estimated value $b_1$ will be greater than $\beta_1$, and for others less than $\beta_1$; but, on average, $b_1$ will be equal to $\beta_1$.
+-   The least-square estimators are linear combinations of the observed responses $y_1$, $y_2$, $\dots$, $y_n$. For $b_3$, for example, there are known constants $c_1$, $c_2$, $\dots$, $c_n$ such that $b_1 = \sum_{i=1}^n c_iy_i$.
+
+When using the `lm()` function, all the necessary calculations are done in R . For the coffee example, we get:
+
+```{r, eval=FALSE}
+# Fit regression model:
+mod_mult <- lm(
+  total_cup_points ~ aroma + flavor + moisture_percentage + continent_of_origin, 
+              data = coffee_data)
+
+# Get the coefficients of the model
+coef(mod_mult)
+sigma(mod_mult)
+```
+
+```{r regtable-coffee, echo=FALSE, purl=FALSE}
+# Fit regression model:
+mod_mult <- lm(
+  total_cup_points ~ aroma + flavor + moisture_percentage + continent_of_origin, 
+              data = coffee_data)
+b_coef <- round(coef(mod_mult),2)
+# Get the coefficients of the model
+lm_data <- data.frame("Coefficients" = c("b0", "b1", "b2", "b3", "b02", "b03", "b04", "s"),"Values" = c(coefficients(mod_mult),sigma(mod_mult)))
+lm_data |> 
+  kbl(
+    digits = 3,
+    caption = "Coffee example linear regression coefficients",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+If the linear model is appropriate, we can interpret some of these coefficients as we did in Subsections \@ref(model4interactiontable) and \@ref(model3table). Recall that the numerical regressors' coefficients ($b_1, b_2$, and $b_3$) are partial slopes, each representing the extra effect (or additional effect) of increasing the corresponding regressor by one unit while keeping all the other regressors fixed to some value. For example, using `mod_mult`, if for a given observation we increase the `flavor` score by one unit, keeping all the other regressors fixed to some level, the `total_cup_points` would increase by `r round(lm_data["flavor","Values"][[1]],2)` units, on average. This interpretation is only valid for the linear regression model `mod_mult`. If we decide to change the regressors used, add some or remove others, the model changes and the partial slope for `flavor` will be different in magnitude and in meaning; do not forget that the partial slope is the additional contribution of `flavor` when added to a model that includes all the other regressors.
+
+In addition, observe that `mod_mult` is a model without interactions, similar to the model described in Subsection \@ref(model4table). The coefficients for factor levels of `continent_of_origin` ($b_{02}, b_{03}$, and $b_{04}$) affect only the intercept of the model, based on the category of the observation in question. Recall that the factor levels, in order, are `Africa`, `Asia`, `North America`, and `South America`. For example, if the fifth observation's continent of origin is South America ($D_{04} = 1$ and $D_{02} = D_{03} = 0$), the regression formula is given by
+
+$$\begin{aligned}
+\widehat{y}_5 &= b_0 + b_1 x_{51} + b_2 x_{52} + b_3 x_{53}+ b_{02}D_{52} + b_{03}D_{53} + b_{04}D_{54}\\
+&= b_0 + b_1 x_{51} + b_2 x_{52} + b_3 x_{53}+ b_{02}\cdot 0 + b_{03}\cdot 0 + b_{04}\cdot 1\\
+&= (b_0 + b_{04}) + b_1 x_{51} + b_2 x_{52} + b_3 x_{53}\\
+\end{aligned}$$
+
+and the regression intercept for this observation is estimated to be
+
+$$b_0 + b_{04} = `r round(lm_data[1,2][[1]],2)` + (`r round(lm_data[7,2][[1]],2)`) = `r round(lm_data[1,2][[1]] + lm_data[7,2][[1]],2)`.$$
+
+We typically do not expect the scores of all regressors to be zero, but you can always check the range of values that your regressors take. For `mod_mult` the range of regressors can be extracted by using `tidy_summary()`. In the following code, using the `coffee_data` data set, we select the numerical regressors, use `tidy_summary()`, and select `min` and `max` to get the range for all regressors
+
+```{r eval=FALSE}
+coffee_data |>
+  select(aroma, flavor, moisture_percentage)|>
+  tidy_summary() |>
+  select(min, max)
+```
+
+```{r, echo=FALSE, purl=FALSE}
+# The range of regressors
+coffee_data |>
+  select(aroma, flavor, moisture_percentage)|>
+  tidy_summary() |>
+  select(min, max)|>
+kbl()|>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+As we see, only `moisture_percentage` includes zero in its range and we would need all numerical regressors to include zero in order for the intercept to have a special meaning in the context of the problem.
+
+Observe that we have decided to use only a subset of regressors and construct a model without interactions. This was done for illustration purposes. We discuss in Subsection \@ref(model-fit-multiple) how we could determine what is the best subset of regressors to use when many are available. We are now ready to discuss about inference for multiple regression.
+
+## Theory-based inference for multiple linear regression {#theory-multiple-regression}
+
+In this section we introduce some of the conceptual framework needed to understand inference in multiple linear regression. We illustrate this framework using the coffee example and the R function `get_regression_table()` introduce in Subsection \@ref(regression-table) but this times for multiple linear regression.
+
+Inference for multiple linear regression is a natural extension of inference for the simple linear regression. Recall that the linear model, for the $i$th observation is given by
+
+$$y_i = \beta_0 + \beta_1 \cdot x_{i1} + \dots + \beta_p x_{ip} + \epsilon_i\,.$$
+
+We assume again that the error term is normally distributed with an expected value (mean) equal to zero and a standard deviation equal to $\sigma$:
+
+$$\epsilon_i \sim Normal(0, \sigma).$$
+
+Since the error term is the only random element in the linear model, the response, $y_i$ results from the sum of a constant
+
+$$\beta_0 + \beta_1 \cdot x_{i1} + \dots + \beta_p x_{ip}$$
+
+and a random variable: the error term $\epsilon_i$. Using properties of the normal distribution, the expected value, and the variance (and standard deviation), it can be shown that $y_i$ is also normally distributed with mean equal to $\beta_0 + \beta_1 \cdot x_{i1} + \dots + \beta_p x_{ip}$ and standard deviation equal to $\sigma$:
+
+$$y_i \sim Normal(\beta_0 + \beta_1 \cdot x_{i1} + \dots + \beta_p x_{ip}\,,\, \sigma)$$ for $i=1,\dots,n$. We also assume that $\epsilon_i$ and $\epsilon_j$ are independent, so $y_i$ and $y_j$ are also independent for any $i \ne j$. Moreover, the least-squares estimators ($b_0, b_1, \dots, b_p$) are linear combinations of the random variables $y_1, \dots, y_n$ which are normally distributed, as shown above. Again, following properties of the normal distribution, the expected value, and the variance it can be shown that
+
+-   the (least-square) estimators follow a normal distribution,
+-   the estimators are unbiased, that means that the expected value for each estimator is the parameter they are estimating; for example, $E(b_1) = \beta_1$, or in general $E(b_j) = \beta_j$ for $j = 0,1,\dots, p$.
+-   the variance and standard deviation of each estimator ($b_j$), is a function of $\sigma$, and the observed data for the explanatory variable (the values of the regressors in the sample). For simplicity, the standard deviation of the estimator $b_j$ is denoted by $SD(b_j)$ but remember that it is a function of the standard deviation of the response, $\sigma$.
+-   Using the information above, the distribution of the (least-square) estimator $b_j$ is given by
+
+$$b_j \sim Normal(\beta_j, SD(b_j))$$
+
+for $j = 1, \dots, p$. Note also that $\sigma$ is typically unknown and it is estimated using the estimated standard deviation $s$ instead of $\sigma$. The estimated standard deviation for $b_j$ is called the standard error of $b_j$ and written as $SE(b_j)$. Again, remember that the standard error is a function of $s$.
+
+The standard errors are shown when applying the `get_regression_table()` function into a regression model. This is the output for model `mod_mult`:
+
+```{r eval=FALSE}
+get_regression_table(mod_mult)
+```
+
+```{r mult-model-1, echo=FALSE, purl=FALSE}
+mod_mult_table <- get_regression_table(mod_mult) 
+mod_mult_table |>
+  kable(
+    caption = "The regression table",
+    digits = 3,
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+We can see that the standard error for the numerical regressors are $SE(b_1) = `r round(mod_mult_table[2,3][[1]],2)`$, $SE(b_2) = `r round(mod_mult_table[3,3][[1]],2)`$, and $SE(b_3) = `r round(mod_mult_table[4,3][[1]],2)`$.
+
+### Model dependency of estimators {#model-dependency}
+
+Many inference methods and results for multiple linear regression are a direct extension of the methods and results discussed in simple linear regression. The most important difference is the the fact that the least-square estimators represent partial slopes and their values are dependent on the other regressors in the model. If we change the set of regressors used in a model, the least-squares estimates and its standard errors will likely change as well. And these changes will lead to different confidence interval limits, different test statistics for hypothesis test, and potentially different conclusions about those regressors.
+
+As an illustration using the `coffee_data` example, suppose that we may consider the model:
+
+$$y_i = \beta_0 + \beta_1 \cdot x_{i1} + \beta_2 \cdot x_{i2} + \beta_3 x_{i3} + \epsilon_i\,$$
+
+where $\beta_1$, $\beta_2$ , and $\beta_3$, are the parameters for the partial slopes of `aroma`, `flavor`, and `moisture_precentage`, respectively. Recall that we assume that the parameters $\beta_1$, $\beta_2$ , and $\beta_3$ are constants, unknown to us, but constants. We use multiple linear regression and obtain the least-square estimates $b_1, b_2$, and $b_3$, respectively. The results using the `coffee_data` are calculated and stored in the object `mod_mult_1` and shown below:
+
+```{r, eval=FALSE}
+# Fit regression model:
+mod_mult_1 <- lm(
+  total_cup_points ~ aroma + flavor + moisture_percentage, 
+              data = coffee_data)
+
+# Get the coefficients of the model
+coef(mod_mult_1)
+sigma(mod_mult_1)
+```
+
+```{r regtable-coffee-mult-1, echo=FALSE, purl=FALSE}
+# Fit regression model:
+mod_mult_1 <- lm(
+  total_cup_points ~ aroma + flavor + moisture_percentage, 
+              data = coffee_data)
+# Get the coefficients of the model
+lm_data <- data.frame("Coefficients" = c("b0", "b1", "b2", "b3", "s"),"Values" = c(coefficients(mod_mult_1),sigma(mod_mult_1)))
+lm_data |> 
+  kbl(
+    digits = 3,
+    caption = "Coffee example linear regression coefficients",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+Now, assume that we decide instead to construct a model without the regressor `flavor`, so our model is
+
+$$y_i = \beta_0 + \beta_1 \cdot x_{i1} + \beta_3 \cdot x_{i3} + \epsilon_i\,.$$
+
+Using multiple regression we obtain the least-square estimates $b'_1, b'_2$, and $b_3$, respectively. The results using the `coffee_data` are calculated and stored in the object `mod_mult_1` and shown below:The results are obtained and stored in `mod_mult_2` and shown below:
+
+```{r, eval=FALSE}
+# Fit regression model:
+mod_mult_2 <- lm(
+  total_cup_points ~ aroma + moisture_percentage, data = coffee_data)
+
+# Get the coefficients of the model
+coef(mod_mult_2)
+sigma(mod_mult_2)
+```
+
+```{r regtable-coffee-mult-1, echo=FALSE, purl=FALSE}
+# Fit regression model:
+mod_mult_2 <- lm(
+  total_cup_points ~ aroma + moisture_percentage, data = coffee_data)
+# Get the coefficients of the model
+lm_data <- data.frame("Coefficients" = c("b'0", "b'1", "b'3", "s'"),"Values" = c(coefficients(mod_mult_2),sigma(mod_mult_2)))
+lm_data |> 
+  kbl(
+    digits = 3,
+    caption = "Coffee example linear regression coefficients",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+We focus on the partial slope for `aroma` using both models. Observe that in model `mod_mult_1` the partial slope for `aroma` is $b_1 = `r round(coef(mod_mult_1)[2][[1]],2)`$ while in model `mod_mult_2` the partial slope for `aroma` is $b'_1 = `r round(coef(mod_mult_2)[2][[1]],2)`$. The results are truly different because the models used in each case are different. Similarly, each other coefficient obtained is different, the standard deviation estimate is different, and it is possible that the inferential results for confidence intervals or hypothesis tests are different too!
+
+Any results, conclusions, and interpretations of a regressor are only valid for the model used. As an illustration, interpretations or conclusions made about `aroma` and its effects or influence in `total_cup_points` are entirely dependent on whether we have used `mod_mult_1`, `mod_mult_2`, or another model. Never assume that a conclusion obtained using one model can translate to a different model.
+
+In addition, it is important to determine which model is the most adequate. Clearly, not both `mod_mult_1` and `mod_mult_2` can be correct and we would like to use the one that is the most appropriate. What if neither `mod_mult_1` nor `mod_mult_2` are adequate and we should use another model instead? There are two areas in inferential statistic that address these questions. The first area works with comparisons between two models, one using a subset of regressors from the other, as in the coffee example where `mod_mult_1` used the regressors `aroma`, `flavor` and `moisture_percentage` while `mod_mult_2` used only two of those regressors: `aroma` and `moisture_percentage`. We discuss methods addressing this comparison in Subsection \@ref(hypo-test-mult-lm). The second area is called *model selection* or *variable selection* and uses alternative methods to determine which model, out of the possible available is the most adequate.
+
+### Confidence intervals
+
+A 95% confidence interval for any coefficient in multiple linear regression is constructed in exactly the same way as we did for simple linear regression, but we should always interpret them as dependent on the model for which they were obtained.
+
+```{r echo=F}
+# This code is used for dynamic non-static in-line text output purposes
+n_coffee <- dim(coffee_data)[1]
+s_mult <- summary(mod_mult)$sigma
+p_mult <- summary(mod_mult)$df[1]
+df_mult <- summary(mod_mult)$df[2]
+
+b1_mult <- summary(mod_mult)$coef[2,1]
+se_b1_mult <- summary(mod_mult)$coef[2,2]
+
+q_mult = qt(p = (1 - (1-0.95)/2), df = n_coffee - p_mult)
+lb_mult <- b1_mult - q*se_b1_mult 
+ub_mult <- b1_mult + q*se_b1_mult
+```
+
+For example, the formula for a 95% confidence interval for $\beta_1$ is given by $b_1 \pm q \cdot SE_{b_1}(s)$ where the critical value $q$ is determined by the level of confidence required, the sample size used ($n$), and the corresponding degrees of freedom needed for the $t$-distribution ($n - p$). In the coffee example using model `mod_mult` that contains three numerical regressors (`aroma`, `flavor` and `moisture_content`) one factor (`continent_of_origin`), the confidence level is 95%, the sample size is $n = `r n_coffee`$, the number of regression coefficients is $p = `r p_mult`$: one intercept ($b_0$), three partial slopes for `aroma`, `flavor` and `moisture_content` ($b_1, b_2$, and $b_3$), three coefficients for the factor levels in the model ($b_{02}, b_{03}$, and $b_{04}$) so the degrees of freedom are $n - p = `r n_coffee` - `r p_mult` =  `r n_coffee - p_mult`$. The 95% confidence interval for the partial slope of $b_1$ `aroma` is determined by
+
+$$\begin{aligned}
+b_1 &\pm q \cdot SE(b_1)\\
+`r round(b1_mult,2)` &\pm `r round(q_mult,2)`\cdot `r round(se_b1_mult,2)`\\
+(`r round(lb_mult,2)` &, `r round(ub_mult,2)`)
+\end{aligned}$$
+
+The interpretation of this interval is the customary: "We are 95% confident that the population partial slope for `aroma` ($\beta_1$) in the model `mod_mult` is a number between `r round(lb_mult,2)` and `r round(ub_mult,2)`".
+
+We obtain these values using `get_regression_table()` in model `mod_mult`. This time, however, we add the argument `conf.level = 0.98` to obtain 98% confidence intervals. The output is presented in Table \@ref(tab:mult-model-2).
+
+```{r eval=FALSE}
+get_regression_table(mod_mult, conf.level = 0.98)
+```
+
+```{r mult-model-2, tab.cap="Regression table", echo=FALSE, purl=FALSE}
+mod_mult_table <- get_regression_table(mod_mult, conf.level = .98) 
+mod_mult_table |>
+  kable(
+    caption = "The regression table",
+    digits = 3,
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+The interpretation for the coefficient for `flavor`, for example, is: "We are 98% confident that the value of $\beta_2$ (the population partial slope for `flavor`), is between `r round(mod_mult_table[3,6],2)` and `r round(mod_mult_table[3,7],2)`".
+
+### Hypothesis test for a single coefficient {#hypo-test-mult-lm}
+
+The hypothesis test for one coefficient, say $\beta_1$ in the model, is similar to the one for simple linear regression. The general formulation for a two-sided test is
+
+$$\begin{aligned}
+H_0: \beta_1 = B\quad \text{with }\beta_0, \beta_2, \dots, \beta_p \text{ given and arbitrary.}\\
+H_A: \beta_1 \ne B\quad \text{with }\beta_0, \beta_2, \dots, \beta_p \text{ given and arbitrary.}
+\end{aligned}$$
+
+where $B$ is the hypothesized value for $\beta_1$. We make emphasis in state that $\beta_0, \beta_2, \dots, \beta_p$ are given but arbitrary to acknowledge that the test only matters in the context of the appropriate model. Also notice, that we can perform a test not only for $\beta_1$ but for any other parameter.
+
+As we did for simple linear regression, the most commonly used test is the one where we check if $\beta_j = 0$ for any $j=0,1,\dots,p$. For $\beta_1$ the two-sided test would be:
+
+$$\begin{aligned}
+H_0: \beta_1 = 0\quad \text{with }\beta_0, \beta_2, \dots, \beta_p \text{ given and arbitrary}\\
+H_A: \beta_1 \ne 0\quad \text{with }\beta_0, \beta_2, \dots, \beta_p \text{ given and arbitrary}
+\end{aligned}$$
+
+In simple linear regression, testing for $\beta_1 = 0$ was testing to determine if there was a linear relationship between the response and the only regressor. Now, testing for $\beta_1 = 0$ is testing whether the corresponding regressor should be part of a linear model that already contains all the other regressors.
+
+This test can be performed with any of the partial slope parameters. For example, we use the coffee example and model `mod_mult_1`, the model with only three numerical regressors, and perform a test for $\beta_2$, the population partial slope for regressor `flavor`. The hypotheses are:
+
+$$\begin{aligned}
+H_0: \beta_2 = 0\quad \text{with }\beta_0, \beta_1, \beta_3, \beta_{02}, \beta_{03}, \beta_{04} \text{ given and arbitrary.}\\
+H_A: \beta_2 \ne 0\quad \text{with }\beta_0, \beta_1, \beta_3, \beta_{02}, \beta_{03}, \beta_{04} \text{ given and arbitrary.}
+\end{aligned}$$
+
+The relevant code is shown below and the output is presented in Table \@ref(tab:mult-model-3).
+
+```{r eval=FALSE}
+get_regression_table(mod_mult_1)
+```
+
+```{r mult-model-3, tab.cap="Regression table", echo=FALSE, purl=FALSE}
+mod_mult_table_1 <- get_regression_table(mod_mult_1) 
+mod_mult_table_1 |>
+  kable(
+    caption = "The regression table",
+    digits = 3,
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+The t-test statistic is
+
+$$t = \frac{b_2 - 0}{SE(b_2)} = \frac{`r round(mod_mult_table_1[3,2][[1]],2)` - 0}{`r round(mod_mult_table_1[3,3][[1]],2)`} = `r round(mod_mult_table_1[3,4][[1]],2)`$$
+
+and using this test statistic, the associated $p$-value is near zero and R only show the output zero. We have enough evidence to reject the null hypothesis that $\beta_2 = 0$. Recall that when we reject the null hypothesis we say that the test was *statistically significant* and we have enough evidence to conclude the alternative hypothesis, that $\beta_2 \ne 0$. This implies that changes in `flavor` score does provide information about the `total_cup_points` when `flavor` is added to a model that already contains `aroma` and `moisture_percentage`.
+
+Table \@ref(tab:mult-model-2) provides information for all the coefficient. Observe, in particular, that the test for $\beta_1$ (`aroma`) is also statistically significant but the test for $\beta_3$ (`moisture_percentage`) is not ($p$-value = `r round(mod_mult_table_1[4,5][[1]],2)`). For the latter, the conclusion is that there is not statistical evidence to reject the null hypothesis that this partial slope was zero. In other words, we have not found evidence that adding `moisture_percentage` to a model that already includes `aroma` and `flavor` helps explaining changes in the response `total_cup_points`. We can remove the `moisture_percentage` regressor from the model.
+
+### Hypothesis test for model comparison {#hypo-test-mult-lm-1}
+
+There is another hypothesis test that can be performed for multiple linear regression, a test that compares two models, one with a given set of regressors called the *full model* and the other with with only a subset of those regressors called the *reduced model*
+
+As an illustration using the `coffee_data` example, suppose that the full model is:
+
+$$Y = \beta_0 + \beta_1 \cdot X_1 + \beta_2 \cdot X_2 + \beta_3 \cdot X_3 + \epsilon$$ where $\beta_1$, $\beta_2$ , and $\beta_3$, are the parameters for the partial slopes of `aroma`, `flavor`, and `moisture_precentage`, respectively. The multiple linear regression outcome using the `coffee_data` data set on this model are stored in the object `mod_mult_1`. The reduced model does not contain the regressor `flavor` and is given by
+
+$$Y = \beta_0 + \beta_1 \cdot X_1  + \beta_3 \cdot X_3 + \epsilon$$ The multiple linear regression output using this model is stored in the object `mod_mult_2`. The hypothesis test for comparing full and reduced model can be written as:
+
+$$\begin{aligned}
+H_0:\quad &Y = \beta_0 + \beta_1 \cdot X_1 + \beta_2 \cdot X_2  + \epsilon\\
+H_A:\quad &Y = \beta_0 + \beta_1 \cdot X_1 + \beta_2 \cdot X_2 + \beta_3 \cdot X_3 + \epsilon
+\end{aligned}$$
+
+or in simple words:
+
+$$\begin{aligned}
+H_0:\quad \text{the reduced model is adequate}\\
+H_A:\quad \text{the full model is needed}
+\end{aligned}$$
+
+This test is called an ANOVA test or an $F$-test, because the distribution of the test statistic follows an $F$ distribution. The way it works is that the test compares the sum of squared residuals of both the full and reduced models and determines whether the difference between these models was large enough to suggest that the full model is needed.
+
+To obtain the result of this test in R we use the R function `anova()` and enter the reduced model followed by the full model
+
+```{r}
+anova(mod_mult_2, mod_mult_1) 
+```
+
+The Table \@ref(tab:mult-model-2) provides information for this test.
+
+```{r mult-model-3, tab.cap="ANOVA table" echo=FALSE, purl=FALSE}
+anova_table <- anova(mod_mult_2, mod_mult_1) 
+anova_table|>
+    kbl(
+    digits = 3,
+    caption = "ANOVA test for model comparison",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+The test statistic is given on the second row for the column `F`. The test statistic is $F =`r round(anova_table[2,5],2)`$ and the associated $p$ value is near zero. In conclusion, we reject the null hypothesis and conclude that the full modes was needed.
+
+The ANOVA test can be use to test more then one regressor at a time. This is useful when you have factors (categorical variables) in your model, as all the factor levels should be tested simultaneously. We use our example again, this time making the full model the model with factor `continent_of_origin` in addition to all three numerical regressors, and the reduced model is the model without `continent_of_origin`. These models have been obtained already, they are `mod_mult` and `mod_mult_1`, respectively. The ANOVA test is:
+
+```{r}
+anova(mod_mult_1, mod_mult) 
+```
+
+The Table \@ref(tab:mult-model-2) provides information for this test.
+
+```{r mult-model-4, tab.cap="ANOVA table" echo=FALSE, purl=FALSE}
+anova_table <- anova(mod_mult_1, mod_mult)
+anova_table|>
+    kbl(
+    digits = 3,
+    caption = "ANOVA test for model comparison",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+Observe in this output that the degrees of freedom are `r round(anova_table[2,3],0)` because we are testing three coefficients at the same time, $\beta_{02}, \beta_{03}$ and $\beta_{04}$. When we are testing for the inclusion of a factor in the model, we always need to test all the factor levels at once. Based on the output, the test statistic is $F =`r round(anova_table[2,5],2)`$ and the associated $p$ value is $F =`r round(anova_table[2,6],3)`$. We reject the null hypothesis and conclude that the full model was needed or, alternatively, that it is appropriate to add the factor `continent_of_origin` to a model that already had `aroma`, `flavor`, and `moisture_percentage`.
+
+### Model fit and diagnostics {#model-fit-mult}
+
+As we did for simple linear regression we use the residuals to determine the fit of the model and whether some of the assumptions are not met. In particular, we continue using the plot of residuals against the fitted values and if no model violations are present the plot should be close to a null plot.
+
+While most of the treatment and interpretations are similar to those presented for simple linear regression, when the plot of residuals against fitted values is not a null plot, we know that there is some sort of violation to one or more of the assumptions of the model. It is not longer clear what is the reason for this, but at least one assumption is not met.
+
+On the other hand if the residual against fitted values plot appears to be close to a null plot, none of the assumptions have been broken and we can proceed with the use of this model.
+
+As an illustration, we use the coffee example. Recall that we have shown that regressors `aroma`, `flavor`, and `continent_of_origin` were statistically significant, but `moisture_percentage` was not. So, we create a model only with the relevant regressors, called `mod_mult_final`, obtain the residuals, and a plot of residuals against fitted values:
+
+```{r}
+# Fit regression model:
+mod_mult_final <- lm(total_cup_points ~ aroma + flavor + continent_of_origin, 
+                     coffee_data)
+# Get fitted values and residuals:
+fit_and_res_mult <- get_regression_points(mod_mult_final)
+```
+
+```{r eval=FALSE}
+g1 <- fit_and_res_mult |>
+  ggplot(aes(x = total_cup_points_hat, y = residual)) +
+  geom_point() +
+  labs(x = "fitted values (total cup points)", y = "residual") +
+  geom_hline(yintercept = 0, col = "blue")
+g2 <- ggplot(fit_and_res_mult, aes(sample = residual)) +
+  geom_qq() +
+  geom_qq_line(col="blue", linewidth = 0.5)
+grid.arrange(g1, g2, ncol=2)
+```
+
+The plot of residuals against fitted values (left) appears to be close to a null plot. This result is desirable because it supports the **L**inearity condition as no patterns are observed in this plot and the **E**qual or constant variance also holds as the vertical dispersion seems to be fairly uniform for any fitted values. Since we have assume the data collected was random and there are no time sequences or other sequences to consider, the assumption of **I**ndependence seem to be acceptable too. Finally, the QQ-plot suggest, with the exception of one of two observations that the residuals follow, approximately, the normal distribution.
+
+We can conclude that this model seems to be good enough in holding the assumptions of the model.
+
+This example concludes our treatment of theory-based inference. We now proceed to study the simulation-based inference.
+
+#### Residual diagnostics
+
+*Residual diagnostics* are used to verify conditions **L**, **N**, and **E**. While there are sophisticated statistical approaches that can be used, we focus on data visualization.
+
+One of the most useful plots is a *residual plot* which is a scatterplot of the residuals against the fitted values. We use the `fitted_and_residuals` object to draw the scatterplot using `geom_point()` with the fitted values (`waiting_hat`) in the x-axis and the residuals (`residual`) in the y-axis. In addition, we add titles to our axes with `labs()` and draw a horizontal line at 0 for reference using `geom_hline()` and `yintercept = 0`, as shown in the following code:
+
+```{r eval=FALSE}
+fitted_and_residuals |>
+  ggplot(aes(x = waiting_hat, y = residual)) +
+  geom_point() +
+  labs(x = "duration", y = "residual") +
+  geom_hline(yintercept = 0, col = "blue")
+```
 
 ## Simulation-based inference for regression {#infer-regression}
 
 In this section, we'll use the simulation-based methods you previously learned in Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing) to recreate the values in the regression table. In particular, we'll use the `infer` package workflow to
 
-* Construct a 95% confidence interval for the population slope $\beta_1$ using bootstrap resampling with replacement. We did this previously in Sections \@ref(bootstrap-process) with the almonds data and \@ref(case-study-two-prop-ci) with the `mythbusters_yawn` data.
-* Conduct a hypothesis test of $H_0: \beta_1 = 0$ versus $H_A: \beta_1 \neq 0$ using a permutation test. We did this previously in Sections \@ref(ht-infer) with the `spotify_sample` data and \@ref(ht-case-study) with the `movies_sample` IMDb data.
+-   Construct a 95% confidence interval for the population slope $\beta_1$ using bootstrap resampling with replacement. We did this previously in Sections \@ref(bootstrap-process) with the almonds data and \@ref(case-study-two-prop-ci) with the `mythbusters_yawn` data.
+-   Conduct a hypothesis test of $H_0: \beta_1 = 0$ versus $H_A: \beta_1 \neq 0$ using a permutation test. We did this previously in Sections \@ref(ht-infer) with the `spotify_sample` data and \@ref(ht-case-study) with the `movies_sample` IMDb data.
 
 ### Using `infer` for inference in regression: confidence intervals
 
@@ -939,11 +1530,11 @@ In this section, we'll use the simulation-based methods you previously learned i
 n_reps <- 1000
 ```
 
-We'll construct a 95% confidence interval for $\beta_1$ using the `infer` workflow outlined in Subsection \@ref(infer-workflow). Specifically, we'll first construct the bootstrap distribution for the fitted slope $b_1$ using our single sample of `r n_eruptions` eruptions: 
+We'll construct a 95% confidence interval for $\beta_1$ using the `infer` workflow outlined in Subsection \@ref(infer-workflow). Specifically, we'll first construct the bootstrap distribution for the fitted slope $b_1$ using our single sample of `r n_eruptions` eruptions:
 
-1. `specify()` the variables of interest in `old_faithful_2024` with the formula: `waiting ~ duration`.
-1. `generate()` replicates by using `bootstrap` resampling with replacement from the original sample of `r n` courses. We generate ``reps = `r n_reps` `` replicates using `type = "bootstrap"`.
-1. `calculate()` the summary statistic of interest: the fitted `slope` $b_1$.
+1.  `specify()` the variables of interest in `old_faithful_2024` with the formula: `waiting ~ duration`.
+2.  `generate()` replicates by using `bootstrap` resampling with replacement from the original sample of `r n` courses. We generate `` reps = `r n_reps` `` replicates using `type = "bootstrap"`.
+3.  `calculate()` the summary statistic of interest: the fitted `slope` $b_1$.
 
 Using this bootstrap distribution, we'll construct the 95% confidence interval using the percentile method and (if appropriate) the standard error method as well. It is important to note in this case that the bootstrapping with replacement is done *row-by-row*. Thus, the original pairs of `waiting` and `duration` values are always kept together, but different pairs of `waiting` and `duration` values may be resampled multiple times. The resulting confidence interval will denote a range of plausible values for the unknown population slope $\beta_1$ quantifying the relationship between waiting times and duration for Old Faithful eruptions.
 
@@ -956,6 +1547,7 @@ bootstrap_distn_slope <- old_faithful_2024 %>%
   calculate(stat = "slope")
 bootstrap_distn_slope
 ```
+
 ```{r echo=FALSE, purl=FALSE}
 if (!file.exists("rds/bootstrap_distn_slope.rds")) {
   set.seed(76)
@@ -979,11 +1571,11 @@ Observe how we have `r n_reps` values of the bootstrapped slope $b_1$ in the `st
 visualize(bootstrap_distn_slope)
 ```
 
-Observe how the bootstrap distribution is roughly bell-shaped. Recall from Subsection \@ref(revisit-almond-bootstrap) that the shape of the bootstrap distribution of $b_1$ closely approximates the shape of the sampling distribution of $b_1$. 
+Observe how the bootstrap distribution is roughly bell-shaped. Recall from Subsection \@ref(revisit-almond-bootstrap) that the shape of the bootstrap distribution of $b_1$ closely approximates the shape of the sampling distribution of $b_1$.
 
-#### Percentile-method {-}
+#### Percentile-method {.unnumbered}
 
-First, let's compute the 95% confidence interval for $\beta_1$ using the percentile method. We'll do so by identifying the 2.5th and 97.5th percentiles which include the middle 95% of values. Recall that this method does not require the bootstrap distribution to be normally shaped. 
+First, let's compute the 95% confidence interval for $\beta_1$ using the percentile method. We'll do so by identifying the 2.5th and 97.5th percentiles which include the middle 95% of values. Recall that this method does not require the bootstrap distribution to be normally shaped.
 
 ```{r}
 percentile_ci <- bootstrap_distn_slope %>% 
@@ -993,9 +1585,9 @@ percentile_ci
 
 The resulting percentile-based 95% confidence interval for $\beta_1$ of (`r percentile_ci[[1]]`, `r percentile_ci[[2]]`).
 
-#### Standard error method {-}
+#### Standard error method {.unnumbered}
 
-Since the bootstrap distribution in Figure \@ref(fig:bootstrap-distribution-slope) appears to be roughly bell-shaped, we can also construct a 95% confidence interval for $\beta_1$ using the standard error method. 
+Since the bootstrap distribution in Figure \@ref(fig:bootstrap-distribution-slope) appears to be roughly bell-shaped, we can also construct a 95% confidence interval for $\beta_1$ using the standard error method.
 
 In order to do this, we need to first compute the fitted slope $b_1$, which will act as the center of our standard error-based confidence interval. While we saw in the regression table in Table \@ref(tab:simple-model-part-deux) that this was $b_1$ = `r b1`, we can also use the `infer` pipeline with the `generate()` step removed to calculate it:
 
@@ -1006,7 +1598,7 @@ observed_slope <- old_faithful_2024 %>%
 observed_slope
 ```
 
-We then use the `get_ci()` function with `level = 0.95` to compute the 95% confidence interval for $\beta_1$. Note that setting the `point_estimate` argument to the `observed_slope` of `r b1` sets the center of the confidence interval. 
+We then use the `get_ci()` function with `level = 0.95` to compute the 95% confidence interval for $\beta_1$. Note that setting the `point_estimate` argument to the `observed_slope` of `r b1` sets the center of the confidence interval.
 
 ```{r}
 se_ci <- bootstrap_distn_slope %>% 
@@ -1016,23 +1608,22 @@ se_ci
 
 The resulting standard error-based 95% confidence interval for $\beta_1$ of $(`r se_ci[["lower_ci"]]`, `r se_ci[["upper_ci"]]`)$ is slightly different than the percentile-based confidence interval. Note that neither of these confidence intervals contain 0 and are entirely located above 0. This is suggesting that there is in fact a meaningful positive relationship between waiting times and duration for Old Faithful eruptions.
 
-#### Multiple linear regression confidence intervals {-}
+#### Multiple linear regression confidence intervals {.unnumbered}
 
+### Using `infer` for inference in regression: hypothesis testing
 
-### Using `infer` for inference in regression: hypothesis testing 
+#### Simple linear regression hypothesis testing {.unnumbered}
 
-#### Simple linear regression hypothesis testing {-}
-
-Let's now conduct a hypothesis test of $H_0: \beta_1 = 0$ vs. $H_A: \beta_1 \neq 0$. We will use the `infer` package, which follows the hypothesis testing paradigm in the "There is only one test" diagram in Figure \@ref(fig:htdowney).  
+Let's now conduct a hypothesis test of $H_0: \beta_1 = 0$ vs. $H_A: \beta_1 \neq 0$. We will use the `infer` package, which follows the hypothesis testing paradigm in the "There is only one test" diagram in Figure \@ref(fig:htdowney).
 
 Let's first think about what it means for $\beta_1$ to be zero as assumed in the null hypothesis $H_0$. Recall we said if $\beta_1 = 0$, then this is saying there is no relationship between the waiting time and duration. Thus, assuming this particular null hypothesis $H_0$ means that in our "hypothesized universe" there is no relationship between `waiting` and `duration`. We can therefore shuffle/permute the `waiting` variable to no consequence.
 
 We construct the null distribution of the fitted slope $b_1$ by performing the steps that follow. Recall from Section \@ref(understanding-ht) on terminology, notation, and definitions related to hypothesis testing where we defined the *null distribution*: the sampling distribution of our test statistic $b_1$ assuming the null hypothesis $H_0$ is true.
 
-1. `specify()` the variables of interest in `old_faithful_2024` with the formula: `waiting ~ duration`.
-1. `hypothesize()` the null hypothesis of `independence`. Recall from Section \@ref(ht-infer) that this is an additional step that needs to be added for hypothesis testing. 
-1. `generate()` replicates by permuting/shuffling values from the original sample of `r nrow(old_faithful_2024)` eruptions. We generate ``reps = `r n_reps` `` replicates using `type = "permute"` here.
-1. `calculate()` the test statistic of interest: the fitted `slope` $b_1$.
+1.  `specify()` the variables of interest in `old_faithful_2024` with the formula: `waiting ~ duration`.
+2.  `hypothesize()` the null hypothesis of `independence`. Recall from Section \@ref(ht-infer) that this is an additional step that needs to be added for hypothesis testing.
+3.  `generate()` replicates by permuting/shuffling values from the original sample of `r nrow(old_faithful_2024)` eruptions. We generate `` reps = `r n_reps` `` replicates using `type = "permute"` here.
+4.  `calculate()` the test statistic of interest: the fitted `slope` $b_1$.
 
 In this case, we `permute` the values of `waiting` across the values of `duration` `r n_reps` times. We can do this shuffling/permuting since we assumed a "hypothesized universe" of no relationship between these two variables. Then we `calculate` the `"slope"` coefficient for each of these `r n_reps` `generate`d samples.
 
@@ -1043,6 +1634,7 @@ null_distn_slope <- old_faithful_2024 |>
   generate(reps = 1000, type = "permute") |> 
   calculate(stat = "slope")
 ```
+
 ```{r echo=FALSE, purl=FALSE}
 if (!file.exists("rds/null_distn_slope.rds")) {
   set.seed(76)
@@ -1060,13 +1652,13 @@ if (!file.exists("rds/null_distn_slope.rds")) {
 }
 ```
 
-Observe the resulting null distribution for the fitted slope $b_1$ in Figure \@ref(fig:null-distribution-slope). 
+Observe the resulting null distribution for the fitted slope $b_1$ in Figure \@ref(fig:null-distribution-slope).
 
 ```{r null-distribution-slope, echo=FALSE, fig.show="hold", fig.cap="Null distribution of slopes.", fig.height=2.5, purl=FALSE}
 visualize(null_distn_slope)
 ```
 
-Notice how it is centered at $b_1$ = 0. This is because in our hypothesized universe, there is no relationship between `waiting` and `duration` and so $\beta_1 = 0$. Thus, the most typical fitted slope $b_1$ we observe across our simulations is 0. Observe, furthermore, how there is variation around this central value of 0. 
+Notice how it is centered at $b_1$ = 0. This is because in our hypothesized universe, there is no relationship between `waiting` and `duration` and so $\beta_1 = 0$. Thus, the most typical fitted slope $b_1$ we observe across our simulations is 0. Observe, furthermore, how there is variation around this central value of 0.
 
 ```{r}
 # Observed slope
@@ -1076,7 +1668,7 @@ b1 <- old_faithful_2024 |>
 b1
 ```
 
-Let's visualize the $p$-value in the null distribution by comparing it to the observed test statistic of $b_1$ = `r b1` in Figure \@ref(fig:p-value-slope). We'll do this by adding a `shade_p_value()` layer to the previous `visualize()` code.  
+Let's visualize the $p$-value in the null distribution by comparing it to the observed test statistic of $b_1$ = `r b1` in Figure \@ref(fig:p-value-slope). We'll do this by adding a `shade_p_value()` layer to the previous `visualize()` code.
 
 ```{r p-value-slope, echo=FALSE, fig.show="hold", fig.cap="Null distribution and $p$-value.", fig.height=3, purl=FALSE}
 visualize(null_distn_slope) +
@@ -1090,10 +1682,9 @@ null_distn_slope |>
   get_p_value(obs_stat = b1, direction = "both")
 ```
 
-This matches the $p$-value of 0 in the regression table. We therefore reject the null hypothesis $H_0: \beta_1 = 0$ in favor of the alternative hypothesis $H_A: \beta_1 \neq 0$.  We thus have evidence that suggests there is a significant relationship between waiting time and duration values for eruptions of Old Faithful. 
+This matches the $p$-value of 0 in the regression table. We therefore reject the null hypothesis $H_0: \beta_1 = 0$ in favor of the alternative hypothesis $H_A: \beta_1 \neq 0$. We thus have evidence that suggests there is a significant relationship between waiting time and duration values for eruptions of Old Faithful.
 
 When the conditions for inference for regression are met and the null distribution has a bell shape, we are likely to see similar results between the simulation-based results we just demonstrated and the theory-based results shown in the regression table.
-
 
 ```{block lc9-5, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
@@ -1108,10 +1699,11 @@ When the conditions for inference for regression are met and the null distributi
 \vspace{-0.25in}
 ```
 
-#### Multiple linear regression hypothesis testing {-}
+#### Multiple linear regression hypothesis testing {.unnumbered}
 
 ## Conclusion {#inference-conclusion}
 
+```{=html}
 <!--
 v2 TODO: Consider adding
 
@@ -1125,8 +1717,7 @@ To conclude this chapter, we'll be investigating how regression relates to two d
 
 
 -->
-
-
+```
 ### Summary of statistical inference
 
 We've finished the last two scenarios from the "Scenarios of sampling for inference" table, which we re-display in Table \@ref(tab:table-ch10).
@@ -1165,7 +1756,6 @@ sampling_scenarios |>
 
 Armed with the regression modeling techniques you learned in Chapters \@ref(regression) and \@ref(multiple-regression), your understanding of sampling for inference in Chapter \@ref(sampling), and the tools for statistical inference like confidence intervals and hypothesis tests in Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing), you're now equipped to study the significance of relationships between variables in a wide array of data! Many of the ideas presented here can be extended into multiple regression and other more advanced modeling techniques.
 
-
 ### Additional resources
 
 ```{r echo=FALSE, results="asis", purl=FALSE}
@@ -1177,7 +1767,6 @@ if (is_latex_output()) {
 ```{r echo=FALSE, purl=FALSE, results="asis"}
 generate_r_file_link("10-inference-for-regression.R")
 ```
-
 
 ### What's to come
 
