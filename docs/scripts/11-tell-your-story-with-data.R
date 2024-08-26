@@ -1,25 +1,7 @@
 ## ----eval=FALSE---------------------------------------------------------------
 ## library(tidyverse)
 ## library(moderndive)
-## #library(skimr)
 ## library(fivethirtyeight)
-
-## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
-# The code presented to the reader in the chunk above is different than the code
-# in this chunk that is actually run to build the book. In particular we do not
-# load the skimr package.
-# 
-# This is because skimr v1.0.6 which we used for the book causes all
-# kable() code to break for the remaining chapters in the book. v2 might
-# fix these issues:
-# https://github.com/moderndive/ModernDive_book/issues/271
-
-# As a workaround for v1 of ModernDive, all skimr::skim() output in this chapter
-# has been hard coded.
-library(tidyverse)
-library(moderndive)
-# library(skimr)
-library(fivethirtyeight)
 
 
 
