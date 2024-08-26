@@ -127,6 +127,47 @@ ggplot(old_faithful_2024,
 
 
 ## -----------------------------------------------------------------------------
+# Fit regression model
+mod_diff_means <- lm(rating ~ genre, 
+                     data = movies_sample)
+# Get regression table
+get_regression_table(mod_diff_means)
+
+
+## -----------------------------------------------------------------------------
+set.seed(6)
+spotify_for_anova <- spotify_by_genre |> 
+  select(artists, track_name, popularity, track_genre) |> 
+  filter(track_genre %in% c("country", "hip-hop", "rock")) 
+spotify_for_anova |> 
+  slice_sample(n = 10)
+
+
+## -----------------------------------------------------------------------------
+ggplot(spotify_for_anova, aes(x = track_genre, y = popularity)) +
+  geom_boxplot() +
+  labs(x = "Genre", y = "Popularity")
+
+
+## -----------------------------------------------------------------------------
+mean_popularities_by_genre <- spotify_for_anova |> 
+  group_by(track_genre) |>
+  summarize(mean_popularity = mean(popularity))
+mean_popularities_by_genre
+
+
+## -----------------------------------------------------------------------------
+mod_anova <- lm(popularity ~ track_genre, 
+                data = spotify_for_anova)
+get_regression_table(mod_anova)
+
+
+## -----------------------------------------------------------------------------
+aov(popularity ~ track_genre, data = spotify_for_anova) |> 
+  anova()
+
+
+## -----------------------------------------------------------------------------
 old_faithful_2024 |>
   slice(c(49, 51))
 
@@ -147,12 +188,12 @@ lb1 <- round(b1 - q*se_b1,3)
 ub1 <- round(b1 + q*se_b1,3)
 # beta0
 b0 <- round(coef(model_1)[[1]],3)
-se_b0 <- round(s*sqrt(1/n + mean(x)^2/sum((x - mean(x))^2)),3)
+se_b0 <- round(s*sqrt(1/n_old_faithful + mean(x)^2/sum((x - mean(x))^2)),3)
 lb0 <- round(b1 - q*se_b0,3)
 ub0 <- round(b1 + q*se_b0,3)
 # t
 t_stat <- round(b1/se_b1,3)
-p_value <- round(2*(1 - pt(abs(t_stat), n-2)),3)
+p_value <- round(2*(1 - pt(abs(t_stat), n_old_faithful-2)),3)
 
 
 ## ----pvalue1, echo=FALSE, fig.height=3, fig.cap="Illustration of a two-sided p-value for a t-test"----
@@ -470,4 +511,110 @@ b1
 ## -----------------------------------------------------------------------------
 null_distn_slope |> 
   get_p_value(obs_stat = b1, direction = "both")
+
+
+
+
+
+
+## -----------------------------------------------------------------------------
+observed_fit <- coffee_data |>
+  specify(
+    total_cup_points ~ aroma + flavor + moisture_percentage + continent_of_origin
+  ) |>
+  fit()
+observed_fit
+
+
+## -----------------------------------------------------------------------------
+mod_mult_table
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## coffee_data |>
+##   specify(
+##     total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage
+##   ) |>
+##   generate(reps = 1000, type = "bootstrap")
+
+
+## ----echo=FALSE---------------------------------------------------------------
+if (!file.exists("rds/generated_distn_slopes.rds")) {
+  set.seed(76)
+  generated_distn_slopes <- coffee_data |>
+    specify(
+      total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage
+    ) |>
+    generate(reps = 1000, type = "bootstrap")
+  saveRDS(
+    object = generated_distn_slopes,
+    "rds/generated_distn_slopes.rds"
+  )
+} else {
+  generated_distn_slopes <- readRDS("rds/generated_distn_slopes.rds")
+}
+generated_distn_slopes
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## boot_distribution_mlr <- coffee_quality |>
+##   specify(
+##     total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage
+##   ) |>
+##   generate(reps = 1000, type = "bootstrap") |>
+##   fit()
+## boot_distribution_mlr
+
+
+## ----echo=FALSE---------------------------------------------------------------
+if (!file.exists("rds/boot_distn_slopes.rds")) {
+  set.seed(76)
+  boot_distribution_mlr <- generated_distn_slopes |> 
+    fit()
+  saveRDS(
+    object = boot_distribution_mlr,
+    "rds/boot_distn_slopes.rds"
+  )
+} else {
+  boot_distribution_mlr <- readRDS("rds/boot_distn_slopes.rds")
+}
+boot_distribution_mlr
+
+
+## ----boot-distn-slopes, fig.cap="Bootstrap distribution of partial slopes."----
+visualize(boot_distribution_mlr)
+
+
+## -----------------------------------------------------------------------------
+confidence_intervals_mlr <- boot_distribution_mlr |> 
+  get_confidence_interval(
+    level = 0.95,
+    type = "percentile",
+    point_estimate = observed_fit)
+confidence_intervals_mlr
+
+
+## ----ci-slopes-multiple, fig.cap="95% confidence intervals for the partial slopes."----
+visualize(boot_distribution_mlr) +
+  shade_confidence_interval(endpoints = confidence_intervals_mlr)
+
+
+## -----------------------------------------------------------------------------
+set.seed(2024)
+null_distribution_mlr <- coffee_quality |>
+  specify(total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage) |>
+  hypothesize(null = "independence") |>
+  generate(reps = 1000, type = "permute") |>
+  fit()
+null_distribution_mlr
+
+
+## -----------------------------------------------------------------------------
+visualize(null_distribution_mlr) +
+  shade_p_value(obs_stat = observed_fit, direction = "two-sided")
+
+
+## -----------------------------------------------------------------------------
+null_distribution_mlr |>
+  get_p_value(obs_stat = observed_fit, direction = "two-sided")
 
