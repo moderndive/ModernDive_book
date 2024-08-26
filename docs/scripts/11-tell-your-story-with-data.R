@@ -178,3 +178,19 @@ ggplot(US_births_1999, aes(x = date, y = births)) +
 US_births_1999 |> 
   arrange(desc(births))
 
+
+
+
+
+
+
+
+
+
+## ----echo=FALSE, results='asis'-----------------------------------------------
+if(!is_latex_output()){
+  cat("# (APPENDIX) Appendix {-}")
+} else {
+  cat("\\appendix")
+}
+
