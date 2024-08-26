@@ -13,7 +13,7 @@
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## gain_summary <- flights %>%
+## gain_summary <- flights |>
 ##   summarize(
 ##     min = min(gain, na.rm = TRUE),
 ##     q1 = quantile(gain, 0.25, na.rm = TRUE),
@@ -26,10 +26,10 @@
 ##   )
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## house_prices %>%
-##   select(price, sqft_living, condition) %>%
-##   skim()
+## -----------------------------------------------------------------------------
+house_prices |> 
+  select(price, sqft_living, condition) |> 
+  tidy_summary()
 
 
 ## ----eval=FALSE, message=FALSE------------------------------------------------
@@ -52,7 +52,7 @@
 
 
 ## -----------------------------------------------------------------------------
-house_prices <- house_prices %>%
+house_prices <- house_prices |>
   mutate(
     log10_price = log10(price),
     log10_size = log10(sqft_living)
@@ -60,7 +60,7 @@ house_prices <- house_prices %>%
 
 
 ## -----------------------------------------------------------------------------
-house_prices %>% 
+house_prices |> 
   select(price, log10_price, sqft_living, log10_size)
 
 
@@ -122,6 +122,11 @@ house_prices %>%
 ##   facet_wrap(~ condition)
 
 
+## -----------------------------------------------------------------------------
+house_prices |> 
+  count(condition)
+
+
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -157,7 +162,7 @@ glimpse(US_births_1994_2003)
 
 
 ## -----------------------------------------------------------------------------
-US_births_1999 <- US_births_1994_2003 %>%
+US_births_1999 <- US_births_1994_2003 |>
   filter(year == 1999)
 
 
@@ -170,6 +175,6 @@ ggplot(US_births_1999, aes(x = date, y = births)) +
 
 
 ## -----------------------------------------------------------------------------
-US_births_1999 %>% 
+US_births_1999 |> 
   arrange(desc(births))
 
