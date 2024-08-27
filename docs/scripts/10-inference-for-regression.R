@@ -303,6 +303,74 @@ ggplot(fitted_and_residuals, aes(x = duration, y = residual)) +
 
 
 ## -----------------------------------------------------------------------------
+n_reps <- 1000
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## bootstrap_distn_slope <- old_faithful_2024 %>%
+##   specify(formula = waiting ~ duration) %>%
+##   generate(reps = 1000, type = "bootstrap") %>%
+##   calculate(stat = "slope")
+## bootstrap_distn_slope
+
+
+
+
+## ----bootstrap-distribution-slope, fig.show="hold", fig.cap="Bootstrap distribution of slope.", fig.height=2.2----
+visualize(bootstrap_distn_slope)
+
+
+## -----------------------------------------------------------------------------
+percentile_ci <- bootstrap_distn_slope %>% 
+  get_confidence_interval(type = "percentile", level = 0.95)
+percentile_ci
+
+
+## -----------------------------------------------------------------------------
+observed_slope <- old_faithful_2024 %>% 
+  specify(waiting ~ duration) %>% 
+  calculate(stat = "slope")
+observed_slope
+
+
+## -----------------------------------------------------------------------------
+se_ci <- bootstrap_distn_slope %>% 
+  get_ci(level = 0.95, type = "se", point_estimate = observed_slope)
+se_ci
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## null_distn_slope <- old_faithful_2024 |>
+##   specify(waiting ~ duration) |>
+##   hypothesize(null = "independence") |>
+##   generate(reps = 1000, type = "permute") |>
+##   calculate(stat = "slope")
+
+
+
+
+
+
+## -----------------------------------------------------------------------------
+# Observed slope
+b1 <- old_faithful_2024 |> 
+  specify(waiting ~ duration) |>
+  calculate(stat = "slope")
+b1
+
+
+
+
+## -----------------------------------------------------------------------------
+null_distn_slope |> 
+  get_p_value(obs_stat = b1, direction = "both")
+
+
+
+
+
+
+## -----------------------------------------------------------------------------
 coffee_data <- coffee_quality |>
   select(aroma, flavor, moisture_percentage, 
          continent_of_origin, total_cup_points) |>
@@ -447,74 +515,6 @@ g2 <- ggplot(fit_and_res_mult, aes(sample = residual)) +
   geom_qq() +
   geom_qq_line(col="blue", linewidth = 0.5)
 grid.arrange(g1, g2, ncol=2)
-
-
-## -----------------------------------------------------------------------------
-n_reps <- 1000
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distn_slope <- old_faithful_2024 %>%
-##   specify(formula = waiting ~ duration) %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
-##   calculate(stat = "slope")
-## bootstrap_distn_slope
-
-
-
-
-## ----bootstrap-distribution-slope, fig.show="hold", fig.cap="Bootstrap distribution of slope.", fig.height=2.2----
-visualize(bootstrap_distn_slope)
-
-
-## -----------------------------------------------------------------------------
-percentile_ci <- bootstrap_distn_slope %>% 
-  get_confidence_interval(type = "percentile", level = 0.95)
-percentile_ci
-
-
-## -----------------------------------------------------------------------------
-observed_slope <- old_faithful_2024 %>% 
-  specify(waiting ~ duration) %>% 
-  calculate(stat = "slope")
-observed_slope
-
-
-## -----------------------------------------------------------------------------
-se_ci <- bootstrap_distn_slope %>% 
-  get_ci(level = 0.95, type = "se", point_estimate = observed_slope)
-se_ci
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## null_distn_slope <- old_faithful_2024 |>
-##   specify(waiting ~ duration) |>
-##   hypothesize(null = "independence") |>
-##   generate(reps = 1000, type = "permute") |>
-##   calculate(stat = "slope")
-
-
-
-
-
-
-## -----------------------------------------------------------------------------
-# Observed slope
-b1 <- old_faithful_2024 |> 
-  specify(waiting ~ duration) |>
-  calculate(stat = "slope")
-b1
-
-
-
-
-## -----------------------------------------------------------------------------
-null_distn_slope |> 
-  get_p_value(obs_stat = b1, direction = "both")
-
-
-
-
 
 
 ## -----------------------------------------------------------------------------
