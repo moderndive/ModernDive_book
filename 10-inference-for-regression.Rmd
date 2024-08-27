@@ -488,7 +488,7 @@ aov(popularity ~ track_genre, data = spotify_for_anova) |>
 
 The small $p$-value here of `2.2e-16` is very close to 0, which would lead us to reject the null hypothesis that all the mean popularities are equal across the three genres. This is consistent with the results we found using the linear model. The traditional ANOVA results do not tell us which means are different from each other though, but the linear model does. ANOVA tells us only that a difference exists in the means of the groups.
 
-## Theory-based inference for simple linear regression {#theory-simple-regression}
+## Theory-based Inference for Simple Linear Regression {#theory-simple-regression}
 
 This section introduces the conceptual framework needed for theory-based inference for regression (see Subsections \@ref(framework-simple-lm) and \@ref(se-simple-lm)) and discusses the two most prominent methods for inference: confidence intervals (Subsection \@ref(conf-intervals-b0-b1)) and hypothesis tests (Subsection \@ref(hypo-test-simple-lm)).
 Some of this material is slightly more technical than other sections in this chapter, but most of the material is illustrated by working with a real example and interpretations and explanations complement the theory. Subsection \@ref(regression-table) presents the R code needed to calculate relevant quantities for inference. Feel free to read this section first.
@@ -1180,6 +1180,185 @@ Ideally, there should be little to no pattern but comment on what you find here.
 \vspace{-0.25in}
 ```
 
+## Simulation-based Inference for Simple Linear Regression {#infer-regression}
+
+In this section, we'll use the simulation-based methods you previously learned in Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing) to recreate the values in the regression table. 
+In particular, we'll use the `infer` package workflow to
+
+-   Construct a 95% confidence interval for the population slope $\beta_1$ using bootstrap resampling with replacement. We did this previously in Sections \@ref(bootstrap-process) with the almonds data and \@ref(case-study-two-prop-ci) with the `mythbusters_yawn` data.
+-   Conduct a hypothesis test of $H_0: \beta_1 = 0$ versus $H_A: \beta_1 \neq 0$ using a permutation test. We did this previously in Sections \@ref(ht-infer) with the `spotify_sample` data and \@ref(ht-case-study) with the `movies_sample` IMDb data.
+
+### Confidence intervals for the population slope using `infer` {#infer-ci-slr}
+
+```{r}
+n_reps <- 1000
+```
+
+We'll construct a 95% confidence interval for $\beta_1$ using the `infer` workflow outlined in Subsection \@ref(infer-workflow). Specifically, we'll first construct the bootstrap distribution for the fitted slope $b_1$ using our single sample of `r n_old_faithful` eruptions:
+
+1.  `specify()` the variables of interest in `old_faithful_2024` with the formula: `waiting ~ duration`.
+2.  `generate()` replicates by using `bootstrap` resampling with replacement from the original sample of `r n` courses. We generate `` reps = `r n_reps` `` replicates using `type = "bootstrap"`.
+3.  `calculate()` the summary statistic of interest: the fitted `slope` $b_1$.
+
+Using this bootstrap distribution, we'll construct the 95% confidence interval using the percentile method and (if appropriate) the standard error method as well. It is important to note in this case that the bootstrapping with replacement is done *row-by-row*. Thus, the original pairs of `waiting` and `duration` values are always kept together, but different pairs of `waiting` and `duration` values may be resampled multiple times. The resulting confidence interval will denote a range of plausible values for the unknown population slope $\beta_1$ quantifying the relationship between waiting times and duration for Old Faithful eruptions.
+
+Let's first construct the bootstrap distribution for the fitted slope $b_1$:
+
+```{r eval=FALSE}
+bootstrap_distn_slope <- old_faithful_2024 %>% 
+  specify(formula = waiting ~ duration) %>%
+  generate(reps = 1000, type = "bootstrap") %>% 
+  calculate(stat = "slope")
+bootstrap_distn_slope
+```
+
+```{r echo=FALSE, purl=FALSE}
+if (!file.exists("rds/bootstrap_distn_slope_eruptions.rds")) {
+  set.seed(76)
+  bootstrap_distn_slope <- old_faithful_2024 %>%
+    specify(waiting ~ duration) %>%
+    generate(reps = 1000, type = "bootstrap") %>%
+    calculate(stat = "slope")
+  saveRDS(
+    object = bootstrap_distn_slope,
+    "rds/bootstrap_distn_slope_eruptions.rds"
+  )
+} else {
+  bootstrap_distn_slope <- readRDS("rds/bootstrap_distn_slope_eruptions.rds")
+}
+bootstrap_distn_slope
+```
+
+Observe how we have `r n_reps` values of the bootstrapped slope $b_1$ in the `stat` column. Let's visualize the `r n_reps` bootstrapped values in Figure \@ref(fig:bootstrap-distribution-slope).
+
+```{r bootstrap-distribution-slope, fig.show="hold", fig.cap="Bootstrap distribution of slope.", fig.height=2.2}
+visualize(bootstrap_distn_slope)
+```
+
+Observe how the bootstrap distribution is roughly bell-shaped. Recall from Subsection \@ref(revisit-almond-bootstrap) that the shape of the bootstrap distribution of $b_1$ closely approximates the shape of the sampling distribution of $b_1$.
+
+#### Percentile-method {-}
+
+First, let's compute the 95% confidence interval for $\beta_1$ using the percentile method. We'll do so by identifying the 2.5th and 97.5th percentiles which include the middle 95% of values. Recall that this method does not require the bootstrap distribution to be normally shaped.
+
+```{r}
+percentile_ci <- bootstrap_distn_slope %>% 
+  get_confidence_interval(type = "percentile", level = 0.95)
+percentile_ci
+```
+
+The resulting percentile-based 95% confidence interval for $\beta_1$ of (`r percentile_ci[[1]]`, `r percentile_ci[[2]]`).
+
+#### Standard error method {-}
+
+Since the bootstrap distribution in Figure \@ref(fig:bootstrap-distribution-slope) appears to be roughly bell-shaped, we can also construct a 95% confidence interval for $\beta_1$ using the standard error method.
+
+In order to do this, we need to first compute the fitted slope $b_1$, which will act as the center of our standard error-based confidence interval. While we saw in the regression table in Table \@ref(tab:simple-model-part-deux) that this was $b_1$ = `r b1`, we can also use the `infer` pipeline with the `generate()` step removed to calculate it:
+
+```{r}
+observed_slope <- old_faithful_2024 %>% 
+  specify(waiting ~ duration) %>% 
+  calculate(stat = "slope")
+observed_slope
+```
+
+We then use the `get_ci()` function with `level = 0.95` to compute the 95% confidence interval for $\beta_1$. Note that setting the `point_estimate` argument to the `observed_slope` of `r b1` sets the center of the confidence interval.
+
+```{r}
+se_ci <- bootstrap_distn_slope %>% 
+  get_ci(level = 0.95, type = "se", point_estimate = observed_slope)
+se_ci
+```
+
+The resulting standard error-based 95% confidence interval for $\beta_1$ of $(`r se_ci[["lower_ci"]]`, `r se_ci[["upper_ci"]]`)$ is slightly different than the percentile-based confidence interval. Note that neither of these confidence intervals contain 0 and are entirely located above 0. This is suggesting that there is in fact a meaningful positive relationship between waiting times and duration for Old Faithful eruptions.
+
+### Hypothesis test for population slope using `infer` {#infer-hypo-slr}
+
+Let's now conduct a hypothesis test of $H_0: \beta_1 = 0$ vs. $H_A: \beta_1 \neq 0$. We will use the `infer` package, which follows the hypothesis testing paradigm in the "There is only one test" diagram in Figure \@ref(fig:htdowney).
+
+Let's first think about what it means for $\beta_1$ to be zero as assumed in the null hypothesis $H_0$. Recall we said if $\beta_1 = 0$, then this is saying there is no relationship between the waiting time and duration. Thus, assuming this particular null hypothesis $H_0$ means that in our "hypothesized universe" there is no relationship between `waiting` and `duration`. We can therefore shuffle/permute the `waiting` variable to no consequence.
+
+We construct the null distribution of the fitted slope $b_1$ by performing the steps that follow. Recall from Section \@ref(understanding-ht) on terminology, notation, and definitions related to hypothesis testing where we defined the *null distribution*: the sampling distribution of our test statistic $b_1$ assuming the null hypothesis $H_0$ is true.
+
+1.  `specify()` the variables of interest in `old_faithful_2024` with the formula: `waiting ~ duration`.
+2.  `hypothesize()` the null hypothesis of `independence`. Recall from Section \@ref(ht-infer) that this is an additional step that needs to be added for hypothesis testing.
+3.  `generate()` replicates by permuting/shuffling values from the original sample of `r nrow(old_faithful_2024)` eruptions. We generate `` reps = `r n_reps` `` replicates using `type = "permute"` here.
+4.  `calculate()` the test statistic of interest: the fitted `slope` $b_1$.
+
+In this case, we `permute` the values of `waiting` across the values of `duration` `r n_reps` times. We can do this shuffling/permuting since we assumed a "hypothesized universe" of no relationship between these two variables. Then we `calculate` the `"slope"` coefficient for each of these `r n_reps` `generate`d samples.
+
+```{r eval=FALSE}
+null_distn_slope <- old_faithful_2024 |> 
+  specify(waiting ~ duration) |>
+  hypothesize(null = "independence") |> 
+  generate(reps = 1000, type = "permute") |> 
+  calculate(stat = "slope")
+```
+
+```{r echo=FALSE, purl=FALSE}
+if (!file.exists("rds/null_distn_slope.rds")) {
+  set.seed(76)
+  null_distn_slope <- old_faithful_2024 |> 
+    specify(waiting ~ duration) |>
+    hypothesize(null = "independence") |> 
+    generate(reps = 1000, type = "permute") |> 
+    calculate(stat = "slope")
+  saveRDS(
+    object = null_distn_slope,
+    "rds/null_distn_slope_old_faithful.rds"
+  )
+} else {
+  null_distn_slope <- readRDS("rds/null_distn_slope_old_faithful.rds")
+}
+```
+
+Observe the resulting null distribution for the fitted slope $b_1$ in Figure \@ref(fig:null-distribution-slope).
+
+```{r null-distribution-slope, echo=FALSE, fig.show="hold", fig.cap="Null distribution of slopes.", fig.height=2.5, purl=FALSE}
+visualize(null_distn_slope)
+```
+
+Notice how it is centered at $b_1$ = 0. This is because in our hypothesized universe, there is no relationship between `waiting` and `duration` and so $\beta_1 = 0$. Thus, the most typical fitted slope $b_1$ we observe across our simulations is 0. Observe, furthermore, how there is variation around this central value of 0.
+
+```{r}
+# Observed slope
+b1 <- old_faithful_2024 |> 
+  specify(waiting ~ duration) |>
+  calculate(stat = "slope")
+b1
+```
+
+Let's visualize the $p$-value in the null distribution by comparing it to the observed test statistic of $b_1$ = `r b1` in Figure \@ref(fig:p-value-slope). We'll do this by adding a `shade_p_value()` layer to the previous `visualize()` code.
+
+```{r p-value-slope, echo=FALSE, fig.show="hold", fig.cap="Null distribution and $p$-value.", fig.height=3, purl=FALSE}
+visualize(null_distn_slope) +
+  shade_p_value(obs_stat = b1, direction = "both")
+```
+
+Since the observed fitted slope `r b1` falls far to the right of this null distribution and thus the shaded region doesn't overlap it, we'll have a $p$-value of 0. For completeness, however, let's compute the numerical value of the $p$-value anyways using the `get_p_value()` function. Recall that it takes the same inputs as the `shade_p_value()` function:
+
+```{r}
+null_distn_slope |> 
+  get_p_value(obs_stat = b1, direction = "both")
+```
+
+This matches the $p$-value of 0 in the regression table. We therefore reject the null hypothesis $H_0: \beta_1 = 0$ in favor of the alternative hypothesis $H_A: \beta_1 \neq 0$. We thus have evidence that suggests there is a significant relationship between waiting time and duration values for eruptions of Old Faithful.
+
+When the conditions for inference for regression are met and the null distribution has a bell shape, we are likely to see similar results between the simulation-based results we just demonstrated and the theory-based results shown in the regression table.
+
+```{block lc9-5, type="learncheck", purl=FALSE}
+\vspace{-0.15in}
+**_Learning check_**
+\vspace{-0.1in}
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the inference but this time for the correlation coefficient instead of the slope. Note the implementation of `stat = "correlation"` in the `calculate()` function of the `infer` package.
+
+```{block, type="learncheck", purl=FALSE}
+\vspace{-0.25in}
+\vspace{-0.25in}
+```
+
 ## The Multiple Linear Regression Model
 
 ### The model {#multiple-linear-model}
@@ -1465,7 +1644,7 @@ As we see, only `moisture_percentage` includes zero in its range, and we would n
 Observe that we have decided to use only a subset of regressors and construct a model without interactions.
 We discuss in Subsection \@ref(model-fit-mult) how we could determine what is the best subset of regressors to use when many are available. We are now ready to discuss about inference for multiple regression.
 
-## Theory-based inference for multiple linear regression {#theory-multiple-regression}
+## Theory-based Inference for Multiple Linear Regression {#theory-multiple-regression}
 
 In this section we introduce some of the conceptual framework needed to understand inference in multiple linear regression. 
 We illustrate this framework using the coffee example and the R function `get_regression_table()` introduced in Subsection \@ref(regression-table), but this time for multiple linear regression.
@@ -1877,186 +2056,9 @@ Finally, the QQ-plot suggests, with the exception of one or two observations tha
 
 This example concludes our treatment of theory-based inference. We now proceed to study the simulation-based inference.
 
-## Simulation-based inference for simple linear regression {#infer-regression}
 
-In this section, we'll use the simulation-based methods you previously learned in Chapters \@ref(confidence-intervals) and \@ref(hypothesis-testing) to recreate the values in the regression table. 
-In particular, we'll use the `infer` package workflow to
 
--   Construct a 95% confidence interval for the population slope $\beta_1$ using bootstrap resampling with replacement. We did this previously in Sections \@ref(bootstrap-process) with the almonds data and \@ref(case-study-two-prop-ci) with the `mythbusters_yawn` data.
--   Conduct a hypothesis test of $H_0: \beta_1 = 0$ versus $H_A: \beta_1 \neq 0$ using a permutation test. We did this previously in Sections \@ref(ht-infer) with the `spotify_sample` data and \@ref(ht-case-study) with the `movies_sample` IMDb data.
-
-### Confidence intervals for the population slope using `infer` {#infer-ci-slr}
-
-```{r}
-n_reps <- 1000
-```
-
-We'll construct a 95% confidence interval for $\beta_1$ using the `infer` workflow outlined in Subsection \@ref(infer-workflow). Specifically, we'll first construct the bootstrap distribution for the fitted slope $b_1$ using our single sample of `r n_old_faithful` eruptions:
-
-1.  `specify()` the variables of interest in `old_faithful_2024` with the formula: `waiting ~ duration`.
-2.  `generate()` replicates by using `bootstrap` resampling with replacement from the original sample of `r n` courses. We generate `` reps = `r n_reps` `` replicates using `type = "bootstrap"`.
-3.  `calculate()` the summary statistic of interest: the fitted `slope` $b_1$.
-
-Using this bootstrap distribution, we'll construct the 95% confidence interval using the percentile method and (if appropriate) the standard error method as well. It is important to note in this case that the bootstrapping with replacement is done *row-by-row*. Thus, the original pairs of `waiting` and `duration` values are always kept together, but different pairs of `waiting` and `duration` values may be resampled multiple times. The resulting confidence interval will denote a range of plausible values for the unknown population slope $\beta_1$ quantifying the relationship between waiting times and duration for Old Faithful eruptions.
-
-Let's first construct the bootstrap distribution for the fitted slope $b_1$:
-
-```{r eval=FALSE}
-bootstrap_distn_slope <- old_faithful_2024 %>% 
-  specify(formula = waiting ~ duration) %>%
-  generate(reps = 1000, type = "bootstrap") %>% 
-  calculate(stat = "slope")
-bootstrap_distn_slope
-```
-
-```{r echo=FALSE, purl=FALSE}
-if (!file.exists("rds/bootstrap_distn_slope_eruptions.rds")) {
-  set.seed(76)
-  bootstrap_distn_slope <- old_faithful_2024 %>%
-    specify(waiting ~ duration) %>%
-    generate(reps = 1000, type = "bootstrap") %>%
-    calculate(stat = "slope")
-  saveRDS(
-    object = bootstrap_distn_slope,
-    "rds/bootstrap_distn_slope_eruptions.rds"
-  )
-} else {
-  bootstrap_distn_slope <- readRDS("rds/bootstrap_distn_slope_eruptions.rds")
-}
-bootstrap_distn_slope
-```
-
-Observe how we have `r n_reps` values of the bootstrapped slope $b_1$ in the `stat` column. Let's visualize the `r n_reps` bootstrapped values in Figure \@ref(fig:bootstrap-distribution-slope).
-
-```{r bootstrap-distribution-slope, fig.show="hold", fig.cap="Bootstrap distribution of slope.", fig.height=2.2}
-visualize(bootstrap_distn_slope)
-```
-
-Observe how the bootstrap distribution is roughly bell-shaped. Recall from Subsection \@ref(revisit-almond-bootstrap) that the shape of the bootstrap distribution of $b_1$ closely approximates the shape of the sampling distribution of $b_1$.
-
-#### Percentile-method {-}
-
-First, let's compute the 95% confidence interval for $\beta_1$ using the percentile method. We'll do so by identifying the 2.5th and 97.5th percentiles which include the middle 95% of values. Recall that this method does not require the bootstrap distribution to be normally shaped.
-
-```{r}
-percentile_ci <- bootstrap_distn_slope %>% 
-  get_confidence_interval(type = "percentile", level = 0.95)
-percentile_ci
-```
-
-The resulting percentile-based 95% confidence interval for $\beta_1$ of (`r percentile_ci[[1]]`, `r percentile_ci[[2]]`).
-
-#### Standard error method {-}
-
-Since the bootstrap distribution in Figure \@ref(fig:bootstrap-distribution-slope) appears to be roughly bell-shaped, we can also construct a 95% confidence interval for $\beta_1$ using the standard error method.
-
-In order to do this, we need to first compute the fitted slope $b_1$, which will act as the center of our standard error-based confidence interval. While we saw in the regression table in Table \@ref(tab:simple-model-part-deux) that this was $b_1$ = `r b1`, we can also use the `infer` pipeline with the `generate()` step removed to calculate it:
-
-```{r}
-observed_slope <- old_faithful_2024 %>% 
-  specify(waiting ~ duration) %>% 
-  calculate(stat = "slope")
-observed_slope
-```
-
-We then use the `get_ci()` function with `level = 0.95` to compute the 95% confidence interval for $\beta_1$. Note that setting the `point_estimate` argument to the `observed_slope` of `r b1` sets the center of the confidence interval.
-
-```{r}
-se_ci <- bootstrap_distn_slope %>% 
-  get_ci(level = 0.95, type = "se", point_estimate = observed_slope)
-se_ci
-```
-
-The resulting standard error-based 95% confidence interval for $\beta_1$ of $(`r se_ci[["lower_ci"]]`, `r se_ci[["upper_ci"]]`)$ is slightly different than the percentile-based confidence interval. Note that neither of these confidence intervals contain 0 and are entirely located above 0. This is suggesting that there is in fact a meaningful positive relationship between waiting times and duration for Old Faithful eruptions.
-
-### Hypothesis test for population slope using `infer` {#infer-hypo-slr}
-
-Let's now conduct a hypothesis test of $H_0: \beta_1 = 0$ vs. $H_A: \beta_1 \neq 0$. We will use the `infer` package, which follows the hypothesis testing paradigm in the "There is only one test" diagram in Figure \@ref(fig:htdowney).
-
-Let's first think about what it means for $\beta_1$ to be zero as assumed in the null hypothesis $H_0$. Recall we said if $\beta_1 = 0$, then this is saying there is no relationship between the waiting time and duration. Thus, assuming this particular null hypothesis $H_0$ means that in our "hypothesized universe" there is no relationship between `waiting` and `duration`. We can therefore shuffle/permute the `waiting` variable to no consequence.
-
-We construct the null distribution of the fitted slope $b_1$ by performing the steps that follow. Recall from Section \@ref(understanding-ht) on terminology, notation, and definitions related to hypothesis testing where we defined the *null distribution*: the sampling distribution of our test statistic $b_1$ assuming the null hypothesis $H_0$ is true.
-
-1.  `specify()` the variables of interest in `old_faithful_2024` with the formula: `waiting ~ duration`.
-2.  `hypothesize()` the null hypothesis of `independence`. Recall from Section \@ref(ht-infer) that this is an additional step that needs to be added for hypothesis testing.
-3.  `generate()` replicates by permuting/shuffling values from the original sample of `r nrow(old_faithful_2024)` eruptions. We generate `` reps = `r n_reps` `` replicates using `type = "permute"` here.
-4.  `calculate()` the test statistic of interest: the fitted `slope` $b_1$.
-
-In this case, we `permute` the values of `waiting` across the values of `duration` `r n_reps` times. We can do this shuffling/permuting since we assumed a "hypothesized universe" of no relationship between these two variables. Then we `calculate` the `"slope"` coefficient for each of these `r n_reps` `generate`d samples.
-
-```{r eval=FALSE}
-null_distn_slope <- old_faithful_2024 |> 
-  specify(waiting ~ duration) |>
-  hypothesize(null = "independence") |> 
-  generate(reps = 1000, type = "permute") |> 
-  calculate(stat = "slope")
-```
-
-```{r echo=FALSE, purl=FALSE}
-if (!file.exists("rds/null_distn_slope.rds")) {
-  set.seed(76)
-  null_distn_slope <- old_faithful_2024 |> 
-    specify(waiting ~ duration) |>
-    hypothesize(null = "independence") |> 
-    generate(reps = 1000, type = "permute") |> 
-    calculate(stat = "slope")
-  saveRDS(
-    object = null_distn_slope,
-    "rds/null_distn_slope_old_faithful.rds"
-  )
-} else {
-  null_distn_slope <- readRDS("rds/null_distn_slope_old_faithful.rds")
-}
-```
-
-Observe the resulting null distribution for the fitted slope $b_1$ in Figure \@ref(fig:null-distribution-slope).
-
-```{r null-distribution-slope, echo=FALSE, fig.show="hold", fig.cap="Null distribution of slopes.", fig.height=2.5, purl=FALSE}
-visualize(null_distn_slope)
-```
-
-Notice how it is centered at $b_1$ = 0. This is because in our hypothesized universe, there is no relationship between `waiting` and `duration` and so $\beta_1 = 0$. Thus, the most typical fitted slope $b_1$ we observe across our simulations is 0. Observe, furthermore, how there is variation around this central value of 0.
-
-```{r}
-# Observed slope
-b1 <- old_faithful_2024 |> 
-  specify(waiting ~ duration) |>
-  calculate(stat = "slope")
-b1
-```
-
-Let's visualize the $p$-value in the null distribution by comparing it to the observed test statistic of $b_1$ = `r b1` in Figure \@ref(fig:p-value-slope). We'll do this by adding a `shade_p_value()` layer to the previous `visualize()` code.
-
-```{r p-value-slope, echo=FALSE, fig.show="hold", fig.cap="Null distribution and $p$-value.", fig.height=3, purl=FALSE}
-visualize(null_distn_slope) +
-  shade_p_value(obs_stat = b1, direction = "both")
-```
-
-Since the observed fitted slope `r b1` falls far to the right of this null distribution and thus the shaded region doesn't overlap it, we'll have a $p$-value of 0. For completeness, however, let's compute the numerical value of the $p$-value anyways using the `get_p_value()` function. Recall that it takes the same inputs as the `shade_p_value()` function:
-
-```{r}
-null_distn_slope |> 
-  get_p_value(obs_stat = b1, direction = "both")
-```
-
-This matches the $p$-value of 0 in the regression table. We therefore reject the null hypothesis $H_0: \beta_1 = 0$ in favor of the alternative hypothesis $H_A: \beta_1 \neq 0$. We thus have evidence that suggests there is a significant relationship between waiting time and duration values for eruptions of Old Faithful.
-
-When the conditions for inference for regression are met and the null distribution has a bell shape, we are likely to see similar results between the simulation-based results we just demonstrated and the theory-based results shown in the regression table.
-
-```{block lc9-5, type="learncheck", purl=FALSE}
-\vspace{-0.15in}
-**_Learning check_**
-\vspace{-0.1in}
-```
-
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the inference but this time for the correlation coefficient instead of the slope. Note the implementation of `stat = "correlation"` in the `calculate()` function of the `infer` package.
-
-```{block, type="learncheck", purl=FALSE}
-\vspace{-0.25in}
-\vspace{-0.25in}
-```
-
-## Simulation-based inference for multiple linear regression
+## Simulation-based Inference for Multiple Linear Regression
 
 ### Confidence intervals for the population partial slopes using `infer`
 
