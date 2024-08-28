@@ -14,6 +14,10 @@ UN_data_ch10 <- un_member_states_2024 |>
   na.omit()
 
 
+## ----eval=FALSE---------------------------------------------------------------
+## UN_data_ch10
+
+
 ## ----echo=FALSE---------------------------------------------------------------
 n_UN_data_ch10 <- nrow(UN_data_ch10)
 
@@ -23,7 +27,12 @@ un_member_states_2024 |>
   select(life_exp = life_expectancy_2022, 
          fert_rate = fertility_rate_2022)|>
   na.omit() |>
-  tidy_summary()
+  tidy_summary() |> 
+  kbl() |> 
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -86,21 +95,30 @@ resid_france <- actual_france - fitted_france
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## simple_model |>
-##   get_regression_points()
-
-
+## ----fittedtable-ch10-all-----------------------------------------------------
+simple_model |>
+  get_regression_points()
 
 
 ## -----------------------------------------------------------------------------
 old_faithful_2024
 
 
-## -----------------------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
+## old_faithful_2024 |>
+##   select(duration, waiting) |>
+##   tidy_summary()
+
+
+## ----echo=FALSE---------------------------------------------------------------
 old_faithful_2024 |>
   select(duration, waiting) |> 
-  tidy_summary()
+  tidy_summary() |> 
+  kbl() |> 
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -139,8 +157,21 @@ set.seed(6)
 spotify_for_anova <- spotify_by_genre |> 
   select(artists, track_name, popularity, track_genre) |> 
   filter(track_genre %in% c("country", "hip-hop", "rock")) 
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## spotify_for_anova |>
+##   slice_sample(n = 10)
+
+
+## ----echo=FALSE---------------------------------------------------------------
 spotify_for_anova |> 
-  slice_sample(n = 10)
+  slice_sample(n = 10) |> 
+  kbl() |> 
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
 
 
 ## -----------------------------------------------------------------------------
@@ -302,7 +333,7 @@ ggplot(fitted_and_residuals, aes(x = duration, y = residual)) +
 
 
 
-## -----------------------------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 n_reps <- 1000
 
 
@@ -381,9 +412,24 @@ coffee_data <- coffee_quality |>
 coffee_data
 
 
-## -----------------------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
+## coffee_data |>
+##   tidy_summary()
+
+
+## ----echo=FALSE---------------------------------------------------------------
 coffee_data |>
-  tidy_summary()
+  tidy_summary()  |> 
+  kbl(
+    digits = 3,
+    caption = "Summary of coffee data",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 9, 16),
+    latex_options = c("hold_position")
+  )
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -485,14 +531,14 @@ ub_mult <- b1_mult + q*se_b1_mult
 
 
 
-## -----------------------------------------------------------------------------
-anova(mod_mult_2, mod_mult_1) 
+## ----eval=FALSE---------------------------------------------------------------
+## anova(mod_mult_2, mod_mult_1)
 
 
 
 
-## -----------------------------------------------------------------------------
-anova(mod_mult_1, mod_mult) 
+## ----eval=FALSE---------------------------------------------------------------
+## anova(mod_mult_1, mod_mult)
 
 
 
@@ -526,8 +572,22 @@ observed_fit <- coffee_data |>
 observed_fit
 
 
-## -----------------------------------------------------------------------------
-mod_mult_table
+## ----eval=FALSE---------------------------------------------------------------
+## mod_mult_table
+
+
+## ----echo=FALSE---------------------------------------------------------------
+mod_mult_table |> 
+  kbl(
+    digits = 3,
+    #    caption = "",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 8, 16),
+    latex_options = c("hold_position")
+  )
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -581,7 +641,7 @@ if (!file.exists("rds/boot_distn_slopes.rds")) {
 boot_distribution_mlr
 
 
-## ----boot-distn-slopes, fig.cap="Bootstrap distribution of partial slopes."----
+## ----boot-distn-slopes, fig.cap="Bootstrap distributions of partial slopes.", fig.height=8----
 visualize(boot_distribution_mlr)
 
 
@@ -594,7 +654,7 @@ confidence_intervals_mlr <- boot_distribution_mlr |>
 confidence_intervals_mlr
 
 
-## ----ci-slopes-multiple, fig.cap="95% confidence intervals for the partial slopes."----
+## ----ci-slopes-multiple, fig.cap="95% confidence intervals for the partial slopes.", fig.height=8----
 visualize(boot_distribution_mlr) +
   shade_confidence_interval(endpoints = confidence_intervals_mlr)
 
@@ -602,14 +662,15 @@ visualize(boot_distribution_mlr) +
 ## -----------------------------------------------------------------------------
 set.seed(2024)
 null_distribution_mlr <- coffee_quality |>
-  specify(total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage) |>
+  specify(total_cup_points ~ continent_of_origin + aroma + 
+      flavor + moisture_percentage) |>
   hypothesize(null = "independence") |>
   generate(reps = 1000, type = "permute") |>
   fit()
 null_distribution_mlr
 
 
-## -----------------------------------------------------------------------------
+## ----fig.height=8-------------------------------------------------------------
 visualize(null_distribution_mlr) +
   shade_p_value(obs_stat = observed_fit, direction = "two-sided")
 
