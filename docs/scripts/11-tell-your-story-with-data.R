@@ -26,10 +26,21 @@
 ##   )
 
 
-## -----------------------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
+## house_prices |>
+##   select(price, sqft_living, condition) |>
+##   tidy_summary()
+
+
+## ----echo=FALSE---------------------------------------------------------------
 house_prices |> 
   select(price, sqft_living, condition) |> 
-  tidy_summary()
+  tidy_summary() |> 
+  kbl() |> 
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 8, 16),
+    latex_options = c("hold_position")
+  )
 
 
 ## ----eval=FALSE, message=FALSE------------------------------------------------
@@ -56,7 +67,7 @@ house_prices <- house_prices |>
   mutate(
     log10_price = log10(price),
     log10_size = log10(sqft_living)
-    )
+  )
 
 
 ## -----------------------------------------------------------------------------
@@ -130,11 +141,7 @@ house_prices |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## price_interaction <- lm(log10_price ~ log10_size * condition,
-##                         data = house_prices)
-## 
-## # Get regression table:
+## price_interaction <- lm(log10_price ~ log10_size * condition, data = house_prices)
 ## get_regression_table(price_interaction)
 
 
@@ -151,6 +158,58 @@ house_prices |>
 
 ## -----------------------------------------------------------------------------
 10^(2.45 + 1 * log10(1900))
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## # Fit regression model:
+## price_interaction <- lm(log10_price ~ log10_size * condition,
+##                         data = house_prices)
+## 
+## # Get regression table:
+## get_regression_table(price_interaction)
+
+
+
+## -----------------------------------------------------------------------------
+observed_fit_coefficients <- house_prices |>
+  specify(log10_price ~ log10_size * condition) |>
+  fit()
+observed_fit_coefficients
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## null_distribution_housing <- house_prices |>
+##   specify(log10_price ~ log10_size * condition) |>
+##   hypothesize(null = "independence") |>
+##   generate(reps = 1000, type = "permute") |>
+##   fit()
+
+
+## ----echo=FALSE---------------------------------------------------------------
+if (!file.exists("rds/null_distribution_housing.rds")) {
+  set.seed(2024)
+  null_distribution_housing <- house_prices |>
+    specify(log10_price ~ log10_size * condition) |>
+    hypothesize(null = "independence") |>
+    generate(reps = 1000, type = "permute") |>
+    fit()
+  saveRDS(
+    object = null_distribution_housing,
+    "rds/null_distribution_housing.rds"
+  )
+} else {
+  null_distribution_housing <- readRDS("rds/null_distribution_housing.rds")
+}
+
+
+## ----fig.height=9.5-----------------------------------------------------------
+visualize(null_distribution_housing) +
+  shade_p_value(obs_stat = observed_fit_coefficients, direction = "two-sided")
+
+
+## -----------------------------------------------------------------------------
+null_distribution_housing |>
+  get_p_value(obs_stat = observed_fit_coefficients, direction = "two-sided")
 
 
 
