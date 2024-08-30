@@ -14,16 +14,14 @@
 
 ## ----eval=FALSE---------------------------------------------------------------
 ## gain_summary <- flights |>
-##   summarize(
-##     min = min(gain, na.rm = TRUE),
-##     q1 = quantile(gain, 0.25, na.rm = TRUE),
-##     median = quantile(gain, 0.5, na.rm = TRUE),
-##     q3 = quantile(gain, 0.75, na.rm = TRUE),
-##     max = max(gain, na.rm = TRUE),
-##     mean = mean(gain, na.rm = TRUE),
-##     sd = sd(gain, na.rm = TRUE),
-##     missing = sum(is.na(gain))
-##   )
+##   summarize(min = min(gain, na.rm = TRUE),
+##             q1 = quantile(gain, 0.25, na.rm = TRUE),
+##             median = quantile(gain, 0.5, na.rm = TRUE),
+##             q3 = quantile(gain, 0.75, na.rm = TRUE),
+##             max = max(gain, na.rm = TRUE),
+##             mean = mean(gain, na.rm = TRUE),
+##             sd = sd(gain, na.rm = TRUE),
+##             missing = sum(is.na(gain)))
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -38,7 +36,7 @@ house_prices |>
   tidy_summary() |> 
   kbl() |> 
   kable_styling(
-    font_size = ifelse(is_latex_output(), 8, 16),
+    font_size = ifelse(is_latex_output(), 7.8, 16),
     latex_options = c("hold_position")
   )
 
@@ -161,11 +159,8 @@ house_prices |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
 ## price_interaction <- lm(log10_price ~ log10_size * condition,
 ##                         data = house_prices)
-## 
-## # Get regression table:
 ## get_regression_table(price_interaction)
 
 
@@ -202,9 +197,23 @@ if (!file.exists("rds/null_distribution_housing.rds")) {
 }
 
 
-## ----fig.height=9.5-----------------------------------------------------------
-visualize(null_distribution_housing) +
+## ----eval=FALSE---------------------------------------------------------------
+## visualize(null_distribution_housing) +
+##   shade_p_value(obs_stat = observed_fit_coefficients, direction = "two-sided")
+
+
+## ----echo=FALSE, message=FALSE------------------------------------------------
+null_housing_shaded <- visualize(null_distribution_housing) +
   shade_p_value(obs_stat = observed_fit_coefficients, direction = "two-sided")
+ggsave(filename = "images/null_housing_shaded.png", 
+       plot = null_housing_shaded, 
+       width = 6,
+       height = 9,
+       dpi = 320)
+
+
+## ----echo=FALSE, out.height="100%"--------------------------------------------
+knitr::include_graphics("images/null_housing_shaded.png")
 
 
 ## -----------------------------------------------------------------------------
@@ -225,7 +234,7 @@ US_births_1999 <- US_births_1994_2003 |>
   filter(year == 1999)
 
 
-## ----us-births, fig.cap="Number of births in the US in 1999.", fig.height=6.4----
+## ----us-births, fig.cap="Number of births in the US in 1999.", fig.height=ifelse(knitr::is_latex_output(), 6.4, 7)----
 ggplot(US_births_1999, aes(x = date, y = births)) +
   geom_line() +
   labs(x = "Date", 

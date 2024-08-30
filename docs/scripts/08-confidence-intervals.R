@@ -6,10 +6,8 @@ library(infer)
 
 
 
-## ----echo=-1, eval=FALSE------------------------------------------------------
-## set.seed(20)
-## almonds_sample_100 <- almonds_bowl |>
-##   rep_slice_sample(n = 100, replace = TRUE, reps = 1)
+## ----echo=FALSE---------------------------------------------------------------
+almonds_sample_100 <- moderndive::almonds_sample_100
 
 
 ## -----------------------------------------------------------------------------
@@ -40,10 +38,6 @@ almonds_bowl |>
 
 
 ## -----------------------------------------------------------------------------
-almonds_sample_100
-
-
-## -----------------------------------------------------------------------------
 almonds_sample_100 |> 
   summarize(mean_weight = mean(weight), 
             sd_weight = sd(weight), 
@@ -54,7 +48,7 @@ almonds_sample_100 |>
 
 
 
-## ----normal-curve-shaded-1a, echo=FALSE, fig.height=2, fig.width=3, fig.cap="Normal area within one standard deviation"----
+## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 2, 7), fig.width=3, fig.cap="Normal area within one standard deviation"----
 ggplot(NULL, aes(c(-4,4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1, 1)) +
@@ -64,7 +58,7 @@ ggplot(NULL, aes(c(-4,4))) +
   scale_x_continuous(breaks = c(-1,1)) 
 
 
-## ----normal-curve-shaded-2a, echo=FALSE, fig.height=2, fig.width=3, fig.cap="Normal area within two standard deviations"----
+## ----normal-curve-shaded-2a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 2, 7), fig.width=3, fig.cap="Normal area within two standard deviations"----
 ggplot(NULL, aes(c(-4,4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -2)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-2, 2)) +
@@ -94,9 +88,11 @@ upper_bound <- sample_mean + 1.96 * sigma / sqrt(100)
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
-  summarize(sample_mean = mean(weight),
-            lower_bound = mean(weight) - 1.96*sigma/sqrt(length(weight)),
-            upper_bound = mean(weight) + 1.96*sigma/sqrt(length(weight)))
+  summarize(
+    sample_mean = mean(weight),
+    lower_bound = mean(weight) - 1.96 * sigma / sqrt(length(weight)),
+    upper_bound = mean(weight) + 1.96 * sigma / sqrt(length(weight))
+  )
 
 
 
@@ -127,7 +123,7 @@ almonds_sample_100 |>
 
 
 
-## ----normal-curve-shaded-3a, echo=FALSE, fig.cap="Normal curve with the shaded middle area being 0.95", fig.height=2, fig.width=3----
+## ----normal-curve-shaded-3a, echo=FALSE, fig.cap="Normal curve with the shaded middle area being 0.95", fig.height=ifelse(knitr::is_latex_output(), 2, 7), fig.width=3----
 ggplot(NULL, aes(c(-4, 4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1.96)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1.96, 1.96)) +
@@ -230,7 +226,7 @@ ggplot(boot_means, aes(x = mean_weight)) +
 
 
 ## -----------------------------------------------------------------------------
-# Obtain 1000 bootstrap samples
+# Retrieve 1000 bootstrap samples
 bootstrap_samples <- almonds_sample_100 |> 
   rep_sample_n(size = 100, replace = TRUE, reps = 1000)
 
@@ -367,8 +363,8 @@ SE_boot
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
-  summarize(lower_bound = mean(weight) - 1.96*SE_boot,
-            upper_bound = mean(weight) + 1.96*SE_boot)
+  summarize(lower_bound = mean(weight) - 1.96 * SE_boot,
+            upper_bound = mean(weight) + 1.96 * SE_boot)
 
 
 ## -----------------------------------------------------------------------------
