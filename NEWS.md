@@ -8,6 +8,7 @@
 * Improved theory-based discussions in Chapters 8, 10, and 11
 * Added use of `fit()` function for simulation-based inference with multiple linear regression
 * Added `infer` package with `fit()` to Chapter 11 to discuss inference for regression
+* Added content in the Appendices
 
 * Used base-pipe `|>` instead of `%>%` in all code chunks since those are in other updates. Some inline functions like `"*"()` were kept using `%>%` since they are more readable than converting to the base-pipe functionality.
 * Addressed the warning message explicitly for `group_by()` in text and fix `index.Rmd` to remove `options(dplyr.summarise.inform = FALSE)`
