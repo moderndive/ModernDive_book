@@ -142,7 +142,7 @@ spotify_metal_deephouse |>
           order = c("metal", "deep-house"))
 
 
-## ----null-distribution-infer, fig.show="hold", fig.cap="Null distribution.", fig.height=1.8----
+## ----null-distribution-infer, fig.show="hold", fig.cap="Null distribution.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 7)----
 visualize(null_distribution, bins = 25)
 
 
@@ -244,7 +244,7 @@ movies
 movies_sample
 
 
-## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre.", fig.height=2.7----
+## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre.", fig.height=ifelse(knitr::is_latex_output(), 2.7, 7)----
 ggplot(data = movies_sample, aes(x = genre, y = rating)) +
   geom_boxplot() +
   labs(y = "IMDb rating")
@@ -355,7 +355,7 @@ movies_sample |>
 
 
 
-## ----t-stat-3, fig.cap="Null distribution using t-statistic and t-distribution.", fig.height=2.2----
+## ----t-stat-3, fig.cap="Null distribution using t-statistic and t-distribution.", fig.height=ifelse(knitr::is_latex_output(), 2.2, 7)----
 visualize(null_distribution_movies_t, bins = 10, method = "both")
 
 
@@ -366,7 +366,7 @@ obs_two_sample_t <- movies_sample |>
 obs_two_sample_t
 
 
-## ----t-stat-4, fig.cap="Null distribution using t-statistic and t-distribution with $p$-value shaded.", warning=TRUE, fig.height=1.7----
+## ----t-stat-4, fig.cap="Null distribution using t-statistic and t-distribution with $p$-value shaded.", warning=TRUE, fig.height=ifelse(knitr::is_latex_output(), 1.7, 7)----
 visualize(null_distribution_movies_t, method = "both") +
   shade_p_value(obs_stat = obs_two_sample_t, direction = "both")
 
@@ -381,7 +381,7 @@ flights_sample <- flights |>
   filter(carrier %in% c("HA", "AS"))
 
 
-## ----ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2023.", fig.height=2.8----
+## ----ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2023.", fig.height=ifelse(knitr::is_latex_output(), 2.8, 7)----
 ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
   geom_boxplot() +
   labs(x = "Carrier", y = "Air Time")

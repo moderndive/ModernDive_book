@@ -14,10 +14,13 @@ library(gapminder)
 
 ## -----------------------------------------------------------------------------
 UN_data_ch6 <- un_member_states_2024 |>
-  select(country, life_expectancy_2022, 
-         fertility_rate_2022, income_group_2024)|>
+  select(country, 
+         life_expectancy_2022, 
+         fertility_rate_2022, 
+         income_group_2024)|>
   na.omit()|>
-  rename(life_exp = life_expectancy_2022, fert_rate = fertility_rate_2022, 
+  rename(life_exp = life_expectancy_2022, 
+         fert_rate = fertility_rate_2022, 
          income = income_group_2024)|>
   mutate(income = factor(income, 
                          levels = c("Low income", "Lower middle income", 
@@ -31,15 +34,26 @@ glimpse(UN_data_ch6)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch6 |> sample_n(size = 5)
+## UN_data_ch6 |> sample_n(size = 10)
 
 
 
 
-## -----------------------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
+## UN_data_ch6 |>
+##   select(life_exp, fert_rate, income) |>
+##   tidy_summary()
+
+
+## ----echo=FALSE---------------------------------------------------------------
 UN_data_ch6 |> 
   select(life_exp, fert_rate, income) |> 
-  tidy_summary()
+  tidy_summary() |> 
+  kbl() |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 8, 16),
+    latex_options = c("hold_position")
+  ) 
 
 
 ## -----------------------------------------------------------------------------

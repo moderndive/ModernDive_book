@@ -326,7 +326,7 @@ almonds_sample |>
 
 ## ----eval=FALSE---------------------------------------------------------------
 ## # Segment 1: sample size = 25 ------------------------------
-## # 1.a) Obtaining the 1000 sample means, each from random samples of size 25
+## # 1.a) Calculating the 1000 sample means, each from random samples of size 25
 ## virtual_mean_weight_25 <- almonds_bowl |>
 ##   rep_slice_sample(n = 25, reps = 1000)|>
 ##   summarize(mean_weight = mean(weight), n = n())
@@ -338,7 +338,7 @@ almonds_sample |>
 ## 
 ## 
 ## # Segment 2: sample size = 50 ------------------------------
-## # 2.a) Obtaining the 1000 sample means, each from random samples of size 50
+## # 2.a) Calculating the 1000 sample means, each from random samples of size 50
 ## virtual_mean_weight_50 <- almonds_bowl |>
 ##   rep_slice_sample(n = 50, reps = 1000)|>
 ##   summarize(mean_weight = mean(weight), n = n())
@@ -349,7 +349,7 @@ almonds_sample |>
 ##   labs(x = "Sample mean weights for random samples of 50 almonds", title = "50")
 ## 
 ## # Segment 3: sample size = 100 ------------------------------
-## # 3.a) Obtaining the 1000 sample means, each from random samples of size 100
+## # 3.a) Calculating the 1000 sample means, each from random samples of size 100
 ## virtual_mean_weight_100 <- almonds_bowl |>
 ##   rep_slice_sample(n = 100, reps = 1000)|>
 ##   summarize(mean_weight = mean(weight), n = n())
@@ -387,16 +387,16 @@ almonds_bowl |>
 
 
 
-## ----echo=-1------------------------------------------------------------------
+## ----echo=-(1:3)--------------------------------------------------------------
 set.seed(76)
 n1 <- 50
-n2<- 60
+n2 <- 60
 virtual_prop_red <- bowl |> 
   rep_slice_sample(n = 50, reps = 1000) |> 
   summarize(prop_red = mean(color == "red"))
 virtual_prop_almond <- almonds_bowl |>
   rep_slice_sample(n = 60, reps = 1000) |>
-  summarise(prop_almond = mean(weight > 3.8))
+  summarize(prop_almond = mean(weight > 3.8))
 prop_joined <- virtual_prop_red |>
   inner_join(virtual_prop_almond, by = "replicate") |>
   mutate(prop_diff = prop_red - prop_almond)

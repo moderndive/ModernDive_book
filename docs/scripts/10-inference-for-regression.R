@@ -45,7 +45,7 @@ un_member_states_2024 |>
 
 
 
-## ----regline-ch10, fig.cap="Relationship with regression line.", fig.height=3.2, message=FALSE----
+## ----regline-ch10, fig.cap="Relationship with regression line.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 7), message=FALSE----
 ggplot(UN_data_ch10, 
        aes(x = life_exp, y = fert_rate)) +
   geom_point() +
@@ -126,7 +126,7 @@ old_faithful_2024 |>
 n_old_faithful <- dim(old_faithful_2024)[1]
 
 
-## ----geyserplot1, echo=F, fig.cap="Scatterplot of relationship of eruption duration and waiting time", fig.height=4.5----
+## ----geyserplot1, echo=F, fig.cap="Scatterplot of relationship of eruption duration and waiting time", fig.height=ifelse(knitr::is_latex_output(), 4.5, 7)----
 ggplot(old_faithful_2024, 
        aes(x = duration, y = waiting)) +
   geom_point(alpha = 0.3) +
@@ -227,7 +227,7 @@ t_stat <- round(b1/se_b1,3)
 p_value <- round(2*(1 - pt(abs(t_stat), n_old_faithful-2)),3)
 
 
-## ----pvalue1, echo=FALSE, fig.height=3, fig.cap="Illustration of a two-sided p-value for a t-test"----
+## ----pvalue1, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 7), fig.cap="Illustration of a two-sided p-value for a t-test"----
 n <- n_old_faithful
 shade <- function(t, a,b) {
   z = dt(t, df = n-2)
@@ -347,7 +347,7 @@ n_reps <- 1000
 
 
 
-## ----bootstrap-distribution-slope, fig.show="hold", fig.cap="Bootstrap distribution of slope.", fig.height=2.2----
+## ----bootstrap-distribution-slope, fig.show="hold", fig.cap="Bootstrap distribution of slope.", fig.height=ifelse(knitr::is_latex_output(), 2.2, 7)----
 visualize(bootstrap_distn_slope)
 
 

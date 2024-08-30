@@ -24,7 +24,7 @@ opts_chunk$set(
   tidy = FALSE,
   purl = TRUE,
   out.width = "\\textwidth",
-  fig.height = 4,
+#  fig.height = 4,
   fig.align = "center"
 )
 
@@ -69,12 +69,12 @@ We begin with regression with a single explanatory variable\index{regression!bas
 We now load all the packages needed for this chapter (this assumes you've already installed them). In this chapter, we introduce some new packages:
 
 1. The `tidyverse` "umbrella" [@R-tidyverse] package. Recall from our discussion in Section \@ref(tidyverse-package) that loading the `tidyverse` package by running `library(tidyverse)` loads the following commonly used data science packages all at once:
-+ `ggplot2` for data visualization
-+ `dplyr` for data wrangling
-+ `tidyr` for converting data to "tidy" format
-+ `readr` for importing spreadsheet data into R
-+ As well as the more advanced `purrr`, `tibble`, `stringr`, and `forcats` packages
-1. The `moderndive` \index{R packages!moderndive} package of datasets and functions for tidyverse-friendly introductory linear regression as well as a data frame summary function.
+    + `ggplot2` for data visualization
+    + `dplyr` for data wrangling
+    + `tidyr` for converting data to "tidy" format
+    + `readr` for importing spreadsheet data into R
+    + As well as the more advanced `purrr`, `tibble`, `stringr`, and `forcats` packages
+2. The `moderndive` \index{R packages!moderndive} package of datasets and functions for tidyverse-friendly introductory linear regression as well as a data frame summary function.
 
 If needed, read Section \@ref(packages) for information on how to install and load R packages.
 
@@ -99,7 +99,9 @@ library(patchwork)
 ## One numerical explanatory variable {#model1}
 
 Before we introduce the model needed for simple linear regression, we present an example.
-Why do some countries exhibit high fertility rates while others have significantly lower ones? Are there correlations between fertility rates and life expectancy across different continents and nations? Could underlying socioeconomic factors be influencing these trends? These are all questions that are of interest to demographers and policy makers, as understanding fertility rates is important for planning and development. By analyzing the data set of UN member states, which includes variables such as country codes (ISO), fertility rates, and life expectancy for 2022, researchers can uncover patterns and make predictions about fertility rates based on life expectancy.
+Why do some countries exhibit high fertility rates while others have significantly lower ones? Are there correlations between fertility rates and life expectancy across different continents and nations? Could underlying socioeconomic factors be influencing these trends? 
+
+These are all questions that are of interest to demographers and policy makers, as understanding fertility rates is important for planning and development. By analyzing the data set of UN member states, which includes variables such as country codes (ISO), fertility rates, and life expectancy for 2022, researchers can uncover patterns and make predictions about fertility rates based on life expectancy.
 
 ```{r echo=FALSE, purl=FALSE}
 # This code is used for dynamic non-static in-line text output purposes
@@ -132,7 +134,7 @@ n_demo_ch5 <- nrow(UN_data_ch5)
 A crucial step before doing any kind of analysis or modeling is performing an *exploratory data analysis*, \index{data analysis!exploratory} or EDA for short. EDA gives you a sense of the distributions of the individual variables in your data, whether any potential relationships exist between variables, whether there are outliers and/or missing values, and (most importantly) how to build your model. Here are three common steps in an EDA:
 
 1. Most crucially, looking at the raw data values.
-1. Computing summary statistics, such as means, medians, and interquartile ranges.
+1. Computing summary statistics, such as means, medians, and maximums.
 1. Creating data visualizations.
 
 We perform the first common step in an exploratory data analysis: looking at the raw data values. Because this step seems so trivial, unfortunately many data analysts ignore it. However, getting an early sense of what your raw data looks like can often prevent many larger issues down the road. 
@@ -145,26 +147,32 @@ glimpse(UN_data_ch5)
 
 Observe that ``Rows: `r n_demo_ch5` `` indicates that there are `r n_demo_ch5` rows/observations in `UN_data_ch5` after filtering out the missing values, where each row corresponds to one observed country/member state. It is important to note that the *observational unit* \index{observational unit} is an individual country. Recall from Subsection \@ref(exploredataframes) that the observational unit is the "type of thing" that is being measured by our variables.
 
-A full description of all the variables included in `un_member_states_2024` can be found by reading the associated help file (run `?un_member_states_2024` in the console). However, we fully describe only the `r UN_data_ch5 |> ncol()` variables we selected in `UN_data_ch5`:
+A full description of all the variables included in `un_member_states_2024` can be found by reading the associated help file (run `?un_member_states_2024` in the console). Let's describe only the `r UN_data_ch5 |> ncol()` variables we selected in `UN_data_ch5`:
 
 1. `iso`: An identification variable used to distinguish between the `r n_demo_ch5` countries in the filtered dataset.
 2. `fert_rate`: A numerical variable representing the country's fertility rate in 2022 corresponding to the expected number of children born per woman in child-bearing years. This is the outcome variable $y$ of interest.
 3. `life_exp`: A numerical variable representing the country's average life expectancy in 2022 in years. This is the primary explanatory variable $x$ of interest.
 4. `obes_rate`: A numerical variable representing the country's obesity rate in 2016. This will be another explanatory variable $x$ that we use in the *Learning check* at the end of this subsection.
 
-An alternative way to look at the raw data values is by choosing a random sample of the rows in `UN_data_ch5` by piping it into the `slice_sample()` \index{dplyr!slice\_sample()} function from the `dplyr` package. Here we set the `n` argument to be `5`, indicating that we want a random sample of 5 rows. We display the results in Table \@ref(tab:five-random-countries). Note that due to the random nature of the sampling, you will likely end up with a different subset of 5 rows.
+```{r echo=FALSE}
+sample_size <- 5
+```
+
+
+An alternative way to look at the raw data values is by choosing a random sample of the rows in `UN_data_ch5` by piping it into the `slice_sample()` \index{dplyr!slice\_sample()} function from the `dplyr` package. Here we set the `n` argument to be ``r sample_size``, indicating that we want a random sample of `r sample_size` rows. We display the results in Table \@ref(tab:random-countries). Note that due to the random nature of the sampling, you will likely end up with a different subset of `r sample_size` rows.
 
 ```{r, eval=FALSE}
 UN_data_ch5 |>
   slice_sample(n = 5)
 ```
 
-```{r five-random-countries, echo=FALSE, purl=FALSE}
+```{r random-countries, echo=FALSE, purl=FALSE}
 UN_data_ch5 |> 
-  slice_sample(n = 5) |> 
+  slice_sample(n = sample_size) |> 
   kbl(
     digits = 3,
-    caption = "A random sample of 5 out of the 193 total countries (181 without missing data)",
+    caption = paste("A random sample of", sample_size, 
+                    "out of the 193 total countries (181 without missing data)"),
     booktabs = TRUE,
     linesep = ""
   ) |>
@@ -176,7 +184,7 @@ UN_data_ch5 |>
 
 We have looked at the raw values in our `UN_data_ch5` data frame and got a preliminary sense of the data. We can now compute summary statistics. We start by computing the mean and median of our numerical outcome variable `fert_rate` and our numerical explanatory variable `life_exp`. We do this by using the `summarize()` function from `dplyr` along with the `mean()` and `median()` summary functions we saw in Section \@ref(summarize).
 
-```{r}
+```{r eval=FALSE}
 UN_data_ch5 |>
   summarize(mean_life_exp = mean(life_exp), 
             mean_fert_rate = mean(fert_rate),
@@ -184,24 +192,61 @@ UN_data_ch5 |>
             median_fert_rate = median(fert_rate))
 ```
 
+```{r echo=FALSE}
+UN_data_ch5 |>
+  summarize(mean_life_exp = mean(life_exp), 
+            mean_fert_rate = mean(fert_rate),
+            median_life_exp = median(life_exp), 
+            median_fert_rate = median(fert_rate)) |> 
+  kbl() |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
 However, what if we want other summary statistics as well, such as the standard deviation (a measure of spread), the minimum and maximum values, and various percentiles? 
 
-Typing out all these summary statistic functions in `summarize()` would be long and tedious. Instead, we use the convenient `tidy_summary()` function from the `moderndive` \index{R packages!moderndive!tidy\_summary()} package. This function takes in a data frame, summarizes it, and returns commonly used summary statistics in tidy format. We take our `UN_data_ch5` data frame, `select()` only the outcome and explanatory variables `fert_rate` and `life_exp`, and pipe them into the `tidy_summary` function:
+Typing out all these summary statistic functions in `summarize()` would be long and tedious. Instead, we use the convenient `tidy_summary()` function from the `moderndive` \index{R packages!moderndive!tidy\_summary()} package. 
 
-```{r}
+This function takes in a data frame, summarizes it, and returns commonly used summary statistics in tidy format. We take our `UN_data_ch5` data frame, `select()` only the outcome and explanatory variables `fert_rate` and `life_exp`, and pipe them into the `tidy_summary` function:
+
+```{r eval=FALSE}
 UN_data_ch5 |> 
   select(fert_rate, life_exp) |> 
   tidy_summary()
 ```
 
+```{r echo=FALSE}
+UN_data_ch5 |> 
+  select(fert_rate, life_exp) |> 
+  tidy_summary() |> 
+  kbl() |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
 We can also do this more directly by providing which `columns` we'd like a summary of inside the `tidy_summary()` function:
 
-```{r}
+```{r eval=FALSE}
 UN_data_ch5 |> 
   tidy_summary(columns = c(fert_rate, life_exp))
 ```
 
-Both styles of code return the same results. For the numerical variables `fert_rate` and `life_exp` it returns:
+```{r echo=FALSE}
+UN_data_ch5 |> 
+  tidy_summary(columns = c(fert_rate, life_exp)) |> 
+  kbl() |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+
+Both return the same results for the numerical variables `fert_rate` and `life_exp`:
 
 - `column`: the name of the column being summarized
 - `n`: the number of non-missing values
@@ -227,17 +272,22 @@ life_summary_df <- summary_df  |>
   filter(column == "life_exp")
 ```
 
-Looking at this output, we can see how the values of both variables distribute. For example, the median fertility rate was `r fert_summary_df$median[1]`, whereas the median life expectancy was `r life_summary_df$median[1]` years. Furthermore, the middle 50% of fertility rates was between `r fert_summary_df$Q1[[1]]` and `r fert_summary_df$Q3[[1]]` (the first and third quartiles), whereas the middle 50% of life expectancies falls within `r life_summary_df$Q1[[1]]` to `r life_summary_df$Q3[[1]]`.
+Looking at this output, we can see how the values of both variables distribute. For example, the median fertility rate was `r fert_summary_df$median[1]`, whereas the median life expectancy was `r life_summary_df$median[1]` years. The middle 50% of fertility rates was between `r fert_summary_df$Q1[[1]]` and `r fert_summary_df$Q3[[1]]` (the first and third quartiles), and the middle 50% of life expectancies was from `r life_summary_df$Q1[[1]]` to `r life_summary_df$Q3[[1]]`.
 
-The `tidy_summary()` function only returns what are known as *univariate* \index{univariate} summary statistics: functions that take a single variable and return some numerical summary of that variable. However, there also exist *bivariate* \index{bivariate} summary statistics: functions that take in two variables and return some summary of those two variables. In particular, when the two variables are numerical, we can compute the \index{correlation (coefficient)} *correlation coefficient*. Generally speaking, *coefficients* are quantitative expressions of a specific phenomenon.  A *correlation coefficient* is a quantitative expression of the *strength of the linear relationship between two numerical variables*. Its value ranges between -1 and 1 where:
+The `tidy_summary()` function only returns what are known as *univariate* \index{univariate} summary statistics: functions that take a single variable and return some numerical summary of that variable. However, there also exist *bivariate* \index{bivariate} summary statistics: functions that take in two variables and return some summary of those two variables. 
 
-* -1 indicates a perfect *negative relationship*: As one variable increases, the value of the other variable tends to go down, following a straight line.
-* 0 indicates no relationship: The values of both variables go up/down independently of each other.
-* +1 indicates a perfect *positive relationship*: As the value of one variable goes up, the value of the other variable tends to go up as well in a linear fashion.
+In particular, when the two variables are numerical, we can compute the \index{correlation (coefficient)} *correlation coefficient*. Generally speaking, *coefficients* are quantitative expressions of a specific phenomenon. A *correlation coefficient* is a quantitative expression of the *strength of the linear relationship between two numerical variables*. Its value goes from -1 and 1 where:
 
-Figure \@ref(fig:correlation1) gives examples of 9 different correlation coefficient values for hypothetical numerical variables $x$ and $y$. For example, observe in the top right plot that for a correlation coefficient of -0.75 there is a negative linear relationship between $x$ and $y$, but it is not as strong as the negative linear relationship between $x$ and $y$ when the correlation coefficient is -0.9 or -1.
+* -1 indicates a perfect *negative relationship*: 
+  As one variable increases, the value of the other variable tends to go down, following a straight line.
+* 0 indicates no relationship: 
+  The values of both variables go up/down independently of each other.
+* +1 indicates a perfect *positive relationship*: 
+  As the value of one variable goes up, the value of the other variable tends to go up as well in a linear fashion.
 
-```{r correlation1, echo=FALSE, fig.cap="Nine different correlation coefficients.", fig.height=2.6, purl=FALSE}
+Figure \@ref(fig:correlation1) gives examples of nine different correlation coefficient values for hypothetical numerical variables $x$ and $y$. 
+
+```{r correlation1, echo=FALSE, fig.cap="Nine different correlation coefficients.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 7), purl=FALSE}
 correlation <- c(-0.9999, -0.9, -0.75, -0.3, 0, 0.3, 0.75, 0.9, 0.9999)
 n_sim <- 100
 values <- NULL
@@ -277,6 +327,8 @@ if (is_latex_output()) {
 }
 ```
 
+For example, observe in the top right plot that for a correlation coefficient of -0.75 there is a negative linear relationship between $x$ and $y$, but it is not as strong as the negative linear relationship between $x$ and $y$ when the correlation coefficient is -0.9 or -1.
+
 The correlation coefficient can be computed using the `get_correlation()` \index{R packages!moderndive!get\_correlation()} function in the `moderndive` package. In this case, the inputs to the function are the two numerical variables for which we want to calculate the correlation coefficient. 
 
 We put the name of the outcome variable on the left-hand side of the `~` "tilde" sign, while putting the name of the explanatory variable on the right-hand side. This is known as R's \index{R!formula notation} *formula notation*. We will use this same "formula" syntax with regression later in this chapter.
@@ -305,7 +357,7 @@ In our case, the correlation coefficient of `r cor_ch5` indicates that the relat
 
 We now perform the last step in EDA: creating data visualizations. Since both the `fert_rate` and `life_exp` variables are numerical, a scatterplot is an appropriate graph to visualize this data. We do this using `geom_point()` and display the result in Figure \@ref(fig:numxplot1). Furthermore, we set the `alpha` value to `0.1` to check for any overplotting.
 
-```{r numxplot1, fig.cap="Scatterplot of relationship of life expectancy and fertility rate", fig.height=4.5}
+```{r numxplot1, fig.cap="Scatterplot of relationship of life expectancy and fertility rate", fig.height=ifelse(knitr::is_latex_output(), 4.5, 7)}
 ggplot(UN_data_ch5, 
        aes(x = life_exp, y = fert_rate)) +
   geom_point(alpha = 0.1) +
@@ -316,15 +368,12 @@ We do not see much for overplotting due to little to no overlap in the points. M
 
 We build on the scatterplot in Figure \@ref(fig:numxplot1) by adding a "best-fitting" line: of all possible lines we can draw on this scatterplot, it is the line that "best" fits through the cloud of points. We do this by adding a new `geom_smooth(method = "lm", se = FALSE)` layer to the `ggplot()` code that created the scatterplot in Figure \@ref(fig:numxplot1). The `method = "lm"` argument sets the line to be a "**l**inear **m**odel." The `se = FALSE` \index{ggplot2!geom\_smooth()} argument suppresses _standard error_ uncertainty bars. (We'll define the concept of _standard error_ later in Subsection \@ref(sampling-variation).)
 
-```{r numxplot3, fig.cap="Regression line.", message=FALSE}
-ggplot(UN_data_ch5, 
-       aes(x = life_exp, y = fert_rate)) +
+```{r numxplot3, fig.cap="Scatterplot of life expectancy and fertility rate with regression line.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 4, 7)}
+ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
   geom_point(alpha = 0.1) +
-  labs(
-    x = "Life Expectancy", 
+  labs(x = "Life Expectancy", 
     y = "Fertility Rate",
-    title = "Scatterplot of relationship of life expectancy and fertility rate"
-  ) +
+    title = "Relationship of life expectancy and fertility rate") +
   geom_smooth(method = "lm", se = FALSE)
 ```
 
@@ -386,7 +435,7 @@ $$
 \begin{aligned}
 \widehat{y} &= b_0 + b_1 \cdot x\\
 \widehat{\text{fertility}\_\text{rate}} &= b_0 + b_{\text{life}\_\text{expectancy}} \cdot \text{life}\_\text{expectancy}\\
-&= `r demo_line[1] |> round(2)` + `r demo_line[2]` \cdot \text{life}\_\text{expectancy}
+&= `r demo_line[1] |> round(3)` + (`r demo_line[2]`) \cdot \text{life}\_\text{expectancy}
 \end{aligned}
 $$
 
@@ -449,7 +498,7 @@ resid <- target_point$residual
 UN_data_ch5 |>
   slice(index) |>
   kbl(
-    digits = 4,
+#    digits = 4,
     caption = "Data for the 21st country out of 193",
     booktabs = TRUE,
     linesep = ""
@@ -463,13 +512,13 @@ UN_data_ch5 |>
 What is the value $\widehat{y}$ on the regression line corresponding to this country's `life_exp` value of `r x`? In Figure \@ref(fig:numxplot4) we mark three values corresponding to these results for Bosnia and Herzegovina and give their statistical names:
 
 * Circle: The *observed value* $y$ = `r y` is this country's actual fertility rate.
-* Square: The *fitted value* $\widehat{y}$ is the value on the regression line for $x$ = `life_exp` = `r x`. This value is computed using the intercept and slope in the previous regression table: 
+* Square: The *fitted value* $\widehat{y}$ is the value on the regression line for $x = $ `life_exp` $ = `r x`$, computed with the intercept and slope in the previous regression table: 
 
-$$\widehat{y} = b_0 + b_1 \cdot x = `r demo_line[1]` + `r demo_line[2]` \cdot `r x` = `r y_hat`$$
+$$\widehat{y} = b_0 + b_1 \cdot x = `r demo_line[1]` + (`r demo_line[2]`) \cdot `r x` = `r y_hat`$$
 
 * Arrow: The length of this arrow is the *residual* \index{regression!residual} and is computed by subtracting the fitted value $\widehat{y}$ from the observed value $y$. The residual can be thought of as a model's error or "lack of fit" for a particular observation.  In the case of this country, it is $y - \widehat{y} = `r y` - `r y_hat` = `r resid`$.
 
-```{r numxplot4, echo=FALSE, fig.cap="Example of observed value, fitted value, and residual.", fig.height=2.8, message=FALSE, purl=FALSE}
+```{r numxplot4, echo=FALSE, fig.cap="Example of observed value, fitted value, and residual.", fig.height=ifelse(knitr::is_latex_output(), 3.4, 7), message=FALSE, purl=FALSE}
 best_fit_plot <- ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
   geom_point(color = "grey") +
   labs(
@@ -583,8 +632,7 @@ The data on the `r n_countries` countries can be found in the `un_member_states_
 
 ```{r, message=FALSE}
 gapminder2022 <- un_member_states_2024 |>
-  select(country, life_exp = life_expectancy_2022, 
-         continent, gdp_per_capita) |> 
+  select(country, life_exp = life_expectancy_2022, continent, gdp_per_capita) |> 
   na.omit()
 ```
 
@@ -610,17 +658,17 @@ glimpse(gapminder2022)
 
 Observe that ``Rows: `r gapminder2022_rows` `` indicates that there are `r gapminder2022_rows` rows/observations in `gapminder2022`, where each row corresponds to one country. In other words, the *observational unit* is an individual country. Furthermore, observe that the variable `continent` is of type `<fct>`, which stands for _factor_, which is R's way of encoding categorical variables.
 
-A full description of all the variables included in `un_member_states_2024` can be found by reading the associated help file (run `?un_member_states_2024` in the console). However, we fully describe only the `r ncol(un_member_states_2024)` variables we selected in `gapminder2022`:
+A full description of all the variables included in `un_member_states_2024` can be found by reading the associated help file (run `?un_member_states_2024` in the console). However, we fully describe only the `r ncol(gapminder2022)` variables we selected in `gapminder2022`:
 
 1. `country`: An identification variable of type character/text used to distinguish the 142 countries in the dataset.
 1. `life_exp`: A numerical variable of that country's life expectancy at birth. This is the outcome variable $y$ of interest.
 1. `continent`: A categorical variable with five levels. Here "levels" correspond to the possible categories: Africa, Asia, Americas, Europe, and Oceania. This is the explanatory variable $x$ of interest.
 1. `gdp_per_capita`: A numerical variable of that country's GDP per capita in US inflation-adjusted dollars that we'll use as another outcome variable $y$ in the *Learning check* at the end of this subsection.
 
-We look at a random sample of five out of the `r gapminder2022_rows` countries in Table \@ref(tab:model2-data-preview). 
+We next look at a random sample of three out of the `r gapminder2022_rows` countries in Table \@ref(tab:model2-data-preview). 
 
 ```{r, eval=FALSE}
-gapminder2022 |> sample_n(size = 5)
+gapminder2022 |> sample_n(size = 3)
 ```
 ```{r model2-data-preview, echo=FALSE, purl=FALSE}
 gapminder2022 |>
@@ -637,12 +685,25 @@ gapminder2022 |>
   )
 ```
 
-Note that random sampling will likely produce a different subset of 5 rows for you than what's shown. Now that we have looked at the raw values in our `gapminder2022` data frame and got a sense of the data, we move on to computing summary statistics. We once again apply the `tidy_summary()` function from the `moderndive` package. Recall from our previous EDA that this function takes in a data frame, summarizes it, and returns commonly used summary statistics. We take our `gapminder2022` data frame, `select()` only the outcome and explanatory variables `life_exp` and `continent`, and pipe them into the `tidy_summary()` function:
+Random sampling will likely produce a different subset of 3 rows for you than what's shown. Now that we have looked at the raw values in our `gapminder2022` data frame and got a sense of the data, we compute summary statistics. We again apply `tidy_summary()` from the `moderndive` package. Recall that this function takes in a data frame, summarizes it, and returns commonly used summary statistics. We take our `gapminder2022` data frame, `select()` only the outcome and explanatory variables `life_exp` and `continent`, and pipe them into `tidy_summary()`:
 
-```{r}
+```{r eval=FALSE}
+gapminder2022 |> select(life_exp, continent) |> tidy_summary()
+```
+
+```{r echo=FALSE}
 gapminder2022 |>
   select(life_exp, continent) |>
-  tidy_summary()
+  tidy_summary() |> 
+  kbl(
+    caption = "Summary of life expectancy and continent variables",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 9, 16),
+    latex_options = c("hold_position")
+  )
 ```
 
 ```{r include=FALSE}
@@ -667,10 +728,11 @@ Turning our attention to the summary statistics of the numerical variable `life_
 
 We can answer this question by performing the last of the three common steps in an exploratory data analysis: creating data visualizations. We visualize the distribution of our outcome variable $y$ = `life_exp` in Figure \@ref(fig:lifeexp2022hist).
 
-```{r lifeexp2022hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=5.2}
+```{r lifeexp2022hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=ifelse(knitr::is_latex_output(), 5.2, 7)}
 ggplot(gapminder2022, aes(x = life_exp)) +
   geom_histogram(binwidth = 5, color = "white") +
-  labs(x = "Life expectancy", y = "Number of countries",
+  labs(x = "Life expectancy", 
+       y = "Number of countries",
        title = "Histogram of distribution of worldwide life expectancies")
 ```
 
@@ -687,7 +749,7 @@ ggplot(gapminder2022, aes(x = life_exp)) +
   facet_wrap(~ continent, nrow = 2)
 ```
 
-```{r catxplot0b, echo=FALSE, fig.cap="Life expectancy in 2022.", fig.height=4.3, purl=FALSE}
+```{r catxplot0b, echo=FALSE, fig.cap="Life expectancy in 2022 by continent (faceted).", fig.height=ifelse(knitr::is_latex_output(), 4, 7), purl=FALSE}
 faceted_life_exp <- ggplot(gapminder2022, aes(x = life_exp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(
@@ -712,24 +774,22 @@ Observe that unfortunately the distribution of African life expectancies is much
 
 Recall that an alternative method to visualize the distribution of a numerical variable split by a categorical variable is by using a side-by-side boxplot. We map the categorical variable `continent` to the $x$-axis and the different life expectancies within each continent on the $y$-axis in Figure \@ref(fig:catxplot1).
 
-```{r catxplot1, fig.cap="Life expectancy in 2022.", fig.height=3.4}
+```{r catxplot1, fig.cap="Life expectancy in 2022 by continent (boxplot).", fig.height=ifelse(knitr::is_latex_output(), 2, 7)}
 ggplot(gapminder2022, aes(x = continent, y = life_exp)) +
   geom_boxplot() +
-  labs(x = "Continent", y = "Life expectancy",
+  labs(x = "Continent", 
+       y = "Life expectancy",
        title = "Life expectancy by continent")
 ```
 
-Some people prefer comparing the distributions of a numerical variable between different levels of a categorical variable using a boxplot instead of a faceted histogram. This is because we can make quick comparisons between the categorical variable's levels with imaginary horizontal lines. For example, observe in Figure \@ref(fig:catxplot1) that we can quickly convince ourselves that Europe has the highest median life expectancies by drawing an imaginary horizontal line near $y$ = 81. Furthermore, as we observed in the faceted histogram in Figure \@ref(fig:catxplot0b), Africa and Asia have the largest variation in life expectancy as evidenced by their large interquartile ranges (the heights of the boxes).
+Some people prefer comparing the distributions of a numerical variable between different levels of a categorical variable using a boxplot instead of a faceted histogram. This is because we can make quick comparisons between the categorical variable's levels with imaginary horizontal lines. For example, observe in Figure \@ref(fig:catxplot1) that we can quickly convince ourselves that Europe has the highest median life expectancies by drawing an imaginary horizontal line near $y = 81$. Furthermore, as we observed in the faceted histogram in Figure \@ref(fig:catxplot0b), Africa and Asia have the largest variation in life expectancy as evidenced by their large interquartile ranges (the size of the boxes).
 
-It’s important to remember, however, that the solid lines in the middle of the boxes correspond to the medians (the middle value) rather than the mean (the average). So, for example, if you look at Asia, the solid line denotes the median life expectancy of around 75 years. This tells us that half of all countries in Asia have a life expectancy below 75 years, whereas half have a life expectancy above 75 years.
-
-We compute the median and mean life expectancy for each continent with a little more data wrangling and display the results in Table \@ref(tab:catxplot0).
+It’s important to remember, however, that the solid lines in the middle of the boxes correspond to the medians (the middle value) rather than the mean (the average). So, for example, if you look at Asia, the solid line denotes the median life expectancy of around 75 years. This tells us that half of all countries in Asia have a life expectancy below 75 years, whereas half have a life expectancy above 75 years. We compute the median and mean life expectancy for each continent with a little more data wrangling and display the results in Table \@ref(tab:catxplot0).
 
 ```{r, eval=TRUE, results='hide'}
 life_exp_by_continent <- gapminder2022 |>
   group_by(continent) |>
-  summarize(median = median(life_exp), 
-            mean = mean(life_exp))
+  summarize(median = median(life_exp), mean = mean(life_exp))
 life_exp_by_continent
 ```
 ```{r catxplot0, echo=FALSE, purl=FALSE}
@@ -746,13 +806,7 @@ life_exp_by_continent |>
   )
 ```
 
-Observe the order of the second column `median` life expectancy: 
-
-- Africa is lowest, 
-- Oceania, South America, Asia, and North America are next with similar medians, and then 
-- Europe has the highest. 
-
-This ordering corresponds to the ordering of the solid black lines inside the boxes in our side-by-side boxplot in Figure \@ref(fig:catxplot1). 
+Observe the order of the second column `median` life expectancy: Africa is lowest, Europe the highest, and the others have similar medians between Africa and Europe. This ordering corresponds to the ordering of the solid black lines inside the boxes in our side-by-side boxplot in Figure \@ref(fig:catxplot1). 
 
 ```{r echo=FALSE, purl=FALSE}
 # This code is used for dynamic non-static in-line text output purposes
@@ -877,7 +931,8 @@ $$
 & \qquad + b_{\text{North America}}\cdot\mathbb{1}_{\text{North America}}(x) + b_{\text{Oceania}}\cdot\mathbb{1}_{\text{Oceania }}(x) \\
 & \qquad + b_{\text{South America}}\cdot\mathbb{1}_{\text{South America}}(x)\\
 &= `r intercept` + `r offset_asia`\cdot\mathbb{1}_{\text{Asia}}(x) + `r offset_europe`\cdot\mathbb{1}_{\text{Euro}}(x)  \\
-& \qquad + `r offset_north_america`\cdot\mathbb{1}_{\text{North America}}(x) + `r offset_oceania`\cdot\mathbb{1}_{\text{Oceania}}(x) + `r offset_south_america`\cdot\mathbb{1}_{\text{South America}}(x)
+& \qquad + `r offset_north_america`\cdot\mathbb{1}_{\text{North America}}(x) + `r offset_oceania`\cdot\mathbb{1}_{\text{Oceania}}(x) \\
+& \qquad + `r offset_south_america`\cdot\mathbb{1}_{\text{South America}}(x)
 \end{aligned}
 $$
 
@@ -913,7 +968,8 @@ $$
 & \qquad + b_{\text{South America}}\cdot\mathbb{1}_{\text{South America}}(x) \\
 &= `r intercept` + `r offset_asia`\cdot\mathbb{1}_{\text{Asia}}(x)
 + `r offset_europe`\cdot\mathbb{1}_{\text{Europe}}(x)\\
-& \qquad + `r offset_north_america`\cdot\mathbb{1}_{\text{North America}}(x) + `r offset_oceania`\cdot\mathbb{1}_{\text{Oceania}}(x) + `r offset_south_america`\cdot\mathbb{1}_{\text{South America}}(x)\\
+& \qquad + `r offset_north_america`\cdot\mathbb{1}_{\text{North America}}(x) + `r offset_oceania`\cdot\mathbb{1}_{\text{Oceania}}(x) \\
+& \qquad + `r offset_south_america`\cdot\mathbb{1}_{\text{South America}}(x)\\
 &= `r intercept` + `r offset_asia`\cdot 0 + `r offset_europe`\cdot 0 + `r offset_north_america`\cdot 0 + `r offset_oceania`\cdot 0 + `r offset_south_america`\cdot 0\\
 &= `r intercept`
 \end{aligned}
@@ -929,7 +985,8 @@ $$
 & \qquad + b_{\text{South America}}\cdot\mathbb{1}_{\text{South America}}(x) \\
 &= `r intercept` + `r offset_asia`\cdot\mathbb{1}_{\text{Asia}}(x) 
 + `r offset_europe`\cdot\mathbb{1}_{\text{Europe}}(x) \\
-& \qquad  + `r offset_north_america`\cdot\mathbb{1}_{\text{North America}}(x) + `r offset_oceania`\cdot\mathbb{1}_{\text{Oceania}}(x) + `r offset_south_america`\cdot\mathbb{1}_{\text{South America}}(x)\\
+& \qquad + `r offset_north_america`\cdot\mathbb{1}_{\text{North America}}(x) + `r offset_oceania`\cdot\mathbb{1}_{\text{Oceania}}(x) \\
+& \qquad + `r offset_south_america`\cdot\mathbb{1}_{\text{South America}}(x)\\
 &= `r intercept` + `r offset_asia`\cdot 1 + `r offset_europe`\cdot 0 + `r offset_north_america`\cdot 0 + `r offset_oceania`\cdot 0 + `r offset_south_america`\cdot 0\\
 &= `r intercept` + `r offset_asia` \\
 & = `r mean_asia`
@@ -1078,7 +1135,7 @@ ggplot(data = un_member_states_2024,
   labs(x = "Human Development Index (HDI)", y = "Life Expectancy")
 ```
 
-```{r, eval=FALSE}
+```{r}
 ggplot(data = un_member_states_2024, 
        aes(x = hdi_2022, y = fertility_rate_2022)) +
   geom_point() +
@@ -1101,7 +1158,7 @@ Looking at both of the scatterplots above, we see a strong positive linear relat
 
 Regression lines are also known as "best-fitting" lines. But what do we mean by "best"? We unpack the criteria that is used in regression to determine "best." Recall Figure \@ref(fig:numxplot4), where for Bosnia and Herzegovina we marked the *observed value* $y$ with a circle, the *fitted value* $\widehat{y}$ with a square, and the *residual* $y - \widehat{y}$ with an arrow. We re-display Figure \@ref(fig:numxplot4) in the top-left plot of Figure \@ref(fig:best-fitting-line) in addition to three more arbitrarily chosen countries:
 
-```{r best-fitting-line, fig.height=5.5, echo=FALSE, fig.cap="Example of observed value, fitted value, and residual.", purl=FALSE, message=FALSE}
+```{r best-fitting-line, fig.height=ifelse(knitr::is_latex_output(), 5.7, 7), echo=FALSE, fig.cap="Example of observed value, fitted value, and residual.", purl=FALSE, message=FALSE}
 # First residual
 demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 index <- with(UN_data_ch5, which(iso == "BIH"))
@@ -1231,12 +1288,12 @@ We use our data wrangling tools from Chapter \@ref(wrangling) to compute the sum
 
 ```{r eval=FALSE}
 # Fit regression model:
-demographics_model <- lm(fert_rate ~ life_exp, 
-                  data = UN_data_ch5)
+demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 
 # Get regression points:
 regression_points <- get_regression_points(demographics_model)
 regression_points
+
 # Compute sum of squared residuals
 regression_points |>
   mutate(squared_residuals = residual^2) |>
@@ -1245,20 +1302,23 @@ regression_points |>
 
 ```{r echo=FALSE}
 # Fit regression model:
-demographics_model <- lm(fert_rate ~ life_exp, 
-                  data = UN_data_ch5)
+demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 
 # Get regression points:
 regression_points <- get_regression_points(demographics_model)
 regression_points
+
 # Compute sum of squared residuals
 SSR <- regression_points |>
   mutate(squared_residuals = residual^2) |>
   summarize(sum_of_squared_residuals = sum(squared_residuals)) |> 
   pull()
+SSR
 ```
 
-Any other straight line drawn in the figure would yield a sum of squared residuals greater than `r SSR`. This is a mathematically guaranteed fact that you can prove using calculus and linear algebra. That's why alternative names for the linear regression line are the *best-fitting line* and the *least-squares line*. Why do we square the residuals (i.e., the arrow lengths)? So that both positive and negative deviations of the same amount are treated equally. (That being said, while taking the absolute value of the residuals would also treat both positive and negative deviations of the same amount equally, squaring the residuals is used for reasons related to calculus: taking derivatives and minimizing functions. To learn more we suggest you consult a textbook on mathematical statistics.)
+Any other straight line drawn in the figure would yield a sum of squared residuals greater than `r SSR`. This is a mathematically guaranteed fact that you can prove using calculus and linear algebra. That's why alternative names for the linear regression line are the *best-fitting line* and the *least-squares line*. 
+
+Why do we square the residuals (i.e., the arrow lengths)? So that both positive and negative deviations of the same amount are treated equally. (That being said, while taking the absolute value of the residuals would also treat both positive and negative deviations of the same amount equally, squaring the residuals is used for reasons related to calculus: taking derivatives and minimizing functions. To learn more we suggest you consult a textbook on mathematical statistics.)
 
 
 ```{block, type="learncheck", purl=FALSE}

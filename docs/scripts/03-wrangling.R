@@ -139,6 +139,9 @@ by_origin
 by_origin_monthly <- flights |> 
   group_by(origin, month) |> 
   summarize(count = n())
+
+
+## -----------------------------------------------------------------------------
 by_origin_monthly
 
 
@@ -193,7 +196,7 @@ gain_summary <- flights |>
 gain_summary
 
 
-## ----gain-hist, fig.cap="Histogram of gain variable.", message=FALSE, fig.height=3----
+## ----gain-hist, fig.cap="Histogram of gain variable.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 7)----
 ggplot(data = flights, mapping = aes(x = gain)) +
   geom_histogram(color = "white", bins = 20)
 

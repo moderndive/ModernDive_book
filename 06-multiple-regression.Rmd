@@ -14,7 +14,7 @@ opts_chunk$set(
   tidy = FALSE,
   purl = TRUE,
   out.width = "\\textwidth",
-  fig.height = 4,
+#  fig.height = 4,
   fig.align = "center"
 )
 
@@ -101,10 +101,13 @@ to be a `factor` so that its levels show up in the expected order.
 
 ```{r}
 UN_data_ch6 <- un_member_states_2024 |>
-  select(country, life_expectancy_2022, 
-         fertility_rate_2022, income_group_2024)|>
+  select(country, 
+         life_expectancy_2022, 
+         fertility_rate_2022, 
+         income_group_2024)|>
   na.omit()|>
-  rename(life_exp = life_expectancy_2022, fert_rate = fertility_rate_2022, 
+  rename(life_exp = life_expectancy_2022, 
+         fert_rate = fertility_rate_2022, 
          income = income_group_2024)|>
   mutate(income = factor(income, 
                          levels = c("Low income", "Lower middle income", 
@@ -138,22 +141,22 @@ are called factors and the categories are factor levels.
 n_UN_data_ch6 <- UN_data_ch6 |> nrow()
 ```
 
-We also display a random sample of 5 rows of the `r n_UN_data_ch6` rows
+We also display a random sample of 10 rows of the `r n_UN_data_ch6` rows
 corresponding to different countries in Table
 \@ref(tab:model4-data-preview). Remember due to the random nature of the
-sampling, you will likely end up with a different subset of 5 rows.
+sampling, you will likely end up with a different subset of 10 rows.
 
 ```{r, eval=FALSE}
-UN_data_ch6 |> sample_n(size = 5)
+UN_data_ch6 |> sample_n(size = 10)
 ```
 
 ```{r model4-data-preview, echo=FALSE, purl=FALSE}
 set.seed(20)
 UN_data_ch6 |>
-  sample_n(5) |>
+  sample_n(size = 10) |>
   kbl(
     digits = 3,
-    caption = "A random sample of 5 out of 182 UN member states",
+    caption = "A random sample of 10 out of 182 UN member states",
     booktabs = TRUE,
     linesep = ""
   ) |>
@@ -167,14 +170,26 @@ Life expectancy, `life_exp`, is an estimate of how many years, on
 average, a person in a given country is expected to live. Fertility
 rate, `fert_rate`, is the average number of live births per woman of
 childbearing age in a country. As we did in our exploratory data
-analyses in Sections \@ref(model1EDA) and \@ref(model2EDA) from the
-previous chapter, we obtain summary statistics:
+analyses in Sections \@ref(model1EDA) and \@ref(model2EDA) from Chapter 
+\@ref(regression), we find summary statistics:
 
-```{r}
+```{r eval=FALSE}
 UN_data_ch6 |> 
   select(life_exp, fert_rate, income) |> 
   tidy_summary()
 ```
+
+```{r echo=FALSE}
+UN_data_ch6 |> 
+  select(life_exp, fert_rate, income) |> 
+  tidy_summary() |> 
+  kbl() |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 8, 16),
+    latex_options = c("hold_position")
+  ) 
+```
+
 
 Recall that each row in `UN_data_ch6` represents a particular country or
 UN member state. The `tidy_summary()` function shows a summary for the
@@ -182,14 +197,16 @@ numerical variables life expectancy (`life_exp`), fertility rate
 (`fert_rate`), and the categorical variable income group (`income`).
 When the variable is numerical, the `tidy_summary()` function provides
 the total number of observations in the data frame, the five-number
-summary, the mean, and the standard deviation. For example, the first
+summary, the mean, and the standard deviation. 
+
+For example, the first
 row of our summary refers to life expectancy as `life_exp`. There are
 `r n_UN_data_ch6` observations for this variable, it is a numerical
 variable, and the first quartile, `Q1`, is 69.4; this means that the
 life expectancy of 25% of the UN member states is less than 69.4 years.
 When a variable in the data set is categorical, also called a `factor`,
 the summary shows all the categories or factor levels and the number of
-observations for each level. For example, income group, `income`, is a
+observations for each level. For example, income group (`income`) is a
 factor with four factor levels: `Low Income`, `Lower middle income`,
 `Upper middle income`, and `High income`. The summary also provides the
 number of states for each factor level; observe, for example, that the
@@ -222,7 +239,7 @@ ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
   geom_smooth(method = "lm", se = FALSE)
 ```
 
-```{r numxcatxplot1, echo=FALSE, fig.cap="Colored scatterplot of relationship of life expectancy and fertility rate.", fig.height=3.2, purl=FALSE, message=FALSE}
+```{r numxcatxplot1, echo=FALSE, fig.cap="Colored scatterplot of life expectancy and fertility rate.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 7), purl=FALSE, message=FALSE}
 if (is_html_output()) {
   ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
     geom_point() +
@@ -347,8 +364,8 @@ Observe that $b_3$ is an *offset* for life expectancy between the
 baseline level and the `High middle income` level. The same logic
 applies to the model for each possible income category.
 
-We obtain the regression coefficients using the `lm()` function and the
-command `coef()` to obtain the coefficients of the linear regression:
+We calculate the regression coefficients using the `lm()` function and the
+command `coef()` to retrieve the coefficients of the linear regression:
 
 ```{r eval=FALSE}
 one_factor_model <- lm(fert_rate ~ income, data = UN_data_ch6)
@@ -363,7 +380,8 @@ above:
 lifeExp_model <- lm(fert_rate ~ income, data = UN_data_ch6)
 b0 <- round(coef(lifeExp_model),2)
 # Get the coefficients of the model
-lm_data <- data.frame("Coefficients" = c("b0", "b2", "b3", "b4"),"Values" = coefficients(lifeExp_model))
+lm_data <- data.frame("Coefficients" = c("b0", "b2", "b3", "b4"),
+                      "Values" = coefficients(lifeExp_model))
 kbl(lm_data)|>
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
@@ -437,7 +455,7 @@ Observe how the intercept and the slope are different for a
 `High income` member state when compared to the baseline `Low income`
 member state. As an illustration, we construct this multiple linear
 regression for the UN member state data set in R. We first "fit" the
-model using the `lm()` "linear model" function and then obtain the
+model using the `lm()` "linear model" function and then find the
 coefficients using the function `coef()`. In R, the formula used is
 `y ~ x1 + x2 + x1:x2` where `x1` and `x2` are the variable names in the
 data set and represent the main effects while `x1:x2` is the interaction
@@ -474,7 +492,7 @@ lm_data |>
   )
 ```
 
-We can match the coefficients with the values obtained: the fitted
+We can match the coefficients with the values computed: the fitted
 fertility rate $\widehat{y} = \widehat{\text{fert rate}}$ for
 `Low income` countries is
 
@@ -490,7 +508,7 @@ appropriate line. The interpretation of the slope is the following: for
 the average fertility rate by `r abs(b_int[[5]])` units.
 
 As discussed earlier, the intercept and slope for all the other income
-groups are obtained by taking into account the appropriate offsets. As
+groups are determined by taking into account the appropriate offsets. As
 an illustration, for `High income` countries $D_4 = 1$ and all other
 dummy variables are equal to zero. The regression line becomes
 
@@ -499,7 +517,7 @@ $$\widehat{y} = \widehat{\text{fert rate}} = b_0 + b_1x + b_{04} + b_{14}x = (b_
 where $x$ is life expectancy, `life_exp`. The intercept is 
 `(Intercept) + incomeHigh income` which is
 
-$$b_0 + b_{04} = `r b_int[[1]]` +(`r b_int[[4]]`) = `r b_int[[1]]+b_int[[4]]`$$,
+$$b_0 + b_{04} = `r b_int[[1]]` +(`r b_int[[4]]`) = `r b_int[[1]]+b_int[[4]]`,$$
 
 and the slope for these `High income` countries is
 `life_exp + life_exp:incomeHigh income` corresponding to
@@ -508,7 +526,7 @@ $$b_1 + b_{14}=  `r b_int[[5]]` + `r b_int[[8]]` = `r b_int[[5]]+b_int[[8]]`.$$
 
 For `High income` countries, every additional year of life expectancy
 reduces the average fertility rate by `r abs(b_int[[5]]+b_int[[8]])`
-units. The intercepts and slopes for other income levels are obtained
+units. The intercepts and slopes for other income levels are calculated
 similarly.
 
 Since the life expectancy for `Low income` countries has a steeper slope
@@ -544,7 +562,7 @@ ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
   geom_parallel_slopes(se = FALSE)
 ```
 
-```{r numxcatx-parallel, echo=FALSE, fig.cap="Parallel slopes model of fertility rate with life expectancy and income group.", fig.height=3.5, purl=FALSE}
+```{r numxcatx-parallel, echo=FALSE, fig.cap="Parallel slopes model of fertility rate with life expectancy and income.", fig.height=ifelse(knitr::is_latex_output(), 2.7, 7), purl=FALSE}
 par_slopes <- ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
   geom_point() +
   labs(x = "Life expectancy", y = "Fertility rate", color = "Income group") +
@@ -583,7 +601,7 @@ equal to zero, will be represented by
 
 $$\widehat{y} = (b_0 + b_{04})+ b_1x.$$
 
-To obtain the coefficients for this regression in R, the formula used is
+To find the coefficients for this regression in R, the formula used is
 `y ~ x1 + x2` where `x1` and `x2` are the variable names in the data set
 and represent the main effects. Observe that the term `x1:x2`
 representing the interaction is no longer included. R would let both
@@ -626,7 +644,7 @@ units, regardless of the income level of the member state. The intercept
 of the regression line for `Low income` member states is
 `r b_no_int[[1]]` while for `High income` member states is
 `r b_no_int[[1]]`+`r b_no_int[[4]]` = `r b_no_int[[1]]+b_no_int[[4]]`.
-The intercepts for other income levels can be obtained similarly. We
+The intercepts for other income levels can be determined similarly. We
 compare the visualizations for both models side-by-side in Figure
 \@ref(fig:numxcatx-comparison).
 
@@ -663,7 +681,7 @@ the interaction model seems more appropriate.
 ### Observed responses, fitted values and residuals {#model4points}
 
 In this subsection, we work with the regression model with interactions.
-The coefficients for this model were obtained earlier, saved in
+The coefficients for this model were found earlier, saved in
 `model_int`, and are shown below:
 
 ```{r regtable-interaction1, echo=FALSE, purl=FALSE}
@@ -685,7 +703,7 @@ lm_data |>
   )
 ```
 
-We can use these coefficients to obtain the fitted values and residuals
+We can use these coefficients to find the fitted values and residuals
 for any given observation. As an illustration, we chose two observations
 from the UN member states data set, provided the values for the
 explanatory variables and response, as well as the fitted values and
@@ -707,7 +725,7 @@ of `r newpoints[[1,4]]` years and an observed fertility rate equal to
 with a life expectancy of `r newpoints[[2,4]]` years and an observed
 fertility rate equal to `r newpoints[[2,2]]` The fitted value, $\hat y$,
 called `fert_rate_hat` in the table, is the estimated value of the
-response determined by the regression line. This value is obtained by
+response determined by the regression line. This value is computed by
 using the values of the explanatory variables and the coefficients of
 the linear regression. In addition, recall the difference between the
 observed response value and the fitted value, $y - \hat y$, is called
@@ -726,7 +744,7 @@ the regression line is the fitted fertility rate. The observed y-value
 for fertility rate is below the regression line making the residual
 negative.
 
-```{r fitted-values, echo=FALSE, fig.cap="Fitted values for two new countries.", fig.height=4.7, purl=FALSE, message=FALSE}
+```{r fitted-values, echo=FALSE, fig.cap="Fitted values for two new countries.", fig.height=ifelse(knitr::is_latex_output(), 4.7, 7), purl=FALSE, message=FALSE}
 newpoints <- 
   get_regression_points(model_int, newdata = slice(UN_data_ch6, c(41, 102)))
 #Cyprus and Mali for comparison
@@ -828,7 +846,7 @@ n_credit_ch6 <- credit_ch6 |> nrow()
 Furthermore, we present a random sample of five out of the
 `r n_credit_ch6` credit card holders in Table
 \@ref(tab:model3-data-preview). As observed before, each time you run
-this code, a different subset of five rows is obtained.
+this code, a different subset of five rows is given.
 
 ```{r, eval=FALSE}
 credit_ch6 |> sample_n(size = 5)
@@ -885,7 +903,7 @@ ggplot(credit_ch6, aes(x = income, y = debt)) +
   geom_smooth(method = "lm", se = FALSE)
 ```
 
-```{r 2numxplot1, echo=FALSE, fig.cap="Relationship between credit card debt and credit limit/income.", fig.height=3.2, purl=FALSE, message=FALSE}
+```{r 2numxplot1, echo=FALSE, fig.cap="Relationship between credit card debt and credit limit/income.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 7), purl=FALSE, message=FALSE}
 model3_balance_vs_limit_plot <- ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
   geom_point() +
   labs(
@@ -921,7 +939,7 @@ association at all.
 
 Since variables `debt`, `credit_limit`, and `income` are numerical, and
 more importantly, the associations between the response and explanatory
-variables appear to be linear or close to linear, we can also obtain the
+variables appear to be linear or close to linear, we can also calculate the
 correlation coefficient between any two of these variables. Recall that
 the correlation coefficient is appropriate if the association between
 the variables is linear. One way to do this is using the
@@ -934,7 +952,7 @@ credit_ch6 |> get_correlation(debt ~ income)
 ```
 
 Alternatively, using the `select()` verb and command `cor()` we can
-obtain all correlations simultaneously by returning a *correlation
+find all correlations simultaneously by returning a *correlation
 matrix* as shown in Table \@ref(tab:model3-correlation).
 \index{correlation (coefficient)} This matrix shows the correlation
 coefficient for any pair of variables in the appropriate row/column
@@ -1109,9 +1127,9 @@ As shown in Figure \@ref(fig:3D-scatterplot), the linear regression with
 two numerical regressors produces the "best-fitting" plane. We start
 with a model with no interactions for the two numerical explanatory
 variables `income` and `credit_limit`. In R we consider a model fit with
-a formula of the form `y ~ x1 + x2`. We obtain the regression
+a formula of the form `y ~ x1 + x2`. We retrieve the regression
 coefficients using the `lm()` function and the command `coef()` to
-obtain the coefficients of the linear regression. The regression
+get the coefficients of the linear regression. The regression
 coefficients are shown in what follows.
 
 ```{r eval=FALSE}
@@ -1135,13 +1153,13 @@ kbl(lm_data)|>
   )
 ```
 
-1.  We obtain the linear regression coefficients using
+1.  We determine the linear regression coefficients using
     `lm(y ~ x1 + x2, data)` where `x1` and `x2` are the two numerical
     explanatory variables used.
 2.  We extract the coefficients from the output using the `coef()`
     command.
 
-We interpret the coefficients obtained. The `intercept` value is
+Let's interpret the coefficients. The `intercept` value is
 -\$385.179. If the range of values that the regressors could take
 include a `credit_limit` of \$0 and an `income` of \$0, the intercept
 would represent the average credit card debt for an individual with
@@ -1180,7 +1198,7 @@ $$ where $x_1$ represents credit limit and $x_2$ income.
 To illustrate the role of partial slopes further, observe that the right
 plot in Figure \@ref(fig:2numxplot1) shows the relationship between
 `debt` and `income` in isolation, a *positive* relationship, so the
-slope of income is positive. We can obtain the value of this slope by
+slope of income is positive. We can determine the value of this slope by
 constructing a simple linear regression using `income` as the only
 regressor:
 
@@ -1257,7 +1275,7 @@ As shown in Subsection \@ref(model4points) for the UN member states
 example, we find the fitted values and residuals for our credit card
 debt regression model. The fitted values for the credit card debt
 ($\widehat{\text{debt}}$) are computed using the equation for the
-regression plane obtained in the previous section:
+regression plane:
 
 $$
 \begin{aligned}
@@ -1320,7 +1338,7 @@ portion of this book. We are ready to proceed to Part III: "Statistical
 Inference with `infer`." Statistical inference is the science of
 inferring about some unknown quantity using sampling. So far, we have
 only studied the regression coefficients and their interpretation. In
-future chapters we learn how we can use information obtained from a
+future chapters we learn how we can use information from a
 sample to make inferences about the entire population.
 
 Once we have covered Chapters \@ref(sampling) on sampling,
