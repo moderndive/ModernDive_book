@@ -233,7 +233,7 @@ ggplot(gapminder2022, aes(x = life_exp)) +
 
 
 
-## ----catxplot1, fig.cap="Life expectancy in 2022 by continent (boxplot).", fig.height=ifelse(knitr::is_latex_output(), 2.5, 7)----
+## ----catxplot1, fig.cap="Life expectancy in 2022 by continent (boxplot).", fig.height=ifelse(knitr::is_latex_output(), 2, 7)----
 ggplot(gapminder2022, aes(x = continent, y = life_exp)) +
   geom_boxplot() +
   labs(x = "Continent", 
