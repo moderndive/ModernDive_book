@@ -78,7 +78,6 @@ se_xbar <- sigma / sqrt(num_almonds_sample)
 sample_mean <- mean(almonds_sample_100$weight)
 deviance <- sample_mean - mu
 z_almond <- deviance / se_xbar
-z_almond
 
 
 ## ----echo=FALSE---------------------------------------------------------------

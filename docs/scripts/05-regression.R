@@ -337,7 +337,6 @@ solomon <- country_lookup_table |>
 ## 
 ## # Get regression points:
 ## regression_points <- get_regression_points(demographics_model)
-## regression_points
 ## 
 ## # Compute sum of squared residuals
 ## regression_points |>
@@ -351,7 +350,6 @@ demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 
 # Get regression points:
 regression_points <- get_regression_points(demographics_model)
-regression_points
 
 # Compute sum of squared residuals
 SSR <- regression_points |>
