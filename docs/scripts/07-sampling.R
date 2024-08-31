@@ -412,3 +412,11 @@ prop_joined
 ##   labs(x = "Difference in sample proportions",
 ##        title = "Histogram of 1000 differences in sample proportions")
 
+
+
+
+
+## ----echo=FALSE, results='asis'-----------------------------------------------
+if (is_latex_output())
+  cat("Check the online version of the book for a table that also includes the sampling distribution of each of these statistics using the Central Limit Theorem.")
+

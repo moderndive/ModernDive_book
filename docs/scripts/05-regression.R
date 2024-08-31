@@ -52,7 +52,7 @@ UN_data_ch5 |>
   kbl() |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   )
 
 
@@ -69,7 +69,7 @@ UN_data_ch5 |>
   kbl() |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   )
 
 
@@ -84,7 +84,7 @@ UN_data_ch5 |>
   kbl() |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   )
 
 
@@ -203,7 +203,7 @@ gapminder2022 |>
   ) |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 9, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   )
 
 
@@ -214,7 +214,7 @@ gapminder2022 |> count(continent)
 
 
 
-## ----lifeexp2022hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=ifelse(knitr::is_latex_output(), 5.2, 7)----
+## ----lifeexp2022hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=ifelse(knitr::is_latex_output(), 5.2, 7), fig.pos='H'----
 ggplot(gapminder2022, aes(x = life_exp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", 
@@ -332,10 +332,8 @@ solomon <- country_lookup_table |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
+## # Fit regression model and regression points
 ## demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
-## 
-## # Get regression points:
 ## regression_points <- get_regression_points(demographics_model)
 ## 
 ## # Compute sum of squared residuals
@@ -362,26 +360,6 @@ SSR
 
 
 
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## demographics_model <- lm(formula = fert_rate ~ life_exp, data = UN_data_ch5)
-## # Get regression table:
-## get_regression_table(demographics_model)
-
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## library(broom)
-## library(janitor)
-## demographics_model |>
-##   tidy(conf.int = TRUE) |>
-##   mutate_if(is.numeric, round, digits = 3) |>
-##   clean_names() |>
-##   rename(lower_ci = conf_low, upper_ci = conf_high)
 
 
 
