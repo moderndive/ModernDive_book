@@ -7,7 +7,7 @@
 ## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
 library(tidyverse)
 library(moderndive)
-library(gapminder)
+library(ISLR2)
 
 
 
@@ -52,7 +52,7 @@ UN_data_ch6 |>
   kbl() |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 8, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   ) 
 
 
@@ -189,7 +189,7 @@ credit_ch6 |>
   kbl()|>
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   )
 
 

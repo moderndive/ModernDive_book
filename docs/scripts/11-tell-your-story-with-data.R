@@ -1,7 +1,7 @@
-## ----eval=FALSE---------------------------------------------------------------
-## library(tidyverse)
-## library(moderndive)
-## library(fivethirtyeight)
+## ----echo=FALSE, message=FALSE------------------------------------------------
+library(tidyverse)
+library(moderndive)
+library(fivethirtyeight)
 
 
 
@@ -34,10 +34,10 @@
 house_prices |> 
   select(price, sqft_living, condition) |> 
   tidy_summary() |> 
-  kbl() |> 
+  kbl(caption = "(ref:some-house-price-vars)") |> 
   kable_styling(
     font_size = ifelse(is_latex_output(), 7.8, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   )
 
 

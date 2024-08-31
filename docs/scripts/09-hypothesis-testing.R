@@ -1,3 +1,9 @@
+## ----message=FALSE------------------------------------------------------------
+library(tidyverse)
+library(moderndive)
+library(infer)
+
+
 ## ----include=FALSE------------------------------------------------------------
 # remotes::install_github("moderndive/moderndive", ref = "add-more-data")
 

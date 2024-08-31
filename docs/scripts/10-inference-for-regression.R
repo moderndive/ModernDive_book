@@ -31,7 +31,7 @@ un_member_states_2024 |>
   kbl() |> 
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   )
 
 
@@ -117,7 +117,7 @@ old_faithful_2024 |>
   kbl() |> 
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   )
 
 
@@ -170,11 +170,11 @@ spotify_for_anova |>
   kbl() |> 
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   )
 
 
-## -----------------------------------------------------------------------------
+## ----fig.cap="Boxplot of popularity by genre.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 7)----
 ggplot(spotify_for_anova, aes(x = track_genre, y = popularity)) +
   geom_boxplot() +
   labs(x = "Genre", y = "Popularity")
@@ -427,8 +427,8 @@ coffee_data |>
     linesep = ""
   ) |>
   kable_styling(
-    font_size = ifelse(is_latex_output(), 9, 16),
-    latex_options = c("hold_position")
+    font_size = ifelse(is_latex_output(), 7, 16),
+    latex_options = c("HOLD_position")
   )
 
 
@@ -580,13 +580,13 @@ observed_fit
 mod_mult_table |> 
   kbl(
     digits = 3,
-    #    caption = "",
+    caption = "(ref:mod-mult-again)",
     booktabs = TRUE,
     linesep = ""
   ) |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 8, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   )
 
 
