@@ -214,7 +214,7 @@ gapminder2022 |> count(continent)
 
 
 
-## ----lifeexp2022hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=ifelse(knitr::is_latex_output(), 5.2, 7), fig.pos='H'----
+## ----lifeexp2022hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=ifelse(knitr::is_latex_output(), 3.4, 7), fig.pos='H'----
 ggplot(gapminder2022, aes(x = life_exp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", 
@@ -233,7 +233,7 @@ ggplot(gapminder2022, aes(x = life_exp)) +
 
 
 
-## ----catxplot1, fig.cap="Life expectancy in 2022 by continent (boxplot).", fig.height=ifelse(knitr::is_latex_output(), 2, 7)----
+## ----catxplot1, fig.cap="Life expectancy in 2022 by continent (boxplot).", fig.height=ifelse(knitr::is_latex_output(), 3, 7)----
 ggplot(gapminder2022, aes(x = continent, y = life_exp)) +
   geom_boxplot() +
   labs(x = "Continent", 

@@ -48,6 +48,11 @@ almonds_sample_100 |>
 
 
 
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat('Please review [Appendix A online](https://moderndive.com/A-appendixA.html) where we provide R code to work with different areas, probabilities, and values under a normal density curve. Here, we place focus on the insights of specific values and areas without dedicating time to those calculations.')
+
+
 ## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 2, 7), fig.width=3, fig.cap="Normal area within one standard deviation"----
 ggplot(NULL, aes(c(-4,4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1)) +
@@ -66,6 +71,11 @@ ggplot(NULL, aes(c(-4,4))) +
   labs(x = "z", y = "") +
   scale_y_continuous(breaks = NULL) +
   scale_x_continuous(breaks = c(-2,2))
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat('Please see [Appendix A online](https://moderndive.com/A-appendixA.html) to produce these or other calculations in R. ')
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -96,6 +106,11 @@ almonds_sample_100 |>
 
 
 
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat("Please see [Appendix A online](https://moderndive.com/A-appendixA.html) for calculations of probabilities for $t$ density curves with different degrees of freedom.")
 
 
 ## -----------------------------------------------------------------------------

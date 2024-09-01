@@ -123,9 +123,13 @@ virtual_prop_red
 ## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(virtual_prop_red, aes(x = prop_red)) +
 ##   geom_histogram(binwidth = 0.04, boundary = 0.4, color = "white") +
-##   labs(x = "Sample proportion",
-##        title = "Histogram of 1000 sample proportions")
+##   labs(x = "Sample proportion", title = "Histogram of 1000 sample proportions")
 
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat('Please read the "Normal distribution" section of ([Appendix A online](https://moderndive.com/A-appendixA.html)) for a brief discussion of this distribution and its properties.')
 
 
 
@@ -207,6 +211,10 @@ e_xbar_50
 e_xbar_100
 
 
+
+
+
+
 ## -----------------------------------------------------------------------------
 bowl |> 
   mutate(is_red = color == "red") |> 
@@ -226,7 +234,7 @@ bowl |>
 
 
 ## -----------------------------------------------------------------------------
-p = 0.375
+p <- 0.375
 sqrt(p*(1-p)/100)
 
 
@@ -240,6 +248,10 @@ virtual_prop_red_50 |>
 ## -----------------------------------------------------------------------------
 sqrt(p * (1 - p) / 25)
 sqrt(p * (1 - p) / 50)
+
+
+
+
 
 
 
@@ -290,8 +302,7 @@ ggplot(almonds_sample, aes(x = weight)) +
 
 
 ## -----------------------------------------------------------------------------
-almonds_sample |>
-  summarize(sample_mean_weight = mean(weight))
+almonds_sample |> summarize(sample_mean_weight = mean(weight))
 
 
 ## -----------------------------------------------------------------------------
@@ -309,8 +320,7 @@ virtual_mean_weight
 ## ----eval=FALSE---------------------------------------------------------------
 ## ggplot(virtual_mean_weight, aes(x = mean_weight)) +
 ##   geom_histogram(binwidth = 0.04, boundary = 3.5, color = "white") +
-##   labs(x = "Sample mean",
-##        title = "Histogram of 1000 sample means")
+##   labs(x = "Sample mean", title = "Histogram of 1000 sample means")
 
 
 
@@ -335,7 +345,6 @@ almonds_sample |>
 ## ggplot(virtual_mean_weight_25, aes(x = mean_weight)) +
 ##   geom_histogram(binwidth = 0.02, boundary = 3.6, color = "white") +
 ##   labs(x = "Sample mean weights for random samples of 25 almonds", title = "25")
-## 
 ## 
 ## # Segment 2: sample size = 50 ------------------------------
 ## # 2.a) Calculating the 1000 sample means, each from random samples of size 50
@@ -387,6 +396,18 @@ almonds_bowl |>
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 ## ----echo=-(1:3)--------------------------------------------------------------
 set.seed(76)
 n1 <- 50
@@ -411,6 +432,10 @@ prop_joined
 ##   geom_histogram(binwidth = 0.04, boundary = 0, color = "white") +
 ##   labs(x = "Difference in sample proportions",
 ##        title = "Histogram of 1000 differences in sample proportions")
+
+
+
+
 
 
 
