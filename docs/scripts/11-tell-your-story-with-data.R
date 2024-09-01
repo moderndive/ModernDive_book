@@ -60,6 +60,11 @@ house_prices |>
 
 
 
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat("If you are unfamiliar with such transformations, we highly recommend you read [Appendix A online](https://moderndive.com/A-appendixA.html) on logarithmic (log) transformations.")
+
+
 ## -----------------------------------------------------------------------------
 house_prices <- house_prices |>
   mutate(
@@ -152,6 +157,11 @@ house_prices |>
 
 ## -----------------------------------------------------------------------------
 2.45 + 1 * log10(1900)
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat("This described in [Appendix A online](https://moderndive.com/A-appendixA.html).")
 
 
 ## -----------------------------------------------------------------------------

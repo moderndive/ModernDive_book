@@ -329,6 +329,11 @@ ggplot(fitted_and_residuals, aes(x = duration, y = residual)) +
 
 
 
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat("An example of such a transformation is given in [Appendix A online](https://moderndive.com/A-appendixA.html).")
+
+
 
 
 
