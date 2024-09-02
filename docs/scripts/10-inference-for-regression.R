@@ -36,18 +36,14 @@ un_member_states_2024 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## simple_model <- lm(fert_rate ~ life_exp,
-##                    data = UN_data_ch10)
-## # Get regression coefficients
+## simple_model <- lm(fert_rate ~ life_exp, data = UN_data_ch10)
 ## coef(simple_model)
 
 
 
 
-## ----regline-ch10, fig.cap="Relationship with regression line.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 7), message=FALSE----
-ggplot(UN_data_ch10, 
-       aes(x = life_exp, y = fert_rate)) +
+## ----regline-ch10, fig.cap="Relationship with regression line.", fig.height=ifelse(knitr::is_latex_output(), 3, 7), message=FALSE----
+ggplot(UN_data_ch10, aes(x = life_exp, y = fert_rate)) +
   geom_point() +
   labs(x = "Life Expectancy (x)", 
        y = "Fertility Rate (y)",
@@ -144,15 +140,22 @@ ggplot(old_faithful_2024,
 
 
 
-## -----------------------------------------------------------------------------
-# Fit regression model
-mod_diff_means <- lm(rating ~ genre, 
-                     data = movies_sample)
-# Get regression table
-get_regression_table(mod_diff_means)
+## ----eval=FALSE---------------------------------------------------------------
+## mod_diff_means <- lm(rating ~ genre, data = movies_sample)
+## get_regression_table(mod_diff_means)
 
 
-## -----------------------------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
+mod_diff_means <- lm(rating ~ genre, data = movies_sample)
+get_regression_table(mod_diff_means) |> 
+  kbl(caption = "Regression table for two-sample difference in means example") |> 
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 8, 16),
+    latex_options = c("HOLD_position")
+  )
+
+
+## ----echo=-1------------------------------------------------------------------
 set.seed(6)
 spotify_for_anova <- spotify_by_genre |> 
   select(artists, track_name, popularity, track_genre) |> 
@@ -167,9 +170,9 @@ spotify_for_anova <- spotify_by_genre |>
 ## ----echo=FALSE---------------------------------------------------------------
 spotify_for_anova |> 
   slice_sample(n = 10) |> 
-  kbl() |> 
+  kbl(caption = "(ref:spotify-for-anova-slice)") |> 
   kable_styling(
-    font_size = ifelse(is_latex_output(), 10, 16),
+    font_size = ifelse(is_latex_output(), 8, 16),
     latex_options = c("HOLD_position")
   )
 
@@ -187,15 +190,28 @@ mean_popularities_by_genre <- spotify_for_anova |>
 mean_popularities_by_genre
 
 
-## -----------------------------------------------------------------------------
-mod_anova <- lm(popularity ~ track_genre, 
-                data = spotify_for_anova)
-get_regression_table(mod_anova)
+## ----eval=FALSE---------------------------------------------------------------
+## mod_anova <- lm(popularity ~ track_genre, data = spotify_for_anova)
+## get_regression_table(mod_anova)
+
+
+## ----echo=FALSE---------------------------------------------------------------
+mod_anova <- lm(popularity ~ track_genre, data = spotify_for_anova)
+get_regression_table(mod_anova) |> 
+  kbl(caption = "Regression table for ANOVA example") |> 
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("HOLD_position")
+  )
 
 
 ## -----------------------------------------------------------------------------
 aov(popularity ~ track_genre, data = spotify_for_anova) |> 
   anova()
+
+
+
+
 
 
 ## -----------------------------------------------------------------------------
