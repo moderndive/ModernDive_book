@@ -37,6 +37,7 @@ If needed, read Section \@ref(packages) for information on how to install and lo
 library(tidyverse)
 library(moderndive)
 library(infer)
+library(gridExtra)
 ```
 
 Recall that loading the `tidyverse` package loads many packages that we have encountered earlier. For details refer to Section \@ref(tidyverse-package). The packages `moderndive` and `infer` contain functions and data frames that will be used in this chapter.
@@ -46,7 +47,6 @@ Recall that loading the `tidyverse` package loads many packages that we have enc
 library(tidyr)
 library(kableExtra)
 library(patchwork)
-library(gridExtra)
 library(GGally)
 ```
 
@@ -360,7 +360,7 @@ For `old_faithful_2024` we get:
 # Fit regression model:
 model_1 <- lm(waiting ~ duration, data = old_faithful_2024)
 
-# Get the coefficients of the model
+# Get the coefficients and standard deviation for the model
 coef(model_1)
 sigma(model_1)
 ```
@@ -1140,7 +1140,7 @@ The scatterplot is not exactly on the 45 degree line but it does not deviate muc
 We compare these results with residuals found by simulation that do not appear to follow normality as shown in Figure \@ref(fig:not-normal-residuals).
 In this case of the model yielding the clearly non-normal residuals on the right, any results from an inference for regression would not be valid.
 
-```{r not-normal-residuals, echo=FALSE, fig.cap="Non-normal residuals.", message=FALSE, purl=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.8, 7)}
+```{r not-normal-residuals, echo=FALSE, fig.cap="Non-normal residuals.", message=FALSE, purl=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.4, 7)}
 set.seed(3)
 g1 <- fitted_and_residuals |>
   mutate(
@@ -1169,7 +1169,7 @@ Using the residuals again as rough estimates of the error terms, we want to chec
 In Figure \@ref(fig:scatt-and-residual), we showed the scatterplot of residuals against fitted values (right plot). 
 We can also produce the scatterplot of residuals against the regressor `duration`:
 
-```{r residual-plot, fig.cap="Plot of residuals against the regressor.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 2.2, 7)}
+```{r residual-plot, fig.cap="Plot of residuals against the regressor.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 7)}
 ggplot(fitted_and_residuals, aes(x = duration, y = residual)) +
   geom_point(alpha = 0.6) +
   labs(x = "duration", y = "residual") +
@@ -1200,7 +1200,7 @@ This example does not appear to violate the constant variance assumption.
 
 In Figure \@ref(fig:equal-variance-residuals) we present an example using simulated data with non-constant variance.
 
-```{r equal-variance-residuals, echo=FALSE, fig.cap="Example of clearly non-equal variance.", purl=FALSE, fig.height=ifelse(is_latex_output(), 2.5, 7)}
+```{r equal-variance-residuals, echo=FALSE, fig.cap="Example of clearly non-equal variance.", purl=FALSE, fig.height=ifelse(is_latex_output(), 2, 7)}
 old_faithful_2024 |>
   mutate(eps = (rnorm(n(), 0, 0.075 * duration^2)) * 0.4) |>
   ggplot(aes(x = duration, y = eps)) +
@@ -1447,7 +1447,7 @@ b1
 
 Let's visualize the $p$-value in the null distribution by comparing it to the observed test statistic of $b_1$ = `r b1` in Figure \@ref(fig:p-value-slope). We'll do this by adding a `shade_p_value()` layer to the previous `visualize()` code.
 
-```{r p-value-slope, echo=FALSE, fig.show="hold", fig.cap="Null distribution and $p$-value.", fig.height=ifelse(knitr::is_latex_output(), 3, 7), purl=FALSE}
+```{r p-value-slope, echo=FALSE, fig.show="hold", fig.cap="Null distribution and $p$-value.", fig.height=ifelse(knitr::is_latex_output(), 3.8, 7), purl=FALSE}
 visualize(null_distn_slope) +
   shade_p_value(obs_stat = b1, direction = "both")
 ```
@@ -1470,6 +1470,28 @@ When the conditions for inference for regression are met and the null distributi
 ```
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Repeat the inference but this time for the correlation coefficient instead of the slope. Note the implementation of `stat = "correlation"` in the `calculate()` function of the `infer` package.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why is it appropriate to use the bootstrap percentile method to construct a 95% confidence interval for the population slope $\beta_1$ in the Old Faithful data?
+
+- A. Because it assumes the slope follows a perfect normal distribution.
+- B. Because it relies on resampling the residuals instead of the original data points.
+- C. Because it requires the original data to be uniformly distributed.
+- D. Because it does not require the bootstrap distribution to be normally shaped.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is the role of the permutation test in the hypothesis testing for the population slope $\beta_1$?
+
+- A. It generates new samples to confirm the confidence interval boundaries.
+- B. It assesses whether the observed slope could have occurred by chance under the null hypothesis of no relationship.
+- C. It adjusts the sample size to reduce sampling variability.
+- D. It ensures the residuals of the regression model are normally distributed.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** After generating a null distribution for the slope using `infer`, you find the $p$-value to be near 0. What does this indicate about the relationship between `waiting` and `duration` in the Old Faithful data?
+
+- A. There is no evidence of a relationship between `waiting` and `duration`.
+- B. The observed slope is likely due to random variation under the null hypothesis.
+- C. The observed slope is significantly different from zero, suggesting a meaningful relationship between `waiting` and `duration`.
+- D. The null hypothesis cannot be rejected because the $p$-value is too small.
+
 
 ```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
@@ -1505,8 +1527,11 @@ We do this by using `dplyr` verbs and including the command `as.factor()` inside
 
 ```{r}
 coffee_data <- coffee_quality |>
-  select(aroma, flavor, moisture_percentage, 
-         continent_of_origin, total_cup_points) |>
+  select(aroma, 
+         flavor, 
+         moisture_percentage, 
+         continent_of_origin, 
+         total_cup_points) |>
   mutate(continent_of_origin = as.factor(continent_of_origin))
 ```
 
@@ -1700,10 +1725,13 @@ When using the `lm()` function, all the necessary calculations are done in R. Fo
 # Fit regression model:
 mod_mult <- lm(
   total_cup_points ~ aroma + flavor + moisture_percentage + continent_of_origin, 
-  data = coffee_data)
+  data = coffee_data
+)
 
 # Get the coefficients of the model
 coef(mod_mult)
+
+# Get the standard deviation of the model
 sigma(mod_mult)
 ```
 
@@ -1777,6 +1805,45 @@ As we see, only `moisture_percentage` includes zero in its range, and we would n
 Observe that we have decided to use only a subset of regressors and construct a model without interactions.
 We discuss in Subsection \@ref(model-fit-mult) how we could determine what is the best subset of regressors to use when many are available. 
 We are now ready to discuss inference for multiple linear regression.
+
+```{block, type="learncheck", purl=FALSE}
+\vspace{-0.15in}
+**_Learning check_**
+\vspace{-0.1in}
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** In a multiple linear regression model, what does the coefficient $\beta_j$ represent?
+
+- A. The intercept of the model.
+- B. The standard error of the estimate.
+- C. The total variance explained by the model.
+- D. The partial slope related to the regressor $X_j$, accounting for all other regressors.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why is it necessary to convert `continent_of_origin` to a factor when preparing the `coffee_data` data frame for regression analysis?
+
+- A. To allow the regression model to interpret `continent_of_origin` as a numerical variable.
+- B. To create dummy variables that represent different categories of `continent_of_origin`.
+- C. To reduce the number of observations in the dataset. 
+- D. To ensure the variable is included in the correlation matrix.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is the purpose of creating a scatterplot matrix in the context of multiple linear regression?
+
+- A. To identify outliers that need to be removed from the dataset.
+- B. To test for normality of the residuals.
+- C. To examine linear relationships between all variable pairs and identify multicollinearity among regressors.
+- D. To determine the appropriate number of dummy variables.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** In the multiple regression model for the `coffee_data`, what is the role of dummy variables for `continent_of_origin`?
+
+- A. They are used to predict the values of the numerical regressors.
+- B. They modify the intercept based on the specific category of `continent_of_origin`.
+- C. They serve to test the independence of residuals.
+- D. They indicate which observations should be excluded from the model.
+
+```{block, type="learncheck", purl=FALSE}
+\vspace{-0.25in}
+\vspace{-0.25in}
+```
 
 ## Theory-based Inference for Multiple Linear Regression {#theory-multiple-regression}
 
@@ -2100,13 +2167,11 @@ H_A&:\quad \text{the full model is needed}
 This test is called an ANOVA test or an $F$-test, because the distribution of the test statistic follows an $F$ distribution. 
 The way it works is that the test compares the sum of squared residuals of both the full and reduced models and determines whether the difference between these models was large enough to suggest that the full model is needed.
 
-To get the result of this test in R, we use the R function `anova()` and enter the reduced model followed by the full model:
+To get the result of this test in R, we use the R function `anova()` and enter the reduced model followed by the full model with Table \@ref(tab:mult-model-4) providing information for this test.
 
 ```{r eval=FALSE}
 anova(mod_mult_2, mod_mult_1) 
 ```
-
-Table \@ref(tab:mult-model-4) provides information for this test.
 
 ```{r mult-model-4, echo=FALSE, purl=FALSE}
 anova_table <- anova(mod_mult_2, mod_mult_1) 
@@ -2168,7 +2233,7 @@ On the other hand, if the residuals against fitted values plot appears to be clo
 
 Let's use the coffee example. 
 Recall that we have shown that regressors `aroma`, `flavor`, and `continent_of_origin` were statistically significant, but `moisture_percentage` was not. 
-So, we create a model only with the relevant regressors, called `mod_mult_final`, determine the residuals, and create a plot of residuals against fitted values:
+So, we create a model only with the relevant regressors, called `mod_mult_final`, determine the residuals, and create a plot of residuals against fitted values and a QQ-plot using the `grid.arrange()` function from the `gridExtra` package:
 
 ```{r}
 # Fit regression model:
@@ -2178,7 +2243,7 @@ mod_mult_final <- lm(total_cup_points ~ aroma + flavor + continent_of_origin,
 fit_and_res_mult <- get_regression_points(mod_mult_final)
 ```
 
-```{r}
+```{r, fig.cap="Residuals vs. fitted values plot and QQ-plot for the multiple regression model", fig.height=ifelse(knitr::is_latex_output(), 4, 7)}
 g1 <- fit_and_res_mult |>
   ggplot(aes(x = total_cup_points_hat, y = residual)) +
   geom_point() +
@@ -2197,6 +2262,45 @@ Finally, the QQ-plot suggests (with the exception of one or two observations) th
 
 This example concludes our treatment of theory-based inference. We now proceed to study the simulation-based inference.
 
+```{block, type="learncheck", purl=FALSE}
+\vspace{-0.15in}
+**_Learning check_**
+\vspace{-0.1in}
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why is it essential to know that the estimators ($b_0, b_1, \dots, b_p$) in multiple linear regression are unbiased?
+
+- A. It ensures that the variance of the estimators is always zero.
+- B. It means that, on average, the estimators will equal the true population parameters they estimate.
+- C. It implies that the estimators have a standard error of zero.
+- D. It suggests that the regression model will always have a perfect fit.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why do the least-squares estimates of coefficients change when different sets of regressors are used in multiple linear regression?
+
+- A. Because the coefficients are recalculated each time, irrespective of the regressors.
+- B. Because the residuals are always zero when regressors are changed.
+- C. Because the value of each coefficient depends on the specific combination of regressors included in the model.
+- D. Because all models with different regressors will produce identical estimates.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** How is a 95% confidence interval for a coefficient in multiple linear regression constructed?
+
+- A. By using the point estimate, the critical value from the t-distribution, and the standard error of the coefficient.
+- B. By taking the standard deviation of the coefficients only.
+- C. By resampling the data without replacement.
+- D. By calculating the mean of all the coefficients.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What does the ANOVA test for comparing two models in multiple linear regression evaluate?
+
+- A. Whether all regressors in both models have the same coefficients.
+- B. Whether the reduced model is adequate or if the full model is needed.
+- C. Whether the residuals of the two models follow a normal distribution.
+- D. Whether the regression coefficients of one model are unbiased estimators.
+
+
+```{block, type="learncheck", purl=FALSE}
+\vspace{-0.25in}
+\vspace{-0.25in}
+```
 
 
 ## Simulation-based Inference for Multiple Linear Regression
@@ -2325,14 +2429,15 @@ confidence_intervals_mlr <- boot_distribution_mlr |>
 confidence_intervals_mlr
 ```
 
-We can also visualize these confidence intervals in Figure \@ref(fig:ci-slopes-multiple).
+We can also visualize these confidence intervals in Figure \@ref(fig:ci-slopes-multiple). 
 
-```{r ci-slopes-multiple, fig.cap="95% confidence intervals for the partial slopes.", fig.height=8}
+In reviewing the confidence intervals, we note that the confidence intervals for `aroma` and `flavor` do not include 0, which suggests that they are statistically significant. We also note that 0 is included in the confidence interval for `moisture_percentage`, which again provides evidence that it might not be a useful regressor in this multiple linear regression model. 
+
+```{r ci-slopes-multiple, fig.cap="95% confidence intervals for the partial slopes.", fig.height=8.5}
 visualize(boot_distribution_mlr) +
   shade_confidence_interval(endpoints = confidence_intervals_mlr)
 ```
 
-We note that 0 is included in the confidence interval for `moisture_percentage`, which again provides evidence that it might not be a useful regressor in this multiple linear regression model.
 
 ### Hypothesis testing for the partial slopes using `infer`
 
@@ -2359,7 +2464,7 @@ We can now conduct hypothesis tests for the partial slopes in multiple linear re
 
 We can visualize the $p$-values in the null distribution by comparing them to the observed test statistics. We do this by adding a `shade_p_value()` layer to the `visualize()` function. 
 
-```{r, fig.height=8}
+```{r, fig.height=6, fig.cap="Shaded p-values for the partial slopes in this multiple linear regression."}
 visualize(null_distribution_mlr) +
   shade_p_value(obs_stat = observed_fit, direction = "two-sided")
 ```
@@ -2373,6 +2478,47 @@ null_distribution_mlr |>
 
 These results match up with our findings from the visualizations of the shaded $p$-values with the null distribution and in the regression table in Table \@ref(tab:mult-model-3). We reject the null hypothesis $H_0: \beta_i = 0$ for `aroma` and `flavor`, but fail to reject it for `moisture_percentage`.
 
+```{block, type="learncheck", purl=FALSE}
+\vspace{-0.15in}
+**_Learning check_**
+\vspace{-0.1in}
+```
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Why might one prefer to use simulation-based methods (e.g., bootstrapping) for inference in multiple linear regression?
+
+- A. Because simulation-based methods require larger sample sizes than theory-based methods.
+- B. Because simulation-based methods are always faster to compute than theory-based methods.
+- C. Because simulation-based methods guarantee the correct model is used.
+- D. Because simulation-based methods do not rely on the assumptions of normality or large sample sizes.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is the purpose of constructing a bootstrap distribution for the partial slopes in multiple linear regression?
+
+- A. To replace the original data with random numbers.
+- B. To approximate the sampling distribution of the partial slopes by resampling with replacement.
+- C. To calculate the exact values of the coefficients in the population.
+- D. To test if the model assumptions are violated.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** If a 95% confidence interval for a partial slope in multiple linear regression includes 0, what does this suggest about the variable?
+
+- A. The variable does not have a statistically significant relationship with the response variable.
+- B. The variable is statistically significant.
+- C. The variable's coefficient estimate is always negative.
+- D. The variable was removed from the model during bootstrapping.
+
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** In hypothesis testing for the partial slopes using permutation tests, what does it mean if an observed test statistic falls far to the right of the null distribution?
+
+- A. The variable is likely to have no effect on the response.
+- B. The null hypothesis should be accepted.
+- C. The variable is likely statistically significant, and we should reject the null hypothesis.
+- D. The observed data should be discarded. 
+
+
+```{block, type="learncheck", purl=FALSE}
+\vspace{-0.25in}
+\vspace{-0.25in}
+```
+
+
 ## Conclusion {#inference-conclusion}
 
 
@@ -2384,14 +2530,14 @@ We've finished the last two scenarios from the "Scenarios of sampling for infere
 # The following Google Doc is published to CSV and loaded using read_csv():
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
-#if (!file.exists("rds/sampling_scenarios.rds")) {
+if (!file.exists("rds/sampling_scenarios-v2.rds")) {
 sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" |>
   read_csv(na = "") |>
   slice(1:5)
-#  write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
-#} else {
-#  sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
-#}
+  write_rds(sampling_scenarios, "rds/sampling_scenarios-v2.rds")
+} else {
+  sampling_scenarios <- read_rds("rds/sampling_scenarios-v2.rds")
+}
 
 sampling_scenarios |>
   filter(Scenario %in% 1:6) |>
