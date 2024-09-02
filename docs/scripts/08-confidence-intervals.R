@@ -25,6 +25,10 @@ almonds_sample_100 |>
 xbar <- mean(almonds_sample_100$weight)
 
 
+
+
+
+
 ## ----echo=FALSE---------------------------------------------------------------
 num_almonds <- nrow(almonds_bowl)
 mu <- mean(almonds_bowl$weight)
@@ -53,7 +57,7 @@ if(!is_latex_output())
   cat('Please review [Appendix A online](https://moderndive.com/A-appendixA.html) where we provide R code to work with different areas, probabilities, and values under a normal density curve. Here, we place focus on the insights of specific values and areas without dedicating time to those calculations.')
 
 
-## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 2, 7), fig.width=3, fig.cap="Normal area within one standard deviation"----
+## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 7), fig.width=3, fig.cap="Normal area within one standard deviation"----
 ggplot(NULL, aes(c(-4,4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1, 1)) +
@@ -63,7 +67,7 @@ ggplot(NULL, aes(c(-4,4))) +
   scale_x_continuous(breaks = c(-1,1)) 
 
 
-## ----normal-curve-shaded-2a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 2, 7), fig.width=3, fig.cap="Normal area within two standard deviations"----
+## ----normal-curve-shaded-2a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 7), fig.width=3, fig.cap="Normal area within two standard deviations"----
 ggplot(NULL, aes(c(-4,4))) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -2)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-2, 2)) +
@@ -76,6 +80,10 @@ ggplot(NULL, aes(c(-4,4))) +
 ## ----echo=FALSE, results="asis"-----------------------------------------------
 if(!is_latex_output()) 
   cat('Please see [Appendix A online](https://moderndive.com/A-appendixA.html) to produce these or other calculations in R. ')
+
+
+
+
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -108,6 +116,10 @@ almonds_sample_100 |>
 
 
 
+
+
+
+
 ## ----echo=FALSE, results="asis"-----------------------------------------------
 if(!is_latex_output()) 
   cat("Please see [Appendix A online](https://moderndive.com/A-appendixA.html) for calculations of probabilities for $t$ density curves with different degrees of freedom.")
@@ -115,8 +127,7 @@ if(!is_latex_output())
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
-  summarize(sample_mean = mean(weight),
-            sample_sd = sd(weight))
+  summarize(sample_mean = mean(weight), sample_sd = sd(weight))
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -129,10 +140,13 @@ upper_bound_t <- with(almonds_sample,
 
 ## -----------------------------------------------------------------------------
 almonds_sample_100 |>
-  summarize(sample_mean = mean(weight),
-            sample_sd = sd(weight),
+  summarize(sample_mean = mean(weight), sample_sd = sd(weight),
             lower_bound = mean(weight) - 1.98*sd(weight)/sqrt(length(weight)),
             upper_bound = mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
+
+
+
+
 
 
 
@@ -163,8 +177,12 @@ qnorm(0.025)
 qnorm(0.975)
 
 
-## -----------------------------------------------------------------------------
-qnorm(0.95)
+## ----eval=FALSE---------------------------------------------------------------
+## qnorm(0.95)
+
+
+## ----echo=FALSE---------------------------------------------------------------
+round(qnorm(0.95), 3)
 
 
 ## -----------------------------------------------------------------------------
@@ -174,8 +192,12 @@ almonds_sample_100 |>
             upper_bound = mean(weight) + qnorm(0.95)*sigma/sqrt(length(weight)))
 
 
-## -----------------------------------------------------------------------------
-qnorm(0.9)
+## ----eval=FALSE---------------------------------------------------------------
+## qnorm(0.9)
+
+
+## ----echo=FALSE---------------------------------------------------------------
+round(qnorm(0.9), 3)
 
 
 ## -----------------------------------------------------------------------------
@@ -257,7 +279,7 @@ boot_means <- almonds_sample_100 |>
 boot_means
 
 
-## ----one-thousand-sample-means, message=FALSE, fig.cap="Histogram of 1000 bootstrap sample mean weights of almonds."----
+## ----one-thousand-sample-means, message=FALSE, fig.cap="Histogram of 1000 bootstrap sample mean weights of almonds.", fig.height=ifelse(knitr::is_latex_output(), 3.85, 7)----
 ggplot(boot_means, aes(x = mean_weight)) +
   geom_histogram(binwidth = 0.01, color = "white") +
   labs(x = "sample mean weight in grams")
@@ -390,7 +412,7 @@ x_bar
 
 ## -----------------------------------------------------------------------------
 standard_error_ci <- bootstrap_means |> 
-  get_confidence_interval(type = "se", point_estimate = x_bar)
+  get_confidence_interval(type = "se", point_estimate = x_bar, level = 0.95)
 standard_error_ci
 
 
@@ -412,20 +434,20 @@ mythbusters_yawn
 
 
 ## -----------------------------------------------------------------------------
-mythbusters_yawn %>% 
-  group_by(group, yawn) %>% 
-  summarize(count = n())
+mythbusters_yawn |> 
+  group_by(group, yawn) |> 
+  summarize(count = n(), .groups = "keep")
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn %>%
+## mythbusters_yawn |>
 ##   specify(formula = yawn ~ group)
 
 
 ## -----------------------------------------------------------------------------
-mythbusters_yawn %>% 
+mythbusters_yawn |> 
   specify(formula = yawn ~ group, success = "yes")
 
 
@@ -439,57 +461,53 @@ set.seed(22)
 
 
 ## -----------------------------------------------------------------------------
-first_six_rows %>% 
+first_six_rows |> 
   sample_n(size = 6, replace = TRUE)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn %>%
-##   specify(formula = yawn ~ group, success = "yes") %>%
+## mythbusters_yawn |>
+##   specify(formula = yawn ~ group, success = "yes") |>
 ##   generate(reps = 1000, type = "bootstrap")
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn %>%
-##   specify(formula = yawn ~ group, success = "yes") %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
+## mythbusters_yawn |>
+##   specify(formula = yawn ~ group, success = "yes") |>
+##   generate(reps = 1000, type = "bootstrap") |>
 ##   calculate(stat = "diff in props")
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distribution_yawning <- mythbusters_yawn %>%
-##   specify(formula = yawn ~ group, success = "yes") %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
+## bootstrap_distribution_yawning <- mythbusters_yawn |>
+##   specify(formula = yawn ~ group, success = "yes") |>
+##   generate(reps = 1000, type = "bootstrap") |>
 ##   calculate(stat = "diff in props", order = c("seed", "control"))
 ## bootstrap_distribution_yawning
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution_yawning) +
-##   geom_vline(xintercept = 0)
-
 
 
 ## -----------------------------------------------------------------------------
-bootstrap_distribution_yawning %>% 
+bootstrap_distribution_yawning |> 
   get_confidence_interval(type = "percentile", level = 0.95)
 
 
 
 ## -----------------------------------------------------------------------------
-obs_diff_in_props <- mythbusters_yawn %>% 
-  specify(formula = yawn ~ group, success = "yes") %>% 
-  # generate(reps = 1000, type = "bootstrap") %>% 
+obs_diff_in_props <- mythbusters_yawn |> 
+  specify(formula = yawn ~ group, success = "yes") |> 
+  # generate(reps = 1000, type = "bootstrap") |> 
   calculate(stat = "diff in props", order = c("seed", "control"))
 obs_diff_in_props
 
 
 ## -----------------------------------------------------------------------------
-myth_ci_se <- bootstrap_distribution_yawning %>% 
+myth_ci_se <- bootstrap_distribution_yawning |> 
   get_confidence_interval(type = "se", point_estimate = obs_diff_in_props)
 myth_ci_se
 

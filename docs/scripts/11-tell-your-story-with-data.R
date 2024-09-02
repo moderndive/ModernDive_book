@@ -265,6 +265,14 @@ US_births_1999 |>
 
 
 
+## ----echo=FALSE---------------------------------------------------------------
+package_versions <- sessioninfo::package_info(c(needed_CRAN_pkgs)) |> 
+  as_tibble() |> 
+  filter(attached == TRUE | package %in% c("bookdown")) |> 
+  select(package, version = ondiskversion)
+readr::write_rds(package_versions, "rds/package_versions.rds")
+
+
 ## ----echo=FALSE, results='asis'-----------------------------------------------
 if(!is_latex_output()){
   cat("# (APPENDIX) Appendix {-}")
