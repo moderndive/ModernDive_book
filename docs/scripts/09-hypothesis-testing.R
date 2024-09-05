@@ -1,15 +1,86 @@
-## ----include=FALSE------------------------------------------------------------
-# remotes::install_github("moderndive/moderndive", ref = "add-more-data")
-
-
 ## ----message=FALSE------------------------------------------------------------
 library(tidyverse)
-library(infer)
 library(moderndive)
+library(infer)
 library(nycflights23)
 library(ggplot2movies)
 
 
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## t.test(x = almonds_sample_100$weight, alternative = "two.sided", mu = 3.6)
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100 |>
+  summarize(sample_mean = mean(weight),
+            sample_sd = sd(weight))
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## almonds_sample_100 |>
+##   summarize(x_bar = mean(weight),
+##             s = sd(weight),
+##             n = length(weight),
+##             t = (x_bar - 3.6)/(s/sqrt(n)))
+
+
+
+
+
+
+## ----eval = FALSE-------------------------------------------------------------
+## 2 * pt(q = -2.26, df = 100 - 1)
+
+
+
+
+## -----------------------------------------------------------------------------
+null_dist <- almonds_sample_100 |>
+  specify(response = weight) |>
+  hypothesize(null = "point", mu = 3.6) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "mean")
+
+
+## ----echo=TRUE----------------------------------------------------------------
+x_bar_almonds <- almonds_sample_100 |>
+  summarize(sample_mean = mean(weight)) |>
+  select(sample_mean)
+null_dist |>
+  get_p_value(obs_stat = x_bar_almonds, direction = "two-sided")
+
+
+## ----echo=FALSE---------------------------------------------------------------
+p_val_almonds <- null_dist |>
+  get_p_value(obs_stat = x_bar_almonds, direction = "two-sided") 
+
+
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100 |>
+  summarize(lower_bound = mean(weight) - 1.98*sd(weight)/sqrt(length(weight)),
+            upper_bound = mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## bootstrap_means <- almonds_sample_100 |>
+##   specify(response = weight) |>
+##   generate(reps = 1000, type = "bootstrap") |>
+##   calculate(stat = "mean")
+
+
+
+
+## -----------------------------------------------------------------------------
+bootstrap_means |> 
+  get_confidence_interval(level = 0.95, type = "percentile")
 
 
 
@@ -21,11 +92,10 @@ set.seed(2)
 ## ----eval=FALSE---------------------------------------------------------------
 ## spotify_metal_deephouse <- spotify_by_genre |>
 ##   filter(track_genre %in% c("metal", "deep-house")) |>
-##   select(track_id, track_genre, artists, track_name, popularity, popular_or_not)
+##   select(track_genre, artists, track_name, popularity, popular_or_not)
 ## spotify_metal_deephouse |>
 ##   group_by(track_genre, popular_or_not) |>
-##   sample_n(size = 3) |>
-##   arrange(track_id)
+##   sample_n(size = 3)
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -36,8 +106,18 @@ sampled_spotify_metal_deephouse <- spotify_metal_deephouse |>
   group_by(track_genre, popular_or_not) |> 
   sample_n(size = 3) |> 
   arrange(track_id) |> 
-  ungroup()
-sampled_spotify_metal_deephouse
+  ungroup() |> 
+  select(-track_id)
+sampled_spotify_metal_deephouse |> 
+  kbl(
+    caption = "Sample of twelve songs from the Spotify data frame.",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 6, 16),
+    latex_options = c("HOLD_position")
+  )
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -58,12 +138,44 @@ spotify_metal_deephouse |>
 
 
 
-## -----------------------------------------------------------------------------
-spotify_52_original
+## ----eval=FALSE---------------------------------------------------------------
+## spotify_52_original |>
+##   select(-track_id) |>
+##   head(10)
 
 
-## -----------------------------------------------------------------------------
-spotify_52_shuffled
+## ----echo=FALSE---------------------------------------------------------------
+spotify_52_original |> 
+  select(-track_id) |> 
+  head(10) |> 
+  kbl(caption = "Representative sample of metal and deep-house songs", 
+      booktabs = TRUE,
+      linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 6, 16),
+    latex_options = c("HOLD_position")
+  )
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## spotify_52_shuffled |>
+##   select(-track_id) |>
+##   head(10)
+
+
+## ----echo=FALSE---------------------------------------------------------------
+spotify_52_shuffled |> 
+  select(-track_id) |> 
+  head(10) |> 
+  kbl(caption = "(ref:spotify-shuffled-52)", 
+      booktabs = TRUE,
+      linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 6, 16),
+    latex_options = c("HOLD_position")
+  )
 
 
 
@@ -71,8 +183,7 @@ spotify_52_shuffled
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(spotify_52_shuffled,
-##        aes(x = track_genre, fill = popular_or_not)) +
+## ggplot(spotify_52_shuffled, aes(x = track_genre, fill = popular_or_not)) +
 ##   geom_bar() +
 ##   labs(x = "Genre of track")
 
@@ -142,7 +253,7 @@ spotify_metal_deephouse |>
           order = c("metal", "deep-house"))
 
 
-## ----null-distribution-infer, fig.show="hold", fig.cap="Null distribution.", fig.height=1.8----
+## ----null-distribution-infer, fig.show="hold", fig.cap="Null distribution.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 7)----
 visualize(null_distribution, bins = 25)
 
 
@@ -191,14 +302,14 @@ percentile_ci
 
 ## ----eval=FALSE---------------------------------------------------------------
 ## se_ci <- bootstrap_distribution |>
-##   get_confidence_interval(level = 0.95, type = "se",
-##                           point_estimate = obs_diff_prop)
+## get_confidence_interval(level = 0.95, type = "se",
+## point_estimate = obs_diff_prop)
 ## se_ci
 
 
 ## ----eval=FALSE---------------------------------------------------------------
 ## visualize(bootstrap_distribution) +
-##   shade_confidence_interval(endpoints = se_ci)
+## shade_confidence_interval(endpoints = se_ci)
 
 
 
@@ -244,7 +355,7 @@ movies
 movies_sample
 
 
-## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre.", fig.height=2.7----
+## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre.", fig.height=ifelse(knitr::is_latex_output(), 4, 7)----
 ggplot(data = movies_sample, aes(x = genre, y = rating)) +
   geom_boxplot() +
   labs(y = "IMDb rating")
@@ -319,10 +430,6 @@ p_value_movies <- null_distribution_movies |>
 
 
 
-
-
-
-
 ## -----------------------------------------------------------------------------
 movies_sample |> 
   group_by(genre) |> 
@@ -330,50 +437,13 @@ movies_sample |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## # Construct null distribution of xbar_a - xbar_r:
-## null_distribution_movies <- movies_sample |>
-##   specify(formula = rating ~ genre) |>
-##   hypothesize(null = "independence") |>
-##   generate(reps = 1000, type = "permute") |>
-##   calculate(stat = "diff in means", order = c("Action", "Romance"))
-## visualize(null_distribution_movies, bins = 10)
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## # Construct null distribution of t:
-## null_distribution_movies_t <- movies_sample |>
-##   specify(formula = rating ~ genre) |>
-##   hypothesize(null = "independence") |>
-##   generate(reps = 1000, type = "permute") |>
-##   # Notice we switched stat from "diff in means" to "t"
-##   calculate(stat = "t", order = c("Action", "Romance"))
-## visualize(null_distribution_movies_t, bins = 10)
-
-
-
-
-
-
-## ----t-stat-3, fig.cap="Null distribution using t-statistic and t-distribution.", fig.height=2.2----
-visualize(null_distribution_movies_t, bins = 10, method = "both")
-
-
 ## -----------------------------------------------------------------------------
-obs_two_sample_t <- movies_sample |> 
-  specify(formula = rating ~ genre) |> 
-  calculate(stat = "t", order = c("Action", "Romance"))
-obs_two_sample_t
+movies_sample |>
+  t_test(formula = rating ~ genre, 
+         order = c("Action", "Romance"), 
+         alternative = "two-sided")
 
 
-## ----t-stat-4, fig.cap="Null distribution using t-statistic and t-distribution with $p$-value shaded.", warning=TRUE, fig.height=1.7----
-visualize(null_distribution_movies_t, method = "both") +
-  shade_p_value(obs_stat = obs_two_sample_t, direction = "both")
-
-
-## -----------------------------------------------------------------------------
-null_distribution_movies_t |> 
-  get_p_value(obs_stat = obs_two_sample_t, direction = "both")
 
 
 ## -----------------------------------------------------------------------------
@@ -381,7 +451,7 @@ flights_sample <- flights |>
   filter(carrier %in% c("HA", "AS"))
 
 
-## ----ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2023.", fig.height=2.8----
+## ----ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2023.", fig.height=ifelse(knitr::is_latex_output(), 2.8, 7)----
 ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
   geom_boxplot() +
   labs(x = "Carrier", y = "Air Time")
@@ -390,5 +460,5 @@ ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
 ## -----------------------------------------------------------------------------
 flights_sample |> 
   group_by(carrier, dest) |> 
-  summarize(n = n(), mean_time = mean(air_time, na.rm = TRUE))
+  summarize(n = n(), mean_time = mean(air_time, na.rm = TRUE), .groups = "keep")
 

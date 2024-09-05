@@ -61,6 +61,11 @@ library(nycflights23)
 
 
 
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat("See [Appendix A online](https://moderndive.com/A-appendixA.html) for a glossary of such summary statistics.")
+
+
 
 
 
@@ -139,6 +144,9 @@ by_origin
 by_origin_monthly <- flights |> 
   group_by(origin, month) |> 
   summarize(count = n())
+
+
+## -----------------------------------------------------------------------------
 by_origin_monthly
 
 
@@ -193,7 +201,7 @@ gain_summary <- flights |>
 gain_summary
 
 
-## ----gain-hist, fig.cap="Histogram of gain variable.", message=FALSE, fig.height=3----
+## ----gain-hist, fig.cap="Histogram of gain variable.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 7)----
 ggplot(data = flights, mapping = aes(x = gain)) +
   geom_histogram(color = "white", bins = 20)
 
@@ -338,4 +346,35 @@ named_dests
 ## named_dests |>
 ##   top_n(n = 10, wt = num_flights) |>
 ##   arrange(desc(num_flights))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat("In the online [Appendix C](https://moderndive.com/C-appendixC.html), we provide a page of data wrangling 'tips and tricks' consisting of the most common data wrangling questions we've encountered in student projects (shout out to [Dr. Jenny Smetzer](https://www.scsparkscience.org/fellow/jennifer-smetzer/) for her work setting this up!):
+
+* Dealing with missing values
+* Reordering bars in a barplot
+* Showing money on an axis
+* Changing values inside cells
+* Converting a numerical variable to a categorical one
+* Computing proportions
+* Dealing with %, commas, and dollar signs
+
+However, to provide a tips and tricks page covering all possible data wrangling questions would be too long to be useful!")
 
