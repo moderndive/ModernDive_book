@@ -7,17 +7,20 @@
 ## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
 library(tidyverse)
 library(moderndive)
-library(gapminder)
+library(ISLR2)
 
 
 
 
 ## -----------------------------------------------------------------------------
 UN_data_ch6 <- un_member_states_2024 |>
-  select(country, life_expectancy_2022, 
-         fertility_rate_2022, income_group_2024)|>
+  select(country, 
+         life_expectancy_2022, 
+         fertility_rate_2022, 
+         income_group_2024)|>
   na.omit()|>
-  rename(life_exp = life_expectancy_2022, fert_rate = fertility_rate_2022, 
+  rename(life_exp = life_expectancy_2022, 
+         fert_rate = fertility_rate_2022, 
          income = income_group_2024)|>
   mutate(income = factor(income, 
                          levels = c("Low income", "Lower middle income", 
@@ -31,15 +34,26 @@ glimpse(UN_data_ch6)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch6 |> sample_n(size = 5)
+## UN_data_ch6 |> sample_n(size = 10)
 
 
 
 
-## -----------------------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
+## UN_data_ch6 |>
+##   select(life_exp, fert_rate, income) |>
+##   tidy_summary()
+
+
+## ----echo=FALSE---------------------------------------------------------------
 UN_data_ch6 |> 
   select(life_exp, fert_rate, income) |> 
-  tidy_summary()
+  tidy_summary() |> 
+  kbl() |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 8, 16),
+    latex_options = c("HOLD_position")
+  ) 
 
 
 ## -----------------------------------------------------------------------------
@@ -64,11 +78,13 @@ UN_data_ch6 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
+## # Fit regression model and get the coefficients of the model
 ## model_int <- lm(fert_rate ~ life_exp * income, data = UN_data_ch6)
-## 
-## # Get the coefficients of the model
 ## coef(model_int)
+
+
+
+
 
 
 
@@ -88,6 +104,10 @@ UN_data_ch6 |>
 ## 
 ## # Get the coefficients of the model
 ## coef(model_no_int)
+
+
+
+
 
 
 
@@ -130,10 +150,24 @@ glimpse(credit_ch6)
 
 
 
-## -----------------------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
+## credit_ch6 |> select(debt, credit_limit, income) |> tidy_summary()
+
+
+## ----echo=FALSE---------------------------------------------------------------
 credit_ch6 |> 
   select(debt, credit_limit, income) |> 
-  tidy_summary()
+  tidy_summary() |> 
+    kbl(
+    digits = 3,
+    caption = "Summary of credit data",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 8, 16),
+    latex_options = c("HOLD_position")
+  )
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -158,25 +192,13 @@ credit_ch6 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## credit_ch6 |>
-##   select(debt, credit_limit, income) |>
-##   cor()
+## credit_ch6 |> select(debt, credit_limit, income) |> cor()
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## credit_ch6 |> get_correlation(debt ~ 1000 * income)
-
-
-## ----echo=FALSE---------------------------------------------------------------
-credit_ch6 |> 
-  get_correlation(debt ~ 1000 * income)|> 
-  kbl()|>
-  kable_styling(
-    font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
-  )
+## -----------------------------------------------------------------------------
+credit_ch6 |> get_correlation(debt ~ 1000 * income)
 
 
 
@@ -197,10 +219,8 @@ credit_ch6 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
+## # Fit regression model and get the coefficients of the model
 ## simple_model <- lm(debt ~ income, data = credit_ch6)
-## 
-## # Get the coefficients of the model
 ## coef(simple_model)
 
 

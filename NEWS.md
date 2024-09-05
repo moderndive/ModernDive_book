@@ -1,10 +1,20 @@
 # ModernDive 2.0.0.9000
 
-* Use base-pipe `|>` instead of `%>%` in all code chunks except for Chapters 7-10 since those are in other updates. Some inline functions like `"*"()` were kept using `%>%` since they are more readable than converting to the base-pipe functionality.
-* Address the warning message explicitly for `group_by()` in text and fix `index.Rmd` to remove `options(dplyr.summarise.inform = FALSE)`
-* Add `relocate()` to end of Chapter 3
-* Add `envoy_flights` and `early_january_2023_weather` to `{moderndive}` package
-* Explain that `{nycflights23}` is an updated version of `{nycflights13}` using the `{anyflights}` package
+* Removed previous data sets `promotions` (Chapter 9) and `evals` (Chapters 5, 6, and 10) and replaced with `un_member_states_2024` and `spotify_sample` instead
+* Replaced `pennies` with `almonds_bowl` in Chapter 7
+* Moved some sections around in Chapters 7 and 10 to improve readability
+* Moved model selection to Chapter 10 instead of Chapter 6
+* Added `coffee_quality` and `old_faithful_2024` examples to Chapter 10
+* Improved theory-based discussions in Chapters 8, 10, and 11
+* Added use of `fit()` function for simulation-based inference with multiple linear regression
+* Added `infer` package with `fit()` to Chapter 11 to discuss inference for regression
+* Added content in the Appendices
+
+* Used base-pipe `|>` instead of `%>%` in all code chunks since those are in other updates. Some inline functions like `"*"()` were kept using `%>%` since they are more readable than converting to the base-pipe functionality.
+* Addressed the warning message explicitly for `group_by()` in text and fix `index.Rmd` to remove `options(dplyr.summarise.inform = FALSE)`
+* Added `relocate()` to end of Chapter 3
+* Added `envoy_flights` and `early_january_2023_weather` to `{moderndive}` package
+* Explained that `{nycflights23}` is an updated version of `{nycflights13}` using the `{anyflights}` package
 * Updated code and discussion throughout the book to use `{nycflights23}` instead of `{nycflights13}`
 
 * Chapter 2 Data Visualization: Remove soft introduction to `%>%` operator (from Ch 3 Data Wrangling) since this only confused readers. Instead we now use a prepared `alaska_flights` and `early_january_weather` data frames from `moderndive` version 0.5.3

@@ -1,5 +1,5 @@
 # Hypothesis Testing {#hypothesis-testing}  
-    
+
 ```{r setup_hypo, include=FALSE, purl=FALSE}
 library(knitr)
 
@@ -16,56 +16,51 @@ opts_chunk$set(
   tidy = FALSE,
   purl = TRUE,
   out.width = "\\textwidth",
-  fig.height = 4,
+  #  fig.height = 4,
   fig.align = "center"
 )
 
 # Set output digit precision
 options(scipen = 99) # , digits = 3)
 
-# Set random number generator seed value for replicable pseudorandomness.
+# Set random number generator seed value for replicable pseudo-randomness.
 set.seed(76)
 ```
 
-Now that we've studied confidence intervals in Chapter \@ref(confidence-intervals), let's study another commonly used method for statistical inference: hypothesis testing. Hypothesis tests allow us to take a sample of data from a population and infer about the plausibility of competing hypotheses. For example, in the upcoming music popularity activity by genre in Section \@ref(ht-activity), you'll study data collected from Spotify to investigate whether metal music is more popular than deep-house music. 
 
-The good news is we've already covered many of the necessary concepts to understand hypothesis testing in Chapters \@ref(sampling) and \@ref(confidence-intervals). We will expand further on these ideas here and also provide a general framework for understanding hypothesis tests. By understanding this general framework, you'll be able to adapt it to many different scenarios.
+
+We have studied confidence intervals in Chapter \@ref(confidence-intervals). This chapter introduces hypothesis testing, another widely used method for statistical inference. Hypothesis tests allow us to take a sample from a population and infer about the plausibility of competing hypotheses. For example, in the upcoming music popularity activity by genre in Section \@ref(ht-activity), you will study data collected from Spotify to investigate whether metal music is more popular than deep-house music. 
+
+The good news is that we have already covered many of the necessary concepts to understand hypothesis testing in Chapters \@ref(sampling) and \@ref(confidence-intervals). We will expand further on these ideas here and also provide a general framework for understanding hypothesis tests. By understanding this general framework, you will be able to adapt it to many different scenarios.
 
 The same can be said for confidence intervals. There was one general framework that applies to confidence intervals, and the `infer` package was designed around this framework. While the specifics may change slightly for different types of confidence intervals, the general framework stays the same. 
 
-We believe that this approach is much better for long-term learning than focusing on specific details for specific confidence intervals using theory-based approaches. As you'll now see, we prefer this general framework for hypothesis tests as well.
+We believe that this approach is better for long-term learning than focusing on specific details for specific confidence intervals. We prefer this approach also for hypothesis tests as well, but we will tie the ideas into the traditional theory-based methods as well for completeness.
+
+In Section \@ref(tying-CI-hypo) we review confidence intervals and introduce hypothesis tests for one-sample problems; in particular, for the mean $\mu$. We use both theory-based and simulation-based approaches, and we provide some justification why we consider it a better idea to carefully unpack the simulation-based approach for hypothesis testing in the context of two-sample problems. We also show the direct link between confidence intervals and hypothesis tests. In Section \@ref(ht-activity) we introduce the activity that motivates the simulation-based approach for two-sample problems, data collected from Spotify to investigate whether metal music is more popular than deep-house music. In Sections \@ref(understanding-ht), \@ref(ht-infer), and \@ref(ht-interpretation) we explain, conduct, and interpret hypothesis tests, respectively, using the simulation-based approach of permutation. We introduce a case study in Section \@ref(ht-case-study), and in Section \@ref(nhst-conclusion) we conclude with a discussion of the theory-based approach for two-sample problems and some additional remarks.
 
 ```{r appendixb, echo=FALSE, results="asis", purl=FALSE}
 if (!is_latex_output()) {
-  cat("If you'd like more practice or you're curious to see how this framework applies to different scenarios, you can find fully-worked out examples for many common hypothesis tests and their corresponding confidence intervals in Appendix B. ")
-  cat("We recommend that you carefully review these examples as they also cover how the general frameworks apply to traditional theory-based methods like the $t$-test and normal-theory confidence intervals. You'll see there that these traditional methods are just approximations for the computer-based methods we've been focusing on. However, they also require conditions to be met for their results to be valid. Computer-based methods using randomization, simulation, and bootstrapping have much fewer restrictions. Furthermore, they help develop your computational thinking, which is one big reason they are emphasized throughout this book.")
+  cat("If you'd like more practice or you are curious to see how this framework applies to different scenarios, you can find fully-worked out examples for many common hypothesis tests and their corresponding confidence intervals in the Appendices online.")
+  cat("We recommend that you carefully review these examples as they also cover how the general frameworks apply to traditional theory-based methods like the $t$-test and normal-theory confidence intervals. You will see there that these traditional methods are just approximations for the computer-based methods we have been focusing on. However, they also require conditions to be met for their results to be valid. Computer-based methods using randomization, simulation, and bootstrapping have much fewer restrictions. Furthermore, they help develop your computational thinking, which is one big reason they are emphasized throughout this book.")
 }
 ```
 
 
-### Needed packages {-#nhst-packages}
-
-Let's load all the packages needed for this chapter (this assumes you've already installed them). Recall from our discussion in Section \@ref(tidyverse-package) that loading the `tidyverse` package by running `library(tidyverse)` loads the following commonly used data science packages all at once:
-
-* `ggplot2` for data visualization
-* `dplyr` for data wrangling
-* `tidyr` for converting data to "tidy" format
-* `readr` for importing spreadsheet data into R
-* As well as the more advanced `purrr`, `tibble`, `stringr`, and `forcats` packages
+## Needed packages {-#nhst-packages}
 
 If needed, read Section \@ref(packages) for information on how to install and load R packages. 
 
-```{r include=FALSE}
-# remotes::install_github("moderndive/moderndive", ref = "add-more-data")
-```
-
 ```{r message=FALSE}
 library(tidyverse)
-library(infer)
 library(moderndive)
+library(infer)
 library(nycflights23)
 library(ggplot2movies)
 ```
+
+Recall that loading the `tidyverse` package loads many packages that we have encountered earlier. For details refer to Section \@ref(tidyverse-package). The packages `moderndive` and `infer` contain functions and data frames that will be used in this chapter.
+
 
 ```{r message=FALSE, echo=FALSE, purl=FALSE}
 # Packages needed internally, but not in text.
@@ -74,11 +69,418 @@ library(patchwork)
 library(scales)
 library(viridis)
 library(ggrepel)
+library(gt)
 ```
 
 
 
 
+## Tying confidence intervals to hypothesis testing {#tying-CI-hypo}
+
+In Chapter \@ref(confidence-intervals) we used a random sample to construct an
+interval estimate of the population mean. 
+When using the theory-based approach, we relied in the Central Limit Theorem 
+to form these intervals and when using the simulation-based approach we do it, 
+for example, using the bootstrap percentile method. 
+Hypothesis testing takes advantages of similar tools but the nature and the goal of 
+the problem are different. Still, there is a direct link between confidence 
+intervals and hypothesis testing. 
+
+In this section we first describe the one-sample hypothesis test for the 
+population mean.
+We then establish the connection between confidence intervals and hypothesis 
+test. 
+This connection is direct when using the theory-based approach but requires 
+careful consideration when using the simulation-based approach.
+
+We proceed by describing hypothesis testing in the case of two-sample problems.
+
+### The one-sample hypothesis test for the population mean{#one-sample-hyp}
+
+
+```{r eval=FALSE}
+t.test(x = almonds_sample_100$weight, alternative = "two.sided", mu = 3.6)
+```
+
+Let's continue working with the population mean, $mu$. 
+In Chapter \@ref(confidence-intervals) we used a random sample to construct a 95% 
+confidence interval for $\mu$. 
+
+When performing hypothesis testing, we test a claim about $\mu$ by collecting a 
+random sample and using it to determine if the sample obtained is consistent to 
+the claim made. To illustrate this idea we return to the chocolate covered almonds 
+activity. Assume that the almonds' company has stated on its 
+website that the average weight of a chocolate-covered almond is exactly 3.6 grams. 
+We are not so sure about this claim and as researchers believe that it is
+different than 3.6 grams on average. To test these competing claims, 
+we again use the random sample 
+`almonds_sample_100` from the `moderndive` package, and 
+the first 10 lines are shown below:
+
+```{r}
+almonds_sample_100
+```
+
+The goal of hypothesis testing is to answer the question: "Assuming that this 
+claim is true, how likely is it to observe a sample as extreme as or more 
+extreme than the one we have observed?" When the answer to the question is: 
+"If the claim was true, it would be very 
+unlikely to observe a sample such as the one we have obtained" we would conclude 
+that the claim cannot be true and we would reject it. Otherwise, we would 
+fail to reject the claim.
+
+The claim is a statement called the **null 
+hypothesis**\index{hypothesis testing!null hypothesis}, $H_0$. It is a statement about $\mu$, and it is
+initially assumed to be true.
+A competing statement called the **alternative hypothesis**\index{hypothesis testing!alternative hypothesis}, $H_A$, is also a 
+statement about $\mu$ and contains all the possible values not included under 
+the null hypothesis.  In the almonds' activity the hypotheses are:
+
+$$\begin{aligned}
+&H_0: &\mu = 3.6\\
+&H_A: &\mu \ne 3.6
+\end{aligned}$$
+
+Evidence against the null may appear if the estimate of $\mu$ in the random 
+sample collected, the sample mean, is much greater or much less than the value 
+of $\mu$ under the null hypothesis.
+
+How do we determine which claim should be the null hypothesis and which one 
+the alternative hypothesis? Always remember that the null hypothesis has a privileged status since we assume it to be true until we find evidence against it. We only rule in favor of the alternative hypothesis if we find evidence in the data to reject the null hypothesis. In this context, a researcher who wants to show some results or conclusions for new findings, needs to _prove_ that the null hypothesis 
+is not true by finding evidence against it. We often say that the 
+researcher bears the _burden of proof_.
+
+The hypothesis shown above represents a *two-sided test*\index{hypothesis testing!two-sided test} because 
+evidence against the null hypothesis could come from either direction (greater 
+or less). 
+Sometimes it is convenient to work with a *left-sided test*\index{hypothesis testing!left-sided test}. In our example, the claim under the null hypothesis becomes: "the 
+average weight is _at least_ 3.6 grams" and the 
+researcher's goal is to find evidence against this claim in favor of the 
+competing claim "the weight is _less_ than 3.6 grams". The competing 
+hypotheses can now be written as $H_0: \mu \ge 3.6$ versus $H_A: \mu < 3.6$ or even
+as $H_0: \mu = 3.6$ versus $H_A: \mu < 3.6$. 
+Notice that we can drop the inequality part from the null hypothesis. We 
+find this simplification convenient as we focus on the equal part of the null 
+hypothesis only and becomes clearer that evidence against the null hypothesis may come only with values to the left of 3.6, hence a left-sided test.
+
+Similarly, a *right-sided test*\index{hypothesis testing!right-sided test} can be stated $H_0: \mu = 3.6$ versus 
+$H_A: \mu > 3.6$. Claims under the null hypothesis for this type of test could be stated as "the average weight is *at most* 3.6 grams" or even "the average weight is *less* than 3.6 grams". But observe that _less_ does not contain the _equal_ part, how can the null then be 
+$H_0: \mu = 3.6$? The reason is related to the method used more than the semantics of the statement. 
+Let's break this down: If, under the null hypothesis, the average weight is less than 3.6 grams, we can only find evidence against the null if we find sample means that are much greater than 3.6 grams, hence the alternative hypothesis is $H_A: \mu > 3.6$.
+Now, to find the evidence we are looking for, the methods we use require a point of reference, "less than 3.6" is not a fixed number since 2 is less than 3.6 but so too is 3.59.
+On the other hand, if we can find evidence that the average is greater than 3.6, then it is also true that the average is greater than 3.5, 2, or any other number less than 3.6. 
+Thus, as a convention, we include the equal sign **always** in the statement under the null hypothesis.
+
+Let's return to the test. We work with the two-sided test in what follows, but we will 
+comment about the changes needed in the process if we are instead working with the left- 
+or right-sided alternatives.
+
+#### The theory-based approach {-}
+
+We use the theory-based approach to illustrate how a hypothesis test is 
+conducted. We first calculate the sample mean and sample standard deviation from 
+this sample:
+
+```{r}
+almonds_sample_100 |>
+  summarize(sample_mean = mean(weight),
+            sample_sd = sd(weight))
+```
+
+We recall that due to the Central Limit Theorem described in Subsection 
+\@ref(central-limit-theorem), the sample mean weight of almonds, $\overline X$, 
+is approximately normally distributed with expected value equal to $\mu$ and 
+standard deviation equal to $\sigma/\sqrt{n}$. Since the population standard 
+deviation is unknown, 
+we use the sample standard deviation, $s$, to calculate the standard error 
+$s/\sqrt{n}$. As presented in Subsection \@ref(t-distribution-CI), the $t$-test 
+statistic
+
+$$t = \frac{\overline{x} - \mu}{s/\sqrt{n}}$$
+follows a $t$ distribution with $n-1$ degrees of freedom.
+Of course we do not know what $\mu$ is. But since we assume that the null 
+hypothesis is true, we can use this value to obtain the test statistic as shown 
+in the code below. Table \@ref(tab:hypo-test-1) presents this values.
+
+```{r eval=FALSE}
+almonds_sample_100 |>
+  summarize(x_bar = mean(weight),
+            s = sd(weight),
+            n = length(weight),
+            t = (x_bar - 3.6)/(s/sqrt(n)))
+```
+
+
+```{r hypo-test-1, fig.cap="The t test statistic.", echo=FALSE, purl=FALSE}
+hypo_test <- almonds_sample_100 |>
+  select(weight) |>
+  summarize(x_bar = mean(weight),
+            s = sd(weight),
+            n = length(weight),
+            t = (x_bar - 3.6)/(s/sqrt(n)))
+hypo_test |>
+  kbl(
+    digits = 3,
+    caption = "Sample mean, standard deviation, size, and the t test statistic",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("HOLD_position")
+  )  
+```
+
+The value of $t = `r round(hypo_test[1,4][[1]],2)`$ is the sample mean 
+standardized such that the claim $\mu = 3.6$ grams corresponds to the center of the 
+$t$ distribution ($t = 0$), and the sample mean observed, 
+$\overline x = `r round(hypo_test[1,2][[1]],2)`$, corresponds to the $t$ test 
+statistic (t = `r round(hypo_test[1,4][[1]],2)`). 
+
+Assuming that the null hypothesis is true ($\mu = 3.6$ grams) how likely is it 
+to observe a sample as extreme as or more extreme than `almonds_sample_100`? 
+Or correspondingly, how likely is it to observe a sample mean as extreme 
+as or more extreme than $\overline x = `r round(hypo_test[1,2][[1]],2)`$? Or even,
+how likely is it to observe a test statistic that is 
+$t = `r round(hypo_test[1,4][[1]],2)`$ units or more away from the center of 
+the $t$ distribution?
+
+Because this is a two-sided test, we care about extreme values that are 
+`r round(hypo_test[1,4][[1]],2)` away in either direction of the distribution. 
+The shaded regions on both tails of the $t$ distribution in Figure 
+\@ref(fig:t-curve-hypo) represent the probability of these extreme values.
+
+```{r t-curve-hypo, echo=FALSE, fig.height=ifelse(is_latex_output(), 2, 7), fig.width=3, purl=FALSE, fig.cap="The tails of a t curve for this hypothesis test."}
+t_value <- hypo_test[1,4][[1]]
+ggplot(NULL, aes(c(-4,4))) +
+  geom_area(stat = "function", fun = dt, args =list(df =99), fill = "pink", xlim = c(-4, -t_value)) +
+  geom_area(stat = "function", fun = dt, args =list(df =99), fill = "white", xlim = c(-t_value, t_value)) +
+  geom_area(stat = "function", fun = dt, args =list(df =99), fill = "pink", xlim = c(t_value, 4)) +
+  labs(x = "t", y = "") +
+  scale_y_continuous(breaks = NULL) +scale_x_continuous(breaks = c(-2.26, 2.26))
+```
+
+The function `pt()` finds the area under a $t$ curve to the left of a given 
+value. The function requires the argument `q` (quantile) that in our example is 
+the value of $t$ on the left part of the plot (`r -abs(round(hypo_test[1,4][[1]],2))`) 
+and the argument `df`, the degrees of freedom that for a one-sample test are 
+$n-1$. 
+The sample size of `almonds_sample_100` was $n = 100$. 
+Finally, since we need the area on both tails and the $t$ distribution is 
+symmetric, we simply multiply the results by 2:
+
+```{r eval = FALSE}
+2 * pt(q = -2.26, df = 100 - 1)
+```
+
+```{r echo = FALSE, purl=FALSE}
+p_val <- 2 * pt(q = -2.26, df = 100 - 1)
+```
+
+
+We have determined that, assuming that the null hypothesis is true, the 
+probability of getting a sample as extreme as or more extreme than 
+`almonds_sample_100` is `r round(p_val,3)`. This probability is called 
+the $p$-value. 
+
+What does this mean? Well, most statistics textbooks will state that, given 
+a significance level, often set as $\alpha = 0.05$, if the $p$-value is less than $\alpha$,
+we reject the null hypothesis. While technically not incorrect, this type of statement 
+does not provide enough insight for students to fully understand the conclusion.
+
+Let's unpack some of these elements and provide additional context to them:
+
+The key element of the conclusion is to determine whether the statement under 
+the null hypothesis can be rejected. If assuming that the null hypothesis is 
+true, it is very unlikely (almost impossible) to observe a random sample such as 
+the one we have observed, we *need* to reject the null hypothesis, but we would 
+not reject the null hypothesis in any other situation. In that sense, the null 
+hypothesis has a privileged status. The reason for this is that we do not want 
+to make a mistake and reject the null hypothesis when the claim under it is 
+actually true. In statistics, making this mistake is called a Type I Error. So, we 
+only reject the null hypothesis if the chances of committing a Type I Error are 
+truly small. The significance level, denoted by the Greek letter $\alpha$ 
+(pronounced "alpha"), is precisely the probability of 
+committing a Type I Error.
+
+
+What are the chances you are willing to take? Again, $\alpha = 0.05$ is what 
+most textbooks use and many research communities have adopted for decades. While 
+we should be able to work with this number, after all we may need to interact 
+with people that are used to it, we want to treat it as one of many possible 
+numbers.
+
+The significance level, $\alpha$, is a predefined level of accepted 
+uncertainty. This value should be defined well before the $p$-value has been 
+calculated, or even before data has been collected. Ideally, it should represent 
+our tolerance for uncertainty. But, how can we determine what this value should 
+be?
+
+We provide an example. Assume that you are a student and 
+have to take a test in your statistics class worth 100 points. You have studied 
+for it, and you expect to get a passing grade (score in the 80s) but not better 
+than that. 
+The day of the exam the instructor gives you one additional option. You can take 
+the exam and receive a grade based on your performance or you can play the 
+following game: the instructor rolls a six-sided fair die. If the top face shows 
+a "one" you score zero on your test, otherwise you score 100. There is a 1 in 6 
+chance that you get zero. Would you play this game?
+
+If you would not play the game, Let's change it. Now the instructor rolls the die 
+twice, you score 0 in the test only if both rolls are "one". Otherwise, you 
+score 100. There is only a 1 in 36 chance to get zero. Would you now play this game? 
+
+What if the instructor rolls the die five times and you score zero in the test 
+only if each roll is a "one", and you score 100 otherwise. The is only a 1 in 7776 
+chance to get zero. Would you play this game?
+
+Converted to probabilities, the three games shown above give you the probabilities of 
+getting a zero equal to $1/6 = 0.167$, $1/36 = 0.028$, and $1/7776 = 0.0001$, respectively. 
+Think of these as $p$-values and getting a zero in the test as committing a Type I Error.
+
+In the context of a hypothesis test, when the random sample collected is extreme, the $p$-value is really small, and 
+we reject the null hypothesis, there is always a chance that the null hypothesis was true, the random sample collected was very atypical, and these results led us to commit a Type I Error.
+There is always uncertainty when using random samples to make inferences about populations. All we can do is decide what is our
+level of tolerance for this uncertainty. Is it $1/6 = 0.167$, $1/36 = 0.028$, $1/7776 = 0.0001$, or some other level? This is precisely the significance level $\alpha$.
+
+Returning to the almond example, if we had set $\alpha = 0.04$ and we observed the $p$-value = `r round(p_val,3)`, we would reject the null hypothesis and conclude that 
+the population mean $\mu$ is not equal to 3.6 grams. When the null hypothesis is rejected we say that the result of the test is **statistically significant**\index{statistically significant}.
+
+Let's summarize the steps for hypothesis testing:
+
+1. Based on the claim we are planning to test, state the null and alternative hypothesis in terms of $\mu$.
+- Remember that the equal sign should go under the null hypothesis as this is needed for the method.
+- The statement under the null hypothesis is assumed to be true during the process. 
+- Typically, researchers want to conclude in favor of the alternative hypothesis; that is, they try to see if the data provides evidence against the null hypothesis.
+2. Set a significance level $\alpha$, based on your tolerance for committing a Type I Error, always before working with the sample.
+3. Obtain the sample mean, sample standard deviation, $t$-test statistic, and $p$-value.
+- When working with a two-sided test, as in the almond example above, the $p$-value is the area on both tails.
+- For a left-sided test, find the area under the $t$ distribution to the left of the observed $t$ test statistic.
+- For a right-sided test, find the area under the $t$ distribution to the right of the observed $t$ test statistic.
+4. Determine whether the result of the test is statistically significant (if the null is rejected) or non-significant (the null is not rejected).
+
+
+#### The simulation-based approach
+
+When using a simulation-based approach such as the bootstrap percentile method, 
+we repeat the first two steps of the theory-based approach:
+
+1. State the null and alternative hypothesis in terms of $\mu$. The statement under the null hypothesis is assumed to be true during the process. 
+2. Set a significance level, $\alpha$, based on your tolerance for committing a Type I Error. 
+
+In step 1 we need to assume the null hypothesis is true. This presents a technical complication in the bootstrap percentile method as the sample collected and corresponding bootstrap samples are based on the real distribution and if the null hypothesis is not true they cannot reflect this. The solution is to shift the sample values by a constant so as to make the sample mean equal to the claimed population mean under the null hypothesis.
+
+The `infer` workflow takes this into account automatically, but when introduced to students for the first time, the additional shifting tends to create some confusion in the intuition of the method. We have determined that it is easier to introduce the elements of the simulation-based approach to hypothesis testing via the two-sample problem context using another resampling technique called *permutation*. Details of this method are presented in Sections \@ref(understanding-ht), \@ref(ht-infer), and 
+\@ref(ht-interpretation). Once we are very comfortable using this method, we can then explore the bootstrap percentile method for one-sample problems. Observe that more examples with explanations for the simulation-based approach are presented in the Appendices online including an example of a one-sample mean hypothesis test using simulation-based methods.
+
+For completeness, we present here the code and results of the one-sample hypothesis test for the almonds' problem.
+
+```{r}
+null_dist <- almonds_sample_100 |>
+  specify(response = weight) |>
+  hypothesize(null = "point", mu = 3.6) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "mean")
+```
+
+
+
+```{r echo=TRUE}
+x_bar_almonds <- almonds_sample_100 |>
+  summarize(sample_mean = mean(weight)) |>
+  select(sample_mean)
+null_dist |>
+  get_p_value(obs_stat = x_bar_almonds, direction = "two-sided")
+```
+
+```{r echo=FALSE}
+p_val_almonds <- null_dist |>
+  get_p_value(obs_stat = x_bar_almonds, direction = "two-sided") 
+```
+
+```{r eval=FALSE, echo=FALSE, purl=FALSE}
+p_val_almonds |> 
+  kbl(
+    digits = 3,
+    caption = "The p value",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+The $p$-value is `r round(p_val_almonds, 3)`. This is fairly similar to the $p$-value obtained using the theory-based approach. Using the same significance level $\alpha = 0.04$ we again reject the null hypothesis.
+
+### Hypothesis tests and confidence intervals
+
+Even though hypothesis tests and confidence intervals are two different approaches that have different goals, they complement each other.
+For example, in Subsection \@ref(t-distribution-CI) we calculated the 95% confidence interval for the almonds' mean weight, $\mu$, using the sample `almonds_sample_100`. The theory-based approach was given by
+
+$$
+\begin{aligned}
+\left(\overline{x} - 1.98 \frac{s}{\sqrt{n}},\quad \overline{x} + 1.98 \frac{s}{\sqrt{n}}\right) 
+\end{aligned}
+$$ 
+
+and the 95% confidence interval is:
+
+```{r}
+almonds_sample_100 |>
+  summarize(lower_bound = mean(weight) - 1.98*sd(weight)/sqrt(length(weight)),
+            upper_bound = mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
+```
+
+Using the simulation-based approach via the bootstrap percentile method, the 95% confidence interval is
+
+```{r eval=FALSE}
+bootstrap_means <- almonds_sample_100 |> 
+  specify(response = weight) |> 
+  generate(reps = 1000, type = "bootstrap") |> 
+  calculate(stat = "mean")
+```
+
+```{r echo=FALSE, purl=FALSE}
+bootstrap_means <- read_rds("rds/bootstrap_means_almonds.rds")
+```
+
+
+```{r}
+bootstrap_means |> 
+  get_confidence_interval(level = 0.95, type = "percentile")
+```
+
+Both 95% confidence intervals are very similar and, more importantly, both 
+intervals do not contain $\mu = 3.6$ grams. 
+Recall that when performing hypothesis testing we rejected the null hypothesis, 
+$H_0: \mu = 3.6$. 
+The results obtained using confidence intervals are consistent to the 
+conclusions of hypothesis testing.
+
+In general, if the values for $\mu$ under the null hypothesis are not part of 
+the confidence interval, the null hypothesis is rejected. 
+Note, however, that the confidence level used when constructing the interval, 
+95% in our example, needs to be consistent with the significance level, 
+$\alpha$, used for the hypothesis test. 
+In particular, when the hypothesis test is two-sided and a significance level 
+$\alpha$ is used, we calculate a confidence interval for a confidence level equal 
+to $(1 - \alpha)\times 100\%$. For example, if $\alpha = 0.05$ then the 
+corresponding confidence level is $(1 - 0.05) = 0.95$ or $95\%$. 
+The correspondence is direct because the confidence intervals that we calculate 
+are always two-sided. 
+On the other hand, if the hypothesis test used is one-sided (left or right), 
+calculate a confidence interval with a confidence level equal to 
+$(1 - 2\alpha)\times 100\%$. For example, if $\alpha = 0.05$ then, the 
+corresponding confidence level needed is $(1 - 2\cdot 0.05) = 0.9$ or $90\%$.
+
+This section concludes our discussion about one-sample hypothesis tests. 
+Observe that, as we have done for confidence intervals, we can also construct 
+hypothesis tests for proportions, and when using the bootstrap percentile method, 
+we can do it also for other quantities, such as the population median, quartiles, etc.
+
+We focus now on building hypothesis tests for two-sample problems.
 
 ## Music popularity activity {#ht-activity}
 
@@ -87,7 +489,7 @@ Let's start with an activity studying the effect of music genre on Spotify song 
 
 ### Is metal music more popular than deep house music?
 
-Imagine you're a music analyst for Spotify, and you're curious about whether fans of metal or deep house are more passionate about their favorite genres. You want to determine if there’s a significant difference in the popularity of these two genres. Popularity, in this case, is measured by Spotify, say, as the average number of streams and recent user interactions on tracks classified under each genre. (Note that Spotify doesn't actually disclose how this metric is calculated, so we have to take our best guess.) This question sets the stage for our exploration into hypothesis testing.
+Imagine you are a music analyst for Spotify, and you are curious about whether fans of metal or deep house are more passionate about their favorite genres. You want to determine if there’s a significant difference in the popularity of these two genres. Popularity, in this case, is measured by Spotify, say, as the average number of streams and recent user interactions on tracks classified under each genre. (Note that Spotify does not actually disclose how this metric is calculated, so we have to take our best guess.) This question sets the stage for our exploration into hypothesis testing.
 
 Metal music, characterized by its aggressive sounds, powerful vocals, and complex instrumentals, has cultivated a loyal fanbase that often prides itself on its deep appreciation for the genre's intensity and technical skill. On the other hand, deep house music, with its smooth, soulful rhythms and steady beats, attracts listeners who enjoy the genre's calming and immersive vibe, often associated with late-night clubs and chill-out sessions.
 
@@ -102,9 +504,9 @@ n_songs <- spotify_by_genre |>
 n_songs_genre <- n_songs / 2
 ```
 
-To begin the analysis, `r n_songs` were selected at random from Spotify's song archive. We'll use "song" and "track" interchangeably going forward. There were `r n_songs_genre` metal tracks and `r n_songs_genre` deep house tracks selected. 
+To begin the analysis, `r n_songs` tracks were selected at random from Spotify's song archive. We will use "song" and "track" interchangeably going forward. There were `r n_songs_genre` metal tracks and `r n_songs_genre` deep house tracks selected. 
 
-The `moderndive` package contains the data on the songs by genre in the `spotify_by_genre` data frame. There are six genres selected in that data (`country`, `deep-house`, `dubstep`, `hip-hop`, `metal`, and `rock`). You'll have the opportunity to explore relationships with the other genres and popularity in the Learning Checks. Let’s explore this data by focusing on just `metal` and `deep-house` by looking at twelve randomly selected rows and our columns of interest. Note here that we also group our selection so that three songs of each of the four possible groupings of `track_genre` and `popular_or_not` are selected.
+The `moderndive` package contains the data on the songs by genre in the `spotify_by_genre` data frame. There are six genres selected in that data (`country`, `deep-house`, `dubstep`, `hip-hop`, `metal`, and `rock`). You will have the opportunity to explore relationships with the other genres and popularity in the Learning checks. Let’s explore this data by focusing on just `metal` and `deep-house` by looking at twelve randomly selected rows and our columns of interest. Note here that we also group our selection so that three songs of each of the four possible groupings of `track_genre` and `popular_or_not` are selected.
 
 ```{r echo=FALSE}
 set.seed(2)
@@ -113,11 +515,10 @@ set.seed(2)
 ```{r eval=FALSE}
 spotify_metal_deephouse <- spotify_by_genre |> 
   filter(track_genre %in% c("metal", "deep-house")) |> 
-  select(track_id, track_genre, artists, track_name, popularity, popular_or_not) 
+  select(track_genre, artists, track_name, popularity, popular_or_not) 
 spotify_metal_deephouse |>
   group_by(track_genre, popular_or_not) |> 
-  sample_n(size = 3) |> 
-  arrange(track_id)
+  sample_n(size = 3)
 ```
 
 ```{r echo=FALSE}
@@ -128,11 +529,21 @@ sampled_spotify_metal_deephouse <- spotify_metal_deephouse |>
   group_by(track_genre, popular_or_not) |> 
   sample_n(size = 3) |> 
   arrange(track_id) |> 
-  ungroup()
-sampled_spotify_metal_deephouse
+  ungroup() |> 
+  select(-track_id)
+sampled_spotify_metal_deephouse |> 
+  kbl(
+    caption = "Sample of twelve songs from the Spotify data frame.",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 6, 16),
+    latex_options = c("HOLD_position")
+  )
 ```
 
-The variable `track_id` acts as an identification variable for all `r n_songs` rows, the `track_genre` variable indicates what genre the song is classified under, the `artists` and `track_name` columns provide additional information about the track by providing the artist and the name of the song, `popularity` is the metric mentioned earlier given by Spotify, and `popular_or_not` is a categorical representation of the `popularity` column with any value of 50 (the 75th percentile of `popularity`) referring to `popular` and anything at or below 50 as `not_popular`. The decision made by the authors to call a song "popular" if it is above the 75th percentile (3rd quartile) of `popularity` is arbitrary and could be changed to any other value.)
+The `track_genre` variable indicates what genre the song is classified under, the `artists` and `track_name` columns provide additional information about the track by providing the artist and the name of the song, `popularity` is the metric mentioned earlier given by Spotify, and `popular_or_not` is a categorical representation of the `popularity` column with any value of 50 (the 75th percentile of `popularity`) referring to `popular` and anything at or below 50 as `not_popular`. The decision made by the authors to call a song "popular" if it is above the 75th percentile (3rd quartile) of `popularity` is arbitrary and could be changed to any other value.)
 
 Let's perform an exploratory data analysis of the relationship between the two categorical variables `track_genre` and `popular_or_not`. Recall that we saw in Subsection \@ref(two-categ-barplot) that one way we can visualize such a relationship is by using a stacked barplot. 
 
@@ -142,7 +553,7 @@ ggplot(spotify_metal_deephouse, aes(x = track_genre, fill = popular_or_not)) +
   labs(x = "Genre of track")
 ```
 
-```{r spotify-genre-barplot, echo=FALSE, fig.cap="Barplot relating genre to popularity.", fig.height=1.6, purl=FALSE}
+```{r spotify-genre-barplot, echo=FALSE, fig.cap="Barplot relating genre to popularity.", fig.height=ifelse(knitr::is_latex_output(), 1.6, 7), purl=FALSE}
 spotify_genre_barplot <- ggplot(spotify_metal_deephouse, aes(x = track_genre, fill = popular_or_not)) +
   geom_bar() +
   labs(x = "Genre of track")
@@ -182,38 +593,74 @@ p_deephouse_popular <- (n_deephouse_popular_original / n_songs_genre) |>
   round(3)
 ```
 
-So of the `r n_songs_genre` metal songs, `r n_metal_popular_original` were popular, for a proportion of `r n_metal_popular_original`/`r n_songs_genre` = `r p_metal_popular` = `r p_metal_popular*100`%. On the other hand, of the `r n_songs_genre` deep house songs, `r n_deephouse_popular_original` were popular, for a proportion of `r n_deephouse_popular_original`/`r n_songs_genre` = `r p_deephouse_popular` = `r p_deephouse_popular*100`%. Comparing these two rates of promotion, it appears that metal songs were popular at a rate `r p_metal_popular` - `r p_deephouse_popular` = `r observed_test_statistic` = `r observed_test_statistic*100`% higher than deep house songs. This is suggestive of an advantage for metal songs in terms of popularity.
+So of the `r n_songs_genre` metal songs, `r n_metal_popular_original` were popular, for a proportion of `r n_metal_popular_original`/`r n_songs_genre` = `r p_metal_popular` = `r p_metal_popular*100`%. On the other hand, of the `r n_songs_genre` deep house songs, `r n_deephouse_popular_original` were popular, for a proportion of `r n_deephouse_popular_original`/`r n_songs_genre` = `r p_deephouse_popular` = `r p_deephouse_popular*100`%. Comparing these two rates of popularity, it appears that metal songs were popular at a rate `r p_metal_popular` - `r p_deephouse_popular` = `r observed_test_statistic` = `r observed_test_statistic*100`% higher than deep house songs. This is suggestive of an advantage for metal songs in terms of popularity.
 
-The question is, however, does this provide *conclusive* evidence that there is greater popularity for metal songs compared to deep house songs? Could a difference in popularity rates of `r observed_test_statistic * 100`% still occur by chance, even in a hypothetical world where no difference in popularity existed between the two genres? In other words, what is the role of *sampling variation* in this hypothesized world? To answer this question, we'll again rely on a computer to run *simulations*. 
+The question is, however, does this provide *conclusive* evidence that there is greater popularity for metal songs compared to deep house songs? Could a difference in popularity rates of `r observed_test_statistic * 100`% still occur by chance, even in a hypothetical world where no difference in popularity existed between the two genres? In other words, what is the role of *sampling variation* in this hypothesized world? To answer this question, we will again rely on a computer to run *simulations*. 
 
 
 ### Shuffling once
 
-First, try to imagine a hypothetical universe where difference in the popularity of metal and deep house songs existed. In such a hypothetical universe, the genre of a song would have no bearing on their chances of popularity. Bringing things back to our `spotify_metal_deephouse` data frame, the `popular_or_not` variable would thus be an irrelevant label. If these `popular_or_not` labels were irrelevant, then we could randomly reassign them by "shuffling" them to no consequence!
+First, try to imagine a hypothetical universe where there was no difference in the popularity of metal and deep house. In such a hypothetical universe, the genre of a song would have no bearing on their chances of popularity. Bringing things back to our `spotify_metal_deephouse` data frame, the `popular_or_not` variable would thus be an irrelevant label. If these `popular_or_not` labels were irrelevant, then we could randomly reassign them by "shuffling" them to no consequence!
 
-To illustrate this idea, let's narrow our focus to 52 chosen songs of the `r n_songs` that you saw earlier. The `track_genre` column shows what the original genre of the song was. Note that to keep this smaller data set of 52 rows to be a representative sample of the 2000 rows, we have sampled such that the popularity rate for each of `metal` and `deep-house` is close to the original rates of `r p_metal_popular` and `r p_deephouse_popular`, respectively, prior to shuffling. This data is available in the `spotify_52_original` data frame in the `moderndive` package.
+To illustrate this idea, Let's narrow our focus to 52 chosen songs of the `r n_songs` that you saw earlier. The `track_genre` column shows what the original genre of the song was. Note that to keep this smaller dataset of 52 rows to be a representative sample of the 2000 rows, we have sampled such that the popularity rate for each of `metal` and `deep-house` is close to the original rates of `r p_metal_popular` and `r p_deephouse_popular`, respectively, prior to shuffling. This data is available in the `spotify_52_original` data frame in the `moderndive` package. We also remove the `track_id` column for simplicity. It is an identification variable that is not relevant for our analysis.
 
-```{r}
-spotify_52_original
+```{r eval=FALSE}
+spotify_52_original |> 
+  select(-track_id) |> 
+  head(10)
 ```
+
+```{r echo=FALSE}
+spotify_52_original |> 
+  select(-track_id) |> 
+  head(10) |> 
+  kbl(caption = "Representative sample of metal and deep-house songs", 
+      booktabs = TRUE,
+      linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 6, 16),
+    latex_options = c("HOLD_position")
+  )
+```
+
 
 In our hypothesized universe of no difference in genre popularity, popularity is irrelevant and thus it is of no consequence to randomly "shuffle" the values of `popular_or_not`. The `popular_or_not` column in the `spotify_52_shuffled` data frame in the `moderndive` package shows one such possible random shuffling. 
 
-```{r}
-spotify_52_shuffled
+```{r eval=FALSE}
+spotify_52_shuffled |> 
+  select(-track_id) |> 
+  head(10)
 ```
+
+(ref:spotify-shuffled-52) Shuffled version of `popular_or_not` in representative sample of metal and deep-house songs
+
+```{r echo=FALSE}
+spotify_52_shuffled |> 
+  select(-track_id) |> 
+  head(10) |> 
+  kbl(caption = "(ref:spotify-shuffled-52)", 
+      booktabs = TRUE,
+      linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 6, 16),
+    latex_options = c("HOLD_position")
+  )
+```
+
 
 Observe in the `popular_or_not` column how the `popular` and `not popular` results are now listed in a different order. Some of the original `popular` now are `not popular`, some of the `not popular` are `popular`, and others are the same as the original. 
 
-Again, such random shuffling of the `popular_or_not` label only makes sense in our hypothesized universe of no difference in popularity between genres. Is there a tactile way for us to understand what is going on with this shuffling? One way would be by using standard deck of 52 playing cards, which we display in Figure \@ref(fig:deck-of-cards).
+Again, such random shuffling of the `popular_or_not` label only makes sense in our hypothesized universe of no difference in popularity between genres. Is there a tactile way for us to understand what is going on with this shuffling? One way would be by using a standard deck of 52 playing cards, which we display in Figure \@ref(fig:deck-of-cards).
 
-```{r deck-of-cards, echo=FALSE, fig.cap="Standard deck of 52 playing cards.", purl=FALSE, out.width="100%"}
+```{r deck-of-cards, echo=FALSE, fig.cap="Standard deck of 52 playing cards.", purl=FALSE, out.width="70%"}
 include_graphics("images/shutterstock/shutterstock_670789453.jpg")
 ```
 
 Since we started with equal sample sizes of 1000 songs for each genre, we can think about splitting the deck in half to have 26 cards in two piles (one for `metal` and another for `deep-house`). After shuffling these 52 cards as seen in Figure \@ref(fig:shuffling), we split the deck equally into the two piles of 26 cards each. Then, we can flip the cards over one-by-one, assigning "popular" for each red card and "not popular" for each black card keeping a tally of how many of each genre are popular.
 
-```{r shuffling, echo=FALSE, fig.cap="Shuffling a deck of cards.", purl=FALSE, out.width="100%", out.height="100%"}
+```{r shuffling, echo=FALSE, fig.cap="Shuffling a deck of cards.", purl=FALSE, out.width="50%", out.height="50%"}
 include_graphics("images/shutterstock/shutterstock_128283971.jpg")
 ```
 
@@ -221,12 +668,11 @@ Let's repeat the same exploratory data analysis we did for the original `spotify
 
 
 ```{r, eval=FALSE}
-ggplot(spotify_52_shuffled, 
-       aes(x = track_genre, fill = popular_or_not)) +
+ggplot(spotify_52_shuffled, aes(x = track_genre, fill = popular_or_not)) +
   geom_bar() + 
   labs(x = "Genre of track")
 ```
-```{r spotify-genre-barplot-permuted, fig.cap="Barplots of relationship of genre with 'popular or not' (left) and shuffled 'popular or not' (right).", fig.height=4.7, echo=FALSE, purl=FALSE}
+```{r spotify-genre-barplot-permuted, fig.cap="Barplots of relationship of genre with `popular or not' (left) and shuffled `popular or not' (right).", fig.height=ifelse(knitr::is_latex_output(), 3, 7), echo=FALSE, purl=FALSE, message=FALSE}
 height1 <- spotify_52_original |>
   group_by(track_genre, popular_or_not) |>
   summarize(n = n()) |>
@@ -304,19 +750,19 @@ Observe how this difference in rates is not the same as the difference in rates 
 
 What we just demonstrated in this activity is the statistical procedure known as *hypothesis testing* using a *permutation test*. The term "permutation" \index{permutation} is the mathematical term for "shuffling": taking a series of values and reordering them randomly, as you did with the playing cards. In fact, permutations are another form of *resampling*, like the bootstrap method you performed in Chapter \@ref(confidence-intervals). While the bootstrap method involves resampling *with* replacement, permutation methods involve resampling *without* replacement. 
 
-We needn't stay defined to this dataset of 52 rows only though. It was useful to see how we could use the deck of cards as a way to visualize tactily how the shuffling would assign values of popular or not popular to different songs. These same ideas can be applied to each of the 2000 tracks in our `spotify_metal_deephouse` data. We can think for this data about an inference about an unknown difference of population proportions with the 2000 tracks being our sample. We denote this as $p_{m} - p_{d}$, where $p_{m}$ is the population proportion of songs with metal names being popular and $p_{d}$ is the equivalent for deep house songs. Recall that this is one of the scenarios for inference we've seen so far in Table \@ref(tab:table-diff-prop).
+We do not need restrict our analysis to a dataset of 52 rows only. It is useful to manually shuffle the deck of cards and assign values of popular or not popular to different songs, but the same ideas can be applied to each of the 2000 tracks in our `spotify_metal_deephouse` data. We can think for this data about an inference about an unknown difference of population proportions with the 2000 tracks being our sample. We denote this as $p_{m} - p_{d}$, where $p_{m}$ is the population proportion of songs with metal names being popular and $p_{d}$ is the equivalent for deep house songs. Recall that this is one of the scenarios for inference we have seen so far in Table \@ref(tab:table-diff-prop).
 
 ```{r table-diff-prop, echo=FALSE, message=FALSE, purl=FALSE}
 # The following Google Doc is published to CSV and loaded using read_csv():
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
-if (!file.exists("rds/sampling_scenarios.rds")) {
+if (!file.exists("rds/sampling_scenarios-v2.rds")) {
   sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" |>
     read_csv(na = "") |>
     slice(1:5)
-  write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
+  write_rds(sampling_scenarios, "rds/sampling_scenarios-v2.rds")
 } else {
-  sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
+  sampling_scenarios <- read_rds("rds/sampling_scenarios-v2.rds")
 }
 
 sampling_scenarios |>
@@ -330,7 +776,7 @@ sampling_scenarios |>
   ) |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   ) |>
   column_spec(1, width = "0.5in") |>
   column_spec(2, width = "0.7in") |>
@@ -339,7 +785,11 @@ sampling_scenarios |>
   column_spec(5, width = "1in")
 ```
 
-So, based on our sample of $n_m = 1000$ metal tracks and $n_f = 1000$ deep house tracks, the *point estimate* for $p_{m} - p_{d}$ is the *difference in sample proportions* $\widehat{p}_{m} -\widehat{p}_{f}$ = `r p_metal_popular` - `r p_deephouse_popular` = `r observed_test_statistic` = `r observed_test_statistic*100`%. This difference in favor of metal songs of `r observed_test_statistic` is greater than 0, suggesting metal songs are more popular than deep house songs.
+So, based on our sample of $n_m = 1000$ metal tracks and $n_f = 1000$ deep house tracks, the *point estimate* for $p_{m} - p_{d}$ is the *difference in sample proportions*
+
+$$\widehat{p}_{m} -\widehat{p}_{f} = `r p_metal_popular` - `r p_deephouse_popular` = `r observed_test_statistic` = `r observed_test_statistic*100`\%$$. 
+
+This difference in favor of metal songs of `r observed_test_statistic` is greater than 0, suggesting metal songs are more popular than deep house songs.
 
 However, the question we ask ourselves was "is this difference meaningfully greater than 0?". In other words, is that difference indicative of true popularity, or can we just attribute it to *sampling variation*? Hypothesis testing allows us to make such distinctions.
 
@@ -349,15 +799,13 @@ However, the question we ask ourselves was "is this difference meaningfully grea
 
 ## Understanding hypothesis tests {#understanding-ht}
 
-Much like the terminology, notation, and definitions relating to sampling you saw in Section \@ref(sampling-framework), there are a lot of terminology, notation, and definitions related to hypothesis testing as well. Learning these may seem like a very daunting task at first. However, with practice, practice, and more practice, anyone can master them. 
+Much like the terminology, notation, and definitions relating to sampling you saw in Section \@ref(sampling-framework), there are a lot of terminology, notation, and definitions related to hypothesis testing as well. Some of this was introduced in Section \@ref(tying-CI-hypo). Learning these may seem like a very daunting task at first. However, with practice, practice, and more practice, anyone can master them. 
 
-<!-- UP TO HERE -->
-
-First, a **hypothesis** \index{hypothesis testing!hypothesis} is a statement about the value of an unknown population parameter. In our genre popularity activity, our population parameter of interest is the difference in population proportions $p_{m} - p_{d}$. Hypothesis tests can involve any of the population parameters in Table \@ref(tab:table-ch8) of the five inference scenarios we'll cover in this book and also more advanced types we won't cover here.
+First, a **hypothesis** \index{hypothesis testing!hypothesis} is a statement about the value of an unknown population parameter. In our genre popularity activity, our population parameter of interest is the difference in population proportions $p_{m} - p_{d}$. Hypothesis tests can involve any of the population parameters in Table \@ref(tab:table-ch8-c) of the five inference scenarios we will cover in this book and also more advanced types we will not cover here.
 
 Second, a **hypothesis test** \index{hypothesis testing} consists of a test between two competing hypotheses: (1) a **null hypothesis** $H_0$ (pronounced "H-naught") versus (2) an **alternative hypothesis** $H_A$ (also denoted $H_1$). 
 
-Generally the null hypothesis \index{hypothesis testing!null hypothesis} is a claim that there is "no effect" or "no difference of interest." In many cases, the null hypothesis represents the status quo or a situation that nothing interesting is happening. Furthermore, generally the alternative hypothesis \index{hypothesis testing!alternative hypothesis} is the claim the experimenter or researcher wants to establish or find evidence to support. It is viewed as a "challenger" hypothesis to the null hypothesis $H_0$. In our genre popularity activity, an appropriate hypothesis test would be:
+When working with the comparison of two populations parameters, typically, the null hypothesis \index{hypothesis testing!null hypothesis} is a claim that there is "no effect" or "no difference of interest." In many cases, the null hypothesis represents the status quo. Furthermore, the alternative hypothesis \index{hypothesis testing!alternative hypothesis} is the claim the experimenter or researcher wants to establish or find evidence to support. It is viewed as a "challenger" hypothesis to the null hypothesis $H_0$. In our genre popularity activity, an appropriate hypothesis test would be:
 
 $$
 \begin{aligned}
@@ -366,7 +814,7 @@ H_0 &: \text{metal and deep house have the same popularity rate}\\
 \end{aligned}
 $$
 
-Note some of the choices we have made. First, we set the null hypothesis $H_0$ to be that there is no difference in popularity rate and the "challenger" alternative hypothesis $H_A$ to be that there is a difference. While it would not be wrong in principle to reverse the two, it is a convention in statistical inference that the null hypothesis is set to reflect a "null" situation where "nothing is going on." As we discussed earlier, in this case, $H_0$ corresponds to there being no difference in promotion rates. Furthermore, we set $H_A$ to be that metal is popular at a *higher* rate, a subjective choice reflecting a prior suspicion we have that this is the case. We call such alternative hypotheses \index{hypothesis testing!one-sided alternative} *one-sided alternatives*. If someone else however does not share such suspicions and only wants to investigate that there is a difference, whether higher or lower, they would set what is known as a \index{hypothesis testing!two-sided alternative} *two-sided alternative*.
+Note some of the choices we have made. First, we set the null hypothesis $H_0$ to be that there is no difference in popularity rate and the "challenger" alternative hypothesis $H_A$ to be that there is a difference in favor of metal. As discussed earlier, the null hypothesis is set to reflect a situation of "no change." As we discussed earlier, in this case, $H_0$ corresponds to there being no difference in popularity. Furthermore, we set $H_A$ to be that metal is popular at a *higher* rate, a subjective choice reflecting a prior suspicion we have that this is the case. As discussed earlier this is a *one-sided test* \index{hypothesis testing!one-sided test}. It can be left- or right-sided, and this becomes clear once we express it in terms of proportions. If someone else however does not share such suspicions and only wants to investigate that there is a difference, whether higher or lower, they would construct a \index{hypothesis testing!two-sided test} *two-sided test*.
 
 We can re-express the formulation of our hypothesis test using the mathematical notation for our population parameter of interest, the difference in population proportions $p_{m} - p_{d}$:
 
@@ -377,32 +825,28 @@ H_0 &: p_{m} - p_{d} = 0\\
 \end{aligned}
 $$
 
-Observe how the alternative hypothesis $H_A$ is one-sided with $p_{m} - p_{d} > 0$. Had we opted for a two-sided alternative, we would have set $p_{m} - p_{d} \neq 0$. To keep things simple for now, we'll stick with the simpler one-sided alternative. We'll present an example of a two-sided alternative in Section \@ref(ht-case-study).
+Observe how the alternative hypothesis $H_A$ is written $p_{m} - p_{d} > 0$. Since we have chosen this particular formulation, the one-sided test becomes *right-sided* because we are looking for a difference that is greater than zero as evidence to reject the null hypothesis. Had we opted for a two-sided alternative, we would have set $p_{m} - p_{d} \neq 0$. We work here with the right-sided test and will present an example of a two-sided test in Section \@ref(ht-case-study).
 
 Third, a **test statistic** \index{hypothesis testing!test statistic} is a *point estimate/sample statistic* formula used for hypothesis testing. Note that a sample statistic is merely a summary statistic based on a sample of observations. Recall we saw in Section \@ref(summarize) that a summary statistic takes in many values and returns only one. Here, the samples would be the $n_m = `r n_songs_genre`$ metal songs and the $n_f = `r n_songs_genre`$ deep house songs. Hence, the point estimate of interest is the difference in sample proportions $\widehat{p}_{m} - \widehat{p}_{d}$. 
 
 Fourth, the **observed test statistic** \index{hypothesis testing!observed test statistic} is the value of the test statistic that we observed in real life. In our case, we computed this value using the data saved in the `spotify_metal_deephouse` data frame. It was the observed difference of $\widehat{p}_{m} -\widehat{p}_{d} = `r p_metal_popular` - `r p_deephouse_popular` = `r observed_test_statistic` = `r observed_test_statistic*100`\%$ in favor of metal songs.
 
-Fifth, the **null distribution** \index{hypothesis testing!null distribution} is the sampling distribution of the test statistic *assuming the null hypothesis $H_0$ is true*. Ooof! That's a long one! Let's unpack it slowly. The key to understanding the null distribution is that the null hypothesis $H_0$ is *assumed* to be true. We're not saying that $H_0$ is true at this point, we're only assuming it to be true for hypothesis testing purposes. In our case, this corresponds to our hypothesized universe of no difference in popularity rates. Assuming the null hypothesis $H_0$, also stated as "Under $H_0$," how does the test statistic vary due to sampling variation? In our case, how will the difference in sample proportions $\widehat{p}_{m} - \widehat{p}_{f}$ vary due to sampling under $H_0$? Recall from Subsection \@ref(sampling-definitions) that distributions displaying how point estimates vary due to sampling variation are called *sampling distributions*. The only additional thing to keep in mind about null distributions is that they are sampling distributions *assuming the null hypothesis $H_0$ is true*. 
+Fifth, the **null distribution** \index{hypothesis testing!null distribution} is the sampling distribution of the test statistic *assuming the null hypothesis $H_0$ is true*. Let's unpack these ideas slowly. The key to understanding the null distribution is that the null hypothesis $H_0$ is *assumed* to be true. We are not saying that $H_0$ is true at this point, we are only assuming it to be true for hypothesis testing purposes. In our case, this corresponds to our hypothesized universe of no difference in popularity rates. Assuming the null hypothesis $H_0$, also stated as "Under $H_0$," how does the test statistic vary due to sampling variation? In our case, how will the difference in sample proportions $\widehat{p}_{m} - \widehat{p}_{f}$ vary due to sampling under $H_0$? Recall from Subsection \@ref(sampling-variation) that distributions displaying how point estimates vary due to sampling variation are called *sampling distributions*. The only additional thing to keep in mind about null distributions is that they are sampling distributions *assuming the null hypothesis $H_0$ is true*. 
 
 
-Sixth, the **$p$-value** \index{hypothesis testing!p-value} is the probability of obtaining a test statistic just as extreme or more extreme than the observed test statistic *assuming the null hypothesis $H_0$ is true*. Double ooof! Let's unpack this slowly as well. You can think of the $p$-value as a quantification of "surprise": assuming $H_0$ is true, how surprised are we with what we observed? Or in our case, in our hypothesized universe of no difference in genre popularity, how surprised are we that we observed a difference in popularity rates of `r observed_test_statistic` from our collected samples assuming $H_0$ is true? Very surprised? Somewhat surprised? 
+Sixth, the **$p$-value** \index{hypothesis testing!p-value} is the probability of obtaining a test statistic just as extreme as or more extreme than the observed test statistic *assuming the null hypothesis $H_0$ is true*. You can think of the $p$-value as a quantification of "surprise": assuming $H_0$ is true, how surprised are we with what we observed? Or in our case, in our hypothesized universe of no difference in genre popularity, how surprised are we that we observed higher popularity rates of `r observed_test_statistic` from our collected samples if no difference in genre popularity exists? Very surprised? Somewhat surprised? 
 
-The $p$-value quantifies this probability, or what proportion had a more "extreme" result? Here, extreme is defined in terms of the alternative hypothesis $H_A$ that metal applicants are promoted at a higher rate than deep house applicants. In other words, how often was the popularity of metal _even more_ pronounced than $`r p_metal_popular` - `r p_deephouse_popular` = `r observed_test_statistic` = `r observed_test_statistic*100`\%$?
+The $p$-value quantifies this probability, or what proportion had a more "extreme" result? Here, extreme is defined in terms of the alternative hypothesis $H_A$ that metal popularity is a higher rate than deep house. In other words, how often was the popularity of metal _even more_ pronounced than $`r p_metal_popular` - `r p_deephouse_popular` = `r observed_test_statistic` = `r observed_test_statistic*100`\%$?
 
-Seventh and lastly, in many hypothesis testing procedures, it is commonly recommended to set the **significance level** \index{hypothesis testing!significance level} of the test beforehand.  It is denoted by the Greek letter $\alpha$ (pronounced "alpha"). This value acts as a cutoff on the $p$-value, where if the $p$-value falls below $\alpha$, we would "reject the null hypothesis $H_0$." 
+Seventh and lastly, in many hypothesis testing procedures, it is commonly recommended to set the **significance level** \index{hypothesis testing!significance level} of the test beforehand.  It is denoted by $\alpha$. Please review our discussion of $\alpha$ in Section \@ref(one-sample-hyp) when we discussed the theory-based approach. For now, it is sufficient to recall that if the $p$-value is less than or equal to $\alpha$, we reject the null hypothesis $H_0$. 
 
-Alternatively, if the $p$-value does not fall below $\alpha$, we would "fail to reject $H_0$." Note the latter statement is not quite the same as saying we "accept $H_0$." This distinction is rather subtle and not immediately obvious. So we'll revisit it later in Section \@ref(ht-interpretation).
+Alternatively, if the $p$-value is greater than  $\alpha$, we would "fail to reject $H_0$." Note the latter statement is not quite the same as saying we "accept $H_0$." This distinction is rather subtle and not immediately obvious. So we will revisit it later in Section \@ref(ht-interpretation).
 
-While different fields tend to use different values of $\alpha$, some commonly used values for $\alpha$ are 0.1, 0.01, and 0.05; with 0.05 being the choice people often make without putting much thought into it. We'll talk more about $\alpha$ significance levels in Section \@ref(ht-interpretation), but first let's fully conduct the hypothesis test corresponding to our genre popularity activity using the `infer` package.
-
-
-
-
+While different fields tend to use different values of $\alpha$, some commonly used values for $\alpha$ are 0.1, 0.01, and 0.05; with 0.05 being the choice people often make without putting much thought into it. We will talk more about $\alpha$ significance levels in Section \@ref(ht-interpretation), but first let's fully conduct a hypothesis test corresponding to our genre popularity activity using the `infer` package.
 
 ## Conducting hypothesis tests {#ht-infer}
 
-In Section \@ref(bootstrap-process), we showed you how to construct confidence intervals. We first illustrated how to do this using `dplyr` data wrangling verbs and the `rep_sample_n()` function from Subsection \@ref(shovel-1000-times) which we used as a virtual shovel. In particular, we constructed confidence intervals by resampling with replacement by setting the `replace = TRUE` argument to the `rep_sample_n()` function. 
+In Section \@ref(bootstrap-process), we showed you how to construct confidence intervals. We first illustrated how to do this using `dplyr` data wrangling verbs and the `rep_sample_n()` function from Subsection \@ref(sampling-simulation) which we used as a virtual shovel. In particular, we constructed confidence intervals by resampling with replacement by setting the `replace = TRUE` argument to the `rep_sample_n()` function. 
 
 We then showed you how to perform the same task using the `infer` package workflow. While both workflows resulted in the same bootstrap distribution from which we can construct confidence intervals, the `infer` package workflow emphasizes each of the steps in the overall process in Figure \@ref(fig:infer-ci). It does so using function names that are intuitively named with verbs:
 
@@ -415,7 +859,7 @@ We then showed you how to perform the same task using the `infer` package workfl
 include_graphics("images/flowcharts/infer/visualize.png")
 ```
 
-In this section, we'll now show you how to seamlessly modify the previously seen `infer` code for constructing confidence intervals to conduct hypothesis tests. You'll notice that the basic outline of the workflow is almost identical, except for an additional `hypothesize()` step between the `specify()` and `generate()` steps, as can be seen in Figure \@ref(fig:inferht).
+In this section, we will now show you how to seamlessly modify the previously seen `infer` code for constructing confidence intervals to conduct hypothesis tests. You will notice that the basic outline of the workflow is almost identical, except for an additional `hypothesize()` step between the `specify()` and `generate()` steps, as can be seen in Figure \@ref(fig:inferht).
 
 ```{r inferht, echo=FALSE, fig.cap="Hypothesis testing with the infer package.", purl=FALSE, out.width="90%", out.height="90%"}
 include_graphics("images/flowcharts/infer/ht.png")
@@ -425,27 +869,27 @@ include_graphics("images/flowcharts/infer/ht.png")
 alpha <- 0.1
 ```
 
-Furthermore, we'll use a pre-specified significance level $\alpha$ = `r alpha` for this hypothesis test. Let's leave discussion on the choice of this $\alpha$ value until later on in Section \@ref(ht-interpretation). 
+Furthermore, we will use a pre-specified significance level $\alpha$ = `r alpha` for this hypothesis test. Please read the discussion about $\alpha$ in Subsection \@(one-sample-hyp) or until later on in Section \@ref(ht-interpretation). 
 
 
 ### `infer` package workflow {#infer-workflow-ht}
 
 #### 1. `specify` variables {-}
 
-Recall that we use the `specify()` \index{infer!specify()} verb to specify the response variable and, if needed, any explanatory variables for our study. In this case, since we are interested in any potential effects of genre on popularity rates, we set `popular_or_not` as the response variable and `track_genre` as the explanatory variable. We do so using `formula = response ~ explanatory` where `response` is the name of the response variable in the data frame and `explanatory` is the name of the explanatory variable. So in our case it is `popular_or_not ~ track_genre`. 
+Recall that we use the `specify()` \index{R packages!infer!specify()} verb to specify the response variable and, if needed, any explanatory variables for our study. In this case, since we are interested in any potential effects of genre on popularity rates, we set `popular_or_not` as the response variable and `track_genre` as the explanatory variable. We do so using `formula = response ~ explanatory` where `response` is the name of the response variable in the data frame and `explanatory` is the name of the explanatory variable. So in our case it is `popular_or_not ~ track_genre`. 
 
-Furthermore, since we are interested in the proportion of songs `"promoted"`, and not the proportion of songs `not` promoted, we set the argument `success` to `"promoted"`.
+Furthermore, since we are interested in the proportion of songs `"popular"`, and not the proportion of songs `not` popular, we set the argument `success` to `"popular"`.
 
 ```{r}
 spotify_metal_deephouse |> 
   specify(formula = popular_or_not ~ track_genre, success = "popular")
 ```
 
-Again, notice how the `spotify_metal_deephouse` data itself doesn't change, but the `Response: decision (factor)` and `Explanatory: gender (factor)` *meta-data* do. This is similar to how the `group_by()` verb from `dplyr` doesn't change the data, but only adds "grouping" meta-data, as we saw in Section \@ref(groupby). We also now focus on only the two columns of interest in the data for our problem at hand with `popular_or_not` and `track_genre`.
+Again, notice how the `spotify_metal_deephouse` data itself does not change, but the `Response: popular_or_not (factor)` and `Explanatory: track_genre (factor)` *meta-data* do. This is similar to how the `group_by()` verb from `dplyr` does not change the data, but only adds "grouping" meta-data, as we saw in Section \@ref(groupby). We also now focus on only the two columns of interest in the data for our problem at hand with `popular_or_not` and `track_genre`.
 
 #### 2. `hypothesize` the null {-}
 
-In order to conduct hypothesis tests using the `infer` workflow, we need a new step not present for confidence intervals: \index{infer!hypothesize()} `hypothesize()`. Recall from Section \@ref(understanding-ht) that our hypothesis test was
+In order to conduct hypothesis tests using the `infer` workflow, we need a new step not present for confidence intervals: \index{R packages!infer!hypothesize()} `hypothesize()`. Recall from Section \@ref(understanding-ht) that our hypothesis test was
 
 $$
 \begin{aligned}
@@ -467,13 +911,13 @@ spotify_metal_deephouse |>
   hypothesize(null = "independence")
 ```
 
-Again, the data has not changed yet. This will occur at the upcoming `generate()` step; we're merely setting meta-data for now.
+Again, the data has not changed yet. This will occur at the upcoming `generate()` step; we are merely setting meta-data for now.
 
 Where do the terms `"point"` and `"independence"` come from? These are two technical statistical terms. The term "point" relates from the fact that for a single group of observations, you will test the value of a single point. Going back to the pennies example from Chapter \@ref(confidence-intervals), say we wanted to test if the mean weight of all chocolate-covered almonds was equal to 3.5 grams or not. We would be testing the value of a "point" $\mu$, the mean weight in grams of *all* chocolate-covered almonds, as follows
 
 $$
 \begin{aligned}
-H_0 &: \mu = 1993\\
+H_0 &: \mu = 3.5\\
 \text{vs } H_A&: \mu \neq 3.5
 \end{aligned}
 $$
@@ -487,7 +931,7 @@ The term "independence" relates to the fact that for two groups of observations,
 n_reps <- 1000L
 ```
 
-After we `hypothesize()` the null hypothesis, we `generate()` replicates of "shuffled" datasets assuming the null hypothesis is true. We do this by repeating the shuffling exercise you performed in Section \@ref(ht-activity) several times on the full dataset of 2000 rows. Let's use the computer to repeat this `r n_reps` times by setting ``reps = `r n_reps` `` in the `generate()` \index{infer!generate()} function. However, unlike for confidence intervals where we generated replicates using `type = "bootstrap"` resampling with replacement, we'll now perform shuffles/permutations by setting `type = "permute"`. Recall that shuffles/permutations are a kind of resampling, but unlike the bootstrap method, they involve resampling *without* replacement. 
+After we `hypothesize()` the null hypothesis, we `generate()` replicates of "shuffled" datasets assuming the null hypothesis is true. We do this by repeating the shuffling exercise you performed in Section \@ref(ht-activity) several times on the full dataset of 2000 rows. Let's use the computer to repeat this `r n_reps` times by setting ``reps = `r n_reps` `` in the `generate()` \index{R packages!infer!generate()} function. However, unlike for confidence intervals where we generated replicates using `type = "bootstrap"` resampling with replacement, we will now perform shuffles/permutations by setting `type = "permute"`. Recall that shuffles/permutations are a kind of resampling, but unlike the bootstrap method, they involve resampling *without* replacement. 
 
 ```{r eval=FALSE}
 spotify_generate <- spotify_metal_deephouse |> 
@@ -511,11 +955,11 @@ if (!file.exists("rds/spotify_generate.rds")) {
 nrow(spotify_generate)
 ```
 
-Observe that the resulting data frame has `r (n_songs*n_reps) |> comma()` rows. This is because we performed shuffles/permutations for each of the `r n_songs` rows `r n_reps` times and $`r (n_songs*n_reps) |> comma()` = `r n_reps` \cdot `r n_songs`$. If you explore the `spotify_generate` data frame with `View()`, you'll notice that the variable `replicate` indicates which resample each row belongs to. So it has the value `1` `r n_songs` times, the value `2` `r n_songs` times, all the way through to the value `` `r n_reps` `` `r n_songs` times. 
+Observe that the resulting data frame has `r (n_songs*n_reps) |> comma()` rows. This is because we performed shuffles/permutations for each of the `r n_songs` rows `r n_reps` times and $`r (n_songs*n_reps) |> comma()` = `r n_reps` \cdot `r n_songs`$. If you explore the `spotify_generate` data frame with `View()`, you will notice that the variable `replicate` indicates which resample each row belongs to. So it has the value `1` `r n_songs` times, the value `2` `r n_songs` times, all the way through to the value `` `r n_reps` `` `r n_songs` times. 
 
 #### 4. `calculate` summary statistics {-}
 
-Now that we have generated `r n_reps` replicates of "shuffles" assuming the null hypothesis is true, let's `calculate()` \index{infer!calculate()} the appropriate summary statistic for each of our `r n_reps` shuffles. From Section \@ref(understanding-ht), point estimates related to hypothesis testing have a specific name: *test statistics*. Since the unknown population parameter of interest is the difference in population proportions $p_{m} - p_{d}$, the test statistic here is the difference in sample proportions $\widehat{p}_{m} - \widehat{p}_{f}$. 
+Now that we have generated `r n_reps` replicates of "shuffles" assuming the null hypothesis is true, Let's `calculate()` \index{R packages!infer!calculate()} the appropriate summary statistic for each of our `r n_reps` shuffles. From Section \@ref(understanding-ht), point estimates related to hypothesis testing have a specific name: *test statistics*. Since the unknown population parameter of interest is the difference in population proportions $p_{m} - p_{d}$, the test statistic here is the difference in sample proportions $\widehat{p}_{m} - \widehat{p}_{f}$. 
 
 For each of our `r n_reps` shuffles, we can calculate this test statistic by setting `stat = "diff in props"`. Furthermore, since we are interested in $\widehat{p}_{m} - \widehat{p}_{d}$ we set `order = c("metal", "deep-house")`. As we stated earlier, the order of the subtraction does not matter, so long as you stay consistent throughout your analysis and tailor your interpretations accordingly. 
 
@@ -565,19 +1009,19 @@ spotify_metal_deephouse |>
 
 #### 5. `visualize` the p-value {-}
 
-The final step is to measure how surprised we are by a promotion difference of `r observed_test_statistic*100`% in a hypothesized universe of no difference in genre popularity. If the observed difference of `r observed_test_statistic` is highly unlikely, then we would be inclined to reject the validity of our hypothesized universe. 
+The final step is to measure how surprised we are by a difference of `r observed_test_statistic*100`% in a hypothesized universe of no difference in genre popularity. If the observed difference of `r observed_test_statistic` is highly unlikely, then we would be inclined to reject the validity of our hypothesized universe. 
 
-We start by visualizing the *null distribution* of our `r n_reps` values of $\widehat{p}_{m} - \widehat{p}_{d}$ using `visualize()` \index{infer!visualize()} in Figure \@ref(fig:null-distribution-infer). Recall that these are values of the difference in popularity rates assuming $H_0$ is true. This corresponds to being in our hypothesized universe of no difference in genre popularity.
+We start by visualizing the *null distribution* of our `r n_reps` values of $\widehat{p}_{m} - \widehat{p}_{d}$ using `visualize()` \index{R packages!infer!visualize()} in Figure \@ref(fig:null-distribution-infer). Recall that these are values of the difference in popularity rates assuming $H_0$ is true. This corresponds to being in our hypothesized universe of no difference in genre popularity.
 
-```{r null-distribution-infer, fig.show="hold", fig.cap="Null distribution.", fig.height=1.8}
+```{r null-distribution-infer, fig.show="hold", fig.cap="Null distribution.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 7)}
 visualize(null_distribution, bins = 25)
 ```
 
-Let's now add what happened in real life to Figure \@ref(fig:null-distribution-infer), the observed difference in popularity rates of `r p_metal_popular` - `r p_deephouse_popular` = `r observed_test_statistic` = `r observed_test_statistic*100`%. However, instead of merely adding a vertical line using `geom_vline()`, let's use the \index{infer!shade\_p\_value()} `shade_p_value()` function with `obs_stat` set to the observed test statistic value we saved in `obs_diff_prop`. 
+Let's now add what happened in real life to Figure \@ref(fig:null-distribution-infer), the observed difference in popularity rates of `r p_metal_popular` - `r p_deephouse_popular` = `r observed_test_statistic` = `r observed_test_statistic*100`%. However, instead of merely adding a vertical line using `geom_vline()`, Let's use the \index{R packages!infer!shade\_p\_value()} `shade_p_value()` function with `obs_stat` set to the observed test statistic value we saved in `obs_diff_prop`. 
 
-Furthermore, we'll set the `direction = "right"` reflecting our alternative hypothesis $H_A: p_{m} - p_{d} > 0$. Recall our alternative hypothesis $H_A$ is that $p_{m} - p_{d} > 0$, stating that there is a difference in popularity rates in favor of metal songs. "More extreme" here corresponds to differences that are "bigger" or "more positive" or "more to the right." Hence we set the `direction` argument of `shade_p_value()` to be `"right"`. 
+Furthermore, we will set the `direction = "right"` reflecting our alternative hypothesis $H_A: p_{m} - p_{d} > 0$. Recall our alternative hypothesis $H_A$ is that $p_{m} - p_{d} > 0$, stating that there is a difference in popularity rates in favor of metal songs. "More extreme" here corresponds to differences that are "bigger" or "more positive" or "more to the right." Hence we set the `direction` argument of `shade_p_value()` to be `"right"`. 
 
-On the other hand, had our alternative hypothesis $H_A$ been the other possible one-sided alternative $p_{m} - p_{d} < 0$, suggesting popularity in favor of deep house songs, we would've set `direction = "left"`.  Had our alternative hypothesis $H_A$ been two-sided $p_{m} - p_{d} \neq 0$, suggesting discrimination in either direction, we would've set `direction = "both"`.
+On the other hand, had our alternative hypothesis $H_A$ been the other possible one-sided alternative $p_{m} - p_{d} < 0$, suggesting popularity in favor of deep house songs, we would have set `direction = "left"`.  Had our alternative hypothesis $H_A$ been two-sided $p_{m} - p_{d} \neq 0$, suggesting discrimination in either direction, we would have set `direction = "both"`.
 
 ```{r null-distribution-infer-2, fig.cap="Shaded histogram to show $p$-value."}
 visualize(null_distribution, bins = 25) + 
@@ -588,9 +1032,9 @@ In the resulting Figure \@ref(fig:null-distribution-infer-2), the solid dark lin
 
 > A $p$-value is the probability of obtaining a test statistic just as or more extreme than the observed test statistic *assuming the null hypothesis $H_0$ is true*.
 
-So judging by the shaded region in Figure \@ref(fig:null-distribution-infer-2), it seems we would somewhat rarely observe differences in promotion rates of `r observed_test_statistic` = `r observed_test_statistic*100`% or more in a hypothesized universe of no difference in genre popularity. In other words, the $p$-value is somewhat small. Hence, we would be inclined to reject this hypothesized universe, or using statistical language we would "reject $H_0$."
+So judging by the shaded region in Figure \@ref(fig:null-distribution-infer-2), it seems we would somewhat rarely observe differences in popularity rates of `r observed_test_statistic` = `r observed_test_statistic*100`% or more in a hypothesized universe of no difference in genre popularity. In other words, the $p$-value is somewhat small. Hence, we would be inclined to reject this hypothesized universe, or using statistical language we would "reject $H_0$."
 
-What fraction of the null distribution is shaded? In other words, what is the exact value of the $p$-value? We can compute it using the `get_p_value()` \index{infer!get\_p\_value()} function with the same arguments as the previous `shade_p_value()` code:
+What fraction of the null distribution is shaded? In other words, what is the exact value of the $p$-value? We can compute it using the `get_p_value()` \index{R packages!infer!get\_p\_value()} function with the same arguments as the previous `shade_p_value()` code:
 
 ```{r}
 null_distribution |> 
@@ -602,7 +1046,7 @@ p_value <- null_distribution |>
   mutate(p_value = round(p_value, 3))
 ```
 
-Keeping the definition of a $p$-value in mind, the probability of observing a difference in promotion rates as large as `r observed_test_statistic` = `r observed_test_statistic*100`% due to sampling variation alone in the null distribution is `r pull(p_value)` = `r pull(p_value) * 100`%. Since this $p$-value is smaller than our pre-specified significance level $\alpha$ = `r alpha`, we reject the null hypothesis $H_0: p_{m} - p_{d} = 0$. In other words, this $p$-value is sufficiently small to reject our hypothesized universe of no difference in genre popularity. We instead have enough evidence to change our mind in favor of difference in genre popularity being a likely culprit here. Observe that whether we reject the null hypothesis $H_0$ or not depends in large part on our choice of significance level $\alpha$. We'll discuss this more in Subsection \@ref(choosing-alpha).
+Keeping the definition of a $p$-value in mind, the probability of observing a difference in popularity rates as large as `r observed_test_statistic` = `r observed_test_statistic*100`% due to sampling variation alone in the null distribution is `r pull(p_value)` = `r pull(p_value) * 100`%. Since this $p$-value is smaller than our pre-specified significance level $\alpha$ = `r alpha`, we reject the null hypothesis $H_0: p_{m} - p_{d} = 0$. In other words, this $p$-value is sufficiently small to reject our hypothesized universe of no difference in genre popularity. We instead have enough evidence to change our mind in favor of difference in genre popularity being a likely culprit here. Observe that whether we reject the null hypothesis $H_0$ or not depends in large part on our choice of significance level $\alpha$. We will discuss this more in Subsection \@ref(choosing-alpha).
 
 
 ### Comparison with confidence intervals {#comparing-infer-workflows}
@@ -617,7 +1061,7 @@ null_distribution <- spotify_metal_deephouse |>
   calculate(stat = "diff in props", order = c("metal", "deep-house"))
 ```
 
-To create the corresponding bootstrap distribution needed to construct a 90% confidence interval for $p_{m} - p_{d}$, we only need to make two changes. \index{infer!switching between tests and confidence intervals} First, we remove the `hypothesize()` step since we are no longer assuming a null hypothesis $H_0$ is true. We can do this by deleting or commenting out the `hypothesize()` line of code. Second, we switch the `type` of resampling in the `generate()` step to be `"bootstrap"` instead of `"permute"`.
+To create the corresponding bootstrap distribution needed to construct a 90% confidence interval for $p_{m} - p_{d}$, we only need to make two changes. \index{R packages!infer!switching between tests and confidence intervals} First, we remove the `hypothesize()` step since we are no longer assuming a null hypothesis $H_0$ is true. We can do this by deleting or commenting out the `hypothesize()` line of code. Second, we switch the `type` of resampling in the `generate()` step to be `"bootstrap"` instead of `"permute"`.
 
 ```{r eval=FALSE}
 bootstrap_distribution <- spotify_metal_deephouse |> 
@@ -631,24 +1075,24 @@ bootstrap_distribution <- spotify_metal_deephouse |>
 
 ```{r echo=FALSE, purl=FALSE}
 #if (!file.exists("rds/bootstrap_distribution_spotify.rds")) {
-  set.seed(16)
-  bootstrap_distribution <- spotify_metal_deephouse |> 
-    specify(formula = popular_or_not ~ track_genre, success = "popular") |> 
-    # Change 1 - Remove hypothesize():
-    # hypothesize(null = "independence") |> 
-    # Change 2 - Switch type from "permute" to "bootstrap":
-    generate(reps = 1000, type = "bootstrap") |> 
-    calculate(stat = "diff in props", order = c("metal", "deep-house"))
-  write_rds(
-    bootstrap_distribution,
-    "rds/bootstrap_distribution_spotify.rds"
-  )
+set.seed(16)
+bootstrap_distribution <- spotify_metal_deephouse |> 
+  specify(formula = popular_or_not ~ track_genre, success = "popular") |> 
+  # Change 1 - Remove hypothesize():
+  # hypothesize(null = "independence") |> 
+  # Change 2 - Switch type from "permute" to "bootstrap":
+  generate(reps = 1000, type = "bootstrap") |> 
+  calculate(stat = "diff in props", order = c("metal", "deep-house"))
+write_rds(
+  bootstrap_distribution,
+  "rds/bootstrap_distribution_spotify.rds"
+)
 # } else {
 #   bootstrap_distribution <- read_rds("rds/bootstrap_distribution_spotify.rds")
 # }
 ```
 
-Using this `bootstrap_distribution`, let's first compute the percentile-based confidence intervals, as we did in Section \@ref(bootstrap-process):
+Using this `bootstrap_distribution`, Let's first compute the percentile-based confidence intervals, as we did in Section \@ref(bootstrap-process):
 
 ```{r}
 percentile_ci <- bootstrap_distribution |> 
@@ -656,13 +1100,13 @@ percentile_ci <- bootstrap_distribution |>
 percentile_ci
 ```
 
-Using our shorthand interpretation for 90% confidence intervals from Subsection \@ref(shorthand), we are 90% "confident" that the true difference in population proportions $p_{m} - p_{d}$ is between (`r percentile_ci[["lower_ci"]] |> round(4)`, `r percentile_ci[["upper_ci"]] |> round(4)`). Let's visualize `bootstrap_distribution` and this percentile-based 90% confidence interval for $p_{m} - p_{d}$ in Figure \@ref(fig:bootstrap-distribution-two-prop-percentile).
+Using our shorthand interpretation for 90% confidence intervals, we are 90% "confident" that the true difference in population proportions $p_{m} - p_{d}$ is between (`r percentile_ci[["lower_ci"]] |> round(4)`, `r percentile_ci[["upper_ci"]] |> round(4)`). Let's visualize `bootstrap_distribution` and this percentile-based 90% confidence interval for $p_{m} - p_{d}$ in Figure \@ref(fig:bootstrap-distribution-two-prop-percentile).
 
 ```{r eval=FALSE}
 visualize(bootstrap_distribution) + 
   shade_confidence_interval(endpoints = percentile_ci)
 ```
-```{r bootstrap-distribution-two-prop-percentile, echo=FALSE, fig.show="hold", fig.cap="Percentile-based 95\\% confidence interval.", purl=FALSE, fig.height=3.2}
+```{r bootstrap-distribution-two-prop-percentile, echo=FALSE, fig.show="hold", fig.cap="Percentile-based 95\\% confidence interval.", purl=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3.2, 7)}
 if (is_html_output()) {
   visualize(bootstrap_distribution) +
     shade_confidence_interval(endpoints = percentile_ci)
@@ -685,8 +1129,8 @@ Since the bootstrap distribution appears to be roughly normally shaped, we can a
 
 ```{r eval=FALSE}
 se_ci <- bootstrap_distribution |> 
-  get_confidence_interval(level = 0.95, type = "se", 
-                          point_estimate = obs_diff_prop)
+get_confidence_interval(level = 0.95, type = "se", 
+point_estimate = obs_diff_prop)
 se_ci
 ```
 
@@ -694,21 +1138,20 @@ Let's visualize `bootstrap_distribution` again, but now the standard error based
 
 ```{r eval=FALSE}
 visualize(bootstrap_distribution) + 
-  shade_confidence_interval(endpoints = se_ci)
+shade_confidence_interval(endpoints = se_ci)
 ```
 ```{r bootstrap-distribution-two-prop-se, eval=FALSE, echo=FALSE, fig.show="hold", fig.cap="Standard error-based 95\\% confidence interval.", purl=FALSE, fig.height=3.4}
-# Will need to make a tweak to the {infer} package so that it doesn't always display "Null" here (added to `develop` branch on 2019-10-26)
 if (is_html_output()) {
-  visualize(bootstrap_distribution) +
-    shade_confidence_interval(endpoints = se_ci) #+
-  #  ggtitle("Simulation-Based Bootstrap Distribution")
+visualize(bootstrap_distribution) +
+shade_confidence_interval(endpoints = se_ci) #+
+#  ggtitle("Simulation-Based Bootstrap Distribution")
 } else {
-  visualize(bootstrap_distribution) +
-    shade_confidence_interval(
-      endpoints = se_ci,
-      fill = "grey40", color = "grey30"
-    ) #+
-  #  ggtitle("Simulation-Based Bootstrap Distribution")
+visualize(bootstrap_distribution) +
+shade_confidence_interval(
+endpoints = se_ci,
+fill = "grey40", color = "grey30"
+) #+
+#  ggtitle("Simulation-Based Bootstrap Distribution")
 }
 ```
 
@@ -742,7 +1185,7 @@ null_distribution_mean <- spotify_metal_deephouse |>
 ``` 
 
 
-### "There is only one test" {#only-one-test}
+### There is only one test {#only-one-test}
 
 Let's recap the steps necessary to conduct a hypothesis test using the terminology, notation, and definitions related to sampling you saw in Section \@ref(understanding-ht) and the `infer` workflow from Subsection \@ref(infer-workflow-ht):
 
@@ -758,7 +1201,7 @@ While this is a lot to digest, especially the first time you encounter hypothesi
 include_graphics("images/copyright/there_is_only_one_test.png")
 ```
 
-Notice its similarity with the "hypothesis testing with `infer`" diagram you saw in Figure \@ref(fig:inferht). That's because the `infer` package was explicitly designed to match the "There is only one test" framework. So if you can understand the framework, you can easily generalize these ideas for all hypothesis testing scenarios. Whether for population proportions $p$, population means $\mu$, differences in population proportions $p_1 - p_2$, differences in population means $\mu_1 - \mu_2$, and as you'll see in Chapter \@ref(inference-for-regression) on inference for regression, population regression slopes $\beta_1$ as well. In fact, it applies more generally even than just these examples to more complicated hypothesis tests and test statistics as well.
+Notice its similarity with the "hypothesis testing with `infer`" diagram you saw in Figure \@ref(fig:inferht). That is because the `infer` package was explicitly designed to match the "There is only one test" framework. So if you can understand the framework, you can easily generalize these ideas for all hypothesis testing scenarios. Whether for population proportions $p$, population means $\mu$, differences in population proportions $p_1 - p_2$, differences in population means $\mu_1 - \mu_2$, and as you will see in Chapter \@ref(inference-for-regression) on inference for regression, population regression slopes $\beta_1$ as well. In fact, it applies more generally even than just these examples to more complicated hypothesis tests and test statistics as well.
 
 ```{block lc-downey, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
@@ -779,7 +1222,7 @@ Notice its similarity with the "hypothesis testing with `infer`" diagram you saw
 
 ## Interpreting hypothesis tests {#ht-interpretation}
 
-Interpreting the results of hypothesis tests is one of the more challenging aspects of this method for statistical inference. In this section, we'll focus on ways to help with deciphering the process and address some common misconceptions. 
+Interpreting the results of hypothesis tests is one of the more challenging aspects of this method for statistical inference. In this section, we will focus on ways to help with deciphering the process and address some common misconceptions. 
 
 
 ### Two possible outcomes {#trial}
@@ -789,16 +1232,16 @@ In Section \@ref(understanding-ht), we mentioned that given a pre-specified sign
 * If the $p$-value is less than $\alpha$, then we *reject* the null hypothesis $H_0$ in favor of $H_A$.
 * If the $p$-value is greater than or equal to $\alpha$, we *fail to reject* the null hypothesis $H_0$.
 
-Unfortunately, the latter result is often misinterpreted as "accepting the null hypothesis $H_0$." While at first glance it may seem that the statements "failing to reject $H_0$" and "accepting $H_0$" are equivalent, there actually is a subtle difference. Saying that we "accept the null hypothesis $H_0$" is equivalent to stating that "we think the null hypothesis $H_0$ is true." However, saying that we "fail to reject the null hypothesis $H_0$" is saying something else: "While $H_0$ might still be false, we don't have enough evidence to say so." In other words, there is an absence of enough proof. However, the absence of proof is not proof of absence. 
+Unfortunately, the latter result is often misinterpreted as "accepting the null hypothesis $H_0$." While at first glance it may seem that the statements "failing to reject $H_0$" and "accepting $H_0$" are equivalent, there actually is a subtle difference. Saying that we "accept the null hypothesis $H_0$" is equivalent to stating that "we think the null hypothesis $H_0$ is true." However, saying that we "fail to reject the null hypothesis $H_0$" is saying something else: "While $H_0$ might still be false, we do not have enough evidence to say so." In other words, there is an absence of enough proof. However, the absence of proof is not proof of absence. 
 
-To further shed light on this distinction, \index{hypothesis testing!US criminal trial analogy} let's use the United States criminal justice system as an analogy. A criminal trial in the United States is a similar situation to hypothesis tests whereby a choice between two contradictory claims must be made about a defendant who is on trial:
+To further shed light on this distinction, \index{hypothesis testing!US criminal trial analogy} Let's use the United States criminal justice system as an analogy. A criminal trial in the United States is a similar situation to hypothesis tests whereby a choice between two contradictory claims must be made about a defendant who is on trial:
 
 1. The defendant is truly either "innocent" or "guilty."
 1. The defendant is presumed "innocent until proven guilty." 
 1. The defendant is found guilty only if there is *strong evidence* that the defendant is guilty. The phrase "beyond a reasonable doubt" is often used as a guideline for determining a cutoff for when enough evidence exists to find the defendant guilty.
 1. The defendant is found to be either "not guilty" or "guilty" in the ultimate verdict.
 
-In other words, _not guilty_ verdicts are not suggesting the defendant is _innocent_, but instead that "while the defendant may still actually be guilty, there wasn't enough evidence to prove this fact." Now let's make the connection with hypothesis tests:
+In other words, _not guilty_ verdicts are not suggesting the defendant is _innocent_, but instead that "while the defendant may still actually be guilty, there was not enough evidence to prove this fact." Now Let's make the connection with hypothesis tests:
 
 1. Either the null hypothesis $H_0$ or the alternative hypothesis $H_A$ is true.
 1. Hypothesis tests are conducted assuming the null hypothesis $H_0$ is true.
@@ -807,86 +1250,88 @@ In other words, _not guilty_ verdicts are not suggesting the defendant is _innoc
 
 So while gut instinct may suggest "failing to reject $H_0$" and "accepting $H_0$" are equivalent statements, they are not. "Accepting $H_0$" is equivalent to finding a defendant innocent. However, courts do not find defendants "innocent," but rather they find them "not guilty." Putting things differently, defense attorneys do not need to prove that their clients are innocent, rather they only need to prove that clients are not "guilty beyond a reasonable doubt".
 
-So going back to our songs activity in Section \@ref(ht-infer), recall that our hypothesis test was $H_0: p_{m} - p_{d} = 0$ versus $H_A: p_{m} - p_{d} > 0$ and that we used a pre-specified significance level of $\alpha$ = `r alpha`.  We found a $p$-value of `r pull(p_value)`. Since the $p$-value was smaller than $\alpha$ = `r alpha`, we rejected $H_0$. In other words, we found needed levels of evidence in this particular sample to say that $H_0$ is false at the $\alpha$ = `r alpha` significance level. We also state this conclusion using non-statistical language: we found enough evidence in this data to suggest that there was gender discrimination at play.
+So going back to our songs activity in Section \@ref(ht-infer), recall that our hypothesis test was $H_0: p_{m} - p_{d} = 0$ versus $H_A: p_{m} - p_{d} > 0$ and that we used a pre-specified significance level of $\alpha$ = `r alpha`.  We found a $p$-value of `r pull(p_value)`. Since the $p$-value was smaller than $\alpha$ = `r alpha`, we rejected $H_0$. In other words, we found needed levels of evidence in this particular sample to say that $H_0$ is false at the $\alpha$ = `r alpha` significance level. We also state this conclusion using non-statistical language: we found enough evidence in this data to suggest that there was a difference in the popularity of our two genres of music.
 
 
 ### Types of errors
 
-Unfortunately, there is some chance a jury or a judge can make an incorrect decision in a criminal trial by reaching the wrong verdict. For example, finding a truly innocent defendant "guilty". Or on the other hand, finding a truly guilty defendant "not guilty." This can often stem from the fact that prosecutors don't have access to all the relevant evidence, but instead are limited to whatever evidence the police can find. 
+Unfortunately, there is some chance a jury or a judge can make an incorrect decision in a criminal trial by reaching the wrong verdict. For example, finding a truly innocent defendant "guilty". Or on the other hand, finding a truly guilty defendant "not guilty." This can often stem from the fact that prosecutors do not have access to all the relevant evidence, but instead are limited to whatever evidence the police can find. 
 
 The same holds for hypothesis tests. We can make incorrect decisions about a population parameter because we only have a sample of data from the population and thus sampling variation can lead us to incorrect conclusions. 
 
 There are two possible erroneous conclusions in a criminal trial: either (1) a truly innocent person is found guilty or (2) a truly guilty person is found not guilty. Similarly, there are two possible errors in a hypothesis test: either (1) rejecting $H_0$ when in fact $H_0$ is true, called a **Type I error** \index{hypothesis testing!Type I error} or (2) failing to reject $H_0$ when in fact $H_0$ is false, called a \index{hypothesis testing!Type II error} **Type II error**. Another term used for "Type I error" is "false positive," while another term for "Type II error" is "false negative."
 
-This risk of error is the price researchers pay for basing inference on a sample instead of performing a census on the entire population. But as we've seen in our numerous examples and activities so far, censuses are often very expensive and other times impossible, and thus researchers have no choice but to use a sample. Thus in any hypothesis test based on a sample, we have no choice but to tolerate some chance that a Type I error will be made and some chance that a Type II error will occur.
+This risk of error is the price researchers pay for basing inference on a sample instead of performing a census on the entire population. But as we have seen in our numerous examples and activities so far, censuses are often very expensive and other times impossible, and thus researchers have no choice but to use a sample. Thus in any hypothesis test based on a sample, we have no choice but to tolerate some chance that a Type I error will be made and some chance that a Type II error will occur.
 
 To help understand the concepts of Type I error and Type II errors, we apply these terms to our criminal justice analogy in Figure \@ref(fig:trial-errors-table). 
 
-```{r eval=FALSE, echo=FALSE, purl=FALSE}
-tibble(
-  verdict = c("Not guilty verdict", "Guilty verdict"),
+```{r eval=!file.exists("images/gt_error_table_v2.png"), echo=FALSE, purl=FALSE}
+trial_table <- tibble(
+  Verdict = c("Not guilty verdict", "Guilty verdict"),
   `Truly not guilty` = c("Correct", "Type I error"),
   `Truly guilty` = c("Type II error", "Correct")
 ) |>
-  gt(rowname_col = "verdict") |>
-  #  tab_header(title = "Type I and Type II errors in US trials",
-  #             label="tab:trial-errors-table") |>
-  tab_row_group(group = "Verdict") |>
+  gt(rowname_col = "Verdict") |>
+  tab_header(title = "Type I and Type II errors in US trials") |> #,
+  #             label="tab:trial-errors-table") %>%
+  tab_row_group(label = "Verdict", rows = Verdict) |>
   tab_spanner(
     label = "Truth",
-    columns = vars(`Truly not guilty`, `Truly guilty`)
+    columns = c(`Truly not guilty`, `Truly guilty`)
   ) |>
   cols_align(align = "center") |>
-  tab_options(table.width = pct(90))
+  tab_options(table.width = pct(50))
+gtsave(trial_table, "images/gt_error_table_v2.png")
 ```
 
 ```{r trial-errors-table, echo=FALSE, fig.cap="Type I and Type II errors in criminal trials.", purl=FALSE}
-include_graphics("images/gt_error_table.png")
+include_graphics("images/gt_error_table_v2.png")
 ```
 
-Thus a Type I error corresponds to incorrectly putting a truly innocent person in jail, whereas a Type II error corresponds to letting a truly guilty person go free. Let's show the corresponding table in Figure \@ref(fig:trial-errors-table-ht) for hypothesis tests.
+Thus, a Type I error corresponds to incorrectly putting a truly innocent person in jail, whereas a Type II error corresponds to letting a truly guilty person go free. Let's show the corresponding table in Figure \@ref(fig:hypo-test-errors) for hypothesis tests.
 
-```{r hypo-test-errors, eval=FALSE, echo=FALSE, purl=FALSE}
-tibble(
+```{r eval=!file.exists("images/gt_error_table_ht_v2.png"), echo=FALSE, purl=FALSE}
+hypo_table <- tibble(
   Decision = c("Fail to reject H0", "Reject H0"),
   `H0 true` = c("Correct", "Type I error"),
   `HA true` = c("Type II error", "Correct")
 ) |>
   gt(rowname_col = "Decision") |>
-  #  tab_header(title = "Type I and Type II errors hypothesis tests",
-  #                          label="tab:trial-errors-table-ht") |>
-  tab_row_group(group = "Verdict") |>
+  tab_header(title = "Type I and Type II errors hypothesis tests") |> #,
+  #             label="tab:trial-errors-table-ht") |>
+  tab_row_group(label = "Decision", rows = Decision) |>
   tab_spanner(
     label = "Truth",
-    columns = vars(`H0 true`, `HA true`)
+    columns = c(`H0 true`, `HA true`)
   ) |>
   cols_align(align = "center") |>
-  tab_options(table.width = pct(90))
+  tab_options(table.width = pct(50))
+gtsave(hypo_table, "images/gt_error_table_ht_v2.png")
 ```
 
-```{r trial-errors-table-ht, echo=FALSE, fig.cap="Type I and Type II errors in hypothesis tests.", purl=FALSE}
-include_graphics("images/gt_error_table_ht.png")
+```{r hypo-test-errors, echo=FALSE, fig.cap="Type I and Type II errors in hypothesis tests.", purl=FALSE}
+include_graphics("images/gt_error_table_ht_v2.png")
 ```
 
 
 ### How do we choose alpha? {#choosing-alpha}
 
-If we are using a sample to make inferences about a population, we run the risk of making errors. For confidence intervals, a corresponding "error" would be constructing a confidence interval that does not contain the true value of the population parameter. For hypothesis tests, this would be making either a Type I or Type II error. Obviously, we want to minimize the probability of either error; we want a small probability of making an incorrect conclusion:
+If we are using a sample to make inferences about a population, we are operating under uncertainty and run the risk of making statistical errors. These are not errors in calculations or in the procedure used, but errors in the sense that the sample used may lead us to construct a confidence interval that does not contain the true value of the population parameter, for example. 
+In the case of hypothesis testing, there are two well defined errors: a Type I and a Type II error:
 
-- The probability of a Type I Error occurring is denoted by $\alpha$. The value of $\alpha$ is called the *significance level* of the hypothesis test, which we defined in Section \@ref(understanding-ht).
-- The probability of a Type II Error is denoted by $\beta$. The value of $1-\beta$ is known as the *power* of the hypothesis test. 
+- A Type I Error\index{hypothesis testing!Type I Error} is rejecting the null hypothesis when it is true. The probability of a Type I Error occurring is $\alpha$, the *significance level*, which we defined in Subsection \@ref(one-sample-hyp) and in Section \@ref(understanding-ht)
+- A Type II Error\index{hypothesis testing!Type II Error} is failing to reject the null hypothesis when it is false. The probability of a Type II Error is denoted by $\beta$. The value of $1-\beta$ is known as the *power* of the test. 
 
-In other words, $\alpha$ corresponds to the probability of incorrectly rejecting $H_0$ when in fact $H_0$ is true. On the other hand, $\beta$ corresponds to the probability of incorrectly failing to reject $H_0$ when in fact $H_0$ is false.
+Ideally, we would like to minimize the errors, and we would like $\alpha = 0$ and $\beta = 0$. However, this is not possible as there will always be the possibility of committing one of these error when making a decision based on sample data. Furthermore, these two error probabilities are inversely related. As the probability of a Type I error goes down, the probability of a Type II error goes up.
 
-Ideally, we want $\alpha = 0$ and $\beta = 0$, meaning that the chance of making either error is 0. However, this can never be the case in any situation where we are sampling for inference. There will always be the possibility of making either error when we use sample data. Furthermore, these two error probabilities are inversely related. As the probability of a Type I error goes down, the probability of a Type II error goes up. 
-
-What is typically done in practice is to fix the probability of a Type I error by pre-specifying a significance level $\alpha$ and then try to minimize $\beta$. In other words, we will tolerate a certain fraction of incorrect rejections of the null hypothesis $H_0$, and then try to minimize the fraction of incorrect non-rejections of $H_0$. 
+When constructing a hypothesis test, we have control of the probability of committing a Type I Error because we can decide what is the significance level $\alpha$ we want to use. Once $\alpha$ has been pre-specified, we try to minimize $\beta$, the fraction of incorrect non-rejections of the null hypothesis. 
 
 So for example if we used $\alpha$ = 0.01, we would be using a hypothesis testing procedure that in the long run would incorrectly reject the null hypothesis $H_0$ one percent of the time. This is analogous to setting the confidence level of a confidence interval. 
 
-So what value should you use for $\alpha$? \index{hypothesis testing!tradeoff between alpha and beta} Different fields have different conventions, but some commonly used values include 0.10, 0.05, 0.01, and 0.001. However, it is important to keep in mind that if you use a relatively small value of $\alpha$, then all things being equal, $p$-values will have a harder time being less than $\alpha$. Thus, we would reject the null hypothesis less often. In other words, we would reject the null hypothesis $H_0$ only if we have *very strong* evidence to do so. This is known as a "conservative" test. 
+So what value should you use for $\alpha$? \index{hypothesis testing!tradeoff between alpha and beta} While different fields of study have adopted different conventions, although $\alpha = 0.05$ is perhaps the most popular threshold, there is nothing special about this or any other number. Please review Subsection \@ref(one-sample-hyp) and our discussion about $\alpha$ and our tolerance for uncertainty. In addition, observe that choosing a relatively small value of $\alpha$ reduces our chances of rejecting the null hypothesis, and also of committing a Type I Error; but increases the probability of committing a Type II Error.
 
-On the other hand, if we used a relatively large value of $\alpha$, then all things being equal, $p$-values will have an easier time being less than $\alpha$. Thus we would reject the null hypothesis more often. In other words, we would reject the null hypothesis $H_0$ even if we only have *mild* evidence to do so. This is known as a "liberal" test. 
+On the other hand, choosing a relatively large value of $\alpha$ increases the chances of failing to reject the null hypothesis, and also of committing a Type I Error; but reduces the probability of committing a Type II Error. Depending of the problem at hand, we may be willing to have a larger significance level in certain scenarios and a smaller significance level in others.
+
 
 ```{block lc7-0, type="learncheck", purl=FALSE}
 \vspace{-0.15in}
@@ -900,7 +1345,7 @@ On the other hand, if we used a relatively large value of $\alpha$, then all thi
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  What are some flaws with hypothesis testing?  How could we alleviate them?
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  Consider two $\alpha$ significance levels of 0.1 and 0.01. Of the two, which would lead to a more *liberal* hypothesis testing procedure? In other words, one that will, all things being equal, lead to more rejections of the null hypothesis $H_0$.
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`**  Consider two $\alpha$ significance levels of 0.1 and 0.01. Of the two, which would lead to a higher chance of committing a Type I Error?
 
 ```{block, type="learncheck", purl=FALSE}
 \vspace{-0.25in}
@@ -913,7 +1358,7 @@ On the other hand, if we used a relatively large value of $\alpha$, then all thi
 
 ## Case study: Are action or romance movies rated higher? {#ht-case-study}
 
-Let's apply our knowledge of hypothesis testing to answer the question: "Are action or romance movies rated higher on IMDb?". [IMDb](https://www.imdb.com/) is a database on the internet providing information on movie and television show casts, plot summaries, trivia, and ratings. We'll investigate if, on average, action or romance movies get higher ratings on IMDb.
+Let's apply our knowledge of hypothesis testing to answer the question: "Are action or romance movies rated higher on IMDb?". [IMDb](https://www.imdb.com/) is a database on the internet providing information on movie and television show casts, plot summaries, trivia, and ratings. We will investigate if, on average, action or romance movies get higher ratings on IMDb.
 
 
 ### IMDb ratings data {#imdb-data}
@@ -929,7 +1374,7 @@ movies
 n_movies_sample <- movies_sample |> nrow()
 ```
 
-We'll focus on a random sample of `r n_movies_sample` movies that are classified as either "action" or "romance" movies but not both. We disregard movies that are classified as both so that we can assign all `r n_movies_sample` movies into either category. Furthermore, since the original `movies` dataset was a little messy, we provide a pre-wrangled version of our data in the `movies_sample` data frame included in the `moderndive` package. If you're curious, you can look at the necessary data wrangling code to do this on [GitHub](https://github.com/moderndive/moderndive/blob/master/data-raw/process_data_sets.R).
+We will focus on a random sample of `r n_movies_sample` movies that are classified as either "action" or "romance" movies but not both. We disregard movies that are classified as both so that we can assign all `r n_movies_sample` movies into either category. Furthermore, since the original `movies` dataset was a little messy, we provide a pre-wrangled version of our data in the `movies_sample` data frame included in the `moderndive` package. If you are curious, you can look at the necessary data wrangling code to do this on [GitHub](https://github.com/moderndive/moderndive/blob/master/data-raw/process_data_sets.R).
 
 ```{r}
 movies_sample
@@ -937,19 +1382,19 @@ movies_sample
 
 The variables include the `title` and `year` the movie was filmed. Furthermore, we have a numerical variable `rating`, which is the IMDb rating out of 10 stars, and a binary categorical variable `genre` indicating if the movie was an `Action` or `Romance` movie. We are interested in whether `Action` or `Romance` movies got a higher `rating` on average.
 
-Let's perform an exploratory data analysis of this data. Recall from Subsection \@ref(geomboxplot) that a boxplot is a visualization we can use to show the relationship between a numerical and a categorical variable. Another option you saw in Section \@ref(facets) would be to use a faceted histogram. However, in the interest of brevity, let's only present the boxplot in Figure \@ref(fig:action-romance-boxplot).
+Let's perform an exploratory data analysis of this data. Recall from Subsection \@ref(geomboxplot) that a boxplot is a visualization we can use to show the relationship between a numerical and a categorical variable. Another option you saw in Section \@ref(facets) would be to use a faceted histogram. However, in the interest of brevity, Let's only present the boxplot in Figure \@ref(fig:action-romance-boxplot).
 
-```{r action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre.", fig.height=2.7}
+```{r action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre.", fig.height=ifelse(knitr::is_latex_output(), 4, 7)}
 ggplot(data = movies_sample, aes(x = genre, y = rating)) +
   geom_boxplot() +
   labs(y = "IMDb rating")
 ```
 
-Eyeballing Figure \@ref(fig:action-romance-boxplot), romance movies have a higher median rating. Do we have reason to believe, however, that there is a *significant* difference between the mean `rating` for action movies compared to romance movies?  It's hard to say just based on this plot. The boxplot does show that the median sample rating is higher for romance movies. 
+Eyeballing Figure \@ref(fig:action-romance-boxplot), romance movies have a higher median rating. Do we have reason to believe, however, that there is a *significant* difference between the mean `rating` for action movies compared to romance movies?  It is hard to say just based on this plot. The boxplot does show that the median sample rating is higher for romance movies. 
 
-However, there is a large amount of overlap between the boxes. Recall that the median isn't necessarily the same as the mean either, depending on whether the distribution is skewed.  
+However, there is a large amount of overlap between the boxes. Recall that the median is not necessarily the same as the mean either, depending on whether the distribution is skewed.  
 
-Let's calculate some summary statistics split by the binary categorical variable `genre`: the number of movies, the mean rating, and the standard deviation split by `genre`. We'll do this using `dplyr` data wrangling verbs. Notice in particular how we count the number of each type of movie using the `n()` summary function. 
+Let's calculate some summary statistics split by the binary categorical variable `genre`: the number of movies, the mean rating, and the standard deviation split by `genre`. We will do this using `dplyr` data wrangling verbs. Notice in particular how we count the number of each type of movie using the `n()` summary function. 
 
 ```{r}
 movies_sample |> 
@@ -988,13 +1433,13 @@ Since this sample was randomly taken from the population `movies`, it is represe
 # The following Google Doc is published to CSV and loaded using read_csv():
 # https://docs.google.com/spreadsheets/d/1QkOpnBGqOXGyJjwqx1T2O5G5D72wWGfWlPyufOgtkk4/edit#gid=0
 
-if (!file.exists("rds/sampling_scenarios.rds")) {
+if (!file.exists("rds/sampling_scenarios-v2.rds")) {
   sampling_scenarios <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd6bBgNwM3z-AJ7o4gZOiPAdPfbTp_V15HVHRmOH5Fc9w62yaG-fEKtjNUD2wOSa5IJkrDMaEBjRnA/pub?gid=0&single=true&output=csv" |>
     read_csv(na = "") |>
     slice(1:5)
-  write_rds(sampling_scenarios, "rds/sampling_scenarios.rds")
+  write_rds(sampling_scenarios, "rds/sampling_scenarios-v2.rds")
 } else {
-  sampling_scenarios <- read_rds("rds/sampling_scenarios.rds")
+  sampling_scenarios <- read_rds("rds/sampling_scenarios-v2.rds")
 }
 
 sampling_scenarios |>
@@ -1007,7 +1452,7 @@ sampling_scenarios |>
   ) |>
   kable_styling(
     font_size = ifelse(is_latex_output(), 10, 16),
-    latex_options = c("hold_position")
+    latex_options = c("HOLD_position")
   ) |>
   column_spec(1, width = "0.5in") |>
   column_spec(2, width = "0.7in") |>
@@ -1016,16 +1461,16 @@ sampling_scenarios |>
   column_spec(5, width = "1in")
 ```
 
-So, whereas the sampling bowl exercise in Section \@ref(sampling-activity) concerned *proportions*, the pennies exercise in Section \@ref(resampling-tactile) concerned *means*, the case study on whether yawning is contagious in Section \@ref(case-study-two-prop-ci) and the promotions activity in Section \@ref(ht-activity) concerned *differences in proportions*, we are now concerned with *differences in means*. 
+So, whereas the sampling bowl exercise in Section \@ref(sampling-activity) concerned *proportions*, the almonds exercise in Section \@ref(revisit-almond-bootstrap) concerned *means*, the case study on whether yawning is contagious in Section \@ref(case-study-two-prop-ci) and the music genre activity in Section \@ref(ht-activity) concerned *differences in proportions*, we are now concerned with *differences in means*. 
 
 In other words, the population parameter of interest is the difference in population mean ratings $\mu_a - \mu_r$, where $\mu_a$ is the mean rating of all action movies on IMDb and similarly $\mu_r$ is the mean rating of all romance movies. Additionally the point estimate/sample statistic of interest is the difference in sample means $\overline{x}_a - \overline{x}_r$, where $\overline{x}_a$ is the mean rating of the $n_a$ = `r n_action` movies in our sample and $\overline{x}_r$ is the mean rating of the $n_r$ = `r n_romance` in our sample. Based on our earlier exploratory data analysis, our estimate $\overline{x}_a - \overline{x}_r$ is $`r x_bar_action |> round(3)` - `r x_bar_romance |> round(3)` = `r (x_bar_action - x_bar_romance) |> round(3)`$. 
 
-So there appears to be a slight difference of `r (x_bar_action - x_bar_romance) |> round(3)` in favor of romance movies. The question is, however, could this difference of `r (x_bar_action - x_bar_romance) |> round(3)` be merely due to chance and sampling variation? Or are these results indicative of a true difference in mean ratings for *all* romance and action movies on IMDb?  To answer this question, we'll use hypothesis testing. 
+So there appears to be a slight difference of `r (x_bar_action - x_bar_romance) |> round(3)` in favor of romance movies. The question is, however, could this difference of `r (x_bar_action - x_bar_romance) |> round(3)` be merely due to chance and sampling variation? Or are these results indicative of a true difference in mean ratings for *all* romance and action movies on IMDb?  To answer this question, we will use hypothesis testing. 
 
 
 ### Conducting the hypothesis test
 
-We'll be testing:
+We will be testing:
 
 $$
 \begin{aligned}
@@ -1034,9 +1479,9 @@ H_0 &: \mu_a - \mu_r = 0\\
 \end{aligned}
 $$
 
-In other words, the null hypothesis $H_0$ suggests that both romance and action movies have the same mean rating. This is the "hypothesized universe" we'll *assume* is true. On the other hand, the alternative hypothesis $H_A$ suggests that there is a difference. Unlike the one-sided alternative we used in the promotions exercise $H_A: p_m - p_f > 0$, we are now considering a two-sided alternative of $H_A: \mu_a - \mu_r \neq 0$. 
+In other words, the null hypothesis $H_0$ suggests that both romance and action movies have the same mean rating. This is the "hypothesized universe" we will *assume* is true. On the other hand, the alternative hypothesis $H_A$ suggests that there is a difference. Unlike the one-sided alternative we used in the popularity exercise $H_A: p_m - p_f > 0$, we are now considering a two-sided alternative of $H_A: \mu_a - \mu_r \neq 0$. 
 
-Furthermore, we'll pre-specify a low significance level of $\alpha$ = 0.001. By setting this value low, all things being equal, there is a lower chance that the $p$-value will be less than $\alpha$. Thus, there is a lower chance that we'll reject the null hypothesis $H_0$ in favor of the alternative hypothesis $H_A$. In other words, we'll reject the hypothesis that there is no difference in mean ratings for all action and romance movies, only if we have quite strong evidence. This is known as a "conservative" hypothesis testing procedure.
+Furthermore, we will pre-specify a low significance level of $\alpha$ = 0.001. By setting this value low, all things being equal, there is a lower chance that the $p$-value will be less than $\alpha$. Thus, there is a lower chance that we will reject the null hypothesis $H_0$ in favor of the alternative hypothesis $H_A$. In other words, we will reject the hypothesis that there is no difference in mean ratings for all action and romance movies, only if we have quite strong evidence. This is known as a "conservative" hypothesis testing procedure.
 
 
 #### 1. `specify` variables {-}
@@ -1064,7 +1509,7 @@ movies_sample |>
 
 After we have set the null hypothesis, we generate "shuffled" replicates assuming the null hypothesis is true by repeating the shuffling/permutation exercise you performed in Section \@ref(ht-activity). 
 
-We'll repeat this resampling without replacement of `type = "permute"` a total of ``reps = `r n_reps` `` times. Feel free to run the code below to check out what the `generate()` step produces.
+We will repeat this resampling without replacement of `type = "permute"` a total of ``reps = `r n_reps` `` times. Feel free to run the code below to check out what the `generate()` step produces.
 
 ```{r eval=FALSE}
 movies_sample |> 
@@ -1089,7 +1534,7 @@ if (!file.exists("rds/movies_sample_generate.rds")) {
 
 #### 4. `calculate` summary statistics {-}
 
-Now that we have `r n_reps` replicated "shuffles" assuming the null hypothesis $H_0$ that both `Action` and `Romance` movies on average have the same ratings on IMDb, let's `calculate()` the appropriate summary statistic for these `r n_reps` replicated shuffles. From Section \@ref(understanding-ht), summary statistics relating to hypothesis testing have a specific name: *test statistics*. Since the unknown population parameter of interest is the difference in population means $\mu_{a} - \mu_{r}$, the test statistic of interest here is the difference in sample means $\overline{x}_{a} - \overline{x}_{r}$. 
+Now that we have `r n_reps` replicated "shuffles" assuming the null hypothesis $H_0$ that both `Action` and `Romance` movies on average have the same ratings on IMDb, Let's `calculate()` the appropriate summary statistic for these `r n_reps` replicated shuffles. From Section \@ref(understanding-ht), summary statistics relating to hypothesis testing have a specific name: *test statistics*. Since the unknown population parameter of interest is the difference in population means $\mu_{a} - \mu_{r}$, the test statistic of interest here is the difference in sample means $\overline{x}_{a} - \overline{x}_{r}$. 
 
 For each of our `r n_reps` shuffles, we can calculate this test statistic by setting `stat = "diff in means"`. Furthermore, since we are interested in $\overline{x}_{a} - \overline{x}_{r}$, we set `order = c("Action", "Romance")`. Let's save the results in a data frame called `null_distribution_movies`:
 
@@ -1113,7 +1558,7 @@ if (!file.exists("rds/null_distribution_movies.rds")) {
 null_distribution_movies
 ```
 
-Observe that we have `r n_reps` values of `stat`, each representing one instance of $\overline{x}_{a} - \overline{x}_{r}$. The `r n_reps` values form the *null distribution*, which is the technical term for the sampling distribution of the difference in sample means $\overline{x}_{a} - \overline{x}_{r}$ assuming $H_0$ is true. What happened in real life? What was the observed difference in promotion rates? What was the *observed test statistic* $\overline{x}_{a} - \overline{x}_{r}$? Recall from our earlier data wrangling, this observed difference in means was $`r x_bar_action |> round(3)` - `r x_bar_romance |> round(3)` = `r (x_bar_action - x_bar_romance) |> round(3)`$. We can also achieve this using the code that constructed the null distribution `null_distribution_movies` but with the `hypothesize()` and `generate()` steps removed. Let's save this in `obs_diff_means`:
+Observe that we have `r n_reps` values of `stat`, each representing one instance of $\overline{x}_{a} - \overline{x}_{r}$. The `r n_reps` values form the *null distribution*, which is the technical term for the sampling distribution of the difference in sample means $\overline{x}_{a} - \overline{x}_{r}$ assuming $H_0$ is true. What happened in real life? What was the observed difference in popularity rates? What was the *observed test statistic* $\overline{x}_{a} - \overline{x}_{r}$? Recall from our earlier data wrangling, this observed difference in means was $`r x_bar_action |> round(3)` - `r x_bar_romance |> round(3)` = `r (x_bar_action - x_bar_romance) |> round(3)`$. We can also achieve this using the code that constructed the null distribution `null_distribution_movies` but with the `hypothesize()` and `generate()` steps removed. We save this in `obs_diff_means`:
 
 ```{r}
 obs_diff_means <- movies_sample |> 
@@ -1124,14 +1569,15 @@ obs_diff_means
 
 #### 5. `visualize` the p-value {-}
 
-Lastly, in order to compute the $p$-value, we have to assess how "extreme" the observed difference in means of `r obs_diff_means$stat |> round(3)` is. We do this by comparing `r obs_diff_means$stat |> round(3)` to our null distribution, which was constructed in a hypothesized universe of no true difference in movie ratings. Let's visualize both the null distribution and the $p$-value in Figure \@ref(fig:null-distribution-movies-2). Unlike our example in Subsection \@ref(infer-workflow-ht) involving promotions, since we have a two-sided $H_A: \mu_a - \mu_r \neq 0$, we have to allow for both possibilities for _more extreme_, so we set `direction = "both"`.
+Lastly, in order to compute the $p$-value, we have to assess how "extreme" the observed difference in means of `r obs_diff_means$stat |> round(3)` is. We do this by comparing `r obs_diff_means$stat |> round(3)` to our null distribution, which was constructed in a hypothesized universe of no true difference in movie ratings. We visualize both the null distribution and the $p$-value in Figure \@ref(fig:null-distribution-movies-2). Unlike our example in Subsection \@ref(infer-workflow-ht) involving music popularity, since we have a two-sided $H_A: \mu_a - \mu_r \neq 0$, we have to allow for both possibilities for _more extreme_, so we set `direction = "both"`.
+
 
 ```{r eval=FALSE}
 visualize(null_distribution_movies, bins = 10) + 
   shade_p_value(obs_stat = obs_diff_means, direction = "both")
 ```
 
-```{r null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and $p$-value.", fig.height=1.8, purl=FALSE}
+```{r null-distribution-movies-2, echo=FALSE, fig.cap="Null distribution, observed test statistic, and $p$-value.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 7), purl=FALSE}
 if (is_html_output()) {
   visualize(null_distribution_movies, bins = 10) +
     shade_p_value(obs_stat = obs_diff_means, direction = "both")
@@ -1158,7 +1604,7 @@ p_value_movies <- null_distribution_movies |>
   mutate(p_value = round(p_value, 3))
 ```
 
-This $p$-value of `r p_value_movies$p_value` is very small. In other words, there is a very small chance that we'd observe a difference of `r x_bar_action |> round(3)` - `r x_bar_romance |> round(3)` = `r (x_bar_action - x_bar_romance) |> round(3)` in a hypothesized universe where there was truly no difference in ratings. 
+This $p$-value of `r p_value_movies$p_value` is very small. In other words, there is a very small chance that we would observe a difference of `r x_bar_action |> round(3)` - `r x_bar_romance |> round(3)` = `r (x_bar_action - x_bar_romance) |> round(3)` in a hypothesized universe where there was truly no difference in ratings. 
 
 But this $p$-value is larger than our (even smaller) pre-specified $\alpha$ significance level of 0.001. Thus, we are inclined to fail to reject the null hypothesis $H_0: \mu_a - \mu_r = 0$. In non-statistical language, the conclusion is: we do not have the evidence needed in this sample of data to suggest that we should reject the hypothesis that there is no difference in mean IMDb ratings between romance and action movies. We, thus, cannot say that a difference exists in romance and action movie ratings, on average, for all IMDb movies.
 
@@ -1170,7 +1616,7 @@ But this $p$-value is larger than our (even smaller) pre-specified $\alpha$ sign
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Conduct the same analysis comparing action movies versus romantic movies using the median rating instead of the mean rating. What was different and what was the same? 
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What conclusions can you make from viewing the faceted histogram looking at `rating` versus `genre` that you couldn't see when looking at the boxplot?
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What conclusions can you make from viewing the faceted histogram looking at `rating` versus `genre` that you could not see when looking at the boxplot?
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Describe in a paragraph how we used Allen Downey's diagram to conclude if a statistical difference existed between mean movie ratings for action and romance movies.
 
@@ -1178,7 +1624,7 @@ But this $p$-value is larger than our (even smaller) pre-specified $\alpha$ sign
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Using the definition of $p$-value, write in words what the $p$-value represents for the hypothesis test comparing the mean rating of romance to action movies.
 
-**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is the value of the $p$-value for the hypothesis test comparing the mean rating of romance to action movies?
+**`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** What is the value of the $p$-value for the two-sided hypothesis test comparing the mean rating of romance to action movies?
 
 **`r paste0("(LC", chap, ".", (lc <- lc + 1), ")")`** Test your data wrangling knowledge and EDA skills:
 
@@ -1195,111 +1641,60 @@ But this $p$-value is larger than our (even smaller) pre-specified $\alpha$ sign
 
 
 
-## Conclusion {#nhst-conclusion}
+## Summary and Final Remarks {#nhst-conclusion}
+
+### Theory-based approach for two-sample hypothesis tests {#theory-hypo}
+
+As we did previously when we discussed the theory-based approach for confidence intervals or hypothesis tests for the one-sample problem, we discuss now some of the theory needed to perform two-sample hypothesis tests. We present an example of a traditional theory-based method to conduct hypothesis tests. This method relies on the Central Limit Theorem and properties of random variables, expected value, variance, and standard deviation. It is also a direct extension of the one-sample problem discussed in Section \@ref(tying-CI-hypo). 
+
+Theory-based methods have been used for decades when researchers did not have access to computers that could run thousands of calculations quickly and efficiently. Now computing power is more accessible and simulation-based methods are becoming more popular, but researchers in many fields continue to use theory-based methods. 
+
+The theory-based method we focus on is known as the *Welch's two-sample $t$-test*\index{Welch's two-sample $t$-test} for testing differences in sample means. The test statistic we use is the  *two-sample $t$-statistic*, a standardized version of the difference in sample means $\overline{x}_1 - \overline{x}_2$. The data we use is once again the `movies_sample` data of action and romance movies from Section \@ref(ht-case-study).
 
 
-### Theory-based hypothesis tests {#theory-hypo}
 
-Much as we did in Subsections \@ref(theory-se) and \@ref(theory-ci) when we showed you theory-based methods for compututing standard errors and constructing confidence intervals that involved mathematical formulas, we now present an example of a traditional theory-based method to conduct hypothesis tests. This method relies on probability models, probability distributions, and a few assumptions to construct the null distribution. This is in contrast to the approach we've been using throughout this book where we relied on computer simulations to construct the null distribution.
+#### Welch's two-sample t-statistic {-}
 
-These traditional theory-based methods have been used for decades mostly because researchers didn't have access to computers that could run thousands of calculations quickly and efficiently. Now that computing power is much cheaper and more accessible, simulation-based methods are much more feasible. However, researchers in many fields continue to use theory-based methods. Hence, we make it a point to include an example here.
 
-As we'll show in this section, any theory-based method is ultimately an approximation to the simulation-based method. The theory-based method we'll focus on is known as the *two-sample $t$-test* for testing differences in sample means. However, the test statistic we'll use won't be the difference in sample means $\overline{x}_1 - \overline{x}_2$, but rather the related  *two-sample $t$-statistic*. The data we'll use will once again be the `movies_sample` data of action and romance movies from Section \@ref(ht-case-study).
+In Section \@ref(sampling-other-scenarios) we introduced the sampling distribution for the difference of two sample means. If we let $\overline X_a$ be the random variable for the sample mean of action films' rating and $\overline X_r$ the one for romance film's rating, the distribution of the difference of these random variables is
 
-#### Two-sample t-statistic {-}
+$$\overline X_a - \overline X_r \sim Normal \left(\mu_a - \mu_r, \sqrt{\frac{\sigma_a^2}{n_a} + \frac{\sigma^2_r}{n_r}} \right)$$
 
-A common task in statistics is the process of "standardizing a variable." By standardizing different variables, we make them more comparable. For example, say you are interested in studying the distribution of temperature recordings from Phoenix, Arizona, USA and comparing it to that of the temperature recordings in Montreal, Quebec, Canada. Given that US temperatures are generally recorded in degrees Fahrenheit and Canadian temperatures are generally recorded in degrees Celsius, how can we make them comparable? One approach would be to convert degrees Fahrenheit into Celsius, or vice versa. Another approach would be to convert them both to a common "standardized" scale, like Kelvin units of temperature. 
+where $\mu_a$ and $\mu_r$ are the population mean ratings, $\sigma_a$ and $\sigma_r$ the population standard deviations, and $n_a$ and $n_r$ the sample sizes for action and romance genres, respectively.
 
-One common method for standardizing a variable from probability and statistics theory is to compute the \index{z-score} $z$-score:
+When using the samples, as we did for one-sample problems, we standardize the difference in sample means,  $\overline{x}_a - \overline{x}_r$, by subtracting its mean (the differences in population means) and dividing by its standard error. This construct a test statistic known as the *Welch's two-sample $t$-test statistic*\index{Welch's two-sample t-test statistic}:
 
-$$z = \frac{x - \mu}{\sigma}$$
+$$t = \dfrac{ (\bar{x}_a - \bar{x}_r) - (\mu_a - \mu_r)}{ \text{SE}(\bar{x}_a - \bar{x}_r) } = \dfrac{ (\bar{x}_a - \bar{x}_r) - (\mu_a - \mu_r)}{ \sqrt{\dfrac{{s_a}^2}{n_a} + \dfrac{{s_r}^2}{n_r}}  }$$
 
-where $x$ represents one value of a variable, $\mu$ represents the mean of that variable, and $\sigma$ represents the standard deviation of that variable. You first subtract the mean $\mu$ from each value of $x$ and then divide $x - \mu$ by the standard deviation $\sigma$. These operations will have the effect of _re-centering_ your variable around 0 and _re-scaling_ your variable $x$ so that they have what are known as "standard units." Thus for every value that your variable can take, it has a corresponding $z$-score that gives how many standard units away that value is from the mean $\mu$. $z$-scores are normally distributed with mean 0 and standard deviation 1. This curve is called a "$z$-distribution" or "standard normal" curve and has the common, bell-shaped pattern from Figure \@ref(fig:zcurve) discussed in Appendix \@ref(appendix-normal-curve).
+Observe that the formula for $\text{SE}(\bar{x}_a - \bar{x}_r)$ has the sample sizes $n_a$ and $n_r$ in them. So as the sample sizes increase, the standard error goes down. We have seen this characteristic for one-sample problems in Subsections \@ref(sampling-variation) and \@ref(random-variable-sample-mean) when describing the sample distribution of the sample mean or the sample proportion and in Section \@ref(theory-based-CI) when discussing the sample size effect on confidence intervals. 
 
-```{r zcurve, echo=FALSE, out.width="100%", fig.cap="Standard normal z curve.", fig.height=1.3, purl=FALSE}
-ggplot(data.frame(x = c(-4, 4)), aes(x)) +
-  stat_function(fun = dnorm) +
-  labs(x = "z", y = "") +
-  theme_light() +
-  theme(
-    axis.title.y = element_blank(),
-    axis.title.x = element_blank(),
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank()
-  )
-```
+Let's state the null and alternative hypotheses for this test:
 
-Bringing these back to the difference of sample mean ratings $\overline{x}_a - \overline{x}_r$ of action versus romance movies, how would we standardize this variable? By once again subtracting its mean and dividing by its standard deviation. Recall two facts from Subsection \@ref(moral-of-the-story). First, if the sampling was done in a representative fashion, then the sampling distribution of $\overline{x}_a - \overline{x}_r$ will be centered at the true population parameter $\mu_a - \mu_r$. Second, the standard deviation of point estimates like $\overline{x}_a - \overline{x}_r$ has a special name: the standard error.
+$$\begin{aligned}&H_0: &\mu_a - \mu_r = 0\\&H_A: &\mu_a - \mu_r \ne 0\end{aligned}$$
 
-Applying these ideas, we present the *two-sample $t$-statistic*\index{two-sample t-statistic}:
+The claim under the null hypothesis is that the difference between the population means is zero. This is equivalent to claiming that the means are the same, $\mu_a = \mu_r$, which is the typical test, as we try to determine whether or not the population means are different. Yet, the structure of the test allows for testing other differences as well, if needed.
 
-$$t = \dfrac{ (\bar{x}_a - \bar{x}_r) - (\mu_a - \mu_r)}{ \text{SE}_{\bar{x}_a - \bar{x}_r} } = \dfrac{ (\bar{x}_a - \bar{x}_r) - (\mu_a - \mu_r)}{ \sqrt{\dfrac{{s_a}^2}{n_a} + \dfrac{{s_r}^2}{n_r}}  }$$
-
-Oofda! There is a lot to try to unpack here! Let's go slowly. In the numerator, $\bar{x}_a-\bar{x}_r$ is the difference in sample means, while $\mu_a - \mu_r$ is the difference in population means. In the denominator, $s_a$ and $s_r$ are the *sample standard deviations* of the action and romance movies in our sample `movies_sample`. Lastly, $n_a$ and $n_r$ are the sample sizes of the action and romance movies. Putting this together under the square root gives us the standard error $\text{SE}_{\bar{x}_a - \bar{x}_r}$.
-    
-Observe that the formula for $\text{SE}_{\bar{x}_a - \bar{x}_r}$ has the sample sizes $n_a$ and $n_r$ in them. So as the sample sizes increase, the standard error goes down. We've seen this concept numerous times now, in particular (1) in our simulations using the three virtual shovels with $n$ = 25, 50, and 100 slots in Figure \@ref(fig:comparing-sampling-distributions-3), (2) in Subsection \@ref(ci-width) where we studied the effect of using larger sample sizes on the widths of confidence intervals, and (3) in Subsection \@ref(theory-se) where we studied the formula-based approximation to the standard error of the sample proportion $\widehat{p}$. 
-
-So how can we use the two-sample $t$-statistic as a test statistic in our hypothesis test? First, assuming the null hypothesis $H_0: \mu_a - \mu_r = 0$ is true, the right-hand side of the numerator (to the right of the $-$ sign), $\mu_a - \mu_r$, becomes 0. 
-
-Second, similarly to how the Central Limit Theorem from Subsection \@ref(sampling-conclusion-central-limit-theorem) states that sample means follow a normal distribution, it can be mathematically proven that the two-sample $t$-statistic follows a *$t$ distribution with degrees of freedom* "roughly equal" to $df = n_a + n_r - 2$. To better understand this concept of _degrees of freedom_, we next display three examples of $t$-distributions in Figure \@ref(fig:t-distributions) along with the standard normal $z$ curve.
-
-```{r t-distributions, echo=FALSE, fig.cap="Examples of t-distributions and the z curve.", purl=FALSE, out.width="100%"}
-all_points <- tibble(
-  domain = seq(from = -4, to = 4, by = 0.01),
-  `t: df = 1` = dt(x = domain, df = 1),
-  `t: df = 3` = dt(x = domain, df = 3),
-  `t: df = 10` = dt(x = domain, df = 10),
-  `z` = dnorm(x = domain)
-) |>
-  gather(key = "Distribution", value = "value", -domain) |>
-  mutate(
-    type = ifelse(Distribution == "z", "z", "t"),
-    Distribution = factor(
-      Distribution,
-      levels = c("z", "t: df = 10", "t: df = 3", "t: df = 1")
-    )
-  )
-
-for_labels <- all_points |>
-  filter(
-    between(domain, -1.205, -1.195) & Distribution == "t: df = 1" |
-      between(domain, -0.205, -0.195) & Distribution == "t: df = 3" |
-      between(domain, 0.095, 0.105) & Distribution == "t: df = 10" |
-      domain == 2.2 & Distribution == "z"
-  )
-
-all_points |>
-  ggplot(aes(x = domain, y = value, color = Distribution)) +
-  geom_line(aes(linetype = type)) +
-  scale_color_viridis(discrete = TRUE, begin = 0, end = 0.7) +
-  geom_label_repel(
-    data = for_labels, 
-    mapping = aes(label = Distribution),
-    nudge_x = c(1, -2, 2, -2)
-  ) +
-  theme_light() +
-  theme(
-    axis.title.y = element_blank(),
-    axis.title.x = element_blank(),
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    legend.position = "none"
-  )
-```
-
-Begin by looking at the center of the plot at 0 on the horizontal axis. As you move up from the value of 0, follow along with the labels and note that the bottom curve corresponds to 1 degree of freedom, the curve above it is for 3 degrees of freedom, the curve above that is for 10 degrees of freedom, and lastly the dotted curve is the standard normal $z$ curve.
-
-Observe that all four curves have a bell shape, are centered at 0, and that as the degrees of freedom increase, the $t$-distribution more and more resembles the standard normal $z$ curve. The "degrees of freedom" \index{degrees of freedom} measures how different the $t$ distribution will be from a normal distribution. $t$-distributions tend to have more values in the tails of their distributions than the standard normal $z$ curve.
-
-This "roughly equal" statement indicates that the equation $df = n_a + n_r - 2$ is a "good enough" approximation to the true degrees of freedom. The true formula is a bit more complicated than this simple expression, but we've found the formula to be beyond the reach of those new to statistical inference and it does little to build the intuition of the $t$-test. 
-
-The message to retain, however, is that small sample sizes lead to small degrees of freedom and thus small sample sizes lead to $t$-distributions that are different than the $z$ curve. On the other hand, large sample sizes correspond to large degrees of freedom and thus produce $t$ distributions that closely align with the standard normal $z$-curve.
-  
-So, assuming the null hypothesis $H_0$ is true, our formula for the test statistic simplifies a bit:
+The Welch's two-sample $t$-test becomes:
 
 $$t = \dfrac{ (\bar{x}_a - \bar{x}_r) - 0}{ \sqrt{\dfrac{{s_a}^2}{n_a} + \dfrac{{s_r}^2}{n_r}}  } = \dfrac{ \bar{x}_a - \bar{x}_r}{ \sqrt{\dfrac{{s_a}^2}{n_a} + \dfrac{{s_r}^2}{n_r}}  }$$
 
-Let's compute the values necessary for this two-sample $t$-statistic. Recall the summary statistics we computed during our exploratory data analysis in Section \@ref(imdb-data).
+
+
+Using results based on the Central Limit Theorem, linear combinations of independent random variables, and properties of the expected value, variance, and standard deviation, it can be shown that the Welch's test statistic follows a *$t$ distribution*.
+
+In Section \@ref(t-distribution-CI) we have discussed the properties of the $t$ distribution and in Figure \@ref(fig:t-curve-1) we have shown different $t$ distributions with different degrees of freedom. Recall that the $t$ distribution is similar to the standard normal; its density curve is also bell-shaped, and it is symmetric around zero, but the tails of the $t$ distribution are a little thicker (or heavier) than those of the standard normal. 
+This is important for hypothesis testing, since the $p$-value is calculated from the areas on those tails. 
+Also recall that as the degrees of freedom increase, the $t$-distribution more and more approximates the standard normal curve. 
+
+In terms of the Welch's two-sample $t$-test, it has been shown that the test statistics follows a $t$ distribution with degrees of freedom that can be approximated by 
+
+$$
+\widehat{df} = \left( \dfrac{s_a^2}{n_a} + \dfrac{s_r^2}{n_r} \right)^2 \Bigg/ \left( \dfrac{\left( \dfrac{s_a^2}{n_a} \right)^2}{n_a - 1} + \dfrac{\left( \dfrac{s_r^2}{n_r} \right)^2}{n_r - 1} \right)
+$$
+
+This formula is just too long to enter manually every time that is needed. (A suitable approximation for the degrees of freedom using $n_a + n_r - 2$ is often used instead for reasonably large sample sizes.) But, fortunately, R and other statistical software have already done the formula inputting for us by introducing relevant functions. While it is important to get good approximations to the degrees of freedom in order to get the appropriate $p$-values, learning this formula goes beyond the reach of those new to statistical inference, and it does little to build the intuition of the $t$-test. Therefore, we will trust the results that R or other statistical packages provide for us.
+
+Let's compute the $t$-test statistic. Recall the summary statistics we computed during our exploratory data analysis in Section \@ref(imdb-data).
 
 ```{r}
 movies_sample |> 
@@ -1322,118 +1717,49 @@ $$
 `r t_stat`
 $$
 
-Great! How can we compute the $p$-value using this theory-based test statistic? We need to compare it to a null distribution, which we construct next.
+How can we compute the $p$-value using this theory-based test statistic? We could do it by calculating the degrees of freedom and using the function `pt()` as we did earlier. Instead, we use the function `t_test()` from the package `infer` with the appropriate `formula` and `order`, as we did for the simulation based approach.
 
-#### Null distribution {-}
-  
-Let's revisit the null distribution for the test statistic $\bar{x}_a - \bar{x}_r$ we constructed in Section \@ref(ht-case-study). Let's visualize this in the left-hand plot of Figure \@ref(fig:comparing-diff-means-t-stat).
+The results are shown below:
 
-```{r, eval=FALSE}
-# Construct null distribution of xbar_a - xbar_r:
-null_distribution_movies <- movies_sample |> 
-  specify(formula = rating ~ genre) |> 
-  hypothesize(null = "independence") |> 
-  generate(reps = 1000, type = "permute") |> 
-  calculate(stat = "diff in means", order = c("Action", "Romance"))
-visualize(null_distribution_movies, bins = 10)
-```
 
-The `infer` package also includes some built-in theory-based test statistics as well. So instead of calculating the test statistic of interest as the `"diff in means"` $\bar{x}_a - \bar{x}_r$, we can calculate this defined two-sample $t$-statistic by setting `stat = "t"`. Let's visualize this in the right-hand plot of Figure \@ref(fig:comparing-diff-means-t-stat).
-
-```{r eval=FALSE}
-# Construct null distribution of t:
-null_distribution_movies_t <- movies_sample |> 
-  specify(formula = rating ~ genre) |> 
-  hypothesize(null = "independence") |> 
-  generate(reps = 1000, type = "permute") |> 
-  # Notice we switched stat from "diff in means" to "t"
-  calculate(stat = "t", order = c("Action", "Romance"))
-visualize(null_distribution_movies_t, bins = 10)
+```{r}
+movies_sample |>
+  t_test(formula = rating ~ genre, 
+         order = c("Action", "Romance"), 
+         alternative = "two-sided")
 ```
 
 ```{r echo=FALSE, purl=FALSE}
-if (!file.exists("rds/null_distribution_movies_t.rds")) {
-  null_distribution_movies_t <- movies_sample |>
-    specify(formula = rating ~ genre) |>
-    hypothesize(null = "independence") |>
-    generate(reps = 1000, type = "permute") |>
-    # Notice we switched stat from "diff in means" to "t"
-    calculate(stat = "t", order = c("Action", "Romance"))
-  write_rds(
-    null_distribution_movies_t,
-    "rds/null_distribution_movies_t.rds"
-  )
-} else {
-  null_distribution_movies_t <- read_rds("rds/null_distribution_movies_t.rds")
-}
+t_table_2_sample <- movies_sample |>
+  t_test(formula = rating ~ genre, 
+         order = c("Action", "Romance"), 
+         alternative = "two-sided")
 ```
 
-```{r comparing-diff-means-t-stat, fig.height=3, fig.cap="Comparing the null distributions of two test statistics.", echo=FALSE, purl=FALSE}
-# Visualize:
-null_dist_1 <- visualize(null_distribution_movies, bins = 10) +
-  labs(title = "Difference in means")
-null_dist_2 <- visualize(null_distribution_movies_t, bins = 10) +
-  labs(title = "Two-sample t-statistic")
-null_dist_1 + null_dist_2
-```
 
-Observe that while the shape of the null distributions of both the difference in means $\bar{x}_a - \bar{x}_r$ and the two-sample $t$-statistics are similar, the scales on the x-axis are different. The two-sample $t$-statistic values are spread out over a larger range.
+Based on the $p$-value = `r round(t_table_2_sample[1,3][[1]],3)` we reject the null hypothesis, the average rating for the `Romance` movies is not the same as the average rating for the `Action` movies. This result is similar to the one calculated using the simulation-based approach.
 
-However, a traditional theory-based $t$-test doesn't look at the simulated histogram in `null_distribution_movies_t`, but instead it looks at the $t$-distribution curve with degrees of freedom equal to roughly `r attr(null_distribution_movies_t, "distr_param") |> round(4)`. This calculation is based on the complicated formula referenced previously, which we approximated with $df = n_a + n_r - 2 = `r n_action` + `r n_romance` - 2 = `r n_action +  n_romance - 2`$. Let's overlay this $t$-distribution curve over the top of our simulated two-sample $t$-statistics using the `method = "both"` argument in `visualize()`.
+To be able to use the Welch's $t$-test, there are some conditions that are necessary so that the underlying mathematical theory holds:
 
-```{r t-stat-3, fig.cap="Null distribution using t-statistic and t-distribution.", fig.height=2.2}
-visualize(null_distribution_movies_t, bins = 10, method = "both")
-```
+1. The populations should be close to normal or the samples should be large. Many textbooks suggest the sample sizes to be greater than 30, but there is no clear mathematical foundation for this rule of thumb. In general, as long as the distribution of the samples appear to be close to symmetric, the Welch's $t$-test may provide useful results.
+2. The samples should be random samples.
+3. The sample of one population should be independent from the sample of the other population.
 
-Observe that the curve does a good job of approximating the histogram here. To calculate the $p$-value in this case, we need to figure out how much of the total area under the $t$-distribution curve is at or "more extreme" than our observed two-sample $t$-statistic. Since $H_A: \mu_a - \mu_r \neq 0$ is a two-sided alternative, we need to add up the areas in both tails. 
-
-We first compute the observed two-sample $t$-statistic using `infer` verbs. This shortcut calculation further assumes that the null hypothesis is true: that the population of action and romance movies have an equal average rating. 
-
-```{r}
-obs_two_sample_t <- movies_sample |> 
-  specify(formula = rating ~ genre) |> 
-  calculate(stat = "t", order = c("Action", "Romance"))
-obs_two_sample_t
-```
-
-We want to find the percentage of values that are at or below `obs_two_sample_t` $= `r pull(obs_two_sample_t) |> round(3)`$ or at or above `-obs_two_sample_t` $= `r -pull(obs_two_sample_t) |> round(3)`$. We use the `shade_p_value()` function with the `direction` argument set to `"both"` to do this:
-
-```{r t-stat-4, fig.cap="Null distribution using t-statistic and t-distribution with $p$-value shaded.", warning=TRUE, fig.height=1.7}
-visualize(null_distribution_movies_t, method = "both") +
-  shade_p_value(obs_stat = obs_two_sample_t, direction = "both")
-```
-
-(We'll discuss this warning message shortly.) What is the $p$-value? We apply `get_p_value()` to our null distribution saved in `null_distribution_movies_t`:
-
-```{r}
-null_distribution_movies_t |> 
-  get_p_value(obs_stat = obs_two_sample_t, direction = "both")
-```
-
-We have a very small $p$-value, and thus it is very unlikely that these results are due to *sampling variation*. Thus, we are inclined to reject $H_0$. 
-
-Let's come back to that earlier warning message: `Check to make sure the conditions have been met for the theoretical method. {infer} currently does not check these for you.` To be able to use the $t$-test and other such theoretical methods, there are always a few conditions to check. The `infer` package does not automatically check these conditions, hence the warning message we received. These conditions are necessary so that the underlying mathematical theory holds. In order for the results of our two-sample $t$-test to be valid, three conditions must be met:
-
-1. Nearly normal populations or large sample sizes. A general rule of thumb that works in many (but not all) situations is that the sample size $n$ should be greater than 30.
-2. Both samples are selected independently of each other.
-3. All observations are independent from each other.
 
 Let's see if these conditions hold for our `movies_sample` data:
 
-1. This is met since $n_a$ = `r n_action` and $n_r$ = `r n_romance` are both larger than 30, satisfying our rule of thumb.
+1. This is met since $n_a$ = `r n_action` and $n_r$ = `r n_romance` do not seem to be highly skewed and therefore are somewhat symmetric.
 1. This is met since we sampled the action and romance movies at random and in an unbiased fashion from the database of all IMDb movies.
-1. Unfortunately, we don't know how IMDb computes the ratings. For example, if the same person rated multiple movies, then those observations would be related and hence not independent.
+1. Unfortunately, we do not know how IMDb computes the ratings. For example, if the same person can rate multiple movies, then those observations may be related. This does not appear to be a major problem in this context though.
 
-Assuming all three conditions are roughly met, we can be reasonably certain that the theory-based $t$-test results are valid. If any of the conditions were clearly not met, we couldn't put as much trust into any conclusions reached. On the other hand, in most scenarios, the only assumption that needs to be met in the simulation-based method is that the sample is selected at random. Thus, in our experience, we prefer simulation-based methods as they have fewer assumptions, are conceptually easier to understand, and since computing power has recently become easily accessible, they can be run quickly. That being said since much of the world's research still relies on traditional theory-based methods, we also believe it is important to understand them. 
-
-You may be wondering why we chose ``reps = `r n_reps` `` for these simulation-based methods. We've noticed that after around `r n_reps` replicates for the null distribution and the bootstrap distribution for most problems you can start to get a general sense for how the statistic behaves. You can change this value to something like 10,000 though for `reps` if you would like even finer detail but this will take more time to compute. Feel free to iterate on this as you like to get an even better idea about the shape of the null and bootstrap distributions as you wish. 
+Assuming all three conditions are not clearly broken, we can be reasonably certain that the theory-based $t$-test results are valid.
 
 
 ### When inference is not needed
 
-We've now walked through several different examples of how to use the `infer` package to perform statistical inference: constructing confidence intervals and conducting hypothesis tests. For each of these examples, we made it a point to always perform an exploratory data analysis (EDA) first; specifically, by looking at the raw data values, by using data visualization with `ggplot2`, and by data wrangling with `dplyr` beforehand. We *highly* encourage you to always do the same. As a beginner to statistics, EDA helps you develop intuition as to what statistical methods like confidence intervals and hypothesis tests can tell us. Even as a seasoned practitioner of statistics, EDA helps guide your statistical investigations. In particular, is statistical inference even needed?
+We have now walked through several different examples of how to use the `infer` package to perform statistical inference: constructing confidence intervals and conducting hypothesis tests. For each of these examples, we made it a point to always perform an exploratory data analysis (EDA) first; specifically, by looking at the raw data values, by using data visualization with `ggplot2`, and by data wrangling with `dplyr` beforehand. We *highly* encourage you to always do the same. As a beginner to statistics, EDA helps you develop intuition as to what statistical methods like confidence intervals and hypothesis tests can tell us. Even as a seasoned practitioner of statistics, EDA helps guide your statistical investigations. In particular, is statistical inference even needed?
 
-Let's consider an example. Say we're interested in the following question: Of *all* flights leaving a New York City airport, are Hawaiian Airlines flights in the air for longer than Alaska Airlines flights? Furthermore, let's assume that 2023 flights are a representative sample of all such flights. Then we can use the `flights` data frame in the `nycflights23` \index{R packages!nycflights23} package we introduced in Section \@ref(nycflights) to answer our question. Let's filter this data frame to only include Hawaiian and Alaska Airlines using their `carrier` codes `HA` and `AS`:
+Let's consider an example. Say we are interested in the following question: Of *all* flights leaving a New York City airport, are Hawaiian Airlines flights in the air for longer than Alaska Airlines flights? Furthermore, Let's assume that 2023 flights are a representative sample of all such flights. Then we can use the `flights` data frame in the `nycflights23` \index{R packages!nycflights23} package we introduced in Section \@ref(nycflights) to answer our question. Let's filter this data frame to only include Hawaiian and Alaska Airlines using their `carrier` codes `HA` and `AS`:
 
 ```{r}
 flights_sample <- flights |> 
@@ -1442,37 +1768,37 @@ flights_sample <- flights |>
 
 There are two possible statistical inference methods we could use to answer such questions. First, we could construct a 95% confidence interval for the difference in population means $\mu_{HA} - \mu_{AS}$, where $\mu_{HA}$ is the mean air time of all Hawaiian Airlines flights and $\mu_{AS}$ is the mean air time of all Alaska Airlines flights. We could then check if the entirety of the interval is greater than 0, suggesting that $\mu_{HA} - \mu_{AS} > 0$, or, in other words suggesting that $\mu_{HA} > \mu_{AS}$. Second, we could perform a hypothesis test of the null hypothesis $H_0: \mu_{HA} - \mu_{AS} = 0$ versus the alternative hypothesis $H_A: \mu_{HA} - \mu_{AS} > 0$.
 
-However, let's first construct an exploratory visualization as we suggested earlier. Since `air_time` is numerical and `carrier` is categorical, a boxplot can display the relationship between these two variables, which we display in Figure \@ref(fig:ha-as-flights-boxplot).
+However, Let's first construct an exploratory visualization as we suggested earlier. Since `air_time` is numerical and `carrier` is categorical, a boxplot can display the relationship between these two variables, which we display in Figure \@ref(fig:ha-as-flights-boxplot).
 
-```{r ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2023.", fig.height=2.8}
+```{r ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2023.", fig.height=ifelse(knitr::is_latex_output(), 2.8, 7)}
 ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
   geom_boxplot() +
   labs(x = "Carrier", y = "Air Time")
 ```
 
-This is what we like to call "no PhD in Statistics needed" moments. You don't have to be an expert in statistics to know that Alaska Airlines and Hawaiian Airlines have *significantly* different air times. The two boxplots don't even overlap! Constructing a confidence interval or conducting a hypothesis test would frankly not provide much more insight than Figure \@ref(fig:ha-as-flights-boxplot). 
+This is what we like to call "no PhD in Statistics needed" moments. You do not have to be an expert in statistics to know that Alaska Airlines and Hawaiian Airlines have *notably* different air times. The two boxplots do not even overlap! Constructing a confidence interval or conducting a hypothesis test would frankly not provide much more insight than Figure \@ref(fig:ha-as-flights-boxplot). 
 
-Let's investigate why we observe such a clear cut difference between these two airlines using data wrangling. Let's first group by the rows of `flights_sample` not only by `carrier` but also by destination `dest`. Subsequently, we'll compute two summary statistics: the number of observations using `n()` and the mean airtime:
+Let's investigate why we observe such a clear cut difference between these two airlines using data wrangling. Let's first group the rows of `flights_sample` not only by `carrier` but also by destination `dest`. Subsequently, we will compute two summary statistics: the number of observations using `n()` and the mean airtime:
 
 ```{r}
 flights_sample |> 
   group_by(carrier, dest) |> 
-  summarize(n = n(), mean_time = mean(air_time, na.rm = TRUE))
+  summarize(n = n(), mean_time = mean(air_time, na.rm = TRUE), .groups = "keep")
 ```
 
-It turns out that from New York City in 2023, Alaska flew to seven different airports on the West Coast region of the US while Hawaiian only flew to `HNL` (Honolulu) from NYC. Given the clear difference in distance from New York City to the West Coast versus New York City to Honolulu, it is not surprising that we observe such different (_statistically significantly different_, in fact) air times in flights. 
+It turns out that from New York City in 2023 Alaska flew to seven different airports on the West Coast region of the US while Hawaiian only flew to `HNL` (Honolulu) from NYC. Given the clear difference in distance from New York City to the West Coast versus New York City to Honolulu, it is not surprising that we observe such different (_statistically significantly different_, in fact) air times in flights. 
 
 This is a clear example of not needing to do anything more than a simple exploratory data analysis using data visualization and descriptive statistics to get an appropriate conclusion.  This is why we highly recommend you perform an EDA of any sample data before running statistical inference methods like confidence intervals and hypothesis tests. 
 
 
 ### Problems with p-values
 
-On top of the many common misunderstandings about hypothesis testing and $p$-values we listed in Section \@ref(ht-interpretation), another unfortunate consequence of the expanded use of $p$-values and hypothesis testing is a phenomenon known as "p-hacking." \index{p-hacking} p-hacking is the act of "cherry-picking" only results that are "statistically significant" while dismissing those that aren't, even if at the expense of the scientific ideas. There are lots of articles written recently about misunderstandings and the problems with $p$-values. We encourage you to check some of them out:
+On top of the many common misunderstandings about hypothesis testing and $p$-values we listed in Section \@ref(ht-interpretation), another unfortunate consequence of the expanded use of $p$-values and hypothesis testing is a phenomenon known as "p-hacking." \index{p-hacking} p-hacking is the act of "cherry-picking" only results that are "statistically significant" while dismissing those that are not, even if at the expense of the scientific ideas. There are lots of articles written recently about misunderstandings and the problems with $p$-values. We encourage you to check some of them out:
 
 1. [Misuse of $p$-values](https://en.wikipedia.org/wiki/Misuse_of_p-values)
 2. [What a nerdy debate about $p$-values shows about science - and how to fix it](https://www.vox.com/science-and-health/2017/7/31/16021654/p-values-statistical-significance-redefine-0005)
 3. [Statisticians issue warning over misuse of $P$ values](https://www.nature.com/news/statisticians-issue-warning-over-misuse-of-p-values-1.19503)
-4. [You Can't Trust What You Read About Nutrition](https://fivethirtyeight.com/features/you-cant-trust-what-you-read-about-nutrition/)
+4. [You Cannot Trust What You Read About Nutrition](https://fivethirtyeight.com/features/you-cant-trust-what-you-read-about-nutrition/)
 5. [A Litany of Problems with p-values](http://www.fharrell.com/post/pval-litany/)
 
 Such issues were getting so problematic that the American Statistical Association (ASA) put out a statement in 2016 titled, ["The ASA Statement on Statistical Significance and $P$-Values,"](https://www.amstat.org/asa/files/pdfs/P-ValueStatement.pdf) with six principles underlying the proper use and interpretation of $p$-values. The ASA released this guidance on $p$-values to improve the conduct and interpretation of quantitative science and to inform the growing emphasis on reproducibility of science research. 
@@ -1484,7 +1810,7 @@ We as authors much prefer the use of confidence intervals for statistical infere
 
 ```{r echo=FALSE, results="asis", purl=FALSE}
 if (is_latex_output()) {
-  cat("Solutions to all *Learning checks* can be found online in [Appendix D](https://moderndive.com/D-appendixD.html).")
+  cat("Solutions to all *Learning checks* can be found in the Appendices of the online version of the book. The Appendices start at <https://moderndive.com/a-appendixa>.")
 }
 ```
 
@@ -1503,4 +1829,4 @@ We conclude with the `infer` pipeline for hypothesis testing in Figure \@ref(fig
 include_graphics("images/flowcharts/infer/ht_diagram_trimmed.png")
 ```
 
-Now that we've armed ourselves with an understanding of confidence intervals from Chapter \@ref(confidence-intervals) and hypothesis tests from this chapter, we'll now study inference for regression in the upcoming Chapter \@ref(inference-for-regression).
+Now that we have armed ourselves with an understanding of confidence intervals from Chapter \@ref(confidence-intervals) and hypothesis tests from this chapter, we will now study inference for regression in the upcoming Chapter \@ref(inference-for-regression).
