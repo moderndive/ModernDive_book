@@ -58,7 +58,8 @@ if(!is_latex_output())
 
 
 ## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 7), fig.width=3, fig.cap="Normal area within one standard deviation."----
-ggplot(NULL, aes(c(-4,4))) +
+ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1, 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(1, 4)) +
@@ -68,7 +69,8 @@ ggplot(NULL, aes(c(-4,4))) +
 
 
 ## ----normal-curve-shaded-2a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 7), fig.width=3, fig.cap="Normal area within two standard deviations."----
-ggplot(NULL, aes(c(-4,4))) +
+ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -2)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-2, 2)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(2, 4)) +
@@ -152,7 +154,8 @@ almonds_sample_100 |>
 
 
 ## ----normal-curve-shaded-3a, echo=FALSE, fig.cap="Normal curve with the shaded middle area being 0.95", fig.height=ifelse(knitr::is_latex_output(), 2, 7), fig.width=3----
-ggplot(NULL, aes(c(-4, 4))) +
+ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1.96)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1.96, 1.96)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(1.96, 4)) +
