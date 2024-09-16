@@ -111,9 +111,10 @@ sampled_spotify_metal_deephouse |>
     linesep = ""
   ) |>
   kable_styling(
-    font_size = ifelse(is_latex_output(), 6, 16),
+    font_size = ifelse(is_latex_output(), 8, 16),
     latex_options = c("HOLD_position")
-  )
+  ) |> 
+  column_spec(3, width = "1.5in")  # Adjust the column number and width as needed
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -149,9 +150,10 @@ spotify_52_original |>
       linesep = ""
   ) |>
   kable_styling(
-    font_size = ifelse(is_latex_output(), 6, 16),
+    font_size = ifelse(is_latex_output(), 8, 16),
     latex_options = c("HOLD_position")
-  )
+  ) |> 
+  column_spec(3, width = "1.5in")  # Adjust the column number and width as needed
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -169,9 +171,10 @@ spotify_52_shuffled |>
       linesep = ""
   ) |>
   kable_styling(
-    font_size = ifelse(is_latex_output(), 6, 16),
+    font_size = ifelse(is_latex_output(), 8, 16),
     latex_options = c("HOLD_position")
-  )
+  ) |> 
+  column_spec(3, width = "1.5in")  # Adjust the column number and width as needed
 
 
 
