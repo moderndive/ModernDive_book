@@ -346,9 +346,9 @@ n_reps <- 1000
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distn_slope <- old_faithful_2024 %>%
-##   specify(formula = waiting ~ duration) %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
+## bootstrap_distn_slope <- old_faithful_2024 |>
+##   specify(formula = waiting ~ duration) |>
+##   generate(reps = 1000, type = "bootstrap") |>
 ##   calculate(stat = "slope")
 ## bootstrap_distn_slope
 
@@ -360,20 +360,20 @@ visualize(bootstrap_distn_slope)
 
 
 ## -----------------------------------------------------------------------------
-percentile_ci <- bootstrap_distn_slope %>% 
+percentile_ci <- bootstrap_distn_slope |> 
   get_confidence_interval(type = "percentile", level = 0.95)
 percentile_ci
 
 
 ## -----------------------------------------------------------------------------
-observed_slope <- old_faithful_2024 %>% 
-  specify(waiting ~ duration) %>% 
+observed_slope <- old_faithful_2024 |> 
+  specify(waiting ~ duration) |> 
   calculate(stat = "slope")
 observed_slope
 
 
 ## -----------------------------------------------------------------------------
-se_ci <- bootstrap_distn_slope %>% 
+se_ci <- bootstrap_distn_slope |> 
   get_ci(level = 0.95, type = "se", point_estimate = observed_slope)
 se_ci
 
@@ -586,7 +586,7 @@ grid.arrange(g1, g2, ncol=2)
 
 
 ## -----------------------------------------------------------------------------
-observed_fit <- coffee_data |>
+observed_fit <- coffee_data |> 
   specify(
     total_cup_points ~ aroma + flavor + moisture_percentage + continent_of_origin
   ) |>
@@ -621,6 +621,8 @@ mod_mult_table |>
 
 
 ## ----echo=FALSE---------------------------------------------------------------
+# Fix the width for the explanatory variable output
+options(width = 125)
 if (!file.exists("rds/generated_distn_slopes.rds")) {
   set.seed(76)
   generated_distn_slopes <- coffee_data |>
@@ -636,6 +638,8 @@ if (!file.exists("rds/generated_distn_slopes.rds")) {
   generated_distn_slopes <- readRDS("rds/generated_distn_slopes.rds")
 }
 generated_distn_slopes
+# Reset width
+options(width = 80)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
