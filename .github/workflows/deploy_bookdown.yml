@@ -12,7 +12,7 @@ name: bookdown
 
 jobs:
   bookdown:
-    runs-on: macos-latest  # Use macOS runner
+    runs-on: macos-latest
     # Only restrict concurrency for non-PR jobs
     concurrency:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
@@ -28,24 +28,15 @@ jobs:
         with:
           use-public-rspm: true
 
-      # Install remotes package
-      - name: Install remotes package
-        run: |
-          R -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")'
-
-      - name: Increase timeout and set download method
-        run: |
-          R -e 'options(timeout = 600, download.file.method = "libcurl")'
-
       # Install system dependencies
       - name: Install system dependencies
         run: |
           brew install freetype libpng libtiff jpeg-turbo
 
-      # Attempt to install ragg from binary
+      # Install ragg from CRAN with a specific version
       - name: Install ragg from CRAN
         run: |
-          R -e 'install.packages("ragg", type = "binary")'
+          R -e 'install.packages("ragg", type = "binary", repos = "https://cloud.r-project.org")'
 
       # Manually install tidymodels/infer with retry logic
       - name: Manually install tidymodels/infer
@@ -61,6 +52,16 @@ jobs:
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
 
+      # Set up Rosetta 2 for Apple Silicon (ARM-based macOS)
+      - name: Install Rosetta 2
+        if: runner.os == 'macOS' && matrix.os == 'macos-latest'
+        run: |
+          softwareupdate --install-rosetta --agree-to-license
+
+      # Set compiler flags for ragg
+      - name: Set compiler flags
+        run: |
+          R -e 'Sys.setenv(PKG_CFLAGS = "-std=c++17")'
 
       - uses: r-lib/actions/setup-renv@v2
 
