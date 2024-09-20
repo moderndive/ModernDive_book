@@ -12,7 +12,7 @@ name: bookdown
 
 jobs:
   bookdown:
-    runs-on: macos-latest
+    runs-on: macos-latest  # Use macOS runner
     # Only restrict concurrency for non-PR jobs
     concurrency:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
@@ -28,6 +28,7 @@ jobs:
         with:
           use-public-rspm: true
 
+      # Install remotes package
       - name: Install remotes package
         run: |
           R -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")'
@@ -36,17 +37,30 @@ jobs:
         run: |
           R -e 'options(timeout = 600, download.file.method = "libcurl")'
 
-      - name: Manually install tidymodels/infer with retry logic
+      # Install system dependencies
+      - name: Install system dependencies
+        run: |
+          brew install freetype libpng libtiff jpeg-turbo
+
+      # Attempt to install ragg from binary
+      - name: Install ragg from CRAN
+        run: |
+          R -e 'install.packages("ragg", type = "binary")'
+
+      # Manually install tidymodels/infer with retry logic
+      - name: Manually install tidymodels/infer
         run: |
           R -e 'for (i in 1:5) { tryCatch(remotes::install_github("tidymodels/infer"), error = function(e) Sys.sleep(30)) }'
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
 
+      # Manually install haozhu233/kableExtra with retry logic
       - name: Manually install haozhu233/kableExtra with retry logic
         run: |
           R -e 'for (i in 1:5) { tryCatch(remotes::install_github("haozhu233/kableExtra"), error = function(e) Sys.sleep(30)) }'
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+
 
       - uses: r-lib/actions/setup-renv@v2
 
