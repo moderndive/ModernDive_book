@@ -1,7 +1,6 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 
-# Set up renv following instructions at https://www.emilhvitfeldt.com/post/bookdown-netlify-github-actions/
 on:
   push:
     branches: [main, master, v2]
@@ -13,12 +12,12 @@ name: bookdown
 
 jobs:
   bookdown:
-    runs-on: macos-latest  # Change to use macOS
+    runs-on: macos-latest
     # Only restrict concurrency for non-PR jobs
     concurrency:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
     env:
-      GITHUB_PAT: ${{ secrets.GH_PAT }}
+      GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
       EMAIL: ${{ secrets.EMAIL }}
     steps:
       - uses: actions/checkout@v3
@@ -28,6 +27,20 @@ jobs:
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
+
+      - name: Install remotes package
+        run: |
+          R -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")'
+
+      - name: Increase timeout and set download method
+        run: |
+          R -e 'options(timeout = 600, download.file.method = "libcurl")'
+
+      - name: Manually install tidymodels/infer with retry logic
+        run: |
+          R -e 'for (i in 1:5) { tryCatch(remotes::install_github("tidymodels/infer"), error = function(e) Sys.sleep(30)) }'
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
 
       - uses: r-lib/actions/setup-renv@v2
 
