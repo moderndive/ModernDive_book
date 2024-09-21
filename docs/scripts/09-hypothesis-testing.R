@@ -252,7 +252,7 @@ spotify_metal_deephouse |>
           order = c("metal", "deep-house"))
 
 
-## ----null-distribution-infer, fig.show="hold", fig.cap="Null distribution.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 7)----
+## ----null-distribution-infer, fig.show="hold", fig.cap="Null distribution.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 4)----
 visualize(null_distribution, bins = 25)
 
 
@@ -354,7 +354,7 @@ movies
 movies_sample
 
 
-## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre.", fig.height=ifelse(knitr::is_latex_output(), 4, 7)----
+## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre.", fig.height=ifelse(knitr::is_latex_output(), 4, 4)----
 ggplot(data = movies_sample, aes(x = genre, y = rating)) +
   geom_boxplot() +
   labs(y = "IMDb rating")
@@ -450,7 +450,7 @@ flights_sample <- flights |>
   filter(carrier %in% c("HA", "AS"))
 
 
-## ----ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2023.", fig.height=ifelse(knitr::is_latex_output(), 2.8, 7)----
+## ----ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2023.", fig.height=ifelse(knitr::is_latex_output(), 2.8, 4)----
 ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
   geom_boxplot() +
   labs(x = "Carrier", y = "Air Time")

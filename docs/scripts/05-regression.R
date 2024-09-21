@@ -113,14 +113,14 @@ UN_data_ch5 |>
 
 
 
-## ----numxplot1, fig.cap="Scatterplot of relationship of life expectancy and fertility rate.", fig.height=ifelse(knitr::is_latex_output(), 4.5, 7)----
+## ----numxplot1, fig.cap="Scatterplot of relationship of life expectancy and fertility rate.", fig.height=ifelse(knitr::is_latex_output(), 4.5, 5)----
 ggplot(UN_data_ch5, 
        aes(x = life_exp, y = fert_rate)) +
   geom_point(alpha = 0.1) +
   labs(x = "Life Expectancy", y = "Fertility Rate")
 
 
-## ----numxplot3, fig.cap="Scatterplot of life expectancy and fertility rate with regression line.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 4, 7)----
+## ----numxplot3, fig.cap="Scatterplot of life expectancy and fertility rate with regression line.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 4, 5)----
 ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
   geom_point(alpha = 0.1) +
   labs(x = "Life Expectancy", 
@@ -214,7 +214,7 @@ gapminder2022 |> count(continent)
 
 
 
-## ----lifeexp2022hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=ifelse(knitr::is_latex_output(), 3.4, 7)----
+## ----lifeexp2022hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=ifelse(knitr::is_latex_output(), 3.4, 4)----
 ggplot(gapminder2022, aes(x = life_exp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", 
@@ -233,7 +233,7 @@ ggplot(gapminder2022, aes(x = life_exp)) +
 
 
 
-## ----catxplot1, fig.cap="Life expectancy in 2022 by continent (boxplot).", fig.height=ifelse(knitr::is_latex_output(), 3, 7)----
+## ----catxplot1, fig.cap="Life expectancy in 2022 by continent (boxplot).", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(gapminder2022, aes(x = continent, y = life_exp)) +
   geom_boxplot() +
   labs(x = "Continent", 
