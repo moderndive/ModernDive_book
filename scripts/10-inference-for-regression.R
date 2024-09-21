@@ -667,7 +667,7 @@ if (!file.exists("rds/boot_distn_slopes.rds")) {
 boot_distribution_mlr
 
 
-## ----boot-distn-slopes, fig.cap="Bootstrap distributions of partial slopes.", fig.height=8----
+## ----boot-distn-slopes, fig.cap="Bootstrap distributions of partial slopes.", fig.height=8, fig.width=6----
 visualize(boot_distribution_mlr)
 
 
@@ -680,7 +680,7 @@ confidence_intervals_mlr <- boot_distribution_mlr |>
 confidence_intervals_mlr
 
 
-## ----ci-slopes-multiple, fig.cap="95% confidence intervals for the partial slopes.", fig.height=8.5----
+## ----ci-slopes-multiple, fig.cap="95% confidence intervals for the partial slopes.", fig.height=8.5, fig.width=6----
 visualize(boot_distribution_mlr) +
   shade_confidence_interval(endpoints = confidence_intervals_mlr)
 
@@ -696,7 +696,7 @@ null_distribution_mlr <- coffee_quality |>
 null_distribution_mlr
 
 
-## ----fig.height=6, fig.cap="Shaded p-values for the partial slopes in this multiple linear regression."----
+## ----fig.height=ifelse(knitr::is_latex_output(), 6, 8), fig.width=6, fig.cap="Shaded p-values for the partial slopes in this multiple linear regression."----
 visualize(null_distribution_mlr) +
   shade_p_value(obs_stat = observed_fit, direction = "two-sided")
 
