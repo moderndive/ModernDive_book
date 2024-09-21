@@ -43,7 +43,7 @@ un_member_states_2024 |>
 
 
 
-## ----regline-ch10, fig.cap="Relationship with regression line.", fig.height=ifelse(knitr::is_latex_output(), 3, 7), message=FALSE----
+## ----regline-ch10, fig.cap="Relationship with regression line.", fig.height=ifelse(knitr::is_latex_output(), 3, 4), message=FALSE----
 ggplot(UN_data_ch10, aes(x = life_exp, y = fert_rate)) +
   geom_point() +
   labs(x = "Life Expectancy (x)", 
@@ -123,7 +123,7 @@ old_faithful_2024 |>
 n_old_faithful <- dim(old_faithful_2024)[1]
 
 
-## ----geyserplot1, echo=F, fig.cap="Scatterplot of relationship of eruption duration and waiting time.", fig.height=ifelse(knitr::is_latex_output(), 3, 7)----
+## ----geyserplot1, echo=F, fig.cap="Scatterplot of relationship of eruption duration and waiting time.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(old_faithful_2024, 
        aes(x = duration, y = waiting)) +
   geom_point(alpha = 0.3) +
@@ -178,7 +178,7 @@ spotify_for_anova |>
   )
 
 
-## ----fig.cap="Boxplot of popularity by genre.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 7)----
+## ----fig.cap="Boxplot of popularity by genre.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 4)----
 ggplot(spotify_for_anova, aes(x = track_genre, y = popularity)) +
   geom_boxplot() +
   labs(x = "Genre", y = "Popularity")
@@ -244,7 +244,7 @@ t_stat <- round(b1/se_b1,3)
 p_value <- round(2*(1 - pt(abs(t_stat), n_old_faithful-2)),3)
 
 
-## ----pvalue1, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 7), fig.cap="Illustration of a two-sided p-value for a t-test."----
+## ----pvalue1, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 4), fig.cap="Illustration of a two-sided p-value for a t-test."----
 n <- n_old_faithful
 shade <- function(t, a,b) {
   z = dt(t, df = n-2)
@@ -323,7 +323,7 @@ grid.arrange(g1, g2, ncol=2)
 
 
 
-## ----residual-plot, fig.cap="Plot of residuals against the regressor.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 7)----
+## ----residual-plot, fig.cap="Plot of residuals against the regressor.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 4)----
 ggplot(fitted_and_residuals, aes(x = duration, y = residual)) +
   geom_point(alpha = 0.6) +
   labs(x = "duration", y = "residual") +
@@ -355,7 +355,7 @@ n_reps <- 1000
 
 
 
-## ----bootstrap-distribution-slope, fig.show="hold", fig.cap="Bootstrap distribution of slope.", fig.height=ifelse(knitr::is_latex_output(), 2.2, 7)----
+## ----bootstrap-distribution-slope, fig.cap="Bootstrap distribution of slope.", fig.height=ifelse(knitr::is_latex_output(), 2.2, 4)----
 visualize(bootstrap_distn_slope)
 
 
@@ -569,7 +569,7 @@ mod_mult_final <- lm(total_cup_points ~ aroma + flavor + continent_of_origin,
 fit_and_res_mult <- get_regression_points(mod_mult_final)
 
 
-## ----fig.cap="Residuals vs. fitted values plot and QQ-plot for the multiple regression model.", fig.height=ifelse(knitr::is_latex_output(), 4, 7)----
+## ----fig.cap="Residuals vs. fitted values plot and QQ-plot for the multiple regression model.", fig.height=ifelse(knitr::is_latex_output(), 4, 4)----
 g1 <- fit_and_res_mult |>
   ggplot(aes(x = total_cup_points_hat, y = residual)) +
   geom_point() +

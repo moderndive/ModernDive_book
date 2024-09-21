@@ -201,7 +201,7 @@ gain_summary <- flights |>
 gain_summary
 
 
-## ----gain-hist, fig.cap="Histogram of gain variable.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 7)----
+## ----gain-hist, fig.cap="Histogram of gain variable.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(data = flights, mapping = aes(x = gain)) +
   geom_histogram(color = "white", bins = 20)
 
