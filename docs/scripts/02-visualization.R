@@ -33,7 +33,7 @@ envoy_flights <- flights |>
 
 
 
-## ----nolayers, fig.cap="A plot with no layers.", fig.height=ifelse(knitr::is_latex_output(), 2, 7)----
+## ----nolayers, fig.cap="A plot with no layers.", fig.height=ifelse(knitr::is_latex_output(), 2, 4)----
 ggplot(data = envoy_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 
@@ -41,14 +41,14 @@ ggplot(data = envoy_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 
 
-## ----alpha, fig.cap="Arrival vs. departure delays scatterplot with alpha = 0.2.", fig.height=ifelse(knitr::is_latex_output(), 3.8, 7)----
+## ----alpha, fig.cap="Arrival vs. departure delays scatterplot with alpha = 0.2.", fig.height=ifelse(knitr::is_latex_output(), 3.8, 4)----
 ggplot(data = envoy_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_point(alpha = 0.2)
 
 
 
 
-## ----jitter, fig.cap="Arrival versus departure delays jittered scatterplot.", fig.height=ifelse(knitr::is_latex_output(), 4.7, 7)----
+## ----jitter, fig.cap="Arrival versus departure delays jittered scatterplot.", fig.height=ifelse(knitr::is_latex_output(), 4.7, 5)----
 ggplot(data = envoy_flights, mapping = aes(x = dep_delay, y = arr_delay)) + 
   geom_jitter(width = 30, height = 30)
 
@@ -77,7 +77,7 @@ ggplot(data = early_january_2023_weather,
 
 
 
-## ----windspeed-on-line, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 0.8, 7), fig.cap="Plot of hourly wind speed recordings from NYC in 2023."----
+## ----windspeed-on-line, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 0.8, 4), fig.cap="Plot of hourly wind speed recordings from NYC in 2023."----
 ggplot(data = weather, mapping = aes(x = wind_speed, y = factor("A"))) +
   geom_point() +
   theme(
@@ -89,12 +89,12 @@ ggplot(data = weather, mapping = aes(x = wind_speed, y = factor("A"))) +
 
 
 
-## ----weather-histogram, warning=TRUE, fig.cap="Histogram of hourly wind speeds at three NYC airports.", fig.height=ifelse(knitr::is_latex_output(), 2.3, 7)----
+## ----weather-histogram, warning=TRUE, fig.cap="Histogram of hourly wind speeds at three NYC airports.", fig.height=ifelse(knitr::is_latex_output(), 2.3, 4)----
 ggplot(data = weather, mapping = aes(x = wind_speed)) +
   geom_histogram()
 
 
-## ----weather-histogram-2, message=FALSE, fig.cap="Histogram of hourly wind speeds at three NYC airports with white borders.", fig.height=ifelse(knitr::is_latex_output(), 3, 7)----
+## ----weather-histogram-2, message=FALSE, fig.cap="Histogram of hourly wind speeds at three NYC airports with white borders.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(data = weather, mapping = aes(x = wind_speed)) +
   geom_histogram(color = "white")
 
@@ -150,12 +150,12 @@ ggplot(data = weather, mapping = aes(x = wind_speed)) +
 
 
 
-## ----badbox, fig.cap="Invalid boxplot specification.", fig.height=ifelse(knitr::is_latex_output(), 1.9, 7)----
+## ----badbox, fig.cap="Invalid boxplot specification.", fig.height=ifelse(knitr::is_latex_output(), 1.9, 4)----
 ggplot(data = weather, mapping = aes(x = month, y = wind_speed)) +
   geom_boxplot()
 
 
-## ----monthtempbox, fig.cap="Side-by-side boxplot of wind speed split by month.", fig.height=ifelse(knitr::is_latex_output(), 4, 7)----
+## ----monthtempbox, fig.cap="Side-by-side boxplot of wind speed split by month.", fig.height=ifelse(knitr::is_latex_output(), 4, 4)----
 ggplot(data = weather, mapping = aes(x = factor(month), y = wind_speed)) +
   geom_boxplot()
 
@@ -175,17 +175,17 @@ fruits_counted <- tibble(
 
 
 
-## ----geombar, fig.cap="Barplot when counts are not pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 7)----
+## ----geombar, fig.cap="Barplot when counts are not pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 4)----
 ggplot(data = fruits, mapping = aes(x = fruit)) +
   geom_bar()
 
 
-## ----geomcol, fig.cap="Barplot when counts are pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 7)----
+## ----geomcol, fig.cap="Barplot when counts are pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 4)----
 ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
 
-## ----flightsbar, fig.cap="(ref:geombar)", fig.height=ifelse(knitr::is_latex_output(), 1.4, 7)----
+## ----flightsbar, fig.cap="(ref:geombar)", fig.height=ifelse(knitr::is_latex_output(), 1.4, 4)----
 ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
 

@@ -57,7 +57,7 @@ if(!is_latex_output())
   cat('Please review [Appendix A online](https://moderndive.com/A-appendixA.html) where we provide R code to work with different areas, probabilities, and values under a normal density curve. Here, we place focus on the insights of specific values and areas without dedicating time to those calculations.')
 
 
-## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 7), fig.width=3, fig.cap="Normal area within one standard deviation."----
+## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 4), fig.width=3, fig.cap="Normal area within one standard deviation."----
 ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1)) +
@@ -68,7 +68,7 @@ ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   scale_x_continuous(breaks = c(-1,1)) 
 
 
-## ----normal-curve-shaded-2a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 7), fig.width=3, fig.cap="Normal area within two standard deviations."----
+## ----normal-curve-shaded-2a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 4), fig.width=3, fig.cap="Normal area within two standard deviations."----
 ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -2)) +
@@ -153,7 +153,7 @@ almonds_sample_100 |>
 
 
 
-## ----normal-curve-shaded-3a, echo=FALSE, fig.cap="Normal curve with the shaded middle area being 0.95", fig.height=ifelse(knitr::is_latex_output(), 2, 7), fig.width=3----
+## ----normal-curve-shaded-3a, echo=FALSE, fig.cap="Normal curve with the shaded middle area being 0.95", fig.height=ifelse(knitr::is_latex_output(), 2, 4), fig.width=3----
 ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1.96)) +
@@ -282,7 +282,7 @@ boot_means <- almonds_sample_100 |>
 boot_means
 
 
-## ----one-thousand-sample-means, message=FALSE, fig.cap="Histogram of 1000 bootstrap sample mean weights of almonds.", fig.height=ifelse(knitr::is_latex_output(), 3.85, 7)----
+## ----one-thousand-sample-means, message=FALSE, fig.cap="Histogram of 1000 bootstrap sample mean weights of almonds.", fig.height=ifelse(knitr::is_latex_output(), 3.85, 4)----
 ggplot(boot_means, aes(x = mean_weight)) +
   geom_histogram(binwidth = 0.01, color = "white") +
   labs(x = "sample mean weight in grams")
