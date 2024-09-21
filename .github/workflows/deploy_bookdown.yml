@@ -1,6 +1,3 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
-
 on:
   push:
     branches: [main, master, v2]
@@ -13,7 +10,6 @@ name: bookdown
 jobs:
   bookdown:
     runs-on: ubuntu-latest
-    # Only restrict concurrency for non-PR jobs
     concurrency:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
     env:
@@ -35,44 +31,21 @@ jobs:
           R -e 'tinytex::tlmgr_install(c("xetex", "fontspec", "xunicode", "geometry", "fancyhdr", "titlesec", "titling", "tocloft", "sectsty", "environ", "trimspaces", "wrapfig", "multirow", "colortbl", "tabularx", "varwidth", "footnote", "threeparttable", "enumitem", "footmisc", "fncychap", "hyphenat", "biblatex", "biber"))'
         shell: bash
 
-      # Install Inconsolata font for LaTeX
-      - name: Install Inconsolata font
+      # Install fonts
+      - name: Install fonts
         run: |
           sudo apt-get update
-          sudo apt-get install -y fonts-inconsolata
-
-      # Install NanumGothic font for LaTeX
-      - name: Install NanumGothic font
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y fonts-nanum
+          sudo apt-get install -y fonts-inconsolata fonts-nanum
           sudo fc-cache -fv
         shell: bash
 
-      # Manually install tidymodels/infer with retry logic
-      - name: Manually install tidymodels/infer
+      # Install R packages with retry logic
+      - name: Install R packages with retry logic
         run: |
           R -e 'for (i in 1:5) { tryCatch(remotes::install_github("tidymodels/infer"), error = function(e) Sys.sleep(30)) }'
-        env:
-          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
-
-      # Manually install haozhu233/kableExtra with retry logic
-      - name: Manually install haozhu233/kableExtra with retry logic
-        run: |
           R -e 'for (i in 1:5) { tryCatch(remotes::install_github("haozhu233/kableExtra"), error = function(e) Sys.sleep(30)) }'
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
-
-      # Set up Rosetta 2 for Apple Silicon (ARM-based macOS)
-      - name: Install Rosetta 2
-        if: runner.os == 'macOS' && matrix.os == 'macos-latest'
-        run: |
-          softwareupdate --install-rosetta --agree-to-license
-
-      # Set compiler flags for ragg
-      - name: Set compiler flags
-        run: |
-          R -e 'Sys.setenv(PKG_CFLAGS = "-std=c++17")'
 
       - uses: r-lib/actions/setup-renv@v2
 
@@ -83,11 +56,17 @@ jobs:
           key: bookdown-${{ hashFiles('**/*Rmd') }}
           restore-keys: bookdown-
 
-      - name: Build site
-        run: bookdown::render_book("index.Rmd", quiet = TRUE)
+      - name: Build HTML book
+        run: |
+          R -e 'bookdown::render_book("index.Rmd", "bookdown::bs4_book", output_dir = "docs", quiet = TRUE)'
         shell: Rscript {0}
 
-      # Deploy to gh-pages if on main or master branch
+      - name: Build PDF book
+        run: |
+          R -e 'bookdown::render_book("index.Rmd", "bookdown::pdf_book", quiet = TRUE)'
+        shell: Rscript {0}
+
+      # Deploy HTML to GitHub Pages if on main or master branch
       - name: Deploy to GitHub pages 🚀
         if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         uses: JamesIves/github-pages-deploy-action@v4.6.4
@@ -102,3 +81,12 @@ jobs:
         with:
           branch: v2-publish
           folder: docs
+
+      # Optional: Save PDF to GitHub Releases
+      - name: Upload PDF to GitHub Release
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "*.pdf"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
