@@ -1,98 +1,82 @@
 ## ----eval=FALSE---------------------------------------------------------------
 ## library(tidyverse)
 ## library(moderndive)
-## library(ISLR2)
-
+## library(skimr)
+## library(ISLR)
 
 ## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
+# The code presented to the reader in the chunk above is different than the code
+# in this chunk that is actually run to build the book. In particular we do not
+# load the skimr package.
+# 
+# This is because skimr v1.0.6 which we used for the book causes all
+# kable() code to break for the remaining chapters in the book. v2 might
+# fix these issues:
+# https://github.com/moderndive/ModernDive_book/issues/271
+
+# As a workaround for v1 of ModernDive, all skimr::skim() output in this chapter
+# has been hard coded.
 library(tidyverse)
 library(moderndive)
-library(ISLR2)
+# library(skimr)
+library(gapminder)
 
 
 
 
 ## -----------------------------------------------------------------------------
-UN_data_ch6 <- un_member_states_2024 |>
-  select(country, 
-         life_expectancy_2022, 
-         fertility_rate_2022, 
-         income_group_2024)|>
-  na.omit()|>
-  rename(life_exp = life_expectancy_2022, 
-         fert_rate = fertility_rate_2022, 
-         income = income_group_2024)|>
-  mutate(income = factor(income, 
-                         levels = c("Low income", "Lower middle income", 
-                                    "Upper middle income", "High income")))
+evals_ch6 <- evals %>%
+  select(ID, score, age, gender)
 
 
 ## -----------------------------------------------------------------------------
-glimpse(UN_data_ch6)
+glimpse(evals_ch6)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch6 |> sample_n(size = 10)
-
+## evals_ch6 %>% sample_n(size = 5)
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch6 |>
-##   select(life_exp, fert_rate, income) |>
-##   tidy_summary()
-
-
-## ----echo=FALSE---------------------------------------------------------------
-UN_data_ch6 |> 
-  select(life_exp, fert_rate, income) |> 
-  tidy_summary() |> 
-  kbl() |>
-  kable_styling(
-    font_size = ifelse(is_latex_output(), 8, 16),
-    latex_options = c("HOLD_position")
-  ) 
+## evals_ch6 %>% select(score, age, gender) %>% skim()
 
 
 ## -----------------------------------------------------------------------------
-UN_data_ch6 |> 
-  get_correlation(formula = fert_rate ~ life_exp)
+evals_ch6 %>% 
+  get_correlation(formula = score ~ age)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
+## ggplot(evals_ch6, aes(x = age, y = score, color = gender)) +
 ##   geom_point() +
-##   labs(x = "Life Expectancy", y = "Fertility Rate", color = "Income group") +
+##   labs(x = "Age", y = "Teaching Score", color = "Gender") +
 ##   geom_smooth(method = "lm", se = FALSE)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## one_factor_model <- lm(fert_rate ~ income, data = UN_data_ch6)
-## coef(one_factor_model)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model and get the coefficients of the model
-## model_int <- lm(fert_rate ~ life_exp * income, data = UN_data_ch6)
-## coef(model_int)
-
-
-
+## # Fit regression model:
+## score_model_interaction <- lm(score ~ age * gender, data = evals_ch6)
+## 
+## # Get regression table:
+## get_regression_table(score_model_interaction)
 
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
+## ggplot(evals_ch6, aes(x = age, y = score, color = gender)) +
 ##   geom_point() +
-##   labs(x = "Life expectancy", y = "Fertility rate", color = "Income group") +
+##   labs(x = "Age", y = "Teaching Score", color = "Gender") +
 ##   geom_parallel_slopes(se = FALSE)
 
 
@@ -100,16 +84,16 @@ UN_data_ch6 |>
 
 ## ----eval=FALSE---------------------------------------------------------------
 ## # Fit regression model:
-## model_no_int <- lm(fert_rate ~ life_exp + income, data = UN_data_ch6)
-## 
-## # Get the coefficients of the model
-## coef(model_no_int)
+## score_model_parallel_slopes <- lm(score ~ age + gender, data = evals_ch6)
+## # Get regression table:
+## get_regression_table(score_model_parallel_slopes)
 
 
 
-
-
-
+## ----echo=FALSE---------------------------------------------------------------
+age_coef <- get_regression_table(score_model_parallel_slopes) %>%
+  filter(term == "age") %>%
+  pull(estimate)
 
 
 
@@ -121,7 +105,7 @@ UN_data_ch6 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## regression_points <- get_regression_points(model_int)
+## regression_points <- get_regression_points(score_model_interaction)
 ## regression_points
 
 
@@ -130,11 +114,10 @@ UN_data_ch6 |>
 
 
 
-
 ## ----message=FALSE------------------------------------------------------------
-library(ISLR2)
-credit_ch6 <- Credit |> as_tibble() |> 
-  select(debt = Balance, credit_limit = Limit, 
+library(ISLR)
+credit_ch6 <- Credit %>% as_tibble() %>% 
+  select(ID, debt = Balance, credit_limit = Limit, 
          income = Income, credit_rating = Rating, age = Age)
 
 
@@ -145,29 +128,24 @@ glimpse(credit_ch6)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## credit_ch6 |> sample_n(size = 5)
-
+## credit_ch6 %>% sample_n(size = 5)
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## credit_ch6 |> select(debt, credit_limit, income) |> tidy_summary()
+## credit_ch6 %>% select(debt, credit_limit, income) %>% skim()
 
 
-## ----echo=FALSE---------------------------------------------------------------
-credit_ch6 |> 
-  select(debt, credit_limit, income) |> 
-  tidy_summary() |> 
-    kbl(
-    digits = 3,
-    caption = "Summary of credit data",
-    booktabs = TRUE,
-    linesep = ""
-  ) |>
-  kable_styling(
-    font_size = ifelse(is_latex_output(), 8, 16),
-    latex_options = c("HOLD_position")
-  )
+## ----eval=FALSE---------------------------------------------------------------
+## credit_ch6 %>% get_correlation(debt ~ credit_limit)
+## credit_ch6 %>% get_correlation(debt ~ income)
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## credit_ch6 %>%
+##   select(debt, credit_limit, income) %>%
+##   cor()
+
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -186,23 +164,6 @@ credit_ch6 |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## credit_ch6 |> get_correlation(debt ~ credit_limit)
-## credit_ch6 |> get_correlation(debt ~ income)
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## credit_ch6 |> select(debt, credit_limit, income) |> cor()
-
-
-
-
-## -----------------------------------------------------------------------------
-credit_ch6 |> get_correlation(debt ~ 1000 * income)
-
-
-
-
 
 
 
@@ -212,17 +173,10 @@ credit_ch6 |> get_correlation(debt ~ 1000 * income)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
+## # Fit regression model:
 ## debt_model <- lm(debt ~ credit_limit + income, data = credit_ch6)
-## coef(debt_model)
-
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model and get the coefficients of the model
-## simple_model <- lm(debt ~ income, data = credit_ch6)
-## coef(simple_model)
-
+## # Get regression table:
+## get_regression_table(debt_model)
 
 
 
@@ -232,4 +186,115 @@ credit_ch6 |> get_correlation(debt ~ 1000 * income)
 
 ## ----eval=FALSE---------------------------------------------------------------
 ## get_regression_points(debt_model)
+
+
+
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## # Interaction model
+## ggplot(MA_schools,
+##        aes(x = perc_disadvan, y = average_sat_math, color = size)) +
+##   geom_point(alpha = 0.25) +
+##   geom_smooth(method = "lm", se = FALSE) +
+##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
+##        color = "School size", title = "Interaction model")
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## # Parallel slopes model
+## ggplot(MA_schools,
+##        aes(x = perc_disadvan, y = average_sat_math, color = size)) +
+##   geom_point(alpha = 0.25) +
+##   geom_parallel_slopes(se = FALSE) +
+##   labs(x = "Percent economically disadvantaged", y = "Math SAT Score",
+##        color = "School size", title = "Parallel slopes model")
+
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## model_2_interaction <- lm(average_sat_math ~ perc_disadvan * size,
+##                           data = MA_schools)
+## get_regression_table(model_2_interaction)
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## model_2_parallel_slopes <- lm(average_sat_math ~ perc_disadvan + size,
+##                               data = MA_schools)
+## get_regression_table(model_2_parallel_slopes)
+
+
+
+## -----------------------------------------------------------------------------
+get_regression_points(model_2_interaction) 
+
+
+## -----------------------------------------------------------------------------
+get_regression_points(model_2_interaction) %>% 
+  summarize(var_y = var(average_sat_math), 
+                      var_y_hat = var(average_sat_math_hat), 
+                      var_residual = var(residual))
+
+
+## ----model2-r-squared, echo=FALSE---------------------------------------------
+variances_interaction <- get_regression_points(model_2_interaction) %>% 
+  summarize(var_y = var(average_sat_math), 
+                      var_y_hat = var(average_sat_math_hat), 
+                      var_residual = var(residual)) %>% 
+  mutate(model = "Interaction", r_squared = var_y_hat/var_y)
+variances_parallel_slopes <- get_regression_points(model_2_parallel_slopes) %>% 
+  summarize(var_y = var(average_sat_math), 
+                      var_y_hat = var(average_sat_math_hat), 
+                      var_residual = var(residual)) %>% 
+  mutate(model = "Parallel slopes", r_squared = var_y_hat/var_y)
+
+bind_rows(
+  variances_interaction,
+  variances_parallel_slopes
+) %>% 
+  select(model, var_y, var_y_hat, var_residual, r_squared) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Comparing variances from interaction and parallel slopes models for MA school data", 
+    booktabs = TRUE,
+    linesep = ""
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("hold_position"))
+
+
+## ----model1-r-squared, echo=FALSE---------------------------------------------
+variances_interaction <- get_regression_points(score_model_interaction) %>% 
+  summarize(var_y = var(score), var_y_hat = var(score_hat), var_residual = var(residual)) %>% 
+  mutate(model = "Interaction", r_squared = var_y_hat/var_y)
+variances_parallel_slopes <- get_regression_points(score_model_parallel_slopes) %>% 
+  summarize(var_y = var(score), var_y_hat = var(score_hat), var_residual = var(residual)) %>% 
+  mutate(model = "Parallel slopes", r_squared = var_y_hat/var_y)
+
+bind_rows(
+  variances_interaction,
+  variances_parallel_slopes
+) %>% 
+  select(model, var_y, var_y_hat, var_residual, r_squared) %>% 
+  knitr::kable(
+    digits = 3,
+    caption = "Comparing variances from interaction and parallel slopes models for UT Austin data", 
+    booktabs = TRUE,
+    linesep = ""
+  ) %>% 
+  kable_styling(font_size = ifelse(knitr:::is_latex_output(), 10, 16),
+                latex_options = c("hold_position"))
+
+
+## -----------------------------------------------------------------------------
+# R-squared for interaction model:
+get_regression_summaries(model_2_interaction)
+# R-squared for parallel slopes model:
+get_regression_summaries(model_2_parallel_slopes)
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## credit_ch6 %>% select(debt, income) %>%
+##   mutate(income = income * 1000) %>%
+##   cor()
 
