@@ -1,7 +1,7 @@
 ## ----message=FALSE------------------------------------------------------------
 library(dplyr)
 library(ggplot2)
-library(nycflights13)
+library(nycflights23)
 
 
 
@@ -11,49 +11,49 @@ library(nycflights13)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## alaska_flights <- flights %>%
+## envoy_flights <- flights |>
 ##   filter(carrier == "AS")
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## portland_flights <- flights %>%
-##   filter(dest == "PDX")
-## View(portland_flights)
+## phoenix_flights <- flights |>
+##   filter(dest == "PHX")
+## View(phoenix_flights)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## btv_sea_flights_fall <- flights %>%
+## btv_sea_flights_fall <- flights |>
 ##   filter(origin == "JFK" & (dest == "BTV" | dest == "SEA") & month >= 10)
 ## View(btv_sea_flights_fall)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## btv_sea_flights_fall <- flights %>%
+## btv_sea_flights_fall <- flights |>
 ##   filter(origin == "JFK", (dest == "BTV" | dest == "SEA"), month >= 10)
 ## View(btv_sea_flights_fall)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## not_BTV_SEA <- flights %>%
+## not_BTV_SEA <- flights |>
 ##   filter(!(dest == "BTV" | dest == "SEA"))
 ## View(not_BTV_SEA)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights %>% filter(!dest == "BTV" | dest == "SEA")
+## flights |> filter(!dest == "BTV" | dest == "SEA")
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## many_airports <- flights %>%
-##   filter(dest == "SEA" | dest == "SFO" | dest == "PDX" |
+## many_airports <- flights |>
+##   filter(dest == "SEA" | dest == "SFO" | dest == "PHX" |
 ##          dest == "BTV" | dest == "BDL")
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## many_airports <- flights %>%
-##   filter(dest %in% c("SEA", "SFO", "PDX", "BTV", "BDL"))
+## many_airports <- flights |>
+##   filter(dest %in% c("SEA", "SFO", "PHX", "BTV", "BDL"))
 ## View(many_airports)
 
 
@@ -61,29 +61,34 @@ library(nycflights13)
 
 
 
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat("See [Appendix A online](https://moderndive.com/A-appendixA.html) for a glossary of such summary statistics.")
+
+
 
 
 
 
 ## -----------------------------------------------------------------------------
-summary_temp <- weather %>% 
-  summarize(mean = mean(temp), std_dev = sd(temp))
-summary_temp
+summary_windspeed <- weather |> 
+  summarize(mean = mean(wind_speed), std_dev = sd(wind_speed))
+summary_windspeed
 
 
 ## -----------------------------------------------------------------------------
-summary_temp <- weather %>% 
-  summarize(mean = mean(temp, na.rm = TRUE), 
-            std_dev = sd(temp, na.rm = TRUE))
-summary_temp
+summary_windspeed <- weather |> 
+  summarize(mean = mean(wind_speed, na.rm = TRUE), 
+            std_dev = sd(wind_speed, na.rm = TRUE))
+summary_windspeed
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## summary_temp <- weather %>%
-##   summarize(mean = mean(temp, na.rm = TRUE)) %>%
-##   summarize(std_dev = sd(temp, na.rm = TRUE))
+## summary_windspeed <- weather |>
+##   summarize(mean = mean(wind_speed, na.rm = TRUE)) |>
+##   summarize(std_dev = sd(wind_speed, na.rm = TRUE))
 
 
 
@@ -91,11 +96,18 @@ summary_temp
 
 
 ## -----------------------------------------------------------------------------
-summary_monthly_temp <- weather %>% 
-  group_by(month) %>% 
-  summarize(mean = mean(temp, na.rm = TRUE), 
-            std_dev = sd(temp, na.rm = TRUE))
-summary_monthly_temp
+summary_temp <- weather |> 
+  summarize(mean = mean(wind_speed, na.rm = TRUE), 
+            std_dev = sd(wind_speed, na.rm = TRUE))
+summary_temp
+
+
+## -----------------------------------------------------------------------------
+summary_monthly_windspeed <- weather |> 
+  group_by(month) |> 
+  summarize(mean = mean(wind_speed, na.rm = TRUE), 
+            std_dev = sd(wind_speed, na.rm = TRUE))
+summary_monthly_windspeed
 
 
 ## -----------------------------------------------------------------------------
@@ -103,42 +115,45 @@ diamonds
 
 
 ## -----------------------------------------------------------------------------
-diamonds %>% 
+diamonds |> 
   group_by(cut)
 
 
 
 
 ## -----------------------------------------------------------------------------
-diamonds %>% 
-  group_by(cut) %>% 
+diamonds |> 
+  group_by(cut) |> 
   summarize(avg_price = mean(price))
 
 
 ## -----------------------------------------------------------------------------
-diamonds %>% 
-  group_by(cut) %>% 
+diamonds |> 
+  group_by(cut) |> 
   ungroup()
 
 
 ## -----------------------------------------------------------------------------
-by_origin <- flights %>% 
-  group_by(origin) %>% 
+by_origin <- flights |> 
+  group_by(origin) |> 
   summarize(count = n())
 by_origin
 
 
 ## -----------------------------------------------------------------------------
-by_origin_monthly <- flights %>% 
-  group_by(origin, month) %>% 
+by_origin_monthly <- flights |> 
+  group_by(origin, month) |> 
   summarize(count = n())
+
+
+## -----------------------------------------------------------------------------
 by_origin_monthly
 
 
 ## -----------------------------------------------------------------------------
-by_origin_monthly_incorrect <- flights %>% 
-  group_by(origin) %>% 
-  group_by(month) %>% 
+by_origin_monthly_incorrect <- flights |> 
+  group_by(origin) |> 
+  group_by(month) |> 
   summarize(count = n())
 by_origin_monthly_incorrect
 
@@ -150,27 +165,29 @@ by_origin_monthly_incorrect
 
 
 ## ----eval=TRUE----------------------------------------------------------------
-weather <- weather %>% 
+weather <- weather |> 
   mutate(temp_in_C = (temp - 32) / 1.8)
 
 
 ## -----------------------------------------------------------------------------
-summary_monthly_temp <- weather %>% 
-  group_by(month) %>% 
+summary_monthly_temp <- weather |> 
+  group_by(month) |> 
   summarize(mean_temp_in_F = mean(temp, na.rm = TRUE), 
             mean_temp_in_C = mean(temp_in_C, na.rm = TRUE))
 summary_monthly_temp
 
 
 ## -----------------------------------------------------------------------------
-flights <- flights %>% 
+flights <- flights |> 
   mutate(gain = dep_delay - arr_delay)
 
 
 
 
+
+
 ## -----------------------------------------------------------------------------
-gain_summary <- flights %>% 
+gain_summary <- flights |> 
   summarize(
     min = min(gain, na.rm = TRUE),
     q1 = quantile(gain, 0.25, na.rm = TRUE),
@@ -184,13 +201,13 @@ gain_summary <- flights %>%
 gain_summary
 
 
-## ----gain-hist, fig.cap="Histogram of gain variable.", message=FALSE, fig.height=3----
+## ----gain-hist, fig.cap="Histogram of gain variable.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(data = flights, mapping = aes(x = gain)) +
   geom_histogram(color = "white", bins = 20)
 
 
 ## -----------------------------------------------------------------------------
-flights <- flights %>% 
+flights <- flights |> 
   mutate(
     gain = dep_delay - arr_delay,
     hours = air_time / 60,
@@ -203,19 +220,19 @@ flights <- flights %>%
 
 
 ## -----------------------------------------------------------------------------
-freq_dest <- flights %>% 
-  group_by(dest) %>% 
+freq_dest <- flights |> 
+  group_by(dest) |> 
   summarize(num_flights = n())
 freq_dest
 
 
 ## -----------------------------------------------------------------------------
-freq_dest %>% 
+freq_dest |> 
   arrange(num_flights)
 
 
 ## -----------------------------------------------------------------------------
-freq_dest %>% 
+freq_dest |> 
   arrange(desc(num_flights))
 
 
@@ -226,7 +243,7 @@ freq_dest %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_joined <- flights %>%
+## flights_joined <- flights |>
 ##   inner_join(airlines, by = "carrier")
 ## View(flights)
 ## View(flights_joined)
@@ -239,23 +256,23 @@ freq_dest %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_with_airport_names <- flights %>%
+## flights_with_airport_names <- flights |>
 ##   inner_join(airports, by = c("dest" = "faa"))
 ## View(flights_with_airport_names)
 
 
 ## -----------------------------------------------------------------------------
-named_dests <- flights %>%
-  group_by(dest) %>%
-  summarize(num_flights = n()) %>%
-  arrange(desc(num_flights)) %>%
-  inner_join(airports, by = c("dest" = "faa")) %>%
+named_dests <- flights |>
+  group_by(dest) |>
+  summarize(num_flights = n()) |>
+  arrange(desc(num_flights)) |>
+  inner_join(airports, by = c("dest" = "faa")) |>
   rename(airport_name = name)
 named_dests
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_weather_joined <- flights %>%
+## flights_weather_joined <- flights |>
 ##   inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
 ## View(flights_weather_joined)
 
@@ -265,7 +282,7 @@ named_dests
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## joined_flights <- flights %>%
+## joined_flights <- flights |>
 ##   inner_join(airlines, by = "carrier")
 ## View(joined_flights)
 
@@ -283,44 +300,81 @@ named_dests
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights %>%
+## flights |>
 ##   select(carrier, flight)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_no_year <- flights %>% select(-year)
+## flights_no_year <- flights |> select(-year)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flight_arr_times <- flights %>% select(month:day, arr_time:sched_arr_time)
+## flight_arr_times <- flights |> select(month:day, arr_time:sched_arr_time)
 ## flight_arr_times
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_reorder <- flights %>%
+## flights |> select(starts_with("a"))
+## flights |> select(ends_with("delay"))
+## flights |> select(contains("time"))
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## flights_reorder <- flights |>
 ##   select(year, month, day, hour, minute, time_hour, everything())
 ## glimpse(flights_reorder)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights %>% select(starts_with("a"))
-## flights %>% select(ends_with("delay"))
-## flights %>% select(contains("time"))
+## flights_relocate <- flights |>
+##   relocate(hour, minute, time_hour, .after = day)
+## glimpse(flights_relocate)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_time_new <- flights %>%
-##   select(dep_time, arr_time) %>%
+## flights_time_new <- flights |>
+##   select(dep_time, arr_time) |>
 ##   rename(departure_time = dep_time, arrival_time = arr_time)
 ## glimpse(flights_time_new)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## named_dests %>% top_n(n = 10, wt = num_flights)
+## named_dests |> top_n(n = 10, wt = num_flights)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## named_dests  %>%
-##   top_n(n = 10, wt = num_flights) %>%
+## named_dests |>
+##   top_n(n = 10, wt = num_flights) |>
 ##   arrange(desc(num_flights))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat("In the online [Appendix C](https://moderndive.com/C-appendixC.html), we provide a page of data wrangling 'tips and tricks' consisting of the most common data wrangling questions we've encountered in student projects (shout out to [Dr. Jenny Smetzer](https://www.scsparkscience.org/fellow/jennifer-smetzer/) for her work setting this up!):
+
+* Dealing with missing values
+* Reordering bars in a barplot
+* Showing money on an axis
+* Changing values inside cells
+* Converting a numerical variable to a categorical one
+* Computing proportions
+* Dealing with %, commas, and dollar signs
+
+However, to provide a tips and tricks page covering all possible data wrangling questions would be too long to be useful!")
 

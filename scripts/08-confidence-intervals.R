@@ -6,6 +6,205 @@ library(infer)
 
 
 
+## ----echo=FALSE---------------------------------------------------------------
+almonds_sample_100 <- moderndive::almonds_sample_100
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100
+
+
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100 |>
+  summarize(sample_mean = mean(weight))
+
+
+## ----echo=FALSE---------------------------------------------------------------
+xbar <- mean(almonds_sample_100$weight)
+
+
+
+
+
+
+## ----echo=FALSE---------------------------------------------------------------
+num_almonds <- nrow(almonds_bowl)
+mu <- mean(almonds_bowl$weight)
+sigma <- pop_sd(almonds_bowl$weight)
+
+
+## -----------------------------------------------------------------------------
+almonds_bowl |> 
+  summarize(population_mean = mean(weight), 
+            population_sd = pop_sd(weight))
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100 |> 
+  summarize(mean_weight = mean(weight), 
+            sd_weight = sd(weight), 
+            sample_size = n())
+
+
+
+
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat('Please review [Appendix A online](https://moderndive.com/A-appendixA.html) where we provide R code to work with different areas, probabilities, and values under a normal density curve. Here, we place focus on the insights of specific values and areas without dedicating time to those calculations.')
+
+
+## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 4), fig.width=3, fig.cap="Normal area within one standard deviation."----
+ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1, 1)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(1, 4)) +
+  labs(x = "z", y = "") +
+  scale_y_continuous(breaks = NULL) +
+  scale_x_continuous(breaks = c(-1,1)) 
+
+
+## ----normal-curve-shaded-2a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 4), fig.width=3, fig.cap="Normal area within two standard deviations."----
+ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -2)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-2, 2)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(2, 4)) +
+  labs(x = "z", y = "") +
+  scale_y_continuous(breaks = NULL) +
+  scale_x_continuous(breaks = c(-2,2))
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat('Please see [Appendix A online](https://moderndive.com/A-appendixA.html) to produce these or other calculations in R. ')
+
+
+
+
+
+
+## ----echo=FALSE---------------------------------------------------------------
+se_xbar <- sigma / sqrt(num_almonds_sample)
+
+
+
+
+## ----echo=FALSE---------------------------------------------------------------
+sample_mean <- mean(almonds_sample_100$weight)
+deviance <- sample_mean - mu
+z_almond <- deviance / se_xbar
+
+
+## ----echo=FALSE---------------------------------------------------------------
+lower_bound <- sample_mean - 1.96 * sigma / sqrt(100)
+upper_bound <- sample_mean + 1.96 * sigma / sqrt(100)
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100 |>
+  summarize(
+    sample_mean = mean(weight),
+    lower_bound = mean(weight) - 1.96 * sigma / sqrt(length(weight)),
+    upper_bound = mean(weight) + 1.96 * sigma / sqrt(length(weight))
+  )
+
+
+
+
+
+
+
+
+
+
+## ----echo=FALSE, results="asis"-----------------------------------------------
+if(!is_latex_output()) 
+  cat("Please see [Appendix A online](https://moderndive.com/A-appendixA.html) for calculations of probabilities for $t$ density curves with different degrees of freedom.")
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100 |>
+  summarize(sample_mean = mean(weight), sample_sd = sd(weight))
+
+
+## ----echo=FALSE---------------------------------------------------------------
+sample_s <- sd(almonds_sample_100$weight)
+lower_bound_t <- with(almonds_sample,
+                     mean(weight) - 1.98*sd(weight)/sqrt(length(weight)))
+upper_bound_t <- with(almonds_sample,
+                     mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100 |>
+  summarize(sample_mean = mean(weight), sample_sd = sd(weight),
+            lower_bound = mean(weight) - 1.98*sd(weight)/sqrt(length(weight)),
+            upper_bound = mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
+
+
+
+
+
+
+
+
+## ----normal-curve-shaded-3a, echo=FALSE, fig.cap="Normal curve with the shaded middle area being 0.95", fig.height=ifelse(knitr::is_latex_output(), 2, 4), fig.width=3----
+ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1.96)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey80", xlim = c(-1.96, 1.96)) +
+  geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(1.96, 4)) +
+  labs(x = "z", y = "") +
+  scale_y_continuous(breaks = NULL) +scale_x_continuous(breaks = NULL) + 
+  geom_point(aes(x=0, y=0), color="red") +
+  geom_point(aes(x=-1.96, y=0), color="red") +
+  geom_point(aes(x=1.96, y=0), color="red") +
+  annotate(geom="text", x=-1.96, y=-0.03, label = bquote("-q"),
+           color="red") +
+  annotate(geom="text", x=1.96, y=-0.03, label = bquote("q"),
+           color="red") +
+  annotate(geom="text", x=0, y=-0.04, label = bquote("0"),
+           color="red")
+
+
+## -----------------------------------------------------------------------------
+qnorm(0.025)
+
+
+## -----------------------------------------------------------------------------
+qnorm(0.975)
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## qnorm(0.95)
+
+
+## ----echo=FALSE---------------------------------------------------------------
+round(qnorm(0.95), 3)
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100 |>
+  summarize(sample_mean = mean(weight),
+            lower_bound = mean(weight) - qnorm(0.95)*sigma/sqrt(length(weight)),
+            upper_bound = mean(weight) + qnorm(0.95)*sigma/sqrt(length(weight)))
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## qnorm(0.9)
+
+
+## ----echo=FALSE---------------------------------------------------------------
+round(qnorm(0.9), 3)
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100
 
 
 
@@ -13,229 +212,132 @@ library(infer)
 
 
 ## -----------------------------------------------------------------------------
-pennies_sample
+almonds_sample_100 <- almonds_sample_100 |> 
+  ungroup() |> 
+  select(-replicate)
+almonds_sample_100
 
 
-## ----pennies-sample-histogram, fig.cap="Distribution of year on 50 US pennies."----
-ggplot(pennies_sample, aes(x = year)) +
-  geom_histogram(binwidth = 10, color = "white")
-
-
-## -----------------------------------------------------------------------------
-x_bar <- pennies_sample %>% 
-  summarize(mean_year = mean(year))
-x_bar
-
-
-
-
-
-
-
-
-
-
+## ----echo=-1------------------------------------------------------------------
+set.seed(202)
+boot_sample <- almonds_sample_100 |> 
+  rep_sample_n(size = 100, replace = TRUE, reps = 1)
 
 
 ## -----------------------------------------------------------------------------
-pennies_resample <- tibble(
-  year = c(1976, 1962, 1976, 1983, 2017, 2015, 2015, 1962, 2016, 1976, 
-           2006, 1997, 1988, 2015, 2015, 1988, 2016, 1978, 1979, 1997, 
-           1974, 2013, 1978, 2015, 2008, 1982, 1986, 1979, 1981, 2004, 
-           2000, 1995, 1999, 2006, 1979, 2015, 1979, 1998, 1981, 2015, 
-           2000, 1999, 1988, 2017, 1992, 1997, 1990, 1988, 2006, 2000)
-)
+boot_sample
+
+
+## -----------------------------------------------------------------------------
+boot_sample |> 
+  summarize(mean_weight = mean(weight))
+
+
+
+## ----eval=FALSE---------------------------------------------------------------
+## ggplot(boot_sample, aes(x = weight)) +
+##   geom_histogram(binwidth = 0.1, color = "white") +
+##   labs(title = "Resample of 100 weights")
+## ggplot(almonds_sample_100, aes(x = weight)) +
+##   geom_histogram(binwidth = 0.1, color = "white") +
+##   labs(title = "Original sample of 100 weights")
+
+
+
+
+## ----echo= -1-----------------------------------------------------------------
+set.seed(20)
+bootstrap_samples_35 <- almonds_sample_100 |> 
+  rep_sample_n(size = 100, replace = TRUE, reps = 35)
+bootstrap_samples_35
+
+
+## -----------------------------------------------------------------------------
+boot_means <- bootstrap_samples_35 |> 
+  summarize(mean_weight = mean(weight))
+boot_means
+
+
+## ----resampling-35, fig.cap="Distribution of 35 sample means from 35 bootrap samples."----
+ggplot(boot_means, aes(x = mean_weight)) +
+  geom_histogram(binwidth = 0.01, color = "white") +
+  labs(x = "sample mean weight in grams")
+
+
+## -----------------------------------------------------------------------------
+# Retrieve 1000 bootstrap samples
+bootstrap_samples <- almonds_sample_100 |> 
+  rep_sample_n(size = 100, replace = TRUE, reps = 1000)
+
+# Compute sample means from the bootstrap samples
+boot_means <- bootstrap_samples |> 
+  summarize(mean_weight = mean(weight))
+
+
+## ----echo=-1------------------------------------------------------------------
+set.seed(20)
+boot_means <- almonds_sample_100 |> 
+  rep_sample_n(size = 100, replace = TRUE, reps = 1000) |> 
+  summarize(mean_weight = mean(weight))
+boot_means
+
+
+## ----one-thousand-sample-means, message=FALSE, fig.cap="Histogram of 1000 bootstrap sample mean weights of almonds.", fig.height=ifelse(knitr::is_latex_output(), 3.85, 4)----
+ggplot(boot_means, aes(x = mean_weight)) +
+  geom_histogram(binwidth = 0.01, color = "white") +
+  labs(x = "sample mean weight in grams")
+
+
+## -----------------------------------------------------------------------------
+boot_means |> 
+  summarize(mean_of_means = mean(mean_weight),
+            sd_of_means = sd(mean_weight))
+
+
+
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(pennies_resample, aes(x = year)) +
-##   geom_histogram(binwidth = 10, color = "white") +
-##   labs(title = "Resample of 50 pennies")
-## ggplot(pennies_sample, aes(x = year)) +
-##   geom_histogram(binwidth = 10, color = "white") +
-##   labs(title = "Original sample of 50 pennies")
-
-
-
-
-## -----------------------------------------------------------------------------
-pennies_resample %>% 
-  summarize(mean_year = mean(year))
-
-
-
-
-
-
-
-## -----------------------------------------------------------------------------
-pennies_resamples
-
-
-## -----------------------------------------------------------------------------
-resampled_means <- pennies_resamples %>% 
-  group_by(name) %>% 
-  summarize(mean_year = mean(year))
-resampled_means
-
-
+## almonds_sample_100 |>
+##   rep_sample_n(size = 100, replace = TRUE, reps = 1000)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## virtual_shovel <- bowl %>%
-##   rep_sample_n(size = 50)
-
-
-## -----------------------------------------------------------------------------
-virtual_resample <- pennies_sample %>% 
-  rep_sample_n(size = 50, replace = TRUE)
-
-
-## -----------------------------------------------------------------------------
-virtual_resample
-
-
-## -----------------------------------------------------------------------------
-virtual_resample %>% 
-  summarize(resample_mean = mean(year))
-
-
-## -----------------------------------------------------------------------------
-virtual_resamples <- pennies_sample %>% 
-  rep_sample_n(size = 50, replace = TRUE, reps = 35)
-virtual_resamples
-
-
-## -----------------------------------------------------------------------------
-virtual_resampled_means <- virtual_resamples %>% 
-  group_by(replicate) %>% 
-  summarize(mean_year = mean(year))
-virtual_resampled_means
-
-
-## ----tactile-resampling-7, fig.cap="Distribution of 35 sample means from 35 resamples."----
-ggplot(virtual_resampled_means, aes(x = mean_year)) +
-  geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
-  labs(x = "Resample mean year")
-
-
-
-
-## -----------------------------------------------------------------------------
-# Repeat resampling 1000 times
-virtual_resamples <- pennies_sample %>% 
-  rep_sample_n(size = 50, replace = TRUE, reps = 1000)
-
-# Compute 1000 sample means
-virtual_resampled_means <- virtual_resamples %>% 
-  group_by(replicate) %>% 
-  summarize(mean_year = mean(year))
-
-
-## -----------------------------------------------------------------------------
-virtual_resampled_means <- pennies_sample %>% 
-  rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>% 
-  group_by(replicate) %>% 
-  summarize(mean_year = mean(year))
-virtual_resampled_means
-
-
-## ----one-thousand-sample-means, message=FALSE, fig.cap="Bootstrap resampling distribution based on 1000 resamples."----
-ggplot(virtual_resampled_means, aes(x = mean_year)) +
-  geom_histogram(binwidth = 1, color = "white", boundary = 1990) +
-  labs(x = "sample mean")
-
-
-## -----------------------------------------------------------------------------
-virtual_resampled_means %>% 
-  summarize(mean_of_means = mean(mean_year))
-
-
-
-
-
-
-
-
-
-
-
-## ----percentile-method, echo=FALSE, message=FALSE, fig.cap="(ref:perc-method)", fig.height=3.4----
-ggplot(virtual_resampled_means, aes(x = mean_year)) +
-  geom_histogram(binwidth = 1, color = "white", boundary = 1988) +
-  labs(x = "Resample sample mean") +
-  scale_x_continuous(breaks = seq(1988, 2006, 2)) +
-  geom_vline(xintercept = percentile_ci[[1, 1]], size = 1) +
-  geom_vline(xintercept = percentile_ci[[1, 2]], size = 1)
-
-
-
-
-## -----------------------------------------------------------------------------
-virtual_resampled_means %>% 
-  summarize(SE = sd(mean_year))
-
-
+## almonds_sample_100 |>
+##   rep_sample_n(size = 100, replace = TRUE, reps = 1000) |>
+##   summarize(mean_weight = mean(weight))
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## standard_error_ci <- bootstrap_distribution %>%
-##   get_ci(type = "se", point_estimate = x_bar)
-## standard_error_ci
-
-
-
-
+## almonds_sample_100 |>
+##   summarize(stat = mean(weight))
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   rep_sample_n(size = 50, replace = TRUE, reps = 1000)
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>%
-##   group_by(replicate)
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>%
-##   group_by(replicate) %>%
-##   summarize(mean_year = mean(year))
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   summarize(stat = mean(year))
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   specify(response = year) %>%
+## almonds_sample_100 |>
+##   specify(response = weight) |>
 ##   calculate(stat = "mean")
 
 
 
 
 ## -----------------------------------------------------------------------------
-pennies_sample %>% 
-  specify(response = year)
+almonds_sample_100 |> 
+  specify(response = weight)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   specify(formula = year ~ NULL)
+## almonds_sample_100 |>
+##   specify(formula = weight ~ NULL)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   specify(response = year) %>%
+## almonds_sample_100 |>
+##   specify(response = weight) |>
 ##   generate(reps = 1000, type = "bootstrap")
 
 
@@ -246,21 +348,17 @@ pennies_sample %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distribution <- pennies_sample %>%
-##   specify(response = year) %>%
-##   generate(reps = 1000) %>%
+## bootstrap_means <- almonds_sample_100 |>
+##   specify(response = weight) |>
+##   generate(reps = 1000) |>
 ##   calculate(stat = "mean")
-## bootstrap_distribution
+## bootstrap_means
 
 
 
 
 
 
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution)
 
 
 
@@ -270,127 +368,56 @@ pennies_sample %>%
 
 
 ## -----------------------------------------------------------------------------
-percentile_ci <- bootstrap_distribution %>% 
+bootstrap_means
+
+
+## -----------------------------------------------------------------------------
+percentile_ci <- bootstrap_means |> 
   get_confidence_interval(level = 0.95, type = "percentile")
 percentile_ci
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution) +
+## visualize(bootstrap_means) +
 ##   shade_confidence_interval(endpoints = percentile_ci)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution) +
+## visualize(bootstrap_means) +
 ##   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 
 
 ## -----------------------------------------------------------------------------
-standard_error_ci <- bootstrap_distribution %>% 
-  get_confidence_interval(type = "se", point_estimate = x_bar)
+SE_boot <- bootstrap_means |>
+  summarize(SE = sd(stat)) |>
+  pull(SE)
+SE_boot
+
+
+## -----------------------------------------------------------------------------
+almonds_sample_100 |>
+  summarize(lower_bound = mean(weight) - 1.96 * SE_boot,
+            upper_bound = mean(weight) + 1.96 * SE_boot)
+
+
+## -----------------------------------------------------------------------------
+x_bar <- almonds_sample_100 |> 
+  specify(response = weight) |> 
+  calculate(stat = "mean")
+x_bar
+
+
+## -----------------------------------------------------------------------------
+standard_error_ci <- bootstrap_means |> 
+  get_confidence_interval(type = "se", point_estimate = x_bar, level = 0.95)
 standard_error_ci
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution) +
+## visualize(bootstrap_means) +
 ##   shade_confidence_interval(endpoints = standard_error_ci)
-
-
-
-
-
-
-
-
-## -----------------------------------------------------------------------------
-bowl %>% 
-  summarize(p_red = mean(color == "red"))
-
-
-
-## -----------------------------------------------------------------------------
-bowl_sample_1
-
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## bowl_sample_1 %>%
-##   specify(response = color)
-
-
-## -----------------------------------------------------------------------------
-bowl_sample_1 %>% 
-  specify(response = color, success = "red")
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## bowl_sample_1 %>%
-##   specify(response = color, success = "red") %>%
-##   generate(reps = 1000, type = "bootstrap")
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## sample_1_bootstrap <- bowl_sample_1 %>%
-##   specify(response = color, success = "red") %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
-##   calculate(stat = "prop")
-## sample_1_bootstrap
-
-
-
-
-## -----------------------------------------------------------------------------
-percentile_ci_1 <- sample_1_bootstrap %>% 
-  get_confidence_interval(level = 0.95, type = "percentile")
-percentile_ci_1
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## sample_1_bootstrap %>%
-##   visualize(bins = 15) +
-##   shade_confidence_interval(endpoints = percentile_ci_1) +
-##   geom_vline(xintercept = 0.42, linetype = "dashed")
-
-
-
-
-## -----------------------------------------------------------------------------
-bowl_sample_2 <- bowl %>% rep_sample_n(size = 50)
-bowl_sample_2
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## sample_2_bootstrap <- bowl_sample_2 %>%
-##   specify(response = color,
-##           success = "red") %>%
-##   generate(reps = 1000,
-##            type = "bootstrap") %>%
-##   calculate(stat = "prop")
-## sample_2_bootstrap
-
-
-
-
-## -----------------------------------------------------------------------------
-percentile_ci_2 <- sample_2_bootstrap %>% 
-  get_confidence_interval(level = 0.95, type = "percentile")
-percentile_ci_2
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -406,20 +433,20 @@ mythbusters_yawn
 
 
 ## -----------------------------------------------------------------------------
-mythbusters_yawn %>% 
-  group_by(group, yawn) %>% 
-  summarize(count = n())
+mythbusters_yawn |> 
+  group_by(group, yawn) |> 
+  summarize(count = n(), .groups = "keep")
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn %>%
+## mythbusters_yawn |>
 ##   specify(formula = yawn ~ group)
 
 
 ## -----------------------------------------------------------------------------
-mythbusters_yawn %>% 
+mythbusters_yawn |> 
   specify(formula = yawn ~ group, success = "yes")
 
 
@@ -428,152 +455,58 @@ first_six_rows <- head(mythbusters_yawn)
 first_six_rows
 
 
+## ----echo=FALSE---------------------------------------------------------------
+set.seed(22)
+
+
 ## -----------------------------------------------------------------------------
-first_six_rows %>% 
+first_six_rows |> 
   sample_n(size = 6, replace = TRUE)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn %>%
-##   specify(formula = yawn ~ group, success = "yes") %>%
+## mythbusters_yawn |>
+##   specify(formula = yawn ~ group, success = "yes") |>
 ##   generate(reps = 1000, type = "bootstrap")
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn %>%
-##   specify(formula = yawn ~ group, success = "yes") %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
+## mythbusters_yawn |>
+##   specify(formula = yawn ~ group, success = "yes") |>
+##   generate(reps = 1000, type = "bootstrap") |>
 ##   calculate(stat = "diff in props")
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distribution_yawning <- mythbusters_yawn %>%
-##   specify(formula = yawn ~ group, success = "yes") %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
+## bootstrap_distribution_yawning <- mythbusters_yawn |>
+##   specify(formula = yawn ~ group, success = "yes") |>
+##   generate(reps = 1000, type = "bootstrap") |>
 ##   calculate(stat = "diff in props", order = c("seed", "control"))
 ## bootstrap_distribution_yawning
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution_yawning) +
-##   geom_vline(xintercept = 0)
-
 
 
 ## -----------------------------------------------------------------------------
-bootstrap_distribution_yawning %>% 
+bootstrap_distribution_yawning |> 
   get_confidence_interval(type = "percentile", level = 0.95)
 
 
 
 ## -----------------------------------------------------------------------------
-obs_diff_in_props <- mythbusters_yawn %>% 
-  specify(formula = yawn ~ group, success = "yes") %>% 
-  # generate(reps = 1000, type = "bootstrap") %>% 
+obs_diff_in_props <- mythbusters_yawn |> 
+  specify(formula = yawn ~ group, success = "yes") |> 
+  # generate(reps = 1000, type = "bootstrap") |> 
   calculate(stat = "diff in props", order = c("seed", "control"))
 obs_diff_in_props
 
 
 ## -----------------------------------------------------------------------------
-myth_ci_se <- bootstrap_distribution_yawning %>% 
+myth_ci_se <- bootstrap_distribution_yawning |> 
   get_confidence_interval(type = "se", point_estimate = obs_diff_in_props)
 myth_ci_se
-
-
-
-
-## ----echo=FALSE---------------------------------------------------------------
-set.seed(76)
-
-
-## ----sampling-distribution-part-deux, fig.show="hold", fig.cap="Previously seen sampling distribution of sample proportion red for $n = 1000$.", fig.height=2----
-# Take 1000 virtual samples of size 50 from the bowl:
-virtual_samples <- bowl %>% 
-  rep_sample_n(size = 50, reps = 1000)
-# Compute the sampling distribution of 1000 values of p-hat
-sampling_distribution <- virtual_samples %>% 
-  group_by(replicate) %>% 
-  summarize(red = sum(color == "red")) %>% 
-  mutate(prop_red = red / 50)
-# Visualize sampling distribution of p-hat
-ggplot(sampling_distribution, aes(x = prop_red)) +
-  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
-  labs(x = "Proportion of 50 balls that were red", 
-       title = "Sampling distribution")
-
-
-## -----------------------------------------------------------------------------
-sampling_distribution %>% summarize(se = sd(prop_red))
-
-
-
-## ----echo=FALSE---------------------------------------------------------------
-set.seed(76)
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distribution <- bowl_sample_1 %>%
-##   specify(response = color, success = "red") %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
-##   calculate(stat = "prop")
-
-
-
-
-
-
-## -----------------------------------------------------------------------------
-bootstrap_distribution %>% summarize(se = sd(stat))
-
-
-
-
-
-
-
-
-
-## ----message=FALSE------------------------------------------------------------
-conf_ints <- tactile_prop_red %>% 
-  rename(p_hat = prop_red) %>% 
-  mutate(
-    n = 50,
-    SE = sqrt(p_hat * (1 - p_hat) / n),
-    MoE = 1.96 * SE,
-    lower_ci = p_hat - MoE,
-    upper_ci = p_hat + MoE
-  )
-
-
-
-
-
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## # First: Take 100 virtual samples of n=50 balls
-## virtual_samples <- bowl %>%
-##   rep_sample_n(size = 50, reps = 100)
-## 
-## # Second: For each virtual sample compute the proportion red
-## virtual_prop_red <- virtual_samples %>%
-##   group_by(replicate) %>%
-##   summarize(red = sum(color == "red")) %>%
-##   mutate(prop_red = red / 50)
-## 
-## # Third: Compute the 95% confidence interval as before
-## virtual_prop_red <- virtual_prop_red %>%
-##   rename(p_hat = prop_red) %>%
-##   mutate(
-##     n = 50,
-##     SE = sqrt(p_hat*(1-p_hat)/n),
-##     MoE = 1.96 * SE,
-##     lower_ci = p_hat - MoE,
-##     upper_ci = p_hat + MoE
-##   )
 
