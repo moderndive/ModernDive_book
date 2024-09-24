@@ -63,7 +63,7 @@ library(nycflights23)
 
 ## ----echo=FALSE, results="asis"-----------------------------------------------
 if(!is_latex_output()) 
-  cat("See [Appendix A online](https://moderndive.com/A-appendixA.html) for a glossary of such summary statistics.")
+  cat("See [Appendix A online](https://moderndive.com/v2/appendixa) for a glossary of such summary statistics.")
 
 
 
@@ -366,7 +366,7 @@ named_dests
 
 ## ----echo=FALSE, results="asis"-----------------------------------------------
 if(!is_latex_output()) 
-  cat("In the online [Appendix C](https://moderndive.com/C-appendixC.html), we provide a page of data wrangling 'tips and tricks' consisting of the most common data wrangling questions we've encountered in student projects (shout out to [Dr. Jenny Smetzer](https://www.scsparkscience.org/fellow/jennifer-smetzer/) for her work setting this up!):
+  cat("In the online [Appendix C](https://moderndive.com/v2/appendixc.html), we provide a page of data wrangling 'tips and tricks' consisting of the most common data wrangling questions we've encountered in student projects (shout out to [Dr. Jenny Smetzer](https://www.scsparkscience.org/fellow/jennifer-smetzer/) for her work setting this up!):
 
 * Dealing with missing values
 * Reordering bars in a barplot
