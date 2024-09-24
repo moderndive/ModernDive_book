@@ -129,7 +129,7 @@ virtual_prop_red
 
 ## ----echo=FALSE, results="asis"-----------------------------------------------
 if(!is_latex_output()) 
-  cat('Please read the "Normal distribution" section of ([Appendix A online](https://moderndive.com/A-appendixA.html)) for a brief discussion of this distribution and its properties.')
+  cat('Please read the "Normal distribution" section of ([Appendix A online](https://moderndive.com/v2/appendixa)) for a brief discussion of this distribution and its properties.')
 
 
 

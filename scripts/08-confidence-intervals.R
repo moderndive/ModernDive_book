@@ -54,7 +54,7 @@ almonds_sample_100 |>
 
 ## ----echo=FALSE, results="asis"-----------------------------------------------
 if(!is_latex_output()) 
-  cat('Please review [Appendix A online](https://moderndive.com/A-appendixA.html) where we provide R code to work with different areas, probabilities, and values under a normal density curve. Here, we place focus on the insights of specific values and areas without dedicating time to those calculations.')
+  cat('Please review [Appendix A online](https://moderndive.com/v2/appendixa) where we provide R code to work with different areas, probabilities, and values under a normal density curve. Here, we place focus on the insights of specific values and areas without dedicating time to those calculations.')
 
 
 ## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 4), fig.width=3, fig.cap="Normal area within one standard deviation."----
@@ -81,7 +81,7 @@ ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
 
 ## ----echo=FALSE, results="asis"-----------------------------------------------
 if(!is_latex_output()) 
-  cat('Please see [Appendix A online](https://moderndive.com/A-appendixA.html) to produce these or other calculations in R. ')
+  cat('Please see [Appendix A online](https://moderndive.com/v2/appendixa) to produce these or other calculations in R. ')
 
 
 
@@ -124,7 +124,7 @@ almonds_sample_100 |>
 
 ## ----echo=FALSE, results="asis"-----------------------------------------------
 if(!is_latex_output()) 
-  cat("Please see [Appendix A online](https://moderndive.com/A-appendixA.html) for calculations of probabilities for $t$ density curves with different degrees of freedom.")
+  cat("Please see [Appendix A online](https://moderndive.com/v2/appendixa) for calculations of probabilities for $t$ density curves with different degrees of freedom.")
 
 
 ## -----------------------------------------------------------------------------
