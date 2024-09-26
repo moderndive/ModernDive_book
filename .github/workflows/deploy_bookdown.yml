@@ -16,21 +16,58 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
       EMAIL: ${{ secrets.EMAIL }}
     steps:
+      # Checkout repository
       - uses: actions/checkout@v4
 
+      # Setup Pandoc
       - uses: r-lib/actions/setup-pandoc@v2
 
+      # Setup R environment with RSPM enabled
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
 
-      # Install tinytex and LaTeX packages
-      - name: Install tinytex
+      # Restore cached package and TinyTeX state files
+      - name: Cache package state
+        uses: actions/cache@v4
+        with:
+          path: |
+            installed_packages.rds
+            tinytex_packages.rds
+          key: package-state-${{ runner.os }}-${{ hashFiles('**/renv.lock') }}
+          restore-keys: package-state-${{ runner.os }}-
+
+      # Check and install R packages if needed
+      - name: Check and Install R Packages
         run: |
-          R -e 'install.packages("tinytex"); tinytex::install_tinytex()'
-          R -e 'tinytex::tlmgr_install(c("xetex", "fontspec", "xunicode", "geometry", "fancyhdr", "titlesec", "titling", "tocloft", "sectsty", "environ", "trimspaces", "wrapfig", "multirow", "colortbl", "tabularx", "varwidth", "footnote", "threeparttable", "enumitem", "footmisc", "fncychap", "hyphenat", "biblatex", "biber"))'
+          R -e '
+            if (file.exists("installed_packages.rds")) {
+              saved_pkgs <- readRDS("installed_packages.rds");
+              current_pkgs <- installed.packages();
+              if (!identical(saved_pkgs[,1], current_pkgs[,1])) {
+                missing_pkgs <- setdiff(rownames(saved_pkgs), rownames(current_pkgs));
+                if (length(missing_pkgs) > 0) install.packages(missing_pkgs);
+              } else {
+                cat("No package changes detected.\n");
+              }
+            } else {
+              install.packages(c("tidyverse", "bookdown"));
+            }'
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+
+      # Install and cache TinyTeX only if needed
+      - name: Install TinyTeX if Needed
+        run: |
+          if ! command -v tlmgr &> /dev/null; then
+            R -e 'install.packages("tinytex"); tinytex::install_tinytex()';
+            R -e 'tinytex::tlmgr_install(c("xetex", "fontspec", "xunicode", "geometry", "fancyhdr", "titlesec", "titling", "tocloft", "sectsty", "environ", "trimspaces", "wrapfig", "multirow", "colortbl", "tabularx", "varwidth", "footnote", "threeparttable", "enumitem", "footmisc", "fncychap", "hyphenat", "biblatex", "biber"))';
+          else
+            echo "TinyTeX is already installed";
+          fi
         shell: bash
 
+      # Cache TinyTeX installation
       - name: Cache TinyTeX installation
         uses: actions/cache@v4
         with:
@@ -38,35 +75,26 @@ jobs:
           key: tinytex-${{ runner.os }}-${{ hashFiles('**/*.tex') }}
           restore-keys: tinytex-
 
-      # Install fonts
-      - name: Install fonts
+      # Install fonts only if needed
+      - name: Check and Install Fonts
         run: |
-          sudo apt-get update
-          sudo apt-get install -y fonts-inconsolata fonts-nanum
-          sudo fc-cache -fv
+          if ! fc-list | grep -q "Inconsolata"; then
+            sudo apt-get update;
+            sudo apt-get install -y fonts-inconsolata fonts-nanum;
+            sudo fc-cache -fv;
+          else
+            echo "Fonts are already installed";
+          fi
         shell: bash
 
-      # Install R packages with retry logic
-      - name: Install R packages with retry logic
-        run: |
-          R -e 'for (i in 1:5) { tryCatch(remotes::install_github("tidymodels/infer"), error = function(e) Sys.sleep(30)) }'
-          R -e 'for (i in 1:5) { tryCatch(remotes::install_github("haozhu233/kableExtra"), error = function(e) Sys.sleep(30)) }'
-        env:
-          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
-
-      - name: Cache R package library
-        uses: actions/cache@v4
-        with:
-          path: renv/library
-          key: renv-library-${{ hashFiles('**/renv.lock') }}
-          restore-keys: renv-library-
-
+      # Setup renv if needed
       - uses: r-lib/actions/setup-renv@v2
 
       # Ensure _bookdown_files directory exists
       - name: Ensure _bookdown_files directory exists
         run: mkdir -p _bookdown_files
 
+      # Cache bookdown results
       - name: Cache bookdown results
         uses: actions/cache@v4
         with:
@@ -79,11 +107,11 @@ jobs:
         id: check_pdf
         run: |
           if grep -qE '^[^#]*bookdown::pdf_book' _output.yml; then
-            echo "PDF book is enabled."
-            echo "build_pdf=true" >> $GITHUB_ENV
+            echo "PDF book is enabled.";
+            echo "build_pdf=true" >> $GITHUB_ENV;
           else
-            echo "PDF book is not enabled."
-            echo "build_pdf=false" >> $GITHUB_ENV
+            echo "PDF book is not enabled.";
+            echo "build_pdf=false" >> $GITHUB_ENV;
           fi
 
       # Build PDF book if enabled
@@ -96,6 +124,12 @@ jobs:
       - name: Build HTML book
         run: |
           R -e 'bookdown::render_book("index.Rmd", "bookdown::bs4_book")'
+
+      # Save R package state and TinyTeX installation to RDS files
+      - name: Save R Package and TinyTeX State
+        run: |
+          R -e 'saveRDS(installed.packages(), file = "installed_packages.rds")';
+          R -e 'tinytex_packages <- tinytex::tl_pkgs(); saveRDS(tinytex_packages, file = "tinytex_packages.rds")'
 
       # Deploy HTML to GitHub Pages if on main or master branch
       - name: Deploy to GitHub pages from main/master 🚀
