@@ -111,10 +111,9 @@ sampled_spotify_metal_deephouse |>
     linesep = ""
   ) |>
   kable_styling(
-    font_size = ifelse(is_latex_output(), 8, 16),
+    font_size = ifelse(is_latex_output(), 6, 16),
     latex_options = c("HOLD_position")
-  ) |> 
-  column_spec(3, width = "1.5in")  # Adjust the column number and width as needed
+  )
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -150,10 +149,9 @@ spotify_52_original |>
       linesep = ""
   ) |>
   kable_styling(
-    font_size = ifelse(is_latex_output(), 8, 16),
+    font_size = ifelse(is_latex_output(), 6, 16),
     latex_options = c("HOLD_position")
-  ) |> 
-  column_spec(3, width = "1.5in")  # Adjust the column number and width as needed
+  )
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -171,10 +169,9 @@ spotify_52_shuffled |>
       linesep = ""
   ) |>
   kable_styling(
-    font_size = ifelse(is_latex_output(), 8, 16),
+    font_size = ifelse(is_latex_output(), 6, 16),
     latex_options = c("HOLD_position")
-  ) |> 
-  column_spec(3, width = "1.5in")  # Adjust the column number and width as needed
+  )
 
 
 
@@ -252,7 +249,7 @@ spotify_metal_deephouse |>
           order = c("metal", "deep-house"))
 
 
-## ----null-distribution-infer, fig.show="hold", fig.cap="Null distribution.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 4)----
+## ----null-distribution-infer, fig.show="hold", fig.cap="Null distribution.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 7)----
 visualize(null_distribution, bins = 25)
 
 
@@ -354,7 +351,7 @@ movies
 movies_sample
 
 
-## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre.", fig.height=ifelse(knitr::is_latex_output(), 4, 4)----
+## ----action-romance-boxplot, fig.cap="Boxplot of IMDb rating vs. genre.", fig.height=ifelse(knitr::is_latex_output(), 4, 7)----
 ggplot(data = movies_sample, aes(x = genre, y = rating)) +
   geom_boxplot() +
   labs(y = "IMDb rating")
@@ -450,7 +447,7 @@ flights_sample <- flights |>
   filter(carrier %in% c("HA", "AS"))
 
 
-## ----ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2023.", fig.height=ifelse(knitr::is_latex_output(), 2.8, 4)----
+## ----ha-as-flights-boxplot, fig.cap="Air time for Hawaiian and Alaska Airlines flights departing NYC in 2023.", fig.height=ifelse(knitr::is_latex_output(), 2.8, 7)----
 ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
   geom_boxplot() +
   labs(x = "Carrier", y = "Air Time")
