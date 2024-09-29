@@ -165,12 +165,12 @@ spotify_for_anova <- spotify_by_genre |>
 
 ## ----eval=FALSE---------------------------------------------------------------
 ## spotify_for_anova |>
-##   slice_sample(n = 10)
+##   slice_sample(n = 5)
 
 
 ## ----echo=FALSE---------------------------------------------------------------
 spotify_for_anova |> 
-  slice_sample(n = 10) |> 
+  slice_sample(n = 5) |> 
   kbl(caption = "(ref:spotify-for-anova-slice)") |> 
   kable_styling(
     font_size = ifelse(is_latex_output(), 8, 16),
