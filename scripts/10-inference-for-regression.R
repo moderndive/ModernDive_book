@@ -622,7 +622,7 @@ mod_mult_table |>
 
 ## ----echo=FALSE---------------------------------------------------------------
 # Fix the width for the explanatory variable output
-options(width = 125)
+#options(width = 125)
 if (!file.exists("rds/generated_distn_slopes.rds")) {
   set.seed(76)
   generated_distn_slopes <- coffee_data |>
@@ -639,7 +639,7 @@ if (!file.exists("rds/generated_distn_slopes.rds")) {
 }
 generated_distn_slopes
 # Reset width
-options(width = 80)
+#options(width = 80)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
