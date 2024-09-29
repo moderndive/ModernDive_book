@@ -223,7 +223,13 @@ ggsave(filename = "images/null_housing_shaded.png",
 
 
 ## ----echo=FALSE, out.height="100%"--------------------------------------------
-knitr::include_graphics("images/null_housing_shaded.png")
+if(is_latex_output())
+  knitr::include_graphics("images/null_housing_shaded.png")
+
+
+## ----echo=FALSE---------------------------------------------------------------
+if(is_html_output())
+  null_housing_shaded
 
 
 ## -----------------------------------------------------------------------------
