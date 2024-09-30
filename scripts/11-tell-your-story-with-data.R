@@ -227,7 +227,7 @@ if(is_latex_output())
   knitr::include_graphics("images/null_housing_shaded.png")
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----echo=FALSE, fig.height=12------------------------------------------------
 if(is_html_output())
   null_housing_shaded
 
