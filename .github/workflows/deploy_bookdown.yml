@@ -1,12 +1,8 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
-
-# Set up renv following instructions at https://www.emilhvitfeldt.com/post/bookdown-netlify-github-actions/
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, v2]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, v2]
   workflow_dispatch:
 
 name: bookdown
@@ -14,37 +10,157 @@ name: bookdown
 jobs:
   bookdown:
     runs-on: ubuntu-latest
-    # Only restrict concurrency for non-PR jobs
     concurrency:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
     env:
-      GITHUB_PAT: ${{ secrets.GH_PAT }}
+      GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
       EMAIL: ${{ secrets.EMAIL }}
     steps:
-      - uses: actions/checkout@v3
+      # Checkout repository
+      - uses: actions/checkout@v4
 
+      # Setup Pandoc
       - uses: r-lib/actions/setup-pandoc@v2
 
+      # Setup R environment with RSPM enabled
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
 
+      # Restore cached package and TinyTeX state files
+      - name: Cache package state
+        uses: actions/cache@v4
+        with:
+          path: |
+            installed_packages.rds
+            tinytex_packages.rds
+          key: package-state-${{ runner.os }}-${{ hashFiles('**/renv.lock') }}
+          restore-keys: package-state-${{ runner.os }}-
+
+      # Check and install R packages if needed
+      - name: Check and Install R Packages
+        run: |
+          R -e '
+            if (file.exists("installed_packages.rds")) {
+              saved_pkgs <- readRDS("installed_packages.rds");
+              current_pkgs <- installed.packages();
+              if (!identical(saved_pkgs[,1], current_pkgs[,1])) {
+                missing_pkgs <- setdiff(rownames(saved_pkgs), rownames(current_pkgs));
+                if (length(missing_pkgs) > 0) install.packages(missing_pkgs);
+              } else {
+                cat("No package changes detected.\n");
+              }
+            } else {
+              install.packages(c("tidyverse", "bookdown"));
+            }'
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+
+      # Install and cache TinyTeX only if needed
+      - name: Install TinyTeX if Needed
+        run: |
+          if ! command -v tlmgr &> /dev/null; then
+            R -e 'install.packages("tinytex"); tinytex::install_tinytex()';
+            R -e 'tinytex::tlmgr_install(c("xetex", "fontspec", "xunicode", "geometry", "fancyhdr", "titlesec", "titling", "tocloft", "sectsty", "environ", "trimspaces", "wrapfig", "multirow", "colortbl", "tabularx", "varwidth", "footnote", "threeparttable", "enumitem", "footmisc", "fncychap", "hyphenat", "biblatex", "biber"))';
+          else
+            echo "TinyTeX is already installed";
+          fi
+        shell: bash
+
+      # Cache TinyTeX installation
+      - name: Cache TinyTeX installation
+        uses: actions/cache@v4
+        with:
+          path: ~/.TinyTeX
+          key: tinytex-${{ runner.os }}-${{ hashFiles('**/*.tex') }}
+          restore-keys: tinytex-
+
+      # Install fonts only if needed
+      - name: Check and Install Fonts
+        run: |
+          if ! fc-list | grep -q "Inconsolata"; then
+            sudo apt-get update;
+            sudo apt-get install -y fonts-inconsolata fonts-nanum;
+            sudo fc-cache -fv;
+          else
+            echo "Fonts are already installed";
+          fi
+        shell: bash
+
+      # Setup renv if needed
       - uses: r-lib/actions/setup-renv@v2
 
+      # Ensure _bookdown_files directory exists
+      - name: Ensure _bookdown_files directory exists
+        run: mkdir -p _bookdown_files
+
+      # Cache bookdown results
       - name: Cache bookdown results
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: _bookdown_files
           key: bookdown-${{ hashFiles('**/*Rmd') }}
           restore-keys: bookdown-
 
-      - name: Build site
-        run: bookdown::render_book("index.Rmd", quiet = TRUE)
-        shell: Rscript {0}
+      # Check if bookdown::pdf_book is enabled (not commented out) in _output.yml
+      - name: Check for uncommented pdf_book in _output.yml
+        id: check_pdf
+        run: |
+          if grep -qE '^[^#]*bookdown::pdf_book' _output.yml; then
+            echo "PDF book is enabled.";
+            echo "build_pdf=true" >> $GITHUB_ENV;
+          else
+            echo "PDF book is not enabled.";
+            echo "build_pdf=false" >> $GITHUB_ENV;
+          fi
 
-      - name: Deploy to GitHub pages 🚀
-        if: github.event_name != 'pull_request'
-        uses: JamesIves/github-pages-deploy-action@v4.4.1
+      # Build PDF book if enabled
+      - name: Build PDF book
+        if: env.build_pdf == 'true'
+        run: |
+          R -e 'bookdown::render_book("index.Rmd", "bookdown::pdf_book")'
+
+      # Build HTML books
+      - name: Build HTML gitbook book
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') || github.event_name == 'pull_request'
+        run: |
+          R -e 'bookdown::render_book("index.Rmd", "bookdown::gitbook")'
+
+      - name: Build HTML bs4_book book
+        if: github.ref == 'refs/heads/v2' || github.event_name == 'pull_request'
+        run: |
+          R -e 'bookdown::render_book("index.Rmd", "bookdown::bs4_book")'
+
+      # Save R package state and TinyTeX installation to RDS files
+      - name: Save R Package and TinyTeX State
+        run: |
+          R -e 'saveRDS(installed.packages(), file = "installed_packages.rds")';
+          R -e 'tinytex_packages <- tinytex::tl_pkgs(); saveRDS(tinytex_packages, file = "tinytex_packages.rds")'
+
+      # Deploy HTML to GitHub Pages if on main or master branch
+      - name: Deploy to GitHub pages from main/master 🚀
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: JamesIves/github-pages-deploy-action@v4.6.4
         with:
           branch: gh-pages
           folder: docs
+          clean: false
+
+      # Deploy to v2-publish if on v2 branch
+      - name: Deploy to v2-publish branch from v2 🚀
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/v2'
+        uses: JamesIves/github-pages-deploy-action@v4.6.4
+        with:
+          branch: v2-publish
+          folder: docs
+          clean: false
+
+      # Deploy to /v2 subdirectory of gh-pages from v2 branch
+      - name: Deploy to v2 subdirectory of gh-pages 🚀
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/v2'
+        uses: JamesIves/github-pages-deploy-action@v4.6.4
+        with:
+          branch: gh-pages
+          folder: docs
+          target-folder: v2 # Specify the target subdirectory
+          clean: false
