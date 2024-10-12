@@ -61,12 +61,6 @@ ggplot(data = envoy_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
 
 
 
-## ----early-january, echo=FALSE------------------------------------------------
-# Need to save `early_january_data` to {moderndive} for 2023 data
-early_january_2023_weather <- weather |> 
-  filter(origin == "EWR" & month == 1 & day <= 15)
-
-
 ## ----hourlytemp, fig.cap="Hourly wind speed in Newark for January 1-15, 2023."----
 ggplot(data = early_january_2023_weather, 
        mapping = aes(x = time_hour, y = wind_speed)) +
