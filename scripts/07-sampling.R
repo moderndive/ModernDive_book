@@ -48,11 +48,11 @@ bowl |>
 tactile_prop_red
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## ggplot(tactile_prop_red, aes(x = prop_red)) +
-##   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
-##   labs(x = "Proportion of red balls in each sample",
-##        title = "Histogram of 33 proportions")
+## ----echo=TRUE, fig.show='hide'-----------------------------------------------
+ggplot(tactile_prop_red, aes(x = prop_red)) +
+  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
+  labs(x = "Proportion of red balls in each sample", 
+       title = "Histogram of 33 proportions") 
 
 
 
@@ -68,7 +68,7 @@ virtual_shovel
 
 
 ## ----echo=-c(1, 2)------------------------------------------------------------
-# Neat way to remove from output particular code pieces!
+# Neat way to remove from output of particular code pieces with echo=-c(1, 2)!
 prop_red_sample1 <- virtual_shovel |> 
   summarize(prop_red = mean(color == "red")) |> 
   pull(prop_red)
@@ -98,11 +98,11 @@ virtual_prop_red <- bowl |>
 virtual_prop_red
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## ggplot(virtual_prop_red, aes(x = prop_red)) +
-##   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
-##   labs(x = "Sample proportion",
-##        title = "Histogram of 33 sample proportions")
+## ----echo=TRUE, fig.show='hide'-----------------------------------------------
+ggplot(virtual_prop_red, aes(x = prop_red)) +
+  geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
+  labs(x = "Sample proportion", 
+       title = "Histogram of 33 sample proportions") 
 
 
 
@@ -120,16 +120,13 @@ virtual_prop_red <- bowl |>
 virtual_prop_red
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## ggplot(virtual_prop_red, aes(x = prop_red)) +
-##   geom_histogram(binwidth = 0.04, boundary = 0.4, color = "white") +
-##   labs(x = "Sample proportion", title = "Histogram of 1000 sample proportions")
+## ----echo=TRUE, fig.show='hide'-----------------------------------------------
+ggplot(virtual_prop_red, aes(x = prop_red)) +
+  geom_histogram(binwidth = 0.04, boundary = 0.4, color = "white") +
+  labs(x = "Sample proportion", title = "Histogram of 1000 sample proportions") 
 
 
 
-## ----echo=FALSE, results="asis"-----------------------------------------------
-if(!is_latex_output()) 
-  cat('Please read the "Normal distribution" section of ([Appendix A online](https://moderndive.com/v2/appendixa)) for a brief discussion of this distribution and its properties.')
 
 
 
@@ -193,22 +190,13 @@ virtual_prop_red_25 |>
   summarize(E_Xbar_25 = mean(prop_red))
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## virtual_prop_red_50 |>
-##   summarize(E_Xbar_50 = mean(prop_red))
-## virtual_prop_red_100 |>
-##   summarize(E_Xbar_100 = mean(prop_red))
-
-
-## ----echo=FALSE---------------------------------------------------------------
-e_xbar_50 <- virtual_prop_red_50 |> 
+## ----echo=TRUE, results='hide'------------------------------------------------
+virtual_prop_red_50 |> 
   summarize(E_Xbar_50 = mean(prop_red))
-e_xbar_100 <- virtual_prop_red_100 |> 
+virtual_prop_red_100 |> 
   summarize(E_Xbar_100 = mean(prop_red))
-e_xbar_50_pull <- e_xbar_50 |> pull(E_Xbar_50)
-e_xbar_100_pull <- e_xbar_100 |> pull(E_Xbar_100)
-e_xbar_50
-e_xbar_100
+
+
 
 
 
@@ -235,7 +223,7 @@ bowl |>
 
 ## -----------------------------------------------------------------------------
 p <- 0.375
-sqrt(p*(1-p)/100)
+sqrt(p * (1 - p) / 100)
 
 
 ## -----------------------------------------------------------------------------
@@ -285,18 +273,15 @@ ggplot(almonds_bowl, aes(x = weight)) +
 
 
 
-## ----echo=2:4, eval=FALSE-----------------------------------------------------
-## set.seed(2024)
-## almonds_sample <- almonds_bowl |>
-##   rep_slice_sample(n = 25, reps = 1)
-## almonds_sample
+## -----------------------------------------------------------------------------
+almonds_sample
 
 
 ## ----echo=FALSE---------------------------------------------------------------
 num_almonds <- length(almonds_sample$weight)
 
 
-## ----almonds-sample-histogram, fig.cap="Distribution of weight for a sample of 25 almonds."----
+## ----almonds-sample-histogram, fig.cap="Distribution of weight for a sample of 25 almonds.", fig.height=ifelse(knitr::is_latex_output(), 1.5, 4)----
 ggplot(almonds_sample, aes(x = weight)) +
   geom_histogram(binwidth = 0.1, color = "white")
 
@@ -317,10 +302,10 @@ virtual_mean_weight <- virtual_samples_almonds |>
 virtual_mean_weight
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## ggplot(virtual_mean_weight, aes(x = mean_weight)) +
-##   geom_histogram(binwidth = 0.04, boundary = 3.5, color = "white") +
-##   labs(x = "Sample mean", title = "Histogram of 1000 sample means")
+## ----echo=TRUE, fig.show='hide'-----------------------------------------------
+ggplot(virtual_mean_weight, aes(x = mean_weight)) +
+  geom_histogram(binwidth = 0.04, boundary = 3.5, color = "white") +
+  labs(x = "Sample mean", title = "Histogram of 1000 sample means") 
 
 
 
@@ -376,18 +361,18 @@ almonds_bowl |>
   summarize(mu = mean(weight), sigma = sd(weight))
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## # n = 25
-## virtual_mean_weight_25 |>
-##   summarize(E_Xbar_25 = mean(mean_weight), sd = sd(mean_weight))
-## 
-## # n = 50
-## virtual_mean_weight_50 |>
-##   summarize(E_Xbar_50 = mean(mean_weight), sd = sd(mean_weight))
-## 
-## # n = 100
-## virtual_mean_weight_100 |>
-##   summarize(E_Xbar_100 = mean(mean_weight), sd = sd(mean_weight))
+## ----results='hide'-----------------------------------------------------------
+# n = 25
+virtual_mean_weight_25 |> 
+  summarize(E_Xbar_25 = mean(mean_weight), sd = sd(mean_weight))
+
+# n = 50
+virtual_mean_weight_50 |> 
+  summarize(E_Xbar_50 = mean(mean_weight), sd = sd(mean_weight))
+
+# n = 100
+virtual_mean_weight_100 |> 
+  summarize(E_Xbar_100 = mean(mean_weight), sd = sd(mean_weight))
 
 
 
@@ -427,21 +412,9 @@ prop_joined <- virtual_prop_red |>
 prop_joined
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## ggplot(prop_joined, aes(x = prop_diff)) +
-##   geom_histogram(binwidth = 0.04, boundary = 0, color = "white") +
-##   labs(x = "Difference in sample proportions",
-##        title = "Histogram of 1000 differences in sample proportions")
-
-
-
-
-
-
-
-
-
-## ----echo=FALSE, results='asis'-----------------------------------------------
-if (is_latex_output())
-  cat("Check the online version of the book for a table that also includes the sampling distribution of each of these statistics using the Central Limit Theorem.")
+## ----echo=TRUE, fig.show='hide'-----------------------------------------------
+ggplot(prop_joined, aes(x = prop_diff)) +
+  geom_histogram(binwidth = 0.04, boundary = 0, color = "white") +
+  labs(x = "Difference in sample proportions", 
+       title = "Histogram of 1000 differences in sample proportions") 
 
