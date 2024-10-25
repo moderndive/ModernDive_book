@@ -52,9 +52,6 @@ almonds_sample_100 |>
 
 
 
-## ----echo=FALSE, results="asis"-----------------------------------------------
-if(!is_latex_output()) 
-  cat('Please review [Appendix A online](https://moderndive.com/v2/appendixa) where we provide R code to work with different areas, probabilities, and values under a normal density curve. Here, we place focus on the insights of specific values and areas without dedicating time to those calculations.')
 
 
 ## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 4), fig.width=3, fig.cap="Normal area within one standard deviation."----
@@ -79,9 +76,6 @@ ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   scale_x_continuous(breaks = c(-2,2))
 
 
-## ----echo=FALSE, results="asis"-----------------------------------------------
-if(!is_latex_output()) 
-  cat('Please see [Appendix A online](https://moderndive.com/v2/appendixa) to produce these or other calculations in R. ')
 
 
 
@@ -122,9 +116,6 @@ almonds_sample_100 |>
 
 
 
-## ----echo=FALSE, results="asis"-----------------------------------------------
-if(!is_latex_output()) 
-  cat("Please see [Appendix A online](https://moderndive.com/v2/appendixa) for calculations of probabilities for $t$ density curves with different degrees of freedom.")
 
 
 ## -----------------------------------------------------------------------------
@@ -180,12 +171,10 @@ qnorm(0.025)
 qnorm(0.975)
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## qnorm(0.95)
+## ----results='hide'-----------------------------------------------------------
+qnorm(0.95)
 
 
-## ----echo=FALSE---------------------------------------------------------------
-round(qnorm(0.95), 3)
 
 
 ## -----------------------------------------------------------------------------
@@ -195,12 +184,10 @@ almonds_sample_100 |>
             upper_bound = mean(weight) + qnorm(0.95)*sigma/sqrt(length(weight)))
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## qnorm(0.9)
+## ----results='hide'-----------------------------------------------------------
+qnorm(0.9)
 
 
-## ----echo=FALSE---------------------------------------------------------------
-round(qnorm(0.9), 3)
 
 
 ## -----------------------------------------------------------------------------
@@ -234,13 +221,13 @@ boot_sample |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## ggplot(boot_sample, aes(x = weight)) +
-##   geom_histogram(binwidth = 0.1, color = "white") +
-##   labs(title = "Resample of 100 weights")
-## ggplot(almonds_sample_100, aes(x = weight)) +
-##   geom_histogram(binwidth = 0.1, color = "white") +
-##   labs(title = "Original sample of 100 weights")
+## ----echo=TRUE, fig.show='hide'-----------------------------------------------
+ggplot(boot_sample, aes(x = weight)) +
+  geom_histogram(binwidth = 0.1, color = "white") +
+  labs(title = "Resample of 100 weights")
+ggplot(almonds_sample_100, aes(x = weight)) +
+  geom_histogram(binwidth = 0.1, color = "white") +
+  labs(title = "Original sample of 100 weights")
 
 
 
@@ -299,26 +286,26 @@ boot_means |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## almonds_sample_100 |>
-##   rep_sample_n(size = 100, replace = TRUE, reps = 1000)
+## ----results='hide'-----------------------------------------------------------
+almonds_sample_100 |> 
+  rep_sample_n(size = 100, replace = TRUE, reps = 1000)
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## almonds_sample_100 |>
-##   rep_sample_n(size = 100, replace = TRUE, reps = 1000) |>
-##   summarize(mean_weight = mean(weight))
+## ----results='hide'-----------------------------------------------------------
+almonds_sample_100 |> 
+  rep_sample_n(size = 100, replace = TRUE, reps = 1000) |> 
+  summarize(mean_weight = mean(weight))
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## almonds_sample_100 |>
-##   summarize(stat = mean(weight))
+## ----results='hide'-----------------------------------------------------------
+almonds_sample_100 |> 
+  summarize(stat = mean(weight))
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## almonds_sample_100 |>
-##   specify(response = weight) |>
-##   calculate(stat = "mean")
+## ----results='hide'-----------------------------------------------------------
+almonds_sample_100 |> 
+  specify(response = weight) |> 
+  calculate(stat = "mean")
 
 
 
@@ -328,17 +315,17 @@ almonds_sample_100 |>
   specify(response = weight)
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## almonds_sample_100 |>
-##   specify(formula = weight ~ NULL)
+## ----results='hide'-----------------------------------------------------------
+almonds_sample_100 |> 
+  specify(formula = weight ~ NULL)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## almonds_sample_100 |>
-##   specify(response = weight) |>
-##   generate(reps = 1000, type = "bootstrap")
+## ----results='hide'-----------------------------------------------------------
+almonds_sample_100 |> 
+  specify(response = weight) |> 
+  generate(reps = 1000, type = "bootstrap")
 
 
 
@@ -347,12 +334,12 @@ almonds_sample_100 |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_means <- almonds_sample_100 |>
-##   specify(response = weight) |>
-##   generate(reps = 1000) |>
-##   calculate(stat = "mean")
-## bootstrap_means
+## ----results='hide'-----------------------------------------------------------
+bootstrap_means <- almonds_sample_100 |> 
+  specify(response = weight) |> 
+  generate(reps = 1000) |> 
+  calculate(stat = "mean")
+bootstrap_means
 
 
 
@@ -377,16 +364,16 @@ percentile_ci <- bootstrap_means |>
 percentile_ci
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_means) +
-##   shade_confidence_interval(endpoints = percentile_ci)
+## ----echo=TRUE, fig.show='hide'-----------------------------------------------
+visualize(bootstrap_means) + 
+  shade_confidence_interval(endpoints = percentile_ci)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_means) +
-##   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
+## ----echo=TRUE, fig.show='hide'-----------------------------------------------
+visualize(bootstrap_means) + 
+  shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 
 
 ## -----------------------------------------------------------------------------
@@ -415,9 +402,9 @@ standard_error_ci <- bootstrap_means |>
 standard_error_ci
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_means) +
-##   shade_confidence_interval(endpoints = standard_error_ci)
+## ----echo=TRUE, fig.show='hide'-----------------------------------------------
+visualize(bootstrap_means) + 
+  shade_confidence_interval(endpoints = standard_error_ci)
 
 
 
@@ -440,11 +427,6 @@ mythbusters_yawn |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn |>
-##   specify(formula = yawn ~ group)
-
-
 ## -----------------------------------------------------------------------------
 mythbusters_yawn |> 
   specify(formula = yawn ~ group, success = "yes")
@@ -464,27 +446,27 @@ first_six_rows |>
   sample_n(size = 6, replace = TRUE)
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn |>
-##   specify(formula = yawn ~ group, success = "yes") |>
-##   generate(reps = 1000, type = "bootstrap")
+## ----results='hide'-----------------------------------------------------------
+mythbusters_yawn |> 
+  specify(formula = yawn ~ group, success = "yes") |> 
+  generate(reps = 1000, type = "bootstrap")
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn |>
-##   specify(formula = yawn ~ group, success = "yes") |>
-##   generate(reps = 1000, type = "bootstrap") |>
-##   calculate(stat = "diff in props")
+## ----results='hide'-----------------------------------------------------------
+mythbusters_yawn |> 
+  specify(formula = yawn ~ group, success = "yes") |> 
+  generate(reps = 1000, type = "bootstrap") |> 
+  calculate(stat = "diff in props")
 
 
-## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distribution_yawning <- mythbusters_yawn |>
-##   specify(formula = yawn ~ group, success = "yes") |>
-##   generate(reps = 1000, type = "bootstrap") |>
-##   calculate(stat = "diff in props", order = c("seed", "control"))
-## bootstrap_distribution_yawning
+## ----results='hide'-----------------------------------------------------------
+bootstrap_distribution_yawning <- mythbusters_yawn |> 
+  specify(formula = yawn ~ group, success = "yes") |> 
+  generate(reps = 1000, type = "bootstrap") |> 
+  calculate(stat = "diff in props", order = c("seed", "control"))
+bootstrap_distribution_yawning
 
 
 
