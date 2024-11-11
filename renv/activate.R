@@ -2,7 +2,7 @@
 local({
 
   # the requested version of renv
-  version <- "1.0.7"
+  version <- "1.0.11"
   attr(version, "sha") <- NULL
 
   # the project directory
@@ -98,6 +98,66 @@ local({
     unloadNamespace("renv")
 
   # load bootstrap tools   
+  ansify <- function(text) {
+    if (renv_ansify_enabled())
+      renv_ansify_enhanced(text)
+    else
+      renv_ansify_default(text)
+  }
+  
+  renv_ansify_enabled <- function() {
+  
+    override <- Sys.getenv("RENV_ANSIFY_ENABLED", unset = NA)
+    if (!is.na(override))
+      return(as.logical(override))
+  
+    pane <- Sys.getenv("RSTUDIO_CHILD_PROCESS_PANE", unset = NA)
+    if (identical(pane, "build"))
+      return(FALSE)
+  
+    testthat <- Sys.getenv("TESTTHAT", unset = "false")
+    if (tolower(testthat) %in% "true")
+      return(FALSE)
+  
+    iderun <- Sys.getenv("R_CLI_HAS_HYPERLINK_IDE_RUN", unset = "false")
+    if (tolower(iderun) %in% "false")
+      return(FALSE)
+  
+    TRUE
+  
+  }
+  
+  renv_ansify_default <- function(text) {
+    text
+  }
+  
+  renv_ansify_enhanced <- function(text) {
+  
+    # R help links
+    pattern <- "`\\?(renv::(?:[^`])+)`"
+    replacement <- "`\033]8;;ide:help:\\1\a?\\1\033]8;;\a`"
+    text <- gsub(pattern, replacement, text, perl = TRUE)
+  
+    # runnable code
+    pattern <- "`(renv::(?:[^`])+)`"
+    replacement <- "`\033]8;;ide:run:\\1\a\\1\033]8;;\a`"
+    text <- gsub(pattern, replacement, text, perl = TRUE)
+  
+    # return ansified text
+    text
+  
+  }
+  
+  renv_ansify_init <- function() {
+  
+    envir <- renv_envir_self()
+    if (renv_ansify_enabled())
+      assign("ansify", renv_ansify_enhanced, envir = envir)
+    else
+      assign("ansify", renv_ansify_default, envir = envir)
+  
+  }
+  
   `%||%` <- function(x, y) {
     if (is.null(x)) y else x
   }
@@ -142,7 +202,10 @@ local({
     # compute common indent
     indent <- regexpr("[^[:space:]]", lines)
     common <- min(setdiff(indent, -1L)) - leave
-    paste(substring(lines, common), collapse = "\n")
+    text <- paste(substring(lines, common), collapse = "\n")
+  
+    # substitute in ANSI links for executable renv code
+    ansify(text)
   
   }
   
@@ -305,8 +368,11 @@ local({
       quiet    = TRUE
     )
   
-    if ("headers" %in% names(formals(utils::download.file)))
-      args$headers <- renv_bootstrap_download_custom_headers(url)
+    if ("headers" %in% names(formals(utils::download.file))) {
+      headers <- renv_bootstrap_download_custom_headers(url)
+      if (length(headers) && is.character(headers))
+        args$headers <- headers
+    }
   
     do.call(utils::download.file, args)
   
@@ -385,10 +451,21 @@ local({
     for (type in types) {
       for (repos in renv_bootstrap_repos()) {
   
+        # build arguments for utils::available.packages() call
+        args <- list(type = type, repos = repos)
+  
+        # add custom headers if available -- note that
+        # utils::available.packages() will pass this to download.file()
+        if ("headers" %in% names(formals(utils::download.file))) {
+          headers <- renv_bootstrap_download_custom_headers(repos)
+          if (length(headers) && is.character(headers))
+            args$headers <- headers
+        }
+  
         # retrieve package database
         db <- tryCatch(
           as.data.frame(
-            utils::available.packages(type = type, repos = repos),
+            do.call(utils::available.packages, args),
             stringsAsFactors = FALSE
           ),
           error = identity
@@ -470,6 +547,14 @@ local({
   
   }
   
+  renv_bootstrap_github_token <- function() {
+    for (envvar in c("GITHUB_TOKEN", "GITHUB_PAT", "GH_TOKEN")) {
+      envval <- Sys.getenv(envvar, unset = NA)
+      if (!is.na(envval))
+        return(envval)
+    }
+  }
+  
   renv_bootstrap_download_github <- function(version) {
   
     enabled <- Sys.getenv("RENV_BOOTSTRAP_FROM_GITHUB", unset = "TRUE")
@@ -477,16 +562,16 @@ local({
       return(FALSE)
   
     # prepare download options
-    pat <- Sys.getenv("GITHUB_PAT")
-    if (nzchar(Sys.which("curl")) && nzchar(pat)) {
+    token <- renv_bootstrap_github_token()
+    if (nzchar(Sys.which("curl")) && nzchar(token)) {
       fmt <- "--location --fail --header \"Authorization: token %s\""
-      extra <- sprintf(fmt, pat)
+      extra <- sprintf(fmt, token)
       saved <- options("download.file.method", "download.file.extra")
       options(download.file.method = "curl", download.file.extra = extra)
       on.exit(do.call(base::options, saved), add = TRUE)
-    } else if (nzchar(Sys.which("wget")) && nzchar(pat)) {
+    } else if (nzchar(Sys.which("wget")) && nzchar(token)) {
       fmt <- "--header=\"Authorization: token %s\""
-      extra <- sprintf(fmt, pat)
+      extra <- sprintf(fmt, token)
       saved <- options("download.file.method", "download.file.extra")
       options(download.file.method = "wget", download.file.extra = extra)
       on.exit(do.call(base::options, saved), add = TRUE)
