@@ -19,11 +19,11 @@ almonds_sample_100 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## almonds_sample_100 |>
-##   summarize(x_bar = mean(weight),
-##             s = sd(weight),
-##             n = length(weight),
-##             t = (x_bar - 3.6)/(s/sqrt(n)))
+# almonds_sample_100 |>
+#   summarize(x_bar = mean(weight),
+#             s = sd(weight),
+#             n = length(weight),
+#             t = (x_bar - 3.6)/(s/sqrt(n)))
 
 
 
@@ -31,7 +31,7 @@ almonds_sample_100 |>
 
 
 ## ----eval = FALSE-------------------------------------------------------------
-## 2 * pt(q = -2.26, df = 100 - 1)
+# 2 * pt(q = -2.26, df = 100 - 1)
 
 
 
@@ -66,10 +66,10 @@ almonds_sample_100 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_means <- almonds_sample_100 |>
-##   specify(response = weight) |>
-##   generate(reps = 1000, type = "bootstrap") |>
-##   calculate(stat = "mean")
+# bootstrap_means <- almonds_sample_100 |>
+#   specify(response = weight) |>
+#   generate(reps = 1000, type = "bootstrap") |>
+#   calculate(stat = "mean")
 
 
 
@@ -86,12 +86,12 @@ set.seed(2)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## spotify_metal_deephouse <- spotify_by_genre |>
-##   filter(track_genre %in% c("metal", "deep-house")) |>
-##   select(track_genre, artists, track_name, popularity, popular_or_not)
-## spotify_metal_deephouse |>
-##   group_by(track_genre, popular_or_not) |>
-##   sample_n(size = 3)
+# spotify_metal_deephouse <- spotify_by_genre |>
+#   filter(track_genre %in% c("metal", "deep-house")) |>
+#   select(track_genre, artists, track_name, popularity, popular_or_not)
+# spotify_metal_deephouse |>
+#   group_by(track_genre, popular_or_not) |>
+#   sample_n(size = 3)
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -118,9 +118,9 @@ sampled_spotify_metal_deephouse |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(spotify_metal_deephouse, aes(x = track_genre, fill = popular_or_not)) +
-##   geom_bar() +
-##   labs(x = "Genre of track")
+# ggplot(spotify_metal_deephouse, aes(x = track_genre, fill = popular_or_not)) +
+#   geom_bar() +
+#   labs(x = "Genre of track")
 
 
 
@@ -136,9 +136,9 @@ spotify_metal_deephouse |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## spotify_52_original |>
-##   select(-track_id) |>
-##   head(10)
+# spotify_52_original |>
+#   select(-track_id) |>
+#   head(10)
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -157,9 +157,9 @@ spotify_52_original |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## spotify_52_shuffled |>
-##   select(-track_id) |>
-##   head(10)
+# spotify_52_shuffled |>
+#   select(-track_id) |>
+#   head(10)
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -182,9 +182,9 @@ spotify_52_shuffled |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(spotify_52_shuffled, aes(x = track_genre, fill = popular_or_not)) +
-##   geom_bar() +
-##   labs(x = "Genre of track")
+# ggplot(spotify_52_shuffled, aes(x = track_genre, fill = popular_or_not)) +
+#   geom_bar() +
+#   labs(x = "Genre of track")
 
 
 
@@ -217,22 +217,22 @@ spotify_metal_deephouse |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## spotify_generate <- spotify_metal_deephouse |>
-##   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
-##   hypothesize(null = "independence") |>
-##   generate(reps = 1000, type = "permute")
-## nrow(spotify_generate)
+# spotify_generate <- spotify_metal_deephouse |>
+#   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
+#   hypothesize(null = "independence") |>
+#   generate(reps = 1000, type = "permute")
+# nrow(spotify_generate)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## null_distribution <- spotify_metal_deephouse |>
-##   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
-##   hypothesize(null = "independence") |>
-##   generate(reps = 1000, type = "permute") |>
-##   calculate(stat = "diff in props", order = c("metal", "deep-house"))
-## null_distribution
+# null_distribution <- spotify_metal_deephouse |>
+#   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
+#   hypothesize(null = "independence") |>
+#   generate(reps = 1000, type = "permute") |>
+#   calculate(stat = "diff in props", order = c("metal", "deep-house"))
+# null_distribution
 
 
 
@@ -268,21 +268,21 @@ null_distribution |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## null_distribution <- spotify_metal_deephouse |>
-##   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
-##   hypothesize(null = "independence") |>
-##   generate(reps = 1000, type = "permute") |>
-##   calculate(stat = "diff in props", order = c("metal", "deep-house"))
+# null_distribution <- spotify_metal_deephouse |>
+#   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
+#   hypothesize(null = "independence") |>
+#   generate(reps = 1000, type = "permute") |>
+#   calculate(stat = "diff in props", order = c("metal", "deep-house"))
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distribution <- spotify_metal_deephouse |>
-##   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
-##   # Change 1 - Remove hypothesize():
-##   # hypothesize(null = "independence") |>
-##   # Change 2 - Switch type from "permute" to "bootstrap":
-##   generate(reps = 1000, type = "bootstrap") |>
-##   calculate(stat = "diff in props", order = c("metal", "deep-house"))
+# bootstrap_distribution <- spotify_metal_deephouse |>
+#   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
+#   # Change 1 - Remove hypothesize():
+#   # hypothesize(null = "independence") |>
+#   # Change 2 - Switch type from "permute" to "bootstrap":
+#   generate(reps = 1000, type = "bootstrap") |>
+#   calculate(stat = "diff in props", order = c("metal", "deep-house"))
 
 
 
@@ -294,34 +294,34 @@ percentile_ci
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution) +
-##   shade_confidence_interval(endpoints = percentile_ci)
+# visualize(bootstrap_distribution) +
+#   shade_confidence_interval(endpoints = percentile_ci)
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## se_ci <- bootstrap_distribution |>
-## get_confidence_interval(level = 0.95, type = "se",
-## point_estimate = obs_diff_prop)
-## se_ci
+# se_ci <- bootstrap_distribution |>
+# get_confidence_interval(level = 0.95, type = "se",
+# point_estimate = obs_diff_prop)
+# se_ci
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution) +
-## shade_confidence_interval(endpoints = se_ci)
+# visualize(bootstrap_distribution) +
+# shade_confidence_interval(endpoints = se_ci)
 
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## library(moderndive)
-## library(infer)
-## null_distribution_mean <- spotify_metal_deephouse |>
-##   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
-##   hypothesize(null = "independence") |>
-##   generate(reps = 1000, type = "permute") |>
-##   calculate(stat = "diff in means", order = c("metal", "deep-house"))
+# library(moderndive)
+# library(infer)
+# null_distribution_mean <- spotify_metal_deephouse |>
+#   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
+#   hypothesize(null = "independence") |>
+#   generate(reps = 1000, type = "permute") |>
+#   calculate(stat = "diff in means", order = c("metal", "deep-house"))
 
 
 
@@ -381,22 +381,22 @@ movies_sample |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## movies_sample |>
-##   specify(formula = rating ~ genre) |>
-##   hypothesize(null = "independence") |>
-##   generate(reps = 1000, type = "permute") |>
-##   View()
+# movies_sample |>
+#   specify(formula = rating ~ genre) |>
+#   hypothesize(null = "independence") |>
+#   generate(reps = 1000, type = "permute") |>
+#   View()
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## null_distribution_movies <- movies_sample |>
-##   specify(formula = rating ~ genre) |>
-##   hypothesize(null = "independence") |>
-##   generate(reps = 1000, type = "permute") |>
-##   calculate(stat = "diff in means", order = c("Action", "Romance"))
-## null_distribution_movies
+# null_distribution_movies <- movies_sample |>
+#   specify(formula = rating ~ genre) |>
+#   hypothesize(null = "independence") |>
+#   generate(reps = 1000, type = "permute") |>
+#   calculate(stat = "diff in means", order = c("Action", "Romance"))
+# null_distribution_movies
 
 
 
@@ -409,8 +409,8 @@ obs_diff_means
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(null_distribution_movies, bins = 10) +
-##   shade_p_value(obs_stat = obs_diff_means, direction = "both")
+# visualize(null_distribution_movies, bins = 10) +
+#   shade_p_value(obs_stat = obs_diff_means, direction = "both")
 
 
 

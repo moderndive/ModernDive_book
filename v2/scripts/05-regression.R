@@ -29,18 +29,18 @@ sample_size <- 5
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch5 |>
-##   slice_sample(n = 5)
+# UN_data_ch5 |>
+#   slice_sample(n = 5)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch5 |>
-##   summarize(mean_life_exp = mean(life_exp),
-##             mean_fert_rate = mean(fert_rate),
-##             median_life_exp = median(life_exp),
-##             median_fert_rate = median(fert_rate))
+# UN_data_ch5 |>
+#   summarize(mean_life_exp = mean(life_exp),
+#             mean_fert_rate = mean(fert_rate),
+#             median_life_exp = median(life_exp),
+#             median_fert_rate = median(fert_rate))
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -57,9 +57,9 @@ UN_data_ch5 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch5 |>
-##   select(fert_rate, life_exp) |>
-##   tidy_summary()
+# UN_data_ch5 |>
+#   select(fert_rate, life_exp) |>
+#   tidy_summary()
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -74,8 +74,8 @@ UN_data_ch5 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch5 |>
-##   tidy_summary(columns = c(fert_rate, life_exp))
+# UN_data_ch5 |>
+#   tidy_summary(columns = c(fert_rate, life_exp))
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -107,8 +107,8 @@ UN_data_ch5 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch5 |>
-##   summarize(correlation = cor(fert_rate, life_exp))
+# UN_data_ch5 |>
+#   summarize(correlation = cor(fert_rate, life_exp))
 
 
 
@@ -134,20 +134,20 @@ ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## demographics_model <- lm(fert_rate ~ life_exp,
-##                          data = UN_data_ch5)
-## # Get regression coefficients
-## coef(demographics_model)
+# # Fit regression model:
+# demographics_model <- lm(fert_rate ~ life_exp,
+#                          data = UN_data_ch5)
+# # Get regression coefficients
+# coef(demographics_model)
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## demographics_model <- lm(fert_rate ~ life_exp,
-##                          data = UN_data_ch5)
-## # Get regression coefficients:
-## coef(demographics_model)
+# # Fit regression model:
+# demographics_model <- lm(fert_rate ~ life_exp,
+#                          data = UN_data_ch5)
+# # Get regression coefficients:
+# coef(demographics_model)
 
 
 
@@ -159,8 +159,8 @@ ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## regression_points <- get_regression_points(demographics_model)
-## regression_points
+# regression_points <- get_regression_points(demographics_model)
+# regression_points
 
 
 
@@ -184,12 +184,12 @@ glimpse(gapminder2022)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## gapminder2022 |> sample_n(size = 3)
+# gapminder2022 |> sample_n(size = 3)
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## gapminder2022 |> select(life_exp, continent) |> tidy_summary()
+# gapminder2022 |> select(life_exp, continent) |> tidy_summary()
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -223,12 +223,12 @@ ggplot(gapminder2022, aes(x = life_exp)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(gapminder2022, aes(x = life_exp)) +
-##   geom_histogram(binwidth = 5, color = "white") +
-##   labs(x = "Life expectancy",
-##        y = "Number of countries",
-##        title = "Histogram of distribution of worldwide life expectancies") +
-##   facet_wrap(~ continent, nrow = 2)
+# ggplot(gapminder2022, aes(x = life_exp)) +
+#   geom_histogram(binwidth = 5, color = "white") +
+#   labs(x = "Life expectancy",
+#        y = "Number of countries",
+#        title = "Histogram of distribution of worldwide life expectancies") +
+#   facet_wrap(~ continent, nrow = 2)
 
 
 
@@ -267,8 +267,8 @@ coef(life_exp_model)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## regression_points <- get_regression_points(life_exp_model, ID = "country")
-## regression_points
+# regression_points <- get_regression_points(life_exp_model, ID = "country")
+# regression_points
 
 
 
@@ -332,14 +332,14 @@ solomon <- country_lookup_table |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model and regression points
-## demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
-## regression_points <- get_regression_points(demographics_model)
-## 
-## # Compute sum of squared residuals
-## regression_points |>
-##   mutate(squared_residuals = residual^2) |>
-##   summarize(sum_of_squared_residuals = sum(squared_residuals))
+# # Fit regression model and regression points
+# demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
+# regression_points <- get_regression_points(demographics_model)
+# 
+# # Compute sum of squared residuals
+# regression_points |>
+#   mutate(squared_residuals = residual^2) |>
+#   summarize(sum_of_squared_residuals = sum(squared_residuals))
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -364,11 +364,11 @@ SSR
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## library(broom)
-## library(janitor)
-## demographics_model |>
-##   augment() |>
-##   mutate_if(is.numeric, round, digits = 3) |>
-##   clean_names() |>
-##   select(-c("std_resid", "hat", "sigma", "cooksd", "std_resid"))
+# library(broom)
+# library(janitor)
+# demographics_model |>
+#   augment() |>
+#   mutate_if(is.numeric, round, digits = 3) |>
+#   clean_names() |>
+#   select(-c("std_resid", "hat", "sigma", "cooksd", "std_resid"))
 

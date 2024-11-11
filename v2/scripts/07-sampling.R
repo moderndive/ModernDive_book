@@ -136,40 +136,40 @@ ggplot(virtual_prop_red, aes(x = prop_red)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Segment 1: sample size = 25 ------------------------------
-## # 1.a) Compute sample proportions for 1000 samples, each sample of size 25
-## virtual_prop_red_25 <- bowl |>
-##   rep_slice_sample(n = 25, reps = 1000) |>
-##   summarize(prop_red = mean(color == "red"))
-## 
-## # 1.b) Plot a histogram to represent the distribution of the sample proportions
-## ggplot(virtual_prop_red_25, aes(x = prop_red)) +
-##   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
-##   labs(x = "Proportion of 25 balls that were red", title = "25")
-## 
-## 
-## # Segment 2: sample size = 50 ------------------------------
-## # 2.a) Compute sample proportions for 1000 samples, each sample of size 50
-## virtual_prop_red_50 <- bowl |>
-##   rep_slice_sample(n = 50, reps = 1000) |>
-##   summarize(prop_red = mean(color == "red"))
-## 
-## # 2.b) Plot a histogram to represent the distribution of the sample proportions
-## ggplot(virtual_prop_red_50, aes(x = prop_red)) +
-##   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
-##   labs(x = "Proportion of 50 balls that were red", title = "50")
-## 
-## 
-## # Segment 3: sample size = 100 ------------------------------
-## # 2.a) Compute sample proportions for 1000 samples, each sample of size 100
-## virtual_prop_red_100 <- bowl |>
-##   rep_slice_sample(n = 100, reps = 1000) |>
-##   summarize(prop_red = mean(color == "red"))
-## 
-## # 3.b) Plot a histogram to represent the distribution of the sample proportions
-## ggplot(virtual_prop_red_100, aes(x = prop_red)) +
-##   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
-##   labs(x = "Proportion of 100 balls that were red", title = "100")
+# # Segment 1: sample size = 25 ------------------------------
+# # 1.a) Compute sample proportions for 1000 samples, each sample of size 25
+# virtual_prop_red_25 <- bowl |>
+#   rep_slice_sample(n = 25, reps = 1000) |>
+#   summarize(prop_red = mean(color == "red"))
+# 
+# # 1.b) Plot a histogram to represent the distribution of the sample proportions
+# ggplot(virtual_prop_red_25, aes(x = prop_red)) +
+#   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
+#   labs(x = "Proportion of 25 balls that were red", title = "25")
+# 
+# 
+# # Segment 2: sample size = 50 ------------------------------
+# # 2.a) Compute sample proportions for 1000 samples, each sample of size 50
+# virtual_prop_red_50 <- bowl |>
+#   rep_slice_sample(n = 50, reps = 1000) |>
+#   summarize(prop_red = mean(color == "red"))
+# 
+# # 2.b) Plot a histogram to represent the distribution of the sample proportions
+# ggplot(virtual_prop_red_50, aes(x = prop_red)) +
+#   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
+#   labs(x = "Proportion of 50 balls that were red", title = "50")
+# 
+# 
+# # Segment 3: sample size = 100 ------------------------------
+# # 2.a) Compute sample proportions for 1000 samples, each sample of size 100
+# virtual_prop_red_100 <- bowl |>
+#   rep_slice_sample(n = 100, reps = 1000) |>
+#   summarize(prop_red = mean(color == "red"))
+# 
+# # 3.b) Plot a histogram to represent the distribution of the sample proportions
+# ggplot(virtual_prop_red_100, aes(x = prop_red)) +
+#   geom_histogram(binwidth = 0.05, boundary = 0.4, color = "white") +
+#   labs(x = "Proportion of 100 balls that were red", title = "100")
 
 
 
@@ -320,38 +320,38 @@ almonds_sample |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Segment 1: sample size = 25 ------------------------------
-## # 1.a) Calculating the 1000 sample means, each from random samples of size 25
-## virtual_mean_weight_25 <- almonds_bowl |>
-##   rep_slice_sample(n = 25, reps = 1000)|>
-##   summarize(mean_weight = mean(weight), n = n())
-## 
-## # 1.b) Plot distribution via a histogram
-## ggplot(virtual_mean_weight_25, aes(x = mean_weight)) +
-##   geom_histogram(binwidth = 0.02, boundary = 3.6, color = "white") +
-##   labs(x = "Sample mean weights for random samples of 25 almonds", title = "25")
-## 
-## # Segment 2: sample size = 50 ------------------------------
-## # 2.a) Calculating the 1000 sample means, each from random samples of size 50
-## virtual_mean_weight_50 <- almonds_bowl |>
-##   rep_slice_sample(n = 50, reps = 1000)|>
-##   summarize(mean_weight = mean(weight), n = n())
-## 
-## # 2.b) Plot distribution via a histogram
-## ggplot(virtual_mean_weight_50, aes(x = mean_weight)) +
-##   geom_histogram(binwidth = 0.02, boundary = 3.6, color = "white") +
-##   labs(x = "Sample mean weights for random samples of 50 almonds", title = "50")
-## 
-## # Segment 3: sample size = 100 ------------------------------
-## # 3.a) Calculating the 1000 sample means, each from random samples of size 100
-## virtual_mean_weight_100 <- almonds_bowl |>
-##   rep_slice_sample(n = 100, reps = 1000)|>
-##   summarize(mean_weight = mean(weight), n = n())
-## 
-## # 3.b) Plot distribution via a histogram
-## ggplot(virtual_mean_weight_100, aes(x = mean_weight)) +
-##   geom_histogram(binwidth = 0.02, boundary = 3.6, color = "white") +
-##   labs(x = "Sample mean weights for random samples of 100 almonds", title = "100")
+# # Segment 1: sample size = 25 ------------------------------
+# # 1.a) Calculating the 1000 sample means, each from random samples of size 25
+# virtual_mean_weight_25 <- almonds_bowl |>
+#   rep_slice_sample(n = 25, reps = 1000)|>
+#   summarize(mean_weight = mean(weight), n = n())
+# 
+# # 1.b) Plot distribution via a histogram
+# ggplot(virtual_mean_weight_25, aes(x = mean_weight)) +
+#   geom_histogram(binwidth = 0.02, boundary = 3.6, color = "white") +
+#   labs(x = "Sample mean weights for random samples of 25 almonds", title = "25")
+# 
+# # Segment 2: sample size = 50 ------------------------------
+# # 2.a) Calculating the 1000 sample means, each from random samples of size 50
+# virtual_mean_weight_50 <- almonds_bowl |>
+#   rep_slice_sample(n = 50, reps = 1000)|>
+#   summarize(mean_weight = mean(weight), n = n())
+# 
+# # 2.b) Plot distribution via a histogram
+# ggplot(virtual_mean_weight_50, aes(x = mean_weight)) +
+#   geom_histogram(binwidth = 0.02, boundary = 3.6, color = "white") +
+#   labs(x = "Sample mean weights for random samples of 50 almonds", title = "50")
+# 
+# # Segment 3: sample size = 100 ------------------------------
+# # 3.a) Calculating the 1000 sample means, each from random samples of size 100
+# virtual_mean_weight_100 <- almonds_bowl |>
+#   rep_slice_sample(n = 100, reps = 1000)|>
+#   summarize(mean_weight = mean(weight), n = n())
+# 
+# # 3.b) Plot distribution via a histogram
+# ggplot(virtual_mean_weight_100, aes(x = mean_weight)) +
+#   geom_histogram(binwidth = 0.02, boundary = 3.6, color = "white") +
+#   labs(x = "Sample mean weights for random samples of 100 almonds", title = "100")
 
 
 
