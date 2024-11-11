@@ -10,9 +10,9 @@ library(fivethirtyeight)
 
 
 ## ----message=FALSE, eval=FALSE------------------------------------------------
-## library(readr)
-## dem_score <- read_csv("https://moderndive.com/data/dem_score.csv")
-## dem_score
+# library(readr)
+# dem_score <- read_csv("https://moderndive.com/data/dem_score.csv")
+# dem_score
 
 
 
@@ -59,22 +59,22 @@ drinks_smaller_tidy
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## drinks_smaller |>
-##   pivot_longer(names_to = "type",
-##                values_to = "servings",
-##                cols = c(beer, spirit, wine))
+# drinks_smaller |>
+#   pivot_longer(names_to = "type",
+#                values_to = "servings",
+#                cols = c(beer, spirit, wine))
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## drinks_smaller |>
-##   pivot_longer(names_to = "type",
-##                values_to = "servings",
-##                cols = beer:wine)
+# drinks_smaller |>
+#   pivot_longer(names_to = "type",
+#                values_to = "servings",
+#                cols = beer:wine)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(drinks_smaller_tidy, aes(x = country, y = servings, fill = type)) +
-##   geom_col(position = "dodge")
+# ggplot(drinks_smaller_tidy, aes(x = country, y = servings, fill = type)) +
+#   geom_col(position = "dodge")
 
 
 

@@ -1,7 +1,7 @@
 ## ----eval=FALSE---------------------------------------------------------------
-## library(tidyverse)
-## library(moderndive)
-## library(ISLR2)
+# library(tidyverse)
+# library(moderndive)
+# library(ISLR2)
 
 
 ## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
@@ -34,15 +34,15 @@ glimpse(UN_data_ch6)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch6 |> sample_n(size = 10)
+# UN_data_ch6 |> sample_n(size = 10)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch6 |>
-##   select(life_exp, fert_rate, income) |>
-##   tidy_summary()
+# UN_data_ch6 |>
+#   select(life_exp, fert_rate, income) |>
+#   tidy_summary()
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -62,56 +62,25 @@ UN_data_ch6 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
-##   geom_point() +
-##   labs(x = "Life Expectancy", y = "Fertility Rate", color = "Income group") +
-##   geom_smooth(method = "lm", se = FALSE)
+# ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
+#   geom_point() +
+#   labs(x = "Life Expectancy", y = "Fertility Rate", color = "Income group") +
+#   geom_smooth(method = "lm", se = FALSE)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## one_factor_model <- lm(fert_rate ~ income, data = UN_data_ch6)
-## coef(one_factor_model)
+# one_factor_model <- lm(fert_rate ~ income, data = UN_data_ch6)
+# coef(one_factor_model)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model and get the coefficients of the model
-## model_int <- lm(fert_rate ~ life_exp * income, data = UN_data_ch6)
-## coef(model_int)
-
-
-
-
-
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
-##   geom_point() +
-##   labs(x = "Life expectancy", y = "Fertility rate", color = "Income group") +
-##   geom_parallel_slopes(se = FALSE)
-
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## model_no_int <- lm(fert_rate ~ life_exp + income, data = UN_data_ch6)
-## 
-## # Get the coefficients of the model
-## coef(model_no_int)
-
-
-
-
-
-
-
-
+# # Fit regression model and get the coefficients of the model
+# model_int <- lm(fert_rate ~ life_exp * income, data = UN_data_ch6)
+# coef(model_int)
 
 
 
@@ -121,8 +90,39 @@ UN_data_ch6 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## regression_points <- get_regression_points(model_int)
-## regression_points
+# ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
+#   geom_point() +
+#   labs(x = "Life expectancy", y = "Fertility rate", color = "Income group") +
+#   geom_parallel_slopes(se = FALSE)
+
+
+
+
+## ----eval=FALSE---------------------------------------------------------------
+# # Fit regression model:
+# model_no_int <- lm(fert_rate ~ life_exp + income, data = UN_data_ch6)
+# 
+# # Get the coefficients of the model
+# coef(model_no_int)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## ----eval=FALSE---------------------------------------------------------------
+# regression_points <- get_regression_points(model_int)
+# regression_points
 
 
 
@@ -145,13 +145,13 @@ glimpse(credit_ch6)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## credit_ch6 |> sample_n(size = 5)
+# credit_ch6 |> sample_n(size = 5)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## credit_ch6 |> select(debt, credit_limit, income) |> tidy_summary()
+# credit_ch6 |> select(debt, credit_limit, income) |> tidy_summary()
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -171,28 +171,28 @@ credit_ch6 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
-##   geom_point() +
-##   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)",
-##        title = "Debt and credit limit") +
-##   geom_smooth(method = "lm", se = FALSE)
-## 
-## ggplot(credit_ch6, aes(x = income, y = debt)) +
-##   geom_point() +
-##   labs(x = "Income (in $1000)", y = "Credit card debt (in $)",
-##        title = "Debt and income") +
-##   geom_smooth(method = "lm", se = FALSE)
+# ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
+#   geom_point() +
+#   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)",
+#        title = "Debt and credit limit") +
+#   geom_smooth(method = "lm", se = FALSE)
+# 
+# ggplot(credit_ch6, aes(x = income, y = debt)) +
+#   geom_point() +
+#   labs(x = "Income (in $1000)", y = "Credit card debt (in $)",
+#        title = "Debt and income") +
+#   geom_smooth(method = "lm", se = FALSE)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## credit_ch6 |> get_correlation(debt ~ credit_limit)
-## credit_ch6 |> get_correlation(debt ~ income)
+# credit_ch6 |> get_correlation(debt ~ credit_limit)
+# credit_ch6 |> get_correlation(debt ~ income)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## credit_ch6 |> select(debt, credit_limit, income) |> cor()
+# credit_ch6 |> select(debt, credit_limit, income) |> cor()
 
 
 
@@ -212,16 +212,16 @@ credit_ch6 |> get_correlation(debt ~ 1000 * income)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## debt_model <- lm(debt ~ credit_limit + income, data = credit_ch6)
-## coef(debt_model)
+# debt_model <- lm(debt ~ credit_limit + income, data = credit_ch6)
+# coef(debt_model)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model and get the coefficients of the model
-## simple_model <- lm(debt ~ income, data = credit_ch6)
-## coef(simple_model)
+# # Fit regression model and get the coefficients of the model
+# simple_model <- lm(debt ~ income, data = credit_ch6)
+# coef(simple_model)
 
 
 
@@ -231,5 +231,5 @@ credit_ch6 |> get_correlation(debt ~ 1000 * income)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## get_regression_points(debt_model)
+# get_regression_points(debt_model)
 

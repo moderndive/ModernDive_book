@@ -16,7 +16,7 @@ UN_data_ch10 <- un_member_states_2024 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch10
+# UN_data_ch10
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -37,8 +37,8 @@ un_member_states_2024 |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## simple_model <- lm(fert_rate ~ life_exp, data = UN_data_ch10)
-## coef(simple_model)
+# simple_model <- lm(fert_rate ~ life_exp, data = UN_data_ch10)
+# coef(simple_model)
 
 
 
@@ -53,10 +53,10 @@ ggplot(UN_data_ch10, aes(x = life_exp, y = fert_rate)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch10 |>
-##   rowid_to_column() |>
-##   filter(country == "France")|>
-##   pull(rowid)
+# UN_data_ch10 |>
+#   rowid_to_column() |>
+#   filter(country == "France")|>
+#   pull(rowid)
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -68,8 +68,8 @@ france_id
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## UN_data_ch10 |>
-##   filter(country == "France")
+# UN_data_ch10 |>
+#   filter(country == "France")
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -85,9 +85,9 @@ resid_france <- actual_france - fitted_france
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## simple_model |>
-##   get_regression_points() |>
-##   filter(ID == 57)
+# simple_model |>
+#   get_regression_points() |>
+#   filter(ID == 57)
 
 
 
@@ -102,9 +102,9 @@ old_faithful_2024
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## old_faithful_2024 |>
-##   select(duration, waiting) |>
-##   tidy_summary()
+# old_faithful_2024 |>
+#   select(duration, waiting) |>
+#   tidy_summary()
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -131,19 +131,19 @@ ggplot(old_faithful_2024,
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## model_1 <- lm(waiting ~ duration, data = old_faithful_2024)
-## 
-## # Get the coefficients and standard deviation for the model
-## coef(model_1)
-## sigma(model_1)
+# # Fit regression model:
+# model_1 <- lm(waiting ~ duration, data = old_faithful_2024)
+# 
+# # Get the coefficients and standard deviation for the model
+# coef(model_1)
+# sigma(model_1)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mod_diff_means <- lm(rating ~ genre, data = movies_sample)
-## get_regression_table(mod_diff_means)
+# mod_diff_means <- lm(rating ~ genre, data = movies_sample)
+# get_regression_table(mod_diff_means)
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -164,8 +164,8 @@ spotify_for_anova <- spotify_by_genre |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## spotify_for_anova |>
-##   slice_sample(n = 5)
+# spotify_for_anova |>
+#   slice_sample(n = 5)
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -192,8 +192,8 @@ mean_popularities_by_genre
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mod_anova <- lm(popularity ~ track_genre, data = spotify_for_anova)
-## get_regression_table(mod_anova)
+# mod_anova <- lm(popularity ~ track_genre, data = spotify_for_anova)
+# get_regression_table(mod_anova)
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -266,7 +266,7 @@ ggplot(data.frame(x = c(-4, 4)), aes(x = x)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## get_regression_table(model_1)
+# get_regression_table(model_1)
 
 
 
@@ -282,11 +282,11 @@ fitted_and_residuals
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## fitted_and_residuals |>
-##   ggplot(aes(x = waiting_hat, y = residual)) +
-##   geom_point() +
-##   labs(x = "duration", y = "residual") +
-##   geom_hline(yintercept = 0, col = "blue")
+# fitted_and_residuals |>
+#   ggplot(aes(x = waiting_hat, y = residual)) +
+#   geom_point() +
+#   labs(x = "duration", y = "residual") +
+#   geom_hline(yintercept = 0, col = "blue")
 
 
 
@@ -296,15 +296,15 @@ fitted_and_residuals
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(fitted_and_residuals, aes(residual)) +
-##   geom_histogram(binwidth = 10, color = "white")
+# ggplot(fitted_and_residuals, aes(residual)) +
+#   geom_histogram(binwidth = 10, color = "white")
 
 
 ## ----eval = FALSE-------------------------------------------------------------
-## fitted_and_residuals |>
-##   ggplot(aes(sample = residual)) +
-##   geom_qq() +
-##   geom_qq_line()
+# fitted_and_residuals |>
+#   ggplot(aes(sample = residual)) +
+#   geom_qq() +
+#   geom_qq_line()
 
 
 ## ----model1residualshist, echo=FALSE, warning=FALSE, fig.cap="Histogram of residuals."----
@@ -346,11 +346,11 @@ n_reps <- 1000
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distn_slope <- old_faithful_2024 |>
-##   specify(formula = waiting ~ duration) |>
-##   generate(reps = 1000, type = "bootstrap") |>
-##   calculate(stat = "slope")
-## bootstrap_distn_slope
+# bootstrap_distn_slope <- old_faithful_2024 |>
+#   specify(formula = waiting ~ duration) |>
+#   generate(reps = 1000, type = "bootstrap") |>
+#   calculate(stat = "slope")
+# bootstrap_distn_slope
 
 
 
@@ -379,11 +379,11 @@ se_ci
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## null_distn_slope <- old_faithful_2024 |>
-##   specify(waiting ~ duration) |>
-##   hypothesize(null = "independence") |>
-##   generate(reps = 1000, type = "permute") |>
-##   calculate(stat = "slope")
+# null_distn_slope <- old_faithful_2024 |>
+#   specify(waiting ~ duration) |>
+#   hypothesize(null = "independence") |>
+#   generate(reps = 1000, type = "permute") |>
+#   calculate(stat = "slope")
 
 
 
@@ -424,8 +424,8 @@ coffee_data
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## coffee_data |>
-##   tidy_summary()
+# coffee_data |>
+#   tidy_summary()
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -463,26 +463,26 @@ corr_table <- coffee_data |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## mod_mult <- lm(
-##   total_cup_points ~ aroma + flavor + moisture_percentage + continent_of_origin,
-##   data = coffee_data
-## )
-## 
-## # Get the coefficients of the model
-## coef(mod_mult)
-## 
-## # Get the standard deviation of the model
-## sigma(mod_mult)
+# # Fit regression model:
+# mod_mult <- lm(
+#   total_cup_points ~ aroma + flavor + moisture_percentage + continent_of_origin,
+#   data = coffee_data
+# )
+# 
+# # Get the coefficients of the model
+# coef(mod_mult)
+# 
+# # Get the standard deviation of the model
+# sigma(mod_mult)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## coffee_data |>
-##   select(aroma, flavor, moisture_percentage)|>
-##   tidy_summary() |>
-##   select(column, min, max)
+# coffee_data |>
+#   select(aroma, flavor, moisture_percentage)|>
+#   tidy_summary() |>
+#   select(column, min, max)
 
 
 
@@ -492,32 +492,32 @@ corr_table <- coffee_data |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## get_regression_table(mod_mult)
+# get_regression_table(mod_mult)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## mod_mult_1 <- lm(
-##   total_cup_points ~ aroma + flavor + moisture_percentage,
-##   data = coffee_data)
-## 
-## # Get the coefficients of the model
-## coef(mod_mult_1)
-## sigma(mod_mult_1)
+# # Fit regression model:
+# mod_mult_1 <- lm(
+#   total_cup_points ~ aroma + flavor + moisture_percentage,
+#   data = coffee_data)
+# 
+# # Get the coefficients of the model
+# coef(mod_mult_1)
+# sigma(mod_mult_1)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## mod_mult_2 <- lm(
-##   total_cup_points ~ aroma + moisture_percentage, data = coffee_data)
-## 
-## # Get the coefficients of the model
-## coef(mod_mult_2)
-## sigma(mod_mult_2)
+# # Fit regression model:
+# mod_mult_2 <- lm(
+#   total_cup_points ~ aroma + moisture_percentage, data = coffee_data)
+# 
+# # Get the coefficients of the model
+# coef(mod_mult_2)
+# sigma(mod_mult_2)
 
 
 
@@ -538,25 +538,25 @@ ub_mult <- b1_mult + q*se_b1_mult
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## get_regression_table(mod_mult, conf.level = 0.98)
+# get_regression_table(mod_mult, conf.level = 0.98)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## get_regression_table(mod_mult_1)
+# get_regression_table(mod_mult_1)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## anova(mod_mult_2, mod_mult_1)
+# anova(mod_mult_2, mod_mult_1)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## anova(mod_mult_1, mod_mult)
+# anova(mod_mult_1, mod_mult)
 
 
 
@@ -595,7 +595,7 @@ observed_fit
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mod_mult_table
+# mod_mult_table
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -613,11 +613,11 @@ mod_mult_table |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## coffee_data |>
-##   specify(
-##     total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage
-##   ) |>
-##   generate(reps = 1000, type = "bootstrap")
+# coffee_data |>
+#   specify(
+#     total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage
+#   ) |>
+#   generate(reps = 1000, type = "bootstrap")
 
 
 ## ----echo=FALSE---------------------------------------------------------------
@@ -643,13 +643,13 @@ generated_distn_slopes
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## boot_distribution_mlr <- coffee_quality |>
-##   specify(
-##     total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage
-##   ) |>
-##   generate(reps = 1000, type = "bootstrap") |>
-##   fit()
-## boot_distribution_mlr
+# boot_distribution_mlr <- coffee_quality |>
+#   specify(
+#     total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage
+#   ) |>
+#   generate(reps = 1000, type = "bootstrap") |>
+#   fit()
+# boot_distribution_mlr
 
 
 ## ----echo=FALSE---------------------------------------------------------------

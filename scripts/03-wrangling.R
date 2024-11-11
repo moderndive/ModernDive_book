@@ -11,50 +11,50 @@ library(nycflights23)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## envoy_flights <- flights |>
-##   filter(carrier == "AS")
+# envoy_flights <- flights |>
+#   filter(carrier == "AS")
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## phoenix_flights <- flights |>
-##   filter(dest == "PHX")
-## View(phoenix_flights)
+# phoenix_flights <- flights |>
+#   filter(dest == "PHX")
+# View(phoenix_flights)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## btv_sea_flights_fall <- flights |>
-##   filter(origin == "JFK" & (dest == "BTV" | dest == "SEA") & month >= 10)
-## View(btv_sea_flights_fall)
+# btv_sea_flights_fall <- flights |>
+#   filter(origin == "JFK" & (dest == "BTV" | dest == "SEA") & month >= 10)
+# View(btv_sea_flights_fall)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## btv_sea_flights_fall <- flights |>
-##   filter(origin == "JFK", (dest == "BTV" | dest == "SEA"), month >= 10)
-## View(btv_sea_flights_fall)
+# btv_sea_flights_fall <- flights |>
+#   filter(origin == "JFK", (dest == "BTV" | dest == "SEA"), month >= 10)
+# View(btv_sea_flights_fall)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## not_BTV_SEA <- flights |>
-##   filter(!(dest == "BTV" | dest == "SEA"))
-## View(not_BTV_SEA)
+# not_BTV_SEA <- flights |>
+#   filter(!(dest == "BTV" | dest == "SEA"))
+# View(not_BTV_SEA)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights |> filter(!dest == "BTV" | dest == "SEA")
+# flights |> filter(!dest == "BTV" | dest == "SEA")
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## many_airports <- flights |>
-##   filter(dest == "SEA" | dest == "SFO" | dest == "PHX" |
-##          dest == "BTV" | dest == "BDL")
+# many_airports <- flights |>
+#   filter(dest == "SEA" | dest == "SFO" | dest == "PHX" |
+#          dest == "BTV" | dest == "BDL")
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## many_airports <- flights |>
-##   filter(dest %in% c("SEA", "SFO", "PHX", "BTV", "BDL"))
-## View(many_airports)
+# many_airports <- flights |>
+#   filter(dest %in% c("SEA", "SFO", "PHX", "BTV", "BDL"))
+# View(many_airports)
 
 
 
@@ -86,9 +86,9 @@ summary_windspeed
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## summary_windspeed <- weather |>
-##   summarize(mean = mean(wind_speed, na.rm = TRUE)) |>
-##   summarize(std_dev = sd(wind_speed, na.rm = TRUE))
+# summary_windspeed <- weather |>
+#   summarize(mean = mean(wind_speed, na.rm = TRUE)) |>
+#   summarize(std_dev = sd(wind_speed, na.rm = TRUE))
 
 
 
@@ -237,28 +237,28 @@ freq_dest |>
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## View(airlines)
+# View(airlines)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_joined <- flights |>
-##   inner_join(airlines, by = "carrier")
-## View(flights)
-## View(flights_joined)
+# flights_joined <- flights |>
+#   inner_join(airlines, by = "carrier")
+# View(flights)
+# View(flights_joined)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## View(airports)
+# View(airports)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_with_airport_names <- flights |>
-##   inner_join(airports, by = c("dest" = "faa"))
-## View(flights_with_airport_names)
+# flights_with_airport_names <- flights |>
+#   inner_join(airports, by = c("dest" = "faa"))
+# View(flights_with_airport_names)
 
 
 ## -----------------------------------------------------------------------------
@@ -272,9 +272,9 @@ named_dests
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_weather_joined <- flights |>
-##   inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
-## View(flights_weather_joined)
+# flights_weather_joined <- flights |>
+#   inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
+# View(flights_weather_joined)
 
 
 
@@ -282,9 +282,9 @@ named_dests
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## joined_flights <- flights |>
-##   inner_join(airlines, by = "carrier")
-## View(joined_flights)
+# joined_flights <- flights |>
+#   inner_join(airlines, by = "carrier")
+# View(joined_flights)
 
 
 
@@ -296,56 +296,56 @@ named_dests
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## glimpse(flights)
+# glimpse(flights)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights |>
-##   select(carrier, flight)
+# flights |>
+#   select(carrier, flight)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_no_year <- flights |> select(-year)
+# flights_no_year <- flights |> select(-year)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flight_arr_times <- flights |> select(month:day, arr_time:sched_arr_time)
-## flight_arr_times
+# flight_arr_times <- flights |> select(month:day, arr_time:sched_arr_time)
+# flight_arr_times
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights |> select(starts_with("a"))
-## flights |> select(ends_with("delay"))
-## flights |> select(contains("time"))
+# flights |> select(starts_with("a"))
+# flights |> select(ends_with("delay"))
+# flights |> select(contains("time"))
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_reorder <- flights |>
-##   select(year, month, day, hour, minute, time_hour, everything())
-## glimpse(flights_reorder)
+# flights_reorder <- flights |>
+#   select(year, month, day, hour, minute, time_hour, everything())
+# glimpse(flights_reorder)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_relocate <- flights |>
-##   relocate(hour, minute, time_hour, .after = day)
-## glimpse(flights_relocate)
+# flights_relocate <- flights |>
+#   relocate(hour, minute, time_hour, .after = day)
+# glimpse(flights_relocate)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## flights_time_new <- flights |>
-##   select(dep_time, arr_time) |>
-##   rename(departure_time = dep_time, arrival_time = arr_time)
-## glimpse(flights_time_new)
+# flights_time_new <- flights |>
+#   select(dep_time, arr_time) |>
+#   rename(departure_time = dep_time, arrival_time = arr_time)
+# glimpse(flights_time_new)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## named_dests |> top_n(n = 10, wt = num_flights)
+# named_dests |> top_n(n = 10, wt = num_flights)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## named_dests |>
-##   top_n(n = 10, wt = num_flights) |>
-##   arrange(desc(num_flights))
+# named_dests |>
+#   top_n(n = 10, wt = num_flights) |>
+#   arrange(desc(num_flights))
 
 
 
