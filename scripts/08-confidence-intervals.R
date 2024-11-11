@@ -50,12 +50,12 @@ pennies_resample <- tibble(
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(pennies_resample, aes(x = year)) +
-##   geom_histogram(binwidth = 10, color = "white") +
-##   labs(title = "Resample of 50 pennies")
-## ggplot(pennies_sample, aes(x = year)) +
-##   geom_histogram(binwidth = 10, color = "white") +
-##   labs(title = "Original sample of 50 pennies")
+# ggplot(pennies_resample, aes(x = year)) +
+#   geom_histogram(binwidth = 10, color = "white") +
+#   labs(title = "Resample of 50 pennies")
+# ggplot(pennies_sample, aes(x = year)) +
+#   geom_histogram(binwidth = 10, color = "white") +
+#   labs(title = "Original sample of 50 pennies")
 
 
 
@@ -84,8 +84,8 @@ resampled_means
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## virtual_shovel <- bowl %>%
-##   rep_sample_n(size = 50)
+# virtual_shovel <- bowl %>%
+#   rep_sample_n(size = 50)
 
 
 ## -----------------------------------------------------------------------------
@@ -181,9 +181,9 @@ virtual_resampled_means %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## standard_error_ci <- bootstrap_distribution %>%
-##   get_ci(type = "se", point_estimate = x_bar)
-## standard_error_ci
+# standard_error_ci <- bootstrap_distribution %>%
+#   get_ci(type = "se", point_estimate = x_bar)
+# standard_error_ci
 
 
 
@@ -191,32 +191,32 @@ virtual_resampled_means %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   rep_sample_n(size = 50, replace = TRUE, reps = 1000)
+# pennies_sample %>%
+#   rep_sample_n(size = 50, replace = TRUE, reps = 1000)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>%
-##   group_by(replicate)
+# pennies_sample %>%
+#   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>%
+#   group_by(replicate)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>%
-##   group_by(replicate) %>%
-##   summarize(mean_year = mean(year))
+# pennies_sample %>%
+#   rep_sample_n(size = 50, replace = TRUE, reps = 1000) %>%
+#   group_by(replicate) %>%
+#   summarize(mean_year = mean(year))
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   summarize(stat = mean(year))
+# pennies_sample %>%
+#   summarize(stat = mean(year))
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   specify(response = year) %>%
-##   calculate(stat = "mean")
+# pennies_sample %>%
+#   specify(response = year) %>%
+#   calculate(stat = "mean")
 
 
 
@@ -227,30 +227,16 @@ pennies_sample %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   specify(formula = year ~ NULL)
+# pennies_sample %>%
+#   specify(formula = year ~ NULL)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## pennies_sample %>%
-##   specify(response = year) %>%
-##   generate(reps = 1000, type = "bootstrap")
-
-
-
-
-
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distribution <- pennies_sample %>%
-##   specify(response = year) %>%
-##   generate(reps = 1000) %>%
-##   calculate(stat = "mean")
-## bootstrap_distribution
+# pennies_sample %>%
+#   specify(response = year) %>%
+#   generate(reps = 1000, type = "bootstrap")
 
 
 
@@ -260,7 +246,21 @@ pennies_sample %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution)
+# bootstrap_distribution <- pennies_sample %>%
+#   specify(response = year) %>%
+#   generate(reps = 1000) %>%
+#   calculate(stat = "mean")
+# bootstrap_distribution
+
+
+
+
+
+
+
+
+## ----eval=FALSE---------------------------------------------------------------
+# visualize(bootstrap_distribution)
 
 
 
@@ -276,15 +276,15 @@ percentile_ci
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution) +
-##   shade_confidence_interval(endpoints = percentile_ci)
+# visualize(bootstrap_distribution) +
+#   shade_confidence_interval(endpoints = percentile_ci)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution) +
-##   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
+# visualize(bootstrap_distribution) +
+#   shade_ci(endpoints = percentile_ci, color = "hotpink", fill = "khaki")
 
 
 ## -----------------------------------------------------------------------------
@@ -294,8 +294,8 @@ standard_error_ci
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution) +
-##   shade_confidence_interval(endpoints = standard_error_ci)
+# visualize(bootstrap_distribution) +
+#   shade_confidence_interval(endpoints = standard_error_ci)
 
 
 
@@ -317,8 +317,8 @@ bowl_sample_1
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bowl_sample_1 %>%
-##   specify(response = color)
+# bowl_sample_1 %>%
+#   specify(response = color)
 
 
 ## -----------------------------------------------------------------------------
@@ -327,18 +327,18 @@ bowl_sample_1 %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bowl_sample_1 %>%
-##   specify(response = color, success = "red") %>%
-##   generate(reps = 1000, type = "bootstrap")
+# bowl_sample_1 %>%
+#   specify(response = color, success = "red") %>%
+#   generate(reps = 1000, type = "bootstrap")
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## sample_1_bootstrap <- bowl_sample_1 %>%
-##   specify(response = color, success = "red") %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
-##   calculate(stat = "prop")
-## sample_1_bootstrap
+# sample_1_bootstrap <- bowl_sample_1 %>%
+#   specify(response = color, success = "red") %>%
+#   generate(reps = 1000, type = "bootstrap") %>%
+#   calculate(stat = "prop")
+# sample_1_bootstrap
 
 
 
@@ -350,10 +350,10 @@ percentile_ci_1
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## sample_1_bootstrap %>%
-##   visualize(bins = 15) +
-##   shade_confidence_interval(endpoints = percentile_ci_1) +
-##   geom_vline(xintercept = 0.42, linetype = "dashed")
+# sample_1_bootstrap %>%
+#   visualize(bins = 15) +
+#   shade_confidence_interval(endpoints = percentile_ci_1) +
+#   geom_vline(xintercept = 0.42, linetype = "dashed")
 
 
 
@@ -364,13 +364,13 @@ bowl_sample_2
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## sample_2_bootstrap <- bowl_sample_2 %>%
-##   specify(response = color,
-##           success = "red") %>%
-##   generate(reps = 1000,
-##            type = "bootstrap") %>%
-##   calculate(stat = "prop")
-## sample_2_bootstrap
+# sample_2_bootstrap <- bowl_sample_2 %>%
+#   specify(response = color,
+#           success = "red") %>%
+#   generate(reps = 1000,
+#            type = "bootstrap") %>%
+#   calculate(stat = "prop")
+# sample_2_bootstrap
 
 
 
@@ -414,8 +414,8 @@ mythbusters_yawn %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn %>%
-##   specify(formula = yawn ~ group)
+# mythbusters_yawn %>%
+#   specify(formula = yawn ~ group)
 
 
 ## -----------------------------------------------------------------------------
@@ -434,33 +434,33 @@ first_six_rows %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn %>%
-##   specify(formula = yawn ~ group, success = "yes") %>%
-##   generate(reps = 1000, type = "bootstrap")
+# mythbusters_yawn %>%
+#   specify(formula = yawn ~ group, success = "yes") %>%
+#   generate(reps = 1000, type = "bootstrap")
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## mythbusters_yawn %>%
-##   specify(formula = yawn ~ group, success = "yes") %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
-##   calculate(stat = "diff in props")
+# mythbusters_yawn %>%
+#   specify(formula = yawn ~ group, success = "yes") %>%
+#   generate(reps = 1000, type = "bootstrap") %>%
+#   calculate(stat = "diff in props")
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distribution_yawning <- mythbusters_yawn %>%
-##   specify(formula = yawn ~ group, success = "yes") %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
-##   calculate(stat = "diff in props", order = c("seed", "control"))
-## bootstrap_distribution_yawning
+# bootstrap_distribution_yawning <- mythbusters_yawn %>%
+#   specify(formula = yawn ~ group, success = "yes") %>%
+#   generate(reps = 1000, type = "bootstrap") %>%
+#   calculate(stat = "diff in props", order = c("seed", "control"))
+# bootstrap_distribution_yawning
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution_yawning) +
-##   geom_vline(xintercept = 0)
+# visualize(bootstrap_distribution_yawning) +
+#   geom_vline(xintercept = 0)
 
 
 
@@ -516,10 +516,10 @@ set.seed(76)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distribution <- bowl_sample_1 %>%
-##   specify(response = color, success = "red") %>%
-##   generate(reps = 1000, type = "bootstrap") %>%
-##   calculate(stat = "prop")
+# bootstrap_distribution <- bowl_sample_1 %>%
+#   specify(response = color, success = "red") %>%
+#   generate(reps = 1000, type = "bootstrap") %>%
+#   calculate(stat = "prop")
 
 
 
@@ -556,24 +556,24 @@ conf_ints <- tactile_prop_red %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # First: Take 100 virtual samples of n=50 balls
-## virtual_samples <- bowl %>%
-##   rep_sample_n(size = 50, reps = 100)
-## 
-## # Second: For each virtual sample compute the proportion red
-## virtual_prop_red <- virtual_samples %>%
-##   group_by(replicate) %>%
-##   summarize(red = sum(color == "red")) %>%
-##   mutate(prop_red = red / 50)
-## 
-## # Third: Compute the 95% confidence interval as before
-## virtual_prop_red <- virtual_prop_red %>%
-##   rename(p_hat = prop_red) %>%
-##   mutate(
-##     n = 50,
-##     SE = sqrt(p_hat*(1-p_hat)/n),
-##     MoE = 1.96 * SE,
-##     lower_ci = p_hat - MoE,
-##     upper_ci = p_hat + MoE
-##   )
+# # First: Take 100 virtual samples of n=50 balls
+# virtual_samples <- bowl %>%
+#   rep_sample_n(size = 50, reps = 100)
+# 
+# # Second: For each virtual sample compute the proportion red
+# virtual_prop_red <- virtual_samples %>%
+#   group_by(replicate) %>%
+#   summarize(red = sum(color == "red")) %>%
+#   mutate(prop_red = red / 50)
+# 
+# # Third: Compute the 95% confidence interval as before
+# virtual_prop_red <- virtual_prop_red %>%
+#   rename(p_hat = prop_red) %>%
+#   mutate(
+#     n = 50,
+#     SE = sqrt(p_hat*(1-p_hat)/n),
+#     MoE = 1.96 * SE,
+#     lower_ci = p_hat - MoE,
+#     upper_ci = p_hat + MoE
+#   )
 

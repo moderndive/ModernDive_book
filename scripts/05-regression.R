@@ -1,8 +1,8 @@
 ## ----eval=FALSE---------------------------------------------------------------
-## library(tidyverse)
-## library(moderndive)
-## library(skimr)
-## library(gapminder)
+# library(tidyverse)
+# library(moderndive)
+# library(skimr)
+# library(gapminder)
 
 ## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
 # The code presented to the reader in the chunk above is different than the code
@@ -38,8 +38,8 @@ glimpse(evals_ch5)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## evals_ch5 %>%
-##   sample_n(size = 5)
+# evals_ch5 %>%
+#   sample_n(size = 5)
 
 
 
@@ -50,7 +50,7 @@ evals_ch5 %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## evals_ch5 %>% select(score, bty_avg) %>% skim()
+# evals_ch5 %>% select(score, bty_avg) %>% skim()
 
 
 
@@ -61,27 +61,27 @@ evals_ch5 %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## evals_ch5 %>%
-##   summarize(correlation = cor(score, bty_avg))
+# evals_ch5 %>%
+#   summarize(correlation = cor(score, bty_avg))
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
-##   geom_point() +
-##   labs(x = "Beauty Score",
-##        y = "Teaching Score",
-##        title = "Scatterplot of relationship of teaching and beauty scores")
+# ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
+#   geom_point() +
+#   labs(x = "Beauty Score",
+#        y = "Teaching Score",
+#        title = "Scatterplot of relationship of teaching and beauty scores")
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
-##   geom_jitter() +
-##   labs(x = "Beauty Score", y = "Teaching Score",
-##        title = "Scatterplot of relationship of teaching and beauty scores")
+# ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
+#   geom_jitter() +
+#   labs(x = "Beauty Score", y = "Teaching Score",
+#        title = "Scatterplot of relationship of teaching and beauty scores")
 
 
 
@@ -98,19 +98,19 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## score_model <- lm(score ~ bty_avg, data = evals_ch5)
-## # Get regression table:
-## get_regression_table(score_model)
+# # Fit regression model:
+# score_model <- lm(score ~ bty_avg, data = evals_ch5)
+# # Get regression table:
+# get_regression_table(score_model)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## score_model <- lm(score ~ bty_avg, data = evals_ch5)
-## # Get regression table:
-## get_regression_table(score_model)
+# # Fit regression model:
+# score_model <- lm(score ~ bty_avg, data = evals_ch5)
+# # Get regression table:
+# get_regression_table(score_model)
 
 
 
@@ -124,8 +124,8 @@ ggplot(evals_ch5, aes(x = bty_avg, y = score)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## regression_points <- get_regression_points(score_model)
-## regression_points
+# regression_points <- get_regression_points(score_model)
+# regression_points
 
 
 
@@ -150,14 +150,14 @@ glimpse(gapminder2007)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## gapminder2007 %>% sample_n(size = 5)
+# gapminder2007 %>% sample_n(size = 5)
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## gapminder2007 %>%
-##   select(lifeExp, continent) %>%
-##   skim()
+# gapminder2007 %>%
+#   select(lifeExp, continent) %>%
+#   skim()
 
 
 
@@ -170,12 +170,12 @@ ggplot(gapminder2007, aes(x = lifeExp)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(gapminder2007, aes(x = lifeExp)) +
-##   geom_histogram(binwidth = 5, color = "white") +
-##   labs(x = "Life expectancy",
-##        y = "Number of countries",
-##        title = "Histogram of distribution of worldwide life expectancies") +
-##   facet_wrap(~ continent, nrow = 2)
+# ggplot(gapminder2007, aes(x = lifeExp)) +
+#   geom_histogram(binwidth = 5, color = "white") +
+#   labs(x = "Life expectancy",
+#        y = "Number of countries",
+#        title = "Histogram of distribution of worldwide life expectancies") +
+#   facet_wrap(~ continent, nrow = 2)
 
 
 
@@ -204,8 +204,8 @@ lifeExp_by_continent <- gapminder2007 %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
-## get_regression_table(lifeExp_model)
+# lifeExp_model <- lm(lifeExp ~ continent, data = gapminder2007)
+# get_regression_table(lifeExp_model)
 
 
 
@@ -215,8 +215,8 @@ lifeExp_by_continent <- gapminder2007 %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## regression_points <- get_regression_points(lifeExp_model, ID = "country")
-## regression_points
+# regression_points <- get_regression_points(lifeExp_model, ID = "country")
+# regression_points
 
 
 
@@ -253,31 +253,31 @@ regression_points %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## score_model <- lm(formula = score ~ bty_avg, data = evals_ch5)
-## # Get regression table:
-## get_regression_table(score_model)
+# # Fit regression model:
+# score_model <- lm(formula = score ~ bty_avg, data = evals_ch5)
+# # Get regression table:
+# get_regression_table(score_model)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## library(broom)
-## library(janitor)
-## score_model %>%
-##   tidy(conf.int = TRUE) %>%
-##   mutate_if(is.numeric, round, digits = 3) %>%
-##   clean_names() %>%
-##   rename(lower_ci = conf_low, upper_ci = conf_high)
+# library(broom)
+# library(janitor)
+# score_model %>%
+#   tidy(conf.int = TRUE) %>%
+#   mutate_if(is.numeric, round, digits = 3) %>%
+#   clean_names() %>%
+#   rename(lower_ci = conf_low, upper_ci = conf_high)
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## library(broom)
-## library(janitor)
-## score_model %>%
-##   augment() %>%
-##   mutate_if(is.numeric, round, digits = 3) %>%
-##   clean_names() %>%
-##   select(-c("std_resid", "hat", "sigma", "cooksd", "std_resid"))
+# library(broom)
+# library(janitor)
+# score_model %>%
+#   augment() %>%
+#   mutate_if(is.numeric, round, digits = 3) %>%
+#   clean_names() %>%
+#   select(-c("std_resid", "hat", "sigma", "cooksd", "std_resid"))
 

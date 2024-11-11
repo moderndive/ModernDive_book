@@ -21,9 +21,9 @@ promotions %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(promotions, aes(x = gender, fill = decision)) +
-##   geom_bar() +
-##   labs(x = "Gender of name on résumé")
+# ggplot(promotions, aes(x = gender, fill = decision)) +
+#   geom_bar() +
+#   labs(x = "Gender of name on résumé")
 
 
 
@@ -45,10 +45,10 @@ promotions %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(promotions_shuffled,
-##        aes(x = gender, fill = decision)) +
-##   geom_bar() +
-##   labs(x = "Gender of résumé name")
+# ggplot(promotions_shuffled,
+#        aes(x = gender, fill = decision)) +
+#   geom_bar() +
+#   labs(x = "Gender of résumé name")
 
 
 
@@ -68,23 +68,23 @@ promotions_shuffled %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## obs_diff_prop <- promotions %>%
-##   specify(decision ~ gender, success = "promoted") %>%
-##   calculate(stat = "diff in props", order = c("male", "female"))
-## obs_diff_prop
+# obs_diff_prop <- promotions %>%
+#   specify(decision ~ gender, success = "promoted") %>%
+#   calculate(stat = "diff in props", order = c("male", "female"))
+# obs_diff_prop
 
 
 ## ----echo=FALSE, eval=FALSE---------------------------------------------------
-## set.seed(2019)
-## tactile_permutes <- promotions %>%
-##   specify(decision ~ gender, success = "promoted") %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 33, type = "permute") %>%
-##   calculate(stat = "diff in props", order = c("male", "female"))
-## ggplot(data = tactile_permutes, aes(x = stat)) +
-##   geom_histogram(binwidth = 0.05, boundary = -0.2, color = "white") +
-##   geom_vline(xintercept = pull(obs_diff_prop), color = "blue", size = 2) +
-##   scale_y_continuous(breaks = 0:10)
+# set.seed(2019)
+# tactile_permutes <- promotions %>%
+#   specify(decision ~ gender, success = "promoted") %>%
+#   hypothesize(null = "independence") %>%
+#   generate(reps = 33, type = "permute") %>%
+#   calculate(stat = "diff in props", order = c("male", "female"))
+# ggplot(data = tactile_permutes, aes(x = stat)) +
+#   geom_histogram(binwidth = 0.05, boundary = -0.2, color = "white") +
+#   geom_vline(xintercept = pull(obs_diff_prop), color = "blue", size = 2) +
+#   scale_y_continuous(breaks = 0:10)
 
 
 
@@ -113,22 +113,22 @@ promotions %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## promotions_generate <- promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted") %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute")
-## nrow(promotions_generate)
+# promotions_generate <- promotions %>%
+#   specify(formula = decision ~ gender, success = "promoted") %>%
+#   hypothesize(null = "independence") %>%
+#   generate(reps = 1000, type = "permute")
+# nrow(promotions_generate)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## null_distribution <- promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted") %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute") %>%
-##   calculate(stat = "diff in props", order = c("male", "female"))
-## null_distribution
+# null_distribution <- promotions %>%
+#   specify(formula = decision ~ gender, success = "promoted") %>%
+#   hypothesize(null = "independence") %>%
+#   generate(reps = 1000, type = "permute") %>%
+#   calculate(stat = "diff in props", order = c("male", "female"))
+# null_distribution
 
 
 
@@ -156,21 +156,21 @@ null_distribution %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## null_distribution <- promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted") %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute") %>%
-##   calculate(stat = "diff in props", order = c("male", "female"))
+# null_distribution <- promotions %>%
+#   specify(formula = decision ~ gender, success = "promoted") %>%
+#   hypothesize(null = "independence") %>%
+#   generate(reps = 1000, type = "permute") %>%
+#   calculate(stat = "diff in props", order = c("male", "female"))
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## bootstrap_distribution <- promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted") %>%
-##   # Change 1 - Remove hypothesize():
-##   # hypothesize(null = "independence") %>%
-##   # Change 2 - Switch type from "permute" to "bootstrap":
-##   generate(reps = 1000, type = "bootstrap") %>%
-##   calculate(stat = "diff in props", order = c("male", "female"))
+# bootstrap_distribution <- promotions %>%
+#   specify(formula = decision ~ gender, success = "promoted") %>%
+#   # Change 1 - Remove hypothesize():
+#   # hypothesize(null = "independence") %>%
+#   # Change 2 - Switch type from "permute" to "bootstrap":
+#   generate(reps = 1000, type = "bootstrap") %>%
+#   calculate(stat = "diff in props", order = c("male", "female"))
 
 
 
@@ -182,8 +182,8 @@ percentile_ci
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution) +
-##   shade_confidence_interval(endpoints = percentile_ci)
+# visualize(bootstrap_distribution) +
+#   shade_confidence_interval(endpoints = percentile_ci)
 
 
 
@@ -195,21 +195,21 @@ se_ci
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(bootstrap_distribution) +
-##   shade_confidence_interval(endpoints = se_ci)
+# visualize(bootstrap_distribution) +
+#   shade_confidence_interval(endpoints = se_ci)
 
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## library(moderndive)
-## library(infer)
-## null_distribution_mean <- promotions %>%
-##   specify(formula = decision ~ gender, success = "promoted") %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute") %>%
-##   calculate(stat = "diff in means", order = c("male", "female"))
+# library(moderndive)
+# library(infer)
+# null_distribution_mean <- promotions %>%
+#   specify(formula = decision ~ gender, success = "promoted") %>%
+#   hypothesize(null = "independence") %>%
+#   generate(reps = 1000, type = "permute") %>%
+#   calculate(stat = "diff in means", order = c("male", "female"))
 
 
 
@@ -269,22 +269,22 @@ movies_sample %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## movies_sample %>%
-##   specify(formula = rating ~ genre) %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute") %>%
-##   View()
+# movies_sample %>%
+#   specify(formula = rating ~ genre) %>%
+#   hypothesize(null = "independence") %>%
+#   generate(reps = 1000, type = "permute") %>%
+#   View()
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## null_distribution_movies <- movies_sample %>%
-##   specify(formula = rating ~ genre) %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute") %>%
-##   calculate(stat = "diff in means", order = c("Action", "Romance"))
-## null_distribution_movies
+# null_distribution_movies <- movies_sample %>%
+#   specify(formula = rating ~ genre) %>%
+#   hypothesize(null = "independence") %>%
+#   generate(reps = 1000, type = "permute") %>%
+#   calculate(stat = "diff in means", order = c("Action", "Romance"))
+# null_distribution_movies
 
 
 
@@ -297,8 +297,8 @@ obs_diff_means
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## visualize(null_distribution_movies, bins = 10) +
-##   shade_p_value(obs_stat = obs_diff_means, direction = "both")
+# visualize(null_distribution_movies, bins = 10) +
+#   shade_p_value(obs_stat = obs_diff_means, direction = "both")
 
 
 
@@ -329,24 +329,24 @@ movies_sample %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Construct null distribution of xbar_a - xbar_r:
-## null_distribution_movies <- movies_sample %>%
-##   specify(formula = rating ~ genre) %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute") %>%
-##   calculate(stat = "diff in means", order = c("Action", "Romance"))
-## visualize(null_distribution_movies, bins = 10)
+# # Construct null distribution of xbar_a - xbar_r:
+# null_distribution_movies <- movies_sample %>%
+#   specify(formula = rating ~ genre) %>%
+#   hypothesize(null = "independence") %>%
+#   generate(reps = 1000, type = "permute") %>%
+#   calculate(stat = "diff in means", order = c("Action", "Romance"))
+# visualize(null_distribution_movies, bins = 10)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Construct null distribution of t:
-## null_distribution_movies_t <- movies_sample %>%
-##   specify(formula = rating ~ genre) %>%
-##   hypothesize(null = "independence") %>%
-##   generate(reps = 1000, type = "permute") %>%
-##   # Notice we switched stat from "diff in means" to "t"
-##   calculate(stat = "t", order = c("Action", "Romance"))
-## visualize(null_distribution_movies_t, bins = 10)
+# # Construct null distribution of t:
+# null_distribution_movies_t <- movies_sample %>%
+#   specify(formula = rating ~ genre) %>%
+#   hypothesize(null = "independence") %>%
+#   generate(reps = 1000, type = "permute") %>%
+#   # Notice we switched stat from "diff in means" to "t"
+#   calculate(stat = "t", order = c("Action", "Romance"))
+# visualize(null_distribution_movies_t, bins = 10)
 
 
 
@@ -398,9 +398,9 @@ flights_sample %>%
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Fit regression model:
-## score_model <- lm(score ~ bty_avg, data = evals)
-## 
-## # Get regression table:
-## get_regression_table(score_model)
+# # Fit regression model:
+# score_model <- lm(score ~ bty_avg, data = evals)
+# 
+# # Get regression table:
+# get_regression_table(score_model)
 

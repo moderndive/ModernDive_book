@@ -21,8 +21,8 @@ library(moderndive)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
-##   geom_point()
+# ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
+#   geom_point()
 
 
 
@@ -89,38 +89,38 @@ ggplot(data = weather, mapping = aes(x = temp)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = weather, mapping = aes(x = temp)) +
-##   geom_histogram(color = "white", fill = "steelblue")
+# ggplot(data = weather, mapping = aes(x = temp)) +
+#   geom_histogram(color = "white", fill = "steelblue")
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = weather, mapping = aes(x = temp)) +
-##   geom_histogram(bins = 40, color = "white")
+# ggplot(data = weather, mapping = aes(x = temp)) +
+#   geom_histogram(bins = 40, color = "white")
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = weather, mapping = aes(x = temp)) +
-##   geom_histogram(binwidth = 10, color = "white")
+# ggplot(data = weather, mapping = aes(x = temp)) +
+#   geom_histogram(binwidth = 10, color = "white")
 
 
 
 
-
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = weather, mapping = aes(x = temp)) +
-##   geom_histogram(binwidth = 5, color = "white") +
-##   facet_wrap(~ month)
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = weather, mapping = aes(x = temp)) +
-##   geom_histogram(binwidth = 5, color = "white") +
-##   facet_wrap(~ month, nrow = 4)
+# ggplot(data = weather, mapping = aes(x = temp)) +
+#   geom_histogram(binwidth = 5, color = "white") +
+#   facet_wrap(~ month)
+
+
+
+
+## ----eval=FALSE---------------------------------------------------------------
+# ggplot(data = weather, mapping = aes(x = temp)) +
+#   geom_histogram(binwidth = 5, color = "white") +
+#   facet_wrap(~ month, nrow = 4)
 
 
 
@@ -193,65 +193,47 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = flights, mapping = aes(x = carrier)) +
-##   geom_bar()
+# ggplot(data = flights, mapping = aes(x = carrier)) +
+#   geom_bar()
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
-##   geom_bar()
-
-
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = flights, mapping = aes(x = carrier, color = origin)) +
-##   geom_bar()
+# ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+#   geom_bar()
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = flights, mapping = aes(x = carrier), fill = origin) +
-##   geom_bar()
-
-
-## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
-##   geom_bar(position = "dodge")
+# ggplot(data = flights, mapping = aes(x = carrier, color = origin)) +
+#   geom_bar()
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
-##   geom_bar(position = position_dodge(preserve = "single"))
+# ggplot(data = flights, mapping = aes(x = carrier), fill = origin) +
+#   geom_bar()
+
+
+## ----eval=FALSE---------------------------------------------------------------
+# ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+#   geom_bar(position = "dodge")
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## ggplot(data = flights, mapping = aes(x = carrier)) +
-##   geom_bar() +
-##   facet_wrap(~ origin, ncol = 1)
-
-
-
-
-
-
+# ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
+#   geom_bar(position = position_dodge(preserve = "single"))
 
 
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## # Segment 1:
-## ggplot(data = flights, mapping = aes(x = carrier)) +
-##   geom_bar()
-## 
-## # Segment 2:
-## ggplot(flights, aes(x = carrier)) +
-##   geom_bar()
+# ggplot(data = flights, mapping = aes(x = carrier)) +
+#   geom_bar() +
+#   facet_wrap(~ origin, ncol = 1)
 
 
 
@@ -263,19 +245,37 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## library(dplyr)
-## 
-## alaska_flights <- flights %>%
-##   filter(carrier == "AS")
-## 
-## ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
-##   geom_point()
+# # Segment 1:
+# ggplot(data = flights, mapping = aes(x = carrier)) +
+#   geom_bar()
+# 
+# # Segment 2:
+# ggplot(flights, aes(x = carrier)) +
+#   geom_bar()
+
+
+
+
+
+
+
+
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-## early_january_weather <- weather %>%
-##   filter(origin == "EWR" & month == 1 & day <= 15)
-## 
-## ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = temp)) +
-##   geom_line()
+# library(dplyr)
+# 
+# alaska_flights <- flights %>%
+#   filter(carrier == "AS")
+# 
+# ggplot(data = alaska_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
+#   geom_point()
+
+
+## ----eval=FALSE---------------------------------------------------------------
+# early_january_weather <- weather %>%
+#   filter(origin == "EWR" & month == 1 & day <= 15)
+# 
+# ggplot(data = early_january_weather, mapping = aes(x = time_hour, y = temp)) +
+#   geom_line()
 
