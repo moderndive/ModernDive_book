@@ -135,8 +135,7 @@ ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
 
 ## ----eval=FALSE---------------------------------------------------------------
 # # Fit regression model:
-# demographics_model <- lm(fert_rate ~ life_exp,
-#                          data = UN_data_ch5)
+# demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 # # Get regression coefficients
 # coef(demographics_model)
 
@@ -144,8 +143,7 @@ ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
 
 ## ----eval=FALSE---------------------------------------------------------------
 # # Fit regression model:
-# demographics_model <- lm(fert_rate ~ life_exp,
-#                          data = UN_data_ch5)
+# demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 # # Get regression coefficients:
 # coef(demographics_model)
 
@@ -192,7 +190,7 @@ glimpse(gapminder2022)
 # gapminder2022 |> select(life_exp, continent) |> tidy_summary()
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----lifeexp-cont, echo=FALSE-------------------------------------------------
 gapminder2022 |>
   select(life_exp, continent) |>
   tidy_summary() |> 
@@ -214,7 +212,7 @@ gapminder2022 |> count(continent)
 
 
 
-## ----lifeexp2022hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=ifelse(knitr::is_latex_output(), 3.4, 4)----
+## ----lifeexp2022hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(gapminder2022, aes(x = life_exp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", 
@@ -233,11 +231,10 @@ ggplot(gapminder2022, aes(x = life_exp)) +
 
 
 
-## ----catxplot1, fig.cap="Life expectancy in 2022 by continent (boxplot).", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----catxplot1, fig.cap="Life expectancy in 2022 by continent (boxplot).", fig.height=ifelse(knitr::is_latex_output(), 2.5, 4)----
 ggplot(gapminder2022, aes(x = continent, y = life_exp)) +
   geom_boxplot() +
-  labs(x = "Continent", 
-       y = "Life expectancy",
+  labs(x = "Continent", y = "Life expectancy",
        title = "Life expectancy by continent")
 
 
@@ -267,8 +264,7 @@ coef(life_exp_model)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-# regression_points <- get_regression_points(life_exp_model, ID = "country")
-# regression_points
+# get_regression_points(life_exp_model, ID = "country")
 
 
 
@@ -282,14 +278,14 @@ coef(life_exp_model)
 
 
 
-## -----------------------------------------------------------------------------
+## ----fig.height=1.5-----------------------------------------------------------
 ggplot(data = un_member_states_2024, 
        aes(x = hdi_2022, y = life_expectancy_2022)) +
   geom_point() +
   labs(x = "Human Development Index (HDI)", y = "Life Expectancy")
 
 
-## -----------------------------------------------------------------------------
+## ----fig.height=1.5-----------------------------------------------------------
 ggplot(data = un_member_states_2024, 
        aes(x = hdi_2022, y = fertility_rate_2022)) +
   geom_point() +

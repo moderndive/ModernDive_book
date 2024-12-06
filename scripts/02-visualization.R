@@ -83,7 +83,7 @@ ggplot(data = weather, mapping = aes(x = wind_speed, y = factor("A"))) +
 
 
 
-## ----weather-histogram, warning=TRUE, fig.cap="Histogram of hourly wind speeds at three NYC airports.", fig.height=ifelse(knitr::is_latex_output(), 2.3, 4)----
+## ----weather-histogram, warning=TRUE, fig.cap="Histogram of hourly wind speeds at three NYC airports.", fig.height=ifelse(knitr::is_latex_output(), 2.3, 4), warning=FALSE, message=FALSE----
 ggplot(data = weather, mapping = aes(x = wind_speed)) +
   geom_histogram()
 
@@ -169,17 +169,17 @@ fruits_counted <- tibble(
 
 
 
-## ----geombar, fig.cap="Barplot when counts are not pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 4)----
+## ----geombar, fig.cap="Barplot when counts are not pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.3, 4)----
 ggplot(data = fruits, mapping = aes(x = fruit)) +
   geom_bar()
 
 
-## ----geomcol, fig.cap="Barplot when counts are pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.8, 4)----
+## ----geomcol, fig.cap="Barplot when counts are pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.3, 4)----
 ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
 
-## ----flightsbar, fig.cap="(ref:geombar)", fig.height=ifelse(knitr::is_latex_output(), 1.4, 4)----
+## ----flightsbar, fig.cap="(ref:geombar)", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
 

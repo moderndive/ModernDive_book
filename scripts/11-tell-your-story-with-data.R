@@ -2,6 +2,7 @@
 library(tidyverse)
 library(moderndive)
 library(fivethirtyeight)
+library(infer)
 
 
 
@@ -169,22 +170,25 @@ if(!is_latex_output())
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-# price_interaction <- lm(log10_price ~ log10_size * condition,
-#                         data = house_prices)
+# price_interaction <- lm(log10_price ~ log10_size * condition, data = house_prices)
 # get_regression_table(price_interaction)
 
 
 
 ## -----------------------------------------------------------------------------
 observed_fit_coefficients <- house_prices |>
-  specify(log10_price ~ log10_size * condition) |>
+  specify(
+    log10_price ~ log10_size * condition
+    ) |>
   fit()
 observed_fit_coefficients
 
 
 ## ----eval=FALSE---------------------------------------------------------------
 # null_distribution_housing <- house_prices |>
-#   specify(log10_price ~ log10_size * condition) |>
+#   specify(
+#     log10_price ~ log10_size * condition
+#     ) |>
 #   hypothesize(null = "independence") |>
 #   generate(reps = 1000, type = "permute") |>
 #   fit()
@@ -209,24 +213,25 @@ if (!file.exists("rds/null_distribution_housing.rds")) {
 
 ## ----eval=FALSE---------------------------------------------------------------
 # visualize(null_distribution_housing) +
-#   shade_p_value(obs_stat = observed_fit_coefficients, direction = "two-sided")
+#   shade_p_value(obs_stat = observed_fit_coefficients,
+#                 direction = "two-sided")
 
 
 ## ----echo=FALSE, message=FALSE------------------------------------------------
 null_housing_shaded <- visualize(null_distribution_housing) +
   shade_p_value(obs_stat = observed_fit_coefficients, direction = "two-sided")
-if (!file.exists("images/patchwork_boxplot.png")) {
+if (!file.exists("images/null_housing_shaded.png")) {
   ggsave(
     filename = "images/null_housing_shaded.png",
     plot = null_housing_shaded,
     width = 6,
-    height = 9,
+    height = 11,
     dpi = 320
   )
 }
 
 
-## ----echo=FALSE, out.height="100%"--------------------------------------------
+## ----echo=FALSE, out.width="90%"----------------------------------------------
 if(is_latex_output())
   knitr::include_graphics("images/null_housing_shaded.png")
 

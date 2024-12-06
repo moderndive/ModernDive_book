@@ -154,7 +154,7 @@ glimpse(credit_ch6)
 # credit_ch6 |> select(debt, credit_limit, income) |> tidy_summary()
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----credittable, echo=FALSE--------------------------------------------------
 credit_ch6 |> 
   select(debt, credit_limit, income) |> 
   tidy_summary() |> 
