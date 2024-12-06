@@ -54,7 +54,7 @@ almonds_sample_100 |>
 
 
 
-## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 4), fig.width=3, fig.cap="Normal area within one standard deviation."----
+## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), .9, 4), fig.width=3, fig.cap="Normal area within one standard deviation."----
 ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1)) +
@@ -65,7 +65,7 @@ ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   scale_x_continuous(breaks = c(-1,1)) 
 
 
-## ----normal-curve-shaded-2a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 4), fig.width=3, fig.cap="Normal area within two standard deviations."----
+## ----normal-curve-shaded-2a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 0.9, 4), fig.width=3, fig.cap="Normal area within two standard deviations."----
 ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -2)) +
@@ -144,7 +144,7 @@ almonds_sample_100 |>
 
 
 
-## ----normal-curve-shaded-3a, echo=FALSE, fig.cap="Normal curve with the shaded middle area being 0.95", fig.height=ifelse(knitr::is_latex_output(), 2, 4), fig.width=3----
+## ----normal-curve-shaded-3a, echo=FALSE, fig.cap="Normal curve with the shaded middle area being 0.95", fig.height=ifelse(knitr::is_latex_output(), 1.5, 4), fig.width=3----
 ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1.96)) +
@@ -245,7 +245,7 @@ boot_means <- bootstrap_samples_35 |>
 boot_means
 
 
-## ----resampling-35, fig.cap="Distribution of 35 sample means from 35 bootrap samples."----
+## ----resampling-35, fig.cap="Distribution of 35 sample means from 35 bootstrap samples."----
 ggplot(boot_means, aes(x = mean_weight)) +
   geom_histogram(binwidth = 0.01, color = "white") +
   labs(x = "sample mean weight in grams")
@@ -269,7 +269,7 @@ boot_means <- almonds_sample_100 |>
 boot_means
 
 
-## ----one-thousand-sample-means, message=FALSE, fig.cap="Histogram of 1000 bootstrap sample mean weights of almonds.", fig.height=ifelse(knitr::is_latex_output(), 3.85, 4)----
+## ----one-thousand-sample-means, message=FALSE, fig.cap="Histogram of 1000 bootstrap sample mean weights of almonds.", fig.height=ifelse(knitr::is_latex_output(), 4, 4)----
 ggplot(boot_means, aes(x = mean_weight)) +
   geom_histogram(binwidth = 0.01, color = "white") +
   labs(x = "sample mean weight in grams")
@@ -489,6 +489,7 @@ obs_diff_in_props
 
 ## -----------------------------------------------------------------------------
 myth_ci_se <- bootstrap_distribution_yawning |> 
-  get_confidence_interval(type = "se", point_estimate = obs_diff_in_props)
+  get_confidence_interval(type = "se", point_estimate = obs_diff_in_props,
+                          level = 0.95)
 myth_ci_se
 

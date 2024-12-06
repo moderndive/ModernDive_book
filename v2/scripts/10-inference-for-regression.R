@@ -146,7 +146,7 @@ ggplot(old_faithful_2024,
 # get_regression_table(mod_diff_means)
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----diff-means-reg, echo=FALSE-----------------------------------------------
 mod_diff_means <- lm(rating ~ genre, data = movies_sample)
 get_regression_table(mod_diff_means) |> 
   kbl(caption = "Regression table for two-sample difference in means example") |> 
@@ -168,7 +168,7 @@ spotify_for_anova <- spotify_by_genre |>
 #   slice_sample(n = 5)
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----spotify-for-anova-slice-five, echo=FALSE---------------------------------
 spotify_for_anova |> 
   slice_sample(n = 5) |> 
   kbl(caption = "(ref:spotify-for-anova-slice)") |> 
@@ -178,7 +178,7 @@ spotify_for_anova |>
   )
 
 
-## ----fig.cap="Boxplot of popularity by genre.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 4)----
+## ----pop-by-genre-plot, fig.cap="Boxplot of popularity by genre.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 4)----
 ggplot(spotify_for_anova, aes(x = track_genre, y = popularity)) +
   geom_boxplot() +
   labs(x = "Genre", y = "Popularity")
@@ -196,7 +196,7 @@ mean_popularities_by_genre
 # get_regression_table(mod_anova)
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----anova-reg-table, echo=FALSE----------------------------------------------
 mod_anova <- lm(popularity ~ track_genre, data = spotify_for_anova)
 get_regression_table(mod_anova) |> 
   kbl(caption = "Regression table for ANOVA example") |> 
@@ -241,10 +241,10 @@ lb0 <- round(b1 - q*se_b0,3)
 ub0 <- round(b1 + q*se_b0,3)
 # t
 t_stat <- round(b1/se_b1,3)
-p_value <- round(2*(1 - pt(abs(t_stat), n_old_faithful-2)),3)
+p_value <- round(2*(1 - pt(abs(t_stat), n_old_faithful-2)), 3)
 
 
-## ----pvalue1, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 4), fig.cap="Illustration of a two-sided p-value for a t-test."----
+## ----pvalue1, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 2, 4), fig.cap="Illustration of a two-sided p-value for a t-test."----
 n <- n_old_faithful
 shade <- function(t, a,b) {
   z = dt(t, df = n-2)
@@ -282,8 +282,7 @@ fitted_and_residuals
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-# fitted_and_residuals |>
-#   ggplot(aes(x = waiting_hat, y = residual)) +
+# ggplot(fitted_and_residuals, aes(x = waiting_hat, y = residual)) +
 #   geom_point() +
 #   labs(x = "duration", y = "residual") +
 #   geom_hline(yintercept = 0, col = "blue")
@@ -428,7 +427,7 @@ coffee_data
 #   tidy_summary()
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----coffee-tidy-summary, echo=FALSE------------------------------------------
 coffee_data |>
   tidy_summary()  |> 
   kbl(
@@ -569,7 +568,7 @@ mod_mult_final <- lm(total_cup_points ~ aroma + flavor + continent_of_origin,
 fit_and_res_mult <- get_regression_points(mod_mult_final)
 
 
-## ----fig.cap="Residuals vs. fitted values plot and QQ-plot for the multiple regression model.", fig.height=ifelse(knitr::is_latex_output(), 4, 4)----
+## ----grid-arrange-plot-check, fig.cap="Residuals vs. fitted values plot and QQ-plot for the multiple regression model.", fig.height=ifelse(knitr::is_latex_output(), 2, 4)----
 g1 <- fit_and_res_mult |>
   ggplot(aes(x = total_cup_points_hat, y = residual)) +
   geom_point() +
@@ -598,7 +597,7 @@ observed_fit
 # mod_mult_table
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----mod-mult-table-again, echo=FALSE-----------------------------------------
 mod_mult_table |> 
   kbl(
     digits = 3,
@@ -622,7 +621,7 @@ mod_mult_table |>
 
 ## ----echo=FALSE---------------------------------------------------------------
 # Fix the width for the explanatory variable output
-#options(width = 125)
+#options(width = 150)
 if (!file.exists("rds/generated_distn_slopes.rds")) {
   set.seed(76)
   generated_distn_slopes <- coffee_data |>
@@ -667,8 +666,29 @@ if (!file.exists("rds/boot_distn_slopes.rds")) {
 boot_distribution_mlr
 
 
-## ----boot-distn-slopes, fig.cap="Bootstrap distributions of partial slopes.", fig.height=8, fig.width=6----
-visualize(boot_distribution_mlr)
+## ----eval=FALSE---------------------------------------------------------------
+# visualize(boot_distribution_mlr)
+
+
+## ----echo=FALSE---------------------------------------------------------------
+boot_mlr_viz <- visualize(boot_distribution_mlr)
+if (!file.exists("images/boot_mlr_viz.png")) {
+  ggsave(
+    filename = "images/boot_mlr_viz.png",
+    plot = boot_mlr_viz,
+    width = 6,
+    height = 11,
+    dpi = 320
+  )
+}
+
+
+## ----boot-distn-slopes, echo=FALSE, out.width="68%", fig.height=12, fig.cap="Bootstrap distributions of partial slopes."----
+if(is_latex_output()) {
+  knitr::include_graphics("images/boot_mlr_viz.png")
+} else {
+  boot_mlr_viz
+}
 
 
 ## -----------------------------------------------------------------------------
@@ -696,9 +716,31 @@ null_distribution_mlr <- coffee_quality |>
 null_distribution_mlr
 
 
-## ----fig.height=ifelse(knitr::is_latex_output(), 6, 8), fig.width=6, fig.cap="Shaded p-values for the partial slopes in this multiple linear regression."----
-visualize(null_distribution_mlr) +
+## ----eval=FALSE---------------------------------------------------------------
+# visualize(null_distribution_mlr) +
+#   shade_p_value(obs_stat = observed_fit, direction = "two-sided")
+
+
+## ----echo=FALSE---------------------------------------------------------------
+mlr_pvalue_viz <- visualize(null_distribution_mlr) +
   shade_p_value(obs_stat = observed_fit, direction = "two-sided")
+#if (!file.exists("images/mlr_pvalue_viz.png")) {
+  ggsave(
+    filename = "images/mlr_pvalue_viz.png",
+    plot = mlr_pvalue_viz,
+    width = 6,
+    height = 11,
+    dpi = 320
+  )
+#}
+
+
+## ----shaded-p-values-partial, echo=FALSE, out.width="55%", fig.height=12, fig.cap="Shaded p-values for the partial slopes in this multiple regression."----
+if(is_latex_output()) {
+  knitr::include_graphics("images/mlr_pvalue_viz.png")
+} else {
+  boot_mlr_viz
+}
 
 
 ## -----------------------------------------------------------------------------

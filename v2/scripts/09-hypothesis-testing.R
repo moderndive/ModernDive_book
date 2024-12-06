@@ -94,7 +94,7 @@ set.seed(2)
 #   sample_n(size = 3)
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----twelve-spotify, echo=FALSE-----------------------------------------------
 spotify_metal_deephouse <- spotify_by_genre |> 
   filter(track_genre %in% c("metal", "deep-house")) |> 
   select(track_id, track_genre, artists, track_name, popularity, popular_or_not) 
@@ -114,7 +114,7 @@ sampled_spotify_metal_deephouse |>
     font_size = ifelse(is_latex_output(), 8, 16),
     latex_options = c("HOLD_position")
   ) |> 
-  column_spec(3, width = "1.5in")  # Adjust the column number and width as needed
+  column_spec(3, width = "1.5in")  # Adjust the column number/width as needed
 
 
 ## ----eval=FALSE---------------------------------------------------------------
@@ -141,7 +141,7 @@ spotify_metal_deephouse |>
 #   head(10)
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----spotify-52-sample, echo=FALSE--------------------------------------------
 spotify_52_original |> 
   select(-track_id) |> 
   head(10) |> 
@@ -162,7 +162,7 @@ spotify_52_original |>
 #   head(10)
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----spotify-shuffled-52-sample, echo=FALSE-----------------------------------
 spotify_52_shuffled |> 
   select(-track_id) |> 
   head(10) |> 
@@ -174,7 +174,7 @@ spotify_52_shuffled |>
     font_size = ifelse(is_latex_output(), 8, 16),
     latex_options = c("HOLD_position")
   ) |> 
-  column_spec(3, width = "1.5in")  # Adjust the column number and width as needed
+  column_spec(3, width = "1.5in")
 
 
 
