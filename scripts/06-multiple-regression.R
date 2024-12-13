@@ -253,7 +253,7 @@ bind_rows(
   variances_parallel_slopes
 ) %>% 
   select(model, var_y, var_y_hat, var_residual, r_squared) %>% 
-  knitr::kable(
+  kbl(
     digits = 3,
     caption = "Comparing variances from interaction and parallel slopes models for MA school data", 
     booktabs = TRUE,
@@ -276,7 +276,7 @@ bind_rows(
   variances_parallel_slopes
 ) %>% 
   select(model, var_y, var_y_hat, var_residual, r_squared) %>% 
-  knitr::kable(
+  kbl(
     digits = 3,
     caption = "Comparing variances from interaction and parallel slopes models for UT Austin data", 
     booktabs = TRUE,
