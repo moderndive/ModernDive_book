@@ -739,7 +739,7 @@ if (!file.exists("images/mlr_pvalue_viz.png")) {
 if(is_latex_output()) {
   knitr::include_graphics("images/mlr_pvalue_viz.png")
 } else {
-  boot_mlr_viz
+  mlr_pvalue_viz
 }
 
 
