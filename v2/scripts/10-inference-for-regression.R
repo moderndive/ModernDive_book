@@ -724,7 +724,7 @@ null_distribution_mlr
 ## ----echo=FALSE---------------------------------------------------------------
 mlr_pvalue_viz <- visualize(null_distribution_mlr) +
   shade_p_value(obs_stat = observed_fit, direction = "two-sided")
-#if (!file.exists("images/mlr_pvalue_viz.png")) {
+if (!file.exists("images/mlr_pvalue_viz.png")) {
   ggsave(
     filename = "images/mlr_pvalue_viz.png",
     plot = mlr_pvalue_viz,
@@ -732,7 +732,7 @@ mlr_pvalue_viz <- visualize(null_distribution_mlr) +
     height = 11,
     dpi = 320
   )
-#}
+}
 
 
 ## ----shaded-p-values-partial, echo=FALSE, out.width="55%", fig.height=12, fig.cap="Shaded p-values for the partial slopes in this multiple regression."----
