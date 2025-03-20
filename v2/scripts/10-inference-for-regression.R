@@ -479,7 +479,7 @@ corr_table <- coffee_data |>
 
 ## ----eval=FALSE---------------------------------------------------------------
 # coffee_data |>
-#   select(aroma, flavor, moisture_percentage)|>
+#   select(aroma, flavor, moisture_percentage) |>
 #   tidy_summary() |>
 #   select(column, min, max)
 
