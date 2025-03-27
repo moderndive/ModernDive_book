@@ -1,4 +1,4 @@
-# ModernDive 2.0.0.9000
+# ModernDive 2.0.0
 
 * Created https://moderndive.com/v2/ website to host the Second Edition (and later v2 and beyond) content
 * Removed previous data sets `promotions` (Chapter 9) and `evals` (Chapters 5, 6, and 10) and replaced with `un_member_states_2024` and `spotify_by_genre` instead
