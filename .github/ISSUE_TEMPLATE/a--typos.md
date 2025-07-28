@@ -9,6 +9,7 @@ assignees: ''
 
 Please let us know about the typo:
 
+* V1 (https://moderndive.com) or V2 (https://moderndive.com/v2/)
 * Location/Chapter Number: 
 * Incorrect text: 
 * Correct text: 
