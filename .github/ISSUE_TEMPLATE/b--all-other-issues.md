@@ -7,4 +7,4 @@ assignees: ''
 
 ---
 
-
+Denote where the issue corresponds to V1 (https://moderndive.com) or V2 (https://moderndive.com/v2/)
