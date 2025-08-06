@@ -3,7 +3,7 @@ name: a) Typos
 about: Please report typos here
 title: Typo in book
 labels: ''
-assignees: ''
+assignees: 'ismayc'
 
 ---
 
