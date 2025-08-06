@@ -3,6 +3,7 @@ library(tidyverse)
 library(moderndive)
 library(infer)
 library(gridExtra)
+library(GGally)
 
 
 
