@@ -1,4 +1,12 @@
-# ModernDive 2.0.0.9000
+# ModernDive 2.1.0.9000
+
+* Fixed a typo flagged by @Bmmju regarding 142 countries in Subsection 5.2.1 that was hard-coded (shame!). It was changed to the correct value of 188.
+* Fixed another hard-coded typo flagged by @segre-ecophysiology-lab
+ on the number of airlines in the Chapter 3 Learning Checks (fixed to 14 instead of 16).
+* Fixed the typo of "95%" instead of "90%" in the interpretation of Subsection 9.4.2 flagged by @omian.
+* Added in `GGally` to the "Versions of R packages used" in the Preface since it wasn't included prior to publication of the Second Edition.
+
+# ModernDive 2.0.0
 
 * Created https://moderndive.com/v2/ website to host the Second Edition (and later v2 and beyond) content
 * Removed previous data sets `promotions` (Chapter 9) and `evals` (Chapters 5, 6, and 10) and replaced with `un_member_states_2024` and `spotify_by_genre` instead
