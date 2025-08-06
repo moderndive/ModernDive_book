@@ -6,6 +6,8 @@
 * Fixed the typo of "95%" instead of "90%" in the interpretation of Subsection 9.4.2 flagged by @omian.
 * Added in `GGally` to the "Versions of R packages used" in the Preface since it wasn't included prior to publication of the Second Edition.
 
+***
+
 # ModernDive 2.0.0
 
 * Created https://moderndive.com/v2/ website to host the Second Edition (and later v2 and beyond) content
