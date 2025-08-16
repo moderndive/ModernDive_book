@@ -1,0 +1,223 @@
+
+Needed packages
+
+```{r message=FALSE}
+library(tidyverse)
+library(moderndive)
+``` 
+
+```{r}
+UN_data_ch5 <- un_member_states_2024 |>
+  select(iso, 
+         life_exp = life_expectancy_2022, 
+         fert_rate = fertility_rate_2022, 
+         obes_rate = obesity_rate_2016)|>
+  na.omit()
+```
+
+**(LC5.1)** Conduct a new EDA with `y = fert_rate` and `x = obes_rate`. What can you say about the relationship?
+
+**Solution**:
+
+```{r}
+# 1) Look at raw values
+glimpse(UN_data_ch5)
+
+# 2) Summary statistics
+UN_data_ch5 |>
+  select(fert_rate, obes_rate) |>
+  moderndive::tidy_summary()
+
+# 3) Visualizations
+ggplot(UN_data_ch5, aes(x = obes_rate, y = fert_rate)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Obesity rate (2016)", y = "Fertility rate (2022)")
+
+# Optional: correlation
+UN_data_ch5 |>
+  moderndive::get_correlation(fert_rate ~ obes_rate)
+```
+
+EDA = raw data + summaries + plot. The scatterplot with the regression line and the correlation quantify direction/strength. This data shows that richer countries have higher obesity rates and lower fertility, so we see a **negative** association (points sloping down; negative correlation).
+
+**(LC5.2)** Main purpose of EDA?
+
+**Solution**: **B.**  
+EDA helps you **understand relationships, spot outliers/missingness, and check assumptions** before modeling, not to predict or fabricate variables.
+
+**(LC5.3)** Which is correct about the correlation coefficient?
+
+**Solution**: **C.**  
+Pearson’s correlation is bounded in **\[-1, 1]** and measures **linear** association strength/direction.
+
+**(LC5.4)** Fit a simple linear regression using `lm(fert_rate ~ obes_rate, data = UN_data_ch5)` where `obes_rate` is the new explanatory variable $x$. Learn about the "best-fitting" line from the regression coefficients by applying the `coef()` function. How do the regression results match up with your earlier exploratory data analysis?
+
+**Solution**:
+
+```{r}
+m_obesity <- lm(fert_rate ~ obes_rate, data = UN_data_ch5)
+coef(m_obesity)
+# or a tidy table:
+moderndive::get_regression_table(m_obesity)
+```
+
+The slope sign should match your EDA: typically **negative**, meaning higher obesity rate is associated with lower fertility. The magnitude tells **how much** fertility changes per 1-point increase in obesity (on average). If your plot/correlation looked negative, a negative fitted slope confirms that.
+
+**(LC5.5)** What does the intercept $b_0$ represent?
+
+**Solution**: **B.**  
+$b_0$ is the **predicted response when $x = 0$**. It may be outside the data’s range (so often not substantively meaningful), but that’s the definition.
+
+**(LC5.6)** What best describes the "slope"?
+
+**Solution**: **C.**  
+The slope is the **change in the outcome** for a **one-unit increase in the explanatory** variable, on average.
+
+**(LC5.7)** What does a negative slope indicate?
+
+**Solution**: **A.**  
+As $x$ increases, the **predicted** $y$ **decreases** (downward trend).
+
+
+**(LC5.8)** What is a "wrapper function"?
+
+**Solution**: **B.**
+Wrapper functions **combine other functions** into a simpler interface (e.g., `moderndive::get_regression_points()` wraps `broom::augment()` and some cleaning).
+
+---
+
+**(LC5.9)** Create a data frame of residuals for the obesity model.
+
+**Solution**:
+
+```{r}
+m_obesity <- lm(fert_rate ~ obes_rate, data = UN_data_ch5)
+resids_df <- moderndive::get_regression_points(m_obesity)
+resids_df |> select(obes_rate, fert_rate, fert_rate_hat, residual) |> head()
+```
+
+`get_regression_points()` returns observed $y$, fitted $\hat y$, and residuals $y-\hat y$ in a tidy frame, perfect for diagnostics and sorting.
+
+---
+
+**(LC5.10)** True statement about the regression line?
+
+**Solution**: **B.**  
+OLS chooses the line that **minimizes the sum of squared residuals** (squared differences between observed and fitted).
+
+
+**(LC5.11)** EDA with `x = continent`, `y = gdp_per_capita`.
+
+**Solution**:
+
+```{r}
+gapminder2022 <- un_member_states_2024 |>
+  select(country, life_exp = life_expectancy_2022, continent, gdp_per_capita) |> 
+  na.omit()
+
+# Raw look
+glimpse(gapminder2022)
+
+# Summaries
+gapminder2022 |>
+  select(gdp_per_capita, continent) |>
+  moderndive::tidy_summary()
+
+# Visualization
+ggplot(gapminder2022, aes(x = continent, y = gdp_per_capita)) +
+  geom_boxplot() +
+  # Helpful with longer names/categories
+  coord_flip() +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = "Continent", y = "GDP per capita (USD)")
+```
+
+Boxplots/facets reveal **distribution and differences**. Notice a **higher median** in **Europe** and **lower** in **Africa**, with Europe showing widest spread.
+
+**(LC5.12)** Baseline group in categorical regression?
+
+**Solution**: **B.**  
+The baseline is the **reference category** against which others are **compared** (it’s not necessarily largest/smallest by any statistic unless you set it).
+
+
+**(LC5.13)** Fit `lm(gdp_per_capita ~ continent, data = gapminder2022)` and compare to EDA.
+
+**Solution**:
+
+```{r}
+m_gdp <- lm(gdp_per_capita ~ continent, data = gapminder2022)
+moderndive::get_regression_table(m_gdp)
+```
+
+The **intercept** is the baseline continent’s mean GDP per capita. Each **continent coefficient** is an **offset from the baseline mean**. Signs/magnitudes should mirror your boxplot: positive for richer-than-baseline continents, negative for poorer-than-baseline.
+
+**(LC5.14)** How many "offsets" for 4 levels?
+
+**Solution**: **C. (3)**
+With $k$ categories, you get **$k-1$** offsets plus 1 intercept for the baseline.
+
+**(LC5.15)** Positive coefficient in a categorical model means?
+
+**Solution**: **C.**
+A positive coefficient means that group’s **mean response is higher than the baseline’s** (by that coefficient amount).
+
+
+**(LC5.16)** Which is true about residuals?
+
+**Solution**: **A.**  
+A residual is $y - \hat y$. It can be **positive or negative** and is crucial for model fit checks.
+
+**(LC5.17)** Find the five most negative residuals; interpret.
+
+**Solution**:
+
+```{r}
+life_exp_model <- lm(life_exp ~ continent, data = gapminder2022)
+rp <- moderndive::get_regression_points(life_exp_model, ID = "country")
+
+rp |>
+  arrange(residual) |>
+  slice(1:5) |>
+  select(country, continent, life_exp, life_exp_hat, residual)
+```
+
+**Negative** residuals are **below** their continent’s mean. Their life expectancy is lower than their continent’s average by residual (in magnitude) years.
+
+**(LC5.18)** Find the five most positive residuals; interpret.
+
+**Solution**:
+
+```{r}
+rp |>
+  arrange(desc(residual)) |>
+  top_n(n = 5) |>
+  select(country, continent, life_exp, life_exp_hat, residual)
+```
+
+**Positive** residuals are **above** their continent’s mean (higher life expectancy than their continent average by residual years).
+
+**(LC5.19)** Compute the sum of squared residuals (SSR) for three lines in the toy example and show the regression line is smallest.
+
+**Solution**:
+
+* The "best" fitting solid regression line `r if_else(is_latex_output(), "", "in blue")`: 
+
+$$
+\sum_{i=1}^{n}(y_i - \widehat{y}_i)^2 = (2.0-1.5)^2+(1.0-2.0)^2+(3.0-2.5)^2 = 1.5
+$$
+
+* An arbitrarily chosen dotted `r if_else(is_latex_output(), "", "red")` line: 
+
+$$
+\sum_{i=1}^{n}(y_i - \widehat{y}_i)^2 = (2.0-2.5)^2+(1.00-2.5)^2+(3.0-2.5)^2 = 2.75
+$$
+
+* Another arbitrarily chosen dashed `r if_else(is_latex_output(), "", "green")` line:
+
+$$
+\sum_{i=1}^{n}(y_i - \widehat{y}_i)^2 = (2.0-2.0)^2+(1.0-1.5)^2+(3.0-1.0)^2 = 4.25
+$$
+
+As calculated, $1.5 < 2.75 < 4.25$. Therefore, we show that the regression line in blue has the smallest value of the residual sum of squares.
+
