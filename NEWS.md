@@ -1,5 +1,6 @@
 # ModernDive 2.1.0.9000
 
+* Updated Posit cheatsheet links and screenshots to latest versions from https://rstudio.github.io/cheatsheets/
 * Added Learning Check solutions to the Appendix online
 * Update LC10.7
 * Deleted the `echo=FALSE` that was hiding the Chapter 11 Needed Packages
