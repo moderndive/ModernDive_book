@@ -1,0 +1,321 @@
+
+Needed packages
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(nycflights23)
+```
+
+```{r echo=FALSE}
+library(knitr)
+library(kableExtra)
+```
+
+
+**(LC3.1)** What's another way of using the "not" operator `!` to filter only the rows that are not going to Burlington, VT nor Seattle, WA in the `flights` data frame? Test this out using the previous code.
+
+**Solution**:
+
+```{r, eval=FALSE, purl=FALSE}
+# Original in book
+not_BTV_SEA <- flights |>
+  filter(!(dest == "BTV" | dest == "SEA"))
+
+# Alternative way
+not_BTV_SEA <- flights |>
+  filter(!dest == "BTV" & !dest == "SEA")
+
+# Yet another way
+not_BTV_SEA <- flights |>
+  filter(dest != "BTV", dest != "SEA")
+```
+
+
+**(LC3.2)** Say a doctor is studying the effect of smoking on lung cancer for a large number of patients who have records measured at five-year intervals. She notices that a large number of patients have missing data points because the patient has died, so she chooses to ignore these patients in her analysis. What is wrong with this doctor's approach?
+
+**Solution**: That introduces **survivorship bias / informative dropout**. Missingness is *not at random* (death is related to smoking/cancer). Excluding them biases effects toward healthier survivors and underestimates harm.
+
+**(LC3.3)**  Modify the above `summarize` function to create `summary_temp` to also use the `n()` summary function: `summarize(count = n())`. What does the returned value correspond to?
+
+**Solution**:
+
+```r
+summary_windspeed <- weather |>
+  summarize(mean = mean(wind_speed, na.rm = TRUE),
+            std_dev = sd(wind_speed, na.rm = TRUE),
+            count = n())
+```
+
+`count` is the **number of rows summarized** (per group if grouped). It does **not** ignore `NA`s unless you pre-filter.
+
+**(LC3.4)** Why doesn't the following code work? Run the code line-by-line instead of all at once, and then look at the data. In other words, select and then run `summary_windspeed <- weather |> summarize(mean = mean(wind_speed, na.rm = TRUE))` first.
+
+```r
+summary_windspeed <- weather |>   
+  summarize(mean = mean(wind_speed, na.rm = TRUE)) |> 
+  summarize(std_dev = sd(wind_speed, na.rm = TRUE))
+```
+
+**Solution**: After the first `summarize()` you have a 1-row data frame with only `mean`; `wind_speed` no longer exists, so the second `summarize(sd(wind_speed))` errors. Compute both in one step to fix it:
+
+```r
+weather |> summarize(mean = mean(wind_speed, na.rm = TRUE),
+                     std_dev = sd(wind_speed, na.rm = TRUE))
+```
+
+**(LC3.5)** Recall from Chapter \@ref(viz) when we looked at wind speeds by months in NYC. What does the standard deviation column in the `summary_monthly_temp` data frame tell us about temperatures in NYC throughout the year?
+
+```{r, echo=FALSE, purl=FALSE}
+summary_temp_by_month <- weather |>
+  group_by(month) |>
+  summarize(
+    mean = mean(temp, na.rm = TRUE),
+    std_dev = sd(temp, na.rm = TRUE)
+  )
+
+knitr::kable(summary_temp_by_month) |>
+  kableExtra::kable_styling(
+    font_size = ifelse(knitr::is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+**Solution**: The SD shows **within-month variability** of temperatures. The largest spread for a given month was in February with the second highest in April. This would lead us to expect different temperatures on different days in those months compared to months like July and August that have the smallest standard deviations.
+
+**(LC3.6)** What code would be required to get the mean and standard deviation wind speed for each day in 2023 for NYC?
+
+**Solution**:
+
+```{r}
+weather |>
+  group_by(year, month, day) |>
+  summarize(mean_ws = mean(wind_speed, na.rm = TRUE),
+            sd_ws = sd(wind_speed, na.rm = TRUE),
+            .groups = "drop")
+```
+
+Note: `group_by(day)` is not enough, because `day` is a value between 1-31. We need to `group_by(year, month, day)`. 
+
+**(LC3.7)** Recreate `by_monthly_origin`, but instead of grouping via `group_by(origin, month)`, group variables in a different order `group_by(month, origin)`. What differs in the resulting dataset?
+
+
+```{r, purl=FALSE}
+by_monthly_origin <- flights |>
+  group_by(month, origin) |>
+  summarize(count = n())
+```
+
+```{r, eval=FALSE, purl=FALSE}
+by_monthly_origin
+```
+
+```{r, echo=FALSE, purl=FALSE}
+kable(by_monthly_origin) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+In `by_monthly_origin` the `month` column is now first and the rows are sorted by `month` instead of origin. If you compare the values of `count` in `by_origin_monthly` and `by_monthly_origin` using the `View()` function, you'll see that the values are actually the same, just presented in a different order. 
+
+**Solution**: The **counts are identical**; only the **grouping structure and column order** of the grouping keys in the result differ (and potentially the default post-summarize grouping retained/dropped message).
+
+**(LC3.8)** How could we identify how many flights left each of the three airports for each `carrier`?
+
+**Solution**:
+
+```{r}
+count_flights_by_airport <- flights |> 
+  group_by(origin, carrier) |> 
+  summarize(num = n(), .groups = "drop") |>
+  arrange(origin, desc(num))
+```
+
+```{r, eval=FALSE, purl=FALSE}
+count_flights_by_airport
+```
+
+```{r, echo=FALSE, purl=FALSE}
+kable(count_flights_by_airport) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 10, 16),
+    latex_options = c("hold_position")
+  )
+```
+
+Note: the `n()` function counts rows, whereas the `sum(VARIABLE_NAME)` function sums all values of a certain numerical variable `VARIABLE_NAME`.
+
+**(LC3.9)** How does the `filter()` operation differ from a `group_by()` followed by a `summarize()`?
+
+**Solution**: `filter()` **keeps/discards rows** based on conditions (no aggregation). `group_by()`+`summarize()` **collapses rows into group-level statistics**.
+
+**(LC3.10)** What do positive values of the `gain` variable in `flights` correspond to? What about negative values? And what about a zero value?
+
+**Solution**: `gain = dep_delay - arr_delay`.
+Positive ⇒ **made up time** (arrived earlier/less late than departure delay).
+Negative ⇒ **lost time** (arrived even later relative to departure delay).
+Zero ⇒ **no change**.
+
+* Say a flight departed 20 minutes late, i.e. `dep_delay = 20`.
+* Then arrived 10 minutes late, i.e. `arr_delay = 10`.
+* Then `gain = dep_delay - arr_delay = 20 - 10  = 10` is positive, so it "made up/gained time in the air."
+* 0 means the departure and arrival time were the same, so no time was made up in  the air. We see in most cases that the `gain` is near 0 minutes.
+* I never understood this. If the pilot says "we're going make up time in the air"
+because of delay by flying faster, why don't you always just fly faster to begin
+with?
+
+**(LC3.11)** Could we create the `dep_delay` and `arr_delay` columns by simply subtracting `dep_time` from `sched_dep_time` and similarly for arrivals? Try the code out and explain any differences between the result and what actually appears in `flights`.
+
+**Solution**: Not reliably. `dep_time`/`sched_dep_time` are **clock times (hhmm)** and can cross midnight; simple subtraction ignores **rollovers/time parsing**. The provided `dep_delay`/`arr_delay` already account for that logic. You can't do direct arithmetic on times. The difference in time between 12:03 and 11:59 is 4 minutes, but `1203-1159 = 44`.
+
+**(LC3.12)** What can we say about the distribution of `gain`? Describe it in a few sentences using the plot and the `gain_summary` data frame values.
+
+**Solution**: The histogram is **centered near 0** with most flights having small gains/losses, and **long tails** in both directions. Median is near 0 at 11; a few flights gain or lose a lot of minutes, but that’s uncommon.
+
+**(LC3.13)** Looking at Figure \@ref(fig:reldiagram), when joining `flights` and `weather` (or, in other words, matching the hourly weather values with each flight), why do we need to join by all of `year`, `month`, `day`, `hour`, and `origin`, and not just `hour`?
+
+**Solution**: `hour` repeats every day and at all three origins. You need **year, month, day, hour, origin** to uniquely identify the **correct hourly record at the correct airport**. `hour` is simply a value between 0 and 23; to identify a *specific* hour, we need to know which year, month, day and at which airport.
+
+**(LC3.14)** What surprises you about the top 10 destinations from NYC in 2023?
+
+**Solution**: Answers vary. Example: heavy traffic to **Florida hubs** and **ORD/ATL**; **west-coast** volumes lower/higher than intuition. Also, the high number of flights to Boston; wouldn't it be easier and quicker to take the train?
+
+**(LC3.15)** What are some advantages of data in normal forms? What are some disadvantages?
+
+**Solution**: Pros: **less redundancy**, **consistent updates**, **smaller storage**, **clean joins**. Cons: Need **more joins**, queries can be **harder/slower**, less convenient for quick, denormalized reporting.
+
+**(LC3.16)** What are some ways to select all three of the `dest`, `air_time`, and `distance` variables from `flights`? Give the code showing how to do this in at least three different ways.
+
+**Solution**:
+
+```r
+flights |> select(dest, air_time, distance)
+flights |> select(c(dest, air_time, distance))
+flights |> select(dest:distance) 
+# If you check out the dplyr help pages you'll also see `any_of()`
+flights |> select(any_of(c("dest","air_time","distance")))
+```
+
+**(LC3.17)** How could one use `starts_with`, `ends_with`, and `contains` to select columns from the `flights` data frame?  Provide three different examples in total: one for `starts_with`, one for `ends_with`, and one for `contains`.
+
+**Solution**:
+
+```r
+flights |> select(starts_with("sched_"))     # e.g., sched_dep_time, sched_arr_time
+flights |> select(ends_with("_delay"))       # dep_delay, arr_delay
+flights |> select(contains("time"))          # dep_time, arr_time, sched_*_time, etc.
+```
+
+**(LC3.18)** Why might we want to use the `select()` function on a data frame?
+
+**Solution**: To **focus** on relevant variables, **declutter** views, **speed up** downstream operations/joins, and **reduce memory**.
+
+**(LC3.19)** Create a new data frame that shows the top 5 airports with the largest arrival delays from NYC in 2023.
+
+**Solution**:
+
+```{r}
+top5_arr_delay <- flights |>
+  group_by(dest) |>
+  summarize(mean_arr_delay = mean(arr_delay, na.rm = TRUE), .groups="drop") |>
+  arrange(desc(mean_arr_delay)) |>
+  top_n(n = 5) |>
+  # Useful for looking up the name of the airports!
+  inner_join(airports, by = c("dest" = "faa")) |>
+  # Can rename with select too!
+  select(dest, airport_name = name, mean_arr_delay)
+top5_arr_delay
+```
+
+**(LC3.20)** Using the datasets included in the `nycflights23` package, compute the available seat miles for each airline sorted in descending order. After completing all the necessary data wrangling steps, the resulting data frame should have 13 rows (one for each airline) and 2 columns (airline name and available seat miles). Here are some hints:
+
+1. **Crucial**: Unless you are very confident in what you are doing, it is worthwhile to not starting coding right away, but rather first sketch out on paper all the necessary data wrangling steps not using exact code, but rather high-level *pseudocode* that is informal yet detailed enough to articulate what you are doing. This way you won't confuse *what* you are trying to do (the algorithm) with *how* you are going to do it (writing `dplyr` code). 
+1. Take a close look at all the datasets using the `View()` function: `flights`, `weather`, `planes`, `airports`, and `airlines` to identify which variables are necessary to compute available seat miles.
+1. Figure \@ref(fig:reldiagram) above showing how the various datasets can be joined will also be useful. 
+1. Consider the data wrangling verbs in Table \@ref(tab:wrangle-summary-table) as your toolbox!
+
+**Solution**: Here are some examples of student-written [pseudocode](https://twitter.com/rudeboybert/status/964181298691629056). Based on our own pseudocode, let's first display the entire solution.
+
+```{r}
+flights |>
+  inner_join(planes, by = "tailnum") |>
+  select(carrier, seats, distance) |>
+  mutate(ASM = seats * distance) |>
+  group_by(carrier) |>
+  summarize(ASM = sum(ASM, na.rm = TRUE)) |>
+  arrange(desc(ASM))
+```
+
+Let's now break this down step-by-step. To compute the available seat miles for a given flight, we need the `distance` variable from the `flights` data frame and the `seats` variable from the `planes` data frame, necessitating a join by the key variable `tailnum` as illustrated in Figure \@ref(fig:reldiagram). To keep the resulting data frame easy to view, we'll `select()` only these two variables and `carrier`:
+
+```{r}
+flights |>
+  inner_join(planes, by = "tailnum") |>
+  select(carrier, seats, distance)
+```
+
+Now for each flight we can compute the available seat miles `ASM` by multiplying the number of seats by the distance via a `mutate()`:
+
+```{r}
+flights |>
+  inner_join(planes, by = "tailnum") |>
+  select(carrier, seats, distance) |>
+  # Added:
+  mutate(ASM = seats * distance)
+```
+
+Next we want to sum the `ASM` for each carrier. We achieve this by first grouping by `carrier` and then summarizing using the `sum()` function:
+
+```{r}
+flights |>
+  inner_join(planes, by = "tailnum") |>
+  select(carrier, seats, distance) |>
+  mutate(ASM = seats * distance) |>
+  # Added:
+  group_by(carrier) |>
+  summarize(ASM = sum(ASM))
+```
+
+However, because for certain carriers certain flights have missing `NA` values, the resulting table also returns `NA`'s. We can eliminate these by adding a `na.rm = TRUE` argument to `sum()`, telling R that we want to remove the `NA`'s in the sum. We saw this in Section \@ref(summarize):
+
+```{r}
+flights |>
+  inner_join(planes, by = "tailnum") |>
+  select(carrier, seats, distance) |>
+  mutate(ASM = seats * distance) |>
+  group_by(carrier) |>
+  # Modified:
+  summarize(ASM = sum(ASM, na.rm = TRUE))
+```
+
+Finally, we `arrange()` the data in `desc()`ending order of `ASM`.
+
+```{r}
+flights |>
+  inner_join(planes, by = "tailnum") |>
+  select(carrier, seats, distance) |>
+  mutate(ASM = seats * distance) |>
+  group_by(carrier) |>
+  summarize(ASM = sum(ASM, na.rm = TRUE)) |>
+  # Added:
+  arrange(desc(ASM))
+```
+
+While the above data frame is correct, the IATA `carrier` code is not always useful. For example, what carrier is `WN`? We can address this by joining with the `airlines` dataset using `carrier` is the key variable. While this step is not absolutely required, it goes a long way to making the table easier to make sense of. It is important to be empathetic with the ultimate consumers of your presented data!
+
+```{r, purl=FALSE}
+flights |>
+  inner_join(planes, by = "tailnum") |>
+  select(carrier, seats, distance) |>
+  mutate(ASM = seats * distance) |>
+  group_by(carrier) |>
+  summarize(ASM = sum(ASM, na.rm = TRUE)) |>
+  arrange(desc(ASM)) |>
+  # Added:
+  inner_join(airlines, by = "carrier") |> 
+  select(-carrier)
+```
+
+

@@ -1,0 +1,152 @@
+
+Needed packages
+
+```{r message=FALSE}
+library(tidyverse)
+library(infer)
+library(moderndive)
+library(nycflights23)
+library(ggplot2movies)
+``` 
+
+**(LC9.1)** Why does the given code produce an error with `stat = "diff in means"`?
+
+**Solution:** 
+Because the response variable `popular_or_not` is categorical, not numerical. The statistic `"diff in means"` requires a numeric response. With categorical responses, you must use `"diff in props"`.
+
+**(LC9.2)** Why are we relatively confident that the distributions of the sample proportions approximate the population distributions?
+
+**Solution:** 
+Because the sample sizes are large (1000 songs per genre). With large, representative random samples, sample proportions are good approximations of population proportions due to [the Law of Large Numbers](https://en.wikipedia.org/wiki/Law_of_large_numbers) and the Central Limit Theorem.
+
+**(LC9.3)** Using the definition of *p-value*, what does the p-value represent in the Spotify test?
+
+**Solution:** 
+It is the probability, assuming no true difference in popularity between metal and deep house, of obtaining a sample difference in proportions as large as or larger than the observed one in favor of metal.
+
+**(LC9.4)** How did Allen Downey’s diagram help us conclude whether a difference existed between popularity rates?
+
+**Solution:** 
+We followed the steps: (1) specify variables and hypotheses, (2) assume the null universe of no difference, (3) simulate data under this null by permutation, (4) calculate the observed test statistic and compare it to the null distribution, and (5) compute the p-value. Since the observed difference lay far in the tail of the null distribution, the p-value was small, leading us to reject the null and conclude metal songs are more popular.
+
+**(LC9.5)** What is wrong about saying, "The defendant is innocent" in a US trial?
+
+**Solution:** 
+The court can only conclude "not guilty." This means insufficient evidence to convict, not proof of innocence. Similarly, in hypothesis testing, we "fail to reject" $H_0$ but never "accept" it as true.
+
+**(LC9.6)** What is the purpose of hypothesis testing?
+
+**Solution:** 
+To assess whether sample evidence provides enough support to reject a null hypothesis about a population parameter, under controlled risk of error.
+
+**(LC9.7)** What are some flaws with hypothesis testing, and how could we alleviate them?
+
+**Solution:** 
+Flaws:
+
+* Overreliance on arbitrary cutoffs (e.g., $p < 0.05$).  
+* Misinterpretation of "failing to reject" as proof of $H_0$.  
+* Sensitivity to sample size (tiny effects significant with large $n$).  
+
+Alleviations: Report effect sizes, confidence intervals, and use context-specific significance levels rather than fixed thresholds.
+
+**(LC9.8)** Comparing $\alpha = 0.1$ and $\alpha = 0.01$, which has a higher chance of Type I Error?
+
+**Solution:** 
+$\alpha = 0.1$. A larger $\alpha$ increases the probability of rejecting $H_0$ when it is actually true.
+
+**(LC9.9)** Conduct the same analysis comparing action versus romance movies using the *median* rating instead of the mean. What was different and what was the same?
+
+**Solution:** 
+
+```{r}
+# In calculate() step replace "diff in means" with "diff in medians"
+null_distribution_movies_median <- movies_sample |> 
+  specify(formula = rating ~ genre) |> 
+  hypothesize(null = "independence") |> 
+  generate(reps = 1000, type = "permute") |> 
+  calculate(stat = "diff in medians", order = c("Action", "Romance"))
+
+# compute observed "diff in medians"
+obs_diff_medians <- movies_sample |> 
+  specify(formula = rating ~ genre) |> 
+  calculate(stat = "diff in medians", order = c("Action", "Romance"))
+obs_diff_medians
+
+# Visualize p-value. Observing this difference in medians under H0
+# is very unlikely! Suggesting H0 is false, similarly to when we used
+# "diff in means" as the test statistic. 
+visualize(null_distribution_movies_median, bins = 10) + 
+  shade_p_value(obs_stat = obs_diff_medians, direction = "both")
+
+# p-value is very small, just like when we used "diff in means"
+# as the test statistic. 
+null_distribution_movies_median |> 
+  get_p_value(obs_stat = obs_diff_medians, direction = "both")
+```
+
+
+**(LC9.10)** What conclusions can you make from viewing the faceted histogram of `rating` versus `genre` that you could not see with the boxplot?
+
+**Solution:** 
+From the faceted histogram, we can also see the comparison of `rating` versus `genre` over each year, but we cannot conclude them from the boxplot. 
+
+
+**(LC9.11)** Describe how we used Allen Downey’s diagram to conclude if a statistical difference existed.
+
+**Solution:**  
+We (1) stated variables and hypotheses, (2) assumed the null universe where action and romance have the same mean, (3) generated shuffled datasets under this null, (4) calculated the difference in sample means for each, (5) compared the observed difference to this null distribution, and (6) computed the $p$-value. If the $p$-value is larger than $\alpha$, we failed to reject $H_0$; otherwise, we reject $H_0$ and conclude a statistical difference existed.
+
+**(LC9.12)** Why are we relatively confident that the distributions of the sample ratings approximate the population distributions?
+
+**Solution:** 
+Because the sample of movies was taken randomly from the full IMDb database and has reasonable size, making it representative. By the Central Limit Theorem, with sufficiently large $n$, sample-based statistics approximate population parameters well.
+
+**(LC9.13)** Using the definition of $p$-value, what does the $p$-value represent here?
+
+**Solution:** 
+It is the probability, assuming no true difference in mean ratings between action and romance movies, of obtaining a sample mean difference at least as extreme (in either direction) as the observed difference.
+ 
+**(LC9.14)** What is the value of the $p$-value for this two-sided test?
+
+**Solution:** 
+The $p$-value here is $0.004$.
+
+**(LC9.15)** Test your wrangling and EDA skills:
+
+* Create an action/romance-only data frame from `movies`.
+* Make boxplots and faceted histograms of IMDb rating by genre.
+* Compare these with the sample plots.
+
+**Solution:** 
+
+- Use `dplyr` and `tidyr` to create the necessary data frame focused on only action and romance movies (but not both) from the `movies` data frame in the `ggplot2movies` package. 
+
+```{r}
+action_romance <- movies |>
+  select(title, year, rating, Action, Romance) |>
+  filter((Action == 1 | Romance == 1) & !(Action == 1 & Romance == 1)) |> 
+  mutate(genre = ifelse(Action == 1, "Action", "Romance"))
+```
+
+Note above:
+
+1. In the `filter()` command that `(Action == 1 | Romance == 1)` picks out the movies that are either action or romance while the `!(Action == 1 & Romance == 1)` leaves out the movies that are classified as both. 
+1. In the `mutate()` we use `ifelse()` to create a new variable `genre` whose values are either `"Action"` or `"Romance"`.
+
+- Make a boxplot and a faceted histogram of this population data comparing ratings of action and romance movies from IMDb.
+
+```{r}
+# Faceted histogram
+ggplot(action_romance, aes(rating)) +
+  geom_histogram() +
+  facet_wrap(~genre)
+```
+
+```{r}
+# Boxplot
+ggplot(action_romance, aes(y = rating, x = genre)) +
+  geom_boxplot()
+```
+
+The results look similar to the previous plots. There are more outliers shown for Romance in the boxplot done here. 

@@ -1,0 +1,122 @@
+
+Needed packages
+
+```{r message=FALSE}
+library(tidyverse)
+library(moderndive)
+library(ISLR2)
+``` 
+
+```{r}
+UN_data_ch6 <- un_member_states_2024 |>
+  select(country, 
+         life_expectancy_2022, 
+         fertility_rate_2022, 
+         income_group_2024)|>
+  na.omit()|>
+  rename(life_exp = life_expectancy_2022, 
+         fert_rate = fertility_rate_2022, 
+         income = income_group_2024)|>
+  mutate(income = factor(income, 
+                         levels = c("Low income", "Lower middle income", 
+                                    "Upper middle income", "High income")))
+```
+
+```{r}
+credit_ch6 <- Credit |> as_tibble() |> 
+  select(debt = Balance, credit_limit = Limit, 
+         income = Income, credit_rating = Rating, age = Age)
+```
+
+**(LC6.1)** What is the goal of including an interaction term?
+
+**Solution:** **B.**  
+It lets the effect of one explanatory variable depend on the level of another.
+
+**(LC6.2)** How do main effects plus interactions change coefficient interpretation?
+
+**Solution:** **C.**  
+Coefficients become conditional effects that depend on the interacting variable(s).
+
+**(LC6.3)** Which statement about dummy variables is correct?
+
+**Solution:** **B.**  
+They encode categorical variables with at least two levels.
+
+**(LC6.4)** Model with one categorical and one numerical regressor, no interactions: interpretation?
+
+**Solution:** **B.**  
+All categories share the same slope; only intercepts differ.
+
+**(LC6.5)** Compute observed responses, fitted values, and residuals for the no interaction model.
+
+**Solution:** Use the fitted no interaction model and generate regression points:
+
+```{r}
+model_no_int <- lm(fert_rate ~ life_exp + income, data = UN_data_ch6)
+pts_no_int <- get_regression_points(model_no_int)
+# Columns include fert_rate (observed y), fert_rate_hat (fitted ŷ), and residual = y - ŷ
+head(pts_no_int)
+```
+
+Interpretation: for each row, compare `fert_rate` to `fert_rate_hat`; the residual is their difference.
+
+**(LC6.6)** Main benefit of visualizing fitted values and residuals?
+
+**Solution:** **B.**  
+To assess model assumptions like linearity and constant variance.
+
+**(LC6.7)** EDA for debt with `credit_rating` and `age`. What can you say?
+
+**Solution:** Make scatterplots and summaries; compute correlations:
+
+```{r}
+credit_ch6 |> 
+  select(debt, credit_rating, age) |> 
+  tidy_summary()
+
+ggplot(credit_ch6, aes(credit_rating, debt)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Credit rating", y = "Debt ($)")
+
+ggplot(credit_ch6, aes(age, debt)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Age", y = "Debt ($)")
+
+credit_ch6 |> select(debt, credit_rating, age) |> cor()
+```
+
+Patterns to look for: higher credit ratings often associate with lower debt; age can show weak or nonlinear association. Your plots and correlations should guide the final statement.
+
+**(LC6.8)** Fit `lm(debt ~ credit_rating + age, data = credit_ch6)` and compare to EDA.
+
+**Solution:** Fit and read coefficients, then check signs and magnitudes against your plots.
+
+```{r}
+m_ca <- lm(debt ~ credit_rating + age, data = credit_ch6)
+get_regression_table(m_ca)
+```
+
+Interpretation: the coefficient on `credit_rating` is the partial effect holding `age` fixed; same for `age`. If EDA showed debt decreasing as rating increases, expect a negative coefficient on `credit_rating`. If age showed a weak relationship, expect a small coefficient or consider adding nonlinear terms if residual plots suggest curvature.
+
+**(LC6.9)** Interpretation of a regression coefficient in multiple regression.
+
+**Solution:** **A.**  
+It is the additional effect of a regressor/predictor variable on the response after accounting for other regressors.
+
+**(LC6.10)** Characteristic of the best fitting plane with two numerical regressors.
+
+**Solution:** **C.**  
+It minimizes the sum of squared residuals over all observations.
+
+**(LC6.11)** What does the intercept represent with two explanatory variables?
+
+**Solution:** **D.**  
+The expected response when all regressors are zero.
+
+**(LC6.12)** What is a partial slope?
+
+**Solution:** **A.**  
+The additional effect of a regressor on the response after the others are taken into account.
