@@ -1,5 +1,9 @@
 # ModernDive 2.1.0.9000
 
+* Updated Posit cheatsheet links and screenshots to latest versions from https://rstudio.github.io/cheatsheets/
+* Added Learning Check solutions to the Appendix online
+* Update LC10.7
+* Deleted the `echo=FALSE` that was hiding the Chapter 11 Needed Packages
 * Fixed a typo flagged by @Bmmju regarding 142 countries in Subsection 5.2.1 that was hard-coded (shame!). It was changed to the correct value of 188.
 * Fixed another hard-coded typo flagged by @segre-ecophysiology-lab
  on the number of airlines in the Chapter 3 Learning Checks (fixed to 14 instead of 16).
