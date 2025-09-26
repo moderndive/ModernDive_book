@@ -1,4 +1,4 @@
-## ----echo=FALSE, message=FALSE------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
 library(tidyverse)
 library(moderndive)
 library(fivethirtyeight)
