@@ -1,0 +1,86 @@
+<script type="module">
+  import { WebR } from "https://webr.r-wasm.org/latest/webr.mjs";
+  const webR = new WebR();
+  await webR.init();
+
+  async function runR(code) {
+    const shelter = await new webR.Shelter();
+    try {
+      const cap = await shelter.captureR(code);
+      return (cap?.output ?? []).map(x => x.data).join("\n").trim() || "(ok)";
+    } finally {
+      shelter.purge();
+    }
+  }
+
+  function isWebRBlock(el){ return !!(el && el.classList && el.classList.contains('webr')); }
+
+  function* findWebRCodeBlocks(root=document){
+    const nodes = root.querySelectorAll("pre code, div.sourceCode pre code");
+    for (const code of nodes) {
+      const pre = code.closest("pre");
+      const wrapper = code.closest("div.sourceCode") || pre?.parentElement;
+      if (isWebRBlock(code) || isWebRBlock(pre) || isWebRBlock(wrapper)) yield code;
+    }
+  }
+
+  function enhanceOne(codeEl){
+    if (codeEl.dataset.webrEnhanced === "true") return;
+    codeEl.dataset.webrEnhanced = "true";
+
+    const pre = codeEl.closest("pre");
+    const container = pre || codeEl.parentElement;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "webr-cell";
+    container.replaceWith(wrapper);
+    wrapper.appendChild(container);
+
+    const controls = document.createElement("div");
+    controls.className = "webr-controls";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "webr-run";
+    btn.textContent = "Run";
+    controls.appendChild(btn);
+    wrapper.appendChild(controls);
+
+    const out = document.createElement("pre");
+    out.className = "webr-output";
+    wrapper.appendChild(out);
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.textContent = "Running...";
+      out.textContent = "";
+      try { out.textContent = await runR(codeEl.textContent); }
+      catch (e) { out.textContent = String(e); }
+      finally { btn.disabled = false; btn.textContent = old; }
+    });
+  }
+
+  function enhanceAll(scope=document){ for (const c of findWebRCodeBlocks(scope)) enhanceOne(c); }
+
+  if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", () => enhanceAll());
+  } else {
+    enhanceAll();
+  }
+
+  const mo = new MutationObserver(muts => {
+    for (const m of muts) for (const n of m.addedNodes) {
+      if (n.nodeType === 1) enhanceAll(n);
+    }
+  });
+  mo.observe(document.body, { childList: true, subtree: true });
+</script>
+
+<style>
+.webr-cell{border:1px solid #e5e7eb;border-radius:.5rem;padding:.75rem;background:#fafafa;margin:1rem 0}
+.webr-controls{display:flex;gap:.5rem;margin:.25rem 0 .5rem 0}
+.webr-run{padding:.35rem .6rem;border:1px solid #d1d5db;border-radius:.375rem;background:#f3f4f6;cursor:pointer}
+.webr-run:hover{background:#e5e7eb}
+.webr-run:disabled{opacity:.6;cursor:not-allowed}
+.webr-output{background:#fff;border:1px solid #eee;border-radius:.375rem;padding:.5rem;margin:0;white-space:pre-wrap}
+</style>
