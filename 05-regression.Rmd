@@ -1,6 +1,6 @@
 (ref:moderndivepart) Statistical Modeling with `moderndive`
 
-```{r regression-1, echo=FALSE, results="asis", purl=FALSE}
+```{r regression-conditional-text, echo=FALSE, results="asis", purl=FALSE}
 if (is_latex_output()) {
   cat("# (PART) (ref:moderndivepart) {-}")
 } else {
@@ -10,7 +10,7 @@ if (is_latex_output()) {
 
 # Simple Linear Regression {#regression}
 
-```{r regression-2, include=FALSE, purl=FALSE}
+```{r regression-setup, include=FALSE, purl=FALSE}
 # Used to define Learning Check numbers:
 chap <- 5
 lc <- 0
@@ -78,13 +78,13 @@ We now load all the packages needed for this chapter (this assumes you've alread
 
 If needed, read Section \@ref(packages) for information on how to install and load R packages.
 
-```{r regression-3, message=FALSE}
+```{r regression-load-packages, message=FALSE}
 library(tidyverse)
 library(moderndive)
 ```
 
 
-```{r regression-4, message=FALSE, echo=FALSE, purl=FALSE}
+```{r regression-load-internal, message=FALSE, echo=FALSE, purl=FALSE}
 # Packages needed internally, but not in text.
 library(mvtnorm)
 library(broom)
@@ -103,7 +103,7 @@ Why do some countries exhibit high fertility rates while others have significant
 
 These are all questions that are of interest to demographers and policy makers, as understanding fertility rates is important for planning and development. By analyzing the dataset of UN member states, which includes variables such as country codes (ISO), fertility rates, and life expectancy for 2022, researchers can uncover patterns and make predictions about fertility rates based on life expectancy.
 
-```{r regression-5, echo=FALSE, purl=FALSE}
+```{r regression-dynamic-text, echo=FALSE, purl=FALSE}
 # This code is used for dynamic non-static in-line text output purposes
 n_countries <- un_member_states_2024 |> nrow()
 ```
@@ -118,7 +118,7 @@ In this section, we aim to explain differences in fertility rates as a function 
 
 The data on the `r n_countries` current UN member states (as of 2024) can be found in the `un_member_states_2024` data frame included in the `moderndive` package. However, to keep things simple we include only those rows that don't have missing data with `na.omit()` and `select()` only the subset of the variables we'll consider in this chapter, and save this data in a new data frame called `UN_data_ch5`:
 
-```{r regression-6}
+```{r regression-create-UN_data_ch5}
 UN_data_ch5 <- un_member_states_2024 |>
   select(iso, 
          life_exp = life_expectancy_2022, 
@@ -127,7 +127,7 @@ UN_data_ch5 <- un_member_states_2024 |>
   na.omit()
 ```
 
-```{r regression-7, include=FALSE}
+```{r regression-create-n_demo_ch5, include=FALSE}
 n_demo_ch5 <- nrow(UN_data_ch5)
 ```
 
@@ -141,7 +141,7 @@ We perform the first common step in an exploratory data analysis: looking at the
 
 You can do this by using RStudio's spreadsheet viewer or by using the `glimpse()` function as introduced in Subsection \@ref(exploredataframes) on exploring data frames:
 
-```{r regression-8}
+```{r regression-glimpse-UN_data_ch5}
 glimpse(UN_data_ch5)
 ```
 
@@ -154,7 +154,7 @@ A full description of all the variables included in `un_member_states_2024` can 
 3. `life_exp`: A numerical variable representing the country's average life expectancy in 2022 in years. This is the primary explanatory variable $x$ of interest.
 4. `obes_rate`: A numerical variable representing the country's obesity rate in 2016. This will be another explanatory variable $x$ that we use in the *Learning check* at the end of this subsection.
 
-```{r regression-9, echo=FALSE}
+```{r regression-create-sample_size, echo=FALSE}
 sample_size <- 5
 ```
 
@@ -184,7 +184,7 @@ UN_data_ch5 |>
 
 We have looked at the raw values in our `UN_data_ch5` data frame and got a preliminary sense of the data. We can now compute summary statistics. We start by computing the mean and median of our numerical outcome variable `fert_rate` and our numerical explanatory variable `life_exp`. We do this by using the `summarize()` function from `dplyr` along with the `mean()` and `median()` summary functions we saw in Section \@ref(summarize).
 
-```{r regression-11, eval=FALSE}
+```{r regression-compute-mean, eval=FALSE}
 UN_data_ch5 |>
   summarize(mean_life_exp = mean(life_exp), 
             mean_fert_rate = mean(fert_rate),
@@ -192,7 +192,7 @@ UN_data_ch5 |>
             median_fert_rate = median(fert_rate))
 ```
 
-```{r regression-12, echo=FALSE}
+```{r regression-compute-mean-2, echo=FALSE}
 UN_data_ch5 |>
   summarize(mean_life_exp = mean(life_exp), 
             mean_fert_rate = mean(fert_rate),
@@ -209,13 +209,13 @@ However, what if we want other summary statistics as well, such as the standard 
 
 Typing all these summary statistic functions in `summarize()` would be long and tedious. Instead, we use the convenient [`tidy_summary()`](https://moderndive.github.io/moderndive/reference/tidy_summary.html) function in the `moderndive` \index{R packages!moderndive!tidy\_summary()} package. This function takes in a data frame, summarizes it, and returns commonly used summary statistics in tidy format. We take our `UN_data_ch5` data frame, `select()` only the outcome and explanatory variables `fert_rate` and `life_exp`, and pipe them into the `tidy_summary` function:
 
-```{r regression-13, eval=FALSE}
+```{r regression-select-vars, eval=FALSE}
 UN_data_ch5 |> 
   select(fert_rate, life_exp) |> 
   tidy_summary()
 ```
 
-```{r regression-14, echo=FALSE}
+```{r regression-select-vars-2, echo=FALSE}
 UN_data_ch5 |> 
   select(fert_rate, life_exp) |> 
   tidy_summary() |> 
@@ -233,7 +233,7 @@ UN_data_ch5 |>
   tidy_summary(columns = c(fert_rate, life_exp))
 ```
 
-```{r regression-16, echo=FALSE}
+```{r regression-conditional, echo=FALSE}
 UN_data_ch5 |> 
   tidy_summary(columns = c(fert_rate, life_exp)) |> 
   kbl() |>
@@ -259,7 +259,7 @@ Both return the same results for the numerical variables `fert_rate` and `life_e
 - `sd`: the standard deviation value for measuring spread
 
 
-```{r regression-17, echo=FALSE}
+```{r regression-create-summary_df, echo=FALSE}
 summary_df <- UN_data_ch5 |> 
   select(fert_rate, life_exp) |> 
   tidy_summary() |> 
@@ -338,12 +338,12 @@ UN_data_ch5 |>
 
 An alternative way to compute correlation is to use the `cor()` summary function within a `summarize()`:
 
-```{r regression-19, eval=FALSE}
+```{r regression-summarize, eval=FALSE}
 UN_data_ch5 |> 
   summarize(correlation = cor(fert_rate, life_exp))
 ```
 
-```{r regression-20, echo=FALSE, purl=FALSE}
+```{r regression-summarize-2, echo=FALSE, purl=FALSE}
 cor_ch5 <- UN_data_ch5 |>
   summarize(correlation = cor(fert_rate, life_exp,
                               use = "complete.obs")) |>
@@ -427,13 +427,13 @@ We can obtain the values of the intercept $b_0$ and the slope for `life_exp` $b_
 1. We first "fit" the linear regression model using the `lm()` function and save it in `demographics_model`.
 1. We get the regression coefficients by applying `coef()`  to `demographics_model`.
 
-```{r regression-21, eval=FALSE}
+```{r regression-lm-fertility, eval=FALSE}
 # Fit regression model:
 demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 # Get regression coefficients
 coef(demographics_model)
 ```
-```{r regression-22, echo=FALSE, purl=FALSE}
+```{r regression-lm-fertility-2, echo=FALSE, purl=FALSE}
 demographics_model <- lm(fert_rate ~ life_exp, 
                          data = UN_data_ch5)
 demo_line <- demographics_model |>
@@ -463,7 +463,7 @@ Furthermore, we say that this associated decrease is *on average* `r abs(demo_li
 
 Now that we have learned how to compute the equation for the regression line in Figure \@ref(fig:numxplot3) using the model coefficient values and how to interpret the resulting intercept and slope, we revisit the code that generated these coefficients:
 
-```{r regression-23, eval=FALSE}
+```{r regression-lm-fertility-3, eval=FALSE}
 # Fit regression model:
 demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 # Get regression coefficients:
@@ -570,7 +570,7 @@ Now say we want to compute both the fitted value $\widehat{y} = b_0 + b_1 \cdot 
 
 We could repeat the previous calculations we performed by hand `r n_demo_ch5` times, but that would be tedious and time consuming. Instead, we use a computer with the `get_regression_points()` function. We apply the `get_regression_points()` function to `demographics_model`, which is where we saved our `lm()` model in the previous section. In Table \@ref(tab:regression-points-1) we present the results of only the 21st through 24th courses for brevity.
 
-```{r regression-24, eval=FALSE}
+```{r regression-reg-points, eval=FALSE}
 regression_points <- get_regression_points(demographics_model)
 regression_points
 ```
@@ -665,13 +665,13 @@ When the explanatory variable $x$ is categorical, the concept of a "best-fitting
 
 The data on the `r n_countries` countries can be found in the `un_member_states_2024` data frame included in the `moderndive` package. However, to keep things simple, we `select()` only the subset of the variables we'll consider in this chapter and focus only on rows where we have no missing values with `na.omit()`. We'll save this data in a new data frame called `gapminder2022`:
 
-```{r regression-25, message=FALSE}
+```{r regression-create-gapminder2022, message=FALSE}
 gapminder2022 <- un_member_states_2024 |>
   select(country, life_exp = life_expectancy_2022, continent, gdp_per_capita) |> 
   na.omit()
 ```
 
-```{r regression-26, echo=FALSE, purl=FALSE}
+```{r regression-create-life_exp_worldwide, echo=FALSE, purl=FALSE}
 # Hidden: internally compute mean and median life expectancy
 life_exp_worldwide <- gapminder2022 |>
   summarize(median = median(life_exp, na.rm = TRUE), 
@@ -687,7 +687,7 @@ gapminder2022_rows <- gapminder2022 |> nrow()
 
 We perform the first common step in an exploratory data analysis: looking at the raw data values. You can do this by using RStudio's spreadsheet viewer or by using the `glimpse()` command as introduced in Subsection \@ref(exploredataframes) on exploring data frames:
 
-```{r regression-27}
+```{r regression-glimpse-gapminder2022}
 glimpse(gapminder2022)
 ```
 
@@ -722,7 +722,7 @@ gapminder2022 |>
 
 Random sampling will likely produce a different subset of 3 rows for you than what's shown. Now that we have looked at the raw values in our `gapminder2022` data frame and got a sense of the data, we compute summary statistics. We again apply `tidy_summary()` from the `moderndive` package. Recall that this function takes in a data frame, summarizes it, and returns commonly used summary statistics. We take our `gapminder2022` data frame, `select()` only the outcome and explanatory variables `life_exp` and `continent`, and pipe them into `tidy_summary()` in Table \@ref(tab:lifeexp-cont):
 
-```{r regression-29, eval=FALSE}
+```{r regression-select-vars-3, eval=FALSE}
 gapminder2022 |> select(life_exp, continent) |> tidy_summary()
 ```
 
@@ -753,7 +753,7 @@ The `tidy_summary()` output now reports summaries for categorical variables and 
 - `type`: The data type of the variable. Here, it is a `factor`.
 - `min` to `sd`: These are missing since calculating the five-number summary, the mean, and standard deviation for categorical variables doesn't make sense.
 
-```{r regression-31, echo=FALSE, purl=FALSE}
+```{r regression-dynamic-text-2, echo=FALSE, purl=FALSE}
 # This code is used for dynamic non-static in-line text output purposes
 median_life_exp <- life_summary_df$median |> round(2)
 mean_life_exp <- life_summary_df$mean |> round(2)
@@ -775,7 +775,7 @@ We see that this data is *left-skewed*, also known as *negatively* \index{skew} 
 
 Remember, however, that we want to compare life expectancies both between continents and within continents. In other words, our visualizations need to incorporate some notion of the variable `continent`. We can do this easily with a faceted histogram. Recall from Section \@ref(facets) that facets allow us to split a visualization by the different values of another variable. We display the resulting visualization in Figure \@ref(fig:catxplot0b) by adding a \index{R packages!ggplot2!facet\_wrap()} `facet_wrap(~ continent, nrow = 2)` layer.
 
-```{r regression-32, eval=FALSE} 
+```{r regression-facet-hist-lifeexp, eval=FALSE} 
 ggplot(gapminder2022, aes(x = life_exp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", 
@@ -820,7 +820,7 @@ Some people prefer comparing the distributions of a numerical variable between d
 
 It’s important to remember, however, that the solid lines in the middle of the boxes correspond to the medians (the middle value) rather than the mean (the average). So, for example, if you look at Asia, the solid line denotes the median life expectancy of around 75 years. This tells us that half of all countries in Asia have a life expectancy below 75 years, whereas half have a life expectancy above 75 years. We compute the median and mean life expectancy for each continent with a little more data wrangling and display the results in Table \@ref(tab:catxplot0).
 
-```{r regression-33, eval=TRUE, results='hide'}
+```{r regression-grouped-summary, eval=TRUE, results='hide'}
 life_exp_by_continent <- gapminder2022 |>
   group_by(continent) |>
   summarize(median = median(life_exp), mean = mean(life_exp))
@@ -842,7 +842,7 @@ life_exp_by_continent |>
 
 Observe the order of the second column `median` life expectancy: Africa is lowest, Europe the highest, and the others have similar medians between Africa and Europe. This ordering corresponds to the ordering of the solid black lines inside the boxes in our side-by-side boxplot in Figure \@ref(fig:catxplot1). 
 
-```{r regression-34, echo=FALSE, purl=FALSE}
+```{r regression-create-life_exp_model, echo=FALSE, purl=FALSE}
 # This code is used for dynamic non-static in-line text output purposes
 # Coding model earlier to calculate the intercepts etc below
 life_exp_model <- lm(life_exp ~ continent, data = gapminder2022)
@@ -945,7 +945,7 @@ As we did in Subsection \@ref(model1table) when studying the relationship betwee
 1. We "fit" the linear regression model using `lm(y ~ x, data)` and save it in `life_exp_model`.
 1. We get the regression coefficients by applying the `coef()` function to `life_exp_model`.
 
-```{r regression-35}
+```{r regression-fit-lm}
 life_exp_model <- lm(life_exp ~ continent, data = gapminder2022)
 coef(life_exp_model)
 ```
@@ -1091,7 +1091,7 @@ Recall in Subsection \@ref(model1points), we defined the following three concept
 
 We obtained these values and other values using the `get_regression_points()` function from the `moderndive` package. This time, however, we add an argument setting `ID = "country"`, which uses the variable `country` in `gapminder2022` as an *identification variable* in the output. This will help contextualize our analysis by matching values to countries.
 
-```{r regression-36, eval=FALSE}
+```{r regression-reg-points-2, eval=FALSE}
 get_regression_points(life_exp_model, ID = "country")
 ```
 ```{r model2-residuals, echo=FALSE, purl=FALSE}
@@ -1110,7 +1110,7 @@ regression_points |>
   )
 ```
 
-```{r regression-37, echo=FALSE, purl=FALSE}
+```{r regression-create-afghanistan_life_e, echo=FALSE, purl=FALSE}
 # This code is for inline dynamic coding
 afghanistan_life_exp <- regression_points |>
   filter(country == "Afghanistan") |>
@@ -1186,14 +1186,14 @@ As you read news stories, be careful not to fall into the trap of thinking that 
 
 Coming back to our UN member states data, a confounding variable could be the level of economic development of a country. This could affect both life expectancy and fertility rates. A proxy for looking at the level of economic development could be the Human Development Index (HDI). It measures a country's average achievements in three basic aspects of human development: health (life expectancy), education (mean and expected years of schooling), and standard of living (gross national income per capita). This is stored in the `hdi_2022` column of `un_member_states_2024`. We explore its relationship with life expectancy and fertility rates:
 
-```{r regression-38, fig.height=1.5}
+```{r regression-scatter-lifeexp, fig.height=1.5}
 ggplot(data = un_member_states_2024, 
        aes(x = hdi_2022, y = life_expectancy_2022)) +
   geom_point() +
   labs(x = "Human Development Index (HDI)", y = "Life Expectancy")
 ```
 
-```{r regression-39, fig.height=1.5}
+```{r regression-scatter, fig.height=1.5}
 ggplot(data = un_member_states_2024, 
        aes(x = hdi_2022, y = fertility_rate_2022)) +
   geom_point() +
@@ -1302,7 +1302,7 @@ p4 <- best_fit_plot + labs(title = "Solomon Islands' residual added") +
 p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
 ```
 
-```{r regression-42, include=FALSE}
+```{r regression-create-four_countries, include=FALSE}
 four_countries <- c("BIH", "TCD", "IND", "SLB")
 country_lookup_table <- UN_data_ch5 |>
   filter(iso %in% four_countries) |>
@@ -1344,7 +1344,7 @@ $$
 
 We use our data-wrangling tools to compute the sum of squared residuals exactly:
 
-```{r regression-43, eval=FALSE}
+```{r regression-create-demographics_model, eval=FALSE}
 # Fit regression model and regression points
 demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 regression_points <- get_regression_points(demographics_model)
@@ -1355,7 +1355,7 @@ regression_points |>
   summarize(sum_of_squared_residuals = sum(squared_residuals))
 ```
 
-```{r regression-44, echo=FALSE}
+```{r regression-create-demographics_model-2, echo=FALSE}
 # Fit regression model:
 demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 
@@ -1422,7 +1422,7 @@ What is going on behind the scenes with the <!-- `get_regression_table()` and --
 The `get_regression_points()` function is a wrapper function, returning information about the individual points involved in a regression model like the fitted values, observed values, and the residuals. `get_regression_points()` \index{R packages!moderndive!get\_regression\_points()} uses the `augment()` \index{R packages!broom!augment()} function in the [`broom` package](https://broom.tidyverse.org/) <!-- instead of the `tidy()` function as with `get_regression_table()` --> to produce the data shown in Table \@ref(tab:regpoints-augment). Additionally, it uses `clean_names()` \index{R packages!janitor!clean\_names()} from the [`janitor` package](https://github.com/sfirke/janitor) [@R-janitor] to clean up the variable names.
 
 
-```{r regression-45, eval=FALSE}
+```{r regression-load-packages-2, eval=FALSE}
 library(broom)
 library(janitor)
 demographics_model |>
@@ -1464,13 +1464,13 @@ If you are even more curious about how these and other wrapper functions work, t
 
 ### Additional resources {#additional-resources-basic-regression}
 
-```{r regression-46, echo=FALSE, results="asis", purl=FALSE}
+```{r regression-conditional-text-2, echo=FALSE, results="asis", purl=FALSE}
 if (is_latex_output()) {
   cat("Solutions to all *Learning checks* can be found in the Appendices of the online version of the book. The Appendices start at <https://moderndive.com/v2/appendixa>.")
 }
 ```
 
-```{r regression-47, echo=FALSE, purl=FALSE, results="asis"}
+```{r regression-conditional-text-3, echo=FALSE, purl=FALSE, results="asis"}
 # For generating the R script files at the end of relevant chapters
 generate_r_file_link <- function(file) {
   if (is_latex_output()) {
