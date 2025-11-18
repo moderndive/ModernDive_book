@@ -1,5 +1,6 @@
 # ModernDive 2.1.0.9000
 
+* Refactored YAML configuration: moved format-specific options from `index.Rmd` to `_output.yml` for better organization and maintainability. PDF-specific options (document class, fonts, LaTeX settings) are now in the `pdf_book` section, and HTML-specific options (favicons, social media metadata) are now in the `bs4_book` section. This follows bookdown best practices and makes it easier to maintain format-specific settings.
 * Updated Posit cheatsheet links and screenshots to latest versions from https://rstudio.github.io/cheatsheets/
 * Added Learning Check solutions to the Appendix online
 * Updated LC10.7
