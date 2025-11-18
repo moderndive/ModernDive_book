@@ -1,0 +1,89 @@
+on:
+  push:
+    branches: [main, master, v2]
+  pull_request:
+    branches: [main, master, v2]
+  workflow_dispatch:
+
+name: Quarto Publish
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # Checkout repository
+      - uses: actions/checkout@v4
+
+      # Setup Quarto
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      # Setup R environment
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      # Install system libraries for the V8 R package
+      - name: Install system libraries for V8
+        run: |
+          sudo apt-get update
+          # Try libv8-dev first; if not available on this Ubuntu image, fall back to libnode-dev
+          sudo apt-get install -y libv8-dev || sudo apt-get install -y libnode-dev
+          # ICU is a common runtime dependency for V8 on Ubuntu
+          sudo apt-get install -y libicu-dev
+
+      # Setup renv if needed
+      - uses: r-lib/actions/setup-renv@v2
+
+      # Ensure _quarto directory exists
+      - name: Ensure _quarto directory exists
+        run: mkdir -p _quarto
+
+      # Cache quarto results
+      - name: Cache quarto results
+        uses: actions/cache@v4
+        with:
+          path: _quarto
+          key: quarto-${{ hashFiles('**/*qmd') }}
+          restore-keys: quarto-
+
+      # Render Quarto book
+      - name: Render Quarto Book
+        run: quarto render
+
+      # Save R package state
+      - name: Save R Package State
+        run: |
+          R -e 'saveRDS(installed.packages(), file = "installed_packages.rds")'
+
+      # Deploy HTML to GitHub Pages if on main or master branch
+      - name: Deploy to GitHub pages from main/master 🚀
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: JamesIves/github-pages-deploy-action@v4.6.4
+        with:
+          branch: gh-pages
+          folder: docs
+          clean: false
+
+      # Deploy to v2-publish if on v2 branch
+      - name: Deploy to v2-publish branch from v2 🚀
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/v2'
+        uses: JamesIves/github-pages-deploy-action@v4.6.4
+        with:
+          branch: v2-publish
+          folder: docs
+          clean: false
+
+      # Deploy to /v2 subdirectory of gh-pages from v2 branch
+      - name: Deploy to v2 subdirectory of gh-pages 🚀
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/v2'
+        uses: JamesIves/github-pages-deploy-action@v4.6.4
+        with:
+          branch: gh-pages
+          folder: docs
+          target-folder: v2
+          clean: false
