@@ -1,4 +1,4 @@
-## ----message=FALSE------------------------------------------------------------
+## ----wrangling-load-packages, message=FALSE-----------------------------------
 library(dplyr)
 library(ggplot2)
 library(nycflights23)
@@ -10,48 +10,48 @@ library(nycflights23)
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-filter-alaska, eval=FALSE--------------------------------------
 # envoy_flights <- flights |>
 #   filter(carrier == "AS")
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-view-phoenix_flights, eval=FALSE-------------------------------
 # phoenix_flights <- flights |>
 #   filter(dest == "PHX")
 # View(phoenix_flights)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-view-btv_sea_flights_fall, eval=FALSE--------------------------
 # btv_sea_flights_fall <- flights |>
 #   filter(origin == "JFK" & (dest == "BTV" | dest == "SEA") & month >= 10)
 # View(btv_sea_flights_fall)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-assign-btv_sea_flights_fa, eval=FALSE--------------------------
 # btv_sea_flights_fall <- flights |>
 #   filter(origin == "JFK", (dest == "BTV" | dest == "SEA"), month >= 10)
 # View(btv_sea_flights_fall)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-view-not_BTV_SEA, eval=FALSE-----------------------------------
 # not_BTV_SEA <- flights |>
 #   filter(!(dest == "BTV" | dest == "SEA"))
 # View(not_BTV_SEA)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-filter, eval=FALSE---------------------------------------------
 # flights |> filter(!dest == "BTV" | dest == "SEA")
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-create-many_airports, eval=FALSE-------------------------------
 # many_airports <- flights |>
 #   filter(dest == "SEA" | dest == "SFO" | dest == "PHX" |
 #          dest == "BTV" | dest == "BDL")
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-view-many_airports, eval=FALSE---------------------------------
 # many_airports <- flights |>
 #   filter(dest %in% c("SEA", "SFO", "PHX", "BTV", "BDL"))
 # View(many_airports)
@@ -61,7 +61,7 @@ library(nycflights23)
 
 
 
-## ----echo=FALSE, results="asis"-----------------------------------------------
+## ----wrangling-conditional-text, echo=FALSE, results="asis"-------------------
 if(!is_latex_output()) 
   cat("See [Appendix A online](https://moderndive.com/v2/appendixa) for a glossary of such summary statistics.")
 
@@ -70,13 +70,13 @@ if(!is_latex_output())
 
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-mean-and-sd----------------------------------------------------
 summary_windspeed <- weather |> 
   summarize(mean = mean(wind_speed), std_dev = sd(wind_speed))
 summary_windspeed
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-mean-sd-wind---------------------------------------------------
 summary_windspeed <- weather |> 
   summarize(mean = mean(wind_speed, na.rm = TRUE), 
             std_dev = sd(wind_speed, na.rm = TRUE))
@@ -85,7 +85,7 @@ summary_windspeed
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-assign-summary_windspeed, eval=FALSE---------------------------
 # summary_windspeed <- weather |>
 #   summarize(mean = mean(wind_speed, na.rm = TRUE)) |>
 #   summarize(std_dev = sd(wind_speed, na.rm = TRUE))
@@ -95,14 +95,14 @@ summary_windspeed
 
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-mean-sd-temp---------------------------------------------------
 summary_temp <- weather |> 
   summarize(mean = mean(wind_speed, na.rm = TRUE), 
             std_dev = sd(wind_speed, na.rm = TRUE))
 summary_temp
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-summary-by-month-----------------------------------------------
 summary_monthly_windspeed <- weather |> 
   group_by(month) |> 
   summarize(mean = mean(wind_speed, na.rm = TRUE), 
@@ -110,47 +110,47 @@ summary_monthly_windspeed <- weather |>
 summary_monthly_windspeed
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-show-diamonds--------------------------------------------------
 diamonds
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-demo-code------------------------------------------------------
 diamonds |> 
   group_by(cut)
 
 
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-grouped-summary------------------------------------------------
 diamonds |> 
   group_by(cut) |> 
   summarize(avg_price = mean(price))
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-ungroup-data---------------------------------------------------
 diamonds |> 
   group_by(cut) |> 
   ungroup()
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-summary-by-origin----------------------------------------------
 by_origin <- flights |> 
   group_by(origin) |> 
   summarize(count = n())
 by_origin
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-assign-by_origin_monthly---------------------------------------
 by_origin_monthly <- flights |> 
   group_by(origin, month) |> 
   summarize(count = n())
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-v26------------------------------------------------------------
 by_origin_monthly
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-count-by-origin------------------------------------------------
 by_origin_monthly_incorrect <- flights |> 
   group_by(origin) |> 
   group_by(month) |> 
@@ -164,12 +164,12 @@ by_origin_monthly_incorrect
 
 
 
-## ----eval=TRUE----------------------------------------------------------------
+## ----wrangling-create-weather, eval=TRUE--------------------------------------
 weather <- weather |> 
   mutate(temp_in_C = (temp - 32) / 1.8)
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-summary-by-month-v4--------------------------------------------
 summary_monthly_temp <- weather |> 
   group_by(month) |> 
   summarize(mean_temp_in_F = mean(temp, na.rm = TRUE), 
@@ -177,7 +177,7 @@ summary_monthly_temp <- weather |>
 summary_monthly_temp
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-mutate-gain----------------------------------------------------
 flights <- flights |> 
   mutate(gain = dep_delay - arr_delay)
 
@@ -186,7 +186,7 @@ flights <- flights |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-mean-sd-narm---------------------------------------------------
 gain_summary <- flights |> 
   summarize(
     min = min(gain, na.rm = TRUE),
@@ -206,7 +206,7 @@ ggplot(data = flights, mapping = aes(x = gain)) +
   geom_histogram(color = "white", bins = 20)
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-mutate-gain-demo-----------------------------------------------
 flights <- flights |> 
   mutate(
     gain = dep_delay - arr_delay,
@@ -219,30 +219,30 @@ flights <- flights |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-count-by-dest--------------------------------------------------
 freq_dest <- flights |> 
   group_by(dest) |> 
   summarize(num_flights = n())
 freq_dest
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-arrange--------------------------------------------------------
 freq_dest |> 
   arrange(num_flights)
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-arrange-desc---------------------------------------------------
 freq_dest |> 
   arrange(desc(num_flights))
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-view-airlines, eval=FALSE--------------------------------------
 # View(airlines)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-view-flights, eval=FALSE---------------------------------------
 # flights_joined <- flights |>
 #   inner_join(airlines, by = "carrier")
 # View(flights)
@@ -251,17 +251,17 @@ freq_dest |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-view-airports, eval=FALSE--------------------------------------
 # View(airports)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-view-flights_with_airport, eval=FALSE--------------------------
 # flights_with_airport_names <- flights |>
 #   inner_join(airports, by = c("dest" = "faa"))
 # View(flights_with_airport_names)
 
 
-## -----------------------------------------------------------------------------
+## ----wrangling-count-by-dest2-------------------------------------------------
 named_dests <- flights |>
   group_by(dest) |>
   summarize(num_flights = n()) |>
@@ -271,7 +271,7 @@ named_dests <- flights |>
 named_dests
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-view-flights_weather_join, eval=FALSE--------------------------
 # flights_weather_joined <- flights |>
 #   inner_join(weather, by = c("year", "month", "day", "hour", "origin"))
 # View(flights_weather_joined)
@@ -281,7 +281,7 @@ named_dests
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-view-joined_flights, eval=FALSE--------------------------------
 # joined_flights <- flights |>
 #   inner_join(airlines, by = "carrier")
 # View(joined_flights)
@@ -295,54 +295,54 @@ named_dests
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-glimpse-flights, eval=FALSE------------------------------------
 # glimpse(flights)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-select-vars, eval=FALSE----------------------------------------
 # flights |>
 #   select(carrier, flight)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-create-flights_no_year, eval=FALSE-----------------------------
 # flights_no_year <- flights |> select(-year)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-create-flight_arr_times, eval=FALSE----------------------------
 # flight_arr_times <- flights |> select(month:day, arr_time:sched_arr_time)
 # flight_arr_times
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-select-vars-alt, eval=FALSE------------------------------------
 # flights |> select(starts_with("a"))
 # flights |> select(ends_with("delay"))
 # flights |> select(contains("time"))
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-glimpse-flights_reorder, eval=FALSE----------------------------
 # flights_reorder <- flights |>
 #   select(year, month, day, hour, minute, time_hour, everything())
 # glimpse(flights_reorder)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-glimpse-flights_relocate, eval=FALSE---------------------------
 # flights_relocate <- flights |>
 #   relocate(hour, minute, time_hour, .after = day)
 # glimpse(flights_relocate)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-glimpse-flights_time_new, eval=FALSE---------------------------
 # flights_time_new <- flights |>
 #   select(dep_time, arr_time) |>
 #   rename(departure_time = dep_time, arrival_time = arr_time)
 # glimpse(flights_time_new)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-demo-code-v2, eval=FALSE---------------------------------------
 # named_dests |> top_n(n = 10, wt = num_flights)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----wrangling-demo-code-v2-dup1, eval=FALSE----------------------------------
 # named_dests |>
 #   top_n(n = 10, wt = num_flights) |>
 #   arrange(desc(num_flights))
@@ -364,7 +364,7 @@ named_dests
 
 
 
-## ----echo=FALSE, results="asis"-----------------------------------------------
+## ----wrangling-conditional-text-v2, echo=FALSE, results="asis"----------------
 if(!is_latex_output()) 
   cat("In the online [Appendix C](https://moderndive.com/v2/appendixc.html), we provide a page of data wrangling 'tips and tricks' consisting of the most common data wrangling questions we've encountered in student projects (shout out to [Dr. Jenny Smetzer](https://www.scsparkscience.org/fellow/jennifer-smetzer/) for her work setting this up!):
 

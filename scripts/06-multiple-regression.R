@@ -1,10 +1,10 @@
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-load-packages, eval=FALSE----------------------------
 # library(tidyverse)
 # library(moderndive)
 # library(ISLR2)
 
 
-## ----echo=FALSE, message=FALSE, purl=TRUE-------------------------------------
+## ----multiple-regression-load-packages-alt, echo=FALSE, message=FALSE, purl=TRUE----
 library(tidyverse)
 library(moderndive)
 library(ISLR2)
@@ -12,7 +12,7 @@ library(ISLR2)
 
 
 
-## -----------------------------------------------------------------------------
+## ----multiple-regression-create-UN_data_ch6-----------------------------------
 UN_data_ch6 <- un_member_states_2024 |>
   select(country, 
          life_expectancy_2022, 
@@ -27,25 +27,25 @@ UN_data_ch6 <- un_member_states_2024 |>
                                     "Upper middle income", "High income")))
 
 
-## -----------------------------------------------------------------------------
+## ----multiple-regression-glimpse-UN_data_ch6----------------------------------
 glimpse(UN_data_ch6)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-alt, eval=FALSE--------------------------------------
 # UN_data_ch6 |> sample_n(size = 10)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-select-vars, eval=FALSE------------------------------
 # UN_data_ch6 |>
 #   select(life_exp, fert_rate, income) |>
 #   tidy_summary()
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----multiple-regression-select-vars-sized, echo=FALSE------------------------
 UN_data_ch6 |> 
   select(life_exp, fert_rate, income) |> 
   tidy_summary() |> 
@@ -56,12 +56,12 @@ UN_data_ch6 |>
   ) 
 
 
-## -----------------------------------------------------------------------------
+## ----multiple-regression-demo-code--------------------------------------------
 UN_data_ch6 |> 
   get_correlation(formula = fert_rate ~ life_exp)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-scatter-lifeexp, eval=FALSE--------------------------
 # ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
 #   geom_point() +
 #   labs(x = "Life Expectancy", y = "Fertility Rate", color = "Income group") +
@@ -70,14 +70,14 @@ UN_data_ch6 |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-lm-fertility, eval=FALSE-----------------------------
 # one_factor_model <- lm(fert_rate ~ income, data = UN_data_ch6)
 # coef(one_factor_model)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-assign-model_int, eval=FALSE-------------------------
 # # Fit regression model and get the coefficients of the model
 # model_int <- lm(fert_rate ~ life_exp * income, data = UN_data_ch6)
 # coef(model_int)
@@ -89,7 +89,7 @@ UN_data_ch6 |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-scatter-lifeexp-colored, eval=FALSE------------------
 # ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
 #   geom_point() +
 #   labs(x = "Life expectancy", y = "Fertility rate", color = "Income group") +
@@ -98,7 +98,7 @@ UN_data_ch6 |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-lm-fertility-alt, eval=FALSE-------------------------
 # # Fit regression model:
 # model_no_int <- lm(fert_rate ~ life_exp + income, data = UN_data_ch6)
 # 
@@ -120,7 +120,7 @@ UN_data_ch6 |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-reg-points, eval=FALSE-------------------------------
 # regression_points <- get_regression_points(model_int)
 # regression_points
 
@@ -131,26 +131,26 @@ UN_data_ch6 |>
 
 
 
-## ----message=FALSE------------------------------------------------------------
+## ----multiple-regression-load-ISLR2, message=FALSE----------------------------
 library(ISLR2)
 credit_ch6 <- Credit |> as_tibble() |> 
   select(debt = Balance, credit_limit = Limit, 
          income = Income, credit_rating = Rating, age = Age)
 
 
-## -----------------------------------------------------------------------------
+## ----multiple-regression-glimpse-credit_ch6-----------------------------------
 glimpse(credit_ch6)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-alt2, eval=FALSE-------------------------------------
 # credit_ch6 |> sample_n(size = 5)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-select-vars-alt, eval=FALSE--------------------------
 # credit_ch6 |> select(debt, credit_limit, income) |> tidy_summary()
 
 
@@ -170,7 +170,7 @@ credit_ch6 |>
   )
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-scatter, eval=FALSE----------------------------------
 # ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
 #   geom_point() +
 #   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)",
@@ -186,18 +186,18 @@ credit_ch6 |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-alt2-dup1, eval=FALSE--------------------------------
 # credit_ch6 |> get_correlation(debt ~ credit_limit)
 # credit_ch6 |> get_correlation(debt ~ income)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-select-vars-alt2, eval=FALSE-------------------------
 # credit_ch6 |> select(debt, credit_limit, income) |> cor()
 
 
 
 
-## -----------------------------------------------------------------------------
+## ----multiple-regression-alt2-dup2--------------------------------------------
 credit_ch6 |> get_correlation(debt ~ 1000 * income)
 
 
@@ -211,14 +211,14 @@ credit_ch6 |> get_correlation(debt ~ 1000 * income)
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-fit-lm, eval=FALSE-----------------------------------
 # debt_model <- lm(debt ~ credit_limit + income, data = credit_ch6)
 # coef(debt_model)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-assign-simple_model, eval=FALSE----------------------
 # # Fit regression model and get the coefficients of the model
 # simple_model <- lm(debt ~ income, data = credit_ch6)
 # coef(simple_model)
@@ -230,6 +230,6 @@ credit_ch6 |> get_correlation(debt ~ 1000 * income)
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----multiple-regression-reg-points-alt, eval=FALSE---------------------------
 # get_regression_points(debt_model)
 

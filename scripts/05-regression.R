@@ -1,4 +1,4 @@
-## ----message=FALSE------------------------------------------------------------
+## ----regression-load-packages, message=FALSE----------------------------------
 library(tidyverse)
 library(moderndive)
 
@@ -7,7 +7,7 @@ library(moderndive)
 
 
 
-## -----------------------------------------------------------------------------
+## ----regression-create-UN_data_ch5--------------------------------------------
 UN_data_ch5 <- un_member_states_2024 |>
   select(iso, 
          life_exp = life_expectancy_2022, 
@@ -16,26 +16,26 @@ UN_data_ch5 <- un_member_states_2024 |>
   na.omit()
 
 
-## ----include=FALSE------------------------------------------------------------
+## ----regression-create-n_demo_ch5, include=FALSE------------------------------
 n_demo_ch5 <- nrow(UN_data_ch5)
 
 
-## -----------------------------------------------------------------------------
+## ----regression-glimpse-UN_data_ch5-------------------------------------------
 glimpse(UN_data_ch5)
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----regression-create-sample_size, echo=FALSE--------------------------------
 sample_size <- 5
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-sample-rows, eval=FALSE---------------------------------------
 # UN_data_ch5 |>
 #   slice_sample(n = 5)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-compute-mean, eval=FALSE--------------------------------------
 # UN_data_ch5 |>
 #   summarize(mean_life_exp = mean(life_exp),
 #             mean_fert_rate = mean(fert_rate),
@@ -43,7 +43,7 @@ sample_size <- 5
 #             median_fert_rate = median(fert_rate))
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----regression-compute-mean-sized, echo=FALSE--------------------------------
 UN_data_ch5 |>
   summarize(mean_life_exp = mean(life_exp), 
             mean_fert_rate = mean(fert_rate),
@@ -56,13 +56,13 @@ UN_data_ch5 |>
   )
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-select-vars, eval=FALSE---------------------------------------
 # UN_data_ch5 |>
 #   select(fert_rate, life_exp) |>
 #   tidy_summary()
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----regression-select-vars-sized, echo=FALSE---------------------------------
 UN_data_ch5 |> 
   select(fert_rate, life_exp) |> 
   tidy_summary() |> 
@@ -73,12 +73,12 @@ UN_data_ch5 |>
   )
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-alt, eval=FALSE-----------------------------------------------
 # UN_data_ch5 |>
 #   tidy_summary(columns = c(fert_rate, life_exp))
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----regression-conditional, echo=FALSE---------------------------------------
 UN_data_ch5 |> 
   tidy_summary(columns = c(fert_rate, life_exp)) |> 
   kbl() |>
@@ -88,7 +88,7 @@ UN_data_ch5 |>
   )
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----regression-create-summary_df, echo=FALSE---------------------------------
 summary_df <- UN_data_ch5 |> 
   select(fert_rate, life_exp) |> 
   tidy_summary() |> 
@@ -101,12 +101,12 @@ life_summary_df <- summary_df  |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----regression-demo-code-----------------------------------------------------
 UN_data_ch5 |> 
   get_correlation(formula = fert_rate ~ life_exp)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-summarize, eval=FALSE-----------------------------------------
 # UN_data_ch5 |>
 #   summarize(correlation = cor(fert_rate, life_exp))
 
@@ -133,7 +133,7 @@ ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-lm-fertility, eval=FALSE--------------------------------------
 # # Fit regression model:
 # demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 # # Get regression coefficients
@@ -141,7 +141,7 @@ ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-lm-fertility-alt2, eval=FALSE---------------------------------
 # # Fit regression model:
 # demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 # # Get regression coefficients:
@@ -156,7 +156,7 @@ ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-reg-points, eval=FALSE----------------------------------------
 # regression_points <- get_regression_points(demographics_model)
 # regression_points
 
@@ -169,7 +169,7 @@ ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
 
 
 
-## ----message=FALSE------------------------------------------------------------
+## ----regression-create-gapminder2022, message=FALSE---------------------------
 gapminder2022 <- un_member_states_2024 |>
   select(country, life_exp = life_expectancy_2022, continent, gdp_per_capita) |> 
   na.omit()
@@ -177,16 +177,16 @@ gapminder2022 <- un_member_states_2024 |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----regression-glimpse-gapminder2022-----------------------------------------
 glimpse(gapminder2022)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-alt2, eval=FALSE----------------------------------------------
 # gapminder2022 |> sample_n(size = 3)
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-select-vars-alt, eval=FALSE-----------------------------------
 # gapminder2022 |> select(life_exp, continent) |> tidy_summary()
 
 
@@ -205,7 +205,7 @@ gapminder2022 |>
   )
 
 
-## ----include=FALSE------------------------------------------------------------
+## ----regression-alt2-dup1, include=FALSE--------------------------------------
 # For discussion in bullet points below
 gapminder2022 |> count(continent)
 
@@ -220,7 +220,7 @@ ggplot(gapminder2022, aes(x = life_exp)) +
        title = "Histogram of distribution of worldwide life expectancies")
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-facet-hist-lifeexp, eval=FALSE--------------------------------
 # ggplot(gapminder2022, aes(x = life_exp)) +
 #   geom_histogram(binwidth = 5, color = "white") +
 #   labs(x = "Life expectancy",
@@ -238,7 +238,7 @@ ggplot(gapminder2022, aes(x = continent, y = life_exp)) +
        title = "Life expectancy by continent")
 
 
-## ----eval=TRUE, results='hide'------------------------------------------------
+## ----regression-grouped-summary, eval=TRUE, results='hide'--------------------
 life_exp_by_continent <- gapminder2022 |>
   group_by(continent) |>
   summarize(median = median(life_exp), mean = mean(life_exp))
@@ -254,7 +254,7 @@ life_exp_by_continent
 
 
 
-## -----------------------------------------------------------------------------
+## ----regression-fit-lm--------------------------------------------------------
 life_exp_model <- lm(life_exp ~ continent, data = gapminder2022)
 coef(life_exp_model)
 
@@ -263,7 +263,7 @@ coef(life_exp_model)
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-reg-points-alt, eval=FALSE------------------------------------
 # get_regression_points(life_exp_model, ID = "country")
 
 
@@ -278,33 +278,33 @@ coef(life_exp_model)
 
 
 
-## ----fig.height=1.5-----------------------------------------------------------
+## ----regression-scatter-lifeexp, fig.height=1.5-------------------------------
 ggplot(data = un_member_states_2024, 
        aes(x = hdi_2022, y = life_expectancy_2022)) +
   geom_point() +
   labs(x = "Human Development Index (HDI)", y = "Life Expectancy")
 
 
-## ----fig.height=1.5-----------------------------------------------------------
+## ----regression-scatter, fig.height=1.5---------------------------------------
 ggplot(data = un_member_states_2024, 
        aes(x = hdi_2022, y = fertility_rate_2022)) +
   geom_point() +
   labs(x = "Human Development Index (HDI)", y = "Fertility Rate")
 
 
-## -----------------------------------------------------------------------------
+## ----regression-alt2-dup2-----------------------------------------------------
 un_member_states_2024 |> 
   get_correlation(life_expectancy_2022 ~ hdi_2022, na.rm = TRUE)
 
 
-## -----------------------------------------------------------------------------
+## ----regression-alt2-dup3-----------------------------------------------------
 un_member_states_2024 |> 
   get_correlation(fertility_rate_2022 ~ hdi_2022, na.rm = TRUE)
 
 
 
 
-## ----include=FALSE------------------------------------------------------------
+## ----regression-create-four_countries, include=FALSE--------------------------
 four_countries <- c("BIH", "TCD", "IND", "SLB")
 country_lookup_table <- UN_data_ch5 |>
   filter(iso %in% four_countries) |>
@@ -327,7 +327,7 @@ solomon <- country_lookup_table |>
          fert_rate_hat = y_sol_hat)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-create-demographics_model, eval=FALSE-------------------------
 # # Fit regression model and regression points
 # demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 # regression_points <- get_regression_points(demographics_model)
@@ -338,7 +338,7 @@ solomon <- country_lookup_table |>
 #   summarize(sum_of_squared_residuals = sum(squared_residuals))
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----regression-create-demographics_model-alt, echo=FALSE---------------------
 # Fit regression model:
 demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
 
@@ -359,7 +359,7 @@ SSR
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----regression-load-packages-alt, eval=FALSE---------------------------------
 # library(broom)
 # library(janitor)
 # demographics_model |>

@@ -1,4 +1,4 @@
-## ----message=FALSE------------------------------------------------------------
+## ----tidy-load-packages, message=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
 library(readr)
@@ -9,7 +9,7 @@ library(fivethirtyeight)
 
 
 
-## ----message=FALSE, eval=FALSE------------------------------------------------
+## ----tidy-load-readr, message=FALSE, eval=FALSE-------------------------------
 # library(readr)
 # dem_score <- read_csv("https://moderndive.com/data/dem_score.csv")
 # dem_score
@@ -20,7 +20,7 @@ library(fivethirtyeight)
 
 
 
-## -----------------------------------------------------------------------------
+## ----tidy-create-drinks_smaller-----------------------------------------------
 drinks_smaller <- drinks |> 
   filter(country %in% c("USA", "China", "Italy", "Saudi Arabia")) |> 
   select(-total_litres_of_pure_alcohol) |> 
@@ -46,11 +46,11 @@ drinks_smaller
 
 
 
-## -----------------------------------------------------------------------------
+## ----tidy-v9------------------------------------------------------------------
 drinks_smaller
 
 
-## -----------------------------------------------------------------------------
+## ----tidy-pivot-longer--------------------------------------------------------
 drinks_smaller_tidy <- drinks_smaller |> 
   pivot_longer(names_to = "type", 
                values_to = "servings", 
@@ -58,21 +58,21 @@ drinks_smaller_tidy <- drinks_smaller |>
 drinks_smaller_tidy
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tidy-pivot-longer2, eval=FALSE-------------------------------------------
 # drinks_smaller |>
 #   pivot_longer(names_to = "type",
 #                values_to = "servings",
 #                cols = c(beer, spirit, wine))
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tidy-pivot-longer2-dup1, eval=FALSE--------------------------------------
 # drinks_smaller |>
 #   pivot_longer(names_to = "type",
 #                values_to = "servings",
 #                cols = beer:wine)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tidy-bar, eval=FALSE-----------------------------------------------------
 # ggplot(drinks_smaller_tidy, aes(x = country, y = servings, fill = type)) +
 #   geom_col(position = "dodge")
 
@@ -83,7 +83,7 @@ drinks_smaller_tidy
 
 
 
-## -----------------------------------------------------------------------------
+## ----tidy-create-airline_safety_sma-------------------------------------------
 airline_safety_smaller <- airline_safety |> 
   select(airline, starts_with("fatalities"))
 airline_safety_smaller
@@ -91,13 +91,13 @@ airline_safety_smaller
 
 
 
-## -----------------------------------------------------------------------------
+## ----tidy-create-guat_dem-----------------------------------------------------
 guat_dem <- dem_score |> 
   filter(country == "Guatemala")
 guat_dem
 
 
-## -----------------------------------------------------------------------------
+## ----tidy-pivot-longer2-dup2--------------------------------------------------
 guat_dem_tidy <- guat_dem |> 
   pivot_longer(names_to = "year", 
                values_to = "democracy_score", 

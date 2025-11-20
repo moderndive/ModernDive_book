@@ -1,4 +1,4 @@
-## ----message=FALSE------------------------------------------------------------
+## ----inference-for-regression-load-packages, message=FALSE--------------------
 library(tidyverse)
 library(moderndive)
 library(infer)
@@ -8,7 +8,7 @@ library(GGally)
 
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-create-UN_data_ch10-----------------------------
 UN_data_ch10 <- un_member_states_2024 |>
   select(country,
          life_exp = life_expectancy_2022, 
@@ -16,15 +16,15 @@ UN_data_ch10 <- un_member_states_2024 |>
   na.omit()
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-demo-code, eval=FALSE---------------------------
 # UN_data_ch10
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-create-n_UN_data_ch10, echo=FALSE---------------
 n_UN_data_ch10 <- nrow(UN_data_ch10)
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-select-vars, echo=FALSE-------------------------
 un_member_states_2024 |>
   select(life_exp = life_expectancy_2022, 
          fert_rate = fertility_rate_2022)|>
@@ -37,7 +37,7 @@ un_member_states_2024 |>
   )
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-lm-fertility, eval=FALSE------------------------
 # simple_model <- lm(fert_rate ~ life_exp, data = UN_data_ch10)
 # coef(simple_model)
 
@@ -53,14 +53,14 @@ ggplot(UN_data_ch10, aes(x = life_exp, y = fert_rate)) +
   geom_smooth(method = "lm", se = FALSE, linewidth = 0.5)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-filter, eval=FALSE------------------------------
 # UN_data_ch10 |>
 #   rowid_to_column() |>
 #   filter(country == "France")|>
 #   pull(rowid)
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-create-france_id, echo=FALSE--------------------
 france_id <- UN_data_ch10 |>
   rowid_to_column() |>
   filter(country == "France")|>
@@ -68,24 +68,24 @@ france_id <- UN_data_ch10 |>
 france_id
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-filter-alt, eval=FALSE--------------------------
 # UN_data_ch10 |>
 #   filter(country == "France")
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-create-france_data, echo=FALSE------------------
 france_data <- UN_data_ch10 |>
   filter(country == "France")
 france_data
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-create-actual_france, echo=FALSE----------------
 actual_france <- france_data$fert_rate[1]
 fitted_france <- lm_data$Values[1] - abs(lm_data$Values[2]) * france_data$life_exp[1]
 resid_france <- actual_france - fitted_france
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-filter-alt2, eval=FALSE-------------------------
 # simple_model |>
 #   get_regression_points() |>
 #   filter(ID == 57)
@@ -98,17 +98,17 @@ simple_model |>
   get_regression_points()
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-demo-code-v2------------------------------------
 old_faithful_2024
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-demo-code-v2-dup1, eval=FALSE-------------------
 # old_faithful_2024 |>
 #   select(duration, waiting) |>
 #   tidy_summary()
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-select-vars-alt, echo=FALSE---------------------
 old_faithful_2024 |>
   select(duration, waiting) |> 
   tidy_summary() |> 
@@ -119,7 +119,7 @@ old_faithful_2024 |>
   )
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-dynamic-text, echo=FALSE------------------------
 # This code is used for dynamic non-static in-line text output purposes
 n_old_faithful <- dim(old_faithful_2024)[1]
 
@@ -131,7 +131,7 @@ ggplot(old_faithful_2024,
   labs(x = "duration", y = "waiting")
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-fit-lm, eval=FALSE------------------------------
 # # Fit regression model:
 # model_1 <- lm(waiting ~ duration, data = old_faithful_2024)
 # 
@@ -142,7 +142,7 @@ ggplot(old_faithful_2024,
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-assign-mod_diff_means, eval=FALSE---------------
 # mod_diff_means <- lm(rating ~ genre, data = movies_sample)
 # get_regression_table(mod_diff_means)
 
@@ -157,14 +157,14 @@ get_regression_table(mod_diff_means) |>
   )
 
 
-## ----echo=-1------------------------------------------------------------------
+## ----inference-for-regression-create-spotify_for_anova, echo=-1---------------
 set.seed(6)
 spotify_for_anova <- spotify_by_genre |> 
   select(artists, track_name, popularity, track_genre) |> 
   filter(track_genre %in% c("country", "hip-hop", "rock")) 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-sample-rows, eval=FALSE-------------------------
 # spotify_for_anova |>
 #   slice_sample(n = 5)
 
@@ -185,14 +185,14 @@ ggplot(spotify_for_anova, aes(x = track_genre, y = popularity)) +
   labs(x = "Genre", y = "Popularity")
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-grouped-summary---------------------------------
 mean_popularities_by_genre <- spotify_for_anova |> 
   group_by(track_genre) |>
   summarize(mean_popularity = mean(popularity))
 mean_popularities_by_genre
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-assign-mod_anova, eval=FALSE--------------------
 # mod_anova <- lm(popularity ~ track_genre, data = spotify_for_anova)
 # get_regression_table(mod_anova)
 
@@ -207,7 +207,7 @@ get_regression_table(mod_anova) |>
   )
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-demo-code-v2-dup2-------------------------------
 aov(popularity ~ track_genre, data = spotify_for_anova) |> 
   anova()
 
@@ -216,14 +216,14 @@ aov(popularity ~ track_genre, data = spotify_for_anova) |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-demo-code-v2-dup3-------------------------------
 old_faithful_2024 |>
   slice(c(49, 51))
 
 
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-dynamic-text-alt, echo=FALSE--------------------
 # This code is used for dynamic non-static in-line text output purposes
 q = round(qt(p = (1 - (1-0.95)/2), df = 114 - 2),3)
 s <- round(sigma(model_1),3)
@@ -266,7 +266,7 @@ ggplot(data.frame(x = c(-4, 4)), aes(x = x)) +
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-reg-table, eval=FALSE---------------------------
 # get_regression_table(model_1)
 
 
@@ -274,7 +274,7 @@ ggplot(data.frame(x = c(-4, 4)), aes(x = x)) +
 
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-fit-lm-alt--------------------------------------
 # Fit regression model:
 model_1 <- lm(waiting ~ duration, data = old_faithful_2024)
 # Get regression points:
@@ -282,7 +282,7 @@ fitted_and_residuals <- get_regression_points(model_1)
 fitted_and_residuals
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-scatter, eval=FALSE-----------------------------
 # ggplot(fitted_and_residuals, aes(x = waiting_hat, y = residual)) +
 #   geom_point() +
 #   labs(x = "duration", y = "residual") +
@@ -295,12 +295,12 @@ fitted_and_residuals
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-hist, eval=FALSE--------------------------------
 # ggplot(fitted_and_residuals, aes(residual)) +
 #   geom_histogram(binwidth = 10, color = "white")
 
 
-## ----eval = FALSE-------------------------------------------------------------
+## ----inference-for-regression-plot, eval = FALSE------------------------------
 # fitted_and_residuals |>
 #   ggplot(aes(sample = residual)) +
 #   geom_qq() +
@@ -332,7 +332,7 @@ ggplot(fitted_and_residuals, aes(x = duration, y = residual)) +
 
 
 
-## ----echo=FALSE, results="asis"-----------------------------------------------
+## ----inference-for-regression-conditional-text, echo=FALSE, results="asis"----
 if(!is_latex_output()) 
   cat("An example of such a transformation is given in [Appendix A online](https://moderndive.com/v2/appendixa).")
 
@@ -341,11 +341,11 @@ if(!is_latex_output())
 
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-create-n_reps, echo=FALSE-----------------------
 n_reps <- 1000
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-bootstrap, eval=FALSE---------------------------
 # bootstrap_distn_slope <- old_faithful_2024 |>
 #   specify(formula = waiting ~ duration) |>
 #   generate(reps = 1000, type = "bootstrap") |>
@@ -359,26 +359,26 @@ n_reps <- 1000
 visualize(bootstrap_distn_slope)
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-conf-interval-----------------------------------
 percentile_ci <- bootstrap_distn_slope |> 
   get_confidence_interval(type = "percentile", level = 0.95)
 percentile_ci
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-specify-----------------------------------------
 observed_slope <- old_faithful_2024 |> 
   specify(waiting ~ duration) |> 
   calculate(stat = "slope")
 observed_slope
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-assign-se_ci------------------------------------
 se_ci <- bootstrap_distn_slope |> 
   get_ci(level = 0.95, type = "se", point_estimate = observed_slope)
 se_ci
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-null-dist, eval=FALSE---------------------------
 # null_distn_slope <- old_faithful_2024 |>
 #   specify(waiting ~ duration) |>
 #   hypothesize(null = "independence") |>
@@ -390,7 +390,7 @@ se_ci
 
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-specify-alt-------------------------------------
 # Observed slope
 b1 <- old_faithful_2024 |> 
   specify(waiting ~ duration) |>
@@ -400,7 +400,7 @@ b1
 
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-alt---------------------------------------------
 null_distn_slope |> 
   get_p_value(obs_stat = b1, direction = "both")
 
@@ -409,7 +409,7 @@ null_distn_slope |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-create-coffee_data------------------------------
 coffee_data <- coffee_quality |>
   select(aroma, 
          flavor, 
@@ -419,11 +419,11 @@ coffee_data <- coffee_quality |>
   mutate(continent_of_origin = as.factor(continent_of_origin))
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-alt2--------------------------------------------
 coffee_data
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-demo-code-v2-dup4, eval=FALSE-------------------
 # coffee_data |>
 #   tidy_summary()
 
@@ -443,7 +443,7 @@ coffee_data |>
   )
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-dynamic-text-alt2, echo=FALSE-------------------
 # This code is used for dynamic non-static in-line text output purposes
 n_coffee <- length(coffee_data$total_cup_points)
 table_coffee <- coffee_data |> tidy_summary()
@@ -454,7 +454,7 @@ flavor <- table_coffee[3,]
 
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-create-corr_table, echo=FALSE-------------------
 # This code is used for dynamic non-static in-line text output purposes
 corr_table <- coffee_data |>
   select(-continent_of_origin) |>
@@ -462,7 +462,7 @@ corr_table <- coffee_data |>
   round(digits = 2)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-fit-lm-alt2, eval=FALSE-------------------------
 # # Fit regression model:
 # mod_mult <- lm(
 #   total_cup_points ~ aroma + flavor + moisture_percentage + continent_of_origin,
@@ -478,7 +478,7 @@ corr_table <- coffee_data |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-select-vars-alt2, eval=FALSE--------------------
 # coffee_data |>
 #   select(aroma, flavor, moisture_percentage) |>
 #   tidy_summary() |>
@@ -491,13 +491,13 @@ corr_table <- coffee_data |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-demo-code-v2-dup5, eval=FALSE-------------------
 # get_regression_table(mod_mult)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-fit-lm-alt2-dup1, eval=FALSE--------------------
 # # Fit regression model:
 # mod_mult_1 <- lm(
 #   total_cup_points ~ aroma + flavor + moisture_percentage,
@@ -510,7 +510,7 @@ corr_table <- coffee_data |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-fit-lm-alt2-dup2, eval=FALSE--------------------
 # # Fit regression model:
 # mod_mult_2 <- lm(
 #   total_cup_points ~ aroma + moisture_percentage, data = coffee_data)
@@ -522,7 +522,7 @@ corr_table <- coffee_data |>
 
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-dynamic-text-alt2-dup1, echo=FALSE--------------
 # This code is used for dynamic non-static in-line text output purposes
 n_coffee <- dim(coffee_data)[1]
 s_mult <- summary(mod_mult)$sigma
@@ -537,31 +537,31 @@ lb_mult <- b1_mult - q*se_b1_mult
 ub_mult <- b1_mult + q*se_b1_mult
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-reg-table-alt, eval=FALSE-----------------------
 # get_regression_table(mod_mult, conf.level = 0.98)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-demo-code-v2-dup6, eval=FALSE-------------------
 # get_regression_table(mod_mult_1)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-alt2-dup1, eval=FALSE---------------------------
 # anova(mod_mult_2, mod_mult_1)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-demo-code-v2-dup7, eval=FALSE-------------------
 # anova(mod_mult_1, mod_mult)
 
 
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-fit-lm-alt2-dup3--------------------------------
 # Fit regression model:
 mod_mult_final <- lm(total_cup_points ~ aroma + flavor + continent_of_origin, 
                      coffee_data)
@@ -569,7 +569,7 @@ mod_mult_final <- lm(total_cup_points ~ aroma + flavor + continent_of_origin,
 fit_and_res_mult <- get_regression_points(mod_mult_final)
 
 
-## ----grid-arrange-plot-check, fig.cap="Residuals vs. fitted values plot and QQ-plot for the multiple regression model.", fig.height=ifelse(knitr::is_latex_output(), 2, 4)----
+## ----inference-for-regression-arrange, grid-arrange-plot-check, fig.cap="Residuals vs. fitted values plot and QQ-plot for the multiple regression model.", fig.height=ifelse(knitr::is_latex_output(), 2, 4)----
 g1 <- fit_and_res_mult |>
   ggplot(aes(x = total_cup_points_hat, y = residual)) +
   geom_point() +
@@ -585,7 +585,7 @@ grid.arrange(g1, g2, ncol=2)
 
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-specify-alt2------------------------------------
 observed_fit <- coffee_data |> 
   specify(
     total_cup_points ~ aroma + flavor + moisture_percentage + continent_of_origin
@@ -594,7 +594,7 @@ observed_fit <- coffee_data |>
 observed_fit
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-alt2-dup2, eval=FALSE---------------------------
 # mod_mult_table
 
 
@@ -612,7 +612,7 @@ mod_mult_table |>
   )
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-bootstrap-alt2, eval=FALSE----------------------
 # coffee_data |>
 #   specify(
 #     total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage
@@ -620,7 +620,7 @@ mod_mult_table |>
 #   generate(reps = 1000, type = "bootstrap")
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-bootstrap-alt2-dup1, echo=FALSE-----------------
 # Fix the width for the explanatory variable output
 #options(width = 150)
 if (!file.exists("rds/generated_distn_slopes.rds")) {
@@ -642,7 +642,7 @@ generated_distn_slopes
 #options(width = 80)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-bootstrap-alt2-dup2, eval=FALSE-----------------
 # boot_distribution_mlr <- coffee_quality |>
 #   specify(
 #     total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage
@@ -652,7 +652,7 @@ generated_distn_slopes
 # boot_distribution_mlr
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-alt2-dup3, echo=FALSE---------------------------
 if (!file.exists("rds/boot_distn_slopes.rds")) {
   set.seed(76)
   boot_distribution_mlr <- generated_distn_slopes |> 
@@ -667,11 +667,11 @@ if (!file.exists("rds/boot_distn_slopes.rds")) {
 boot_distribution_mlr
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-viz-dist, eval=FALSE----------------------------
 # visualize(boot_distribution_mlr)
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-viz-dist-alt, echo=FALSE------------------------
 boot_mlr_viz <- visualize(boot_distribution_mlr)
 if (!file.exists("images/boot_mlr_viz.png")) {
   ggsave(
@@ -692,7 +692,7 @@ if(is_latex_output()) {
 }
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-conf-interval-alt-------------------------------
 confidence_intervals_mlr <- boot_distribution_mlr |> 
   get_confidence_interval(
     level = 0.95,
@@ -706,7 +706,7 @@ visualize(boot_distribution_mlr) +
   shade_confidence_interval(endpoints = confidence_intervals_mlr)
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-null-dist-alt-----------------------------------
 set.seed(2024)
 null_distribution_mlr <- coffee_quality |>
   specify(total_cup_points ~ continent_of_origin + aroma + 
@@ -717,12 +717,12 @@ null_distribution_mlr <- coffee_quality |>
 null_distribution_mlr
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----inference-for-regression-viz-pvalue, eval=FALSE--------------------------
 # visualize(null_distribution_mlr) +
 #   shade_p_value(obs_stat = observed_fit, direction = "two-sided")
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----inference-for-regression-viz-pvalue-alt, echo=FALSE----------------------
 mlr_pvalue_viz <- visualize(null_distribution_mlr) +
   shade_p_value(obs_stat = observed_fit, direction = "two-sided")
 if (!file.exists("images/mlr_pvalue_viz.png")) {
@@ -744,7 +744,7 @@ if(is_latex_output()) {
 }
 
 
-## -----------------------------------------------------------------------------
+## ----inference-for-regression-alt2-dup4---------------------------------------
 null_distribution_mlr |>
   get_p_value(obs_stat = observed_fit, direction = "two-sided")
 

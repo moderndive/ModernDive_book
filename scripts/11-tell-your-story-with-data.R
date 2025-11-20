@@ -1,4 +1,4 @@
-## ----message=FALSE------------------------------------------------------------
+## ----tell-your-story-with-data-load-packages, message=FALSE-------------------
 library(tidyverse)
 library(moderndive)
 library(fivethirtyeight)
@@ -7,13 +7,13 @@ library(infer)
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-glimpse-house_prices, eval=FALSE---------------
 # View(house_prices)
 # glimpse(house_prices)
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-mean-and-sd, eval=FALSE------------------------
 # gain_summary <- flights |>
 #   summarize(min = min(gain, na.rm = TRUE),
 #             q1 = quantile(gain, 0.25, na.rm = TRUE),
@@ -25,13 +25,13 @@ library(infer)
 #             missing = sum(is.na(gain)))
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-select-vars, eval=FALSE------------------------
 # house_prices |>
 #   select(price, sqft_living, condition) |>
 #   tidy_summary()
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-select-vars-sized, echo=FALSE------------------
 house_prices |> 
   select(price, sqft_living, condition) |> 
   tidy_summary() |> 
@@ -42,7 +42,7 @@ house_prices |>
   )
 
 
-## ----eval=FALSE, message=FALSE------------------------------------------------
+## ----tell-your-story-with-data-hist-price, eval=FALSE, message=FALSE----------
 # # Histogram of house price:
 # ggplot(house_prices, aes(x = price)) +
 #   geom_histogram(color = "white") +
@@ -61,12 +61,12 @@ house_prices |>
 
 
 
-## ----echo=FALSE, results="asis"-----------------------------------------------
+## ----tell-your-story-with-data-conditional-text, echo=FALSE, results="asis"----
 if(!is_latex_output()) 
   cat("If you are unfamiliar with such transformations, we highly recommend you read [Appendix A online](https://moderndive.com/v2/appendixa) on logarithmic (log) transformations.")
 
 
-## -----------------------------------------------------------------------------
+## ----tell-your-story-with-data-create-house_prices----------------------------
 house_prices <- house_prices |>
   mutate(
     log10_price = log10(price),
@@ -74,12 +74,12 @@ house_prices <- house_prices |>
   )
 
 
-## -----------------------------------------------------------------------------
+## ----tell-your-story-with-data-select-vars-alt2-------------------------------
 house_prices |> 
   select(price, log10_price, sqft_living, log10_size)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-hist-white-border, eval=FALSE------------------
 # # Before log10 transformation:
 # ggplot(house_prices, aes(x = price)) +
 #   geom_histogram(color = "white") +
@@ -93,7 +93,7 @@ house_prices |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-hist-white-border-v2, eval=FALSE---------------
 # # Before log10 transformation:
 # ggplot(house_prices, aes(x = sqft_living)) +
 #   geom_histogram(color = "white") +
@@ -106,7 +106,7 @@ house_prices |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-scatter-price, eval=FALSE----------------------
 # # Plot interaction model
 # ggplot(house_prices,
 #        aes(x = log10_size, y = log10_price, col = condition)) +
@@ -126,7 +126,7 @@ house_prices |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-facet-scatter-price, eval=FALSE----------------
 # ggplot(house_prices,
 #        aes(x = log10_size, y = log10_price, col = condition)) +
 #   geom_point(alpha = 0.4) +
@@ -137,14 +137,14 @@ house_prices |>
 #   facet_wrap(~ condition)
 
 
-## -----------------------------------------------------------------------------
+## ----tell-your-story-with-data-v16--------------------------------------------
 house_prices |> 
   count(condition)
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-lm-price, eval=FALSE---------------------------
 # price_interaction <- lm(log10_price ~ log10_size * condition, data = house_prices)
 # get_regression_table(price_interaction)
 
@@ -156,26 +156,26 @@ house_prices |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----tell-your-story-with-data-v20--------------------------------------------
 2.45 + 1 * log10(1900)
 
 
-## ----echo=FALSE, results="asis"-----------------------------------------------
+## ----tell-your-story-with-data-conditional-text-dup1, echo=FALSE, results="asis"----
 if(!is_latex_output()) 
   cat("This described in [Appendix A online](https://moderndive.com/v2/appendixa).")
 
 
-## -----------------------------------------------------------------------------
+## ----tell-your-story-with-data-v22--------------------------------------------
 10^(2.45 + 1 * log10(1900))
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-assign-price_interaction, eval=FALSE-----------
 # price_interaction <- lm(log10_price ~ log10_size * condition, data = house_prices)
 # get_regression_table(price_interaction)
 
 
 
-## -----------------------------------------------------------------------------
+## ----tell-your-story-with-data-specify----------------------------------------
 observed_fit_coefficients <- house_prices |>
   specify(
     log10_price ~ log10_size * condition
@@ -184,7 +184,7 @@ observed_fit_coefficients <- house_prices |>
 observed_fit_coefficients
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-null-dist, eval=FALSE--------------------------
 # null_distribution_housing <- house_prices |>
 #   specify(
 #     log10_price ~ log10_size * condition
@@ -194,7 +194,7 @@ observed_fit_coefficients
 #   fit()
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-null-dist-sized, echo=FALSE--------------------
 if (!file.exists("rds/null_distribution_housing.rds")) {
   set.seed(2024)
   null_distribution_housing <- house_prices |>
@@ -211,13 +211,13 @@ if (!file.exists("rds/null_distribution_housing.rds")) {
 }
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-viz-pvalue, eval=FALSE-------------------------
 # visualize(null_distribution_housing) +
 #   shade_p_value(obs_stat = observed_fit_coefficients,
 #                 direction = "two-sided")
 
 
-## ----echo=FALSE, message=FALSE------------------------------------------------
+## ----tell-your-story-with-data-viz-pvalue-alt, echo=FALSE, message=FALSE------
 null_housing_shaded <- visualize(null_distribution_housing) +
   shade_p_value(obs_stat = observed_fit_coefficients, direction = "two-sided")
 if (!file.exists("images/null_housing_shaded.png")) {
@@ -231,17 +231,17 @@ if (!file.exists("images/null_housing_shaded.png")) {
 }
 
 
-## ----echo=FALSE, out.width="90%"----------------------------------------------
+## ----tell-your-story-with-data-show-null-housing-shaded, echo=FALSE, out.width="90%"----
 if(is_latex_output())
   knitr::include_graphics("images/null_housing_shaded.png")
 
 
-## ----echo=FALSE, fig.height=12------------------------------------------------
+## ----tell-your-story-with-data-conditional, echo=FALSE, fig.height=12---------
 if(is_html_output())
   null_housing_shaded
 
 
-## -----------------------------------------------------------------------------
+## ----tell-your-story-with-data-v31--------------------------------------------
 null_distribution_housing |>
   get_p_value(obs_stat = observed_fit_coefficients, direction = "two-sided")
 
@@ -250,11 +250,11 @@ null_distribution_housing |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----tell-your-story-with-data-glimpse-US_births_1994_20----------------------
 glimpse(US_births_1994_2003)
 
 
-## -----------------------------------------------------------------------------
+## ----tell-your-story-with-data-create-US_births_1999--------------------------
 US_births_1999 <- US_births_1994_2003 |>
   filter(year == 1999)
 
@@ -267,7 +267,7 @@ ggplot(US_births_1999, aes(x = date, y = births)) +
        title = "US Births in 1999")
 
 
-## -----------------------------------------------------------------------------
+## ----tell-your-story-with-data-arrange-desc-----------------------------------
 US_births_1999 |> 
   arrange(desc(births))
 
@@ -280,7 +280,7 @@ US_births_1999 |>
 
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----tell-your-story-with-data-create-package_versions, echo=FALSE------------
 package_versions <- sessioninfo::package_info(c(needed_CRAN_pkgs)) |> 
   as_tibble() |> 
   filter(attached == TRUE | package %in% c("bookdown")) |> 
@@ -288,7 +288,7 @@ package_versions <- sessioninfo::package_info(c(needed_CRAN_pkgs)) |>
 readr::write_rds(package_versions, "rds/package_versions.rds")
 
 
-## ----echo=FALSE, results='asis'-----------------------------------------------
+## ----tell-your-story-with-data-conditional-text-v2, echo=FALSE, results='asis'----
 if(!is_latex_output()){
   cat("# (APPENDIX) Appendix {-}")
 } else {
