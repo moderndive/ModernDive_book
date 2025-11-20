@@ -1,4 +1,4 @@
-## ----message=FALSE------------------------------------------------------------
+## ----visualization-load-packages, message=FALSE-------------------------------
 library(nycflights23)
 library(ggplot2)
 library(moderndive)
@@ -21,12 +21,12 @@ library(tibble)
 
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----visualization-filter-envoy, echo=FALSE-----------------------------------
 envoy_flights <- flights |> 
   filter(carrier == "MQ")
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-scatter-delays, eval=FALSE---------------------------------
 # ggplot(data = envoy_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
 #   geom_point()
 
@@ -88,22 +88,22 @@ ggplot(data = weather, mapping = aes(x = wind_speed)) +
   geom_histogram()
 
 
-## ----weather-histogram-2, message=FALSE, fig.cap="Histogram of hourly wind speeds at three NYC airports with white borders.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----visualization-hist-white-border, message=FALSE, fig.cap="Histogram of hourly wind speeds at three NYC airports with white borders.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(data = weather, mapping = aes(x = wind_speed)) +
   geom_histogram(color = "white")
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-hist-wind, eval=FALSE--------------------------------------
 # ggplot(data = weather, mapping = aes(x = wind_speed)) +
 #   geom_histogram(color = "white", fill = "steelblue")
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-hist-white-border-v2, eval=FALSE---------------------------
 # ggplot(data = weather, mapping = aes(x = wind_speed)) +
 #   geom_histogram(bins = 20, color = "white")
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-hist-white-border-v2-dup1, eval=FALSE----------------------
 # ggplot(data = weather, mapping = aes(x = wind_speed)) +
 #   geom_histogram(binwidth = 5, color = "white")
 
@@ -114,7 +114,7 @@ ggplot(data = weather, mapping = aes(x = wind_speed)) +
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-facet-hist-wind, eval=FALSE--------------------------------
 # ggplot(data = weather, mapping = aes(x = wind_speed)) +
 #   geom_histogram(binwidth = 5, color = "white") +
 #   facet_wrap(~ month)
@@ -122,7 +122,7 @@ ggplot(data = weather, mapping = aes(x = wind_speed)) +
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-facet-with-nrow, eval=FALSE--------------------------------
 # ggplot(data = weather, mapping = aes(x = wind_speed)) +
 #   geom_histogram(binwidth = 5, color = "white") +
 #   facet_wrap(~ month, nrow = 4)
@@ -158,7 +158,7 @@ ggplot(data = weather, mapping = aes(x = factor(month), y = wind_speed)) +
 
 
 
-## -----------------------------------------------------------------------------
+## ----visualization-create-fruits----------------------------------------------
 fruits <- tibble(fruit = c("apple", "apple", "orange", "apple", "orange"))
 fruits_counted <- tibble(
   fruit = c("apple", "orange"),
@@ -174,7 +174,7 @@ ggplot(data = fruits, mapping = aes(x = fruit)) +
   geom_bar()
 
 
-## ----geomcol, fig.cap="Barplot when counts are pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.3, 4)----
+## ----visualization-bar, geomcol, fig.cap="Barplot when counts are pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.3, 4)----
 ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
@@ -196,38 +196,38 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-bar-simple, eval=FALSE-------------------------------------
 # ggplot(data = flights, mapping = aes(x = carrier)) +
 #   geom_bar()
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-bar-filled, eval=FALSE-------------------------------------
 # ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
 #   geom_bar()
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-bar-simple-v2, eval=FALSE----------------------------------
 # ggplot(data = flights, mapping = aes(x = carrier, color = origin)) +
 #   geom_bar()
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-bar-filled-v2, eval=FALSE----------------------------------
 # ggplot(data = flights, mapping = aes(x = carrier), fill = origin) +
 #   geom_bar()
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-bar-filled-v2-dup1, eval=FALSE-----------------------------
 # ggplot(data = flights, mapping = aes(x = carrier, fill = origin)) +
 #   geom_bar(position = "dodge")
 
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-facet-bar, eval=FALSE--------------------------------------
 # ggplot(data = flights, mapping = aes(x = carrier)) +
 #   geom_bar() +
 #   facet_wrap(~ origin, ncol = 1)
@@ -241,7 +241,7 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-bar-simple-v2-dup1, eval=FALSE-----------------------------
 # # Segment 1:
 # ggplot(data = flights, mapping = aes(x = carrier)) +
 #   geom_bar()
@@ -259,7 +259,7 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-load-dplyr, eval=FALSE-------------------------------------
 # library(dplyr)
 # 
 # envoy_flights <- flights |>
@@ -269,7 +269,7 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 #   geom_point()
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----visualization-filter-month1, eval=FALSE----------------------------------
 # early_january_2023_weather <- weather |>
 #   filter(origin == "EWR" & month == 1 & day <= 15)
 # 

@@ -1,4 +1,4 @@
-## ----message=FALSE------------------------------------------------------------
+## ----hypothesis-testing-load-packages, message=FALSE--------------------------
 library(tidyverse)
 library(moderndive)
 library(infer)
@@ -8,17 +8,17 @@ library(ggplot2movies)
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-alt2--------------------------------------------------
 almonds_sample_100
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-mean-and-sd-------------------------------------------
 almonds_sample_100 |>
   summarize(sample_mean = mean(weight),
             sample_sd = sd(weight))
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-mean-sd, eval=FALSE-----------------------------------
 # almonds_sample_100 |>
 #   summarize(x_bar = mean(weight),
 #             s = sd(weight),
@@ -30,13 +30,13 @@ almonds_sample_100 |>
 
 
 
-## ----eval = FALSE-------------------------------------------------------------
+## ----hypothesis-testing-demo-code, eval = FALSE-------------------------------
 # 2 * pt(q = -2.26, df = 100 - 1)
 
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-null-dist---------------------------------------------
 null_dist <- almonds_sample_100 |>
   specify(response = weight) |>
   hypothesize(null = "point", mu = 3.6) |>
@@ -44,7 +44,7 @@ null_dist <- almonds_sample_100 |>
   calculate(stat = "mean")
 
 
-## ----echo=TRUE----------------------------------------------------------------
+## ----hypothesis-testing-create-x_bar_almonds, echo=TRUE-----------------------
 x_bar_almonds <- almonds_sample_100 |>
   summarize(sample_mean = mean(weight)) |>
   select(sample_mean)
@@ -52,20 +52,20 @@ null_dist |>
   get_p_value(obs_stat = x_bar_almonds, direction = "two-sided")
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-create-p_val_almonds, echo=FALSE----------------------
 p_val_almonds <- null_dist |>
   get_p_value(obs_stat = x_bar_almonds, direction = "two-sided") 
 
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-mean-sd-v2-dup1---------------------------------------
 almonds_sample_100 |>
   summarize(lower_bound = mean(weight) - 1.98*sd(weight)/sqrt(length(weight)),
             upper_bound = mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-bootstrap, eval=FALSE---------------------------------
 # bootstrap_means <- almonds_sample_100 |>
 #   specify(response = weight) |>
 #   generate(reps = 1000, type = "bootstrap") |>
@@ -74,18 +74,18 @@ almonds_sample_100 |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-conf-interval-----------------------------------------
 bootstrap_means |> 
   get_confidence_interval(level = 0.95, type = "percentile")
 
 
 
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-v17, echo=FALSE---------------------------------------
 set.seed(2)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-create-spotify_metal_deep, eval=FALSE-----------------
 # spotify_metal_deephouse <- spotify_by_genre |>
 #   filter(track_genre %in% c("metal", "deep-house")) |>
 #   select(track_genre, artists, track_name, popularity, popular_or_not)
@@ -117,7 +117,7 @@ sampled_spotify_metal_deephouse |>
   column_spec(3, width = "1.5in")  # Adjust the column number/width as needed
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-bar, eval=FALSE---------------------------------------
 # ggplot(spotify_metal_deephouse, aes(x = track_genre, fill = popular_or_not)) +
 #   geom_bar() +
 #   labs(x = "Genre of track")
@@ -125,7 +125,7 @@ sampled_spotify_metal_deephouse |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-grouped-summary---------------------------------------
 spotify_metal_deephouse |> 
   group_by(track_genre, popular_or_not) |>
   tally() # Same as summarize(n = n())
@@ -135,7 +135,7 @@ spotify_metal_deephouse |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-select-vars, eval=FALSE-------------------------------
 # spotify_52_original |>
 #   select(-track_id) |>
 #   head(10)
@@ -156,7 +156,7 @@ spotify_52_original |>
   column_spec(3, width = "1.5in")  # Adjust the column number and width as needed
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-select-vars-alt, eval=FALSE---------------------------
 # spotify_52_shuffled |>
 #   select(-track_id) |>
 #   head(10)
@@ -181,14 +181,14 @@ spotify_52_shuffled |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-bar-filled, eval=FALSE--------------------------------
 # ggplot(spotify_52_shuffled, aes(x = track_genre, fill = popular_or_not)) +
 #   geom_bar() +
 #   labs(x = "Genre of track")
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-v26---------------------------------------------------
 spotify_52_shuffled |> 
   group_by(track_genre, popular_or_not) |> 
   tally()
@@ -203,12 +203,12 @@ spotify_52_shuffled |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-specify-----------------------------------------------
 spotify_metal_deephouse |> 
   specify(formula = popular_or_not ~ track_genre, success = "popular")
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-null-dist-sized---------------------------------------
 spotify_metal_deephouse |> 
   specify(formula = popular_or_not ~ track_genre, success = "popular") |> 
   hypothesize(null = "independence")
@@ -216,7 +216,7 @@ spotify_metal_deephouse |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-null-dist-alt2, eval=FALSE----------------------------
 # spotify_generate <- spotify_metal_deephouse |>
 #   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
 #   hypothesize(null = "independence") |>
@@ -226,7 +226,7 @@ spotify_metal_deephouse |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-null-dist-v5, eval=FALSE------------------------------
 # null_distribution <- spotify_metal_deephouse |>
 #   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
 #   hypothesize(null = "independence") |>
@@ -237,14 +237,14 @@ spotify_metal_deephouse |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-specify-alt-------------------------------------------
 obs_diff_prop <- spotify_metal_deephouse |> 
   specify(formula = popular_or_not ~ track_genre, success = "popular") |> 
   calculate(stat = "diff in props", order = c("metal", "deep-house"))
 obs_diff_prop
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-v37---------------------------------------------------
 spotify_metal_deephouse |> 
   observe(formula = popular_or_not ~ track_genre, 
           success = "popular", 
@@ -256,18 +256,18 @@ spotify_metal_deephouse |>
 visualize(null_distribution, bins = 25)
 
 
-## ----null-distribution-infer-2, fig.cap="Shaded histogram to show $p$-value."----
+## ----hypothesis-testing-null-distribution-infer-alt, fig.cap="Shaded histogram to show $p$-value."----
 visualize(null_distribution, bins = 25) + 
   shade_p_value(obs_stat = obs_diff_prop, direction = "right")
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-v38---------------------------------------------------
 null_distribution |> 
   get_p_value(obs_stat = obs_diff_prop, direction = "right")
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-null-dist-v6, eval=FALSE------------------------------
 # null_distribution <- spotify_metal_deephouse |>
 #   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
 #   hypothesize(null = "independence") |>
@@ -275,7 +275,7 @@ null_distribution |>
 #   calculate(stat = "diff in props", order = c("metal", "deep-house"))
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-null-dist-v7, eval=FALSE------------------------------
 # bootstrap_distribution <- spotify_metal_deephouse |>
 #   specify(formula = popular_or_not ~ track_genre, success = "popular") |>
 #   # Change 1 - Remove hypothesize():
@@ -287,26 +287,26 @@ null_distribution |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-assign-percentile_ci----------------------------------
 percentile_ci <- bootstrap_distribution |> 
   get_confidence_interval(level = 0.90, type = "percentile")
 percentile_ci
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-viz-dist, eval=FALSE----------------------------------
 # visualize(bootstrap_distribution) +
 #   shade_confidence_interval(endpoints = percentile_ci)
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-conf-interval-alt2, eval=FALSE------------------------
 # se_ci <- bootstrap_distribution |>
 # get_confidence_interval(level = 0.95, type = "se",
 # point_estimate = obs_diff_prop)
 # se_ci
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-viz-dist-alt, eval=FALSE------------------------------
 # visualize(bootstrap_distribution) +
 # shade_confidence_interval(endpoints = se_ci)
 
@@ -314,7 +314,7 @@ percentile_ci
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-load-packages-sized, eval=FALSE-----------------------
 # library(moderndive)
 # library(infer)
 # null_distribution_mean <- spotify_metal_deephouse |>
@@ -344,13 +344,13 @@ percentile_ci
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-v50---------------------------------------------------
 movies
 
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-v52---------------------------------------------------
 movies_sample
 
 
@@ -360,7 +360,7 @@ ggplot(data = movies_sample, aes(x = genre, y = rating)) +
   labs(y = "IMDb rating")
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-mean-sd-v2-dup2---------------------------------------
 movies_sample |> 
   group_by(genre) |> 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
@@ -369,18 +369,18 @@ movies_sample |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-specify-alt2------------------------------------------
 movies_sample |> 
   specify(formula = rating ~ genre)
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-null-dist-v9------------------------------------------
 movies_sample |> 
   specify(formula = rating ~ genre) |> 
   hypothesize(null = "independence")
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-view, eval=FALSE--------------------------------------
 # movies_sample |>
 #   specify(formula = rating ~ genre) |>
 #   hypothesize(null = "independence") |>
@@ -390,7 +390,7 @@ movies_sample |>
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-null-dist-v11, eval=FALSE-----------------------------
 # null_distribution_movies <- movies_sample |>
 #   specify(formula = rating ~ genre) |>
 #   hypothesize(null = "independence") |>
@@ -401,25 +401,25 @@ movies_sample |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-specify-v4--------------------------------------------
 obs_diff_means <- movies_sample |> 
   specify(formula = rating ~ genre) |> 
   calculate(stat = "diff in means", order = c("Action", "Romance"))
 obs_diff_means
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-viz-pvalue, eval=FALSE--------------------------------
 # visualize(null_distribution_movies, bins = 10) +
 #   shade_p_value(obs_stat = obs_diff_means, direction = "both")
 
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-v63---------------------------------------------------
 null_distribution_movies |> 
   get_p_value(obs_stat = obs_diff_means, direction = "both")
 
-## ----echo=FALSE---------------------------------------------------------------
+## ----hypothesis-testing-create-p_value_movies, echo=FALSE---------------------
 p_value_movies <- null_distribution_movies |>
   get_p_value(obs_stat = obs_diff_means, direction = "both") |>
   mutate(p_value = round(p_value, 3))
@@ -429,14 +429,14 @@ p_value_movies <- null_distribution_movies |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-mean-sd-v2-dup3---------------------------------------
 movies_sample |> 
   group_by(genre) |> 
   summarize(n = n(), mean_rating = mean(rating), std_dev = sd(rating))
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-v67---------------------------------------------------
 movies_sample |>
   t_test(formula = rating ~ genre, 
          order = c("Action", "Romance"), 
@@ -445,7 +445,7 @@ movies_sample |>
 
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-filter-alaska-----------------------------------------
 flights_sample <- flights |> 
   filter(carrier %in% c("HA", "AS"))
 
@@ -456,7 +456,7 @@ ggplot(data = flights_sample, mapping = aes(x = carrier, y = air_time)) +
   labs(x = "Carrier", y = "Air Time")
 
 
-## -----------------------------------------------------------------------------
+## ----hypothesis-testing-summary-by-carrier------------------------------------
 flights_sample |> 
   group_by(carrier, dest) |> 
   summarize(n = n(), mean_time = mean(air_time, na.rm = TRUE), .groups = "keep")

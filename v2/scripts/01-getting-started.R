@@ -1,4 +1,4 @@
-## ----eval=FALSE---------------------------------------------------------------
+## ----getting-started-load-ggplot2, eval=FALSE---------------------------------
 # library(ggplot2)
 
 
@@ -6,7 +6,7 @@
 
 
 
-## ----message=FALSE------------------------------------------------------------
+## ----getting-started-load-packages, message=FALSE-----------------------------
 library(nycflights23)
 library(dplyr)
 library(knitr)
@@ -22,7 +22,7 @@ flights
 
 
 
-## -----------------------------------------------------------------------------
+## ----getting-started-glimpse-flights------------------------------------------
 glimpse(flights)
 
 
@@ -30,16 +30,16 @@ glimpse(flights)
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----getting-started-kable-airlines, eval=FALSE-------------------------------
 # airlines
 # kable(airlines)
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----getting-started-demo-code, eval=FALSE------------------------------------
 # airlines$name
 
 
-## -----------------------------------------------------------------------------
+## ----getting-started-glimpse-airports-----------------------------------------
 glimpse(airports)
 
 
@@ -47,6 +47,6 @@ glimpse(airports)
 
 
 
-## ----eval=FALSE---------------------------------------------------------------
+## ----getting-started-demo-code-v2, eval=FALSE---------------------------------
 # ?flights
 
