@@ -52,15 +52,25 @@ jobs:
 
       # Render Quarto book
       - name: Render Quarto Book
-        run: quarto render
-
-      # Deploy to separate preview branch
-      - name: Deploy preview to quarto-preview branch 🚀
+        run: |
+          quarto render
+          
+      # Fix paths for subdirectory deployment
+      - name: Fix paths for subdirectory
+        run: |
+          # Add base path to all HTML files
+          find docs -name "*.html" -type f -exec sed -i 's|href="/|href="/quarto-preview/|g' {} \;
+          find docs -name "*.html" -type f -exec sed -i 's|src="/|src="/quarto-preview/|g' {} \;
+          find docs -name "*.html" -type f -exec sed -i 's|action="/|action="/quarto-preview/|g' {} \;
+          
+      # Deploy to gh-pages for preview
+      - name: Deploy preview to gh-pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4.6.4
         with:
-          branch: quarto-preview
+          branch: gh-pages
           folder: docs
-          clean: true
+          target-folder: quarto-preview
+          clean: false
 
       # Comment on PR with preview link
       - name: Comment Preview Link
@@ -68,26 +78,23 @@ jobs:
         if: github.event_name == 'push'
         with:
           script: |
-            const previewUrl = 'https://moderndive.github.io/ModernDive_book/';
+            const previewUrl = 'https://moderndive.github.io/ModernDive_book/quarto-preview/';
             const message = `## 📚 Quarto Book Preview Available!
             
             Your Quarto book preview has been deployed and is ready to explore:
             
             🔗 **[View Full Quarto Book Preview](${previewUrl})**
             
-            **Note:** The preview is served from the \`quarto-preview\` branch. To view it, you need to:
-            1. Go to repository Settings → Pages
-            2. Set source to \`quarto-preview\` branch
-            3. Wait a few moments for GitHub Pages to update
-            
             This preview includes:
             - ✅ Full book rendering with all R code executed
-            - ✅ All 11 chapters + appendices
+            - ✅ All 11 chapters + appendices  
             - ✅ Interactive navigation and search
             - ✅ All figures, tables, and outputs
             - ✅ Complete styling with Cosmo theme
             
+            The preview is deployed to the \`quarto-preview\` subdirectory of the gh-pages branch.
+            
             _Preview automatically updates on new commits to this branch._`;
             
-            console.log('Preview deployed to quarto-preview branch');
+            console.log('Preview deployed to:', previewUrl);
             console.log(message);
