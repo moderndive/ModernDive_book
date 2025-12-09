@@ -256,7 +256,7 @@ spotify_metal_deephouse |>
 visualize(null_distribution, bins = 25)
 
 
-## ----hypothesis-testing-null-distribution-infer-alt, fig.cap="Shaded histogram to show $p$-value."----
+## ----null-distribution-infer-2, fig.cap="Shaded histogram to show $p$-value."----
 visualize(null_distribution, bins = 25) + 
   shade_p_value(obs_stat = obs_diff_prop, direction = "right")
 
