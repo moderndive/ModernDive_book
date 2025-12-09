@@ -245,7 +245,7 @@ boot_means <- bootstrap_samples_35 |>
 boot_means
 
 
-## ----confidence-intervals-hist-white-border, fig.cap="Distribution of 35 sample means from 35 bootstrap samples."----
+## ----resampling-35, fig.cap="Distribution of 35 sample means from 35 bootstrap samples."----
 ggplot(boot_means, aes(x = mean_weight)) +
   geom_histogram(binwidth = 0.01, color = "white") +
   labs(x = "sample mean weight in grams")

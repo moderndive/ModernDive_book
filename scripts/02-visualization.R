@@ -88,7 +88,7 @@ ggplot(data = weather, mapping = aes(x = wind_speed)) +
   geom_histogram()
 
 
-## ----visualization-hist-white-border, message=FALSE, fig.cap="Histogram of hourly wind speeds at three NYC airports with white borders.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----weather-histogram-2, message=FALSE, fig.cap="Histogram of hourly wind speeds at three NYC airports with white borders.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(data = weather, mapping = aes(x = wind_speed)) +
   geom_histogram(color = "white")
 
@@ -174,7 +174,7 @@ ggplot(data = fruits, mapping = aes(x = fruit)) +
   geom_bar()
 
 
-## ----visualization-bar, geomcol, fig.cap="Barplot when counts are pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.3, 4)----
+## ----geomcol, fig.cap="Barplot when counts are pre-counted.", fig.height=ifelse(knitr::is_latex_output(), 1.3, 4)----
 ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
