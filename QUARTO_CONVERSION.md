@@ -7,7 +7,9 @@ The v2 bookdown project has been successfully converted to Quarto. Here's what w
 ### Files Converted
 - All 20 `.Rmd` files have been renamed to `.qmd` files
 - `_quarto.yml` configuration file created to replace `_bookdown.yml` and `_output.yml`
+- Old bookdown configs renamed to `_bookdown.yml.bak` and `_output.yml.bak` for reference
 - `purl.R` script updated to reference `.qmd` files instead of `.Rmd`
+- `_build.sh` script updated to use `quarto render` instead of bookdown
 - `index.qmd` updated to remove bookdown-specific YAML and use Quarto conventions
 
 ### Configuration Changes
@@ -40,6 +42,11 @@ To build the book locally:
 quarto render
 ```
 
+Or use the provided build script:
+```bash
+./_build.sh
+```
+
 The output will be in the `docs/` directory as configured.
 
 ## Testing
@@ -57,3 +64,5 @@ All 20 chapters are properly recognized and configured.
 2. Test the full build with all packages installed
 3. Verify the rendered output matches the original bookdown version
 4. Update deployment workflow to use the Quarto workflow for the v2 branch
+5. Consider converting cross-references to native Quarto syntax (optional, for better performance)
+
