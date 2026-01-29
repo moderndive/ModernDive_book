@@ -1,0 +1,58 @@
+on:
+  push:
+    branches: [copilot/convert-v2-bookdown-to-quarto]
+  pull_request:
+    branches: [copilot/convert-v2-bookdown-to-quarto]
+  workflow_dispatch:
+
+name: quarto
+
+jobs:
+  quarto:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # Checkout repository
+      - uses: actions/checkout@v4
+
+      # Setup Quarto
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.4.551
+
+      # Setup R environment
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      # Install system libraries for the V8 R package
+      - name: Install system libraries for V8
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libv8-dev || sudo apt-get install -y libnode-dev
+          sudo apt-get install -y libicu-dev
+
+      # Setup renv for R package management
+      - uses: r-lib/actions/setup-renv@v2
+
+      # Install any additional R packages needed
+      - name: Install R Packages
+        run: |
+          R -e 'if (!require("knitr")) install.packages("knitr")'
+          R -e 'if (!require("here")) install.packages("here")'
+
+      # Render Quarto book
+      - name: Render Quarto Book
+        run: |
+          quarto render
+
+      # Deploy to GitHub Pages
+      - name: Deploy to GitHub pages 🚀
+        if: github.event_name != 'pull_request'
+        uses: JamesIves/github-pages-deploy-action@v4.6.4
+        with:
+          branch: quarto-preview
+          folder: docs
+          clean: false
