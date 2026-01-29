@@ -2,9 +2,9 @@ include_image <- function(path,
                           html_opts = "width=45%",
                           latex_opts = html_opts,
                           alt_text = "") {
-  if (is_html_output()) {
+  if (knitr::is_html_output()) {
     glue::glue("![{alt_text}]({path}){{ {html_opts} }}")
-  } else if (is_latex_output()) {
+  } else if (knitr::is_latex_output()) {
     glue::glue("![{alt_text}]({path}){{ {latex_opts} }}")
   }
 }
@@ -15,7 +15,7 @@ image_link <- function(path,
                        latex_opts = "width=0.2\\textwidth",
                        alt_text = "",
                        centering = TRUE) {
-  if (is_html_output()) {
+  if (knitr::is_html_output()) {
     if (centering) {
       glue::glue(
         '<center><a target="_blank" class="page-link" href="{link}"><img src="{path}" style="{html_opts}"/></a></center>'
@@ -26,7 +26,7 @@ image_link <- function(path,
       )
     }
   }
-  else if (is_latex_output()) {
+  else if (knitr::is_latex_output()) {
     if (centering) {
       glue::glue("\\begin{{center}}
         \\href{{{link}}}{{\\includegraphics[{latex_opts}]{{{path}}}}}
