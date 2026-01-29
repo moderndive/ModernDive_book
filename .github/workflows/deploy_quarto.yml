@@ -1,0 +1,99 @@
+on:
+  push:
+    branches: [copilot/convert-v2-bookdown-to-quarto-again]
+  workflow_dispatch:
+
+name: quarto-render
+
+jobs:
+  quarto:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: quarto-${{ github.event_name != 'pull_request' || github.run_id }}
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: write
+    steps:
+      # Checkout repository
+      - uses: actions/checkout@v4
+
+      # Setup Quarto
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.5.57
+
+      # Setup R environment with RSPM enabled
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      # Install system libraries for the V8 R package
+      - name: Install system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libv8-dev || sudo apt-get install -y libnode-dev
+          sudo apt-get install -y libicu-dev libcurl4-openssl-dev
+
+      # Install R packages (without renv since it's disabled)
+      - name: Install R packages
+        run: |
+          R -e '
+            needed_pkgs <- c(
+              "dygraphs", "fivethirtyeight", "gapminder", "ggplot2movies", "infer", 
+              "ISLR2", "janitor", "knitr", "moderndive", 
+              "nycflights23", "scales", "tidyverse", "broom",
+              "gridExtra", "GGally",
+              "devtools", "ggrepel", "here", "kableExtra", "mvtnorm", "patchwork", 
+              "remotes", "rmarkdown", "sessioninfo", "viridis", "webshot", "glue"
+            )
+            new_pkgs <- needed_pkgs[!(needed_pkgs %in% installed.packages()[,"Package"])]
+            if (length(new_pkgs)) {
+              install.packages(new_pkgs, repos = "https://cloud.r-project.org")
+            }
+          '
+
+      # Ensure docs directory exists
+      - name: Ensure docs directory exists
+        run: mkdir -p docs
+
+      # Cache Quarto freeze results
+      - name: Cache Quarto freeze
+        uses: actions/cache@v4
+        with:
+          path: _freeze
+          key: quarto-${{ hashFiles('**/*.qmd') }}
+          restore-keys: quarto-
+
+      # Render the Quarto book
+      - name: Render Quarto book
+        run: |
+          quarto render
+
+      # Copy static files to docs
+      - name: Copy static files
+        run: |
+          cp -r images docs/ || true
+          cp -r data docs/ || true
+          cp labs.html docs/ || true
+          cp regression-plane.html docs/ || true
+          cp regression-plane-ISLR2.html docs/ || true
+          cp -r previous_versions docs/ || true
+          cp images/logos/wide_format.png docs/ || true
+          cp _redirects docs/ || true
+
+      # Upload artifact of the rendered book
+      - name: Upload rendered book
+        uses: actions/upload-artifact@v4
+        with:
+          name: moderndive-book
+          path: docs/
+
+      # Deploy to quarto-pages branch
+      - name: Deploy to quarto-pages branch 🚀
+        if: github.event_name != 'pull_request'
+        uses: JamesIves/github-pages-deploy-action@v4.6.4
+        with:
+          branch: quarto-pages
+          folder: docs
+          clean: true

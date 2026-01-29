@@ -1,1 +1,2 @@
-source("renv/activate.R")
+# renv disabled for Quarto rendering
+# source("renv/activate.R")
