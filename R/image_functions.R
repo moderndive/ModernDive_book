@@ -1,3 +1,28 @@
+# Cross-chapter constants. In bookdown these were defined once in index.Rmd
+# and shared via the merged knit session; in Quarto each chapter is its own
+# R session, so they're defined here and sourced by every chapter.
+version <- "2.0.0"
+date <- "December 4, 2024"
+latest_release_version <- "2.0.0"
+latest_release_date <- "March 20, 2025"
+dev_version <- FALSE
+
+needed_CRAN_pkgs <- c(
+  "dygraphs", "fivethirtyeight", "gapminder", "ggplot2movies", "infer",
+  "ISLR2", "janitor", "knitr", "moderndive", "nycflights23", "scales",
+  "tidyverse", "broom", "bookdown", "gridExtra", "GGally",
+  "devtools", "ggrepel", "here", "kableExtra", "mvtnorm", "patchwork",
+  "remotes", "rmarkdown", "sessioninfo", "viridis", "webshot"
+)
+
+generate_r_file_link <- function(file) {
+  if (is_html_output()) {
+    cat(glue::glue("An R script file of all R code used in this chapter is available [here](scripts/{file})."))
+  } else if (is_latex_output()) {
+    cat(glue::glue("An R script file of all R code used in this chapter is available at <https://www.moderndive.com/v2/scripts/{file}>."))
+  }
+}
+
 include_image <- function(path,
                           html_opts = "width=45%",
                           latex_opts = html_opts,
