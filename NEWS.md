@@ -1,16 +1,48 @@
-# ModernDive 2.1.0.9000
+# ModernDive 2.1.0
 
-* Added names to all chunks with the help of GitHub Copilot
-* Refactored YAML configuration: moved format-specific options from `index.Rmd` to `_output.yml` for better organization and maintainability. PDF-specific options (document class, fonts, LaTeX settings) are now in the `pdf_book` section, and HTML-specific options (favicons, social media metadata) are now in the `bs4_book` section. This follows bookdown best practices and makes it easier to maintain format-specific settings.
-* Updated Posit cheatsheet links and screenshots to latest versions from https://rstudio.github.io/cheatsheets/
-* Added Learning Check solutions to the Appendix online
-* Updated LC10.7
-* Deleted the `echo=FALSE` that was hiding the Chapter 11 Needed Packages
-* Fixed a typo flagged by @Bmmju regarding 142 countries in Subsection 5.2.1 that was hard-coded (shame!). It was changed to the correct value of 188.
-* Fixed another hard-coded typo flagged by @segre-ecophysiology-lab
- on the number of airlines in the Chapter 3 Learning Checks (fixed to 14 instead of 16).
+This release ports the entire book from `bookdown` to **Quarto** and layers on a set of pedagogy and accessibility upgrades. The bookdown source remains canonical on the `v2` branch; the Quarto build is published to the `v2-publish` branch and currently lives on the `v2-quarto-html` branch. Existing reader URLs are preserved.
+
+## Migration: bookdown → Quarto
+
+* All chapter source files renamed `.Rmd → .qmd`. `_bookdown.yml` and `_output.yml` replaced with a single `_quarto.yml`. PDF/Krantz support is intentionally deferred — this release is HTML-only.
+* All bookdown cross-reference syntax (`\@ref(fig:x)`, `\@ref(tab:x)`, section refs) converted to Quarto's `@fig-x` / `@tbl-x` / `@sec-x`. Chunk labels renamed accordingly.
+* `{block, type="learncheck"}` paired blocks merged into single `:::{.learncheck}` fenced divs (one cohesive callout per Learning Check).
+* CI workflow now uses `quarto-actions` and caches `.quarto/_freeze` for fast incremental builds.
+* Cross-chapter R state (`version`, `dev_version`, `needed_CRAN_pkgs`, helper functions) moved to `R/image_functions.R`, sourced by every chapter's auto-prepended `setup-init` chunk (Quarto runs each chapter in its own R session).
+
+## New reader-facing features
+
+* **Learning objectives** at the top of each of the 11 main chapters — Bloom-style "by the end of this chapter, you'll be able to…" lists.
+* **"Common mistake" callouts** at predictable trouble spots: `aes()` vs setting (Ch 2), the `na.rm = TRUE` reflex (Ch 3), correlation ≠ causation (Ch 5), the three distributions students confuse (Ch 7), the "95% probability the parameter is in this interval" misinterpretation (Ch 8), and the p-value as P(H₀ true) trap (Ch 9).
+* **Quick check quizzes** — three multiple-choice questions per chapter with collapsible answers, placed right before each Conclusion.
+* **Per-chapter cheatsheets** — compact reference tables of the verbs/functions introduced in each chapter, in a dedicated callout.
+* **Glossary appendix** — alphabetized definitions of ~25 stats / data-science terms (sampling distribution, p-value, LINE conditions, …), each linking back to the chapter that develops the concept.
+* **WebR-runnable code cells** — pilot in Chapters 2, 3, 4, and Appendix B. Click *Run Code* to execute R in your browser without installing anything; edit and re-run to experiment. Cells live inside collapsible "Try it interactively" callouts so the WebR runtime only loads when a reader actively expands one.
+* **Dark mode + lightbox** — sun/moon toggle in the navbar; click any figure to enlarge in a modal. Custom `.learncheck` / `.announcement` / `.review` styles have dark-aware variants.
+* **Hyperlinked code** — function names in code blocks now link to their package documentation (Quarto's `code-link: true`).
+
+## Accessibility
+
+* All 150 figure chunks across the book now carry dedicated `fig.alt` attributes describing each figure's visual content for screen-reader users — distinct from (and richer than) the human-readable caption.
+
+## Deploy
+
+* `_quarto.yml` `repo-actions: [edit, source, issue]` enables per-page edit/source/issue links in the navbar.
+* `R/post-render-cleanup.sh` post-render hook keeps the working tree tidy of macOS Cocoa render artifacts.
+* `_tools/convert_bookdown.pl` and `_tools/fix-chapter-refs.pl` preserved as the migration tooling for future reference.
+
+## Bug fixes (rolled in from the 2.1.0.9000 dev cycle)
+
+* Added names to all chunks with the help of GitHub Copilot.
+* Updated Posit cheatsheet links and screenshots to latest versions from <https://rstudio.github.io/cheatsheets/>.
+* Added Learning Check solutions to the Appendix online (now also collapsibly inline in some chapters).
+* Updated LC10.7.
+* Deleted the `echo=FALSE` that was hiding the Chapter 11 Needed Packages.
+* Fixed a typo flagged by @Bmmju regarding 142 countries in Subsection 5.2.1 that was hard-coded — corrected to 188.
+* Fixed another hard-coded typo flagged by @segre-ecophysiology-lab on the number of airlines in the Chapter 3 Learning Checks (fixed to 14 instead of 16).
 * Fixed the typo of "95%" instead of "90%" in the interpretation of Subsection 9.4.2 flagged by @omian.
-* Added in `GGally` to the "Versions of R packages used" in the Preface since it wasn't included prior to publication of the Second Edition.
+* Added `GGally` to the "Versions of R packages used" in the Preface (missing prior to publication of the Second Edition).
+* Replaced bookdown references in the Preface's "About this book" section with Quarto.
 
 ***
 
