@@ -9,6 +9,14 @@ set -euo pipefail
 OUT="${QUARTO_PROJECT_OUTPUT_DIR:-docs}"
 find "$OUT" -depth -type d -name "* 2" -empty -delete
 
+# Same Cocoa-rename artifacts can appear inside the freeze cache too. Sweep
+# both empty dirs and 0-byte / duplicate-suffix files so they don't get
+# committed alongside the cache.
+if [ -d .quarto/_freeze ]; then
+  find .quarto/_freeze -depth -type d -name "* 2" -empty -delete
+  find .quarto/_freeze -type f \( -name "* 2.png" -o -name "* 2.svg" -o -name "* 2.json" \) -delete
+fi
+
 # Strip a trailing bare /.quarto/ line if present (Quarto re-adds this on
 # every render, undoing our gitignore tuning that keeps _freeze tracked).
 if [ -f .gitignore ] && grep -qE '^/\.quarto/$' .gitignore; then
