@@ -14,7 +14,7 @@ This release ports the entire book from `bookdown` to **Quarto** and layers on a
 
 * **Learning objectives** at the top of each of the 11 main chapters — Bloom-style "by the end of this chapter, you'll be able to…" lists.
 * **"Common mistake" callouts** at predictable trouble spots: `aes()` vs setting (Ch 2), the `na.rm = TRUE` reflex (Ch 3), correlation ≠ causation (Ch 5), the three distributions students confuse (Ch 7), the "95% probability the parameter is in this interval" misinterpretation (Ch 8), and the p-value as P(H₀ true) trap (Ch 9).
-* **Quick check quizzes** — three multiple-choice questions per chapter with collapsible answers, placed right before each Conclusion.
+* **Quick check quizzes** — **ten** multiple-choice questions per chapter with collapsible answers, placed right before each Conclusion. Wrong-answer distractors deliberately reflect common student misconceptions (e.g., `aes(constant)` in Ch 2; `==` vs `=` in Ch 3; "95% probability the parameter is in this CI" in Ch 8; the multiple-testing problem in Ch 9), and each answer block briefly explains why each tempting wrong option is wrong.
 * **Per-chapter cheatsheets** — compact reference tables of the verbs/functions introduced in each chapter, in a dedicated callout.
 * **Glossary appendix** — alphabetized definitions of ~25 stats / data-science terms (sampling distribution, p-value, LINE conditions, …), each linking back to the chapter that develops the concept.
 * **WebR-runnable code cells** — pilot in Chapters 2, 3, 4, and Appendix B. Click *Run Code* to execute R in your browser without installing anything; edit and re-run to experiment. Cells live inside collapsible "Try it interactively" callouts so the WebR runtime only loads when a reader actively expands one.
@@ -43,6 +43,8 @@ This release ports the entire book from `bookdown` to **Quarto** and layers on a
 * Fixed the typo of "95%" instead of "90%" in the interpretation of Subsection 9.4.2 flagged by @omian.
 * Added `GGally` to the "Versions of R packages used" in the Preface (missing prior to publication of the Second Edition).
 * Replaced bookdown references in the Preface's "About this book" section with Quarto.
+* Fixed code formatting in Tables 2.4 and 3.x (the chapter-end summary tables): markdown backticks in CSV-loaded cells were rendering as literal characters instead of inline code; cells now pre-process backticks into `<code>` tags so verbs like `geom_point()` and `filter()` render correctly (and the new `code-link` setting hyperlinks them to package docs).
+* Fixed cheatsheet pipe rows (`|>`) in Chapters 3, 10, 11 that were rendering as literal `\|>` due to markdown table-cell escaping inside backticks.
 
 ***
 
