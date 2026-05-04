@@ -20,6 +20,21 @@ This release ports the entire book from `bookdown` to **Quarto** and layers on a
 * **WebR-runnable code cells** — pilot in Chapters 2, 3, 4, and Appendix B. Click *Run Code* to execute R in your browser without installing anything; edit and re-run to experiment. Cells live inside collapsible "Try it interactively" callouts so the WebR runtime only loads when a reader actively expands one.
 * **Dark mode + lightbox** — sun/moon toggle in the navbar; click any figure to enlarge in a modal. Custom `.learncheck` / `.announcement` / `.review` styles have dark-aware variants.
 * **Hyperlinked code** — function names in code blocks now link to their package documentation (Quarto's `code-link: true`).
+* **New "Random sampling vs. random assignment" subsection** at the end of Chapter 7, with a 2×2 summary table mapping the four study-design quadrants (random sample / random assignment, with/without each) to what kind of conclusion each design supports — and explicitly placing this book's example datasets within that grid.
+
+## End-of-chapter exercises and instructor solutions
+
+* **Roughly 320 new end-of-chapter exercises** placed between *Quick checks* and *Conclusion* in every numbered chapter — ~30–35 per chapter for the substantive chapters (2–10), and smaller capstone sets for chapters 1 and 11. Each exercise carries a difficulty marker (★ warm-up, ★★ standard, ★★★ critical thinking).
+* **Five new exercise datasets**, scaffolded gradually so packages and concepts accumulate naturally:
+    + `olympic_athletes` / `medal_table` / `editions` from the [`olympicAthletes`](https://github.com/moderndive/olympicAthletes) package — introduced in chapter 1, used throughout chapters 2, 3, 5, 8, 9, 10, 11.
+    + `episodes` from the [`steves`](https://github.com/ismayc/steves) package — Rick Steves' Europe (2000–2025); introduced in chapter 3.
+    + `bob_ross` from `fivethirtyeight` (already CRAN) — used as the chapter 4 *Tidy Data* pilot dataset and revisited in chapters 8 and 9.
+    + `planets` and `stars` from the [`exoplanets`](https://github.com/moderndive/exoplanets) package — introduced in chapter 6 and reused in 7, 10, 11.
+    + `volcanoes` / `eruptions` / `events` from the [`volcanoes`](https://github.com/moderndive/volcanoes) package — introduced in chapter 7 and reused in 8, 9, 11.
+* **Inline WebR sandboxes** beneath each code-needing exercise — same `{webr-r}` mechanism as the chapter examples — with reasoning-only prompts left as plain text so the *Run Code* button only appears where it makes sense.
+* **Solutions are instructor-only** and *not* deployed alongside the public book. Per-chapter solution content lives in `exercise-solutions/NN_ex.qmd` (mirroring the `lc-answers/` pattern) and is assembled into a self-contained HTML by a separate Quarto project at `instructor-solutions/`. Each chapter's solutions section opens with a **section coverage** table mapping book sections to exercise numbers, and each entry shows a foldable *show question* callout above an always-visible **Solution** with a plain-text section reference.
+* **CRAN/GitHub install toggle** in `R/setup_exercise_packages.R` — a single `from_github` flag per package. When any of the four GitHub-only packages reaches CRAN, flip its flag to `FALSE` and the next build pulls from CRAN instead. `DESCRIPTION` has matching `Imports:` and `Remotes:` entries so CI can install them either way.
+* Chapter 1 picks up a small *"Looking ahead to end-of-chapter exercises"* subsection that walks new readers through installing the first GitHub-only package (`olympicAthletes`) with `remotes::install_github()` and previews the four other datasets they'll meet.
 
 ## Accessibility
 
@@ -30,8 +45,9 @@ This release ports the entire book from `bookdown` to **Quarto** and layers on a
 * `_quarto.yml` `repo-actions: [edit, source, issue]` enables per-page edit/source/issue links in the navbar.
 * `R/post-render-cleanup.sh` post-render hook keeps the working tree tidy of macOS Cocoa render artifacts.
 * `_tools/convert_bookdown.pl` and `_tools/fix-chapter-refs.pl` preserved as the migration tooling for future reference.
+* `quarto-publish.yml` now pre-installs the four GitHub-only exercise packages with `remotes::install_github()` *before* `setup-renv@v2` runs, so `renv::restore()` finds them already present and skips them — working around resolution failures on those entries in the lockfile.
 
-## Bug fixes (rolled in from the 2.1.0.9000 dev cycle)
+## Bug fixes
 
 * Added names to all chunks with the help of GitHub Copilot.
 * Updated Posit cheatsheet links and screenshots to latest versions from <https://rstudio.github.io/cheatsheets/>.
@@ -45,6 +61,8 @@ This release ports the entire book from `bookdown` to **Quarto** and layers on a
 * Replaced bookdown references in the Preface's "About this book" section with Quarto.
 * Fixed code formatting in Tables 2.4 and 3.x (the chapter-end summary tables): markdown backticks in CSV-loaded cells were rendering as literal characters instead of inline code; cells now pre-process backticks into `<code>` tags so verbs like `geom_point()` and `filter()` render correctly (and the new `code-link` setting hyperlinks them to package docs).
 * Fixed cheatsheet pipe rows (`|>`) in Chapters 3, 10, 11 that were rendering as literal `\|>` due to markdown table-cell escaping inside backticks.
+* Normalized fenced-div opens to `::: {.learncheck}` (with a space) across all chapters and appendices. The no-space form `:::{.learncheck}` is valid Pandoc but trips Quarto's lua filter, which would render the opening fence as literal text and emit a "problem with a fenced div" warning.
+* Inserted a missing blank line between a math display (`$$ … $$`) and the immediately following `::: {.learncheck}` fence in Chapter 7; without the separator, Pandoc treated the fence as part of the preceding block and the closing `:::` would render as literal text under the Quick checks section.
 
 ***
 
