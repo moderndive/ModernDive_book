@@ -1,0 +1,206 @@
+Solutions for the end-of-chapter exercises in *Chapter 11 — Tell Your Story with Data*. These are intentionally open-ended; "solutions" are exemplar paths, not the only valid answers.
+
+::: {.callout-tip title="Section coverage at a glance" collapse="false" appearance="simple"}
+
+| Section in chapter                              | Exercises |
+|-------------------------------------------------|-----------|
+| 11.1 Case study: Seattle house prices            | EX11.6 (regression+inference synthesis) |
+| 11.2 Effective data storytelling                 | EX11.1, EX11.2, EX11.3, EX11.4, EX11.7, EX11.8, EX11.12 |
+| Concluding remarks / synthesis                   | EX11.5, EX11.9, EX11.10, EX11.11 |
+
+These prompts are by design open-ended. *Answers will vary; the rubrics and exemplars below are illustrative.*
+:::
+
+```{r 11-ex-setup, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(infer)
+library(moderndive)
+library(olympicAthletes)
+library(steves)
+library(exoplanets)
+library(volcanoes)
+library(fivethirtyeight)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX11.1 — show question"}
+**EX11.1 (★★★)** Pick a dataset, write a 3-sentence headline finding.
+:::
+
+**Solution** *(reference: Section 11.2 "Effective data storytelling")*. *Exemplar:*
+
+> Among confirmed exoplanets, host star temperature and incoming flux together explain about 70% of variation in planetary equilibrium temperature, with insolation by far the dominant factor. Earth-like predictions from this catalog are systematically biased *warm* because confirmed exoplanets are heavily over-sampled near their host stars. The catalog is therefore a strong tool for studying close-in worlds, but a poor one for inferring the prevalence of cool, distant planets.
+
+***
+
+::: {.callout-note collapse="true" title="EX11.2 — show question"}
+**EX11.2 (★★★)** Build the chart that supports the headline.
+:::
+
+**Solution** *(reference: Section 11.2 "Effective data storytelling", chart-as-communication)*. *Exemplar — for the exoplanet headline above:*
+
+```{r 11-ex-2, message=FALSE, fig.height=3}
+planets |>
+  filter(!is.na(eq_temp_k), !is.na(insolation_earth)) |>
+  ggplot(aes(x = insolation_earth, y = eq_temp_k)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", color = "darkred") +
+  scale_x_log10() +
+  geom_hline(yintercept = 255, linetype = 2, color = "steelblue") +
+  annotate("text", x = 0.05, y = 270, label = "Earth (255 K)",
+           hjust = 0, color = "steelblue") +
+  labs(title = "Confirmed exoplanets are mostly hot — Earth is a chilly outlier",
+       x = "Incoming flux (Earth = 1, log scale)",
+       y = "Equilibrium temperature (K)",
+       caption = "Source: NASA Exoplanet Archive via the exoplanets R package")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX11.3 — show question"}
+**EX11.3 (★★★)** Caption with finding + source + caveat.
+:::
+
+**Solution** *(reference: Section 11.2 "Effective data storytelling", caption craft)*. *Exemplar:*
+
+> Each dot is a confirmed exoplanet. Most cluster at temperatures *well above* Earth's, reflecting selection bias — transit and radial-velocity methods preferentially detect close-in (hot) planets. The dashed line marks Earth's equilibrium temperature; the catalog is a useful proxy for the population of *detectable* exoplanets, but **not** for all exoplanets.
+
+***
+
+::: {.callout-note collapse="true" title="EX11.4 — show question"}
+**EX11.4 (★★★)** Build the misleading version too.
+:::
+
+**Solution** *(reference: Section 11.2 "Effective data storytelling", chart honesty)*. *Exemplar:* truncating the y-axis exaggerates a tiny upward trend; using a non-log x-axis hides the dynamic range.
+
+```{r 11-ex-4, message=FALSE, fig.height=3}
+planets |>
+  filter(!is.na(eq_temp_k), !is.na(insolation_earth),
+         insolation_earth > 0.1, insolation_earth < 100) |>
+  ggplot(aes(x = insolation_earth, y = eq_temp_k)) +
+  geom_point(alpha = 0.3) +
+  ylim(200, 600) +
+  labs(title = "Misleading: linear x-axis hides 4 orders of magnitude")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX11.5 — show question"}
+**EX11.5 (★★★)** Multi-verb pipeline ending in a chart.
+:::
+
+**Solution** *(reference: Chapter 3 "Data wrangling" + Chapter 2 "Data visualization", pipeline)*. *Exemplar:*
+
+```{r 11-ex-5, message=FALSE, fig.height=3}
+olympic_athletes |>
+  filter(Season == "Summer", !is.na(Age)) |>
+  group_by(Year, Sex) |>
+  summarize(median_age = median(Age), .groups = "drop") |>
+  ggplot(aes(x = Year, y = median_age, color = Sex)) +
+  geom_line() + geom_point() +
+  labs(y = "Median age", title = "Olympic Summer athletes — median age by sex over time")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX11.6 — show question"}
+**EX11.6 (★★★)** Regression + inference synthesis.
+:::
+
+**Solution** *(reference: Chapter 5 "Basic regression" + Chapter 10 "Inference for regression")*. *Exemplar:*
+
+```{r 11-ex-6}
+swim <- olympic_athletes |>
+  filter(Sport == "Swimming", !is.na(Height), !is.na(Weight))
+m <- lm(Weight ~ Height, data = swim)
+get_regression_table(m)
+```
+
+> Among Olympic swimmers, each additional cm of height is associated with about $\hat{\beta}$ kg of weight. The 95% CI for the slope is well above zero, ruling out the null of no relationship. The relationship is strong and **practically meaningful** — a 10 cm difference predicts roughly $10\hat{\beta}$ kg.
+
+***
+
+::: {.callout-note collapse="true" title="EX11.7 — show question"}
+**EX11.7 (★★★)** Two audiences.
+:::
+
+**Solution** *(reference: Section 11.2 "Effective data storytelling", audience adaptation)*. The 7-year-old version uses big text, no jargon, and a single comparison. The peer-statistician version layers in error bars, sample sizes, and a fitted model summary.
+
+```{r 11-ex-7, message=FALSE, fig.height=3}
+# Kid version
+swim |>
+  ggplot(aes(x = Height, y = Weight)) +
+  geom_point(color = "steelblue", size = 2, alpha = 0.5) +
+  labs(title = "Taller swimmers weigh more 🏊",
+       x = "How tall (cm)", y = "How heavy (kg)") +
+  theme_minimal(base_size = 16)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX11.8 — show question"}
+**EX11.8 (★★★)** 200–300 word research note.
+:::
+
+**Solution** *(reference: Section 11.2 "Effective data storytelling", structured exposition)*. *Exemplar (excerpt):*
+
+> **Question.** How does an exoplanet's equilibrium temperature relate to its incoming stellar flux?
+>
+> **Data.** 6,278 confirmed exoplanets from NASA's Exoplanet Archive (via the `exoplanets` R package), each with merged host-star parameters. Equilibrium temperature and stellar flux are non-missing for ~3,500 of these.
+>
+> **Finding.** Equilibrium temperature is well-predicted by log-flux ($R^2 \approx 0.6$); host-star temperature adds a smaller but statistically significant contribution. The fitted model produces an Earth-like prediction (~250 K) for `insolation_earth = 1`, `star_temp_k = 5800`, in line with theoretical expectations.
+>
+> **Limitation.** The catalog is selection-biased: transit and radial-velocity methods preferentially detect close-in, large planets. Coefficients describe the *catalog*, not the *underlying population* of all exoplanets. Cooler, more distant planets are systematically under-represented, biasing the estimated typical temperature warm.
+
+***
+
+::: {.callout-note collapse="true" title="EX11.9 — show question"}
+**EX11.9 (★★★)** Reproducibility check.
+:::
+
+**Solution** *(reference: Section 11.2 "Effective data storytelling", reproducible scripts)*. Common dependencies that bite: `set.seed()` not set; non-deterministic `slice_sample()` or bootstrap calls; data loaded from a path on your laptop only; package versions that have changed APIs (e.g., `infer` between versions). Refactor by adding `set.seed()` at the top, using `here::here()` for file paths, and pinning package versions in `renv.lock`.
+
+***
+
+::: {.callout-note collapse="true" title="EX11.10 — show question"}
+**EX11.10 (★★★)** Question this dataset can't answer.
+:::
+
+**Solution** *(reference: Section 11.2 "Effective data storytelling", scope of conclusions)*. *Exemplar (volcanoes):* "Did Pinatubo's 1991 eruption cool global temperature for 2 years?" The `volcanoes` dataset doesn't include atmospheric or climate data. You'd need NOAA temperature anomalies or NASA GISS reanalysis joined to the eruption record.
+
+***
+
+::: {.callout-note collapse="true" title="EX11.11 — show question"}
+**EX11.11 (★★★)** Same concept, three datasets.
+:::
+
+**Solution** *(reference: Section 11.2 "Effective data storytelling", cross-dataset comparison)*. *Exemplar — "right-skewed distributions":*
+
+```{r 11-ex-11, message=FALSE, fig.height=3}
+library(patchwork)
+
+p1 <- ggplot(volcanoes, aes(x = elevation)) +
+  geom_histogram(bins = 30) + labs(title = "Volcanoes elevation")
+p2 <- ggplot(planets, aes(x = mass_earth)) +
+  geom_histogram(bins = 30) + scale_x_log10() +
+  labs(title = "Exoplanet mass (log)")
+p3 <- ggplot(olympic_athletes |> filter(!is.na(Weight)), aes(x = Weight)) +
+  geom_histogram(bins = 30) + labs(title = "Athlete weight")
+
+p1 + p2 + p3 + plot_layout(ncol = 3)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX11.12 — show question"}
+**EX11.12 (★★★)** The takeaway sentence.
+:::
+
+**Solution** *(reference: Section 11.2 "Effective data storytelling", clarity of message)*. *Exemplar:* "Confirmed exoplanets are mostly hot worlds clustered near their stars — a property of *detection*, not of *planet populations*."
+
+The follow-up self-check ("does my chart and analysis support exactly that, or are they hedging?") is the harder skill — it's the discipline of letting the headline lead and pruning anything that doesn't serve it.
+
+***

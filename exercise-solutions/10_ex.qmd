@@ -1,0 +1,476 @@
+Solutions for the end-of-chapter exercises in *Chapter 10 — Inference for Regression*. Datasets: `olympic_athletes` (`olympicAthletes`) and `planets` (`exoplanets`).
+
+::: {.callout-tip title="Section coverage at a glance" collapse="false" appearance="simple"}
+
+| Section in chapter                                       | Exercises |
+|----------------------------------------------------------|-----------|
+| 10.2 Theory-based inference for simple regression         | EX10.1, EX10.2, EX10.3, EX10.4 |
+| 10.3 Simulation-based inference for simple regression     | EX10.5, EX10.6, EX10.7, EX10.8, EX10.9 |
+| 10.2.4 Model fit and assumptions                          | EX10.10, EX10.11, EX10.12 |
+| 10.5 Theory-based inference for multiple regression       | EX10.13, EX10.14, EX10.15, EX10.16 |
+| 10.6 Simulation-based inference for multiple regression    | EX10.17 |
+| Practical / interpretation                                | EX10.18, EX10.19, EX10.20, EX10.21 |
+| Visualizing uncertainty                                   | EX10.22, EX10.23, EX10.24 |
+| Critical thinking / synthesis                             | EX10.25 – EX10.35 |
+
+Difficulty: ★ warm-up · ★★ standard · ★★★ critical thinking.
+:::
+
+```{r 10-ex-setup, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(infer)
+library(moderndive)
+library(broom)
+library(olympicAthletes)
+library(exoplanets)
+
+bball <- olympic_athletes |>
+  filter(Sport == "Basketball", !is.na(Height), !is.na(Weight))
+m_b <- lm(Weight ~ Height, data = bball)
+
+planets_lite <- planets |>
+  filter(!is.na(radius_earth), !is.na(mass_earth), !is.na(discovery_method)) |>
+  mutate(log_mass = log10(mass_earth), log_radius = log10(radius_earth))
+top2 <- planets_lite |> count(discovery_method, sort = TRUE) |>
+  slice_head(n = 2) |> pull(discovery_method)
+pl2 <- planets_lite |> filter(discovery_method %in% top2)
+```
+
+### Theory-based inference for simple regression
+
+::: {.callout-note collapse="true" title="EX10.1 — show question"}
+**EX10.1 (★★)** Basketball regression table.
+:::
+
+**Solution** *(reference: Section 10.2.4 "The regression table in R")*.
+
+```{r 10-ex-1}
+get_regression_table(m_b)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.2 — show question"}
+**EX10.2 (★★)** Interpret slope CI.
+:::
+
+**Solution** *(reference: Section 10.2.3 "Confidence intervals for the least-squares estimators")*. We are 95% confident that, for each additional centimeter of height, the *population* mean Weight of Olympic basketball athletes increases by between [lower] and [upper] kilograms.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.3 — show question"}
+**EX10.3 (★★★)** What does the slope's p-value test?
+:::
+
+**Solution** *(reference: Section 10.2.4 "Hypothesis test for population slope")*. **$H_0$: population slope = 0** — i.e., Height has no linear relationship with Weight in the population. Tiny p-value ⇒ reject; basketball Height *does* predict Weight.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.4 — show question"}
+**EX10.4 (★★★)** t = estimate / SE.
+:::
+
+**Solution** *(reference: Section 10.2.4 "Hypothesis test for population slope", t-statistic)*.
+
+```{r 10-ex-4}
+tab <- get_regression_table(m_b)
+tab
+tab$estimate[2] / tab$std_error[2]
+```
+
+The computed ratio matches `statistic` in the table.
+
+***
+
+### Simulation-based inference for simple regression
+
+::: {.callout-note collapse="true" title="EX10.5 — show question"}
+**EX10.5 (★★★)** Bootstrap distribution of slope.
+:::
+
+**Solution** *(reference: Section 10.3.1 "Confidence intervals for the population slope using infer")*.
+
+```{r 10-ex-5, fig.height=3}
+set.seed(76)
+slope_boot <- bball |>
+  specify(Weight ~ Height) |>
+  generate(reps = 500, type = "bootstrap") |>
+  calculate(stat = "slope")
+visualize(slope_boot)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.6 — show question"}
+**EX10.6 (★★★)** Bootstrap percentile 95% CI; compare theory.
+:::
+
+**Solution** *(reference: Section 10.3.1 "Confidence intervals for the population slope using infer", method comparison)*.
+
+```{r 10-ex-6}
+slope_boot |> get_confidence_interval(level = 0.95, type = "percentile")
+get_regression_table(m_b)
+```
+
+The bootstrap CI matches the theory-based CI very closely (large $n$, well-behaved residuals).
+
+***
+
+::: {.callout-note collapse="true" title="EX10.7 — show question"}
+**EX10.7 (★★★)** Permutation test of slope = 0.
+:::
+
+**Solution** *(reference: Section 10.3.2 "Hypothesis test for population slope using infer")*.
+
+```{r 10-ex-7}
+set.seed(76)
+null_slope <- bball |>
+  specify(Weight ~ Height) |>
+  hypothesize(null = "independence") |>
+  generate(reps = 500, type = "permute") |>
+  calculate(stat = "slope")
+obs_slope <- bball |>
+  specify(Weight ~ Height) |>
+  calculate(stat = "slope")
+get_p_value(null_slope, obs_stat = obs_slope, direction = "two-sided")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.8 — show question"}
+**EX10.8 (★★★)** Visualize null + p-value.
+:::
+
+**Solution** *(reference: Section 10.3.2 "Hypothesis test for population slope using infer")*.
+
+```{r 10-ex-8, fig.height=3}
+visualize(null_slope) +
+  shade_p_value(obs_stat = obs_slope, direction = "two-sided")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.9 — show question"}
+**EX10.9 (★★★)** Why simulation and theory agree.
+:::
+
+**Solution** *(reference: Section 10.3 "Simulation-based inference for simple linear regression")*. With $n$ in the thousands and reasonably normal residuals, both procedures converge on the same answer — the CLT applies to the sampling distribution of the slope estimator.
+
+***
+
+### Model assumptions
+
+::: {.callout-note collapse="true" title="EX10.10 — show question"}
+**EX10.10 (★★)** L.I.N.E. assumptions.
+:::
+
+**Solution** *(reference: Section 10.2.5 "Model fit and model assumptions")*. **L**inearity of the relationship, **I**ndependence of residuals, **N**ormality of residuals, **E**qual variance (homoscedasticity).
+
+***
+
+::: {.callout-note collapse="true" title="EX10.11 — show question"}
+**EX10.11 (★★★)** Diagnostic plots.
+:::
+
+**Solution** *(reference: Section 10.2.5 "Model fit and model assumptions", residual diagnostics)*. Look for systematic curvature (linearity), Q-Q deviations (normality), and trumpet shapes (equal variance). Olympic basketball is mostly clean.
+
+```{r 10-ex-11, fig.height=4}
+par(mfrow = c(2, 2)); plot(m_b); par(mfrow = c(1, 1))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.12 — show question"}
+**EX10.12 (★★★)** "Trust t over bootstrap" — push back.
+:::
+
+**Solution** *(reference: Section 10.3 "Simulation-based inference for simple linear regression")*. The t-test relies on assumptions (L.I.N.E.) that may not hold. The bootstrap is **assumption-light** — it just resamples the data — making it more reliable when residuals are skewed, when $n$ is small, or when nonlinear structure violates the t-test's premises.
+
+***
+
+### Inference on multiple regression
+
+::: {.callout-note collapse="true" title="EX10.13 — show question"}
+**EX10.13 (★★★)** `pl2` parallel-slopes table.
+:::
+
+**Solution** *(reference: Section 10.5 "Theory-based inference for multiple linear regression")*.
+
+```{r 10-ex-13}
+m_par <- lm(log_mass ~ log_radius + discovery_method, data = pl2)
+get_regression_table(m_par)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.14 — show question"}
+**EX10.14 (★★★)** Interpret 95% CI for `log_radius`.
+:::
+
+**Solution** *(reference: Section 10.5.3 "Confidence intervals", multiple-regression CIs)*. Holding discovery method fixed, a 10× increase in radius is associated with a $\beta$-unit change in log10(mass) — equivalently, a multiplicative change of $10^{\beta}$ in mass. The CI is narrow because $n$ is large.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.15 — show question"}
+**EX10.15 (★★★)** Discovery-method p-value tests what?
+:::
+
+**Solution** *(reference: Section 10.5.4 "Hypothesis test for a single coefficient")*. $H_0$: the difference between the non-baseline method and the baseline method, *holding radius fixed*, is 0. Equivalently: parallel slopes share a common intercept.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.16 — show question"}
+**EX10.16 (★★★)** Interaction p-value.
+:::
+
+**Solution** *(reference: Section 10.5.4 "Hypothesis test for a single coefficient", interactions)*. Tests whether the slope on `log_radius` *differs* between the two methods. A small p-value means slopes really do differ — the interaction is needed.
+
+```{r 10-ex-16}
+m_int <- lm(log_mass ~ log_radius * discovery_method, data = pl2)
+get_regression_table(m_int)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.17 — show question"}
+**EX10.17 (★★★)** Bootstrap CI for `log_radius`.
+:::
+
+**Solution** *(reference: Section 10.6.1 "Confidence intervals for the partial slopes using infer")*. With multi-predictor models, easiest path is to extract coefficients per bootstrap replicate via `tidy()`.
+
+```{r 10-ex-17}
+set.seed(76)
+boot_log_radius <- replicate(500, {
+  s <- pl2 |> slice_sample(n = nrow(pl2), replace = TRUE)
+  coef(lm(log_mass ~ log_radius + discovery_method, data = s))["log_radius"]
+})
+quantile(boot_log_radius, c(0.025, 0.975))
+```
+
+***
+
+### Practical questions
+
+::: {.callout-note collapse="true" title="EX10.18 — show question"}
+**EX10.18 (★★★)** `Height ~ Year` for basketball.
+:::
+
+**Solution** *(reference: Section 10.2.4 "Hypothesis test for population slope")*.
+
+```{r 10-ex-18}
+get_regression_table(lm(Height ~ Year, data = bball))
+```
+
+A small p-value confirms heights have grown over time in basketball.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.19 — show question"}
+**EX10.19 (★★★)** "Olympic basketball *trains* taller players" — refute.
+:::
+
+**Solution** *(reference: Section 5.3.1 "Correlation is not necessarily causation")*. Same as Ch 5: the slope reflects **selection** (the Olympics has progressively recruited taller athletes due to NBA pipeline, rule changes), not biology. Inference doesn't establish causation; only experiments and randomization do.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.20 — show question"}
+**EX10.20 (★★★)** Repeat for gymnastics; compare.
+:::
+
+**Solution** *(reference: Section 10.2.4 "Hypothesis test for population slope")*. Gymnastics likely has a *negative* slope (modern gymnasts are shorter than mid-century ones, especially female).
+
+```{r 10-ex-20}
+gym <- olympic_athletes |>
+  filter(Sport == "Gymnastics", !is.na(Height))
+get_regression_table(lm(Height ~ Year, data = gym))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.21 — show question"}
+**EX10.21 (★★★)** "The population" in regression — sampling frame.
+:::
+
+**Solution** *(reference: Section 10.1 "The simple linear regression model", scope of inference)*. The "population" is implicitly **all Olympic basketball athletes**, past and future, who *could* be in this dataset under the same selection process. Inference applies to that population — *not* to the general human population. This is why CIs from Olympic data tell you about Olympic athletes, not basketball players in general.
+
+***
+
+### Visualizing uncertainty
+
+::: {.callout-note collapse="true" title="EX10.22 — show question"}
+**EX10.22 (★★★)** Regression line + 95% CI band.
+:::
+
+**Solution** *(reference: Section 10.2.5 "Model fit and model assumptions", uncertainty visualization)*.
+
+```{r 10-ex-22, message=FALSE, fig.height=3}
+ggplot(bball, aes(x = Height, y = Weight)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.23 — show question"}
+**EX10.23 (★★★)** Confidence band vs prediction band.
+:::
+
+**Solution** *(reference: Section 10.2.5 "Model fit and model assumptions", confidence vs prediction)*. **Confidence band**: uncertainty about the *mean* response at a given X — narrow. **Prediction band**: uncertainty about a *single new observation* at that X — much wider, because individual variation gets added to estimation uncertainty.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.24 — show question"}
+**EX10.24 (★★★)** Parallel-slopes with CI bands.
+:::
+
+**Solution** *(reference: Section 10.5 "Theory-based inference for multiple linear regression", visualizing parallel slopes)*.
+
+```{r 10-ex-24, message=FALSE, fig.height=3}
+ggplot(pl2, aes(x = log_radius, y = log_mass, color = discovery_method)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm")
+```
+
+***
+
+### Critical thinking and synthesis
+
+::: {.callout-note collapse="true" title="EX10.25 — show question"}
+**EX10.25 (★★★)** Tiny p-values vs practical significance.
+:::
+
+**Solution** *(reference: Section 10.5.4 "Hypothesis test for a single coefficient", practical vs statistical)*. **No.** With $n \approx 1000$, even effects measured in fractions of a kilogram or millimeters become statistically significant. Always check the **estimate's magnitude** in domain units before celebrating.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.26 — show question"}
+**EX10.26 (★★★)** Why removing `Sport` changes `Sex` coefficient.
+:::
+
+**Solution** *(reference: Section 10.5.2 "Model dependency of estimators", omitted-variable bias)*. **Sport** is correlated with both Sex (uneven gender ratios across sports) and Height (sport-specific selection on height). Omitting it makes the Sex coefficient absorb that confounding — coefficients are *not invariant* to which controls are included.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.27 — show question"}
+**EX10.27 (★★★)** Demonstrate for two specific sports.
+:::
+
+**Solution** *(reference: Section 10.5.2 "Model dependency of estimators")*.
+
+```{r 10-ex-27}
+two_sports <- olympic_athletes |>
+  filter(Sport %in% c("Athletics", "Swimming"),
+         !is.na(Height))
+get_regression_table(lm(Height ~ Sex, data = two_sports))
+get_regression_table(lm(Height ~ Sex + Sport, data = two_sports))
+```
+
+The `SexM` coefficient typically *changes* once `Sport` is added — the per-sport male-female gap differs from the pooled gap.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.28 — show question"}
+**EX10.28 (★★★)** CI widths at three sample sizes.
+:::
+
+**Solution** *(reference: Section 10.2.3 "Confidence intervals for the least-squares estimators")*. Width shrinks as $\sqrt{n}$ grows.
+
+```{r 10-ex-28, fig.height=3}
+set.seed(76)
+ci_at_n <- function(nn) {
+  s <- if (nn == "full") bball else slice_sample(bball, n = as.integer(nn))
+  tab <- get_regression_table(lm(Weight ~ Height, data = s))
+  tab |> filter(term == "Height") |>
+    transmute(lower_ci, upper_ci, n = nn)
+}
+out <- bind_rows(ci_at_n("30"), ci_at_n("100"), ci_at_n("full"))
+out
+ggplot(out, aes(y = n, xmin = lower_ci, xmax = upper_ci)) +
+  geom_errorbarh(height = 0.2)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.29 — show question"}
+**EX10.29 (★★★)** R², adjusted R², F-statistic.
+:::
+
+**Solution** *(reference: Section 10.2.5 "Model fit and model assumptions", F-test)*. The **F-statistic** tests $H_0$: all slopes are zero (the *whole* model has no explanatory power) vs $H_A$: at least one slope is non-zero. Tiny p-value ⇒ at least one predictor matters.
+
+```{r 10-ex-29}
+glance(m_b) |> select(r.squared, adj.r.squared, statistic, p.value, df)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.30 — show question"}
+**EX10.30 (★★★)** Adjusted R² decreasing on useless predictors.
+:::
+
+**Solution** *(reference: Section 10.5.5 "Model fit and diagnostics", adjusted R²)*. Adjusted R² penalizes extra predictors. Plain R² always rises when adding any predictor (even noise). Adjusted R² rises only when the new predictor's contribution exceeds what would be expected from chance — protecting against overfitting.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.31 — show question"}
+**EX10.31 (★★★)** Try to demonstrate Simpson's paradox in `planets`.
+:::
+
+**Solution** *(reference: Chapter 10 — synthesis, model dependency)*. *Answers vary.* With `mass_earth ~ radius_earth` colored by discovery_method, the *pooled* slope can differ from each *within-method* slope when methods cluster in different parts of the (radius, mass) plane.
+
+```{r 10-ex-31}
+pooled <- lm(log_mass ~ log_radius, data = pl2)
+within_methods <- pl2 |>
+  group_by(discovery_method) |>
+  summarize(slope = coef(lm(log_mass ~ log_radius))[2])
+list(pooled_slope = coef(pooled)[2], within = within_methods)
+```
+
+The slopes can differ; if they have opposite signs and the pooled has the wrong direction, that *would* be Simpson's paradox.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.32 — show question"}
+**EX10.32 (★★★)** R² = 0.95 + curvature: trust inference?
+:::
+
+**Solution** *(reference: Section 10.2.5 "Model fit and model assumptions")*. **No.** The high R² doesn't validate the *model form*. Curvature in residuals violates linearity, biasing inference (CIs/SEs misstate uncertainty) and producing predictions that systematically err in different parts of the X range.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.33 — show question"}
+**EX10.33 (★★★)** CI (0.001, 0.005): tiny but above 0.
+:::
+
+**Solution** *(reference: Section 10.2.3 "Confidence intervals for the least-squares estimators", practical significance)*. The slope is *statistically* different from 0 (CI excludes 0), but **practically** tiny — for any X-range you care about, the predicted Y barely moves. Don't write a press release.
+
+***
+
+::: {.callout-note collapse="true" title="EX10.34 — show question"}
+**EX10.34 (★★★)** Open exploration.
+:::
+
+**Solution** *(reference: Chapter 10 — synthesis)*. *Answers vary.* Example: `Weight ~ Height` for swimming — strong positive slope, narrow 95% CI, p ≈ 0.
+
+```{r 10-ex-34}
+swim <- olympic_athletes |>
+  filter(Sport == "Swimming", !is.na(Height), !is.na(Weight))
+get_regression_table(lm(Weight ~ Height, data = swim))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX10.35 — show question"}
+**EX10.35 (★★★)** Synthesis: multiple regression on `eq_temp_k`.
+:::
+
+**Solution** *(reference: Chapter 10 — synthesis)*. *Answers vary.* Robustly supported: (i) insolation is a strong, statistically significant predictor of equilibrium temperature; (ii) host star temperature has a smaller but significant additional effect; (iii) selection-bias caveats apply — these conclusions describe the *catalog*, not all exoplanets.
+
+```{r 10-ex-35}
+planets_temp <- planets |>
+  filter(!is.na(eq_temp_k), !is.na(star_temp_k), !is.na(insolation_earth)) |>
+  mutate(log_insol = log10(insolation_earth))
+get_regression_table(lm(eq_temp_k ~ log_insol + star_temp_k, data = planets_temp))
+```
+
+***

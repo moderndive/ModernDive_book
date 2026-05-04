@@ -1,0 +1,526 @@
+Solutions for the end-of-chapter exercises in *Chapter 8 — Confidence Intervals*. Datasets: `volcanoes`, `episodes` (`steves`), `olympic_athletes`, plus `bob_ross` (`fivethirtyeight`).
+
+::: {.callout-tip title="Section coverage at a glance" collapse="false" appearance="simple"}
+
+| Section in chapter                              | Exercises |
+|-------------------------------------------------|-----------|
+| 8.1 Tying the sampling distribution to estimation / theory-based CIs | EX8.1, EX8.2, EX8.3, EX8.4 |
+| 8.1.4 Interpreting confidence intervals          | EX8.5, EX8.20, EX8.21, EX8.22, EX8.23, EX8.29 |
+| 8.2 Bootstrap CIs for a mean                     | EX8.6, EX8.7, EX8.8, EX8.9, EX8.27, EX8.28, EX8.31 |
+| Bootstrap CI for a proportion                    | EX8.10, EX8.11, EX8.12 |
+| 8.2.5 `infer` workflow                           | EX8.13, EX8.14, EX8.15 |
+| 8.3 Case study: yawning (two-sample)             | EX8.16, EX8.17, EX8.18, EX8.19 |
+| Critical thinking / synthesis                    | EX8.24, EX8.25, EX8.26, EX8.30, EX8.32 |
+
+Difficulty: ★ warm-up · ★★ standard · ★★★ critical thinking.
+:::
+
+```{r 08-ex-setup, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(infer)
+library(moderndive)
+library(volcanoes)
+library(steves)
+library(olympicAthletes)
+library(fivethirtyeight)
+
+set.seed(76)
+samp <- volcanoes |> rep_sample_n(50) |> ungroup()
+mu   <- mean(volcanoes$elevation, na.rm = TRUE)
+```
+
+### Theory-based CIs
+
+::: {.callout-note collapse="true" title="EX8.1 — show question"}
+**EX8.1 (★)** Theory-based 95% t-CI for mean elevation, $n = 50$.
+:::
+
+**Solution** *(reference: Section 8.1.4 "The confidence interval")*.
+
+```{r 08-ex-1}
+samp |>
+  summarize(
+    xbar = mean(elevation, na.rm = TRUE),
+    s    = sd(elevation, na.rm = TRUE),
+    n    = sum(!is.na(elevation))
+  ) |>
+  mutate(
+    lower = xbar - qt(0.975, df = n - 1) * s / sqrt(n),
+    upper = xbar + qt(0.975, df = n - 1) * s / sqrt(n)
+  )
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.2 — show question"}
+**EX8.2 (★★)** Does CI contain $\mu$?
+:::
+
+**Solution** *(reference: Section 8.1.4 "Interpreting confidence intervals")*. With 95% confidence, *most* (≈95%) of CIs from repeated samples contain $\mu$ — but any *one* sample's CI either does or doesn't. We hope this one does.
+
+```{r 08-ex-2}
+mu
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.3 — show question"}
+**EX8.3 (★)** SE expression; why $s$, not $\sigma$?
+:::
+
+**Solution** *(reference: Section 8.1.2 "The t distribution", standard error in practice)*. SE = $s / \sqrt{n}$. We use $s$ (sample SD) because $\sigma$ is unknown — we only have the sample. The t distribution corrects for the extra uncertainty introduced by estimating $\sigma$.
+
+***
+
+::: {.callout-note collapse="true" title="EX8.4 — show question"}
+**EX8.4 (★★)** $n = 200$ shrinks CI by what factor?
+:::
+
+**Solution** *(reference: Section 8.1.4 "The confidence interval", $1/\sqrt{n}$)*. Width shrinks by $\sqrt{50/200} = 1/2$.
+
+```{r 08-ex-4}
+set.seed(76)
+samp_200 <- volcanoes |> rep_sample_n(200) |> ungroup()
+samp_200 |>
+  summarize(
+    xbar = mean(elevation, na.rm = TRUE),
+    s    = sd(elevation, na.rm = TRUE),
+    n    = sum(!is.na(elevation))
+  ) |>
+  mutate(width = 2 * qt(0.975, df = n - 1) * s / sqrt(n))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.5 — show question"}
+**EX8.5 (★)** Refute "95% probability that $\mu$ is in (1100, 1900)."
+:::
+
+**Solution** *(reference: Section 8.1.4 "Interpreting confidence intervals")*. $\mu$ is **fixed** (a single unknown number), not random. The CI is what's random across hypothetical resamples. The correct interpretation: "If we repeated this procedure many times, ~95% of the resulting CIs would contain $\mu$."
+
+***
+
+### Bootstrap CIs for a mean
+
+::: {.callout-note collapse="true" title="EX8.6 — show question"}
+**EX8.6 (★★)** Bootstrap distribution from `samp`.
+:::
+
+**Solution** *(reference: Section 8.2.2 "The infer package workflow")*.
+
+```{r 08-ex-6, fig.height=3}
+boot_dist <- samp |>
+  specify(response = elevation) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "mean")
+visualize(boot_dist) + labs(title = "Bootstrap distribution of x̄")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.7 — show question"}
+**EX8.7 (★★)** Percentile 95% CI; compare to theory.
+:::
+
+**Solution** *(reference: Section 8.2.3 "Confidence intervals using bootstrap samples", percentile method)*.
+
+```{r 08-ex-7}
+boot_dist |> get_confidence_interval(level = 0.95, type = "percentile")
+```
+
+The two CIs typically agree closely when $n$ is large and the population is reasonably symmetric.
+
+***
+
+::: {.callout-note collapse="true" title="EX8.8 — show question"}
+**EX8.8 (★★★)** SE-method bootstrap CI.
+:::
+
+**Solution** *(reference: Section 8.2.3 "Confidence intervals using bootstrap samples", SE method)*.
+
+```{r 08-ex-8}
+xbar <- samp |> summarize(stat = mean(elevation, na.rm = TRUE))
+boot_dist |> get_confidence_interval(level = 0.95, type = "se",
+                                     point_estimate = xbar)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.9 — show question"}
+**EX8.9 (★★★)** When are percentile and theory CIs different?
+:::
+
+**Solution** *(reference: Section 8.2.3 "Confidence intervals using bootstrap samples", method comparison)*. They diverge when the bootstrap distribution is **skewed** (population is skewed and $n$ is small) or has **heavy tails**. The percentile bootstrap is preferred whenever you don't trust the t-CI's symmetry assumption.
+
+***
+
+### Bootstrap CI for a proportion
+
+::: {.callout-note collapse="true" title="EX8.10 — show question"}
+**EX8.10 (★★)** CI for proportion of medal winners ($n = 50$).
+:::
+
+**Solution** *(reference: Section 8.2.3 "Confidence intervals using bootstrap samples", proportion variant)*.
+
+```{r 08-ex-10}
+set.seed(76)
+om_samp <- olympic_athletes |>
+  rep_sample_n(50) |>
+  ungroup() |>
+  mutate(won = if_else(!is.na(Medal), "yes", "no"))
+
+om_samp |>
+  specify(response = won, success = "yes") |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "prop") |>
+  get_confidence_interval(level = 0.95, type = "percentile")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.11 — show question"}
+**EX8.11 (★★★)** True population proportion of medal winners.
+:::
+
+**Solution** *(reference: Section 8.1.4 "Interpreting confidence intervals")*. ~14% — the CI from a single $n = 50$ sample should usually cover this, though sample-to-sample variation may put it at the edges.
+
+```{r 08-ex-11}
+mean(!is.na(olympic_athletes$Medal))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.12 — show question"}
+**EX8.12 (★★)** 90% CI for `imdb_rating >= 8` proportion.
+:::
+
+**Solution** *(reference: Section 8.2.3 "Confidence intervals using bootstrap samples")*.
+
+```{r 08-ex-12}
+set.seed(76)
+episodes |>
+  filter(!is.na(imdb_rating)) |>
+  mutate(high = if_else(imdb_rating >= 8, "yes", "no")) |>
+  specify(response = high, success = "yes") |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "prop") |>
+  get_confidence_interval(level = 0.90, type = "percentile")
+```
+
+***
+
+### `infer` workflow practice
+
+::: {.callout-note collapse="true" title="EX8.13 — show question"}
+**EX8.13 (★★)** CI for mean `imdb_rating`.
+:::
+
+**Solution** *(reference: Section 8.2.2 "The infer package workflow")*.
+
+```{r 08-ex-13}
+set.seed(76)
+imdb_boot <- episodes |>
+  specify(response = imdb_rating) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "mean")
+imdb_boot |> get_confidence_interval(level = 0.95)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.14 — show question"}
+**EX8.14 (★★)** Visualize with `shade_confidence_interval()`.
+:::
+
+**Solution** *(reference: Section 8.2.3 "Confidence intervals using bootstrap samples", visualizing CIs)*.
+
+```{r 08-ex-14, fig.height=3}
+ci <- imdb_boot |> get_confidence_interval(level = 0.95)
+visualize(imdb_boot) +
+  shade_confidence_interval(endpoints = ci)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.15 — show question"}
+**EX8.15 (★★★)** 99% CI vs 95%.
+:::
+
+**Solution** *(reference: Section 8.1.4 "The confidence interval", confidence vs precision)*. The 99% CI is **wider** — to be more confident, you must hedge more. Confidence and precision trade off.
+
+```{r 08-ex-15}
+imdb_boot |> get_confidence_interval(level = 0.99)
+```
+
+***
+
+### Two-sample CIs
+
+::: {.callout-note collapse="true" title="EX8.16 — show question"}
+**EX8.16 (★★★)** CI for $\mu_M - \mu_F$ in athletics.
+:::
+
+**Solution** *(reference: Section 8.3.1 "Mythbusters study data", difference in means)*.
+
+```{r 08-ex-16}
+set.seed(76)
+ath <- olympic_athletes |>
+  filter(Sport == "Athletics", !is.na(Height))
+samp_m <- ath |> filter(Sex == "M") |> slice_sample(n = 100)
+samp_f <- ath |> filter(Sex == "F") |> slice_sample(n = 100)
+two_samp <- bind_rows(samp_m, samp_f)
+
+two_samp |>
+  specify(response = Height, explanatory = Sex) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "diff in means", order = c("M", "F")) |>
+  get_confidence_interval(level = 0.95)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.17 — show question"}
+**EX8.17 (★★★)** Does the CI contain 0? Implication?
+:::
+
+**Solution** *(reference: Section 8.3.4 "Interpreting the confidence interval")*. The CI is well above 0 ⇒ we have strong evidence that male athletics athletes are **taller on average** than female athletics athletes by an interval-bounded amount.
+
+***
+
+::: {.callout-note collapse="true" title="EX8.18 — show question"}
+**EX8.18 (★★★)** Mean rating Italy vs France.
+:::
+
+**Solution** *(reference: Section 8.3 "Case study: is yawning contagious?")*.
+
+```{r 08-ex-18}
+set.seed(76)
+two_country <- episodes |>
+  filter(primary_country %in% c("Italy", "France"))
+two_country |>
+  specify(response = imdb_rating, explanatory = primary_country) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "diff in means", order = c("Italy", "France")) |>
+  get_confidence_interval(level = 0.95)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.19 — show question"}
+**EX8.19 (★★★)** $p_{\text{mountain}} - p_{\text{cabin}}$ in `bob_ross`.
+:::
+
+**Solution** *(reference: Section 8.3 "Case study: is yawning contagious?", difference in proportions)*. We compute the per-episode difference (1 if mountain present minus 1 if cabin present, then average), then bootstrap that.
+
+```{r 08-ex-19}
+set.seed(76)
+br <- bob_ross |> mutate(diff = mountain - cabin)
+br |>
+  specify(response = diff) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "mean") |>
+  get_confidence_interval(level = 0.95)
+```
+
+***
+
+### Critical thinking and synthesis
+
+::: {.callout-note collapse="true" title="EX8.20 — show question"}
+**EX8.20 (★★)** Wider sample → narrower CI; higher confidence → wider CI.
+:::
+
+**Solution** *(reference: Section 8.1.4 "The confidence interval")*. Bigger $n$ shrinks $SE = s/\sqrt{n}$, so the CI tightens. Higher confidence requires a larger critical value (e.g., $t_{0.995}$ vs $t_{0.975}$), so we add more margin to be safer.
+
+***
+
+::: {.callout-note collapse="true" title="EX8.21 — show question"}
+**EX8.21 (★★★)** Triple $n$ ⇒ guaranteed contain $\mu$?
+:::
+
+**Solution** *(reference: Section 8.1.4 "Interpreting confidence intervals")*. **No.** A specific CI either contains $\mu$ or doesn't — confidence describes the long-run frequency, not any individual case. Tripling $n$ just makes the CI tighter (smaller miss when it happens).
+
+***
+
+::: {.callout-note collapse="true" title="EX8.22 — show question"}
+**EX8.22 (★★★)** "95% of values fall in this range" — wrong.
+:::
+
+**Solution** *(reference: Section 8.1.4 "Interpreting confidence intervals")*. The CI bounds the **mean**, not individual values — those follow the population's full distribution and most don't fall in any narrow CI. Correct phrasing: "If we redrew samples and built a CI each time, ~95% of those CIs would contain the true mean."
+
+***
+
+::: {.callout-note collapse="true" title="EX8.23 — show question"}
+**EX8.23 (★★★)** Empirical confirmation: 100 samples × CI; how many contain $\mu$?
+:::
+
+**Solution** *(reference: Section 8.1.4 "Interpreting confidence intervals", long-run frequency)*. Approximately 95 of 100 CIs contain $\mu$.
+
+```{r 08-ex-23, fig.height=4}
+set.seed(76)
+many <- volcanoes |>
+  rep_sample_n(50, reps = 100) |>
+  group_by(replicate) |>
+  summarize(
+    xbar = mean(elevation, na.rm = TRUE),
+    s    = sd(elevation, na.rm = TRUE),
+    n    = sum(!is.na(elevation)),
+    .groups = "drop"
+  ) |>
+  mutate(
+    lower = xbar - qt(0.975, df = n - 1) * s / sqrt(n),
+    upper = xbar + qt(0.975, df = n - 1) * s / sqrt(n),
+    contains = lower <= mu & upper >= mu
+  )
+
+mean(many$contains)
+ggplot(many, aes(x = replicate, y = xbar, color = contains)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper)) +
+  geom_hline(yintercept = mu, linewidth = 1) +
+  coord_flip() +
+  labs(title = paste0("Coverage: ", sum(many$contains), "/100"))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.24 — show question"}
+**EX8.24 (★★★)** Why does the bootstrap work?
+:::
+
+**Solution** *(reference: Section 8.2.4 "Why bootstrap methods")*. The sample is our best estimate of the population. **Resampling** with replacement from the sample mimics drawing fresh samples from the population — so the spread of bootstrap statistics estimates the spread of the *original* sampling distribution. The empirical distribution stands in for the unknown population.
+
+***
+
+::: {.callout-note collapse="true" title="EX8.25 — show question"}
+**EX8.25 (★★★)** When bootstrap fails.
+:::
+
+**Solution** *(reference: Section 8.2.4 "Why bootstrap methods", limits)*. (1) **Tiny samples** ($n < ~15$) — empirical distribution is too coarse. (2) **Extreme statistics** like the maximum — bootstrap can't generate values larger than the sample's max, so CIs for max are degenerate.
+
+***
+
+::: {.callout-note collapse="true" title="EX8.26 — show question"}
+**EX8.26 (★★★)** CI for the median; why bootstrap is easier.
+:::
+
+**Solution** *(reference: Section 8.2.4 "Why bootstrap methods", non-mean estimators)*. There's no clean closed-form distribution for the sample median (unlike the mean's t-distribution). The bootstrap sidesteps that — just resample and compute medians.
+
+```{r 08-ex-26}
+set.seed(76)
+samp |>
+  specify(response = elevation) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "median") |>
+  get_confidence_interval(level = 0.95, type = "percentile")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.27 — show question"}
+**EX8.27 (★★★)** CIs at three sample sizes.
+:::
+
+**Solution** *(reference: Section 8.1.4 "The confidence interval", precision vs $n$)*.
+
+```{r 08-ex-27, fig.height=3}
+set.seed(76)
+ns <- c(20, 50, 200)
+ci_tibble <- bind_rows(lapply(ns, function(nn) {
+  s <- volcanoes |> rep_sample_n(nn) |> ungroup()
+  s |>
+    specify(response = elevation) |>
+    generate(reps = 500, type = "bootstrap") |>
+    calculate(stat = "mean") |>
+    get_confidence_interval(level = 0.95) |>
+    mutate(n = nn)
+}))
+ggplot(ci_tibble, aes(y = factor(n), xmin = lower_ci, xmax = upper_ci)) +
+  geom_errorbarh(height = 0.2) +
+  geom_vline(xintercept = mu, color = "red", linetype = 2) +
+  labs(y = "Sample size", x = "95% CI for μ")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.28 — show question"}
+**EX8.28 (★★★)** Width difference 99% vs 95%.
+:::
+
+**Solution** *(reference: Section 8.1.4 "The confidence interval", critical-value tradeoff)*. The 99% CI is wider — typically by ~30–35% for $n = 50$, which translates to several hundred extra meters of uncertainty.
+
+```{r 08-ex-28}
+set.seed(76)
+boot_dist2 <- samp |>
+  specify(response = elevation) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "mean")
+ci95 <- boot_dist2 |> get_confidence_interval(level = 0.95)
+ci99 <- boot_dist2 |> get_confidence_interval(level = 0.99)
+list(ci95 = ci95, ci99 = ci99,
+     extra_width_m = (ci99$upper_ci - ci99$lower_ci) -
+                     (ci95$upper_ci - ci95$lower_ci))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.29 — show question"}
+**EX8.29 (★★★)** "What does 95% mean?" — non-jargon answer.
+:::
+
+**Solution** *(reference: Section 8.1.4 "Interpreting confidence intervals")*. "If we'd surveyed many random groups of 50 volcanoes and built a CI from each, **about 95 out of every 100** of those CIs would contain the true average elevation. We can't say whether *this particular* CI is one of those 95, but the procedure is reliable."
+
+***
+
+::: {.callout-note collapse="true" title="EX8.30 — show question"}
+**EX8.30 (★★★)** What checks the t-CI assumptions?
+:::
+
+**Solution** *(reference: Section 8.1.2 "The t distribution", assumptions)*. (1) **Random sampling** — was the sample drawn IID from the population? (2) **Approximate normality** of the *sampling distribution* — usually true if $n$ is large or the population isn't extremely skewed. Diagnose with a histogram of the sample (or a Q-Q plot of the bootstrap distribution).
+
+***
+
+::: {.callout-note collapse="true" title="EX8.31 — show question"}
+**EX8.31 (★★★)** Skewed pop + small $n$: theory vs bootstrap differ.
+:::
+
+**Solution** *(reference: Section 8.2.4 "Why bootstrap methods", small-$n$ comparison)*. The bootstrap CI is **asymmetric** when the underlying sampling distribution is skewed; the t-CI forces symmetry around $\bar{x}$.
+
+```{r 08-ex-31}
+set.seed(76)
+small <- volcanoes |> rep_sample_n(10) |> ungroup()
+t_ci <- small |>
+  summarize(xbar = mean(elevation, na.rm = TRUE),
+            s = sd(elevation, na.rm = TRUE),
+            n = sum(!is.na(elevation))) |>
+  mutate(lower = xbar - qt(0.975, df = n - 1) * s / sqrt(n),
+         upper = xbar + qt(0.975, df = n - 1) * s / sqrt(n)) |>
+  select(lower, upper)
+
+boot_ci <- small |>
+  specify(response = elevation) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "mean") |>
+  get_confidence_interval(level = 0.95, type = "percentile")
+
+list(t_ci = t_ci, boot_ci = boot_ci)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX8.32 — show question"}
+**EX8.32 (★★★)** Open exploration.
+:::
+
+**Solution** *(reference: Chapter 8 — synthesis)*. *Answers vary.* Example: "Across the 159 *Rick Steves' Europe* episodes, the bootstrap 95% CI for mean IMDB rating is roughly (8.0, 8.3) — the show enjoys consistently strong audience reception."
+
+```{r 08-ex-32}
+set.seed(76)
+episodes |>
+  specify(response = imdb_rating) |>
+  generate(reps = 1000, type = "bootstrap") |>
+  calculate(stat = "mean") |>
+  get_confidence_interval(level = 0.95)
+```
+
+***

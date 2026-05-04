@@ -1,0 +1,538 @@
+Solutions for the end-of-chapter exercises in *Chapter 7 — Sampling*. Primary dataset: `volcanoes` from [`volcanoes`](https://github.com/moderndive/volcanoes); secondary: `eruptions` (same package) and `planets` from [`exoplanets`](https://github.com/moderndive/exoplanets).
+
+::: {.callout-tip title="Section coverage at a glance" collapse="false" appearance="simple"}
+
+| Section in chapter                              | Exercises |
+|-------------------------------------------------|-----------|
+| Population statistics                           | EX7.1, EX7.2, EX7.3, EX7.4 |
+| 7.1.2 Manual sampling / single sample           | EX7.5, EX7.6, EX7.7        |
+| 7.1.3 Virtual sampling / sampling distribution  | EX7.8, EX7.9, EX7.10, EX7.11, EX7.12 |
+| 7.4 Central Limit Theorem                       | EX7.13, EX7.14, EX7.15, EX7.16 |
+| Sampling distribution for a proportion          | EX7.17, EX7.18, EX7.19, EX7.20 |
+| Other populations (eruptions, planets)          | EX7.21, EX7.22, EX7.23 |
+| Critical thinking / synthesis / open exploration | EX7.24, EX7.25, EX7.26, EX7.27, EX7.28, EX7.29, EX7.30, EX7.31, EX7.32 |
+
+Difficulty: ★ warm-up · ★★ standard · ★★★ critical thinking.
+:::
+
+```{r 07-ex-setup, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(moderndive)
+library(infer)
+library(volcanoes)
+
+mu     <- mean(volcanoes$elevation, na.rm = TRUE)
+sigma  <- sd(volcanoes$elevation, na.rm = TRUE)
+p_strato <- mean(volcanoes$primary_volcano_type == "Stratovolcano",
+                 na.rm = TRUE)
+```
+
+### Setup and population statistics
+
+::: {.callout-note collapse="true" title="EX7.1 — show question"}
+**EX7.1 (★)** Glimpse `volcanoes`. Treat as the *population*.
+:::
+
+**Solution** *(reference: Section 7.1 "First activity: red balls", population concept)*. ~1,200 rows × 13 columns; this is our population for the rest of the chapter.
+
+```{r 07-ex-1}
+dim(volcanoes)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.2 — show question"}
+**EX7.2 (★)** Population $\mu$ and $\sigma$ of elevation.
+:::
+
+**Solution** *(reference: Section 7.4.3 "The center of the distribution: the expected value")*.
+
+```{r 07-ex-2}
+c(mu = mu, sigma = sigma)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.3 — show question"}
+**EX7.3 (★)** Population proportion `Stratovolcano`.
+:::
+
+**Solution** *(reference: Section 7.1.1 "The proportion of red balls in the bowl", population proportion)*.
+
+```{r 07-ex-3}
+p_strato
+```
+
+About 60–65% of Holocene volcanoes are stratovolcanoes (the iconic conical type).
+
+***
+
+::: {.callout-note collapse="true" title="EX7.4 — show question"}
+**EX7.4 (★★)** Histogram of elevation — shape?
+:::
+
+**Solution** *(reference: Section 2.5 "Histograms", connecting EDA to sampling)*. **Right-skewed** — most volcanoes are at modest elevations, with a long tail of high-altitude stratovolcanoes (Andes, Japan).
+
+```{r 07-ex-4, fig.height=3}
+ggplot(volcanoes, aes(x = elevation)) +
+  geom_histogram(bins = 30) +
+  labs(x = "Elevation (m)")
+```
+
+***
+
+### A single sample
+
+::: {.callout-note collapse="true" title="EX7.5 — show question"}
+**EX7.5 (★★)** A single $n = 30$ sample.
+:::
+
+**Solution** *(reference: Section 7.1.2 "Manual sampling")*.
+
+```{r 07-ex-5}
+set.seed(76)
+volcanoes |>
+  rep_sample_n(size = 30, reps = 1) |>
+  summarize(xbar = mean(elevation, na.rm = TRUE))
+```
+
+The sample mean is *near* but not exactly equal to $\mu$.
+
+***
+
+::: {.callout-note collapse="true" title="EX7.6 — show question"}
+**EX7.6 (★★)** Different seed → different sample → different mean. Why?
+:::
+
+**Solution** *(reference: Section 7.4.4 "Sampling variation", concept of sampling variation)*. Each sample is a *random subset*; different draws yield different sample means. This is **sampling variation** — and it's what motivates the sampling distribution.
+
+```{r 07-ex-6}
+set.seed(2026)
+volcanoes |>
+  rep_sample_n(size = 30, reps = 1) |>
+  summarize(xbar = mean(elevation, na.rm = TRUE))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.7 — show question"}
+**EX7.7 (★)** "$\bar{x} \neq \mu$ ⇒ biased sample" — refute.
+:::
+
+**Solution** *(reference: Section 7.2 "Sampling framework", bias vs variance)*. Disagree. **Bias** is a *systematic* tendency — present when the sampling *procedure* favors certain values. A single $\bar{x}$ deviating from $\mu$ is *sampling variation*, not bias. With many random samples, the mean of $\bar{x}$ values *does* equal $\mu$ — even though any one sample's mean does not.
+
+***
+
+### Building the sampling distribution
+
+::: {.callout-note collapse="true" title="EX7.8 — show question"}
+**EX7.8 (★★)** 1,000 samples × $n=30$, plot histogram.
+:::
+
+**Solution** *(reference: Section 7.1.3 "Virtual sampling")*.
+
+```{r 07-ex-8, fig.height=3}
+set.seed(76)
+samp_dist_30 <- volcanoes |>
+  rep_sample_n(size = 30, reps = 1000) |>
+  group_by(replicate) |>
+  summarize(xbar = mean(elevation, na.rm = TRUE), .groups = "drop")
+
+ggplot(samp_dist_30, aes(x = xbar)) +
+  geom_histogram(bins = 30) +
+  geom_vline(xintercept = mu, color = "red", linetype = 2) +
+  labs(x = expression(bar(x)), title = "Sampling distribution, n = 30")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.9 — show question"}
+**EX7.9 (★★)** Center and SE.
+:::
+
+**Solution** *(reference: Section 7.4.4 "Sampling variation: standard deviation and standard error")*. Center ≈ $\mu$ (CLT); SD of $\bar{x}$ is the **standard error**.
+
+```{r 07-ex-9}
+samp_dist_30 |>
+  summarize(center = mean(xbar), SE = sd(xbar), mu = mu)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.10 — show question"}
+**EX7.10 (★★)** Compare sampling dists for $n = 30$ vs $n = 100$.
+:::
+
+**Solution** *(reference: Section 7.4.4 "Sampling variation: standard deviation and standard error", $n$ effect)*. The $n=100$ distribution is **narrower** — bigger samples give more precise estimates.
+
+```{r 07-ex-10, fig.height=3}
+set.seed(76)
+samp_dist_100 <- volcanoes |>
+  rep_sample_n(size = 100, reps = 1000) |>
+  group_by(replicate) |>
+  summarize(xbar = mean(elevation, na.rm = TRUE), .groups = "drop")
+
+bind_rows(
+  samp_dist_30  |> mutate(n = "n = 30"),
+  samp_dist_100 |> mutate(n = "n = 100")
+) |>
+  ggplot(aes(x = xbar)) +
+  geom_histogram(bins = 30) +
+  facet_wrap(~ n, ncol = 1)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.11 — show question"}
+**EX7.11 (★★)** SE shrinkage factor; compare to $\sqrt{30/100}$.
+:::
+
+**Solution** *(reference: Section 7.4 "Central Limit Theorem", CLT scaling)*.
+
+```{r 07-ex-11}
+SE_30  <- sd(samp_dist_30$xbar)
+SE_100 <- sd(samp_dist_100$xbar)
+c(SE_30 = SE_30, SE_100 = SE_100,
+  ratio = SE_100 / SE_30,
+  theory = sqrt(30 / 100))
+```
+
+The simulated ratio matches $\sqrt{n_1/n_2}$ — exactly the CLT prediction.
+
+***
+
+::: {.callout-note collapse="true" title="EX7.12 — show question"}
+**EX7.12 (★★★)** SE vs $n$ on log–log; slope ≈ $-1/2$.
+:::
+
+**Solution** *(reference: Section 7.4 "Central Limit Theorem")*.
+
+```{r 07-ex-12, fig.height=3}
+set.seed(76)
+ns <- c(10, 30, 100, 300)
+ses <- sapply(ns, function(nn) {
+  volcanoes |>
+    rep_sample_n(size = nn, reps = 500) |>
+    group_by(replicate) |>
+    summarize(xbar = mean(elevation, na.rm = TRUE), .groups = "drop") |>
+    summarize(SE = sd(xbar)) |>
+    pull(SE)
+})
+
+ggplot(data.frame(n = ns, SE = ses), aes(x = n, y = SE)) +
+  geom_point() + geom_line() +
+  scale_x_log10() + scale_y_log10() +
+  labs(title = "log SE vs log n: slope ≈ −1/2 (CLT)")
+```
+
+***
+
+### Central Limit Theorem
+
+::: {.callout-note collapse="true" title="EX7.13 — show question"}
+**EX7.13 (★★★)** Skewed population, near-normal sampling distribution. Why?
+:::
+
+**Solution** *(reference: Section 7.4 "The Central Limit Theorem")*. The **CLT** says: regardless of the population's shape, the sampling distribution of $\bar{x}$ approaches normality as $n$ grows. By $n = 30$, even a fairly skewed population yields a roughly bell-shaped sampling distribution.
+
+***
+
+::: {.callout-note collapse="true" title="EX7.14 — show question"}
+**EX7.14 (★★★)** Population vs sampling distribution side-by-side.
+:::
+
+**Solution** *(reference: Section 7.4 "The Central Limit Theorem")*. The population is right-skewed; the sampling distribution of $\bar{x}$ is roughly bell-shaped — the CLT in action.
+
+```{r 07-ex-14, fig.height=4, message=FALSE}
+library(patchwork)
+
+p_pop <- ggplot(volcanoes, aes(x = elevation)) +
+  geom_histogram(bins = 30) + labs(title = "Population")
+
+p_sd  <- ggplot(samp_dist_30, aes(x = xbar)) +
+  geom_histogram(bins = 30) + labs(title = "Sampling dist of x̄, n = 30")
+
+p_pop / p_sd
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.15 — show question"}
+**EX7.15 (★★★)** Theoretical SE = $\sigma / \sqrt{n}$ vs simulated.
+:::
+
+**Solution** *(reference: Section 7.4.4 "Sampling variation: standard deviation and standard error")*.
+
+```{r 07-ex-15}
+c(theoretical = sigma / sqrt(30),
+  simulated   = sd(samp_dist_30$xbar))
+```
+
+Match within simulation noise.
+
+***
+
+::: {.callout-note collapse="true" title="EX7.16 — show question"}
+**EX7.16 (★★★)** Smallest $n$ that already looks bell-shaped.
+:::
+
+**Solution** *(reference: Section 7.4 "The Central Limit Theorem", convergence)*. *Answers vary.* For elevation (modestly skewed), even $n = 10$ looks roughly bell-shaped at the center, with thicker tails. By $n = 30$ the bell is clean.
+
+```{r 07-ex-16, fig.height=3}
+set.seed(76)
+sd_5 <- volcanoes |>
+  rep_sample_n(size = 5, reps = 1000) |>
+  group_by(replicate) |>
+  summarize(xbar = mean(elevation, na.rm = TRUE), .groups = "drop")
+
+ggplot(sd_5, aes(x = xbar)) + geom_histogram(bins = 30) +
+  labs(title = "n = 5 — clearly skewed still")
+```
+
+***
+
+### Sampling distribution for a proportion
+
+::: {.callout-note collapse="true" title="EX7.17 — show question"}
+**EX7.17 (★★)** Sampling dist of $\hat{p}$ for stratovolcano, $n = 50$.
+:::
+
+**Solution** *(reference: Section 7.1.3 "Virtual sampling", proportion variant)*.
+
+```{r 07-ex-17, fig.height=3}
+set.seed(76)
+samp_p <- volcanoes |>
+  filter(!is.na(primary_volcano_type)) |>
+  rep_sample_n(size = 50, reps = 1000) |>
+  group_by(replicate) |>
+  summarize(phat = mean(primary_volcano_type == "Stratovolcano"),
+            .groups = "drop")
+
+ggplot(samp_p, aes(x = phat)) +
+  geom_histogram(bins = 25) +
+  geom_vline(xintercept = p_strato, color = "red", linetype = 2)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.18 — show question"}
+**EX7.18 (★★)** Simulated vs theoretical SE for $\hat{p}$.
+:::
+
+**Solution** *(reference: Section 7.4.4 "Sampling variation: standard deviation and standard error", $\sqrt{p(1-p)/n}$)*.
+
+```{r 07-ex-18}
+c(simulated   = sd(samp_p$phat),
+  theoretical = sqrt(p_strato * (1 - p_strato) / 50))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.19 — show question"}
+**EX7.19 (★★★)** What if $n = 5$?
+:::
+
+**Solution** *(reference: Section 7.4 "The Central Limit Theorem", small-$n$ failure)*. With $n = 5$, $\hat{p}$ can only take values $\{0, 0.2, 0.4, 0.6, 0.8, 1\}$ — the histogram has visible spikes (no longer continuous-looking) and the CLT approximation is poor.
+
+```{r 07-ex-19, fig.height=3}
+set.seed(76)
+samp_p_5 <- volcanoes |>
+  filter(!is.na(primary_volcano_type)) |>
+  rep_sample_n(size = 5, reps = 1000) |>
+  group_by(replicate) |>
+  summarize(phat = mean(primary_volcano_type == "Stratovolcano"),
+            .groups = "drop")
+ggplot(samp_p_5, aes(x = phat)) + geom_histogram(bins = 6)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.20 — show question"}
+**EX7.20 (★★★)** Rare type — Caldera — at $n = 50$.
+:::
+
+**Solution** *(reference: Section 7.4 "The Central Limit Theorem", small $p$ regime)*. When $p$ is near 0 or 1, even moderately large $n$ gives a skewed sampling distribution — the CLT requires *both* large $n$ AND $np(1-p)$ not too small.
+
+```{r 07-ex-20, fig.height=3}
+set.seed(76)
+samp_p_caldera <- volcanoes |>
+  filter(!is.na(primary_volcano_type)) |>
+  rep_sample_n(size = 50, reps = 1000) |>
+  group_by(replicate) |>
+  summarize(phat = mean(primary_volcano_type == "Caldera"),
+            .groups = "drop")
+ggplot(samp_p_caldera, aes(x = phat)) + geom_histogram(bins = 25)
+```
+
+***
+
+### Other populations
+
+::: {.callout-note collapse="true" title="EX7.21 — show question"}
+**EX7.21 (★★★)** Population mean `vei`.
+:::
+
+**Solution** *(reference: Section 7.1.1 "The proportion of red balls in the bowl", different population)*.
+
+```{r 07-ex-21}
+mean(eruptions$vei, na.rm = TRUE)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.22 — show question"}
+**EX7.22 (★★★)** Sampling dist of mean `vei`, $n = 50$.
+:::
+
+**Solution** *(reference: Section 7.1.3 "Virtual sampling")*.
+
+```{r 07-ex-22, fig.height=3}
+set.seed(76)
+samp_vei <- eruptions |>
+  filter(!is.na(vei)) |>
+  rep_sample_n(size = 50, reps = 1000) |>
+  group_by(replicate) |>
+  summarize(xbar = mean(vei, na.rm = TRUE), .groups = "drop")
+
+ggplot(samp_vei, aes(x = xbar)) + geom_histogram(bins = 30)
+sd(samp_vei$xbar)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.23 — show question"}
+**EX7.23 (★★★)** Sampling dist of `radius_earth` for two $n$ values.
+:::
+
+**Solution** *(reference: Section 7.4 "The Central Limit Theorem", $n$ effect on heavy-skew populations)*. The exoplanet radius distribution has *much* heavier tails than volcano elevations, so $n = 30$ may still look skewed. By $n = 200$, it's much closer to bell-shaped.
+
+```{r 07-ex-23, fig.height=4, message=FALSE}
+library(exoplanets)
+set.seed(76)
+
+samp_30  <- planets |> filter(!is.na(radius_earth)) |>
+  rep_sample_n(30,  reps = 500) |>
+  group_by(replicate) |>
+  summarize(xbar = mean(radius_earth), .groups = "drop") |>
+  mutate(n = "n = 30")
+samp_200 <- planets |> filter(!is.na(radius_earth)) |>
+  rep_sample_n(200, reps = 500) |>
+  group_by(replicate) |>
+  summarize(xbar = mean(radius_earth), .groups = "drop") |>
+  mutate(n = "n = 200")
+
+bind_rows(samp_30, samp_200) |>
+  ggplot(aes(x = xbar)) + geom_histogram(bins = 30) +
+  facet_wrap(~ n, scales = "free_y", ncol = 1)
+```
+
+***
+
+### Critical thinking and synthesis
+
+::: {.callout-note collapse="true" title="EX7.24 — show question"}
+**EX7.24 (★★★)** Biased sampling design.
+:::
+
+**Solution** *(reference: Section 7.2 "Sampling framework", representative samples)*. **No** — over-sampling tall volcanoes systematically pushes $\bar{x}$ above $\mu$. This is **bias from non-representative sampling**, distinct from *random* sampling variation. No amount of replication fixes a biased procedure.
+
+***
+
+::: {.callout-note collapse="true" title="EX7.25 — show question"}
+**EX7.25 (★★★)** SD vs SE.
+:::
+
+**Solution** *(reference: Section 7.4.4 "Sampling variation: standard deviation and standard error", terminology)*. **SD** = "spread of *individuals* in the population." Example: SD of volcano elevations = how spread-out individual volcano altitudes are. **SE** = "spread of an *estimator* over hypothetical resamples." Example: SE of $\bar{x}$ for $n = 30$ = how much the sample mean would vary if we redrew the sample many times.
+
+***
+
+::: {.callout-note collapse="true" title="EX7.26 — show question"}
+**EX7.26 (★★★)** "n = 30 always works" — critique.
+:::
+
+**Solution** *(reference: Section 7.4 "The Central Limit Theorem", scope of CLT)*. The CLT requires *enough* sample size relative to the population's skewness. For symmetric populations $n = 5$ may suffice; for highly skewed populations or rare-event proportions, $n = 30$ is far too small. Always verify with a sampling-distribution simulation when in doubt.
+
+***
+
+::: {.callout-note collapse="true" title="EX7.27 — show question"}
+**EX7.27 (★★★)** SE halves ⇒ $n$ × ?
+:::
+
+**Solution** *(reference: Section 7.4.4 "Sampling variation: standard deviation and standard error", $1/\sqrt{n}$ scaling)*. Halving SE requires $n$ to **quadruple** ($\sqrt{4} = 2$). Doubling SE precision quadruples sampling cost — diminishing returns.
+
+***
+
+::: {.callout-note collapse="true" title="EX7.28 — show question"}
+**EX7.28 (★★★)** Replicates vs $n$.
+:::
+
+**Solution** *(reference: Section 7.1.3 "Virtual sampling", reps vs n)*. Increasing **reps** smooths the *histogram* of the sampling distribution but does **not** change the SE — the SE is a property of the population and $n$. Increasing **n** narrows the sampling distribution itself (smaller SE), regardless of how many replicates we use.
+
+***
+
+::: {.callout-note collapse="true" title="EX7.29 — show question"}
+**EX7.29 (★★★)** With vs without replacement, small $n$ vs population.
+:::
+
+**Solution** *(reference: Section 7.1.3 "Virtual sampling", finite-population correction)*. With $N \approx 1{,}200$ and $n = 30$ ($n / N \approx 2.5\%$), the difference between with-replacement and without-replacement sampling is negligible. The finite-population correction $\sqrt{(N-n)/(N-1)}$ is only ~0.987.
+
+```{r 07-ex-29}
+set.seed(76)
+sd_wo <- volcanoes |>
+  rep_sample_n(30, reps = 1000, replace = FALSE) |>
+  group_by(replicate) |> summarize(xbar = mean(elevation, na.rm = TRUE), .groups = "drop")
+sd_wr <- volcanoes |>
+  rep_sample_n(30, reps = 1000, replace = TRUE) |>
+  group_by(replicate) |> summarize(xbar = mean(elevation, na.rm = TRUE), .groups = "drop")
+c(SE_without_repl = sd(sd_wo$xbar), SE_with_repl = sd(sd_wr$xbar))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.30 — show question"}
+**EX7.30 (★★★)** Whole-chapter visualization.
+:::
+
+**Solution** *(reference: Chapter 7 — synthesis)*. *Answers vary.* A 4-panel figure: (1) population histogram with $\mu$ marked; (2) one sample's histogram; (3) sampling distribution with $\mu$ marked; (4) SE-vs-$n$ on log-log.
+
+```{r 07-ex-30, fig.height=3}
+ggplot(samp_dist_30, aes(x = xbar)) +
+  geom_histogram(bins = 30, fill = "steelblue") +
+  geom_vline(xintercept = mu, color = "red", linewidth = 1) +
+  labs(title = "Sampling distribution centers on μ — that's the CLT",
+       x = expression(bar(x)), y = NULL)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.31 — show question"}
+**EX7.31 (★★★)** Sampling dist of the *median*.
+:::
+
+**Solution** *(reference: Section 7.4 "The Central Limit Theorem", non-mean estimators)*. The median's sampling distribution is also approximately normal under regularity conditions, but with a **larger SE** than the mean (typically by a factor ≈ 1.25 for normal-ish populations).
+
+```{r 07-ex-31, fig.height=3}
+set.seed(76)
+samp_med <- volcanoes |>
+  rep_sample_n(30, reps = 1000) |>
+  group_by(replicate) |>
+  summarize(med = median(elevation, na.rm = TRUE), .groups = "drop")
+ggplot(samp_med, aes(x = med)) + geom_histogram(bins = 25)
+sd(samp_med$med)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX7.32 — show question"}
+**EX7.32 (★★★)** Open exploration.
+:::
+
+**Solution** *(reference: Chapter 7 — synthesis)*. *Answers vary.* Example: "For `eruptions$vei`, the population is heavily right-skewed, but the sampling distribution of $\bar{x}$ at $n = 50$ is bell-shaped with simulated SE ≈ theoretical $\sigma/\sqrt{n}$ — the CLT works even on a count variable."
+
+```{r 07-ex-32}
+c(theoretical_SE = sd(eruptions$vei, na.rm = TRUE) / sqrt(50),
+  simulated_SE   = sd(samp_vei$xbar))
+```
+
+***

@@ -1,0 +1,458 @@
+Solutions for the end-of-chapter exercises in *Chapter 5 — Basic Regression*. Dataset: `olympic_athletes` from [`olympicAthletes`](https://github.com/moderndive/olympicAthletes).
+
+::: {.callout-tip title="Section coverage at a glance" collapse="false" appearance="simple"}
+
+| Section in chapter                            | Exercises                          |
+|-----------------------------------------------|------------------------------------|
+| Setup / EDA                                   | EX5.1, EX5.2, EX5.3, EX5.4, EX5.5  |
+| 5.1 One numerical explanatory variable        | EX5.6, EX5.7, EX5.8, EX5.13        |
+| 5.1.3 Observed/fitted values & residuals      | EX5.9, EX5.10, EX5.11              |
+| 5.2 One categorical explanatory variable      | EX5.14, EX5.15, EX5.16, EX5.17, EX5.18, EX5.19, EX5.20 |
+| Residual diagnostics                          | EX5.12, EX5.21, EX5.22, EX5.23, EX5.24, EX5.25 |
+| 5.3.1 Correlation is not necessarily causation | EX5.26, EX5.27, EX5.28           |
+| Critical thinking / synthesis                 | EX5.29, EX5.30, EX5.31, EX5.32, EX5.33, EX5.34, EX5.35 |
+
+Difficulty stars: ★ warm-up, ★★ standard application, ★★★ critical thinking.
+:::
+
+```{r 05-ex-setup, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(moderndive)
+library(olympicAthletes)
+
+bball <- olympic_athletes |>
+  filter(Sport == "Basketball", !is.na(Height), !is.na(Weight))
+```
+
+### Setup and EDA
+
+::: {.callout-note collapse="true" title="EX5.1 — show question"}
+**EX5.1 (★)** Filter to basketball with no NAs and call it `bball`. How many rows?
+:::
+
+**Solution** *(reference: Section 5.1.1 "Exploratory data analysis")*.
+
+```{r 05-ex-1}
+nrow(bball)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.2 — show question"}
+**EX5.2 (★)** Summary stats for `Height` and `Weight` in `bball`.
+:::
+
+**Solution** *(reference: Section 5.1.1 "Exploratory data analysis")*.
+
+```{r 05-ex-2}
+bball |>
+  summarize(
+    mean_h = mean(Height), sd_h = sd(Height),
+    min_h = min(Height),  max_h = max(Height),
+    mean_w = mean(Weight), sd_w = sd(Weight),
+    min_w = min(Weight),  max_w = max(Weight)
+  )
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.3 — show question"}
+**EX5.3 (★)** Scatter Weight vs Height. Describe the pattern.
+:::
+
+**Solution** *(reference: Section 5.1.1 "Exploratory data analysis", Section 2.3 "Scatterplots")*. Strong positive linear association — taller basketball athletes weigh more, on average.
+
+```{r 05-ex-3, message=FALSE, fig.height=3}
+ggplot(bball, aes(x = Height, y = Weight)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.4 — show question"}
+**EX5.4 (★★)** `cor(bball$Height, bball$Weight)`. Interpret.
+:::
+
+**Solution** *(reference: Section 5.1.1 "Exploratory data analysis", correlation)*. A correlation around 0.7–0.8 indicates a strong positive linear relationship — most of the variation in Weight is captured by Height alone.
+
+```{r 05-ex-4}
+cor(bball$Height, bball$Weight)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.5 — show question"}
+**EX5.5 (★★)** Why is the bivariate scatter the right *first step* before fitting a regression line?
+:::
+
+**Solution** *(reference: Section 5.1.1 "Exploratory data analysis", EDA-first principle)*. Regression coefficients are summary statistics — they hide outliers, non-linearity, and clustering. A scatterplot lets you *see* the relationship and decide whether a straight line is even appropriate.
+
+***
+
+### Simple linear regression: one numerical predictor
+
+::: {.callout-note collapse="true" title="EX5.6 — show question"}
+**EX5.6 (★★)** Fit `model_b <- lm(Weight ~ Height, data = bball)` and print `get_regression_table()`.
+:::
+
+**Solution** *(reference: Section 5.1.2 "Simple linear regression")*.
+
+```{r 05-ex-6}
+model_b <- lm(Weight ~ Height, data = bball)
+get_regression_table(model_b)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.7 — show question"}
+**EX5.7 (★★)** Interpret the slope.
+:::
+
+**Solution** *(reference: Section 5.1.2 "Simple linear regression", slope interpretation)*. For each additional centimeter of height, predicted weight increases by approximately *β* kilograms (read the slope estimate from your table — typically ~1.0 kg/cm for basketball).
+
+***
+
+::: {.callout-note collapse="true" title="EX5.8 — show question"}
+**EX5.8 (★★)** Interpret the intercept. Why is the literal interpretation misleading?
+:::
+
+**Solution** *(reference: Section 5.1.2 "Simple linear regression", extrapolation)*. The intercept is the predicted Weight at Height = 0 cm — far outside the observed range (~150–230 cm). Using it as a literal prediction is **extrapolation**, which the chapter warns against.
+
+***
+
+::: {.callout-note collapse="true" title="EX5.9 — show question"}
+**EX5.9 (★★)** First 5 fitted values and residuals.
+:::
+
+**Solution** *(reference: Section 5.1.3 "Observed/fitted values and residuals")*.
+
+```{r 05-ex-9}
+get_regression_points(model_b) |> slice_head(n = 5)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.10 — show question"}
+**EX5.10 (★★)** R² from `get_regression_summaries()`. Interpret in context.
+:::
+
+**Solution** *(reference: Section 5.1.2 "Simple linear regression", R² interpretation)*. With R² ≈ 0.6, roughly 60% of the variation in basketball-athlete Weight is explained by Height alone — a strong but imperfect predictor.
+
+```{r 05-ex-10}
+get_regression_summaries(model_b)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.11 — show question"}
+**EX5.11 (★★)** Predict weight at Height = 200 cm.
+:::
+
+**Solution** *(reference: Section 5.1.2 "Simple linear regression", prediction)*.
+
+```{r 05-ex-11}
+coef(model_b)
+predict(model_b, newdata = data.frame(Height = 200))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.12 — show question"}
+**EX5.12 (★★★)** Residuals vs fitted plot.
+:::
+
+**Solution** *(reference: Section 5.1.3 "Observed/fitted values and residuals", residual diagnostics)*. Look for trumpet shapes (heteroscedasticity) or curvature (mis-specification). The basketball data is mostly clean; modest fan-out is normal at the high-Weight tail.
+
+```{r 05-ex-12, fig.height=3}
+get_regression_points(model_b) |>
+  ggplot(aes(x = Weight_hat, y = residual)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept = 0, linetype = 2)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.13 — show question"}
+**EX5.13 (★★★)** Repeat for `Sport == "Gymnastics"`. Compare slopes.
+:::
+
+**Solution** *(reference: Section 5.1.2 "Simple linear regression")*. Gymnasts' slope is typically *steeper* (kg per cm) — a small height range maps to a larger weight range relative to basketball, where many tall players cluster around average BMI.
+
+```{r 05-ex-13}
+gym <- olympic_athletes |>
+  filter(Sport == "Gymnastics", !is.na(Height), !is.na(Weight))
+model_g <- lm(Weight ~ Height, data = gym)
+get_regression_table(model_g)
+```
+
+***
+
+### Categorical predictor
+
+::: {.callout-note collapse="true" title="EX5.14 — show question"}
+**EX5.14 (★★)** Boxplots of `Height` by `Sex` on `bball`.
+:::
+
+**Solution** *(reference: Section 5.2.1 "Exploratory data analysis")*. Male basketball players are taller on average than female basketball players.
+
+```{r 05-ex-14, fig.height=3}
+ggplot(bball, aes(x = Sex, y = Height)) + geom_boxplot()
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.15 — show question"}
+**EX5.15 (★★)** Fit `lm(Height ~ Sex)` on `bball`. Which sex is the baseline?
+:::
+
+**Solution** *(reference: Section 5.2.2 "Linear regression")*. R uses **alphabetical order** for factor levels by default, so `F` is the baseline. The coefficient `SexM` is the *difference* M − F.
+
+```{r 05-ex-15}
+model_sex <- lm(Height ~ Sex, data = bball)
+get_regression_table(model_sex)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.16 — show question"}
+**EX5.16 (★★)** Interpret the intercept of `model_sex`.
+:::
+
+**Solution** *(reference: Section 5.2.2 "Linear regression", baseline interpretation)*. The intercept is the **mean Height of female basketball players** in the data.
+
+***
+
+::: {.callout-note collapse="true" title="EX5.17 — show question"}
+**EX5.17 (★★)** Interpret the `SexM` coefficient.
+:::
+
+**Solution** *(reference: Section 5.2.2 "Linear regression", offset coefficients)*. `SexM` = *mean Height of male players − mean Height of female players*. So adding it to the intercept gives the male group mean.
+
+***
+
+::: {.callout-note collapse="true" title="EX5.18 — show question"}
+**EX5.18 (★★★)** Confirm with group means via `dplyr`.
+:::
+
+**Solution** *(reference: Section 5.2.2 "Linear regression", equivalence to group means)*.
+
+```{r 05-ex-18}
+bball |>
+  group_by(Sex) |>
+  summarize(mean_h = mean(Height), .groups = "drop")
+coef(model_sex)
+```
+
+The difference between the two group means equals the `SexM` coefficient.
+
+***
+
+::: {.callout-note collapse="true" title="EX5.19 — show question"}
+**EX5.19 (★★★)** `lm(Height ~ Season)` on the full data. Which season is taller?
+:::
+
+**Solution** *(reference: Section 5.2.2 "Linear regression")*. Summer's mean Height is slightly higher (driven by basketball, volleyball, rowing, etc.).
+
+```{r 05-ex-19}
+all_h <- olympic_athletes |> filter(!is.na(Height))
+get_regression_table(lm(Height ~ Season, data = all_h))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.20 — show question"}
+**EX5.20 (★★★)** `lm(Height ~ Sport)` on the 5 most-populous sports. Interpret one coefficient.
+:::
+
+**Solution** *(reference: Section 5.2.2 "Linear regression", multi-level categorical)*.
+
+```{r 05-ex-20}
+top5 <- olympic_athletes |>
+  count(Sport, sort = TRUE) |> slice_head(n = 5) |> pull(Sport)
+
+dat <- olympic_athletes |>
+  filter(Sport %in% top5, !is.na(Height))
+get_regression_table(lm(Height ~ Sport, data = dat))
+```
+
+Each non-baseline sport's coefficient is its **mean Height minus the baseline sport's mean Height**.
+
+***
+
+### Residuals & diagnostics
+
+::: {.callout-note collapse="true" title="EX5.21 — show question"}
+**EX5.21 (★★★)** Histogram of residuals from `model_b`.
+:::
+
+**Solution** *(reference: Section 5.1.3 "Observed/fitted values and residuals")*. Roughly bell-shaped, centered at 0 — the linear-model assumption is reasonable.
+
+```{r 05-ex-21, fig.height=3}
+get_regression_points(model_b) |>
+  ggplot(aes(x = residual)) +
+  geom_histogram(bins = 30)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.22 — show question"}
+**EX5.22 (★★★)** Residuals vs Height. Heteroscedasticity?
+:::
+
+**Solution** *(reference: Section 5.1.3 "Observed/fitted values and residuals")*. Some fan-out at higher Heights is visible — not extreme, but enough to note. A weighted regression or a transformation could address it.
+
+```{r 05-ex-22, fig.height=3}
+get_regression_points(model_b) |>
+  ggplot(aes(x = Height, y = residual)) +
+  geom_point(alpha = 0.3) +
+  geom_hline(yintercept = 0, linetype = 2)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.23 — show question"}
+**EX5.23 (★★)** Plain-English R² sentence.
+:::
+
+**Solution** *(reference: Section 5.1.2 "Simple linear regression", R²)*. "Knowing how tall a basketball athlete is gets us about 60% of the way to predicting their weight — the rest depends on factors we haven't measured (build, body composition, sport-specific training)."
+
+***
+
+::: {.callout-note collapse="true" title="EX5.24 — show question"}
+**EX5.24 (★★★)** Top-5 outliers in basketball Weight given Height.
+:::
+
+**Solution** *(reference: Section 5.1.3 "Observed/fitted values and residuals")*.
+
+```{r 05-ex-24}
+get_regression_points(model_b) |>
+  arrange(desc(abs(residual))) |>
+  slice_head(n = 5)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.25 — show question"}
+**EX5.25 (★★★)** What evidence shows that one straight line is *not* a good model on the *full* dataset?
+:::
+
+**Solution** *(reference: Section 5.1.2 "Simple linear regression", model assumptions)*. The full scatterplot shows multiple distinct *clusters* (one per sport), each with its own slope and intercept. A single line averages over a structurally heterogeneous population — visible curvature or banding, plus an R² well below the per-sport models.
+
+```{r 05-ex-25, message=FALSE, fig.height=3}
+olympic_athletes |>
+  filter(!is.na(Height), !is.na(Weight)) |>
+  ggplot(aes(x = Height, y = Weight)) +
+  geom_point(alpha = 0.02) +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+***
+
+### Critical thinking and synthesis
+
+::: {.callout-note collapse="true" title="EX5.26 — show question"}
+**EX5.26 (★★★)** Regress `Height ~ Year` on basketball.
+:::
+
+**Solution** *(reference: Section 5.3.1 "Correlation is not necessarily causation")*. A positive slope (cm/year) shows the secular trend.
+
+```{r 05-ex-26}
+get_regression_table(lm(Height ~ Year, data = bball))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.27 — show question"}
+**EX5.27 (★★★)** Refute "Olympic basketball *causes* people to grow taller every year."
+:::
+
+**Solution** *(reference: Section 5.3.1 "Correlation is not necessarily causation")*. The slope reflects **selection** — over the years the Olympics has progressively recruited *taller* athletes — not biology. Confounders include rule changes, professional NBA pipeline, and global trends in human height. Regression detects association; causation needs an experiment or a careful identification strategy.
+
+***
+
+::: {.callout-note collapse="true" title="EX5.28 — show question"}
+**EX5.28 (★★★)** Simple way to control for sport without multiple regression.
+:::
+
+**Solution** *(reference: Section 5.3.1 "Correlation is not necessarily causation", stratification)*. Fit the regression *separately within each sport* (stratification). Each model's slope is sport-specific. The pooled slope mixes within-sport and between-sport variation; the per-sport slopes isolate the within-sport effect.
+
+***
+
+::: {.callout-note collapse="true" title="EX5.29 — show question"}
+**EX5.29 (★★★)** `Weight ~ Height` for two sports. Compare slopes.
+:::
+
+**Solution** *(reference: Section 5.1.2 "Simple linear regression")*. *Answers vary by choice.* Different slopes ⇒ pooling distorts the relationship. If slopes are similar, pooling gains power without bias.
+
+```{r 05-ex-29}
+sports_two <- olympic_athletes |>
+  filter(Sport %in% c("Athletics", "Swimming"),
+         !is.na(Height), !is.na(Weight))
+
+sports_two |>
+  group_by(Sport) |>
+  summarize(slope = coef(lm(Weight ~ Height))[2],
+            intercept = coef(lm(Weight ~ Height))[1])
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.30 — show question"}
+**EX5.30 (★★★)** Why baseline matters for *interpretation* but not *prediction*.
+:::
+
+**Solution** *(reference: Section 5.2.2 "Linear regression", model parametrization)*. Predictions are invariant to which level is baseline — the same fitted means come out either way. But the coefficients have different *names* and *meanings* depending on baseline (intercept = mean of whichever level is baseline; offsets are *differences* from that baseline). Pick a baseline that makes interpretation natural for your audience.
+
+***
+
+::: {.callout-note collapse="true" title="EX5.31 — show question"}
+**EX5.31 (★★★)** Two situations where linear regression is a poor choice.
+:::
+
+**Solution** *(reference: Section 5.1.2 "Simple linear regression", model assumptions)*. (1) **Curved relationships** — e.g., diminishing returns or U-shapes; a line systematically misses both ends. (2) **Binary or count outcomes** — `Medal won (Y/N)`; logistic or count regressions are appropriate, not OLS.
+
+***
+
+::: {.callout-note collapse="true" title="EX5.32 — show question"}
+**EX5.32 (★★★)** Multi-level categorical regression with interpretation.
+:::
+
+**Solution** *(reference: Section 5.2.2 "Linear regression")*. *Answers vary.* Example: `lm(imdb_rating ~ region, data = steves::episodes)` gives one coefficient per non-baseline region; each is the difference in mean IMDB rating from the baseline region.
+
+***
+
+::: {.callout-note collapse="true" title="EX5.33 — show question"}
+**EX5.33 (★★)** Why doesn't `lm()` break on `NA`s?
+:::
+
+**Solution** *(reference: Section 5.1.2 "Simple linear regression", `na.action`)*. `lm()`'s default is `na.action = na.omit` — it silently drops rows with `NA` in any variable used in the formula. The summary's `n` reflects the kept rows. This is convenient, but you should always check how many rows were dropped.
+
+```{r 05-ex-33}
+summary(lm(Weight ~ Height, data = olympic_athletes))$df[2] + 2
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX5.34 — show question"}
+**EX5.34 (★★★)** Two questions this dataset can't answer with regression alone.
+:::
+
+**Solution** *(reference: Chapter 5 — synthesis)*. *Answers vary.* (1) "Does specific *training* cause athletic improvement?" — needs longitudinal training data. (2) "Why has female participation grown?" — needs policy/institutional data outside athlete demographics.
+
+***
+
+::: {.callout-note collapse="true" title="EX5.35 — show question"}
+**EX5.35 (★★★)** Open exploration.
+:::
+
+**Solution** *(reference: Chapter 5 — synthesis)*. *Answers will vary.* Example: "Among Olympic swimmers, **Height predicts about 40% of variation in Weight, with each cm associated with ~0.9 kg.**"
+
+```{r 05-ex-35}
+swim <- olympic_athletes |>
+  filter(Sport == "Swimming", !is.na(Height), !is.na(Weight))
+get_regression_summaries(lm(Weight ~ Height, data = swim))
+```
+
+***

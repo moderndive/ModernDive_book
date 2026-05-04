@@ -1,0 +1,561 @@
+Solutions for the end-of-chapter exercises in *Chapter 2 — Data Visualization*. The dataset is `olympic_athletes` (≈315k athlete-event rows, 1896–2026), accompanied by `medal_table` (medal counts per Games × NOC for 2018–2026) and `editions` (metadata for the five most recent Games), all from the [`olympicAthletes`](https://github.com/moderndive/olympicAthletes) package.
+
+::: {.callout-tip title="Section coverage at a glance" collapse="false" appearance="simple"}
+
+| Section in chapter                    | Exercises                                              |
+|---------------------------------------|--------------------------------------------------------|
+| Chapter overview / data exploration   | EX2.1, EX2.2, EX2.3, EX2.4                             |
+| 2.3 Scatterplots                      | EX2.5, EX2.8, EX2.9, EX2.10                            |
+| 2.3.1 Overplotting                    | EX2.6, EX2.7                                           |
+| 2.4 Linegraphs                        | EX2.11, EX2.12, EX2.13                                 |
+| 2.5 Histograms                        | EX2.14, EX2.16, EX2.17, EX2.33                         |
+| 2.5.1 Adjusting bins                  | EX2.15                                                 |
+| 2.6 Facets                            | EX2.27, EX2.28, EX2.29                                 |
+| 2.7 Boxplots                          | EX2.18, EX2.19, EX2.20, EX2.21                         |
+| 2.8 Barplots                          | EX2.22, EX2.23, EX2.24, EX2.25, EX2.26                 |
+| Critical thinking / open exploration  | EX2.30, EX2.31, EX2.32, EX2.34, EX2.35                 |
+
+Difficulty stars on each exercise: ★ warm-up, ★★ standard application, ★★★ critical thinking. Click *show question* on any callout to reveal the prompt; the solution is always visible underneath.
+:::
+
+```{r 02-ex-setup, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(olympicAthletes)
+```
+
+### Setup and exploration
+
+::: {.callout-note collapse="true" title="EX2.1 — show question"}
+**EX2.1 (★)** Load `olympicAthletes`, then run `glimpse()` on each of the three datasets. How many rows and how many columns does each have?
+:::
+
+**Solution** *(reference: Chapter 2, "Data Visualization", overview)*. `olympic_athletes` ≈ **314,749 × 15**; `medal_table` ≈ **273 × 9**; `editions` ≈ **5 × 14**.
+
+```{r 02-ex-1}
+glimpse(medal_table)
+glimpse(editions)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.2 — show question"}
+**EX2.2 (★)** For each column in `olympic_athletes`, classify it as **numerical** or **categorical**. There are some that look numerical but behave categorically — name at least one and justify.
+:::
+
+**Solution** *(reference: Chapter 1, "Identification and measurement variables")*. Numerical: `Age`, `Height`, `Weight`, `Year`. Categorical: `Sex`, `Team`, `NOC`, `Games`, `Season`, `City`, `Sport`, `Event`, `Medal`. Identifier: `ID`, `Name`. **Year** is interesting — stored as integer, but for grouping/coloring purposes it acts like a small set of categorical levels (every 4 years).
+
+***
+
+::: {.callout-note collapse="true" title="EX2.3 — show question"}
+**EX2.3 (★)** `Year` stores values like `1896`, `2024`. Why is treating `Year` as numerical (continuous x-axis on a linegraph) often more useful than treating it as categorical? When would the categorical interpretation be useful?
+:::
+
+**Solution** *(reference: Sections 2.4 "Linegraphs" and 2.8 "Barplots")*. Treating `Year` as numerical preserves the **ordering and spacing** of time, which is what a linegraph needs. Treating it as categorical (factor) can be useful for *boxplots* or *grouped barplots* where each Games is its own category to compare side-by-side.
+
+***
+
+::: {.callout-note collapse="true" title="EX2.4 — show question"}
+**EX2.4 (★)** `Height` and `Weight` have many `NA` values, especially for older Games. Predict — without running code — *why* this is. Then count the proportion of `NA`s in each.
+:::
+
+**Solution** *(reference: Chapter 2 overview, exploring the data)*. Bio data was not systematically reported in early 20th-century Games; coverage improved over time but is still incomplete for the most recent Games (athlete privacy / late data ingest). The proportion of `NA`s for `Height`/`Weight` is roughly **30–35%** overall:
+
+```{r 02-ex-4}
+olympic_athletes |>
+  summarize(
+    pct_height_na = mean(is.na(Height)),
+    pct_weight_na = mean(is.na(Weight))
+  )
+```
+
+***
+
+### Scatterplots
+
+::: {.callout-note collapse="true" title="EX2.5 — show question"}
+**EX2.5 (★★)** Build a scatterplot of `Weight` (y) vs `Height` (x) for **all athletes**. What overall pattern do you see? Do you see overplotting?
+:::
+
+**Solution** *(reference: Section 2.3 "Scatterplots")*. A clear positive linear association — taller athletes tend to be heavier. With ~315k points, the cloud is heavily over-plotted near the median.
+
+```{r 02-ex-5, message=FALSE, warning=FALSE, fig.height=3.5}
+ggplot(olympic_athletes, aes(x = Height, y = Weight)) +
+  geom_point()
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.6 — show question"}
+**EX2.6 (★★)** Modify your scatterplot to color points by `Sex`. What pattern does coloring reveal that the single-color version hid?
+:::
+
+**Solution** *(reference: Section 2.3.1 "Overplotting")*. Two overlapping clouds — the female cloud sits below-left of the male cloud (lower height, lower weight on average) but with substantial overlap.
+
+```{r 02-ex-6, message=FALSE, warning=FALSE, fig.height=3.5}
+ggplot(olympic_athletes, aes(x = Height, y = Weight, color = Sex)) +
+  geom_point(alpha = 0.05)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.7 — show question"}
+**EX2.7 (★★)** Set `alpha = 0.05` on `geom_point()`. Compare to the un-faded version. Where is the densest cluster?
+:::
+
+**Solution** *(reference: Section 2.3.1 "Overplotting")*. With `alpha = 0.05` the densest core (around ~175 cm and ~70 kg) becomes visible. The opaque version hides this peak under a black blob.
+
+```{r 02-ex-7, message=FALSE, warning=FALSE, fig.height=3.5}
+ggplot(olympic_athletes, aes(x = Height, y = Weight)) +
+  geom_point(alpha = 0.05)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.8 — show question"}
+**EX2.8 (★★)** Filter the data to `Sport == "Gymnastics"` and rebuild the Height vs Weight scatterplot.
+:::
+
+**Solution** *(reference: Section 2.3 "Scatterplots")*. The cloud is shifted *left and down* compared to all-athletes — gymnasts are typically shorter and lighter.
+
+```{r 02-ex-8, message=FALSE, warning=FALSE, fig.height=3.5}
+olympic_athletes |>
+  filter(Sport == "Gymnastics") |>
+  ggplot(aes(x = Height, y = Weight, color = Sex)) +
+  geom_point(alpha = 0.4)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.9 — show question"}
+**EX2.9 (★★)** Filter to `Sport == "Basketball"` and rebuild. Compared with gymnastics, where on the (Height, Weight) plane do basketball athletes sit?
+:::
+
+**Solution** *(reference: Section 2.3 "Scatterplots")*. Basketball players cluster at the **upper-right** — much taller (often 190+ cm) and heavier than gymnasts.
+
+```{r 02-ex-9, message=FALSE, warning=FALSE, fig.height=3.5}
+olympic_athletes |>
+  filter(Sport == "Basketball") |>
+  ggplot(aes(x = Height, y = Weight, color = Sex)) +
+  geom_point(alpha = 0.4)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.10 — show question"}
+**EX2.10 (★★)** Add `labs()` to your favorite of the above plots — title, axis labels in human language, and a caption naming the data source.
+:::
+
+**Solution** *(reference: Section 2.3 "Scatterplots", grammar of graphics layers)*. Good labels turn a chart from "data" into a *communication artifact*. A reader who sees only the image — not your code — needs to know what's plotted, in what units, and where the data came from.
+
+```{r 02-ex-10, message=FALSE, warning=FALSE, fig.height=3.5}
+olympic_athletes |>
+  filter(Sport == "Basketball") |>
+  ggplot(aes(x = Height, y = Weight, color = Sex)) +
+  geom_point(alpha = 0.4) +
+  labs(
+    title    = "Olympic basketball athletes are tall, regardless of sex",
+    subtitle = "1896–2026 Summer Games",
+    x = "Height (cm)", y = "Weight (kg)", color = "Sex",
+    caption = "Source: olympicAthletes R package"
+  )
+```
+
+***
+
+### Linegraphs
+
+::: {.callout-note collapse="true" title="EX2.11 — show question"}
+**EX2.11 (★★)** Using `medal_table`, plot the **total** medals (`gold + silver + bronze`) won by `"USA"` across the five recent Games as a linegraph (`year` on the x-axis).
+:::
+
+**Solution** *(reference: Section 2.4 "Linegraphs")*.
+
+```{r 02-ex-11, fig.height=3}
+medal_table |>
+  filter(noc == "USA") |>
+  mutate(total_medals = gold + silver + bronze) |>
+  ggplot(aes(x = year, y = total_medals)) +
+  geom_line() + geom_point() +
+  labs(x = "Games (year)", y = "Total medals (USA)")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.12 — show question"}
+**EX2.12 (★★)** Compute the **number of distinct athletes per Games** in `olympic_athletes` and plot it as a linegraph against `Year`. Filter to a single season — combining them would mix two cycles.
+:::
+
+**Solution** *(reference: Section 2.4 "Linegraphs")*. Linegraphs require a single ordered sequence on the x-axis — Summer and Winter alternate every 2 years and would zig-zag if mixed.
+
+```{r 02-ex-12, fig.height=3}
+olympic_athletes |>
+  filter(Season == "Summer") |>
+  group_by(Year) |>
+  summarize(n_athletes = n_distinct(ID)) |>
+  ggplot(aes(x = Year, y = n_athletes)) +
+  geom_line() + geom_point() +
+  labs(y = "Distinct athletes (Summer Games)")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.13 — show question"}
+**EX2.13 (★★)** For one sport of your choice, plot mean `Height` per `Year` over time.
+:::
+
+**Solution** *(reference: Section 2.4 "Linegraphs")*. *Answers will vary.* Basketball trends upward — average height has grown ~10 cm over the past century.
+
+```{r 02-ex-13, message=FALSE, fig.height=3}
+olympic_athletes |>
+  filter(Sport == "Basketball") |>
+  group_by(Year) |>
+  summarize(mean_height = mean(Height, na.rm = TRUE)) |>
+  ggplot(aes(x = Year, y = mean_height)) +
+  geom_line() + geom_point() +
+  labs(y = "Mean height (cm)", title = "Olympic basketball: rising stature")
+```
+
+***
+
+### Histograms
+
+::: {.callout-note collapse="true" title="EX2.14 — show question"}
+**EX2.14 (★★)** Build a histogram of `Age` for all athletes. What's the rough median? Are there suspicious values (very young / very old)?
+:::
+
+**Solution** *(reference: Section 2.5 "Histograms")*. Median age sits around **25**. Tails reach into the teens and 50s+ — a few are real (equestrian, shooting) and a few may be data anomalies.
+
+```{r 02-ex-14, message=FALSE, warning=FALSE, fig.height=3}
+ggplot(olympic_athletes, aes(x = Age)) +
+  geom_histogram(bins = 30) +
+  labs(x = "Age (years)")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.15 — show question"}
+**EX2.15 (★★)** Try `bins = 10`, then `bins = 80`. Which gives a more honest view?
+:::
+
+**Solution** *(reference: Section 2.5.1 "Adjusting the bins")*. With `bins = 10`, fine structure is washed out. With `bins = 80`, noise dominates — every integer age gets a spike. Around `bins = 30` is the sweet spot for this distribution.
+
+```{r 02-ex-15, message=FALSE, warning=FALSE, fig.height=3}
+ggplot(olympic_athletes, aes(x = Age)) + geom_histogram(bins = 10)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.16 — show question"}
+**EX2.16 (★★)** Filter to `Season == "Winter"` and plot a histogram of `Height`. Repeat for `Season == "Summer"`. Which season has taller athletes on average?
+:::
+
+**Solution** *(reference: Section 2.5 "Histograms")*. Both distributions peak around 175 cm but **Summer** athletes have a slightly heavier upper tail (basketball/volleyball/rowing pull it up).
+
+```{r 02-ex-16, message=FALSE, warning=FALSE, fig.height=3}
+olympic_athletes |>
+  filter(Season == "Summer") |>
+  ggplot(aes(x = Height)) + geom_histogram(bins = 30) +
+  labs(title = "Summer Games — Height (cm)")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.17 — show question"}
+**EX2.17 (★★)** A peer claims "Olympic athletes are mostly in their 20s." Use a histogram to support or refute this claim with a one-sentence answer.
+:::
+
+**Solution** *(reference: Section 2.5 "Histograms")*. The histogram supports the claim — the bulk of the distribution sits between 20 and 30, with the central tendency in the mid-20s.
+
+```{r 02-ex-17, message=FALSE, warning=FALSE, fig.height=3}
+ggplot(olympic_athletes, aes(x = Age)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "white")
+```
+
+***
+
+### Boxplots
+
+::: {.callout-note collapse="true" title="EX2.18 — show question"}
+**EX2.18 (★★)** Build side-by-side boxplots of `Age` by `Season`. Which season's athletes skew older?
+:::
+
+**Solution** *(reference: Section 2.7 "Boxplots")*. Winter Games athletes skew slightly older — sports like curling, biathlon, and bobsleigh keep peak ages later than gymnastics or sprinting.
+
+```{r 02-ex-18, message=FALSE, warning=FALSE, fig.height=3}
+ggplot(olympic_athletes, aes(x = Season, y = Age)) +
+  geom_boxplot()
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.19 — show question"}
+**EX2.19 (★★)** Identify the **5 sports with the most athletes**, then build boxplots of `Height` for those 5 sports only.
+:::
+
+**Solution** *(reference: Section 2.7 "Boxplots")*.
+
+```{r 02-ex-19, message=FALSE, warning=FALSE, fig.height=3}
+top5_sports <- olympic_athletes |>
+  count(Sport, sort = TRUE) |>
+  slice_head(n = 5) |>
+  pull(Sport)
+
+olympic_athletes |>
+  filter(Sport %in% top5_sports) |>
+  ggplot(aes(x = Sport, y = Height)) +
+  geom_boxplot() +
+  coord_flip()
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.20 — show question"}
+**EX2.20 (★★)** A single boxplot for *all* sports would have hundreds of boxes. Why is filtering to a few sports a *better* visualization choice than showing them all?
+:::
+
+**Solution** *(reference: Section 2.7 "Boxplots", chart legibility)*. Visual clutter masks the signal. With 50+ boxes, individual medians are unreadable, axis labels overlap, and the chart conveys "lots of sports" instead of any specific comparison. Selecting a small set lets the reader actually *compare*.
+
+***
+
+::: {.callout-note collapse="true" title="EX2.21 — show question"}
+**EX2.21 (★★★)** A boxplot of `Weight` for one sport shows many "outlier" dots above the upper whisker. Are these necessarily data errors?
+:::
+
+**Solution** *(reference: Section 2.7 "Boxplots", IQR rule)*. **No.** Boxplot "outliers" use the $Q_3 + 1.5 \times \text{IQR}$ rule and flag any unusually large value relative to the bulk — but heavyweight sports legitimately produce athletes well above average. They're statistical outliers, not necessarily errors.
+
+***
+
+### Barplots
+
+::: {.callout-note collapse="true" title="EX2.22 — show question"}
+**EX2.22 (★★)** Use `medal_table` to find the **10 NOCs with the most total medals** across all five recent Games combined. Display them as a horizontal bar chart, sorted descending.
+:::
+
+**Solution** *(reference: Section 2.8 "Barplots")*.
+
+```{r 02-ex-22, fig.height=3}
+top10 <- medal_table |>
+  group_by(noc, country) |>
+  summarize(total = sum(total), .groups = "drop") |>
+  slice_max(total, n = 10)
+
+ggplot(top10, aes(x = total, y = reorder(country, total))) +
+  geom_col() +
+  labs(x = "Total medals (2018–2026)", y = NULL)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.23 — show question"}
+**EX2.23 (★★)** Modify your top-10 plot to *stack* gold/silver/bronze in each bar.
+:::
+
+**Solution** *(reference: Section 2.8 "Barplots")*.
+
+```{r 02-ex-23, message=FALSE, fig.height=3}
+library(tidyr)
+medal_table |>
+  group_by(noc, country) |>
+  summarize(across(c(gold, silver, bronze), sum), total = sum(total),
+            .groups = "drop") |>
+  slice_max(total, n = 10) |>
+  pivot_longer(c(gold, silver, bronze),
+               names_to = "medal_type", values_to = "n") |>
+  mutate(medal_type = factor(medal_type, levels = c("bronze", "silver", "gold"))) |>
+  ggplot(aes(x = n, y = reorder(country, n, sum), fill = medal_type)) +
+  geom_col() +
+  labs(x = "Medals (2018–2026)", y = NULL, fill = "Medal")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.24 — show question"}
+**EX2.24 (★★)** Build a barplot of medal counts for **the 2024 Summer Games only** (one bar per top-10 NOC).
+:::
+
+**Solution** *(reference: Section 2.8 "Barplots")*. The U.S. is the top NOC for the 2024 Summer Games.
+
+```{r 02-ex-24, fig.height=3}
+medal_table |>
+  filter(games == "2024 Summer") |>
+  slice_max(total, n = 10) |>
+  ggplot(aes(x = total, y = reorder(country, total))) +
+  geom_col() +
+  labs(x = "Total medals", y = NULL, title = "2024 Summer — top 10 NOCs")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.25 — show question"}
+**EX2.25 (★★)** Use `geom_bar()` (not `geom_col()`) on `olympic_athletes` to show the count of athlete-rows per `Season`. Why is `geom_bar()` the right choice here, not `geom_col()`?
+:::
+
+**Solution** *(reference: Section 2.8 "Barplots", `geom_bar()` vs `geom_col()`)*. `geom_bar()` *counts rows* — exactly what we want here (no pre-tallying needed). `geom_col()` requires a pre-computed `y` value.
+
+```{r 02-ex-25, fig.height=3}
+ggplot(olympic_athletes, aes(x = Season)) + geom_bar()
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.26 — show question"}
+**EX2.26 (★★★)** A pie chart of the top-10-NOC medal totals from EX2.22 would be visually appealing. Give two reasons the chapter argues a barplot is *better*.
+:::
+
+**Solution** *(reference: Section 2.8 "Must avoid pie charts!")*. (1) **Humans judge length more accurately than angle**: differences between similar-sized slices are nearly impossible to perceive. (2) **Sorted bars convey ranking** at a glance, while pie slices need a legend or numeric labels for the same effect.
+
+***
+
+### Facets
+
+::: {.callout-note collapse="true" title="EX2.27 — show question"}
+**EX2.27 (★★)** Take your Height vs Weight scatterplot from EX2.5 and add `facet_wrap(~ Sex)`. What does faceting reveal that coloring did *not* (or vice versa)?
+:::
+
+**Solution** *(reference: Section 2.6 "Facets")*. Faceting separates the two clouds into their own panels — easier for *spotting outliers within each group*. Coloring keeps both on one set of axes — easier for *comparing the two distributions side-by-side*. Different jobs.
+
+```{r 02-ex-27, message=FALSE, warning=FALSE, fig.height=3}
+ggplot(olympic_athletes, aes(x = Height, y = Weight)) +
+  geom_point(alpha = 0.05) +
+  facet_wrap(~ Sex)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.28 — show question"}
+**EX2.28 (★★)** Build a faceted histogram of `Age`, one panel per `Season`.
+:::
+
+**Solution** *(reference: Section 2.6 "Facets")*.
+
+```{r 02-ex-28, message=FALSE, warning=FALSE, fig.height=3}
+ggplot(olympic_athletes, aes(x = Age)) +
+  geom_histogram(bins = 30) +
+  facet_wrap(~ Season, scales = "free_y")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.29 — show question"}
+**EX2.29 (★★)** Filter to the top-5 NOCs in `medal_table`, then use `facet_wrap(~ noc)` to show a barplot of medal totals per Games for each NOC.
+:::
+
+**Solution** *(reference: Section 2.6 "Facets")*.
+
+```{r 02-ex-29, fig.height=4}
+top5_noc <- medal_table |>
+  group_by(noc) |> summarize(t = sum(total)) |>
+  slice_max(t, n = 5) |> pull(noc)
+
+medal_table |>
+  filter(noc %in% top5_noc) |>
+  ggplot(aes(x = year, y = total, fill = season)) +
+  geom_col() +
+  facet_wrap(~ noc, scales = "free_y") +
+  labs(x = "Year", y = "Total medals", fill = "Season")
+```
+
+***
+
+### Critical thinking and open exploration
+
+::: {.callout-note collapse="true" title="EX2.30 — show question"}
+**EX2.30 (★★★)** Imagine a news outlet posts a chart of "USA's medal dominance" using a y-axis that starts at 50 (cropping the bar baseline).
+:::
+
+**Solution** *(reference: Section 2.8 "Barplots", chart honesty)*. Cropping the y-axis exaggerates differences — a USA total of 120 vs a peer's 90 looks like *4× as many* (70 vs 40 above the cropped origin) instead of the true 1.33×. An honest version starts the y-axis at zero, or uses a non-bar geom (e.g., points + connecting line) where a non-zero baseline is conventionally acceptable.
+
+***
+
+::: {.callout-note collapse="true" title="EX2.31 — show question"}
+**EX2.31 (★★★)** Build a chart that visualizes the *rise of female participation* in the Summer Olympics over time.
+:::
+
+**Solution** *(reference: Section 2.4 "Linegraphs")*. The female line rises sharply from near zero in 1900 to roughly parity with the male line by the 2020s.
+
+```{r 02-ex-31, message=FALSE, fig.height=3}
+olympic_athletes |>
+  filter(Season == "Summer") |>
+  group_by(Year, Sex) |>
+  summarize(n_athletes = n_distinct(ID), .groups = "drop") |>
+  ggplot(aes(x = Year, y = n_athletes, color = Sex)) +
+  geom_line() + geom_point(size = 1) +
+  labs(y = "Distinct athletes (Summer Games)",
+       title = "Women's participation has caught up to men's")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.32 — show question"}
+**EX2.32 (★★★)** Pick a sport whose athletes' average height has clearly *changed* over time. Build a chart that supports the change. Acknowledge any caveats.
+:::
+
+**Solution** *(reference: Section 2.4 "Linegraphs", working with missingness)*. *Answers will vary.* Volleyball average heights have climbed steadily. Caveat: pre-1990 height data is sparse, so early points are computed on small samples.
+
+```{r 02-ex-32, message=FALSE, fig.height=3}
+olympic_athletes |>
+  filter(Sport == "Volleyball") |>
+  group_by(Year) |>
+  summarize(mean_height = mean(Height, na.rm = TRUE),
+            n = sum(!is.na(Height)), .groups = "drop") |>
+  filter(n > 20) |>
+  ggplot(aes(x = Year, y = mean_height)) +
+  geom_line() + geom_point() +
+  labs(y = "Mean height (cm)", title = "Volleyball: athletes are getting taller")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.33 — show question"}
+**EX2.33 (★★★)** Build a barplot showing the *count of `NA`s per column* in `olympic_athletes`. Which columns have the most missingness?
+:::
+
+**Solution** *(reference: Section 2.8 "Barplots", data quality awareness)*. `Height`, `Weight`, and `Age` lead the missingness — older Games and recent privacy practices both contribute.
+
+```{r 02-ex-33, message=FALSE, fig.height=3}
+olympic_athletes |>
+  summarize(across(everything(), ~ sum(is.na(.x)))) |>
+  tidyr::pivot_longer(everything(), names_to = "column", values_to = "n_na") |>
+  filter(n_na > 0) |>
+  ggplot(aes(x = n_na, y = reorder(column, n_na))) +
+  geom_col() +
+  labs(x = "# of NAs", y = NULL)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.34 — show question"}
+**EX2.34 (★★★)** Using `editions`, build a small table or chart relating `participants` to `medal_events`. Are bigger Games (more athletes) also more medal-rich?
+:::
+
+**Solution** *(reference: Section 2.3 "Scatterplots")*. With only 5 rows it's a tiny scatter, but more participants generally accompanies more medal events — though Summer/Winter sit on different scales.
+
+```{r 02-ex-34, fig.height=3}
+ggplot(editions, aes(x = participants, y = medal_events,
+                     color = season, label = games)) +
+  geom_point(size = 3) +
+  geom_text(nudge_y = 8, size = 3) +
+  labs(x = "Participants", y = "Medal events")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX2.35 — show question"}
+**EX2.35 (★★★)** Open exploration: using any of the three datasets, find one pattern that surprises you.
+:::
+
+**Solution** *(reference: Chapter 2 — synthesis)*. *Answers will vary.* One example: **medal share is heavily right-skewed** — a small number of NOCs win the bulk of medals each Games.
+
+```{r 02-ex-35, fig.height=3}
+medal_table |>
+  filter(games == "2024 Summer") |>
+  arrange(desc(total)) |>
+  mutate(rank = row_number()) |>
+  ggplot(aes(x = rank, y = total)) +
+  geom_col() +
+  labs(x = "NOC rank", y = "Total medals",
+       title = "2024 Summer — long tail of medal distribution")
+```
+
+***

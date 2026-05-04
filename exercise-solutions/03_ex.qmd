@@ -1,0 +1,560 @@
+Solutions for the end-of-chapter exercises in *Chapter 3 — Data Wrangling*. Datasets: `olympic_athletes` and `medal_table` from [`olympicAthletes`](https://github.com/moderndive/olympicAthletes), and `episodes` from [`steves`](https://github.com/ismayc/steves) — a tidied snapshot of every *Rick Steves' Europe* episode (159 rows × 38 columns).
+
+::: {.callout-tip title="Section coverage at a glance" collapse="false" appearance="simple"}
+
+| Section in chapter             | Exercises                                          |
+|--------------------------------|----------------------------------------------------|
+| Setup / data exploration       | EX3.1, EX3.2, EX3.3                                |
+| 3.2 `filter`                   | EX3.4, EX3.5, EX3.6, EX3.7, EX3.8                  |
+| 3.7.1 `select`                 | EX3.9, EX3.10, EX3.11                              |
+| 3.5 `mutate`                   | EX3.12, EX3.13, EX3.14, EX3.15                     |
+| 3.6 `arrange`                  | EX3.16, EX3.17, EX3.18                             |
+| 3.3 `summarize` + 3.4 `group_by` | EX3.19, EX3.20, EX3.21, EX3.22, EX3.23, EX3.24, EX3.25 |
+| 3.7 joins                      | EX3.26, EX3.27, EX3.28, EX3.29                     |
+| Critical thinking / synthesis  | EX3.30, EX3.31, EX3.32, EX3.33, EX3.34, EX3.35     |
+
+Difficulty stars on each exercise: ★ warm-up, ★★ standard application, ★★★ critical thinking.
+:::
+
+```{r 03-ex-setup, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(olympicAthletes)
+library(steves)
+```
+
+### Setup
+
+::: {.callout-note collapse="true" title="EX3.1 — show question"}
+**EX3.1 (★)** Load `steves` and run `glimpse(episodes)`. How many rows and columns? Name three numerical and three categorical variables.
+:::
+
+**Solution** *(reference: Chapter 1, "Identification and measurement variables")*. **159 × 38**. Numerical: `season`, `imdb_rating`, `imdb_votes`, `lat`, `long`, `best_runtime`. Categorical: `primary_country`, `region`, `episode_type`, `theme_tags`, `iso2`. Date: `original_air_date`.
+
+```{r 03-ex-1}
+glimpse(episodes)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.2 — show question"}
+**EX3.2 (★)** Predict, then verify: what is the range of `imdb_rating` in `episodes`? What is the range of `season`?
+:::
+
+**Solution** *(reference: Chapter 2 overview, exploring data)*. IMDB ratings span ~7 to ~9 (the show is well-loved). Seasons run 1–13.
+
+```{r 03-ex-2}
+range(episodes$imdb_rating, na.rm = TRUE)
+range(episodes$season)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.3 — show question"}
+**EX3.3 (★)** `original_air_date` has type `Date`. Why does that matter for arithmetic compared to storing it as `character`?
+:::
+
+**Solution** *(reference: Section 3.5 "mutate existing variables", date arithmetic)*. With `Date`, you can compute differences directly (`date2 - date1` returns days), arrange chronologically without lexicographic surprises, and extract components with `lubridate::year()`/`month()`. Strings would need parsing every time.
+
+***
+
+### `filter()`
+
+::: {.callout-note collapse="true" title="EX3.4 — show question"}
+**EX3.4 (★)** Filter `olympic_athletes` to athletes from `Sport == "Swimming"` who won a `Gold` medal.
+:::
+
+**Solution** *(reference: Section 3.2 "filter rows")*.
+
+```{r 03-ex-4}
+olympic_athletes |>
+  filter(Sport == "Swimming", Medal == "Gold") |>
+  nrow()
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.5 — show question"}
+**EX3.5 (★)** Filter `episodes` to those where `primary_country == "Italy"`. How many?
+:::
+
+**Solution** *(reference: Section 3.2 "filter rows")*.
+
+```{r 03-ex-5}
+episodes |> filter(primary_country == "Italy") |> nrow()
+```
+
+Italy is the most-visited single country (~29 episodes).
+
+***
+
+::: {.callout-note collapse="true" title="EX3.6 — show question"}
+**EX3.6 (★)** Filter `episodes` to **highly-rated AND well-watched**: `imdb_rating >= 8` AND `imdb_votes >= 50`.
+:::
+
+**Solution** *(reference: Section 3.2 "filter rows", boolean operators)*.
+
+```{r 03-ex-6}
+episodes |>
+  filter(imdb_rating >= 8, imdb_votes >= 50) |>
+  select(season, episode_in_season, title, imdb_rating, imdb_votes)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.7 — show question"}
+**EX3.7 (★)** Filter `episodes` to the union: `"Italy"` OR `"France"`. Use `%in%`.
+:::
+
+**Solution** *(reference: Section 3.2 "filter rows", `%in%`)*.
+
+```{r 03-ex-7}
+episodes |>
+  filter(primary_country %in% c("Italy", "France")) |>
+  count(primary_country)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.8 — show question"}
+**EX3.8 (★★)** Filter `olympic_athletes` to the most recent Summer Games. How many distinct athletes?
+:::
+
+**Solution** *(reference: Section 3.2 "filter rows")*.
+
+```{r 03-ex-8}
+olympic_athletes |>
+  filter(Year == 2024, Season == "Summer") |>
+  summarize(n_distinct_athletes = n_distinct(ID))
+```
+
+***
+
+### `select()`
+
+::: {.callout-note collapse="true" title="EX3.9 — show question"}
+**EX3.9 (★)** Select identifier and medal-related columns from `olympic_athletes`.
+:::
+
+**Solution** *(reference: Section 3.7.1 "select variables")*.
+
+```{r 03-ex-9}
+olympic_athletes |>
+  select(ID, Name, Medal, Event, Sport, Year) |>
+  head()
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.10 — show question"}
+**EX3.10 (★)** Use a `tidyselect` helper to keep only the IMDB-related columns of `episodes`.
+:::
+
+**Solution** *(reference: Section 3.7.1 "select variables", helpers)*.
+
+```{r 03-ex-10}
+episodes |> select(starts_with("imdb")) |> head()
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.11 — show question"}
+**EX3.11 (★)** Drop `image_url` and `tvmaze_url` from `episodes`.
+:::
+
+**Solution** *(reference: Section 3.7.1 "select variables", negative selection)*.
+
+```{r 03-ex-11}
+episodes |> select(-image_url, -tvmaze_url) |> ncol()
+```
+
+***
+
+### `mutate()`
+
+::: {.callout-note collapse="true" title="EX3.12 — show question"}
+**EX3.12 (★★)** Add a `height_in` column converting `Height` (cm) to inches.
+:::
+
+**Solution** *(reference: Section 3.5 "mutate existing variables")*.
+
+```{r 03-ex-12}
+olympic_athletes |>
+  mutate(height_in = Height / 2.54) |>
+  select(Name, Height, height_in) |>
+  head()
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.13 — show question"}
+**EX3.13 (★★)** Recompute `air_year` from `original_air_date`.
+:::
+
+**Solution** *(reference: Section 3.5 "mutate existing variables", date functions)*.
+
+```{r 03-ex-13}
+episodes |>
+  mutate(air_year_recomputed = as.integer(format(original_air_date, "%Y"))) |>
+  summarize(matches = all(air_year_recomputed == air_year, na.rm = TRUE))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.14 — show question"}
+**EX3.14 (★★)** Add `won_medal` (`TRUE`/`FALSE`). What proportion of athlete-rows won a medal?
+:::
+
+**Solution** *(reference: Section 3.5 "mutate existing variables", boolean coercion)*.
+
+```{r 03-ex-14}
+olympic_athletes |>
+  mutate(won_medal = !is.na(Medal)) |>
+  summarize(pct_with_medal = mean(won_medal))
+```
+
+About 14% of athlete-rows are part of a medal-winning entry. (Team events count each roster member.)
+
+***
+
+::: {.callout-note collapse="true" title="EX3.15 — show question"}
+**EX3.15 (★★)** Add ordinal `age_bucket` using `cut()`.
+:::
+
+**Solution** *(reference: Section 3.5 "mutate existing variables", binning)*.
+
+```{r 03-ex-15}
+olympic_athletes |>
+  mutate(age_bucket = cut(Age, breaks = c(0, 18, 22, 28, 35, 100),
+                          right = FALSE)) |>
+  count(age_bucket)
+```
+
+***
+
+### `arrange()`
+
+::: {.callout-note collapse="true" title="EX3.16 — show question"}
+**EX3.16 (★★)** 10 oldest athletes by `Age`.
+:::
+
+**Solution** *(reference: Section 3.6 "arrange and sort rows")*.
+
+```{r 03-ex-16}
+olympic_athletes |>
+  arrange(desc(Age)) |>
+  select(Name, Age, Sport, Year) |>
+  slice_head(n = 10)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.17 — show question"}
+**EX3.17 (★★)** 5 highest-rated *Rick Steves' Europe* episodes.
+:::
+
+**Solution** *(reference: Section 3.6 "arrange and sort rows")*.
+
+```{r 03-ex-17}
+episodes |>
+  arrange(desc(imdb_rating)) |>
+  select(season, episode_in_season, title, imdb_rating) |>
+  slice_head(n = 5)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.18 — show question"}
+**EX3.18 (★★)** Sort by `season` asc, then `imdb_rating` desc.
+:::
+
+**Solution** *(reference: Section 3.6 "arrange and sort rows", multi-key)*.
+
+```{r 03-ex-18}
+episodes |>
+  arrange(season, desc(imdb_rating)) |>
+  select(season, episode_in_season, title, imdb_rating) |>
+  slice_head(n = 10)
+```
+
+***
+
+### `group_by` + `summarize`
+
+::: {.callout-note collapse="true" title="EX3.19 — show question"}
+**EX3.19 (★★)** Mean `Height` per `Sport`, top 10 tallest.
+:::
+
+**Solution** *(reference: Section 3.4 "group_by rows" + 3.3 "summarize variables")*.
+
+```{r 03-ex-19}
+olympic_athletes |>
+  group_by(Sport) |>
+  summarize(mean_height = mean(Height, na.rm = TRUE), .groups = "drop") |>
+  slice_max(mean_height, n = 10)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.20 — show question"}
+**EX3.20 (★★)** Total medals per NOC across the five recent Games — top 10.
+:::
+
+**Solution** *(reference: Section 3.4 "group_by rows")*.
+
+```{r 03-ex-20}
+medal_table |>
+  group_by(noc, country) |>
+  summarize(total = sum(total), .groups = "drop") |>
+  slice_max(total, n = 10)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.21 — show question"}
+**EX3.21 (★★)** Median IMDB rating per `region` in `episodes`.
+:::
+
+**Solution** *(reference: Section 3.4 "group_by rows")*.
+
+```{r 03-ex-21}
+episodes |>
+  group_by(region) |>
+  summarize(median_rating = median(imdb_rating, na.rm = TRUE),
+            n_episodes    = n(),
+            .groups = "drop") |>
+  arrange(desc(median_rating))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.22 — show question"}
+**EX3.22 (★★)** Episodes per `season` of *Rick Steves' Europe* — barplot.
+:::
+
+**Solution** *(reference: Section 3.4 "group_by rows" + Section 2.8 "Barplots")*.
+
+```{r 03-ex-22, fig.height=3}
+episodes |>
+  count(season) |>
+  ggplot(aes(x = factor(season), y = n)) +
+  geom_col() +
+  labs(x = "Season", y = "Number of episodes")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.23 — show question"}
+**EX3.23 (★★)** Distinct *athletes* per `NOC`, top 10.
+:::
+
+**Solution** *(reference: Section 3.3 "summarize variables", `n_distinct()`)*.
+
+```{r 03-ex-23}
+olympic_athletes |>
+  group_by(NOC) |>
+  summarize(n_athletes = n_distinct(ID), .groups = "drop") |>
+  slice_max(n_athletes, n = 10)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.24 — show question"}
+**EX3.24 (★★★)** Mean `Age` per `Sport`, only sports with ≥ 1,000 athlete-rows.
+:::
+
+**Solution** *(reference: Section 3.3 "summarize variables", `n()` for sample sizes)*. The post-summary `filter` keeps the comparison meaningful — averages computed on tiny samples are noisy.
+
+```{r 03-ex-24}
+olympic_athletes |>
+  group_by(Sport) |>
+  summarize(n = n(), mean_age = mean(Age, na.rm = TRUE),
+            .groups = "drop") |>
+  filter(n >= 1000) |>
+  arrange(mean_age) |>
+  slice_head(n = 5)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.25 — show question"}
+**EX3.25 (★★)** Distinct events per `Games` — has the number grown?
+:::
+
+**Solution** *(reference: Section 3.4 "group_by rows")*. Yes, the long-run trend is upward (more disciplines, more events per discipline).
+
+```{r 03-ex-25, fig.height=3}
+olympic_athletes |>
+  group_by(Year, Season) |>
+  summarize(n_events = n_distinct(Event), .groups = "drop") |>
+  ggplot(aes(x = Year, y = n_events, color = Season)) +
+  geom_line() + geom_point() +
+  labs(y = "Distinct events")
+```
+
+***
+
+### `join()`
+
+::: {.callout-note collapse="true" title="EX3.26 — show question"}
+**EX3.26 (★★★)** Inner-join `olympic_athletes` with `editions` (5 rows). Resulting row count?
+:::
+
+**Solution** *(reference: Section 3.7 "join data frames", inner_join)*. `editions` only covers 2018–2026, so an inner join keeps only athletes from those Games. The original 314,749 rows shrink to the count of athletes in those 5 Games.
+
+```{r 03-ex-26}
+olympic_athletes |>
+  inner_join(editions, by = c("Games" = "games")) |>
+  nrow()
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.27 — show question"}
+**EX3.27 (★★★)** Left-join instead. Why is the row count different?
+:::
+
+**Solution** *(reference: Section 3.7 "join data frames", left_join)*. `left_join` preserves *all* athlete rows; rows whose `Games` value isn't in `editions` get `NA`s for the joined columns. So the count matches the original 314,749.
+
+```{r 03-ex-27}
+olympic_athletes |>
+  left_join(editions, by = c("Games" = "games")) |>
+  nrow()
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.28 — show question"}
+**EX3.28 (★★★)** Anti-join: athletes whose NOC didn't appear in `medal_table` for that Games.
+:::
+
+**Solution** *(reference: Section 3.7 "join data frames", anti_join + filtering joins)*. These are NOCs that participated but won no medals at that Games — the bulk of NOCs in any given Olympics.
+
+```{r 03-ex-28}
+olympic_athletes |>
+  filter(Year >= 2018) |>
+  anti_join(medal_table, by = c("Year" = "year", "NOC" = "noc")) |>
+  count(Year, Season, NOC, sort = TRUE) |>
+  slice_head(n = 10)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.29 — show question"}
+**EX3.29 (★★★)** Semi-join: keep only athletes from medal-winning NOCs.
+:::
+
+**Solution** *(reference: Section 3.7 "join data frames", semi_join)*. `semi_join()` filters `x` rows to those that match `y` — without bringing along `y`'s columns.
+
+```{r 03-ex-29}
+olympic_athletes |>
+  filter(Year >= 2018) |>
+  semi_join(medal_table, by = c("Year" = "year", "NOC" = "noc")) |>
+  nrow()
+```
+
+***
+
+### Critical thinking and open exploration
+
+::: {.callout-note collapse="true" title="EX3.30 — show question"}
+**EX3.30 (★★)** Run `mean(olympic_athletes$Height)` without `na.rm`.
+:::
+
+**Solution** *(reference: Section 3.3 "summarize variables", `na.rm`)*. The result is `NA` — any `NA` in the input poisons the mean. Use `na.rm = TRUE` to ignore them.
+
+```{r 03-ex-30}
+mean(olympic_athletes$Height)
+mean(olympic_athletes$Height, na.rm = TRUE)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.31 — show question"}
+**EX3.31 (★★★)** Compare a 3-step chain written with intermediate variables vs `|>`.
+:::
+
+**Solution** *(reference: Section 3.1 "The pipe operator |>")*. Piped style is easier to *modify* (insert/swap a step in one line) and easier to *read top-to-bottom*. Intermediate-variable style is easier to *debug step-by-step* (you can `View(step1)` between calls).
+
+```{r 03-ex-31, eval=FALSE}
+# Intermediate variables
+step1 <- filter(olympic_athletes, Sport == "Athletics")
+step2 <- group_by(step1, Year)
+step3 <- summarize(step2, mean_h = mean(Height, na.rm = TRUE))
+
+# Piped (same)
+olympic_athletes |>
+  filter(Sport == "Athletics") |>
+  group_by(Year) |>
+  summarize(mean_h = mean(Height, na.rm = TRUE))
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.32 — show question"}
+**EX3.32 (★★★)** Two countries (USA & GBR) — total medals across the five recent Games as a single linegraph.
+:::
+
+**Solution** *(reference: Sections 3.4 "group_by rows" + 2.4 "Linegraphs")*.
+
+```{r 03-ex-32, fig.height=3}
+medal_table |>
+  filter(noc %in% c("USA", "GBR")) |>
+  group_by(noc, year) |>
+  summarize(total = sum(total), .groups = "drop") |>
+  ggplot(aes(x = year, y = total, color = noc)) +
+  geom_line() + geom_point() +
+  labs(y = "Total medals (Summer + Winter)")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.33 — show question"}
+**EX3.33 (★★★)** Episodes per primary country, then again with `geo_match == "full"`. Does the leader change?
+:::
+
+**Solution** *(reference: Section 3.2 "filter rows" + 3.4 "group_by rows")*. Italy is typically the leader in both — the geo-match filter mostly removes "compilation" or multi-country episodes (`geo_match == "country"` etc.).
+
+```{r 03-ex-33}
+episodes |> count(primary_country, sort = TRUE) |> slice_head(n = 5)
+
+episodes |>
+  filter(geo_match == "full") |>
+  count(primary_country, sort = TRUE) |> slice_head(n = 5)
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.34 — show question"}
+**EX3.34 (★★★)** Country diversity per Games — distinct `NOC`s per `Year`/`Season`.
+:::
+
+**Solution** *(reference: Section 3.4 "group_by rows", time-series summary)*. The Olympic movement has expanded substantially since 1896.
+
+```{r 03-ex-34, fig.height=3}
+olympic_athletes |>
+  group_by(Year, Season) |>
+  summarize(n_nocs = n_distinct(NOC), .groups = "drop") |>
+  ggplot(aes(x = Year, y = n_nocs, color = Season)) +
+  geom_line() + geom_point() +
+  labs(y = "Distinct NOCs")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX3.35 — show question"}
+**EX3.35 (★★★)** Open exploration.
+:::
+
+**Solution** *(reference: Chapter 3 — synthesis)*. *Answers will vary.* Example: "Among `Rick Steves' Europe` episodes, *British Isles* episodes have the highest median IMDB rating among regions with at least 10 episodes."
+
+```{r 03-ex-35}
+episodes |>
+  group_by(region) |>
+  summarize(n = n(), median_rating = median(imdb_rating, na.rm = TRUE),
+            .groups = "drop") |>
+  filter(n >= 10) |>
+  arrange(desc(median_rating))
+```
+
+***
