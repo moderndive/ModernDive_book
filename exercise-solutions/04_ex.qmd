@@ -2,13 +2,33 @@ Solutions for the end-of-chapter exercises in *Chapter 4 — Data Importing and 
 
 ::: {.callout-tip title="Section coverage at a glance" collapse="false" appearance="simple"}
 
-| Section in chapter                   | Exercises                                                  |
-|--------------------------------------|------------------------------------------------------------|
-| Chapter overview                     | EX4.1                                                      |
-| 4.1 Importing data                   | EX4.25                                                     |
-| 4.2 Tidy data → Definition           | EX4.2, EX4.3, EX4.5, EX4.6, EX4.7, EX4.8, EX4.11           |
-| 4.2 Tidy data (applied)              | EX4.4, EX4.12, EX4.14–EX4.22, EX4.27–EX4.30                |
-| 4.4 `tidyverse` package              | EX4.9, EX4.10, EX4.13, EX4.23, EX4.24, EX4.26              |
+**Exercises per section** — count of prompts that touch each book section.
+
+| Book section                                      | # of exercises |
+|---------------------------------------------------|---------------:|
+| 4.1 Importing data                                 | 2              |
+| 4.2 Tidy data                                      | 23             |
+| 4.3 Case study: democracy in Guatemala             | 1              |
+| 4.4 `tidyverse` package                            | 1              |
+| Setup / chapter overview                           | 1              |
+| Critical thinking / open exploration               | 4              |
+
+**Exercises by subsection** — which prompts target each finer-grained subsection.
+
+| Subsection                                        | Exercises                                              |
+|---------------------------------------------------|--------------------------------------------------------|
+| Setup and first look                               | EX4.1                                                  |
+| 4.1 Importing data (`read_csv`, type-coercion)     | EX4.2, EX4.3                                           |
+| 4.2.1 Definition of tidy data                      | EX4.4, EX4.5, EX4.6, EX4.7, EX4.8, EX4.9, EX4.12       |
+| 4.2.2 Converting to tidy data — `pivot_longer()`   | EX4.10, EX4.11, EX4.13                                 |
+| 4.2.2 Applied summaries on long-form               | EX4.14, EX4.15, EX4.16, EX4.17, EX4.18, EX4.19, EX4.20, EX4.21 |
+| 4.2.2 Applied visualizations on long-form          | EX4.22, EX4.23, EX4.24                                 |
+| 4.2.2 Pivoting wider / round-trips                 | EX4.25, EX4.26                                         |
+| 4.3 Case study: democracy in Guatemala             | EX4.27                                                 |
+| 4.4 `tidyverse` package                            | EX4.28                                                 |
+| Critical thinking / open exploration               | EX4.29, EX4.30, EX4.31, EX4.32                         |
+
+**A note on coverage.** Section 4.4 is short (~40 lines) and conceptually straightforward (one umbrella `library()` call vs many) — a single exercise (EX4.28) covers it cleanly. Section 4.3 (the Guatemala case study) is a worked example rather than new methodology; EX4.27 acts as a *comprehension* check on the pivoting structure used there. Exercises now follow chapter content order: setup → importing (4.1) → recognizing tidy structure (4.2.1) → pivoting longer (4.2.2) → applied summaries/viz → pivoting wider → case study (4.3) → tidyverse umbrella (4.4) → critical thinking.
 
 Difficulty stars on each exercise: ★ warm-up, ★★ standard application, ★★★ critical thinking. Click *show question* on any callout to reveal the prompt; the solution is always visible underneath.
 :::
@@ -35,45 +55,73 @@ glimpse(bob_ross)
 
 ***
 
+### Importing data
+
 ::: {.callout-note collapse="true" title="EX4.2 — show question"}
-**EX4.2 (★)** The first four columns of `bob_ross` (`episode`, `season`, `episode_num`, `title`) are *identification* variables, not *measurement* variables. Explain in one sentence why.
+**EX4.2 (★)** Suppose someone published a CSV version of the dataset at `https://example.com/bob-ross.csv`. Write the single line of code you would use — with `readr` — to read it into a tibble called `br`.
+:::
+
+**Solution** *(reference: Section 4.1 "Importing data")*.
+
+```{r 04-ex-2, eval=FALSE}
+br <- read_csv("https://example.com/bob-ross.csv")
+```
+
+***
+
+::: {.callout-note collapse="true" title="EX4.3 — show question"}
+**EX4.3 (★★)** `read_csv()` reads `age` as character (`"unknown"` mixed in). Two fixes — at-import vs after-import. Why does at-import win?
+:::
+
+**Solution** *(reference: Section 4.1 "Importing data", `readr` / `read_csv()`)*.
+
+**(a) At-import fix** — tell `read_csv()` what `"unknown"` means *as you read*:
+
+```r
+read_csv("athletes.csv", na = c("", "NA", "unknown"))
+```
+
+`readr` then parses `age` as **numeric** automatically (because the `"unknown"` strings became `NA` before type-detection ran), and you don't carry a string-typed column forward.
+
+**(b) After-import fix** — coerce in a `mutate()`:
+
+```r
+read_csv("athletes.csv") |>
+  mutate(age = na_if(age, "unknown"),
+         age = as.numeric(age))
+```
+
+This works, but you've already paid the cost of a character-typed column propagating through the pipeline (and silenced the chance to spot *other* sentinel values like `"N/A"` or `"missing"` at the same place).
+
+**Why at-import wins:** the fix lives next to the *cause*. The dataset's "missing" convention is documented at the boundary — anyone reading the script can see exactly which strings got translated to `NA`. Subsequent code can then assume clean numeric data. This is the classic "fail at the boundary, trust the interior" principle.
+
+***
+
+### Recognizing tidy structure
+
+::: {.callout-note collapse="true" title="EX4.4 — show question"}
+**EX4.4 (★)** The first four columns of `bob_ross` (`episode`, `season`, `episode_num`, `title`) are *identification* variables, not *measurement* variables. Explain in one sentence why.
 :::
 
 **Solution** *(reference: "Definition of tidy data")*. They serve to **uniquely identify** which episode each row refers to (e.g., `S01E01` titled "A Walk in the Woods"); they describe *which* observation we're looking at, not *what* was painted in it.
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.3 — show question"}
-**EX4.3 (★)** Without running any code, predict: what are the only two possible values that any of the 67 indicator columns (e.g., `mountain`, `tree`) can take? Then verify by running `summary(bob_ross$tree)`.
+::: {.callout-note collapse="true" title="EX4.5 — show question"}
+**EX4.5 (★)** Without running any code, predict: what are the only two possible values that any of the 67 indicator columns (e.g., `mountain`, `tree`) can take? Then verify by running `summary(bob_ross$tree)`.
 :::
 
 **Solution** *(reference: "Definition of tidy data")*. The columns are **0/1 indicators** — `1` means the element appears in that episode, `0` means it does not.
 
-```{r 04-ex-3}
+```{r 04-ex-5}
 summary(bob_ross$tree)
 range(bob_ross$tree)
 ```
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.4 — show question"}
-**EX4.4 (★)** Count how many episodes feature a `cabin`. Hint: an indicator column of 0/1 sums to the number of 1s.
-:::
-
-**Solution** *(reference: "Tidy data")*.
-
-```{r 04-ex-4}
-sum(bob_ross$cabin)
-```
-
-Roughly 18% of episodes — cabins are surprisingly common.
-
-***
-
-### Recognizing tidy structure
-
-::: {.callout-note collapse="true" title="EX4.5 — show question"}
-**EX4.5 (★)** Is `bob_ross` in tidy format? Justify by referring to the three rules of tidy data.
+::: {.callout-note collapse="true" title="EX4.6 — show question"}
+**EX4.6 (★)** Is `bob_ross` in tidy format? Justify by referring to the three rules of tidy data.
 :::
 
 **Solution** *(reference: "Definition of tidy data")*. **No.** Two of Wickham's three rules are violated:
@@ -82,33 +130,33 @@ Roughly 18% of episodes — cabins are surprisingly common.
 2. *Each observation is a row.* ✗ — the natural observation is "this element in this episode," but right now one row holds 67 such observations.
 3. *Each observational unit has its own table.* ✓.
 
-The fix is `pivot_longer()` (see EX4.9).
+The fix is `pivot_longer()` (see EX4.10).
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.6 — show question"}
-**EX4.6 (★)** Two variables are encoded in the *names* of the 67 indicator columns. What are they?
+::: {.callout-note collapse="true" title="EX4.7 — show question"}
+**EX4.7 (★)** Two variables are encoded in the *names* of the 67 indicator columns. What are they?
 :::
 
 **Solution** *(reference: "Definition of tidy data")*. The column **names** encode the variable **`element`** (e.g., `mountain`, `cabin`, `tree`), and the **cell values** encode the variable **`present`** (0 or 1). Both should be their own columns in tidy form.
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.7 — show question"}
-**EX4.7 (★★)** The `episode` column contains values like `"S01E01"`, `"S01E02"`. How many distinct pieces of information are packed into this single column? Suggest tidier columns to replace it.
+::: {.callout-note collapse="true" title="EX4.8 — show question"}
+**EX4.8 (★★)** The `episode` column contains values like `"S01E01"`, `"S01E02"`. How many distinct pieces of information are packed into this single column? Suggest tidier columns to replace it.
 :::
 
 **Solution** *(reference: "Definition of tidy data")*. Two: the **season number** and the **episode-within-season number**. They are already separated into the `season` and `episode_num` columns, so `episode` is technically redundant — though useful as a human-readable label. A `tidyr::separate()` call would split `"S01E01"` into the two pieces if the columns weren't already present:
 
-```{r 04-ex-7}
+```{r 04-ex-8}
 tibble(episode = c("S01E01", "S02E13")) |>
   separate_wider_position(episode, widths = c(s = 1, season = 2, e = 1, ep = 2))
 ```
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.8 — show question"}
-**EX4.8 (★)** What is the *observational unit* of `bob_ross`? Phrase your answer as "one row of `bob_ross` represents one ____."
+::: {.callout-note collapse="true" title="EX4.9 — show question"}
+**EX4.9 (★)** What is the *observational unit* of `bob_ross`? Phrase your answer as "one row of `bob_ross` represents one ____."
 :::
 
 **Solution** *(reference: "Definition of tidy data")*. One row of `bob_ross` represents one **episode** of *The Joy of Painting*.
@@ -117,13 +165,13 @@ tibble(episode = c("S01E01", "S02E13")) |>
 
 ### Pivoting longer
 
-::: {.callout-note collapse="true" title="EX4.9 — show question"}
-**EX4.9 (★★)** Use `pivot_longer()` to reshape `bob_ross` so that all 67 indicator columns become two columns: one called `element` (the old name) and one called `present` (the 0/1 value). Save the result to `bob_long`.
+::: {.callout-note collapse="true" title="EX4.10 — show question"}
+**EX4.10 (★★)** Use `pivot_longer()` to reshape `bob_ross` so that all 67 indicator columns become two columns: one called `element` (the old name) and one called `present` (the 0/1 value). Save the result to `bob_long`.
 :::
 
 **Solution** *(reference: "tidyverse package")*.
 
-```{r 04-ex-9}
+```{r 04-ex-10}
 bob_long <- bob_ross |>
   pivot_longer(
     cols      = -c(episode, season, episode_num, title),
@@ -136,40 +184,24 @@ bob_long
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.10 — show question"}
-**EX4.10 (★★)** `bob_ross` has 403 rows and 67 indicator columns. **Predict** the number of rows in `bob_long` *before* you check. Then verify with `nrow()`.
+::: {.callout-note collapse="true" title="EX4.11 — show question"}
+**EX4.11 (★★)** `bob_ross` has 403 rows and 67 indicator columns. **Predict** the number of rows in `bob_long` *before* you check. Then verify with `nrow()`.
 :::
 
 **Solution** *(reference: "tidyverse package")*. Predicted: $403 \times 67 = 27{,}001$ rows. Verified:
 
-```{r 04-ex-10}
+```{r 04-ex-11}
 nrow(bob_long)
 403 * 67
 ```
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.11 — show question"}
-**EX4.11 (★★)** After pivoting, each row of `bob_long` represents one ___ in one ___. Fill in the blanks.
+::: {.callout-note collapse="true" title="EX4.12 — show question"}
+**EX4.12 (★★)** After pivoting, each row of `bob_long` represents one ___ in one ___. Fill in the blanks.
 :::
 
 **Solution** *(reference: "Definition of tidy data")*. Each row represents **one element in one episode** — e.g., "was `mountain` present in `S01E03`?".
-
-***
-
-::: {.callout-note collapse="true" title="EX4.12 — show question"}
-**EX4.12 (★★)** Filter `bob_long` to rows where `present == 1` and call the result `bob_present`. How many rows does it have, and what does that count tell you about the show as a whole?
-:::
-
-**Solution** *(reference: "Tidy data")*.
-
-```{r 04-ex-12}
-bob_present <- bob_long |> filter(present == 1)
-nrow(bob_present)
-nrow(bob_present) / 403   # average elements per episode
-```
-
-The total — the count of element-episode pairs where `present == 1` — divided by 403 episodes gives the **mean number of elements per painting** (≈10).
 
 ***
 
@@ -184,12 +216,42 @@ The total — the count of element-episode pairs where `present == 1` — divide
 ### Summarizing the long-form data
 
 ::: {.callout-note collapse="true" title="EX4.14 — show question"}
-**EX4.14 (★★)** Using `bob_long` (or `bob_present`), find the **top 10 most-painted elements** across all episodes.
+**EX4.14 (★)** Count how many episodes feature a `cabin`. Hint: an indicator column of 0/1 sums to the number of 1s.
 :::
 
 **Solution** *(reference: "Tidy data")*.
 
 ```{r 04-ex-14}
+sum(bob_ross$cabin)
+```
+
+Roughly 18% of episodes — cabins are surprisingly common.
+
+***
+
+::: {.callout-note collapse="true" title="EX4.15 — show question"}
+**EX4.15 (★★)** Filter `bob_long` to rows where `present == 1` and call the result `bob_present`. How many rows does it have, and what does that count tell you about the show as a whole?
+:::
+
+**Solution** *(reference: "Tidy data")*.
+
+```{r 04-ex-15}
+bob_present <- bob_long |> filter(present == 1)
+nrow(bob_present)
+nrow(bob_present) / 403   # average elements per episode
+```
+
+The total — the count of element-episode pairs where `present == 1` — divided by 403 episodes gives the **mean number of elements per painting** (≈10).
+
+***
+
+::: {.callout-note collapse="true" title="EX4.16 — show question"}
+**EX4.16 (★★)** Using `bob_long` (or `bob_present`), find the **top 10 most-painted elements** across all episodes.
+:::
+
+**Solution** *(reference: "Tidy data")*.
+
+```{r 04-ex-16}
 bob_long |>
   group_by(element) |>
   summarize(n_episodes = sum(present)) |>
@@ -199,13 +261,13 @@ bob_long |>
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.15 — show question"}
-**EX4.15 (★★)** How many distinct elements appear in the very first episode of season 1?
+::: {.callout-note collapse="true" title="EX4.17 — show question"}
+**EX4.17 (★★)** How many distinct elements appear in the very first episode of season 1?
 :::
 
 **Solution** *(reference: "Tidy data")*.
 
-```{r 04-ex-15}
+```{r 04-ex-17}
 bob_long |>
   filter(episode == "S01E01", present == 1) |>
   nrow()
@@ -213,13 +275,13 @@ bob_long |>
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.16 — show question"}
-**EX4.16 (★★)** Compute the *average number of elements per painting* across the full series. Is this larger or smaller than you would have guessed?
+::: {.callout-note collapse="true" title="EX4.18 — show question"}
+**EX4.18 (★★)** Compute the *average number of elements per painting* across the full series. Is this larger or smaller than you would have guessed?
 :::
 
 **Solution** *(reference: "Tidy data")*.
 
-```{r 04-ex-16}
+```{r 04-ex-18}
 bob_long |>
   group_by(episode) |>
   summarize(n_elements = sum(present)) |>
@@ -230,13 +292,13 @@ About 10 elements per painting — Bob's "happy little" components add up.
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.17 — show question"}
-**EX4.17 (★★)** Did Bob Ross ever paint a `barn`? In how many episodes? In what fraction of his run does a barn appear?
+::: {.callout-note collapse="true" title="EX4.19 — show question"}
+**EX4.19 (★★)** Did Bob Ross ever paint a `barn`? In how many episodes? In what fraction of his run does a barn appear?
 :::
 
 **Solution** *(reference: "Tidy data")*.
 
-```{r 04-ex-17}
+```{r 04-ex-19}
 bob_long |>
   filter(element == "barn") |>
   summarize(
@@ -247,13 +309,13 @@ bob_long |>
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.18 — show question"}
-**EX4.18 (★★)** Which episode features the *largest* number of distinct elements? Print its `episode`, `title`, and total element count.
+::: {.callout-note collapse="true" title="EX4.20 — show question"}
+**EX4.20 (★★)** Which episode features the *largest* number of distinct elements? Print its `episode`, `title`, and total element count.
 :::
 
 **Solution** *(reference: "Tidy data")*.
 
-```{r 04-ex-18}
+```{r 04-ex-20}
 bob_long |>
   group_by(episode, title) |>
   summarize(n_elements = sum(present), .groups = "drop") |>
@@ -262,13 +324,13 @@ bob_long |>
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.19 — show question"}
-**EX4.19 (★★★)** For each season, find the **single most-painted element**. Are there elements that dominate one season but not another?
+::: {.callout-note collapse="true" title="EX4.21 — show question"}
+**EX4.21 (★★★)** For each season, find the **single most-painted element**. Are there elements that dominate one season but not another?
 :::
 
 **Solution** *(reference: "Tidy data")*.
 
-```{r 04-ex-19}
+```{r 04-ex-21}
 bob_long |>
   group_by(season, element) |>
   summarize(n_episodes = sum(present), .groups = "drop_last") |>
@@ -282,13 +344,13 @@ bob_long |>
 
 ### Visualizing the long-form data
 
-::: {.callout-note collapse="true" title="EX4.20 — show question"}
-**EX4.20 (★★)** Build a horizontal bar chart of the top 15 elements by total appearance count across the full series.
+::: {.callout-note collapse="true" title="EX4.22 — show question"}
+**EX4.22 (★★)** Build a horizontal bar chart of the top 15 elements by total appearance count across the full series.
 :::
 
 **Solution** *(reference: "Tidy data")*.
 
-```{r 04-ex-20, fig.height=4}
+```{r 04-ex-22, fig.height=4}
 top15 <- bob_long |>
   group_by(element) |>
   summarize(n = sum(present)) |>
@@ -302,13 +364,13 @@ ggplot(top15, aes(x = n, y = reorder(element, n))) +
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.21 — show question"}
-**EX4.21 (★★)** Plot the number of episodes per season featuring `tree` as a line graph (season on the x-axis). Was Bob's tree habit consistent?
+::: {.callout-note collapse="true" title="EX4.23 — show question"}
+**EX4.23 (★★)** Plot the number of episodes per season featuring `tree` as a line graph (season on the x-axis). Was Bob's tree habit consistent?
 :::
 
 **Solution** *(reference: "Tidy data")*.
 
-```{r 04-ex-21, fig.height=3}
+```{r 04-ex-23, fig.height=3}
 bob_long |>
   filter(element == "tree") |>
   group_by(season) |>
@@ -324,13 +386,13 @@ The line is nearly flat near the maximum — trees appeared in almost every epis
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.22 — show question"}
-**EX4.22 (★★★)** Build a faceted bar chart showing the **top 5 elements within each season** (one panel per season). Comment on whether the rankings shift over time.
+::: {.callout-note collapse="true" title="EX4.24 — show question"}
+**EX4.24 (★★★)** Build a faceted bar chart showing the **top 5 elements within each season** (one panel per season). Comment on whether the rankings shift over time.
 :::
 
 **Solution** *(reference: "Tidy data")*.
 
-```{r 04-ex-22, fig.height=8, fig.width=8}
+```{r 04-ex-24, fig.height=8, fig.width=8}
 bob_long |>
   group_by(season, element) |>
   summarize(n = sum(present), .groups = "drop_last") |>
@@ -346,15 +408,15 @@ Trees, mountains, and clouds dominate every season; rarer items (waterfalls, str
 
 ***
 
-### Pivoting wider, round trips, and importing data
+### Pivoting wider
 
-::: {.callout-note collapse="true" title="EX4.23 — show question"}
-**EX4.23 (★★★)** Starting from `bob_long`, use `pivot_wider()` to reconstruct a wide data frame and confirm its dimensions match the original `bob_ross`.
+::: {.callout-note collapse="true" title="EX4.25 — show question"}
+**EX4.25 (★★★)** Starting from `bob_long`, use `pivot_wider()` to reconstruct a wide data frame and confirm its dimensions match the original `bob_ross`.
 :::
 
 **Solution** *(reference: "tidyverse package")*.
 
-```{r 04-ex-23}
+```{r 04-ex-25}
 bob_wide <- bob_long |>
   pivot_wider(names_from = element, values_from = present)
 
@@ -366,13 +428,13 @@ Same dimensions (403 × 71). The pivot is a true *inverse* when no information i
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.24 — show question"}
-**EX4.24 (★★★)** Build a *season × element* count matrix using `pivot_wider()` with `values_fn = sum` so each cell contains the count of episodes that season featuring that element.
+::: {.callout-note collapse="true" title="EX4.26 — show question"}
+**EX4.26 (★★★)** Build a *season × element* count matrix using `pivot_wider()` with `values_fn = sum` so each cell contains the count of episodes that season featuring that element.
 :::
 
 **Solution** *(reference: "tidyverse package")*.
 
-```{r 04-ex-24}
+```{r 04-ex-26}
 season_element_matrix <- bob_long |>
   pivot_wider(
     id_cols     = season,
@@ -386,20 +448,38 @@ season_element_matrix
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.25 — show question"}
-**EX4.25 (★)** Suppose someone published a CSV version of the dataset at `https://example.com/bob-ross.csv`. Write the single line of code you would use — with `readr` — to read it into a tibble called `br`.
+### Case study: democracy in Guatemala
+
+::: {.callout-note collapse="true" title="EX4.27 — show question"}
+**EX4.27 (★★)** `dem_score` (one column per year): name the variable hidden in the column names, sketch the `pivot_longer()` call.
 :::
 
-**Solution** *(reference: "Importing data")*.
+**Solution** *(reference: Section 4.3 "Case study: democracy in Guatemala")*. **(a)** The column names — `1952`, `1957`, `1962`, …, `1992` — encode the variable **`year`**. The values inside those columns encode a second variable, **`democracy_score`**. Two variables hiding in a wide layout — the textbook tidy-data violation.
 
-```{r 04-ex-25, eval=FALSE}
-br <- read_csv("https://example.com/bob-ross.csv")
+**(b)** The pivot looks like:
+
+```{r 04-ex-27, message=FALSE}
+library(tidyr)
+
+dem_score <- readr::read_csv("https://moderndive.com/data/dem_score.csv")
+
+dem_score |>
+  pivot_longer(
+    cols      = -country,         # everything except country becomes year/value
+    names_to  = "year",
+    values_to = "democracy_score"
+  ) |>
+  head(6)
 ```
+
+Each row of the result represents **one country in one year** — the right granularity for plotting trajectories or running models.
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.26 — show question"}
-**EX4.26 (★)** What is the difference between `library(tidyverse)` and `library(tidyr)`? Which one would suffice for the pivots in this set of exercises, and which is more convenient?
+### `tidyverse` package
+
+::: {.callout-note collapse="true" title="EX4.28 — show question"}
+**EX4.28 (★)** What is the difference between `library(tidyverse)` and `library(tidyr)`? Which one would suffice for the pivots in this set of exercises, and which is more convenient?
 :::
 
 **Solution** *(reference: "tidyverse package")*. `library(tidyr)` loads only the `tidyr` package — which is enough for `pivot_longer()` and `pivot_wider()`. `library(tidyverse)` is the **umbrella** package that loads `tidyr`, `dplyr`, `ggplot2`, `readr`, and several others in a single call. The umbrella is more convenient when you want all the tidyverse tools at once, as we did throughout this exercise set.
@@ -408,13 +488,13 @@ br <- read_csv("https://example.com/bob-ross.csv")
 
 ### Critical thinking and open exploration
 
-::: {.callout-note collapse="true" title="EX4.27 — show question"}
-**EX4.27 (★★★)** The wide format is sometimes *more* convenient than the long format. Give one analytical question that is easier to answer in `bob_ross` (wide) than in `bob_long` (long).
+::: {.callout-note collapse="true" title="EX4.29 — show question"}
+**EX4.29 (★★★)** The wide format is sometimes *more* convenient than the long format. Give one analytical question that is easier to answer in `bob_ross` (wide) than in `bob_long` (long).
 :::
 
 **Solution** *(reference: "Tidy data")*. "In how many episodes did Bob paint **both** a `mountain` AND a `cabin`?" In the wide data this is a single filter:
 
-```{r 04-ex-27}
+```{r 04-ex-29}
 bob_ross |>
   filter(mountain == 1, cabin == 1) |>
   nrow()
@@ -424,13 +504,13 @@ In the long data you'd need to pivot back to wide, or do a self-join — both mo
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.28 — show question"}
-**EX4.28 (★★★)** Pick one element whose frequency *surprises* you (high or low). Write 2–3 sentences interpreting why that frequency might make sense given what you know — or suspect — about the show.
+::: {.callout-note collapse="true" title="EX4.30 — show question"}
+**EX4.30 (★★★)** Pick one element whose frequency *surprises* you (high or low). Write 2–3 sentences interpreting why that frequency might make sense given what you know — or suspect — about the show.
 :::
 
 **Solution** *(reference: "Tidy data")*. *Answers will vary.* One worked example: **`aurora_borealis`** appears in only a handful of episodes — far fewer than I'd guessed for a painter known for atmospheric night scenes. Painting an aurora is technically demanding (multiple wet-into-wet color glazes), so Bob may have reserved it for "special" episodes rather than the standard half-hour format.
 
-```{r 04-ex-28}
+```{r 04-ex-30}
 bob_long |>
   filter(element == "aurora_borealis") |>
   summarize(n = sum(present))
@@ -438,8 +518,8 @@ bob_long |>
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.29 — show question"}
-**EX4.29 (★★★)** Name **two** questions about Bob Ross's painting style that this dataset *cannot* answer. For each, explain what additional data you would need.
+::: {.callout-note collapse="true" title="EX4.31 — show question"}
+**EX4.31 (★★★)** Name **two** questions about Bob Ross's painting style that this dataset *cannot* answer. For each, explain what additional data you would need.
 :::
 
 **Solution** *(reference: "Tidy data")*. *Answers will vary.* Examples:
@@ -450,13 +530,13 @@ bob_long |>
 
 ***
 
-::: {.callout-note collapse="true" title="EX4.30 — show question"}
-**EX4.30 (★★★)** Open exploration: find one pattern the chapter examples did *not* uncover and create a chart that communicates it clearly.
+::: {.callout-note collapse="true" title="EX4.32 — show question"}
+**EX4.32 (★★★)** Open exploration: find one pattern the chapter examples did *not* uncover and create a chart that communicates it clearly.
 :::
 
 **Solution** *(reference: "Tidy data")*. *Answers will vary.* One example: **complexity over time** — does the average number of elements per painting trend up or down across seasons?
 
-```{r 04-ex-30, fig.height=3}
+```{r 04-ex-32, fig.height=3}
 bob_long |>
   group_by(season, episode) |>
   summarize(n_elements = sum(present), .groups = "drop_last") |>
