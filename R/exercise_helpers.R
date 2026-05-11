@@ -28,6 +28,32 @@ ex_helpers_difficulty_marker <- function(n, group) {
 
 ex_helpers_id <- function(chapter, ex_num) sprintf("EX%d.%d", chapter, ex_num)
 
+# Collapse a vector of `EXc.n` ids into a comma-separated string where any
+# run of three or more consecutive ex_nums is rendered as `EXc.start–EXc.end`
+# (en dash). Two-element runs stay listed as `EXc.a, EXc.b` since `a–b` would
+# save no characters. Single ids are left alone.
+ex_helpers_collapse_runs <- function(ids, chapter) {
+  if (length(ids) == 0) return("")
+  nums <- as.integer(sub("^EX[0-9]+\\.", "", ids))
+  parts <- character()
+  start <- nums[1]; prev <- nums[1]
+  flush <- function(s, e) {
+    if (e - s >= 2) sprintf("EX%d.%d–EX%d.%d", chapter, s, chapter, e)
+    else if (e == s) sprintf("EX%d.%d", chapter, s)
+    else sprintf("EX%d.%d, EX%d.%d", chapter, s, chapter, e)
+  }
+  for (i in seq_along(nums)[-1]) {
+    if (nums[i] == prev + 1) {
+      prev <- nums[i]
+    } else {
+      parts <- c(parts, flush(start, prev))
+      start <- nums[i]; prev <- nums[i]
+    }
+  }
+  parts <- c(parts, flush(start, prev))
+  paste(parts, collapse = ", ")
+}
+
 ex_helpers_load <- function(chapter) {
   pub_path <- sprintf("exercises/%02d.yml", chapter)
   if (!file.exists(pub_path)) {
@@ -201,7 +227,7 @@ render_coverage_callout <- function(chapter) {
   subsection_order <- unique_subs[order(parent_idx, unique_subs)]
 
   subsection_ids <- vapply(subsection_order,
-                           function(s) paste(ids[subsections == s], collapse = ", "),
+                           function(s) ex_helpers_collapse_runs(ids[subsections == s], chapter),
                            character(1))
 
   out <- c(
