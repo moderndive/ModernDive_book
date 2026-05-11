@@ -1,0 +1,229 @@
+# Exercise rendering helpers.
+#
+# Single-source authoring for end-of-chapter exercises. Per chapter, all prompts,
+# solutions, and section/subsection assignments live in `exercises/NN.yml`. Two
+# rendering functions emit markdown for the chapter qmd and the solutions qmd
+# respectively, plus a third that auto-builds the section-coverage callout.
+#
+# Conventions:
+# - Chunk labels in `solution` should follow `NN-ex-N`, `NN-ex-N-b`, etc.
+# - `webr` field is *optional* — omit for reasoning-only exercises.
+# - `book_section` and `book_subsection` drive the coverage tables; their
+#   *order of first appearance* is preserved.
+
+suppressPackageStartupMessages({
+  library(yaml)
+})
+
+`%||%` <- function(a, b) if (is.null(a) || identical(a, "")) b else a
+
+ex_helpers_stars <- function(n) strrep("★", as.integer(n))
+
+# Extensions use diamonds instead of stars to signal "bonus / exploratory"
+# vs. "graded assessment".
+ex_helpers_difficulty_marker <- function(n, group) {
+  symbol <- if (identical(group, "Extensions")) "◆" else "★"
+  strrep(symbol, as.integer(n))
+}
+
+ex_helpers_id <- function(chapter, ex_num) sprintf("EX%d.%d", chapter, ex_num)
+
+ex_helpers_load <- function(chapter) {
+  pub_path <- sprintf("exercises/%02d.yml", chapter)
+  if (!file.exists(pub_path)) {
+    alt <- file.path("..", pub_path)
+    if (file.exists(alt)) pub_path <- alt
+  }
+  data <- yaml::read_yaml(pub_path)
+
+  # Solutions live in a separate gitignored file `exercises/NN-solutions.yml`
+  # that ships only to instructors. If absent (e.g., a student clone), we
+  # fill in placeholders so the helper still renders gracefully.
+  priv_path <- sprintf("exercises/%02d-solutions.yml", chapter)
+  if (!file.exists(priv_path)) {
+    alt <- file.path("..", priv_path)
+    if (file.exists(alt)) priv_path <- alt
+  }
+  if (file.exists(priv_path)) {
+    priv <- yaml::read_yaml(priv_path)
+    sol_by_ex <- setNames(priv$exercises,
+                          vapply(priv$exercises, function(e) as.character(e$ex_num),
+                                 character(1)))
+    for (i in seq_along(data$exercises)) {
+      ex_num <- as.character(data$exercises[[i]]$ex_num)
+      if (!is.null(sol_by_ex[[ex_num]])) {
+        data$exercises[[i]]$solution_ref <- sol_by_ex[[ex_num]]$solution_ref
+        data$exercises[[i]]$solution     <- sol_by_ex[[ex_num]]$solution
+      }
+    }
+  } else {
+    for (i in seq_along(data$exercises)) {
+      data$exercises[[i]]$solution_ref <- "instructor edition"
+      data$exercises[[i]]$solution <- "*Solution available in the instructor edition only.*"
+    }
+  }
+
+  data
+}
+
+# A reusable note emitted once at the top of the "Extensions" group.
+ex_helpers_extensions_callout <- function() c(
+  '::: {.callout-note appearance="simple" title="About these Extensions"}',
+  'The exercises below **deliberately introduce functions and concepts beyond what this chapter teaches** — log transformations, `predict()`, new packages, foreshadowing later chapters. They are *optional*, aimed at readers who want to push further. The main Exercises and Quick checks above stick strictly to what this chapter covers.',
+  ':::',
+  ''
+)
+
+# Markdown for the chapter qmd's `## Exercises` body — group headers, prompts,
+# and {webr-r} blocks. Author writes the rest of the section (intro, difficulty
+# legend, setup chunk) directly in the qmd.
+render_chapter_exercises <- function(chapter) {
+  data <- ex_helpers_load(chapter)
+  out <- character()
+  current_group <- NULL
+  for (ex in data$exercises) {
+    if (!is.null(ex$group) && nzchar(ex$group) &&
+        (is.null(current_group) || !identical(ex$group, current_group))) {
+      out <- c(out, "", sprintf("### %s {.unnumbered}", ex$group), "")
+      if (identical(ex$group, "Extensions")) {
+        out <- c(out, ex_helpers_extensions_callout())
+      }
+      current_group <- ex$group
+    }
+    id <- ex_helpers_id(chapter, ex$ex_num)
+    star_str <- ex_helpers_difficulty_marker(ex$difficulty, ex$group)
+    out <- c(out, sprintf("**%s (%s)** %s", id, star_str, trimws(ex$prompt)))
+    if (!is.null(ex$webr) && nzchar(ex$webr)) {
+      out <- c(out, "", "```{webr-r}", trimws(ex$webr, which = "right"), "```")
+    }
+    out <- c(out, "")
+  }
+  paste(out, collapse = "\n")
+}
+
+# Markdown for the solutions qmd body — group headers, callout-note blocks
+# wrapping each prompt, then the solution narrative + chunks.
+#
+# Solutions often contain `{r ...}` chunks. Because the qmd embeds this via
+# `cat(render_solutions(N))` with `results="asis"`, knitr has already finished
+# its evaluation pass by the time `cat` runs — so any chunks inside the cat-ed
+# text would render as raw text, not be executed. We therefore call
+# `knitr::knit_child()` to run knitr on the assembled text *before* returning,
+# yielding markdown with chunk outputs already substituted in.
+#
+# Implementation detail: we knit_child() *per exercise* rather than once for
+# the whole chapter. This is slightly slower than a single knit_child call
+# but gives visible per-exercise progress in the Quarto build log (via a
+# stderr message printed before each exercise renders), so when a render
+# hangs we know exactly which exercise to investigate.
+render_solutions <- function(chapter) {
+  data <- ex_helpers_load(chapter)
+  out <- character()
+  current_group <- NULL
+  for (ex in data$exercises) {
+    cat(sprintf("    ▸ EX%d.%d\n", chapter, ex$ex_num), file = stderr())
+    flush(stderr())
+
+    if (!is.null(ex$group) && nzchar(ex$group) &&
+        (is.null(current_group) || !identical(ex$group, current_group))) {
+      out <- c(out, "", sprintf("### %s", ex$group), "")
+      if (identical(ex$group, "Extensions")) {
+        out <- c(out, ex_helpers_extensions_callout())
+      }
+      current_group <- ex$group
+    }
+    id <- ex_helpers_id(chapter, ex$ex_num)
+    star_str <- ex_helpers_difficulty_marker(ex$difficulty, ex$group)
+    body <- trimws(ex$solution, which = "right")
+    ex_text <- paste(c(
+      sprintf('::: {.callout-note collapse="true" title="%s — show question"}', id),
+      sprintf("**%s (%s)** %s", id, star_str, trimws(ex$prompt)),
+      ":::",
+      "",
+      sprintf("**Solution** *(reference: %s)*.", ex$solution_ref),
+      "",
+      body,
+      "",
+      "***",
+      ""
+    ), collapse = "\n")
+    out <- c(out, knitr::knit_child(text = ex_text, quiet = TRUE))
+  }
+  paste(out, collapse = "\n")
+}
+
+# The section-coverage callout (two tables + the chapter's coverage note).
+#
+# Section ordering: by first appearance in the YAML (preserves chapter content
+# order). `chapter_meta$empty_sections` may list sections to show with count 0
+# (e.g., "2.2 Five named graphs" — covered nowhere but called out for honesty).
+#
+# Subsection ordering: subsections are grouped under their parent section (in
+# the section order above), then sorted alphabetically within the section.
+# This matches book-numeric order for labels like "2.8.1" / "2.8.2" / "2.8.3".
+render_coverage_callout <- function(chapter) {
+  data <- ex_helpers_load(chapter)
+  exercises <- data$exercises
+  meta <- data$chapter_meta %||% list()
+
+  sections <- vapply(exercises, function(e) e$book_section, character(1))
+  subsections <- vapply(exercises, function(e) e$book_subsection, character(1))
+  ids <- vapply(exercises, function(e) ex_helpers_id(chapter, e$ex_num), character(1))
+
+  # Section table: first-appearance order, plus optional empty-sections list
+  # inserted at the position the author specifies (or appended at the end).
+  section_order_observed <- unique(sections)
+  empty_sections <- meta$empty_sections %||% character()
+  insert_after <- meta$empty_sections_after %||% list()
+
+  section_order <- section_order_observed
+  for (i in seq_along(empty_sections)) {
+    es <- empty_sections[[i]]
+    after <- insert_after[[i]] %||% NULL
+    if (!is.null(after) && after %in% section_order) {
+      pos <- match(after, section_order)
+      section_order <- append(section_order, es, after = pos)
+    } else {
+      section_order <- c(section_order, es)
+    }
+  }
+
+  section_counts <- vapply(section_order,
+                           function(s) sum(sections == s), integer(1))
+
+  # Subsection-to-section mapping from observed exercises.
+  sub_to_section <- setNames(sections, subsections)
+  sub_to_section <- sub_to_section[!duplicated(names(sub_to_section))]
+
+  # Order subsections by parent section's position, then alphabetically within.
+  unique_subs <- unique(subsections)
+  parent_idx <- match(sub_to_section[unique_subs], section_order_observed)
+  subsection_order <- unique_subs[order(parent_idx, unique_subs)]
+
+  subsection_ids <- vapply(subsection_order,
+                           function(s) paste(ids[subsections == s], collapse = ", "),
+                           character(1))
+
+  out <- c(
+    '::: {.callout-tip title="Section coverage at a glance" collapse="false" appearance="simple"}',
+    '',
+    '**Exercises per section** — count of prompts that touch each book section.',
+    '',
+    '| Book section | # of exercises |',
+    '|---|---:|'
+  )
+  out <- c(out, sprintf("| %s | %d |", section_order, section_counts))
+  out <- c(out, '',
+    '**Exercises by subsection** — which prompts target each finer-grained subsection.',
+    '',
+    '| Subsection | Exercises |',
+    '|---|---|')
+  out <- c(out, sprintf("| %s | %s |", subsection_order, subsection_ids))
+
+  if (!is.null(meta$coverage_note) && nzchar(meta$coverage_note)) {
+    out <- c(out, '', trimws(meta$coverage_note))
+  }
+
+  out <- c(out, '', ':::')
+  paste(out, collapse = "\n")
+}
