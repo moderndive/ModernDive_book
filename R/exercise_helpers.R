@@ -108,6 +108,9 @@ render_chapter_exercises <- function(chapter) {
   out <- character()
   current_group <- NULL
   for (ex in data$exercises) {
+    cat(sprintf("    ▸ EX%d.%d\n", chapter, ex$ex_num), file = stderr())
+    flush(stderr())
+
     if (!is.null(ex$group) && nzchar(ex$group) &&
         (is.null(current_group) || !identical(ex$group, current_group))) {
       out <- c(out, "", sprintf("### %s {.unnumbered}", ex$group), "")
@@ -146,13 +149,40 @@ render_solutions <- function(chapter) {
   data <- ex_helpers_load(chapter)
   out <- character()
   current_group <- NULL
+  # Cap visible TOC entries to 5 per chapter. "Extensions" and any group whose
+  # name starts with "Critical thinking" are *always* visible (pinned) — the
+  # cap consumes the remaining slots with non-pinned groups in document order.
+  # Hidden groups still render as h3 sections in the body but get `.unlisted`
+  # so they disappear from the sidebar TOC.
+  is_pinned <- function(g) identical(g, "Extensions") ||
+                           isTRUE(startsWith(g, "Critical thinking"))
+  groups_seen <- character()
+  for (ex in data$exercises) {
+    g <- ex$group %||% NA_character_
+    if (!is.na(g) && nzchar(g) && !(g %in% groups_seen)) {
+      groups_seen <- c(groups_seen, g)
+    }
+  }
+  pinned <- groups_seen[vapply(groups_seen, is_pinned, logical(1))]
+  non_pinned <- groups_seen[!vapply(groups_seen, is_pinned, logical(1))]
+  n_slots <- max(0L, 5L - length(pinned))
+  visible_groups <- c(pinned, head(non_pinned, n_slots))
+  # When the same group label re-appears non-contiguously in the YAML, only
+  # the first emission gets a TOC entry; later re-emissions are forced
+  # `.unlisted` so the TOC doesn't show "Observed/fitted values..." twice.
+  emitted_visible <- character()
+
   for (ex in data$exercises) {
     cat(sprintf("    ▸ EX%d.%d\n", chapter, ex$ex_num), file = stderr())
     flush(stderr())
 
     if (!is.null(ex$group) && nzchar(ex$group) &&
         (is.null(current_group) || !identical(ex$group, current_group))) {
-      out <- c(out, "", sprintf("### %s", ex$group), "")
+      is_first_visible <- ex$group %in% visible_groups &&
+                          !(ex$group %in% emitted_visible)
+      heading_attrs <- if (is_first_visible) "" else " {.unlisted}"
+      if (is_first_visible) emitted_visible <- c(emitted_visible, ex$group)
+      out <- c(out, "", sprintf("### %s%s", ex$group, heading_attrs), "")
       if (identical(ex$group, "Extensions")) {
         out <- c(out, ex_helpers_extensions_callout())
       }

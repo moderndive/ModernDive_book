@@ -541,3 +541,70 @@ exercises:
   book_section: Extensions
   book_subsection: Extensions
 
+- ex_num: 53
+  difficulty: 3
+  group: Extensions
+  webr: |-
+    library(ggplot2)
+    # pl2 = top-2-discovery-method subset of planets (see EX 10.13)
+    planets_lite <- planets |>
+      filter(!is.na(mass_earth), !is.na(radius_earth), !is.na(discovery_method))
+    top2 <- planets_lite |>
+      count(discovery_method, sort = TRUE) |>
+      head(2) |>
+      pull(discovery_method)
+    pl2 <- planets_lite |> filter(discovery_method %in% top2)
+
+    ggplot(pl2, aes(x = radius_earth, y = mass_earth, color = discovery_method)) +
+      geom_point(alpha = 0.5) +
+      geom_smooth(method = "lm", se = TRUE) +
+      labs(title = "Parallel-slopes fit with 95% confidence bands")
+  prompt: |-
+    **Confidence bands on a regression plot.** `geom_smooth(method = "lm", se = TRUE)` (the default) adds a shaded *confidence band* around each fitted line. The band is a visual summary of how precisely the *mean* response is estimated at each value of $x$ — wider where data is sparse or scatter is large, narrower where data is dense and tightly clustered. Earlier figures in this chapter used `se = FALSE` to keep the lines clean; here, turn the bands back on for the `pl2` parallel-slopes setup. Which discovery method's slope has the wider band, and why does that make sense given the data?
+  book_section: Extensions
+  book_subsection: Extensions
+- ex_num: 54
+  difficulty: 3
+  group: Extensions
+  webr: |-
+    bball <- olympic_athletes |>
+      filter(sport == "Basketball", !is.na(height), !is.na(weight), !is.na(sex))
+    m <- lm(weight ~ height + sex, data = bball)
+    s <- summary(m)
+    c(R2        = s$r.squared,
+      adj_R2    = s$adj.r.squared,
+      F_stat    = unname(s$fstatistic["value"]),
+      F_p_value = pf(s$fstatistic["value"],
+                     s$fstatistic["numdf"],
+                     s$fstatistic["dendf"],
+                     lower.tail = FALSE))
+  prompt: |-
+    **$R^2$, adjusted $R^2$, and the F-statistic — three whole-model summary numbers.** Beyond the per-coefficient regression table, `summary(lm(...))` reports three numbers that describe the model as a whole:
+
+    * $R^2$ — the fraction of variance in $y$ that the fitted model explains. Adding any predictor (useful or not) can only *raise* $R^2$.
+    * Adjusted $R^2$ — same idea, but penalized for the number of predictors. Adding a *useless* predictor will typically *lower* this (EX 55 demonstrates).
+    * F-statistic — the omnibus test that *at least one* slope is non-zero ($H_0$: all slopes simultaneously zero).
+
+    Fit `lm(weight ~ height + sex, data = bball)` and pull all three. What does the F-test's $p$-value tell you that the per-coefficient $p$-values don't?
+  book_section: Extensions
+  book_subsection: Extensions
+- ex_num: 55
+  difficulty: 3
+  group: Extensions
+  webr: |-
+    bball <- olympic_athletes |>
+      filter(sport == "Basketball", !is.na(height), !is.na(weight), !is.na(sex))
+    set.seed(123)
+    bball_aug <- bball |> mutate(noise = rnorm(n()))
+
+    # With useless predictor:
+    c(R2_with    = summary(lm(weight ~ height + sex + noise, data = bball_aug))$r.squared,
+      adjR2_with = summary(lm(weight ~ height + sex + noise, data = bball_aug))$adj.r.squared)
+
+    # Without:
+    c(R2_without    = summary(lm(weight ~ height + sex, data = bball_aug))$r.squared,
+      adjR2_without = summary(lm(weight ~ height + sex, data = bball_aug))$adj.r.squared)
+  prompt: |-
+    **Adjusted $R^2$ penalizes a useless predictor (pairs with EX 54).** Add a column of pure noise (`rnorm()`) to `bball` — completely unrelated to anything — then refit the weight model both with and without this noise predictor. Compare each pair of $R^2$ values: the *unadjusted* $R^2$ will at best be flat or rise a hair (more predictors always explain at least as much variance in the *training* data), but the *adjusted* version will typically drop. Why does the adjustment go *down* for a useless predictor, and what does this say about using raw $R^2$ alone to compare models?
+  book_section: Extensions
+  book_subsection: Extensions
