@@ -152,12 +152,24 @@ for (chap in 1:11) {
       }
     }
 
-    # 3. Dataset refs
+    # 3. Dataset refs — only flag when the dataset name appears in a CODE
+    # context (backticks, library() / data() / inline R code), not in
+    # natural-language prose. The script previously over-flagged words like
+    # "events" appearing colloquially ("medal events"); restricting to code
+    # contexts eliminates that false-positive class.
     for (ds in names(dataset_intro)) {
       intro_chap <- dataset_intro[[ds]]
       if (intro_chap <= chap) next
-      pat <- paste0("\\b", ds, "\\b")
-      if (grepl(pat, prompt_text)) {
+      patterns <- c(
+        paste0("`", ds, "`"),               # backticked: `events`
+        paste0("\\blibrary\\(", ds, "\\b"), # library(events)
+        paste0("\\bdata\\(", ds, "\\b")     # data(events)
+      )
+      # Also check the webr field directly (treat as code by default)
+      webr_only <- ex$webr %||% ""
+      hit_code <- any(sapply(patterns, function(p) grepl(p, prompt_text)))
+      hit_webr <- grepl(paste0("\\b", ds, "\\b"), webr_only)
+      if (hit_code || hit_webr) {
         flags[[length(flags) + 1]] <- list(
           chap = chap, ex = ex$ex_num, kind = "dataset", item = ds,
           intro_chap = intro_chap,
