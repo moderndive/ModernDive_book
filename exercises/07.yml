@@ -1,6 +1,6 @@
 chapter_meta:
   coverage_note: |-
-    **A note on coverage.** *Section 7.4 (the chocolate-almond activity for the sample mean) appears 0 here, but the volcano-elevation exercises EX7.5–EX7.17 deliberately mirror the same structure on a different population* — single sample, virtual replicates, sampling distribution, CLT — so 7.4 is *implicitly* exercised throughout the chapter. EX7.13 makes the **terminology** of Section 7.2 (parameters vs. statistics, populations vs. random variables) explicit, and EX7.25 covers the **two-sample** subsection (7.5.1).
+    **A note on coverage.** *Section 7.4 (the chocolate-almond activity for the sample mean) appears 0 here, but the volcano-elevation exercises EX7.5–EX7.17 deliberately mirror the same structure on a different population* — single sample, virtual replicates, sampling distribution, CLT — so 7.4 is *implicitly* exercised throughout the chapter. **Section 7.2** (vocabulary) is exercised by EX7.13 and EX7.45 (terminology paragraph). **Section 7.5.1** (two-sample sampling distribution) is exercised by EX7.25 plus EX7.46 (SE of a difference, checked numerically) and EX7.47 (center of the two-sample sampling distribution).
 
     Difficulty: ★ warm-up · ★★ standard · ★★★ critical thinking.
 exercises:
@@ -467,4 +467,64 @@ exercises:
     **`rep_slice_sample()` vs. a hand-rolled `replicate()` sampler.** § 7.3 used `rep_slice_sample(n, reps)` for the virtual sampling distribution. Under the hood, that's essentially a `replicate(reps, slice_sample(n))` chained with a `replicate` column. Run both versions. Where does `rep_slice_sample()` simplify the workflow? When would you *want* to hand-roll the sampling loop (think — what control does the `replicate()` form give you that `rep_slice_sample()` doesn't)?
   book_section: Extensions
   book_subsection: Extensions
+- ex_num: 45
+  difficulty: 2
+  group: Extensions
+  prompt: |-
+    **Sampling framework vocabulary in one paragraph.** Section 7.2 introduces a tight cluster of terms: **population**, **sample**, **simple random sampling**, **population parameter** ($p$, $\mu$), **sample statistic** ($\widehat{p}$, $\bar{x}$), and **sampling distribution**. Write a single paragraph that uses *all six* terms in context of the volcanoes activity (e.g., "the **population** is …; we take a **simple random sample** of 30 volcanoes; …"). The goal is to nail the distinction between *one* sample statistic (a single number from one draw) and the *sampling distribution* (the spread of that statistic over many possible draws).
+  book_section: 7.2 Sampling framework
+  book_subsection: 7.2 Sampling framework (terminology and notation)
+- ex_num: 46
+  difficulty: 3
+  group: Extensions
+  webr: |-
+    set.seed(76)
+    sa  <- volcanoes |> filter(region == "South America Volcanic Regions") |>
+      rep_slice_sample(n = 30, reps = 1000) |>
+      group_by(replicate) |>
+      summarize(xbar_sa = mean(elevation, na.rm = TRUE), .groups = "drop")
+
+    mca <- volcanoes |> filter(region == "Middle America-Caribbean Volcanic Regions") |>
+      rep_slice_sample(n = 30, reps = 1000) |>
+      group_by(replicate) |>
+      summarize(xbar_mca = mean(elevation, na.rm = TRUE), .groups = "drop")
+
+    diffs <- sa |> inner_join(mca, by = "replicate") |>
+      mutate(diff = xbar_sa - xbar_mca)
+
+    sd(diffs$diff)
+    sd(sa$xbar_sa)
+    sd(mca$xbar_mca)
+    sqrt(sd(sa$xbar_sa)^2 + sd(mca$xbar_mca)^2)
+  prompt: |-
+    **SE of a difference, checked numerically.** EX 7.25 built the sampling distribution of $\bar{X}_{SA} - \bar{X}_{MCA}$. The snippet here computes three numbers: $SD$ of the difference distribution, $SD$ of each region's $\bar{X}$ distribution alone, and $\sqrt{SD_{SA}^2 + SD_{MCA}^2}$. Run it. Is the SD of the difference closer to $SD_{SA}$, to $SD_{MCA}$, or to $\sqrt{SD_{SA}^2 + SD_{MCA}^2}$? In one sentence, why does *combining* two independent sources of sampling variation give a wider — not narrower — spread?
+  book_section: 7.5 Sampling distribution in other scenarios
+  book_subsection: 7.5.1 Sampling distribution for two samples (difference)
+- ex_num: 47
+  difficulty: 3
+  group: Extensions
+  webr: |-
+    set.seed(76)
+    sa_pop_diff <-
+      mean(volcanoes$elevation[volcanoes$region == "South America Volcanic Regions"], na.rm = TRUE) -
+      mean(volcanoes$elevation[volcanoes$region == "Middle America-Caribbean Volcanic Regions"], na.rm = TRUE)
+
+    sa  <- volcanoes |> filter(region == "South America Volcanic Regions") |>
+      rep_slice_sample(n = 30, reps = 1000) |>
+      group_by(replicate) |>
+      summarize(xbar_sa = mean(elevation, na.rm = TRUE), .groups = "drop")
+    mca <- volcanoes |> filter(region == "Middle America-Caribbean Volcanic Regions") |>
+      rep_slice_sample(n = 30, reps = 1000) |>
+      group_by(replicate) |>
+      summarize(xbar_mca = mean(elevation, na.rm = TRUE), .groups = "drop")
+
+    diffs <- sa |> inner_join(mca, by = "replicate") |>
+      mutate(diff = xbar_sa - xbar_mca)
+
+    list(population_difference = sa_pop_diff,
+         mean_of_sampling_distribution = mean(diffs$diff))
+  prompt: |-
+    **Center of the two-sample sampling distribution.** The mean of the $\bar{X}_{SA} - \bar{X}_{MCA}$ sampling distribution should sit close to the *population* mean difference $\mu_{SA} - \mu_{MCA}$. The snippet computes both: the *population* difference (computed once over all volcanoes in each region) and the *mean of the sampling distribution* of differences. Compare them. Are they essentially equal? What property of the sample mean as an estimator are you observing here, applied to *differences* of means?
+  book_section: 7.5 Sampling distribution in other scenarios
+  book_subsection: 7.5.1 Sampling distribution for two samples (difference)
 

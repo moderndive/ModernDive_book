@@ -1,53 +1,89 @@
-# ModernDive 2.1.0
+# ModernDive 2.7.0 — Diagnostic scripts and audit-driven content refinements
 
-This release ports the entire book from `bookdown` to **Quarto** and layers on a set of pedagogy and accessibility upgrades. The bookdown source remains canonical on the `v2` branch; the Quarto build is published to the `v2-publish` branch and currently lives on the `v2-quarto-html` branch. Existing reader URLs are preserved.
+A diagnostic-tooling release that puts the book's pedagogy and accessibility under explicit, repeatable scrutiny. Three read-only audit scripts now live in `scripts/`; their findings drove targeted refinements to the exercise system, Quick check coverage, distractor wording, and figure alt-text. The bookdown source remains canonical on the `v2` branch; the Quarto build is published to `v2-publish` from `v2-quarto-html`.
 
-## Migration: bookdown → Quarto
+## Diagnostic scripts (new `scripts/` folder)
 
-* All chapter source files renamed `.Rmd → .qmd`. `_bookdown.yml` and `_output.yml` replaced with a single `_quarto.yml`. PDF/Krantz support is intentionally deferred — this release is HTML-only.
-* All bookdown cross-reference syntax (`\@ref(fig:x)`, `\@ref(tab:x)`, section refs) converted to Quarto's `@fig-x` / `@tbl-x` / `@sec-x`. Chunk labels renamed accordingly.
-* `{block, type="learncheck"}` paired blocks merged into single `:::{.learncheck}` fenced divs (one cohesive callout per Learning Check).
-* CI workflow now uses `quarto-actions` and caches `.quarto/_freeze` for fast incremental builds.
-* Cross-chapter R state (`version`, `dev_version`, `needed_CRAN_pkgs`, helper functions) moved to `R/image_functions.R`, sourced by every chapter's auto-prepended `setup-init` chunk (Quarto runs each chapter in its own R session).
+Three self-contained R scripts that audit the book and print structured punch-lists, plus a `README.md` documenting use, output format, and known false-positive patterns. Each script is read-only — outputs are reviewed and applied separately.
 
-## New reader-facing features
+* `scripts/pedagogy_scans.R` — three scans in one pass: forward `@sec-*` cross-references (with Conclusion/foreshadowing prose filtered out), first-use lexicon for glossary terms, and a function-introduction map (prose-intro vs code-intro per function).
+* `scripts/learning_objective_scans.R` — LC distribution per chapter/section, fuzzy QC-to-subsection alignment, and per-group exercise difficulty progression (flags groups with `★★★` exercises but no `★★` rung).
+* `scripts/alt_text_audit.R` — figure alt-text accessibility audit covering R chunks (`fig.alt=`), markdown `![alt](path)` images, and `include_graphics()` calls. Filters non-rendering chunks (`eval=FALSE`, `fig.show='hide'`, `{webr-r}`, HTML-comment-wrapped markdown images) to suppress false positives.
 
-* **Learning objectives** at the top of each of the 11 main chapters — Bloom-style "by the end of this chapter, you'll be able to…" lists.
-* **"Common mistake" callouts** at predictable trouble spots: `aes()` vs setting (Ch 2), the `na.rm = TRUE` reflex (Ch 3), correlation ≠ causation (Ch 5), the three distributions students confuse (Ch 7), the "95% probability the parameter is in this interval" misinterpretation (Ch 8), and the p-value as P(H₀ true) trap (Ch 9).
-* **Quick check quizzes** — **ten** multiple-choice questions per chapter with collapsible answers, placed right before each Conclusion. Wrong-answer distractors deliberately reflect common student misconceptions (e.g., `aes(constant)` in Ch 2; `==` vs `=` in Ch 3; "95% probability the parameter is in this CI" in Ch 8; the multiple-testing problem in Ch 9), and each answer block briefly explains why each tempting wrong option is wrong.
-* **Per-chapter cheatsheets** — compact reference tables of the verbs/functions introduced in each chapter, in a dedicated callout.
-* **Glossary appendix** — alphabetized definitions of ~25 stats / data-science terms (sampling distribution, p-value, LINE conditions, …), each linking back to the chapter that develops the concept.
-* **WebR-runnable code cells** — pilot in Chapters 2, 3, 4, and Appendix B. Click *Run Code* to execute R in your browser without installing anything; edit and re-run to experiment. Cells live inside collapsible "Try it interactively" callouts so the WebR runtime only loads when a reader actively expands one.
-* **Dark mode + lightbox** — sun/moon toggle in the navbar; click any figure to enlarge in a modal. Custom `.learncheck` / `.announcement` / `.review` styles have dark-aware variants.
-* **Hyperlinked code** — function names in code blocks now link to their package documentation (Quarto's `code-link: true`).
-* **New "Random sampling vs. random assignment" subsection** at the end of Chapter 7, with a 2×2 summary table mapping the four study-design quadrants (random sample / random assignment, with/without each) to what kind of conclusion each design supports — and explicitly placing this book's example datasets within that grid.
+## End-of-chapter exercise system — coverage and difficulty
 
-## End-of-chapter exercises and instructor solutions
+* **~12 new end-of-chapter exercises** added to fill depth/length-proportional gaps surfaced by the section-coverage audit, all as Extensions tagged to the section they target so the coverage tables update correctly:
+    + Ch 6 § 6.2 *Two numerical predictors* (EX 6.55–56): partial vs marginal slopes, residuals-vs-fitted diagnostic on the two-numerical model.
+    + Ch 7 § 7.2 *Sampling framework* (EX 7.45): six-term vocabulary paragraph.
+    + Ch 7 § 7.5.1 *Two-sample sampling distributions* (EX 7.46–47): SE-of-a-difference numeric check, center of the two-sample sampling distribution.
+    + Ch 8 § 8.3 *Additional remarks about the bootstrap* (EX 8.44): how many bootstrap replicates is "enough."
+    + Ch 9 § 9.3 *Understanding hypothesis tests* (EX 9.45–46): six-term vocabulary paragraph, "three things a $p$-value is *not*."
+    + Ch 10 § 10.6 *Simulation-based inference for multiple linear regression* (EX 10.56–58): `infer::fit()` bootstrap CI for each partial slope, permutation $p$-value for each partial slope, when simulation-based beats theory-based.
+    + Ch 11 § 11.1 *Seattle case study* (EX 11.20–21): scaffolded warm-ups on log-transforming `price` and predicting a single house price by hand from the fitted equation.
+* **Ch 10 difficulty rebalanced** — 12 exercises rerated from ★★★ to ★★ (EX 10.8, 10.10, 10.11, 10.13, 10.15, 10.17, 10.19, 10.21, 10.22, 10.24, 10.37, 10.38) so every substantive non-Extension group now has a ★★ rung; the chapter's `Critical thinking and synthesis` group stays all ★★★ by design.
+* **Section-coverage notes refreshed** in `exercises/07.yml` and `exercises/11.yml` to reference the new exercises and reflect the chapter's actual coverage shape.
+* **Solutions** for the new exercises added to the (instructor-only) `exercises/06-solutions.yml`, `08-solutions.yml`, `10-solutions.yml` files. `instructor-solutions/_site/index.html` re-rendered cleanly with no cross-reference warnings.
 
-* **Roughly 320 new end-of-chapter exercises** placed between *Quick checks* and *Conclusion* in every numbered chapter — ~30–35 per chapter for the substantive chapters (2–10), and smaller capstone sets for chapters 1 and 11. Each exercise carries a difficulty marker (★ warm-up, ★★ standard, ★★★ critical thinking).
-* **Five new exercise datasets**, scaffolded gradually so packages and concepts accumulate naturally:
-    + `olympic_athletes` / `medal_table` / `editions` from the [`olympicAthletes`](https://github.com/moderndive/olympicAthletes) package — introduced in chapter 1, used throughout chapters 2, 3, 5, 8, 9, 10, 11.
-    + `episodes` from the [`steves`](https://github.com/ismayc/steves) package — Rick Steves' Europe (2000–2025); introduced in chapter 3.
-    + `bob_ross` from `fivethirtyeight` (already CRAN) — used as the chapter 4 *Tidy Data* pilot dataset and revisited in chapters 8 and 9.
-    + `planets` and `stars` from the [`exoplanets`](https://github.com/moderndive/exoplanets) package — introduced in chapter 6 and reused in 7, 10, 11.
-    + `volcanoes` / `eruptions` / `events` from the [`volcanoes`](https://github.com/moderndive/volcanoes) package — introduced in chapter 7 and reused in 8, 9, 11.
-* **Inline WebR sandboxes** beneath each code-needing exercise — same `{webr-r}` mechanism as the chapter examples — with reasoning-only prompts left as plain text so the *Run Code* button only appears where it makes sense.
-* **Solutions are instructor-only** and *not* deployed alongside the public book. Per-chapter solution content lives in `exercise-solutions/NN_ex.qmd` (mirroring the `lc-answers/` pattern) and is assembled into a self-contained HTML by a separate Quarto project at `instructor-solutions/`. Each chapter's solutions section opens with a **section coverage** table mapping book sections to exercise numbers, and each entry shows a foldable *show question* callout above an always-visible **Solution** with a plain-text section reference.
-* **CRAN/GitHub install toggle** in `R/setup_exercise_packages.R` — a single `from_github` flag per package. When any of the four GitHub-only packages reaches CRAN, flip its flag to `FALSE` and the next build pulls from CRAN instead. `DESCRIPTION` has matching `Imports:` and `Remotes:` entries so CI can install them either way.
-* Chapter 1 picks up a small *"Looking ahead to end-of-chapter exercises"* subsection that walks new readers through installing the first GitHub-only package (`olympicAthletes`) with `remotes::install_github()` and previews the four other datasets they'll meet.
+## Quick checks — section coverage gaps
 
-## Accessibility
+Surfaced by the QC-alignment audit:
 
-* All 150 figure chunks across the book now carry dedicated `fig.alt` attributes describing each figure's visual content for screen-reader users — distinct from (and richer than) the human-readable caption.
+* **Ch 8** picks up **Q11**: the *Mythbusters* yawning case study (§ 8.4) — previously uncovered by any QC. Intro line updated from "Ten questions" → "Eleven questions."
+* **Ch 9** picks up **Q11–Q12**: the music-popularity activity (§ 9.2) and the IMDb case study (§ 9.6) — both anchored on the chapter's worked examples. Intro line updated from "Ten" → "Twelve."
+* **Ch 10** picks up **Q11–Q12**: partial-slope interpretation in the coffee model (§ 10.5) and the `infer::fit()` bootstrap CI for partial slopes (§ 10.6) — the previously-thin multiple-regression material now has direct QC checks. Intro line updated from "Ten" → "Twelve."
 
-## Deploy
+## Quick check / LC distractor cleanup (first-use lexicon scan)
 
-* `_quarto.yml` `repo-actions: [edit, source, issue]` enables per-page edit/source/issue links in the navbar.
-* `R/post-render-cleanup.sh` post-render hook keeps the working tree tidy of macOS Cocoa render artifacts.
-* `_tools/convert_bookdown.pl` and `_tools/fix-chapter-refs.pl` preserved as the migration tooling for future reference.
-* `quarto-publish.yml` now pre-installs the four GitHub-only exercise packages with `remotes::install_github()` *before* `setup-renv@v2` runs, so `renv::restore()` finds them already present and skips them — working around resolution failures on those entries in the lockfile.
+Quick check stems and distractors must use only concepts the chapter has already introduced (per the long-standing in-repo rule). The lexicon scan caught five spots that violated this:
+
+* **Ch 2 Q9** (faceting): distractor (d) "*Creates a confidence interval per origin*" → rewritten to "*Sorts the data by `origin` level*" — `confidence interval` is a Ch 8 concept.
+* **Ch 5 LC** (intercept term $b_0$): option C "*The standard error of the regression*" → rewritten to "*The slope of the regression line*" — `standard error` is a Ch 7 concept.
+* **Ch 7 Q1** (sampling distribution): distractor (d) "*The probability that the null hypothesis is true*" → rewritten to "*How the population parameter varies across many possible populations*" — `null hypothesis` is a Ch 9 concept.
+* **Ch 1 Q3** (package re-loading): stem and option (d) referenced `filter()` from `dplyr` (a Ch 3 verb) → rewritten to use `glimpse()` (introduced in Ch 1).
+* **Ch 1 Q8** (`View()` is read-only): answer key referenced "dplyr verbs (`mutate()`, `filter()`, etc.)" → rewritten to point forward via `@sec-wrangling` without naming the verbs.
+
+## Figure alt-text — accessibility completion
+
+The alt-text audit found 72 figures still lacking `fig.alt=` or with empty markdown image alt brackets after the initial migration pass. All resolved in this release:
+
+* **65 new `fig.alt=` descriptions** added across foreword, preface, Ch 1, 2, 5, 11, App A, App B, and App C. Each describes the visual content of the figure (axes, shape, key features) rather than duplicating the human-readable caption — alt text and `fig.cap=` now consistently have different jobs across the book.
+* **3 markdown image alts** filled in for the `data_ninja1.png`, `forcats` package hex logo, and `Rninja.png` images in App C.
+* **Internal builder chunks** (Ch 2 `visualization-create-boxplot-components`, Ch 10/11 `*-viz-*-alt` chunks) that `ggsave()` to disk without printing now carry `fig.show='hide'` so the alt-text audit doesn't flag them, and so accessibility tooling correctly understands no figure is rendered there.
 
 ## Bug fixes
+
+* Stale doc reference: Ch 7's "you'll learn how to" callout pointed to `rep_sample_n()`, but the chapter actually teaches the newer `rep_slice_sample()`. Updated to match.
+
+***
+
+# ModernDive 2.6.0 — Exercise system refinements + pedagogical audits
+
+Refactor and tighten the end-of-chapter exercise rollout, then sweep through it for forward-reference and difficulty-progression issues.
+
+## Single-source-of-truth for end-of-chapter exercises
+
+* Per-chapter exercise content (prompts, webr code, difficulty, group, section/subsection assignments) now lives exclusively in `exercises/NN.yml`. Each chapter's `## Exercises` section in its `.qmd` calls `render_chapter_exercises(N)`; the matching `exercise-solutions/NN_ex.qmd` calls `render_solutions(N)`. No more drift between prompts in the chapter qmd and prompts in the solutions qmd — they read from the same YAML.
+* Coverage callout per chapter (a "Section coverage at a glance" table mapping book sections to exercise numbers) is now auto-generated by `render_coverage_callout(N)`. Consecutive exercise IDs collapse to en-dash ranges (e.g., `EX5.3–EX5.7`) for readability.
+* Instructor-solutions HTML TOC fixed — `toc-depth: 3` lets exercise group headers appear in the sidebar, and the per-chapter shortcode now lifts each chapter heading to the right level so the TOC isn't flat.
+
+## Pedagogical audits — Quick checks and exercise placement
+
+* Distractor scrubbing across Quick checks (Ch 4 first pass, then Ch 6, 8, 9, 10, 11) — rewrote multiple distractors that introduced forward-reference terminology and tightened wording on several stems.
+* Forward-ref exercise moves: a handful of exercises that secretly required Ch 8+ material were promoted into each chapter's *Extensions* group (where the "deliberately introduces concepts beyond" framing is appropriate) rather than sitting in the main exercise list.
+* R²/forward-ref cleanup in Chs 5 and 6: exercises mentioning R² migrated to *Extensions* (R² is properly introduced as a model-fit summary in Ch 10).
+* EX 6.11 added to fill a parallel-slopes interpretation gap; small wording fixes across Ch 1, 3, 5, 6.
+
+***
+
+# ModernDive 2.5.0 — Accessibility & migration polish
+
+The accessibility complement to the Quarto port, plus the wave of migration-era bug fixes that surfaced as the build settled.
+
+## Accessibility — initial alt-text pass
+
+* All 150 figure chunks that existed at the time of the Quarto migration received dedicated `fig.alt` attributes describing each figure's visual content for screen-reader users — distinct from (and richer than) the human-readable `fig.cap=`. (The remaining ~70 figures get their alt text in 2.7.0's accessibility completion pass.)
+
+## Migration bug fixes
 
 * Added names to all chunks with the help of GitHub Copilot.
 * Updated Posit cheatsheet links and screenshots to latest versions from <https://rstudio.github.io/cheatsheets/>.
@@ -63,6 +99,70 @@ This release ports the entire book from `bookdown` to **Quarto** and layers on a
 * Fixed cheatsheet pipe rows (`|>`) in Chapters 3, 10, 11 that were rendering as literal `\|>` due to markdown table-cell escaping inside backticks.
 * Normalized fenced-div opens to `::: {.learncheck}` (with a space) across all chapters and appendices. The no-space form `:::{.learncheck}` is valid Pandoc but trips Quarto's lua filter, which would render the opening fence as literal text and emit a "problem with a fenced div" warning.
 * Inserted a missing blank line between a math display (`$$ … $$`) and the immediately following `::: {.learncheck}` fence in Chapter 7; without the separator, Pandoc treated the fence as part of the preceding block and the closing `:::` would render as literal text under the Quick checks section.
+
+***
+
+# ModernDive 2.4.0 — End-of-chapter exercise system
+
+* **Roughly 320 new end-of-chapter exercises** placed between *Quick checks* and *Conclusion* in every numbered chapter — ~30–35 per chapter for the substantive chapters (2–10), and smaller capstone sets for chapters 1 and 11. Each exercise carries a difficulty marker (★ warm-up, ★★ standard, ★★★ critical thinking).
+* **Five new exercise datasets**, scaffolded gradually so packages and concepts accumulate naturally:
+    + `olympic_athletes` / `medal_table` / `editions` from the [`olympicAthletes`](https://github.com/moderndive/olympicAthletes) package — introduced in chapter 1, used throughout chapters 2, 3, 5, 8, 9, 10, 11.
+    + `episodes` from the [`steves`](https://github.com/ismayc/steves) package — Rick Steves' Europe (2000–2025); introduced in chapter 3.
+    + `bob_ross` from `fivethirtyeight` (already CRAN) — used as the chapter 4 *Tidy Data* pilot dataset and revisited in chapters 8 and 9.
+    + `planets` and `stars` from the [`exoplanets`](https://github.com/moderndive/exoplanets) package — introduced in chapter 6 and reused in 7, 10, 11.
+    + `volcanoes` / `eruptions` / `events` from the [`volcanoes`](https://github.com/moderndive/volcanoes) package — introduced in chapter 7 and reused in 8, 9, 11.
+* **Inline WebR sandboxes** beneath each code-needing exercise — same `{webr-r}` mechanism as the chapter examples — with reasoning-only prompts left as plain text so the *Run Code* button only appears where it makes sense.
+* **Solutions are instructor-only** and *not* deployed alongside the public book. Per-chapter solution content lives in `exercise-solutions/NN_ex.qmd` (mirroring the `lc-answers/` pattern) and is assembled into a self-contained HTML by a separate Quarto project at `instructor-solutions/`. Each chapter's solutions section opens with a **section coverage** table mapping book sections to exercise numbers, and each entry shows a foldable *show question* callout above an always-visible **Solution** with a plain-text section reference.
+* **CRAN/GitHub install toggle** in `R/setup_exercise_packages.R` — a single `from_github` flag per package. When any of the four GitHub-only packages reaches CRAN, flip its flag to `FALSE` and the next build pulls from CRAN instead. `DESCRIPTION` has matching `Imports:` and `Remotes:` entries so CI can install them either way.
+* Chapter 1 picks up a small *"Looking ahead to end-of-chapter exercises"* subsection that walks new readers through installing the first GitHub-only package (`olympicAthletes`) with `remotes::install_github()` and previews the four other datasets they'll meet.
+
+***
+
+# ModernDive 2.3.0 — Quick checks + WebR pilot
+
+* **Quick check quizzes** — **ten** multiple-choice questions per chapter with collapsible answers, placed right before each Conclusion. Wrong-answer distractors deliberately reflect common student misconceptions (e.g., `aes(constant)` in Ch 2; `==` vs `=` in Ch 3; "95% probability the parameter is in this CI" in Ch 8; the multiple-testing problem in Ch 9), and each answer block briefly explains why each tempting wrong option is wrong.
+* **WebR-runnable code cells** — pilot in Chapters 2, 3, 4, and Appendix B. Click *Run Code* to execute R in your browser without installing anything; edit and re-run to experiment. Cells live inside collapsible "Try it interactively" callouts so the WebR runtime only loads when a reader actively expands one.
+
+***
+
+# ModernDive 2.2.0 — Reader UX layer
+
+Substantive pedagogical scaffolding plus visual/navigation polish that the Quarto port made cheap to add.
+
+## Pedagogical scaffolding
+
+* **Learning objectives** at the top of each of the 11 main chapters — Bloom-style "by the end of this chapter, you'll be able to…" lists.
+* **"Common mistake" callouts** at predictable trouble spots: `aes()` vs setting (Ch 2), the `na.rm = TRUE` reflex (Ch 3), correlation ≠ causation (Ch 5), the three distributions students confuse (Ch 7), the "95% probability the parameter is in this interval" misinterpretation (Ch 8), and the p-value as P(H₀ true) trap (Ch 9).
+* **Per-chapter cheatsheets** — compact reference tables of the verbs/functions introduced in each chapter, in a dedicated callout.
+* **Glossary appendix** — alphabetized definitions of ~25 stats / data-science terms (sampling distribution, p-value, LINE conditions, …), each linking back to the chapter that develops the concept.
+* **New "Random sampling vs. random assignment" subsection** at the end of Chapter 7, with a 2×2 summary table mapping the four study-design quadrants (random sample / random assignment, with/without each) to what kind of conclusion each design supports — and explicitly placing this book's example datasets within that grid.
+
+## Visual + navigation
+
+* **Dark mode + lightbox** — sun/moon toggle in the navbar; click any figure to enlarge in a modal. Custom `.learncheck` / `.announcement` / `.review` styles have dark-aware variants.
+* **Hyperlinked code** — function names in code blocks now link to their package documentation (Quarto's `code-link: true`).
+
+***
+
+# ModernDive 2.1.0 — Quarto port (HTML migration)
+
+The mechanical bookdown→Quarto conversion plus the deploy/CI infrastructure that supports it. No new chapter content in this release — all pedagogy additions arrive in subsequent releases. PDF/Krantz support is intentionally deferred; this release is HTML-only.
+
+## Migration: bookdown → Quarto
+
+* All chapter source files renamed `.Rmd → .qmd`. `_bookdown.yml` and `_output.yml` replaced with a single `_quarto.yml`.
+* All bookdown cross-reference syntax (`\@ref(fig:x)`, `\@ref(tab:x)`, section refs) converted to Quarto's `@fig-x` / `@tbl-x` / `@sec-x`. Chunk labels renamed accordingly.
+* `{block, type="learncheck"}` paired blocks merged into single `:::{.learncheck}` fenced divs (one cohesive callout per Learning Check).
+* CI workflow now uses `quarto-actions` and caches `.quarto/_freeze` for fast incremental builds.
+* Cross-chapter R state (`version`, `dev_version`, `needed_CRAN_pkgs`, helper functions) moved to `R/image_functions.R`, sourced by every chapter's auto-prepended `setup-init` chunk (Quarto runs each chapter in its own R session).
+
+## Deploy
+
+* The bookdown source remains canonical on the `v2` branch; the Quarto build is published to the `v2-publish` branch and currently lives on the `v2-quarto-html` branch. Existing reader URLs are preserved.
+* `_quarto.yml` `repo-actions: [edit, source, issue]` enables per-page edit/source/issue links in the navbar.
+* `R/post-render-cleanup.sh` post-render hook keeps the working tree tidy of macOS Cocoa render artifacts.
+* `_tools/convert_bookdown.pl` and `_tools/fix-chapter-refs.pl` preserved as the migration tooling for future reference.
+* `quarto-publish.yml` now pre-installs the four GitHub-only exercise packages with `remotes::install_github()` *before* `setup-renv@v2` runs, so `renv::restore()` finds them already present and skips them — working around resolution failures on those entries in the lockfile.
 
 ***
 
