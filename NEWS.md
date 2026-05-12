@@ -1,3 +1,54 @@
+# ModernDive 2.8.0 — Repository restructure
+
+Folder-and-file reorganization to give the repo a single home for every R / shell / Perl helper, decouple App C from legacy knitr caching, and consolidate the instructor-solutions sources next to their builder. No content changes — public reader-facing book is identical to 2.7.0.
+
+## `scripts/` is now the single home for all helper code
+
+Previously, helper code lived in three overlapping folders:
+
+* `R/` — render-time helpers, plus a couple of one-shot dev tools mixed in.
+* `scripts/` — diagnostic audit scripts (added in 2.7.0).
+* `_tools/` — bookdown→Quarto migration Perl scripts.
+
+These all merged into `scripts/`, with a single source-of-truth `scripts/README.md` documenting each file by *role* (render-time, manual build, diagnostic audit, migration tool, archive). The table at the top of the README classifies every file. Internal organization:
+
+* **Top level** — render-time helpers (`exercise_helpers.R`, `image_functions.R`, `setup_exercise_packages.R`, `post-render-cleanup.sh`), manual build helper (`pdf_build_from_tex.R`), 4 diagnostic audits, 2 migration Perl scripts, V1→V2 `learning-checks/` subdir.
+* **`scripts/archive/`** — orphaned bookdown-era helpers kept for git-history reference (currently just `purl.R`, which `index.qmd` no longer sources).
+
+All `R/`-path references updated to `scripts/`: 18 chapter qmds, 11 exercise-solution qmds, `_quarto.yml`, internal references inside the migration scripts themselves.
+
+Removed: duplicate `pdf_build_from_tex.R` (root copy stale; `R/` version kept the same content but with current Quarto-era paths).
+
+## App C no longer uses legacy `cache=TRUE`
+
+`93-appendixC.qmd` was the only chapter still using R Markdown's `cache=TRUE` chunk option, producing `93-appendixC_cache/` (8.5 MB of tracked binary cache that churned on every chunk-option change) and `93-appendixC_files/`. Both directories deleted from tracking; the chunk option removed; the chapter now uses Quarto's `_freeze` like every other chapter. Net savings: ~9 MB and zero cache-file churn in future commits.
+
+## Static HTML pages moved out of repo root
+
+The three static HTML files referenced as resources in `_quarto.yml` (`regression-plane.html`, `regression-plane-ISLR2.html` — both ~4.5 MB interactive 3D plots — and `labs.html` — a 206-byte redirect) moved to `extras/`. The `_quarto.yml` `resources:` list now points to `extras/<file>`. Two follow-on updates:
+
+* The Ch 6 prose link to `https://moderndive.com/v2/regression-plane-ISLR2.html` updated to `.../v2/extras/regression-plane-ISLR2.html`.
+* `_redirects` (Netlify) gained three permanent redirects to preserve any existing inbound links to the pre-move URLs.
+
+## Instructor solutions consolidated
+
+`exercise-solutions/*.qmd` (11 per-chapter solution stubs) moved into `instructor-solutions/chapters/`. The `instructor-solutions/index.qmd` include paths updated from `../exercise-solutions/NN_ex.qmd` to `chapters/NN_ex.qmd`. The `exercise-solutions/` directory is gone.
+
+In the process, 20 MB of stale build artifacts (10 `*_ex.html` standalone renders plus 225 entries under `*_ex_files/` for bootstrap CSS/JS/woff fonts) removed from tracking. The canonical instructor-solutions render is `instructor-solutions/_site/index.html`; the per-chapter HTMLs were leftover from when each chapter rendered standalone before the wrapper project existed.
+
+`.gitignore` now defensively ignores `exercise-solutions/` so a stray hand-render can't re-track those artifacts.
+
+**Heads-up for the companion `moderndive_exercise_solutions` repo**: its `build.yml` Cache step hashes `book/R/exercise_helpers.R` for the cache key — that path no longer exists. The single-line patch is:
+
+```diff
+-          key: instructor-solutions-freeze-${{ hashFiles('book/exercises/**/*.yml', 'exercises/**/*.yml', 'book/R/exercise_helpers.R') }}
++          key: instructor-solutions-freeze-${{ hashFiles('book/exercises/**/*.yml', 'exercises/**/*.yml', 'book/scripts/exercise_helpers.R') }}
+```
+
+(Not a build failure — the existing key just produces a cache miss every run, forcing a fresh render. Updating restores cache hits.)
+
+***
+
 # ModernDive 2.7.0 — Diagnostic scripts and audit-driven content refinements
 
 A diagnostic-tooling release that puts the book's pedagogy and accessibility under explicit, repeatable scrutiny. Three read-only audit scripts now live in `scripts/`; their findings drove targeted refinements to the exercise system, Quick check coverage, distractor wording, and figure alt-text. The bookdown source remains canonical on the `v2` branch; the Quarto build is published to `v2-publish` from `v2-quarto-html`.
