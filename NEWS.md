@@ -549,7 +549,7 @@ Completed major re-organization and clean-up of Chapters 9-11 using the `infer` 
 
 ## Content changes
 
-* Incorporated feedback from consultations with Prof. Yana Weinstein, cognitive psychological scientist and co-founder of [The Learning Scientists](http://www.learningscientists.org/yana-weinstein/).
+* Incorporated feedback from consultations with Prof. Jude Weinstein Jones, cognitive psychological scientist and co-founder of [The Learning Scientists](https://www.learningscientists.org/about).
 * Restructured/revamped chapters
     + **Chapter 1: Introduction**
         + Friendlier introduction targeted to students is first thing users see. Followed then by introduction  for instructors, ways to connect/contribute, and technical details.

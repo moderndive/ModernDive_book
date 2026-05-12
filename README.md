@@ -1,10 +1,10 @@
 # ModernDive <img src="images/logos/hex_blue_text.png" align="right" width=125 />
 
-[![DOI](https://zenodo.org/badge/66818484.svg)](https://zenodo.org/badge/latestdoi/66818484) [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://www.tidyverse.org/lifecycle/#stable) [![GitHub Actions Deployment](https://github.com/moderndive/ModernDive_book/actions/workflows/quarto-publish.yml/badge.svg)](https://github.com/moderndive/ModernDive_book/actions/workflows/quarto-publish.yml)
+[![DOI](https://zenodo.org/badge/66818484.svg)](https://zenodo.org/badge/latestdoi/66818484) [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable) [![GitHub Actions Deployment](https://github.com/moderndive/ModernDive_book/actions/workflows/quarto-publish.yml/badge.svg)](https://github.com/moderndive/ModernDive_book/actions/workflows/quarto-publish.yml)
 
 Welcome to the GitHub repository page for **Statistical Inference via Data Science: A ModernDive into R and the Tidyverse**.
 
-* **Second Edition (current):** [moderndive.com/v2/](https://moderndive.com/v2/) — also available in print from [CRC Press](https://www.routledge.com/Statistical-Inference-via-Data-Science-A-ModernDive-into-R-and-the-Tidyverse/Ismay-Kim/p/book/9780367409821).
+* **Second Edition (current):** [moderndive.com/v2/](https://moderndive.com/v2/) — also available in print from [CRC Press](https://www.routledge.com/Statistical-Inference-via-Data-Science-A-ModernDive-into-R-and-the-Tidyverse/Ismay-Kim-Valdivia/p/book/9781032708379).
 * **First Edition (archived):** [moderndive.com](https://moderndive.com/).
 
 <img src="images/logos/v2_cover.jpg" width="50%"/>
