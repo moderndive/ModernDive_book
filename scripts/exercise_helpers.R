@@ -55,21 +55,23 @@ ex_helpers_collapse_runs <- function(ids, chapter) {
 }
 
 ex_helpers_load <- function(chapter) {
-  pub_path <- sprintf("exercises/%02d.yml", chapter)
-  if (!file.exists(pub_path)) {
-    alt <- file.path("..", pub_path)
-    if (file.exists(alt)) pub_path <- alt
+  # Search the same yml at several relative depths so this helper works when
+  # called from book root (`exercises/...`), instructor-solutions/
+  # (`../exercises/...`), or instructor-solutions/solutions/
+  # (`../../exercises/...`) — the last case applies after the v2.8.13
+  # restructure moved the worked-solutions page a level deeper.
+  find_yml <- function(rel) {
+    candidates <- c(rel, file.path("..", rel), file.path("..", "..", rel))
+    Find(file.exists, candidates)
   }
+  pub_path <- find_yml(sprintf("exercises/%02d.yml", chapter))
   data <- yaml::read_yaml(pub_path)
 
   # Solutions live in a separate gitignored file `exercises/NN-solutions.yml`
   # that ships only to instructors. If absent (e.g., a student clone), we
   # fill in placeholders so the helper still renders gracefully.
-  priv_path <- sprintf("exercises/%02d-solutions.yml", chapter)
-  if (!file.exists(priv_path)) {
-    alt <- file.path("..", priv_path)
-    if (file.exists(alt)) priv_path <- alt
-  }
+  priv_path <- find_yml(sprintf("exercises/%02d-solutions.yml", chapter))
+  if (is.null(priv_path)) priv_path <- sprintf("exercises/%02d-solutions.yml", chapter)
   if (file.exists(priv_path)) {
     priv <- yaml::read_yaml(priv_path)
     sol_by_ex <- setNames(priv$exercises,
