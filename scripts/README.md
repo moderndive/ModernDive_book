@@ -7,7 +7,7 @@ This folder holds every R / shell / Perl script the book project uses, organized
 | **Render-time helpers** | `exercise_helpers.R`, `image_functions.R`, `setup_exercise_packages.R`, `post-render-cleanup.sh` | Automatically, every Quarto render |
 | **Manual build helpers** | `pdf_build_from_tex.R` | By hand, when building the print/PDF edition |
 | **Diagnostic audits** | `alt_text_audit.R`, `cross_reference_scans.R`, `learning_objective_scans.R`, `pedagogy_scans.R`, `lint_exercise_yaml.R`, `audit_heading_hierarchy.R`, `audit_unused_images.R`, `audit_quick_check_format.R`, `audit_exercise_lexicon.R`, `audit_terminology.R` | By hand, to find punch-list items |
-| **Reports** | `exercise_coverage_map.R` | By hand, to generate an instructor-facing coverage HTML |
+| **Reports** | `exercise_coverage_map.R`, `build_concept_map.R` | By hand, to generate instructor-facing HTML reports |
 | **Migration tools** | `convert_bookdown.pl`, `fix-chapter-refs.pl`, `learning-checks/` | Historical; one-shot for bookdown→Quarto and V1→V2 |
 | **Archive** | `archive/purl.R` | Never (kept for git history reference) |
 
@@ -91,6 +91,15 @@ Validates every `exercises/NN.yml` (and `NN-solutions.yml` if present locally) c
 6. **`book_section` value matches an actual chapter section title** — typo-catching (warning).
 
 Exits non-zero on errors; warnings print without failing. Wired into the `Audits` CI workflow so PRs that introduce malformed YAML fail before render.
+
+### `build_concept_map.R` — chapter dependency visualization
+
+Reads every chapter qmd, extracts `@sec-*` cross-references, maps each anchor to its owning chapter, and writes `instructor-solutions/concept-map.html` containing:
+
+1. An SVG dependency graph (11 chapters as nodes; forward arcs in blue above the line, backward references in red below).
+2. A per-chapter dependency table: which chapters each chapter cites (outgoing) and which chapters cite it (incoming).
+
+Useful for instructors planning a non-linear curriculum or visualizing how concepts build up across the book. Output is gitignored — regenerate on demand with `Rscript scripts/build_concept_map.R`.
 
 ### `exercise_coverage_map.R` — instructor-facing coverage report
 
