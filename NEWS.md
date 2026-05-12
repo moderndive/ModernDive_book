@@ -1,3 +1,41 @@
+# ModernDive 2.8.4 — Accessibility pass: contrast, keyboard, ARIA
+
+* **WCAG contrast audit** of custom callouts (`.learncheck`, `.announcement`, `.review`) in light *and* dark mode: all foreground/background pairs now verified at AAA. No CSS color changes needed.
+* **Focus indicators**: prominent `:focus-visible` outline (blue in light mode, lighter blue in dark mode) — keyboard users can see which element has focus.
+* **`prefers-reduced-motion` support**: users with reduced-motion OS preferences get all animations/transitions dialed down to 0.01ms.
+* **Skip-to-main-content link** scaffold in CSS (`.skip-link` class), visible only on keyboard focus.
+* **ARIA landmarks on custom callouts**: new `_extensions/aria-callouts/` Lua filter adds `role="region"` and a descriptive `aria-label` to `.learncheck`, `.announcement`, and `.review` divs so screen-reader users can navigate between them as landmarks. (Quarto's built-in callouts already have these.)
+
+***
+
+# ModernDive 2.8.3 — Glossary auto-link + social-share metadata
+
+* **Glossary auto-link Lua filter** (`_extensions/glossary-autolink/`). On the *first* occurrence of each glossary term in each chapter, the prose now contains a hyperlink to the matching glossary entry. Multi-word terms ("sampling distribution", "Central Limit Theorem") and single-word terms ("scatterplot", "outlier") both supported. Excluded contexts: code, math, existing links, headings, the glossary chapter itself. Readers benefit from the glossary without needing to know it exists.
+* **Per-page OpenGraph + Twitter-card metadata** via `book:` config (`site-url`, `open-graph`, `twitter-card`). Social-share previews now include the book hex logo + chapter title; per-chapter overrides still possible via YAML frontmatter.
+
+***
+
+# ModernDive 2.8.2 — Exercise YAML linter + coverage heatmap
+
+* **`scripts/lint_exercise_yaml.R`** — validates every `exercises/NN.yml`: required fields (`ex_num`, `difficulty`, `prompt`), difficulty in 1..3, unique `ex_num` within chapter, code-needing prompts without `webr` (warning), orphan solutions (warning), `book_section` values matching real chapter section titles (warning). Wired into the *Audits* CI workflow so malformed YAML fails the PR before render.
+* **`scripts/exercise_coverage_map.R`** — generates `instructor-solutions/coverage-map.html` with per-chapter tables of section/subsection coverage, exercise-ID lists collapsed to en-dash ranges, and difficulty histograms. Sections with ≤ 1 exercise are flagged in red. Output is gitignored; regenerate on demand.
+
+***
+
+# ModernDive 2.8.1 — Hover citations, MathJax a11y, CI audit gates
+
+* **Hover citations** already enabled in `_quarto.yml` (`citations-hover: true`) — bibliography refs preview on hover.
+* **MathJax screen-reader accessibility**: new `_includes/mathjax-assistive.html` loads the `a11y/assistive-mml` MathJax extension and enables `assistiveMml: true` so screen readers speak equations semantically rather than glyph-by-glyph.
+* **Tighter `_freeze` cache key** in `quarto-publish.yml` — hashes the root-level book qmds + helper scripts + `exercises/*.yml` instead of `**/*qmd`, so instructor-solutions edits don't invalidate the main book's freeze cache.
+* **New `.github/workflows/audits.yml`** with three PR-gate jobs:
+    - Dead anchors (runs `cross_reference_scans.R`; fails on unresolved `@sec-*` / `@fig-*` / `@tbl-*`)
+    - Figure alt-text (runs `alt_text_audit.R`; fails if any figure ships without alt text)
+    - External link check (`lychee`; reports dead URLs as a downloadable artifact, doesn't block the PR)
+
+Locks in the 2.7.0 cross-ref/alt-text wins so future PRs can't regress.
+
+***
+
 # ModernDive 2.8.0 — Repository restructure
 
 Folder-and-file reorganization to give the repo a single home for every R / shell / Perl helper, decouple App C from legacy knitr caching, and consolidate the instructor-solutions sources next to their builder. No content changes — public reader-facing book is identical to 2.7.0.
