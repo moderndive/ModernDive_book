@@ -6,7 +6,8 @@ This folder holds every R / shell / Perl script the book project uses, organized
 |---|---|---|
 | **Render-time helpers** | `exercise_helpers.R`, `image_functions.R`, `setup_exercise_packages.R`, `post-render-cleanup.sh` | Automatically, every Quarto render |
 | **Manual build helpers** | `pdf_build_from_tex.R` | By hand, when building the print/PDF edition |
-| **Diagnostic audits** | `alt_text_audit.R`, `cross_reference_scans.R`, `learning_objective_scans.R`, `pedagogy_scans.R` | By hand, to find punch-list items |
+| **Diagnostic audits** | `alt_text_audit.R`, `cross_reference_scans.R`, `learning_objective_scans.R`, `pedagogy_scans.R`, `lint_exercise_yaml.R` | By hand, to find punch-list items |
+| **Reports** | `exercise_coverage_map.R` | By hand, to generate an instructor-facing coverage HTML |
 | **Migration tools** | `convert_bookdown.pl`, `fix-chapter-refs.pl`, `learning-checks/` | Historical; one-shot for bookdown→Quarto and V1→V2 |
 | **Archive** | `archive/purl.R` | Never (kept for git history reference) |
 
@@ -77,6 +78,30 @@ Three figure patterns checked: R chunks with `fig.alt=`, markdown `![alt](path)`
 - `CAPTION` — alt text identical to `fig.cap=`
 
 Filters out non-rendering chunks (`eval=FALSE`, `fig.show='hide'`, `{webr-r}`, HTML-comment-wrapped markdown images).
+
+### `lint_exercise_yaml.R` — exercise YAML linter
+
+Validates every `exercises/NN.yml` (and `NN-solutions.yml` if present locally) catches authoring bugs *before* render:
+
+1. **Required fields** — `ex_num`, `difficulty`, `prompt` on every entry; `group` and `book_section` recommended (warning).
+2. **Difficulty** must be 1, 2, or 3 (error).
+3. **Unique `ex_num`** within a chapter (error).
+4. **Code-needing prompt without `webr` field** — heuristic on prompt verbs like "fit", "plot", "compute"; flags as warning so reasoning-only prompts don't false-positive.
+5. **Solution `ex_num` ⊆ prompt `ex_num`** — no orphan solutions (warning).
+6. **`book_section` value matches an actual chapter section title** — typo-catching (warning).
+
+Exits non-zero on errors; warnings print without failing. Wired into the `Audits` CI workflow so PRs that introduce malformed YAML fail before render.
+
+### `exercise_coverage_map.R` — instructor-facing coverage report
+
+Reads every `exercises/NN.yml` and emits `instructor-solutions/coverage-map.html`: per-chapter tables showing each section/subsection, the count of exercises targeting it, the exercise-ID list (collapsed to en-dash ranges), and a difficulty histogram. Sections with ≤ 1 exercise are highlighted in red.
+
+The output is gitignored — regenerate on demand:
+
+```sh
+Rscript scripts/exercise_coverage_map.R
+open instructor-solutions/coverage-map.html
+```
 
 ### `cross_reference_scans.R` — dead anchors, forward refs, glossary coverage
 
