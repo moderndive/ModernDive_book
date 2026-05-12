@@ -90,55 +90,74 @@ for (qf in chap_files) {
   )
 }
 
+# ModernDive Labs problem sets (hosted at moderndive.github.io/moderndive_labs).
+# These are the "official" lab/problem-set companions to the book and are
+# referenced per week in the syllabus table.
+labs_base <- "https://moderndive.github.io/moderndive_labs/static/PS"
+ps_link <- function(name, label) {
+  sprintf("[%s](%s/%s)", label, labs_base, name)
+}
+PS01 <- ps_link("PS01_intro_to_R_RStudio.html",  "PS1 Intro R/RStudio")
+PS02 <- ps_link("PS02_data_viz.html",            "PS2 Data Viz")
+PS03 <- ps_link("PS03_data_wrangling.html",      "PS3 Wrangling")
+PS04 <- ps_link("PS04_reg_one_num_x.html",       "PS4 Regression, 1 num x")
+PS05 <- ps_link("PS05_reg_one_cat_x.html",       "PS5 Regression, 1 cat x")
+PS06 <- ps_link("PS06_multiple_reg.html",        "PS6 Multiple Regression")
+PS07 <- ps_link("PS07_sampling_dist.html",       "PS7 Sampling Distributions")
+PS08 <- ps_link("PS08_CI_bootstrap.html",        "PS8 CIs (bootstrap)")
+PS09 <- ps_link("PS09_hypothesis_testing.html",  "PS9 Hypothesis Testing")
+PS10 <- ps_link("PS10_inference_for_regression.html", "PS10 Inference for Regression")
+TERM_PROJECT <- "[Term project template](https://moderndive.github.io/moderndive_labs/term_project.html)"
+
 # === 15-week semester plan ===
 # Week-to-chapter map. Heavy chapters get 2 weeks; chapter 7 is paired with
 # midterm; chapter 11 is paired with final-project workshop.
 semester <- list(
   list(week = 1,  topic = "Course intro + R/RStudio setup", chap = 1,
        activities = "Install R + RStudio + tidyverse; tour the book; first scripts",
-       hw = "Problem Set 0: setup verification"),
+       hw = sprintf("%s assigned", PS01)),
   list(week = 2,  topic = "Grammar of graphics, scatterplots, linegraphs", chap = 2,
        activities = "5NG #1-2 worked examples + group critique of student-built plots",
-       hw = "Problem Set 1 released (Ch 1-2 mix)"),
+       hw = sprintf("%s due; %s assigned", PS01, PS02)),
   list(week = 3,  topic = "Histograms, facets, boxplots, barplots", chap = 2,
        activities = "5NG #3-5 + facets; cold-call a student to predict a faceted plot before reveal",
        hw = "—"),
   list(week = 4,  topic = "Data wrangling I: filter / summarize / group_by", chap = 3,
        activities = "Live coding from flights; debugging-walkthrough on a broken pipeline",
-       hw = "PS1 due; PS2 released"),
+       hw = sprintf("%s due; %s assigned", PS02, PS03)),
   list(week = 5,  topic = "Data wrangling II: mutate / arrange / joins", chap = 3,
        activities = "Joins worked example; pair programming on weather merge",
        hw = "—"),
   list(week = 6,  topic = "Importing data + tidy data principles", chap = 4,
        activities = "Real-world messy-CSV import lab; pivot_longer / pivot_wider drill",
-       hw = "PS2 due"),
+       hw = sprintf("%s due", PS03)),
   list(week = 7,  topic = "Midterm review + midterm exam", chap = NA,
        activities = "Day 1: jeopardy-style retrieval over Ch 1-4; Day 2: in-class exam",
        hw = "Midterm exam"),
   list(week = 8,  topic = "Basic regression: one numerical predictor", chap = 5,
        activities = "Walk through `get_regression_table()` + `get_regression_points()` on `evals`",
-       hw = "PS3 released"),
-  list(week = 9,  topic = "Multiple regression: two numerical predictors", chap = 6,
-       activities = "3D regression visualization; interpret coefficients in context",
-       hw = "—"),
-  list(week = 10, topic = "Multiple regression: interactions + categorical predictors", chap = 6,
-       activities = "Interaction-vs-parallel-slopes group activity",
-       hw = "PS3 due"),
+       hw = sprintf("%s + %s assigned", PS04, PS05)),
+  list(week = 9,  topic = "Basic regression: categorical predictor", chap = 5,
+       activities = "Interpret slopes for a 0/1 indicator; compare against group means",
+       hw = sprintf("%s + %s due; %s assigned", PS04, PS05, PS06)),
+  list(week = 10, topic = "Multiple regression + interactions", chap = 6,
+       activities = "3D regression visualization; interaction-vs-parallel-slopes group activity",
+       hw = sprintf("%s due", PS06)),
   list(week = 11, topic = "Sampling distributions + the bootstrap intuition", chap = 7,
        activities = "Tactile sampling activity (red/white balls); virtual sampling with `rep_sample_n()`",
-       hw = "Final project proposal due"),
+       hw = sprintf("%s assigned; %s proposal due", PS07, TERM_PROJECT)),
   list(week = 12, topic = "Confidence intervals", chap = 8,
        activities = "Bootstrap CI lab; CI-interpretation common-mistake gallery",
-       hw = "PS4 released"),
+       hw = sprintf("%s due; %s assigned", PS07, PS08)),
   list(week = 13, topic = "Hypothesis testing", chap = 9,
        activities = "Permutation-test simulation; build a null world step by step",
-       hw = "—"),
+       hw = sprintf("%s due; %s assigned", PS08, PS09)),
   list(week = 14, topic = "Inference for regression", chap = 10,
        activities = "Bringing it all together: bootstrap CIs for regression slopes",
-       hw = "PS4 due"),
-  list(week = 15, topic = "Tell your story with data + final-project workshop", chap = 11,
-       activities = "Peer review of final-project drafts; presentations day 2",
-       hw = "Final project due (end of week)")
+       hw = sprintf("%s due; %s assigned", PS09, PS10)),
+  list(week = 15, topic = "Tell your story with data + term-project workshop", chap = 11,
+       activities = "Peer review of project drafts; presentations day 2",
+       hw = sprintf("%s due; final project due (end of week)", PS10))
 )
 
 # === 10-week quarter plan (compressed) ===
@@ -235,6 +254,10 @@ out <- c(
   "Adapt freely. The week-by-week table is a **scaffold**, not a contract &mdash; depending on your students' prior R exposure you'll likely spend extra time on Ch 1-3, or compress them if your students arrive with tidyverse fluency. Each row links to the matching slide deck and facilitator notes so you can jump straight to teaching prep.",
   ":::",
   "",
+  "::: {.callout-tip title=\"Companion lab/problem-set site: ModernDive Labs\"}",
+  "The book pairs with the [ModernDive Labs](https://moderndive.github.io/moderndive_labs/) site, which hosts PS1-PS10 (one per chapter, written as self-contained scaffolded notebooks) and a [term-project template](https://moderndive.github.io/moderndive_labs/term_project.html). The syllabus below uses these labs as the default weekly homework; per-week direct links appear in the *Homework / assessments* column.",
+  ":::",
+  "",
   "## At a glance",
   "",
   sprintf("- **Book version:** ModernDive 2.x (current v2-quarto-html branch)"),
@@ -264,11 +287,11 @@ out <- c(
   "",
   "## Assessment plan",
   "",
-  "**Problem sets (40%):** Four problem sets, each 8-12 exercises drawn from the homework planner ([open the planner](homework-planner.html)). Mix of ★ (warm-up), ★★ (standard), and ★★★ (critical-thinking). Released alternating weeks.",
+  "**Problem sets (40%):** Ten problem sets from [ModernDive Labs](https://moderndive.github.io/moderndive_labs/) (PS1-PS10) — one per book chapter (Ch 4 absorbed into PS3). These are the *official* lab companions: each is a self-contained narrative-style notebook with scaffolded R chunks, conceptual questions, and a write-up section. The release-and-due cadence above pairs each PS to the chapter it tests. Alternative / supplement: build custom sets via the [homework planner](homework-planner.html).",
   "",
   "**Midterm exam (20%):** Closed-book on R syntax + open-book on plot/wrangling interpretation. Covers Ch 1-4. The Quick checks make excellent practice problems &mdash; one Q from each chapter on the exam itself.",
   "",
-  "**Final project (30%):** End-to-end data project mirroring Ch 11. Students pick a dataset, ask one question, produce one visualization, fit one model, communicate findings. Deliverable: 5-min talk + 4-page reproducible Quarto report.",
+  "**Final / term project (30%):** End-to-end data project. The ModernDive [Term Project template](https://moderndive.github.io/moderndive_labs/term_project.html) is the recommended structure: students pick a dataset, ask one question, produce one visualization, fit one model, communicate findings. Deliverable: 5-min talk + 4-page reproducible Quarto report. Project proposal due Week 11.",
   "",
   "**Participation / Quick checks (10%):** Frequent in-class retrieval practice via the [slide-deck MCQ check-ins](slides/index.html). Tracked but lightly weighted &mdash; the goal is psychological safety to be wrong, since incorrect answers anchor learning.",
   "",
@@ -278,6 +301,7 @@ out <- c(
   "",
   "## Companion materials",
   "",
+  "- [ModernDive Labs](https://moderndive.github.io/moderndive_labs/) &mdash; PS1-PS10 problem sets + term-project template (external site, public)",
   "- [Slide decks](slides/index.html) &mdash; one revealjs deck per chapter, with built-in MCQ check-ins",
   "- [Facilitator notes](facilitator-notes/index.qmd) &mdash; per-chapter teaching scaffold: cold open, transitions, cold-call moments, exit ticket",
   "- [Homework planner](homework-planner.html) &mdash; build problem sets by filtering exercises",
