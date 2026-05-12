@@ -17,9 +17,10 @@
 #
 # Checks per question:
 #   1. Has exactly 4 options, labeled `a.`, `b.`, `c.`, `d.` (in order).
-#   2. Exactly one option contains bold (**...**) text — the correct answer.
-#   3. A `Show answer` callout-tip follows the options.
-#   4. The callout opens with `**(X)**` where X matches the bolded option.
+#   2. A `Show answer` callout-tip follows the options.
+#   3. The callout opens with `**(X)**` where X is one of `a`/`b`/`c`/`d` —
+#      this `**(X)**` marker IS the correctness indicator (options themselves
+#      are NOT bolded in this book's convention).
 #
 # Exits non-zero on any structural violation.
 
@@ -58,17 +59,15 @@ for (f in qmd_files) {
     e <- if (qi < length(q_idx)) q_idx[qi + 1] - 1 else length(qc_block)
     block <- qc_block[s:e]
 
-    # Find option lines (a. / b. / c. / d.) and the answer callout
+    # Find option lines (a. / b. / c. / d.) and the answer callout.
+    # The book's convention: options are plain (NOT bolded) — the correctness
+    # indicator is the `**(X)**` marker at the start of the Show-answer callout.
     opt_re <- "^([a-d])\\.\\s+(.+)$"
     opt_lines <- grep(opt_re, block)
     opt_letters <- character()
-    bolded_letter <- character()
     for (j in opt_lines) {
       m <- str_match(block[j], opt_re)
-      letter <- m[1, 2]
-      content <- m[1, 3]
-      opt_letters <- c(opt_letters, letter)
-      if (grepl("\\*\\*[^*]+\\*\\*", content)) bolded_letter <- c(bolded_letter, letter)
+      opt_letters <- c(opt_letters, m[1, 2])
     }
 
     # Check 1: exactly 4 options in order a, b, c, d
@@ -78,31 +77,21 @@ for (f in qmd_files) {
         f, qn, paste(opt_letters, collapse = "/")))
       next
     }
-    # Check 2: exactly one bolded option
-    if (length(bolded_letter) != 1) {
-      errors <- c(errors, sprintf(
-        "[%s] Q%s: expected exactly one bolded (correct) option, found %d (%s)",
-        f, qn, length(bolded_letter),
-        if (length(bolded_letter) > 0) paste(bolded_letter, collapse = "/") else "none"))
-      next
-    }
-    # Check 3: Show-answer callout follows
+    # Check 2: Show-answer callout follows
     callout_idx <- grep("^::: \\{\\.callout-tip[^}]*title=\"Show answer\"", block)
     if (!length(callout_idx)) {
       errors <- c(errors, sprintf(
         "[%s] Q%s: missing `Show answer` callout-tip", f, qn))
       next
     }
-    # Check 4: callout opens with **(X)** matching bolded option
+    # Check 3: callout opens with **(X)** where X is one of a/b/c/d
     callout_start <- callout_idx[1]
     callout_body <- block[(callout_start + 1):min(callout_start + 3, length(block))]
     answer_marker <- str_match(callout_body[1], "^\\*\\*\\(([a-d])\\)\\*\\*")[1, 2]
-    if (is.na(answer_marker) || answer_marker != bolded_letter) {
+    if (is.na(answer_marker)) {
       errors <- c(errors, sprintf(
-        "[%s] Q%s: callout opens with **%s** but bolded option was (%s)",
-        f, qn,
-        if (is.na(answer_marker)) "(no marker)" else paste0("(", answer_marker, ")"),
-        bolded_letter))
+        "[%s] Q%s: Show-answer callout doesn't start with **(a/b/c/d)** marker",
+        f, qn))
     }
   }
 }
