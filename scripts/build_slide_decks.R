@@ -30,7 +30,7 @@ suppressPackageStartupMessages({
 })
 
 book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
-setwd(book)
+if (dir.exists(book)) setwd(book)
 
 slides_dir <- "instructor-solutions/slides"
 dir.create(slides_dir, showWarnings = FALSE, recursive = TRUE)

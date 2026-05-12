@@ -34,7 +34,7 @@ suppressPackageStartupMessages({
 })
 
 book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
-setwd(book)
+if (dir.exists(book)) setwd(book)
 
 notes_dir <- "instructor-solutions/facilitator-notes"
 dir.create(notes_dir, showWarnings = FALSE, recursive = TRUE)

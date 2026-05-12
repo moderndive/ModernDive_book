@@ -22,7 +22,7 @@ suppressPackageStartupMessages({
 })
 
 book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
-setwd(book)
+if (dir.exists(book)) setwd(book)
 
 `%||%` <- function(a, b) if (is.null(a) || identical(a, "")) b else a
 
