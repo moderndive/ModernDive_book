@@ -1,0 +1,119 @@
+name: Audits
+
+on:
+  pull_request:
+    branches: [main, master, v2-quarto-html]
+  push:
+    branches: [main, master, v2-quarto-html]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-references:
+    name: Cross-references (dead anchors + glossary coverage)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.5.2"
+          use-public-rspm: true
+
+      - name: Install audit dependencies
+        run: |
+          R -q -e 'install.packages(c("stringr", "yaml"),
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+
+      - name: Run cross-reference scans
+        run: |
+          # Patch the hard-coded local path at the top of the script so it
+          # works from the GitHub workspace root.
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/cross_reference_scans.R
+          Rscript scripts/cross_reference_scans.R | tee audit_output.txt
+
+      - name: Fail on dead anchors
+        run: |
+          if grep -q "^Dead references found: [^0]" audit_output.txt; then
+            echo "::error::Dead @sec-* / @fig-* / @tbl-* references detected. See output above."
+            grep -A 1 "not found" audit_output.txt | head -20
+            exit 1
+          fi
+          echo "✓ no dead anchors"
+
+  figure-alt-text:
+    name: Figure alt-text coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.5.2"
+          use-public-rspm: true
+
+      - name: Install audit dependencies
+        run: |
+          R -q -e 'install.packages("stringr",
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+
+      - name: Run alt-text audit
+        run: |
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/alt_text_audit.R
+          Rscript scripts/alt_text_audit.R | tee audit_output.txt
+
+      - name: Fail on missing alt-text
+        run: |
+          flags=$(awk '/^Total flags: / {print $3; exit}' audit_output.txt)
+          if [ -z "$flags" ] || [ "$flags" -gt 0 ] 2>/dev/null; then
+            echo "::error::Figures missing alt text detected (flags=$flags). See output above."
+            exit 1
+          fi
+          echo "✓ alt-text complete ($flags flags)"
+
+  link-check:
+    name: External link check (lychee)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore lychee cache
+        uses: actions/cache@v4
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
+
+      - name: Run lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # Scan chapter qmds + appendices + glossary + NEWS + README.
+          # Avoid scanning rendered docs/ (lychee follows redirects, doesn't
+          # need to traverse generated HTML) and avoid scanning external
+          # archives (previous_versions/) which point at historical URLs
+          # that may legitimately be 404 now.
+          args: >-
+            --cache
+            --max-cache-age 7d
+            --no-progress
+            --accept 200..=299,403,429
+            --exclude-path docs
+            --exclude-path previous_versions
+            --exclude-path .quarto
+            --exclude-path renv
+            --exclude '\.html$'
+            './*.qmd'
+            'NEWS.md'
+            'README.md'
+            'scripts/README.md'
+          fail: false
+          output: ./lychee-report.md
+
+      - name: Upload link report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lychee-report
+          path: lychee-report.md
+          retention-days: 30
