@@ -206,7 +206,10 @@ html <- c(
   '</body></html>'
 )
 
-dir.create("instructor-solutions", showWarnings = FALSE)
-out_path <- "instructor-solutions/homework-planner.html"
+# Route output into instructor-solutions/_site/ so it sits alongside the
+# rendered Quarto pages (syllabus, slides, facilitator notes, worked
+# solutions) and the cross-page links between them work.
+dir.create("instructor-solutions/_site", showWarnings = FALSE, recursive = TRUE)
+out_path <- "instructor-solutions/_site/homework-planner.html"
 writeLines(html, out_path)
 cat(sprintf("Wrote %s (%d exercises)\n", out_path, length(all_records)))

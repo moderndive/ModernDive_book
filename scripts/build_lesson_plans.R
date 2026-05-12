@@ -264,6 +264,7 @@ html <- c(
 )
 
 dir.create("instructor-solutions", showWarnings = FALSE)
-out_path <- "instructor-solutions/lesson-plans.html"
+dir.create("instructor-solutions/_site", showWarnings = FALSE, recursive = TRUE)
+out_path <- "instructor-solutions/_site/lesson-plans.html"
 writeLines(html, out_path)
 cat(sprintf("Wrote %s (%d chapters)\n", out_path, length(plans)))

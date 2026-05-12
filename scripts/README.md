@@ -94,7 +94,7 @@ Exits non-zero on errors; warnings print without failing. Wired into the `Audits
 
 ### `build_concept_map.R` — chapter dependency visualization
 
-Reads every chapter qmd, extracts `@sec-*` cross-references, maps each anchor to its owning chapter, and writes `instructor-solutions/concept-map.html` containing:
+Reads every chapter qmd, extracts `@sec-*` cross-references, maps each anchor to its owning chapter, and writes `instructor-solutions/_site/concept-map.html` containing:
 
 1. An SVG dependency graph (11 chapters as nodes; forward arcs in blue above the line, backward references in red below).
 2. A per-chapter dependency table: which chapters each chapter cites (outgoing) and which chapters cite it (incoming).
@@ -103,22 +103,22 @@ Useful for instructors planning a non-linear curriculum or visualizing how conce
 
 ### `exercise_coverage_map.R` — instructor-facing coverage report
 
-Reads every `exercises/NN.yml` and emits `instructor-solutions/coverage-map.html`: per-chapter tables showing each section/subsection, the count of exercises targeting it, the exercise-ID list (collapsed to en-dash ranges), and a difficulty histogram. Sections with ≤ 1 exercise are highlighted in red.
+Reads every `exercises/NN.yml` and emits `instructor-solutions/_site/coverage-map.html`: per-chapter tables showing each section/subsection, the count of exercises targeting it, the exercise-ID list (collapsed to en-dash ranges), and a difficulty histogram. Sections with ≤ 1 exercise are highlighted in red.
 
 The output is gitignored — regenerate on demand:
 
 ```sh
 Rscript scripts/exercise_coverage_map.R
-open instructor-solutions/coverage-map.html
+open instructor-solutions/_site/coverage-map.html
 ```
 
 ### `build_lesson_plans.R` — per-chapter teaching plan
 
-Reads each chapter's learning objectives, sections, Quick check / Learning check counts, and prose word count, and emits `instructor-solutions/lesson-plans.html`: per-chapter cards with learning objectives, a section outline, an exercise-mix breakdown, and a suggested class-time budget (150 wpm reading rate + 3 min/QC + 2 min/LC + 3 min per section overhead). Output is gitignored.
+Reads each chapter's learning objectives, sections, Quick check / Learning check counts, and prose word count, and emits `instructor-solutions/_site/lesson-plans.html`: per-chapter cards with learning objectives, a section outline, an exercise-mix breakdown, and a suggested class-time budget (150 wpm reading rate + 3 min/QC + 2 min/LC + 3 min per section overhead). Output is gitignored.
 
 ### `build_homework_planner.R` — interactive homework-set builder
 
-Reads every `exercises/NN.yml` and emits a single self-contained `instructor-solutions/homework-planner.html`: all exercises in one table with client-side JS filters (chapter range, difficulty, group, keyword, webr-only). Instructors check boxes to build a set, then click *Export* for a copy-pasteable list. Output is gitignored — no server / build step needed once generated.
+Reads every `exercises/NN.yml` and emits a single self-contained `instructor-solutions/_site/homework-planner.html`: all exercises in one table with client-side JS filters (chapter range, difficulty, group, keyword, webr-only). Instructors check boxes to build a set, then click *Export* for a copy-pasteable list. Output is gitignored — no server / build step needed once generated.
 
 ### `build_syllabus.R` — sample course syllabus
 

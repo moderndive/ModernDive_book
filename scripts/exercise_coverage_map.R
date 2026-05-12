@@ -171,7 +171,7 @@ for (s in all_summaries) {
 
 html <- c(html, '</body></html>')
 
-dir.create("instructor-solutions", showWarnings = FALSE)
-out_path <- "instructor-solutions/coverage-map.html"
+dir.create("instructor-solutions/_site", showWarnings = FALSE, recursive = TRUE)
+out_path <- "instructor-solutions/_site/coverage-map.html"
 writeLines(html, out_path)
 cat(sprintf("Wrote %s (%d chapters covered)\n", out_path, length(all_summaries)))

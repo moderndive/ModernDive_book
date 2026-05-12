@@ -224,8 +224,8 @@ html <- paste(c(
   '</body></html>'
 ), collapse = "\n")
 
-dir.create("instructor-solutions", showWarnings = FALSE)
-out_path <- "instructor-solutions/concept-map.html"
+dir.create("instructor-solutions/_site", showWarnings = FALSE, recursive = TRUE)
+out_path <- "instructor-solutions/_site/concept-map.html"
 writeLines(html, out_path)
 cat(sprintf("Wrote %s (%d chapters, %d cross-chapter edges)\n",
             out_path, n_chapters, length(edges)))
