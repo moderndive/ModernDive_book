@@ -1,0 +1,68 @@
+name: PR preview artifact
+
+# On every pull-request push to v2-quarto-html, render the book and upload
+# `docs/` as a downloadable artifact. PR authors / reviewers can download
+# the zip and open it locally to see the rendered version of their changes
+# before merge.
+#
+# (Full preview-deploy infrastructure — Netlify / Cloudflare Pages — would
+# be nicer but adds operational overhead. This artifact-upload approach gives
+# the same review-before-merge capability with zero external dependencies.)
+
+on:
+  pull_request:
+    branches: [v2-quarto-html]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.5.2"
+          use-public-rspm: true
+
+      - name: Install system libraries for V8
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libv8-dev || sudo apt-get install -y libnode-dev
+          sudo apt-get install -y libicu-dev
+
+      - name: Install GitHub-only exercise packages
+        run: |
+          R -q -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes", repos = "https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+          R -q -e 'remotes::install_github(c(
+            "moderndive/olympicAthletes",
+            "ismayc/steves",
+            "moderndive/exoplanets",
+            "moderndive/volcanoes"
+          ), upgrade = "never", quiet = FALSE)'
+
+      - uses: r-lib/actions/setup-renv@v2
+
+      - name: Cache Quarto freeze
+        uses: actions/cache@v4
+        with:
+          path: .quarto/_freeze
+          key: quarto-freeze-${{ hashFiles('*.qmd', 'index.qmd', 'scripts/exercise_helpers.R', 'scripts/image_functions.R', 'exercises/*.yml') }}
+          restore-keys: quarto-freeze-
+
+      - name: Render book
+        run: quarto render
+
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: book-preview-${{ github.event.pull_request.number || 'manual' }}
+          path: docs/
+          retention-days: 14
