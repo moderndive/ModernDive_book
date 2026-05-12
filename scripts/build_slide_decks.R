@@ -62,15 +62,19 @@ section_headings <- function(lines) {
 
 # Learning objectives from "you'll learn" callout.
 learning_objectives <- function(lines) {
-  text <- paste(lines, collapse = "\n")
-  # Match block from "::: {.callout-tip" up to closing ":::" containing "learn"
-  blocks <- str_match_all(text,
-    "(?s)::: \\{\\.callout-[a-z]+[^}]*\\}\\s*\\n## In this chapter[^\\n]*\\n([\\s\\S]*?)\\n:::")[[1]]
-  if (!nrow(blocks)) return(character())
-  bullets <- str_extract_all(blocks[1, 2], "(?m)^[\\s-]*[-*]\\s+(.+)$")[[1]]
-  bullets <- sub("^[\\s-]*[-*]\\s+", "", bullets, perl = TRUE)
-  bullets <- sub("\\s*\\\\$", "", bullets)
-  bullets
+  # Book convention: `::: {.callout-note title="In this chapter, you'll learn how to:"}`
+  # — heading text lives in the callout's title attribute, not as a `##`. Find that
+  # line, walk forward to the closing `:::`, collect bullets.
+  start_idx <- grep("In this chapter.*you", lines)
+  if (!length(start_idx)) return(character())
+  start <- start_idx[1]
+  end <- start
+  for (j in (start + 1):min(start + 40, length(lines))) {
+    if (grepl("^:::\\s*$", lines[j])) { end <- j; break }
+  }
+  region <- lines[start:end]
+  bullets <- region[grepl("^-\\s+", region)]
+  sub("^-\\s+", "", bullets)
 }
 
 # Parse a chapter's Quick checks into structured records.
@@ -320,7 +324,8 @@ landing <- c(
   "title: \"ModernDive slide decks\"",
   "format:",
   "  html:",
-  "    theme: cosmo",
+  "    theme:",
+  "      light: [cosmo, ../moderndive-instructor.scss]",
   "    css: ../../style.css",
   "    embed-resources: true",
   "---",

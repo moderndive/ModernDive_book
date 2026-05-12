@@ -120,6 +120,14 @@ Reads each chapter's learning objectives, sections, Quick check / Learning check
 
 Reads every `exercises/NN.yml` and emits a single self-contained `instructor-solutions/homework-planner.html`: all exercises in one table with client-side JS filters (chapter range, difficulty, group, keyword, webr-only). Instructors check boxes to build a set, then click *Export* for a copy-pasteable list. Output is gitignored — no server / build step needed once generated.
 
+### `build_syllabus.R` — sample course syllabus
+
+Generates `instructor-solutions/syllabus.qmd`: a 15-week US-semester layout with chapter-to-week mapping, in-class activity prompts, problem-set release cadence, plus a compressed 10-week quarter alternative. Includes an assessment plan (4 problem sets + midterm + final project) and per-unit learning outcomes auto-extracted from each chapter's "In this chapter, you'll learn how to:" callout. Output is gitignored (renders to `_site/syllabus.html` as part of the project).
+
+### `build_facilitator_notes.R` — per-chapter teaching scaffold
+
+Generates `instructor-solutions/facilitator-notes/NN_notes.qmd` × 11 + a landing page. Each notes page combines auto-generated content (learning objectives, section-by-section breakdown with minute estimates, stuck-points parsed from each Quick check's wrong-answer options) with **blank slots** the instructor fills in once before teaching (cold open, cold-call moments, transition phrases between sections, group-work break prompts, exit ticket, after-class self-check). Output is gitignored.
+
 ### `build_slide_decks.R` — per-chapter revealjs slide decks
 
 For each of the eleven chapters, generates a revealjs deck at `instructor-solutions/slides/NN-slides.qmd` themed in the ModernDive hex-sticker palette (navy `#1F3A6B`, blue `#1A6FBE`, green `#76BC43`). Each deck is a scaffold: title + learning objectives + spaced-practice warm-up (Ch ≥ 2) + per-section dividers and content placeholders + section MCQ check-ins + wrap-up retrieval slide.
