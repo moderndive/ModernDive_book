@@ -152,23 +152,30 @@ for (chap in 1:11) {
       }
     }
 
-    # 3. Dataset refs — only flag when the dataset name appears in a CODE
-    # context (backticks, library() / data() / inline R code), not in
-    # natural-language prose. The script previously over-flagged words like
-    # "events" appearing colloquially ("medal events"); restricting to code
-    # contexts eliminates that false-positive class.
+    # 3. Dataset refs — only flag when the dataset name appears as a CODE
+    # SYMBOL (backticks, library()/data() call, or used in code as a data
+    # object: `events,`, `events %>%`, `events$col`, `events[`). String
+    # literals like `labs(y = "medal events")` and prose mentions like
+    # "medal events" should NOT trigger the flag.
+    webr_only <- ex$webr %||% ""
+    # Strip string literals from the webr field before symbol matching so
+    # `"medal events"` doesn't get treated as a reference to the `events`
+    # dataset.
+    webr_code <- gsub('"[^"]*"', "", webr_only)
+    webr_code <- gsub("'[^']*'", "", webr_code)
     for (ds in names(dataset_intro)) {
       intro_chap <- dataset_intro[[ds]]
       if (intro_chap <= chap) next
       patterns <- c(
-        paste0("`", ds, "`"),               # backticked: `events`
-        paste0("\\blibrary\\(", ds, "\\b"), # library(events)
-        paste0("\\bdata\\(", ds, "\\b")     # data(events)
+        paste0("`", ds, "`"),                          # `events`
+        paste0("\\blibrary\\(\\s*", ds, "\\s*[,)]"),    # library(events)
+        paste0("\\bdata\\(\\s*", ds, "\\s*[,)]")        # data(events)
       )
-      # Also check the webr field directly (treat as code by default)
-      webr_only <- ex$webr %||% ""
       hit_code <- any(sapply(patterns, function(p) grepl(p, prompt_text)))
-      hit_webr <- grepl(paste0("\\b", ds, "\\b"), webr_only)
+      # In webr code, require dataset name to appear as a symbol followed
+      # by a code-relevant punctuation/operator (i.e., used as a data var).
+      symbol_pat <- paste0("\\b", ds, "\\b\\s*(\\$|\\[|,|\\)|%>%|\\|>)")
+      hit_webr <- grepl(symbol_pat, webr_code)
       if (hit_code || hit_webr) {
         flags[[length(flags) + 1]] <- list(
           chap = chap, ex = ex$ex_num, kind = "dataset", item = ds,

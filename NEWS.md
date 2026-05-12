@@ -1,3 +1,13 @@
+# ModernDive 2.8.11 — Instructor tooling pass: lesson plans, homework planner, slide decks
+
+* **`scripts/build_lesson_plans.R`** → `instructor-solutions/lesson-plans.html`. Per-chapter teaching plan: learning objectives, section outline, Quick check / Learning check counts, exercise difficulty mix, and a class-time budget (150 wpm reading rate + 3 min/QC + 2 min/LC + 3 min/section overhead).
+* **`scripts/build_homework_planner.R`** → `instructor-solutions/homework-planner.html`. Single self-contained page with all 486 exercises in a sortable table; client-side JS filters by chapter, difficulty, group, keyword, webr-only. Check boxes to assemble a set; click *Export* for a copy-pasteable list.
+* **`scripts/build_slide_decks.R`** → `instructor-solutions/slides/NN-slides.qmd` × 11. Interactive revealjs decks themed in the ModernDive hex-sticker palette (navy `#1F3A6B`, blue `#1A6FBE`, green `#76BC43`). Each deck includes title + learning objectives + spaced-practice warm-up (Ch ≥ 2) + section dividers + per-section MCQ check-ins (parsed directly from each chapter's Quick checks: stem, options, correct letter, explanation) + wrap-up retrieval slide. Shared theme in `slides/moderndive-slides.scss` and tap-to-select / show-poll / show-answer interactions in `slides/moderndive-slides.js`. Learning-sciences design choices: frequent retrieval practice, predict-then-check prompts, single-idea slides, `prefers-reduced-motion` aware.
+* **`scripts/audit_exercise_lexicon.R`** — dataset-cadence check tightened so dataset names only count as a forward-ref when they appear as **code symbols** (backticked, `library()`/`data()` call, or followed by `,`, `$`, `[`, `(`, `%>%`, `|>`). String literals inside webr labels (e.g., `labs(y = "medal events")`) no longer false-flag.
+* **`instructor-solutions/index.qmd`** — new callout block linking to all five companion instructor artifacts so the worked-solutions page is the single navigation hub.
+
+***
+
 # ModernDive 2.8.4 — Accessibility pass: contrast, keyboard, ARIA
 
 * **WCAG contrast audit** of custom callouts (`.learncheck`, `.announcement`, `.review`) in light *and* dark mode: all foreground/background pairs now verified at AAA. No CSS color changes needed.

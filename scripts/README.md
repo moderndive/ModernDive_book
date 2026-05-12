@@ -112,6 +112,30 @@ Rscript scripts/exercise_coverage_map.R
 open instructor-solutions/coverage-map.html
 ```
 
+### `build_lesson_plans.R` — per-chapter teaching plan
+
+Reads each chapter's learning objectives, sections, Quick check / Learning check counts, and prose word count, and emits `instructor-solutions/lesson-plans.html`: per-chapter cards with learning objectives, a section outline, an exercise-mix breakdown, and a suggested class-time budget (150 wpm reading rate + 3 min/QC + 2 min/LC + 3 min per section overhead). Output is gitignored.
+
+### `build_homework_planner.R` — interactive homework-set builder
+
+Reads every `exercises/NN.yml` and emits a single self-contained `instructor-solutions/homework-planner.html`: all exercises in one table with client-side JS filters (chapter range, difficulty, group, keyword, webr-only). Instructors check boxes to build a set, then click *Export* for a copy-pasteable list. Output is gitignored — no server / build step needed once generated.
+
+### `build_slide_decks.R` — per-chapter revealjs slide decks
+
+For each of the eleven chapters, generates a revealjs deck at `instructor-solutions/slides/NN-slides.qmd` themed in the ModernDive hex-sticker palette (navy `#1F3A6B`, blue `#1A6FBE`, green `#76BC43`). Each deck is a scaffold: title + learning objectives + spaced-practice warm-up (Ch ≥ 2) + per-section dividers and content placeholders + section MCQ check-ins + wrap-up retrieval slide.
+
+The MCQ structure (stem, options, correct letter, explanation) is parsed directly from each chapter's `## Quick checks` block, so the slides stay in sync with the book. The shared theme/JS live alongside the qmds:
+
+```
+instructor-solutions/slides/
+├── moderndive-slides.scss   # hex-sticker themed revealjs SCSS
+├── moderndive-slides.js     # MCQ tap-to-select / show-poll / show-answer helpers
+├── index.qmd                # landing page linking all 11 decks
+└── NN-slides.qmd            # per-chapter (gitignored renders → NN-slides.html)
+```
+
+Learning-sciences features baked in: retrieval practice every section, spaced practice across chapters, predict-then-check prompts, single-idea slides, and a `prefers-reduced-motion`-aware theme. Output HTMLs are gitignored; render with `quarto render NN-slides.qmd` from the `slides/` folder.
+
 ### `audit_heading_hierarchy.R` — heading-level skips
 
 For each chapter qmd, flags heading sequences that skip levels (e.g., h2 → h4 without an h3 in between). Screen readers expose the document outline by heading level, so skips degrade accessibility AND make Quarto's TOC nesting weird. Wired into the Audits CI workflow.
