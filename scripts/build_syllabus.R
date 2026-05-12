@@ -303,12 +303,12 @@ out <- c(
   "",
   "- [ModernDive Labs](https://moderndive.github.io/moderndive_labs/) &mdash; PS1-PS10 problem sets + term-project template (external site, public)",
   "- [Slide decks](slides/index.html) &mdash; one revealjs deck per chapter, with built-in MCQ check-ins",
-  "- [Facilitator notes](facilitator-notes/index.qmd) &mdash; per-chapter teaching scaffold: cold open, transitions, cold-call moments, exit ticket",
+  "- [Facilitator notes](facilitator-notes/index.html) &mdash; per-chapter teaching scaffold: cold open, transitions, cold-call moments, exit ticket",
   "- [Homework planner](homework-planner.html) &mdash; build problem sets by filtering exercises",
   "- [Lesson plans](lesson-plans.html) &mdash; per-chapter timing + section breakdown",
   "- [Coverage map](coverage-map.html) &mdash; per-section exercise counts + difficulty histogram",
   "- [Concept map](concept-map.html) &mdash; SVG dependency graph across the 11 chapters",
-  "- Worked exercise solutions &mdash; the parent page of this site"
+  "- [Worked exercise solutions](solutions/index.html) &mdash; complete solutions to every end-of-chapter exercise"
 )
 writeLines(out, "instructor-solutions/syllabus.qmd")
 cat(sprintf("Wrote instructor-solutions/syllabus.qmd (%d lines)\n", length(out)))
