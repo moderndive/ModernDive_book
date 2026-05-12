@@ -6,7 +6,7 @@ This folder holds every R / shell / Perl script the book project uses, organized
 |---|---|---|
 | **Render-time helpers** | `exercise_helpers.R`, `image_functions.R`, `setup_exercise_packages.R`, `post-render-cleanup.sh` | Automatically, every Quarto render |
 | **Manual build helpers** | `pdf_build_from_tex.R` | By hand, when building the print/PDF edition |
-| **Diagnostic audits** | `alt_text_audit.R`, `cross_reference_scans.R`, `learning_objective_scans.R`, `pedagogy_scans.R`, `lint_exercise_yaml.R` | By hand, to find punch-list items |
+| **Diagnostic audits** | `alt_text_audit.R`, `cross_reference_scans.R`, `learning_objective_scans.R`, `pedagogy_scans.R`, `lint_exercise_yaml.R`, `audit_heading_hierarchy.R`, `audit_unused_images.R`, `audit_quick_check_format.R`, `audit_exercise_lexicon.R`, `audit_terminology.R` | By hand, to find punch-list items |
 | **Reports** | `exercise_coverage_map.R` | By hand, to generate an instructor-facing coverage HTML |
 | **Migration tools** | `convert_bookdown.pl`, `fix-chapter-refs.pl`, `learning-checks/` | Historical; one-shot for bookdown→Quarto and V1→V2 |
 | **Archive** | `archive/purl.R` | Never (kept for git history reference) |
@@ -102,6 +102,42 @@ The output is gitignored — regenerate on demand:
 Rscript scripts/exercise_coverage_map.R
 open instructor-solutions/coverage-map.html
 ```
+
+### `audit_heading_hierarchy.R` — heading-level skips
+
+For each chapter qmd, flags heading sequences that skip levels (e.g., h2 → h4 without an h3 in between). Screen readers expose the document outline by heading level, so skips degrade accessibility AND make Quarto's TOC nesting weird. Wired into the Audits CI workflow.
+
+### `audit_unused_images.R` — orphan images + broken references
+
+Two-way audit over `images/` and every source file that might reference an image:
+
+1. **Unused images on disk** — image files under `images/` that no source references. Informational (some are kept for instructor use); doesn't fail CI.
+2. **Broken image references** — `include_graphics()` / markdown `![](...)` / `<img src>` references pointing at paths that don't exist. Fails CI.
+
+### `audit_quick_check_format.R` — Quick-check structural validator
+
+Parses every chapter's `## Quick checks` block. For each `**QN.** ...` stem, verifies the canonical structure:
+
+* Exactly 4 options labeled `a` / `b` / `c` / `d` in order.
+* Exactly one option contains bold (the correct answer).
+* A `Show answer` callout-tip follows.
+* The callout opens with `**(X)**` where `X` matches the bolded option's letter.
+
+Fails CI on any structural violation.
+
+### `audit_exercise_lexicon.R` — no-new-terms rule for exercise YAMLs
+
+Extends the established "no new terms in assessments" rule (already enforced in chapter prose via `pedagogy_scans.R`) to the *exercise YAMLs*. Flags exercises whose `prompt` or `webr` field mentions:
+
+* An R function whose first code-chunk introduction is in a *later* chapter than the one containing the exercise.
+* A glossary term whose intro section lives in a later chapter.
+* A dataset (`olympic_athletes`, `planets`, etc.) that isn't introduced until a later chapter, per the dataset cadence map.
+
+Exempt: exercises in the `Extensions` group (deliberately allowed to go beyond the chapter) and prompts marked with "Carried over from Chapter X" caveats.
+
+### `audit_terminology.R` — terminology consistency
+
+For each chapter qmd, counts occurrences of canonical forms vs known variants (e.g., `dataset` vs `data set`, `boxplot` vs `box plot`, `p-value` vs `p value`). Informational only — doesn't fail CI — but surfaces inconsistencies for a future style-pass.
 
 ### `cross_reference_scans.R` — dead anchors, forward refs, glossary coverage
 
