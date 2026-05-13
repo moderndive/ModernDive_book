@@ -326,7 +326,7 @@ for (qf in chap_files) {
   cat(sprintf("Wrote %s (%d lines)\n", out_path, length(notes)))
   title <- chapter_title(readLines(qf, warn = FALSE))
   landing_rows <- c(landing_rows,
-    sprintf("- [Chapter %d &mdash; %s](%02d_notes.qmd)", n, title, n))
+    sprintf("- [Chapter %d &mdash; %s](%02d_notes.html)", n, title, n))
 }
 
 # Landing page

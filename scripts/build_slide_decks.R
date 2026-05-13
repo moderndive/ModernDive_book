@@ -315,7 +315,7 @@ for (qf in chap_files) {
   prev_qcs <- this_qcs
   title <- chapter_title(readLines(qf, warn = FALSE))
   landing_rows <- c(landing_rows,
-    sprintf("- [Chapter %d &mdash; %s](%02d-slides.qmd)", n, title, n))
+    sprintf("- [Chapter %d &mdash; %s](%02d-slides.html)", n, title, n))
 }
 
 # === Landing page ===

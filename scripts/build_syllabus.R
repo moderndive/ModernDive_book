@@ -186,7 +186,7 @@ quarter <- list(
 
 mk_link <- function(chap_num) {
   if (is.na(chap_num) || identical(chap_num, "")) return("—")
-  sprintf("[slides](slides/%02d-slides.html) · [notes](facilitator-notes/%02d_notes.qmd)",
+  sprintf("[slides](slides/%02d-slides.html) · [notes](facilitator-notes/%02d_notes.html)",
           as.integer(chap_num), as.integer(chap_num))
 }
 
