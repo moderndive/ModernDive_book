@@ -27,8 +27,23 @@ local seen = {}            -- anchor -> true once we've linked it in this doc
 local term_to_anchor = nil -- lowercased term -> "sec-gloss-X"
 local term_keys = nil      -- sorted longest-first so multi-word wins over partial
 local in_heading = false   -- skip while walking inside Headers
+local anchor_to_def = {}   -- "sec-gloss-X" -> plain-text definition (popover body)
+local anchor_to_title = {} -- "sec-gloss-X" -> display term (popover header)
 
 local function trim(s) return (s:gsub("^%s+", ""):gsub("%s+$", "")) end
+
+-- Reduce a glossary definition paragraph to popover-friendly plain text:
+-- drop the trailing "See @sec-..." cross-ref, any inline @sec refs, code
+-- backticks, *italic* markers, and $math$ delimiters; collapse whitespace.
+local function clean_def(s)
+  s = s:gsub("%s*See @sec[%w%-]+%s*%.%s*$", "")  -- trailing "See @sec-foo."
+  s = s:gsub("@sec[%w%-]+", "")                   -- any other cross-ref token
+  s = s:gsub("`", "")                              -- inline code backticks
+  s = s:gsub("%*", "")                             -- *italic* markers
+  s = s:gsub("%$", "")                             -- $math$ delimiters
+  s = s:gsub("%s+", " ")
+  return trim(s)
+end
 
 local function load_glossary()
   if term_to_anchor then return end
@@ -36,16 +51,25 @@ local function load_glossary()
   -- Look for the glossary in the project root (where Quarto runs).
   local f = io.open("96-glossary.qmd", "r")
   if not f then return end
+  local pending_anchor = nil  -- anchor awaiting its definition paragraph
   for line in f:lines() do
     local term, anchor = line:match("^##%s+(.-)%s*{#(sec%-gloss%-[a-zA-Z0-9%-]+)")
     if term and anchor then
-      term = term:gsub("`", "")                 -- drop backticks
-      term = term:gsub("%s*%(.-%)$", "")        -- drop trailing "(...)" qualifier
+      local display = trim(term:gsub("`", ""))  -- popover header (keep case)
+      term = display:gsub("%s*%(.-%)$", "")     -- drop trailing "(...)" qualifier
       term = trim(term):lower()
       -- Skip very short terms to avoid false positives (e.g. "n").
       if #term >= 3 then
         term_to_anchor[term] = anchor
+        anchor_to_title[anchor] = display
+        pending_anchor = anchor                 -- next prose line is its def
+      else
+        pending_anchor = nil
       end
+    elseif pending_anchor and trim(line) ~= "" then
+      -- First non-empty line after the heading is the definition paragraph.
+      anchor_to_def[pending_anchor] = clean_def(line)
+      pending_anchor = nil
     end
   end
   f:close()
@@ -140,6 +164,25 @@ local function match_term_at(inlines, start)
   return nil
 end
 
+-- Build the glossary Link, attaching Bootstrap popover attributes so the
+-- definition shows as a hover/focus bubble. Popovers are initialised in
+-- _includes/glossary-popover.html. The href still jumps to the full entry.
+local function make_gloss_link(content, anchor)
+  local attrs = { class = "glossary-term" }
+  local def = anchor_to_def[anchor]
+  if def and def ~= "" then
+    attrs["data-bs-toggle"]       = "popover"
+    attrs["data-bs-trigger"]      = "hover focus"
+    attrs["data-bs-placement"]    = "top"
+    attrs["data-bs-html"]         = "false"
+    attrs["data-bs-custom-class"] = "glossary-popover"
+    attrs["data-bs-title"]        = anchor_to_title[anchor] or ""
+    attrs["data-bs-content"]      = def
+    attrs["tabindex"]             = "0"
+  end
+  return pandoc.Link(content, "#" .. anchor, "", attrs)
+end
+
 -- Walk an Inlines list and emit a new list where the FIRST occurrence
 -- of each unseen glossary term is wrapped in a Link to its glossary entry.
 local function process_inlines(inlines)
@@ -175,13 +218,13 @@ local function process_inlines(inlines)
             local keep = last.text:sub(1, #last.text - extra)
             local leftover = last.text:sub(#last.text - extra + 1)
             matched[#matched] = pandoc.Str(keep)
-            out:insert(pandoc.Link(matched, "#" .. term_to_anchor[term]))
+            out:insert(make_gloss_link(matched, term_to_anchor[term]))
             out:insert(pandoc.Str(leftover))
             i = i + n_consumed
             goto continue
           end
         end
-        out:insert(pandoc.Link(matched, "#" .. term_to_anchor[term]))
+        out:insert(make_gloss_link(matched, term_to_anchor[term]))
         i = i + n_consumed
       else
         out:insert(x)
