@@ -34,13 +34,15 @@ local function trim(s) return (s:gsub("^%s+", ""):gsub("%s+$", "")) end
 
 -- Reduce a glossary definition paragraph to popover-friendly plain text:
 -- drop the trailing "See @sec-..." cross-ref, any inline @sec refs, code
--- backticks, *italic* markers, and $math$ delimiters; collapse whitespace.
+-- backticks and *italic* markers; rewrite $math$ to MathJax's default
+-- \(math\) inline delimiters (Quarto's MathJax only listens for \(\), not
+-- $...$) so the popover JS can re-typeset it; collapse whitespace.
 local function clean_def(s)
   s = s:gsub("%s*See @sec[%w%-]+%s*%.%s*$", "")  -- trailing "See @sec-foo."
   s = s:gsub("@sec[%w%-]+", "")                   -- any other cross-ref token
   s = s:gsub("`", "")                              -- inline code backticks
   s = s:gsub("%*", "")                             -- *italic* markers
-  s = s:gsub("%$", "")                             -- $math$ delimiters
+  s = s:gsub("%$(.-)%$", "\\(%1\\)")              -- $math$ -> \(math\)
   s = s:gsub("%s+", " ")
   return trim(s)
 end
