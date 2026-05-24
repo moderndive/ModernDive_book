@@ -127,14 +127,16 @@ json_str <- function(x) paste0('"', gsub('"', '\\\\"', x), '"')
 
 nodes_json <- paste0(
   vapply(seq_len(n_chapters), function(i) {
+    # Don't set `group` — vis-network's default group palette would
+    # override our explicit nodes.color (one of those defaults is yellow,
+    # which has terrible contrast against the white label text).
     sprintf(
-      '{"id":%d,"label":"Ch %d","title":%s,"value":%d,"group":%d}',
+      '{"id":%d,"label":"Ch %d","title":%s,"value":%d}',
       i, i,
       json_str(sprintf("Ch %d — %s\\nIncoming: %d  •  Outgoing: %d",
                        i, chap_titles[as.character(i)],
                        summaries[[i]]$n_in, summaries[[i]]$n_out)),
-      summaries[[i]]$n_in + summaries[[i]]$n_out + 1L,
-      i
+      summaries[[i]]$n_in + summaries[[i]]$n_out + 1L
     )
   }, character(1)),
   collapse = ","
