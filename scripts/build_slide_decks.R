@@ -77,6 +77,34 @@ learning_objectives <- function(lines) {
   sub("^-\\s+", "", bullets)
 }
 
+# Load slide-specific MCQ variants for a chapter, if a variants file exists.
+# Returns NULL if no variants file is present (build falls back to book QCs).
+# Variants file: instructor-solutions/slides/variants/NN-variants.yml
+# Format (per item): n, stem, options (named list a–d), correct (letter),
+# explanation. Each variant tests the SAME concept as the book's Q_n but uses
+# a different example/scenario so class isn't a re-run of the textbook.
+load_slide_variants <- function(chap_num) {
+  vf <- file.path("instructor-solutions", "slides", "variants",
+                  sprintf("%02d-variants.yml", chap_num))
+  if (!file.exists(vf)) return(NULL)
+  if (!requireNamespace("yaml", quietly = TRUE)) return(NULL)
+  data <- tryCatch(yaml::read_yaml(vf), error = function(e) NULL)
+  if (is.null(data) || is.null(data$variants)) return(NULL)
+  lapply(data$variants, function(v) {
+    list(
+      n = as.integer(v$n %||% 0L),
+      stem = v$stem %||% "",
+      options = setNames(
+        c(v$options$a, v$options$b, v$options$c, v$options$d),
+        c("a", "b", "c", "d")
+      ),
+      correct = v$correct %||% "",
+      explanation = v$explanation %||% ""
+    )
+  })
+}
+`%||%` <- function(a, b) if (is.null(a) || identical(a, "")) b else a
+
 # Parse a chapter's Quick checks into structured records.
 # Returns a list of list(stem, options, correct_letter, explanation).
 parse_quick_checks <- function(lines) {
@@ -148,7 +176,12 @@ build_deck <- function(chap_num, qmd_file, prev_qcs) {
   title <- chapter_title(lines)
   sections <- section_headings(lines)
   los <- learning_objectives(lines)
-  qcs <- parse_quick_checks(lines)
+  # Prefer slide-specific variant MCQs (different examples, same concepts)
+  # if a variants file exists for this chapter; otherwise fall back to the
+  # book's own Quick checks (so unmodified chapters still get slide MCQs).
+  variants <- load_slide_variants(chap_num)
+  qcs <- variants %||% parse_quick_checks(lines)
+  qcs_source <- if (!is.null(variants)) "slide variants" else "book Quick checks"
 
   out <- c(
     "---",
@@ -310,9 +343,10 @@ for (qf in chap_files) {
   out_path <- file.path(slides_dir, sprintf("%02d-slides.qmd", n))
   writeLines(deck, out_path)
   cat(sprintf("Wrote %s (%d lines)\n", out_path, length(deck)))
-  # Capture this chapter's QCs as next chapter's warm-up source
-  this_qcs <- parse_quick_checks(readLines(qf, warn = FALSE))
-  prev_qcs <- this_qcs
+  # Capture this chapter's QCs as next chapter's warm-up source. Prefer
+  # variants over book QCs so the "from last time" warm-up also uses the
+  # alternative scenarios when present.
+  prev_qcs <- load_slide_variants(n) %||% parse_quick_checks(readLines(qf, warn = FALSE))
   title <- chapter_title(readLines(qf, warn = FALSE))
   landing_rows <- c(landing_rows,
     sprintf("- [Chapter %d &mdash; %s](%02d-slides.html)", n, title, n))
