@@ -1,16 +1,23 @@
 # Shadow library() for the ModernDive v2 Quarto book's webR cells.
 #
-# webR (browser-side R) can't install the four GitHub-only companion packages
-# (olympicAthletes, steves, exoplanets, volcanoes). To keep student code
-# identical to what they'd write in local RStudio — `library(olympicAthletes)`
-# — this shadow intercepts those four package names and reads each package's
-# datasets from the v2 raw CSV mirror into globalenv(). For any other package
-# name it delegates to base::library(), so `library(dplyr)` etc. behave normally.
+# In webR (browser-side R) the four GitHub-only companion packages —
+# olympicAthletes, steves, exoplanets, volcanoes — can't be installed. To keep
+# student code identical to what they'd write in local RStudio
+# (`library(olympicAthletes)`), this shadow intercepts those four package
+# names and, *only when the real package isn't already installed*, reads the
+# matching `.csv.gz` mirrors on the v2 branch into globalenv(). For any
+# other package — or when the real package IS available (local R, server-side
+# CI eval) — it delegates to base::library() unchanged.
+#
+# Net result:
+#   webR:                shadow loads from CSV mirror
+#   local RStudio:       shadow no-ops; base::library loads the real package
+#   server-side CI eval: same as local RStudio
 #
 # Sourced from each chapter's `#| context: setup` webR cell. Idempotent: a
 # repeat `library(<gh-pkg>)` call skips datasets already in globalenv().
 #
-# To add a dataset: append it to `.gh_pkg_data` below and ship the matching
+# To add a dataset: append it to `pkg_data` below and ship the matching
 # .csv.gz on the v2 branch.
 
 local({
@@ -35,7 +42,11 @@ local({
 
   shadow_library <- function(package, ..., character.only = FALSE) {
     pkg <- if (character.only) package else as.character(substitute(package))
-    if (pkg %in% names(pkg_data)) {
+    # Fall through to base::library if (a) we don't know this package, OR
+    # (b) it's a known GitHub-only one but is actually installed (local R / CI).
+    use_shadow <- pkg %in% names(pkg_data) &&
+      !requireNamespace(pkg, quietly = TRUE)
+    if (use_shadow) {
       for (ds in names(pkg_data[[pkg]])) {
         if (!exists(ds, envir = globalenv(), inherits = FALSE)) {
           assign(
