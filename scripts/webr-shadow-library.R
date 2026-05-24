@@ -109,11 +109,28 @@ local({
   }
 
   shadow_library <- function(package, ..., character.only = FALSE) {
-    pkg <- if (character.only) package else as.character(substitute(package))
-    # Fall through to base::library if (a) we don't know this package, OR
-    # (b) it's a known GitHub-only one but is actually installed (local R / CI).
-    use_shadow <- pkg %in% names(pkg_data) &&
-      !requireNamespace(pkg, quietly = TRUE)
+    # library() with no arg lists installed packages — delegate.
+    if (missing(package)) return(base::library())
+    # Coerce to a single character regardless of how it was passed. webR's
+    # quarto-webr cell driver calls library() with various shapes (symbol,
+    # already-character with character.only=TRUE, sometimes via do.call); the
+    # earlier `as.character(substitute(package))` blew up with "invalid
+    # argument type" when the substituted expression wasn't a name/string.
+    pkg <- tryCatch(
+      if (character.only) as.character(package)[1] else as.character(substitute(package)),
+      error = function(e) NA_character_
+    )
+    if (is.na(pkg) || !nzchar(pkg)) {
+      return(invisible(base::library(package, ..., character.only = character.only)))
+    }
+    # Use the shadow path only when (a) we know this package, AND (b) the
+    # real package isn't actually installed (webR's case). Wrap
+    # requireNamespace in tryCatch so anything weird falls through to base.
+    is_installed <- tryCatch(
+      isTRUE(requireNamespace(pkg, quietly = TRUE)),
+      error = function(e) FALSE
+    )
+    use_shadow <- pkg %in% names(pkg_data) && !is_installed
     if (use_shadow) {
       for (ds in names(pkg_data[[pkg]])) {
         if (!exists(ds, envir = globalenv(), inherits = FALSE)) {
