@@ -12,6 +12,18 @@
 hub_nav_html <- function(at_root = TRUE) {
   href <- if (at_root) "index.html" else "../index.html"
   paste(c(
+    # MathJax 3 — handles $…$ inline and $$…$$ display math. Defensive: the
+    # script only does work when it finds math delimiters on the page, so it's
+    # safe to load even on pages that don't use LaTeX. Configured for both
+    # the "single dollar" inline convention and the "double-dollar" display
+    # convention used across the book's exercises and solutions.
+    '<script>',
+    '  window.MathJax = {',
+    '    tex: { inlineMath: [["$","$"], ["\\\\(","\\\\)"]], displayMath: [["$$","$$"], ["\\\\[","\\\\]"]] },',
+    '    options: { skipHtmlTags: ["script","noscript","style","textarea","pre","code"] }',
+    '  };',
+    '</script>',
+    '<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>',
     '<style>',
     '  .hub-nav { position: sticky; top: 0; z-index: 1000;',
     '             background: linear-gradient(180deg, #1F3A6B 0%, #1A6FBE 100%);',
