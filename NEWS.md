@@ -1,3 +1,22 @@
+# ModernDive 2.8.20 — Faster webR setup: .csv.gz → .rds mirrors
+
+The "Evaluating hidden code cell" delay students saw before any interactive cell was usable was dominated by `read.csv(gzfile(...))` parsing 315 090 rows of olympic_athletes in wasm R. Switching the shadow library's CSV mirrors to R's native binary format (`.rds`) gives:
+
+* **~50 % first-visit setup speedup** — locally measured ch 11 setup (the heaviest, loads all four GitHub-only packages + the three moderndive top-ups) dropped from ~10–15 s to **6.2 s** in real webR. `readRDS()` skips CSV parsing entirely and is roughly 2× faster than `read.csv(gzfile())` on the big file (benchmarked locally: 0.47 s vs 0.86 s; speedup is amplified in wasm).
+* **~37 % bandwidth reduction on the big file** — `olympic_athletes.rds` with `compress = "xz"` is 3.2 MB vs the previous 5.8 MB `.csv.gz`. The other 9 mirrors stay on default gzip (xz overhead isn't worth it under 1 MB; sizes within 10 % of the previous `.csv.gz`).
+
+Concrete changes:
+
+* `scripts/webr-shadow-library.R` — file extensions `.csv.gz` → `.rds` throughout `pkg_data` and `pkg_extras$moderndive`; `load_from_mirror` swaps `read.csv(gzfile(tmp))` for `readRDS(tmp)`.
+* Ten new `.rds` files in `data/`. The previous `.csv.gz` files are no longer referenced but left in place (orphan but harmless).
+* No curriculum or student-code impact: loaded data frames are identical.
+
+Verified end-to-end with the Layer C headless-webR CI job (`scripts/test_webr_headless/`) — all 53 webR cells across chapters 1-11 + Appendix B pass.
+
+**Not pursued (yet):** persistent webR filesystem cache via IDBFS for cross-visit caching. Quarto-webr doesn't expose a stable hook to mount the IndexedDB filesystem before cells run, and the bigger pain (first-visit latency) is already addressed by this change. Documented as a deferred enhancement.
+
+***
+
 # ModernDive 2.8.19 — Three-layer CI test pyramid catches webR breakage
 
 The 2.8.16–2.8.18 webR work fixed bugs by hand, but nothing in the audit pipeline watched the webR surface — every regression slipped through until a student tried to run a cell. Three new jobs in `.github/workflows/audits.yml` now guard webR:
