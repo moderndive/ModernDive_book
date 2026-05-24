@@ -41,21 +41,11 @@ function extractWebrCells(qmdPath) {
 }
 
 async function evalCell(webR, code) {
+  // captureR throws on R errors; warnings are surfaced via output but don't throw
+  // (matches webR's interactive cell behaviour — students see warnings, not stops).
   const shelter = await new webR.Shelter();
   try {
-    const result = await shelter.captureR(code, {
-      withAutoprint: false,
-      captureStreams: true,
-      captureConditions: true,
-    });
-    // captureConditions surfaces errors that didn't throw natively
-    const errCondition = result.output.find(
-      o => o.type === 'message' && /Error/i.test(o.data?.message ?? ''),
-    );
-    if (errCondition) {
-      throw new Error(errCondition.data.message);
-    }
-    return result;
+    await shelter.captureR(code, { withAutoprint: false });
   } finally {
     await shelter.purge();
   }
