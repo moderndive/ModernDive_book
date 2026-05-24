@@ -90,19 +90,45 @@ ignore_funs <- c("c", "list", "sum", "mean", "median", "min", "max", "sd", "var"
                  "data.frame", "tibble", "log10", "log2", "as.numeric",
                  "as.integer", "as.character", "as.factor", "as.logical")
 in_chunk <- FALSE
+chunk_visible <- TRUE
+record_fns <- function(line, chap) {
+  fns <- unlist(str_extract_all(line, "\\b[A-Za-z_][A-Za-z_0-9.]*(?=\\()"))
+  for (fn in fns) {
+    if (fn %in% ignore_funs) next
+    if (is.null(function_intro[[fn]])) function_intro[[fn]] <<- chap
+  }
+}
 for (f in chap_files) {
   m <- str_match(f, "^([0-9]+)")
   chap <- as.integer(m[1, 2])
   if (is.na(chap)) next
   in_chunk <- FALSE
+  chunk_visible <- TRUE
   for (l in readLines(f, warn = FALSE)) {
-    if (!in_chunk && grepl("^```\\{", l)) { in_chunk <- TRUE; next }
-    if (in_chunk && grepl("^```\\s*$", l)) { in_chunk <- FALSE; next }
-    if (!in_chunk) next
-    fns <- unlist(str_extract_all(l, "\\b[A-Za-z_][A-Za-z_0-9.]*(?=\\()"))
-    for (fn in fns) {
-      if (fn %in% ignore_funs) next
-      if (is.null(function_intro[[fn]])) function_intro[[fn]] <- chap
+    if (!in_chunk && grepl("^```\\{", l)) {
+      in_chunk <- TRUE
+      chunk_visible <- !grepl("echo\\s*=\\s*FALSE|include\\s*=\\s*FALSE", l)
+      next
+    }
+    if (in_chunk && grepl("^```\\s*$", l)) {
+      in_chunk <- FALSE
+      chunk_visible <- TRUE
+      next
+    }
+    if (in_chunk && grepl("^#\\|", l)) {
+      if (grepl("echo:\\s*false|include:\\s*false", l, ignore.case = TRUE)) {
+        chunk_visible <- FALSE
+      }
+      next
+    }
+    # Two valid intro paths:
+    #   (a) visible code chunks (echo not FALSE)
+    #   (b) backticked inline code in prose (e.g., `labs()`, `get_regression_table()`)
+    # Either way, students have *encountered* the function name in the chapter.
+    if (in_chunk && chunk_visible) {
+      record_fns(l, chap)
+    } else if (!in_chunk) {
+      for (code in str_extract_all(l, "`[^`]+`")[[1]]) record_fns(code, chap)
     }
   }
 }
