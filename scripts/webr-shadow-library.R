@@ -47,16 +47,18 @@ local({
     use_shadow <- pkg %in% names(pkg_data) &&
       !requireNamespace(pkg, quietly = TRUE)
     if (use_shadow) {
+      # We do NOT use readr::read_csv() with the gz URL directly because webR's
+      # readr hangs indefinitely on .csv.gz URLs (gzip decoding from a remote
+      # stream isn't wired up). The base-R pattern below works reliably:
+      # download.file() fetches the bytes, then read.csv(gzfile(...)) decodes
+      # locally. The same pattern works identically in regular R.
       for (ds in names(pkg_data[[pkg]])) {
         if (!exists(ds, envir = globalenv(), inherits = FALSE)) {
-          assign(
-            ds,
-            readr::read_csv(
-              paste0(base_url, pkg_data[[pkg]][[ds]]),
-              show_col_types = FALSE
-            ),
-            envir = globalenv()
-          )
+          tmp <- tempfile(fileext = ".csv.gz")
+          url <- paste0(base_url, pkg_data[[pkg]][[ds]])
+          download.file(url, tmp, quiet = TRUE, mode = "wb")
+          assign(ds, read.csv(gzfile(tmp)), envir = globalenv())
+          unlink(tmp)
         }
       }
       invisible()
