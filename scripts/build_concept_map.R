@@ -33,6 +33,9 @@ if (dir.exists(book)) setwd(book)
 
 `%||%` <- function(a, b) if (is.null(a) || identical(a, "")) b else a
 
+# Shared "← Back to instructor hub" sticky top-of-page nav.
+source("scripts/_hub_nav.R")
+
 chap_titles <- c(
   "1" = "Getting started",
   "2" = "Visualization",
@@ -258,6 +261,7 @@ html <- paste(c(
   '  table.summary th { background: #f4f4f4; padding: 0.5em 0.8em; text-align: left; }',
   '  table.summary td { padding: 0.5em 0.8em; border-top: 1px solid #eee; vertical-align: top; }',
   '</style></head><body>',
+  hub_nav_html(),
   '<h1>ModernDive &mdash; Concept dependency map</h1>',
   sprintf('<p class="lede">Generated %s. Inter-chapter dependencies derived by walking every <code>@sec-*</code> reference in chapter prose and mapping it back to the chapter that owns the anchor. Three views below: an interactive network graph (drag, hover), an adjacency-matrix heatmap, and a per-chapter dependency table.</p>',
           format(Sys.Date(), "%Y-%m-%d")),

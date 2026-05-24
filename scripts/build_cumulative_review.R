@@ -28,6 +28,7 @@ suppressPackageStartupMessages({
 
 book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
 if (dir.exists(book)) setwd(book)
+source("scripts/_hub_nav.R")
 
 `%||%` <- function(a, b) if (is.null(a) || identical(a, "")) b else a
 
@@ -197,6 +198,7 @@ html <- paste(c(
   '  nav.milestone-jump a { display: inline-block; margin-right: 0.6em; color: #1A6FBE; text-decoration: none; padding: 0.3em 0.7em; background: #F0F4F8; border-radius: 4px; }',
   '  nav.milestone-jump a:hover { background: #E0EBF5; }',
   '</style></head><body>',
+  hub_nav_html(),
   '<h1>Cumulative review</h1>',
   sprintf('<p>Generated %s. Three milestone study guides, each pulling a curated handful of medium-difficulty exercises from every prior chapter plus a vocabulary checklist. Hand these to students before midterms / finals, or as voluntary self-study material. (For exam <em>delivery</em>, see the <a href="exam-bank.html">exam question bank</a>; for individual chapter pacing, see <a href="lesson-plans.html">lesson plans</a>.)</p>',
           format(Sys.Date(), "%Y-%m-%d")),

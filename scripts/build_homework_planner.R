@@ -15,6 +15,7 @@ suppressPackageStartupMessages({
 
 book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
 if (dir.exists(book)) setwd(book)
+source("scripts/_hub_nav.R")
 
 `%||%` <- function(a, b) if (is.null(a) || identical(a, "")) b else a
 
@@ -78,6 +79,7 @@ html <- c(
   '  #export-output { background: #f4f4f4; padding: 0.8em; border-radius: 4px; white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 0.88em; display: none; }',
   '  .empty { color: #888; text-align: center; padding: 2em; }',
   '</style></head><body>',
+  hub_nav_html(),
   '<h1>ModernDive &mdash; Homework planner</h1>',
   sprintf('<p class="lead">Build a homework set: filter by chapter, difficulty, group, or keyword. Check exercises to include, then click <em>Export</em> for a copy-pasteable list. %d exercises total across 11 chapters.</p>',
           length(all_records)),

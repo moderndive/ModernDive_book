@@ -25,6 +25,7 @@ suppressPackageStartupMessages({
 
 book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
 if (dir.exists(book)) setwd(book)
+source("scripts/_hub_nav.R")
 
 `%||%` <- function(a, b) if (is.null(a) || identical(a, "")) b else a
 
@@ -180,6 +181,7 @@ html <- paste(c(
   '  .toc li { margin: 0.25em 0; }',
   '  @media print { body { max-width: 100%; } .toc { display: none; } .exam-q { break-inside: avoid; } }',
   '</style></head><body>',
+  hub_nav_html(),
   '<h1>Exam question bank</h1>',
   sprintf('<p>Generated %s. Each template is a stratified random sample (versions A/B/C are different seeds, so they can be used as parallel forms). Point value = difficulty (★=1, ★★=2, ★★★=3). Extensions and "Carried over" exercises are excluded from the pool. Solutions linked per question (instructor-only).</p>',
           format(Sys.Date(), "%Y-%m-%d")),

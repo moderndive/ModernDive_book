@@ -27,6 +27,7 @@ suppressPackageStartupMessages({
 
 book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
 if (dir.exists(book)) setwd(book)
+source("scripts/_hub_nav.R")
 
 chap_titles <- c(
   "1" = "Getting started",          "2"  = "Visualization",
@@ -192,6 +193,7 @@ html <- paste(c(
   '  nav.chapter-jump a { display: inline-block; margin-right: 0.6em; color: #1A6FBE; text-decoration: none; padding: 0.2em 0.5em; border-radius: 3px; }',
   '  nav.chapter-jump a:hover { background: #F0F4F8; }',
   '</style></head><body>',
+  hub_nav_html(),
   '<h1>Assessment alignment matrix</h1>',
   sprintf('<p>Generated %s. Each chapter\'s <em>learning objectives</em> (the bulleted list in the "In this chapter, you\'ll learn how to:" callout) cross-referenced against its end-of-chapter exercises. The matcher scores each exercise by keyword overlap with the LO (code identifiers count strongest, emphasised nouns next, then plain prose). The top 4 matches per LO are shown.</p>',
           format(Sys.Date(), "%Y-%m-%d")),

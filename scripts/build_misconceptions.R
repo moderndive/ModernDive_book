@@ -21,6 +21,7 @@ suppressPackageStartupMessages({
 
 book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
 if (dir.exists(book)) setwd(book)
+source("scripts/_hub_nav.R")
 
 chap_titles <- c(
   "1" = "Getting started",          "2"  = "Visualization",
@@ -176,6 +177,7 @@ html <- paste(c(
   '  .qc.hidden { display: none; }',
   '  h2.hidden { display: none; }',
   '</style></head><body>',
+  hub_nav_html(),
   '<h1>Misconceptions cheat-sheet</h1>',
   sprintf('<p>Generated %s. Each chapter\'s Quick-check <em>wrong-answer options</em> distilled into a one-place reference. The wrong answers were written deliberately to encode tempting-but-incorrect reasoning &mdash; this page presents them so you can pre-empt the confusion in lecture or office hours.</p>',
           format(Sys.Date(), "%Y-%m-%d")),

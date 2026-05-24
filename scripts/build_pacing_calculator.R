@@ -23,6 +23,7 @@ suppressPackageStartupMessages({
 
 book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
 if (dir.exists(book)) setwd(book)
+source("scripts/_hub_nav.R")
 
 chap_titles <- c(
   "1" = "Getting started",          "2"  = "Visualization",
@@ -136,6 +137,7 @@ html <- paste(c(
   '  ul.compress-list { font-size: 0.92em; }',
   '  ul.compress-list li { margin: 0.3em 0; }',
   '</style></head><body>',
+  hub_nav_html(),
   '<h1>Course-pacing calculator</h1>',
   sprintf('<p>Generated %s. Plug in how long your term is and how much class time you have; the calculator fits chapters into weeks using each chapter\'s word count, section count, and Quick-/Learning-check counts. Time per chapter is conservative (~150 wpm + 3 min/QC + 2 min/LC + 3 min/section transition).</p>',
           format(Sys.Date(), "%Y-%m-%d")),

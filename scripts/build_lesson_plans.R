@@ -22,6 +22,7 @@ suppressPackageStartupMessages({
 
 book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
 if (dir.exists(book)) setwd(book)
+source("scripts/_hub_nav.R")
 
 `%||%` <- function(a, b) if (is.null(a) || identical(a, "")) b else a
 
@@ -255,6 +256,7 @@ html <- c(
   '  ul.sections li.sec-l3 { color: #555; }',
   '  .intro { background: #fff3cd; padding: 1em 1.4em; border-radius: 6px; border-left: 5px solid #f0a500; margin: 1em 0 2em; }',
   '</style></head><body>',
+  hub_nav_html(),
   '<h1>ModernDive &mdash; Per-chapter lesson plans</h1>',
   sprintf('<p>Generated %s. Instructor-facing teaching plan for each chapter: learning objectives, section outline, exercise difficulty mix, and a rough class-time budget (reading prose at ~150 wpm + ~3 min per Quick check + ~2 min per inline Learning Check + section-transition overhead). These estimates are deliberately conservative — your students may need more or less time. Time budgets are <em>guidance</em>, not gospel.</p>',
           format(Sys.Date(), "%Y-%m-%d")),

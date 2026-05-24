@@ -21,6 +21,7 @@ suppressPackageStartupMessages({
 
 book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
 if (dir.exists(book)) setwd(book)
+source("scripts/_hub_nav.R")
 
 `%||%` <- function(a, b) if (is.null(a) || identical(a, "")) b else a
 
@@ -136,6 +137,7 @@ html <- c(
   '  .total-tag { color: #888; font-weight: normal; font-size: 0.85em; }',
   '  .low-coverage { color: #c0392b; font-weight: 600; }',
   '</style></head><body>',
+  hub_nav_html(),
   '<h1>ModernDive &mdash; Exercise coverage map</h1>',
   sprintf('<p>Snapshot generated %s. Per-chapter exercise distribution by section / subsection, with difficulty histograms. <em>Low coverage</em> = sections with 1 or 0 exercises.</p>',
           format(Sys.Date(), "%Y-%m-%d"))
