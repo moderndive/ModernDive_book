@@ -1,3 +1,20 @@
+# ModernDive 2.8.17 — Shadow library() so library(<github-only-pkg>) "just works" in webR
+
+* **Shadow `library()` for the four GitHub-only companion packages.** 2.8.16 fixed broken chapter setups by routing GitHub-only datasets through inline `readr::read_csv()` calls — which worked, but it made the setup code diverge from the local-RStudio idiom, and any exercise `webr:` starter that already wrote `library(olympicAthletes)` (six of them: ex 1.6, 2.1, 3.1, 6.1, 7.1, 10.49) still errored. New `scripts/webr-shadow-library.R` defines a shadow `library()` that — for `olympicAthletes` / `steves` / `exoplanets` / `volcanoes` only — reads each package's `.csv.gz` mirror into `globalenv()`. Every other package name delegates to `base::library()` unchanged, so `library(dplyr)` / `library(infer)` etc. behave normally. Idempotent (repeat calls skip datasets already present).
+* **Each chapter `#| context: setup` cell now uses `source(...) + library(...)`**:
+    ```r
+    source("https://raw.githubusercontent.com/moderndive/ModernDive_book/v2/scripts/webr-shadow-library.R")
+    library(dplyr)
+    library(ggplot2)
+    library(olympicAthletes)   # loads olympic_athletes + editions + medal_table via shadow
+    ```
+    Net −29 lines across the 10 chapters + Appendix B, and the code finally matches what students would type in local RStudio.
+* **`olympic_editions.csv.gz` (62×15, 3 KB) and `olympic_medal_table.csv.gz` (1929×11, 16 KB)** added so `library(olympicAthletes)` in webR transparently provides all three datasets — fixing latent breaks in ch 1 ex 13/15 (which call `glimpse(medal_table)` / `tidy_summary(medal_table)`) and ch 3 ex 24 (`inner_join(editions, ...)`).
+* **Appendix B's two `read_csv()`-based webR cells** migrated to the same `source(...) + library(steves)` pattern, eliminating the last inline mirror URL in the book.
+* **Companion commit on `v2`** publishes `scripts/webr-shadow-library.R` plus the two new `.csv.gz` files so all of the above URLs resolve.
+
+***
+
 # ModernDive 2.8.16 — webR no longer broken by GitHub-only datasets
 
 * **Restored interactive exercises across 10 chapters.** webR (browser-side R) can only install packages from `repo.r-wasm.org`, so each chapter's `#| context: setup` cell `library(olympicAthletes)` / `library(steves)` / `library(exoplanets)` / `library(volcanoes)` call failed silently and tore down the per-page webR namespace — every downstream end-of-chapter `{webr-r}` exercise cell in chapters 1-3, 5-11 was broken. Setup cells now read each needed dataset from a gzipped CSV mirror on `raw.githubusercontent.com/moderndive/ModernDive_book/v2/data/<file>.csv.gz` via `readr::read_csv()`. Datasets exported with `readr::write_csv()` (auto-gzips on `.gz` extension):
