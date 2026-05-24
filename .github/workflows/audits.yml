@@ -241,3 +241,69 @@ jobs:
           name: lychee-report
           path: lychee-report.md
           retention-days: 30
+
+  webr-static-audit:
+    name: webR symbols (Layer A — static)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.5.2"
+          use-public-rspm: true
+      - name: Install audit dependencies
+        run: |
+          R -q -e 'install.packages(c("stringr", "yaml"),
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+      - name: Run webR symbol audit
+        run: |
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/audit_webr_symbols.R
+          Rscript scripts/audit_webr_symbols.R
+
+  webr-server-eval:
+    name: webR cells run server-side (Layer B)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.5.2"
+          use-public-rspm: true
+      - name: Install CRAN packages used by webR cells
+        run: |
+          R -q -e 'install.packages(c(
+            "stringr", "yaml",
+            "ggplot2", "dplyr", "tidyr", "readr",
+            "moderndive", "nycflights23", "fivethirtyeight",
+            "patchwork", "infer", "broom", "MASS", "conflicted",
+            "janitor", "pwr", "readxl", "remotes"
+          ), repos = "https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+      - name: Install GitHub-only companion packages
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          R -q -e 'remotes::install_github(c(
+            "moderndive/olympicAthletes",
+            "ismayc/steves",
+            "moderndive/exoplanets",
+            "moderndive/volcanoes"
+          ), upgrade = "never", quiet = FALSE)'
+      - name: Evaluate every webR cell
+        run: Rscript scripts/test_webr_cells.R
+
+  webr-headless:
+    name: webR cells run in headless webR (Layer C)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install @r-wasm/webr
+        working-directory: scripts/test_webr_headless
+        run: npm install
+      - name: Run headless webR test
+        working-directory: scripts/test_webr_headless
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: npm test
