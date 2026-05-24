@@ -84,10 +84,14 @@ local({
 
   load_from_mirror <- function(ds, file) {
     set_status(sprintf("Loading %s…", ds))
-    tmp <- tempfile(fileext = ".rds")
-    download.file(paste0(base_url, file), tmp, quiet = TRUE, mode = "wb")
-    assign(ds, readRDS(tmp), envir = globalenv())
-    unlink(tmp)
+    # `download.file()` can hang indefinitely in webR's browser worker
+    # (synchronous network calls in Web Workers are unreliable). Streaming
+    # the gzipped RDS through `gzcon(url(...))` uses R's url-connection
+    # path, which webR routes through the async-compatible fetch API.
+    # Works identically in regular R.
+    con <- gzcon(url(paste0(base_url, file), "rb"))
+    on.exit(close(con), add = TRUE)
+    assign(ds, readRDS(con), envir = globalenv())
   }
 
   fill_missing_datasets <- function(pkg) {
