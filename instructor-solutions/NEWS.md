@@ -14,6 +14,21 @@ format:
 
 This page tracks substantive changes to the **instructor resources hub** (this site) — new tools, redesigns, content additions, and fixes. The book itself has its own [`NEWS.md`](https://github.com/moderndive/ModernDive_book/blob/v2-quarto-html/NEWS.md) for student-facing changes.
 
+# 2026-05-24 (cont.) — Quarto-website navbar, slide MCQ variants, more tools
+
+A second wave of updates after the five-tools release earlier the same day:
+
+* **Quarto-website navbar across every page.** `instructor-solutions/_quarto.yml` is now `type: website` with a navbar at the top of every page: Hub · Plan ↓ · Teach ↓ · Assess ↓ · What's new · GitHub. The three dropdowns list every resource in each area. One click from any tool to any other tool — no more bouncing back through the hub. The matching navbar is mirrored on the standalone R-generated pages via `scripts/_hub_nav.R` so the look is consistent across both render paths.
+* **Slide-deck MCQ variants for every chapter.** New `instructor-solutions/slides/variants/NN-variants.yml` files (Ch 1-11). Each file holds 10-12 multiple-choice questions that test the SAME concepts as the book's `## Quick checks` but use DIFFERENT example scenarios — Python/PyCharm analogies, palmerpenguins regression, restaurant tips, A/B website tests, Boston housing, etc. The slide decks now pull from these variants so class is no longer a re-run of the textbook. `scripts/build_slide_decks.R` prefers variants if present, falls back to book Quick checks otherwise. **115 variant MCQs total.**
+* **Exam question bank: Section A (concepts) + Section B (application).** Each exam template now produces two sections — concept MCQs sampled from the book's Quick checks (Section A) plus computational free-response from the exercise pool (Section B). Per-template ratios bias quizzes 60/40 conceptual, midterms 50/50, finals 40/60. Addresses the previous skew where exam-bank content was overwhelmingly computational.
+* **Instructor-authored EXTRAS pool** (`instructor-solutions/exam-bank-extras.yml`). Lets instructors add their own questions beyond the book — MCQ, short answer, or essay items with grading rubrics. The sampler folds them into the appropriate exam template by chapter. Five worked examples ship (chapters 2, 5, 8, 9, 10) demonstrating the schema.
+* **MathJax 3 on every standalone page** via `scripts/_hub_nav.R`. `$…$` inline and `$$…$$` display math now render across exam-bank, cumulative-review, lesson-plans, misconceptions, etc. Defensive load — only activates when math delimiters are present.
+* **Missing solutions filled in.** Solution-coverage audit surfaced 14 public exercises lacking entries in the private solutions yml (chapters 5-11 tail-end additions). All 14 now have worked solutions; one orphan solution entry (ch5 ex23 with no matching public exercise) was removed.
+* **Page-style consistency pass.** Four older standalone reports (concept-map, homework-planner, lesson-plans, coverage-map) brought into line with the ModernDive hex palette — navy h1/h2 with blue underline, matching the newer reports.
+* **`audit_exercise_lexicon.R` smarter.** Skips `echo=FALSE` chunks (code hidden from readers) when building the function-introduction map, and ALSO credits inline `` `func()` `` mentions in prose. Catches forward-reference violations the old "any code chunk" rule missed.
+
+***
+
 # 2026-05-24 — Five new tools + concept-map rewrite
 
 * **Pacing calculator** ([pacing-calculator.html](pacing-calculator.html)) — interactive bin-packer that fits the 11 chapters into your term given weeks-of-instruction, class-min/week, and out-of-class-min/week. Highlights weeks that overflow the per-week budget; ranks chapters by skippability for compressed terms. Per-chapter time budgets mirror the lesson-plans heuristic (150 wpm reading + 3 min/QC + 2 min/LC + 3 min/section).
