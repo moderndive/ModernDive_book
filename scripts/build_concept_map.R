@@ -3,15 +3,24 @@
 #
 # Builds a visualization of inter-chapter dependencies by walking every
 # `@sec-*` reference in chapter prose and mapping it back to the chapter
-# that owns the anchor. Outputs an HTML page with:
+# that owns the anchor. Outputs an HTML page with three views, in order:
 #
-#   1. A textual dependency table (per chapter: "Depends on (incoming):
-#      Ch 2, 3, 5"; "Cited by (outgoing): Ch 7, 8, 10").
-#   2. A simple SVG dependency-graph rendering with chapters laid out in
-#      reading order and arrows showing cross-references.
+#   1. Interactive force-directed network (vis-network). Nodes are
+#      draggable; hovering a node highlights its neighbors. Edge weight
+#      = number of cross-references; rendered as line thickness.
+#   2. Adjacency-matrix heatmap. 11×11 grid; each cell encodes the number
+#      of times the row chapter references the column chapter. Zero arc
+#      overlap, every relationship visible at a glance.
+#   3. Per-chapter dependency table (textual): "Depends on (incoming):
+#      Ch 2, 3, 5"; "Cited by (outgoing): Ch 7, 8, 10".
 #
-# Writes to `instructor-solutions/concept-map.html` (gitignored — a
-# snapshot regenerated on demand).
+# The previous design used a horizontal row of 11 nodes with raw (non-
+# aggregated) arcs above/below for forward/backward edges. With 257
+# cross-chapter references — including 201 backward — the arcs piled into
+# unreadable spaghetti. vis-network + matrix is much clearer.
+#
+# Writes to `instructor-solutions/_site/concept-map.html` (regenerated on
+# demand).
 #
 # Run:  Rscript scripts/build_concept_map.R
 
@@ -106,84 +115,104 @@ summaries <- lapply(1:n_chapters, function(ch) {
   )
 })
 
-# Build SVG: chapters laid out as a row of circles, arrows showing edges.
-# Forward edges (left→right, normal flow) are blue; backward edges are red
-# (forward references — i.e., the chapter cites a later chapter, which is
-# only OK in well-foreshadowed contexts).
-svg_w <- 980
-svg_h <- 460
-margin_x <- 60
-node_y <- 220
-node_r <- 26
-xs <- margin_x + (seq_len(n_chapters) - 1) * (svg_w - 2 * margin_x) / (n_chapters - 1)
-
-# Arc path between two nodes, with curvature proportional to distance.
-arc_path <- function(x1, x2, above = TRUE) {
-  dx <- abs(x2 - x1)
-  ctrl_y <- node_y + if (above) -dx * 0.5 else dx * 0.5
-  sprintf("M %.1f %.1f Q %.1f %.1f %.1f %.1f",
-          x1, node_y, (x1 + x2) / 2, ctrl_y, x2, node_y)
-}
-
-svg_lines <- c(
-  sprintf('<svg viewBox="0 0 %d %d" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ModernDive chapter-dependency graph">', svg_w, svg_h),
-  '<style>',
-  '  .node circle { fill: #5b9bd5; stroke: #1f4e79; stroke-width: 1.5; }',
-  '  .node text { fill: white; font-weight: bold; text-anchor: middle; dominant-baseline: central; font-family: -apple-system, system-ui, sans-serif; font-size: 14px; }',
-  '  .label { fill: #333; text-anchor: middle; font-family: -apple-system, system-ui, sans-serif; font-size: 11px; }',
-  '  .edge { fill: none; stroke-width: 1.2; opacity: 0.55; }',
-  '  .edge.fwd { stroke: #1f4e79; }',
-  '  .edge.bwd { stroke: #c0392b; }',
-  '  marker.fwd-arrow path { fill: #1f4e79; }',
-  '  marker.bwd-arrow path { fill: #c0392b; }',
-  '  text.legend { font-family: -apple-system, system-ui, sans-serif; font-size: 12px; fill: #333; }',
-  '</style>',
-  '<defs>',
-  '  <marker id="fwd-arrow" class="fwd-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker>',
-  '  <marker id="bwd-arrow" class="bwd-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker>',
-  '</defs>'
-)
-
-# Backward edges first (drawn below), then forward (above), then nodes on top.
-for (e in backward_edges) {
-  svg_lines <- c(svg_lines,
-    sprintf('<path class="edge bwd" d="%s" marker-end="url(#bwd-arrow)" />',
-            arc_path(xs[e$from], xs[e$to], above = FALSE)))
-}
-# Aggregate forward edges by (from, to) so we draw one arc per pair instead
-# of N — visual noise reduction
-fwd_pairs <- list()
-for (e in forward_edges) {
+# Aggregate edges by (from, to) pair with weight = reference count.
+edge_pairs <- list()
+for (e in edges) {
   k <- sprintf("%d->%d", e$from, e$to)
-  fwd_pairs[[k]] <- (fwd_pairs[[k]] %||% 0) + 1
-}
-for (key in names(fwd_pairs)) {
-  fromto <- as.integer(strsplit(sub("->", " ", key), " ")[[1]])
-  svg_lines <- c(svg_lines,
-    sprintf('<path class="edge fwd" d="%s" marker-end="url(#fwd-arrow)" />',
-            arc_path(xs[fromto[1]], xs[fromto[2]], above = TRUE)))
+  edge_pairs[[k]] <- (edge_pairs[[k]] %||% 0L) + 1L
 }
 
-# Nodes
-for (i in seq_len(n_chapters)) {
-  svg_lines <- c(svg_lines,
-    sprintf('<g class="node"><circle cx="%.1f" cy="%.1f" r="%d"/><text x="%.1f" y="%.1f">%d</text></g>',
-            xs[i], node_y, node_r, xs[i], node_y, i))
-  svg_lines <- c(svg_lines,
-    sprintf('<text class="label" x="%.1f" y="%.1f">%s</text>',
-            xs[i], node_y + node_r + 18, chap_titles[as.character(i)]))
-}
+# JSON for vis-network: nodes + edges. Hand-built to avoid a jsonlite dep.
+json_str <- function(x) paste0('"', gsub('"', '\\\\"', x), '"')
 
-# Legend
-svg_lines <- c(svg_lines,
-  sprintf('<line x1="%d" y1="%d" x2="%d" y2="%d" class="edge fwd" marker-end="url(#fwd-arrow)" />', svg_w - 280, svg_h - 50, svg_w - 230, svg_h - 50),
-  sprintf('<text class="legend" x="%d" y="%d" dominant-baseline="central">backward citation (e.g., Ch 10 → Ch 5)</text>', svg_w - 220, svg_h - 50),
-  sprintf('<line x1="%d" y1="%d" x2="%d" y2="%d" class="edge bwd" marker-end="url(#bwd-arrow)" />', svg_w - 280, svg_h - 25, svg_w - 230, svg_h - 25),
-  sprintf('<text class="legend" x="%d" y="%d" dominant-baseline="central">forward reference (e.g., Ch 5 → Ch 10)</text>', svg_w - 220, svg_h - 25),
-  '</svg>'
+nodes_json <- paste0(
+  vapply(seq_len(n_chapters), function(i) {
+    sprintf(
+      '{"id":%d,"label":"Ch %d","title":%s,"value":%d,"group":%d}',
+      i, i,
+      json_str(sprintf("Ch %d — %s\\nIncoming: %d  •  Outgoing: %d",
+                       i, chap_titles[as.character(i)],
+                       summaries[[i]]$n_in, summaries[[i]]$n_out)),
+      summaries[[i]]$n_in + summaries[[i]]$n_out + 1L,
+      i
+    )
+  }, character(1)),
+  collapse = ","
 )
 
-svg <- paste(svg_lines, collapse = "\n")
+edges_json <- paste0(
+  vapply(names(edge_pairs), function(k) {
+    ft <- as.integer(strsplit(sub("->", " ", k), " ")[[1]])
+    w <- edge_pairs[[k]]
+    is_fwd <- ft[2] > ft[1]
+    sprintf(
+      '{"from":%d,"to":%d,"value":%d,"title":%s,"color":{"color":"%s","opacity":%s},"arrows":{"to":{"enabled":true,"scaleFactor":0.6}}}',
+      ft[1], ft[2], w,
+      json_str(sprintf("%d cross-refs: Ch %d → Ch %d", w, ft[1], ft[2])),
+      if (is_fwd) "#1f4e79" else "#c0392b",
+      sprintf("%.2f", min(1, 0.35 + w * 0.05))
+    )
+  }, character(1)),
+  collapse = ","
+)
+
+graph_html <- paste(c(
+  '<div id="concept-graph" role="img" aria-label="Interactive chapter-dependency network"></div>',
+  '<p class="graph-legend"><span class="legend-fwd">━</span> forward (later chapter cites earlier) &nbsp; <span class="legend-bwd">━</span> backward (earlier chapter cites later, foreshadowing) &nbsp;&nbsp; <em>Drag nodes • Hover a chapter to highlight its neighbors • Edge thickness = reference count</em></p>',
+  '<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>',
+  '<script>',
+  sprintf('  const nodes = new vis.DataSet([%s]);', nodes_json),
+  sprintf('  const edges = new vis.DataSet([%s]);', edges_json),
+  '  const network = new vis.Network(document.getElementById("concept-graph"), { nodes, edges }, {',
+  '    nodes: { shape: "circle", font: { size: 18, color: "#fff", face: "system-ui" }, color: { background: "#1f4e79", border: "#0d2e4d", highlight: { background: "#5b9bd5", border: "#0d2e4d" } }, borderWidth: 2, scaling: { min: 14, max: 36, label: { enabled: false } } },',
+  '    edges: { smooth: { type: "curvedCW", roundness: 0.18 }, scaling: { min: 0.8, max: 8 }, hoverWidth: 1.5, selectionWidth: 2 },',
+  '    physics: { solver: "forceAtlas2Based", forceAtlas2Based: { gravitationalConstant: -120, springLength: 130, avoidOverlap: 0.6 }, stabilization: { iterations: 250 } },',
+  '    interaction: { hover: true, tooltipDelay: 120 }',
+  '  });',
+  '  network.once("stabilizationIterationsDone", () => network.setOptions({ physics: false }));',
+  '</script>'
+), collapse = "\n")
+
+# Adjacency matrix view: 11×11 HTML table. Cell intensity = reference count.
+# Row = source chapter; column = target chapter. Color by direction:
+# blue for forward (j > i), red for backward (j < i).
+edge_count <- matrix(0L, nrow = n_chapters, ncol = n_chapters)
+for (k in names(edge_pairs)) {
+  ft <- as.integer(strsplit(sub("->", " ", k), " ")[[1]])
+  edge_count[ft[1], ft[2]] <- edge_pairs[[k]]
+}
+max_count <- max(edge_count)
+
+matrix_rows <- c('<tr><th class="corner">From \\ To</th>',
+                 paste0('<th class="cm-col">Ch', seq_len(n_chapters), '</th>',
+                        collapse = ""),
+                 '</tr>')
+for (i in seq_len(n_chapters)) {
+  cells <- vapply(seq_len(n_chapters), function(j) {
+    if (i == j) return('<td class="diag"></td>')
+    n <- edge_count[i, j]
+    if (n == 0) return('<td class="zero"></td>')
+    intensity <- 0.18 + 0.82 * (n / max_count)  # 0.18..1.0
+    bg <- if (j > i) {
+      sprintf("rgba(31, 78, 121, %.2f)", intensity)
+    } else {
+      sprintf("rgba(192, 57, 43, %.2f)", intensity)
+    }
+    sprintf('<td class="filled" style="background:%s" title="Ch %d → Ch %d: %d refs">%d</td>',
+            bg, i, j, n, n)
+  }, character(1))
+  matrix_rows <- c(matrix_rows,
+                   sprintf('<tr><th class="cm-row">Ch%d</th>%s</tr>',
+                           i, paste(cells, collapse = "")))
+}
+matrix_html <- paste(c(
+  '<div class="matrix-wrap">',
+  '<table class="cm-matrix">',
+  paste(matrix_rows, collapse = "\n"),
+  '</table>',
+  '<p class="matrix-legend">Cell shows the count of <code>@sec-*</code> cross-references from the row chapter to the column chapter. Blue (above the diagonal) is the normal direction; red (below) is a backward reference where an earlier chapter foreshadows a later one.</p>',
+  '</div>'
+), collapse = "\n")
 
 # Build textual summary table
 rows <- character()
@@ -205,19 +234,37 @@ html <- paste(c(
   '  body { font-family: -apple-system, system-ui, sans-serif; max-width: 1100px; margin: 2em auto; padding: 0 1em; color: #222; line-height: 1.5; }',
   '  h1 { font-size: 1.6em; margin-bottom: 0.2em; }',
   '  h2 { font-size: 1.25em; margin-top: 2em; border-bottom: 1px solid #ccc; padding-bottom: 0.2em; }',
-  '  table { border-collapse: collapse; width: 100%; margin: 1em 0; }',
-  '  th { background: #f4f4f4; padding: 0.5em 0.8em; text-align: left; }',
-  '  td { padding: 0.5em 0.8em; border-top: 1px solid #eee; vertical-align: top; }',
-  '  .svg-wrap { background: #fafafa; padding: 1em; border-radius: 6px; margin: 1.5em 0; }',
+  '  p.lede { color: #555; }',
+  '  /* Network graph */',
+  '  #concept-graph { width: 100%; height: 560px; background: #fafafa; border-radius: 6px; border: 1px solid #e5e5e5; }',
+  '  p.graph-legend { font-size: 0.92em; color: #555; margin-top: 0.5em; }',
+  '  .legend-fwd { color: #1f4e79; font-weight: bold; letter-spacing: -2px; }',
+  '  .legend-bwd { color: #c0392b; font-weight: bold; letter-spacing: -2px; }',
+  '  /* Adjacency matrix */',
+  '  .matrix-wrap { overflow-x: auto; margin: 1em 0; }',
+  '  table.cm-matrix { border-collapse: collapse; margin: 0; font-size: 0.92em; }',
+  '  table.cm-matrix th, table.cm-matrix td { border: 1px solid #ddd; padding: 0.45em 0.5em; text-align: center; min-width: 2.4em; }',
+  '  table.cm-matrix th.corner { background: #f4f4f4; font-weight: 600; }',
+  '  table.cm-matrix th.cm-col, table.cm-matrix th.cm-row { background: #f4f4f4; font-weight: 600; }',
+  '  table.cm-matrix th.cm-row { text-align: right; padding-right: 0.6em; }',
+  '  table.cm-matrix td.zero { background: #fff; color: #aaa; }',
+  '  table.cm-matrix td.diag { background: repeating-linear-gradient(45deg, #f0f0f0, #f0f0f0 4px, #fafafa 4px, #fafafa 8px); }',
+  '  table.cm-matrix td.filled { color: #fff; font-weight: 600; text-shadow: 0 0 2px rgba(0,0,0,0.35); }',
+  '  p.matrix-legend { font-size: 0.92em; color: #555; }',
+  '  /* Per-chapter summary table */',
+  '  table.summary { border-collapse: collapse; width: 100%; margin: 1em 0; }',
+  '  table.summary th { background: #f4f4f4; padding: 0.5em 0.8em; text-align: left; }',
+  '  table.summary td { padding: 0.5em 0.8em; border-top: 1px solid #eee; vertical-align: top; }',
   '</style></head><body>',
   '<h1>ModernDive &mdash; Concept dependency map</h1>',
-  sprintf('<p>Generated %s. Each chapter is a node; arrows show <code>@sec-*</code> cross-references between chapters. Forward arcs (blue, above the line) represent the normal "this chapter builds on an earlier one" direction; backward arcs (red, below) represent forward references where an earlier chapter mentions a later one (well-foreshadowed in this book; see the cross-reference scan results).</p>',
+  sprintf('<p class="lede">Generated %s. Inter-chapter dependencies derived by walking every <code>@sec-*</code> reference in chapter prose and mapping it back to the chapter that owns the anchor. Three views below: an interactive network graph (drag, hover), an adjacency-matrix heatmap, and a per-chapter dependency table.</p>',
           format(Sys.Date(), "%Y-%m-%d")),
-  '<div class="svg-wrap">',
-  svg,
-  '</div>',
+  '<h2>Interactive network</h2>',
+  graph_html,
+  '<h2>Adjacency matrix</h2>',
+  matrix_html,
   '<h2>Per-chapter dependency summary</h2>',
-  '<table>',
+  '<table class="summary">',
   '<tr><th>Chapter</th><th>Depends on (incoming refs)</th><th>Cited by (outgoing refs)</th></tr>',
   paste(rows, collapse = "\n"),
   '</table>',
