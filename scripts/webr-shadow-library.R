@@ -111,10 +111,13 @@ local({
       return(invisible(base::library(package, ..., character.only = character.only)))
     }
     # Use the shadow path only when (a) we know this package, AND (b) the
-    # real package isn't actually installed (webR's case). Wrap
-    # requireNamespace in tryCatch so anything weird falls through to base.
+    # real package isn't actually installed (webR's case). We use
+    # `.packages(all.available = TRUE)` rather than `requireNamespace()`
+    # because webR shims requireNamespace to attempt `webr::install()` on
+    # miss, which logs "Requested package X not found in webR binary repo"
+    # for our GitHub-only packages even when wrapped in quietly/suppressWarnings.
     is_installed <- tryCatch(
-      isTRUE(requireNamespace(pkg, quietly = TRUE)),
+      pkg %in% .packages(all.available = TRUE),
       error = function(e) FALSE
     )
     use_shadow <- pkg %in% names(pkg_data) && !is_installed
@@ -131,4 +134,26 @@ local({
     }
   }
   assign("library", shadow_library, envir = globalenv())
+
+  # Suppress quarto-webr's "Requested package <X> not found in webR binary repo"
+  # warning for the four GitHub-only packages the shadow handles. webr::install
+  # (called by quarto-webr's auto-install of any library() reference and by the
+  # shimmed install.packages) checks repo.r-wasm.org — our packages aren't
+  # there, hence the noisy warning. Shim it: silently no-op for shadow-handled
+  # packages, delegate to the real install for everything else.
+  if (requireNamespace("webr", quietly = TRUE)) {
+    try({
+      ns <- asNamespace("webr")
+      if (exists("install", envir = ns)) {
+        real_install <- get("install", envir = ns)
+        shadow_install <- function(packages, ...) {
+          packages <- setdiff(packages, names(pkg_data))
+          if (length(packages) > 0) real_install(packages, ...)
+        }
+        # Unlock + replace + relock the binding inside the webr namespace.
+        # utils::assignInNamespace handles this cleanly.
+        utils::assignInNamespace("install", shadow_install, ns = "webr")
+      }
+    }, silent = TRUE)
+  }
 })
