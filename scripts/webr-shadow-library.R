@@ -56,7 +56,8 @@ local({
   pkg_extras <- list(
     moderndive = list(
       envoy_flights              = "envoy_flights.csv.gz",
-      early_january_2023_weather = "early_january_2023_weather.csv.gz"
+      early_january_2023_weather = "early_january_2023_weather.csv.gz",
+      un_member_states_2024      = "un_member_states_2024.csv.gz"
     )
   )
 
