@@ -1,3 +1,25 @@
+# ModernDive 2.8.19 — Three-layer CI test pyramid catches webR breakage
+
+The 2.8.16–2.8.18 webR work fixed bugs by hand, but nothing in the audit pipeline watched the webR surface — every regression slipped through until a student tried to run a cell. Three new jobs in `.github/workflows/audits.yml` now guard webR:
+
+* **Layer A — static scan** (`scripts/audit_webr_symbols.R`). Walks every `{webr-r}` cell in chapter qmds + Appendix B and every `webr:` field in `exercises/*.yml`; flags bare data symbols that aren't loaded by the chapter's setup (via `library()` — with shadow mapping for the four GitHub-only packages — or top-level `X <- …` assignments) and aren't in webR's preloaded-package datasets or built-ins. Fast (<30 s), fails CI on any flag.
+* **Layer B — server-side eval** (`scripts/test_webr_cells.R`). Installs the 9 webR-preloaded CRAN packages + the 4 GitHub-only ones + every other package exercise cells `library()` (broom, MASS, conflicted, janitor, pwr, readxl, stringr), then runs every `{webr-r}` cell in plain R. Matches Quarto/webR ordering (`#| context: setup` first, then file order). Catches logic errors, wrong column names, undefined intermediates — bugs static analysis can't see. **Caught the ch5 `UN_data_ch5` rebind-with-wrong-columns bug on first local run** — the line ~160 webR cell was `filter`-only (leaving columns named `life_expectancy_2022`), which silently clobbered the setup's `select(life_exp = …, fert_rate = …)` rename and broke every downstream cell. Fixed in this commit.
+* **Layer C — headless webR-in-Node** (`scripts/test_webr_headless/test_webr.mjs`). Node script using `@r-wasm/webr` (pinned to 0.2.0) that initialises a real headless webR (browser-side R compiled to wasm), installs the preload list, and evaluates every cell with `globalenv()` cleared between chapters. **Surfaced a real webR runtime bug** (see below) that would have stayed latent until someone clicked Run.
+
+Supporting changes:
+
+* **Shadow `library()` is now environment-aware** (`scripts/webr-shadow-library.R`). The earlier version always loaded GitHub-only datasets from the CSV mirror, even in regular R where the package was installed. `requireNamespace()` check now means: real package installed → delegate to `base::library()` (local R + Layer B CI); not installed → CSV-mirror path (webR + Layer C). Same student behaviour in both environments.
+* **Shadow now uses `download.file() + read.csv(gzfile(tmp))` instead of `readr::read_csv()`.** Layer C surfaced that webR's `readr::read_csv()` hangs indefinitely on `.csv.gz` URLs (even tiny 50 KB ones) — gzip decoding from a remote stream isn't wired up in webR. It also hangs on plain `.csv` URLs (ch4's `dem_score <- read_csv(...)` was the trigger). The base-R `download.file()` + `read.csv()` chain works in both webR and regular R; verified locally with `ch1 setup` (downloads + decodes the 5.8 MB olympic_athletes plus the two small olympicAthletes datasets) in 2.9 s.
+* **Shadow now also tops up missing moderndive datasets after `library(moderndive)`** succeeds via `base::library`. webR's binary moderndive (from `repo.r-wasm.org`) lags CRAN and silently lacks newer datasets that the book uses — `envoy_flights` (ch 2 viz examples), `early_january_2023_weather` (ch 2 line-graph), and `un_member_states_2024` (ch 5 / ch 6 UN regression chapters). After loading the package, the shadow checks each name and downloads the v2 `.csv.gz` mirror only when the local install doesn't already have it. Three new tiny CSV mirrors land on `v2`:
+    - `data/envoy_flights.csv.gz` — 357 × 19, 7 KB
+    - `data/early_january_2023_weather.csv.gz` — 360 × 15, 4 KB
+    - `data/un_member_states_2024.csv.gz` — 193 × 39, 20 KB
+* **ch4 setup**: `dem_score <- read_csv(URL, show_col_types = FALSE)` → `read.csv(URL)`. webR's readr hangs on every URL form, gz or plain. Base `read.csv()` works identically in regular R.
+
+The 2.8.16–2.8.18 work shipped a working pipeline by browser test alone; Layer C would have caught the readr-gz hang, the readr-plain-URL hang, and the three moderndive-lag bugs in CI on first push instead of mid-class.
+
+***
+
 # ModernDive 2.8.18 — webR exercise robustness: pre-define chapter-derived objects
 
 A thorough audit after 2.8.17 turned up nine objects that exercise `{webr-r}` cells reference but that were never available in the webR namespace — each a pre-existing footgun. A student opening any later exercise in isolation would hit an "object not found" error because the definition lived in an earlier inline `{webr-r}` cell (or, for `bball`, was only *described* in an exercise prompt and never defined anywhere).
