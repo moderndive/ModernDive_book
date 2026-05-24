@@ -70,7 +70,20 @@ local({
 
   base_url <- "https://raw.githubusercontent.com/moderndive/ModernDive_book/v2/data/"
 
+  # Push a transient toast like "Loading olympic_athletes…" to the DOM helper
+  # defined in _includes/webr-status.html. Silent no-op outside webR (the
+  # `webr` package isn't installed in regular R, so the call errors and try()
+  # swallows it) — this keeps Layer B / local sourcing of the shadow clean.
+  set_status <- function(msg) {
+    js <- sprintf(
+      "if (window.moderndiveSetStatus) window.moderndiveSetStatus('%s');",
+      gsub("'", "\\\\'", msg, fixed = TRUE)
+    )
+    try(webr::eval_js(js), silent = TRUE)
+  }
+
   load_from_mirror <- function(ds, file) {
+    set_status(sprintf("Loading %s…", ds))
     tmp <- tempfile(fileext = ".rds")
     download.file(paste0(base_url, file), tmp, quiet = TRUE, mode = "wb")
     assign(ds, readRDS(tmp), envir = globalenv())
