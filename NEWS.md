@@ -1,3 +1,17 @@
+# ModernDive 2.8.16 — webR no longer broken by GitHub-only datasets
+
+* **Restored interactive exercises across 10 chapters.** webR (browser-side R) can only install packages from `repo.r-wasm.org`, so each chapter's `#| context: setup` cell `library(olympicAthletes)` / `library(steves)` / `library(exoplanets)` / `library(volcanoes)` call failed silently and tore down the per-page webR namespace — every downstream end-of-chapter `{webr-r}` exercise cell in chapters 1-3, 5-11 was broken. Setup cells now read each needed dataset from a gzipped CSV mirror on `raw.githubusercontent.com/moderndive/ModernDive_book/v2/data/<file>.csv.gz` via `readr::read_csv()`. Datasets exported with `readr::write_csv()` (auto-gzips on `.gz` extension):
+    - `data/olympic_athletes.csv.gz` — 315 090 rows × 16 cols, 5.8 MB (full `olympicAthletes::olympic_athletes`)
+    - `data/steves_episodes.csv.gz` — 159 × 38, 50 KB (full `steves::episodes`)
+    - `data/exoplanets_planets.csv.gz` — 6 278 × 28, 377 KB (full `exoplanets::planets`)
+    - `data/volcanoes_eruptions.csv.gz` — 11 089 × 14, 163 KB (full `volcanoes::eruptions`)
+    - `data/volcanoes_volcanoes.csv.gz` — 1 215 × 19, 442 KB (full `volcanoes::volcanoes`)
+* **`readr` added to `webr.packages`** in `_quarto.yml` so it's preloaded into every chapter's webR session alongside ggplot2/dplyr/etc. — needed to decode the gzipped mirrors transparently.
+* **Companion commit on `v2`** publishes the same five `.csv.gz` files to that branch so the raw URLs resolve. (The bookdown v1 build on `v2` is unaffected — these are new files only.)
+* **Appendix B steves reads consolidated.** The two `read.csv("…/v2-quarto-html/data/steves_episodes.csv")` calls added during the 2.8.14 Appendix B work now point at the gzipped mirror on `v2` via `readr::read_csv()`, matching every other webR mirror read. The plain `data/steves_episodes.csv` (6-col subset) committed during that earlier work is removed — superseded by the full 38-col `.csv.gz`.
+
+***
+
 # ModernDive 2.8.15 — Per-chapter social-share previews + v2 hardcover share image
 
 * **Per-chapter OG/Twitter descriptions.** Each of the 11 main chapters (`01-…` through `11-…`) now declares a topic-specific `description:` in YAML frontmatter so social-share previews (Open Graph + Twitter Card) surface a chapter-specific blurb instead of the book-level default. In a Quarto **book** project, `book.description` from `_quarto.yml` propagates to `og:description` and `twitter:description` on every chapter and overrides the page-level `description:`; the override only reaches `<meta name="description">`. Each chapter's frontmatter therefore declares the string once with a YAML anchor (`description: &desc "…"`) and references it (`*desc`) inside explicit `open-graph:` and `twitter-card:` blocks, so the same per-chapter blurb lands in all three meta tags.
