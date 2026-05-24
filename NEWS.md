@@ -1,3 +1,20 @@
+# ModernDive 2.8.18 — webR exercise robustness: pre-define chapter-derived objects
+
+A thorough audit after 2.8.17 turned up nine objects that exercise `{webr-r}` cells reference but that were never available in the webR namespace — each a pre-existing footgun. A student opening any later exercise in isolation would hit an "object not found" error because the definition lived in an earlier inline `{webr-r}` cell (or, for `bball`, was only *described* in an exercise prompt and never defined anywhere).
+
+Pre-defined in each affected chapter's `#| context: setup` cell:
+
+* **Ch 4 (`04-tidy.qmd`)** — needed three additions. `bob_long` (the long-form pivot of `bob_ross`'s 67 indicator columns, referenced by EX 4.11). `dem_score` (read from the `data/dem_score.csv` mirror — *not* in any preloaded package despite the EX 4.27 prompt's "from `moderndive`" hint). Plus `library(olympicAthletes)` (via the shadow) since ch 4 had no GitHub-only package loads but multiple exercises (EX 4.35/39/40/41) reference `olympic_athletes`.
+* **Ch 5 (`05-regression.qmd`)** — `bball` (`olympic_athletes |> filter(sport == "Basketball", !is.na(height), !is.na(weight))`), referenced across many later exercises. EX 5.1 still asks the student to construct it — their code just overwrites the pre-defined object. Plus `UN_data_ch5` (the four-variable UN member states subset shown in @sec-model1EDA), which downstream `{webr-r}` cells reference directly.
+* **Ch 6 (`06-multiple-regression.qmd`)** — `planets_lite` (four non-missing exoplanet variables, EX 6.3) and `planets_temp` (three non-missing variables, EX 6.15), both built by student exercises but referenced from EX 6.4/5/16/21/37/39/44–46/53. Plus `UN_data_ch6` (the factor-typed-income subset).
+* **Ch 10 (`10-inference-for-regression.qmd`)** — `bball` again. Roughly 11 ch 10 exercises (EX 10.20, 22, 37, 45–51, 54–55) reference it but `bball` was never defined anywhere in the chapter — a pre-existing curriculum bug independent of the webR migration.
+
+The "build X yourself" exercises (EX 5.1, 6.3, 6.15) continue to work as written; the student's code just overwrites the pre-defined object. Net effect: every exercise webR cell is now runnable in isolation, regardless of which order a student opens them.
+
+Audit infrastructure: `tmp/webr_audit.py` and `webr_qmd_cells.py` flag bare data-symbol references in `webr:` fields and inline `{webr-r}` cells that aren't loaded by the chapter setup or webR's preloaded packages. The audit reports clean across all 11 chapters and Appendix B (14 cells).
+
+***
+
 # ModernDive 2.8.17 — Shadow library() so library(<github-only-pkg>) "just works" in webR
 
 * **Shadow `library()` for the four GitHub-only companion packages.** 2.8.16 fixed broken chapter setups by routing GitHub-only datasets through inline `readr::read_csv()` calls — which worked, but it made the setup code diverge from the local-RStudio idiom, and any exercise `webr:` starter that already wrote `library(olympicAthletes)` (six of them: ex 1.6, 2.1, 3.1, 6.1, 7.1, 10.49) still errored. New `scripts/webr-shadow-library.R` defines a shadow `library()` that — for `olympicAthletes` / `steves` / `exoplanets` / `volcanoes` only — reads each package's `.csv.gz` mirror into `globalenv()`. Every other package name delegates to `base::library()` unchanged, so `library(dplyr)` / `library(infer)` etc. behave normally. Idempotent (repeat calls skip datasets already present).
