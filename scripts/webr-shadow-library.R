@@ -1,26 +1,38 @@
 # Shadow library() for the ModernDive v2 Quarto book's webR cells.
 #
-# In webR (browser-side R) the four GitHub-only companion packages —
-# olympicAthletes, steves, exoplanets, volcanoes — can't be installed. To keep
-# student code identical to what they'd write in local RStudio
-# (`library(olympicAthletes)`), this shadow intercepts those four package
-# names and, *only when the real package isn't already installed*, reads the
-# matching `.csv.gz` mirrors on the v2 branch into globalenv(). For any
-# other package — or when the real package IS available (local R, server-side
-# CI eval) — it delegates to base::library() unchanged.
+# Two webR-specific gaps this addresses:
+#
+# (1) The four GitHub-only companion packages — olympicAthletes, steves,
+#     exoplanets, volcanoes — can't be installed in webR. For those, the
+#     shadow reads each package's datasets from a v2 raw .csv.gz mirror into
+#     globalenv() when `library(<pkg>)` is called.
+#
+# (2) webR's binary moderndive (from repo.r-wasm.org) can lag behind CRAN
+#     and miss newer datasets (`envoy_flights`, `early_january_2023_weather`,
+#     etc.) that chapter cells reference. After `library(moderndive)` succeeds
+#     via base::library, the shadow tops up any datasets the local install
+#     doesn't already have, also from the v2 raw mirror.
+#
+# For every other package — or when a known GitHub-only package IS
+# installed (local R, server-side CI eval) — the shadow delegates to
+# `base::library()` unchanged. Same student code path in all environments.
 #
 # Net result:
-#   webR:                shadow loads from CSV mirror
-#   local RStudio:       shadow no-ops; base::library loads the real package
+#   webR:                CSV mirror fills both gaps
+#   local RStudio:       base::library + dataset lookup, no network reads
 #   server-side CI eval: same as local RStudio
 #
-# Sourced from each chapter's `#| context: setup` webR cell. Idempotent: a
-# repeat `library(<gh-pkg>)` call skips datasets already in globalenv().
+# Sourced from each chapter's `#| context: setup` webR cell. Idempotent:
+# repeat `library()` calls skip datasets already in globalenv().
 #
-# To add a dataset: append it to `pkg_data` below and ship the matching
-# .csv.gz on the v2 branch.
+# To add a dataset:
+#   - GitHub-only package -> append to `pkg_data`
+#   - Newer-than-webR moderndive dataset -> append to `pkg_extras$moderndive`
+# Then ship the matching .csv.gz on the v2 branch.
 
 local({
+  # Datasets to load from the v2 CSV mirror when a GitHub-only package
+  # isn't installed (webR's case).
   pkg_data <- list(
     olympicAthletes = c(
       olympic_athletes = "olympic_athletes.csv.gz",
@@ -38,7 +50,38 @@ local({
       volcanoes = "volcanoes_volcanoes.csv.gz"
     )
   )
+
+  # Datasets to fill in after base::library succeeds when webR's binary
+  # version of a package lags CRAN. Each entry: package -> dataset:file.
+  pkg_extras <- list(
+    moderndive = list(
+      envoy_flights              = "envoy_flights.csv.gz",
+      early_january_2023_weather = "early_january_2023_weather.csv.gz"
+    )
+  )
+
   base_url <- "https://raw.githubusercontent.com/moderndive/ModernDive_book/v2/data/"
+
+  load_from_mirror <- function(ds, file) {
+    tmp <- tempfile(fileext = ".csv.gz")
+    download.file(paste0(base_url, file), tmp, quiet = TRUE, mode = "wb")
+    assign(ds, read.csv(gzfile(tmp)), envir = globalenv())
+    unlink(tmp)
+  }
+
+  fill_missing_datasets <- function(pkg) {
+    extras <- pkg_extras[[pkg]]
+    if (is.null(extras)) return(invisible())
+    for (ds in names(extras)) {
+      if (exists(ds, envir = globalenv(), inherits = FALSE)) next
+      # Try the attached package first
+      found <- tryCatch({
+        suppressWarnings(data(list = ds, envir = globalenv(), package = pkg))
+        exists(ds, envir = globalenv(), inherits = FALSE)
+      }, error = function(e) FALSE)
+      if (!found) load_from_mirror(ds, extras[[ds]])
+    }
+  }
 
   shadow_library <- function(package, ..., character.only = FALSE) {
     pkg <- if (character.only) package else as.character(substitute(package))
@@ -54,16 +97,13 @@ local({
       # locally. The same pattern works identically in regular R.
       for (ds in names(pkg_data[[pkg]])) {
         if (!exists(ds, envir = globalenv(), inherits = FALSE)) {
-          tmp <- tempfile(fileext = ".csv.gz")
-          url <- paste0(base_url, pkg_data[[pkg]][[ds]])
-          download.file(url, tmp, quiet = TRUE, mode = "wb")
-          assign(ds, read.csv(gzfile(tmp)), envir = globalenv())
-          unlink(tmp)
+          load_from_mirror(ds, pkg_data[[pkg]][[ds]])
         }
       }
       invisible()
     } else {
       base::library(pkg, ..., character.only = TRUE)
+      fill_missing_datasets(pkg)
     }
   }
   assign("library", shadow_library, envir = globalenv())
