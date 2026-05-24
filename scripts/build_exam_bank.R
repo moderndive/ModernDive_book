@@ -370,3 +370,315 @@ out <- "instructor-solutions/_site/exam-bank.html"
 writeLines(html, out)
 cat(sprintf("Wrote %s (%d templates × 3 versions = %d exams)\n",
             out, length(templates), length(templates) * 3))
+
+# ---------------------------------------------------------------------------
+# LMS-importable exports of the full item bank.
+#
+# Three formats — covers ~every modern LMS instructors actually use:
+#
+#   * GIFT plain-text  — Moodle's simple format; also importable into many
+#                        other tools (e.g., Quizgenerator, LimeSurvey).
+#                        Single .txt file, human-readable, easy to edit by hand.
+#   * Moodle XML       — Richer than GIFT: preserves question type metadata,
+#                        per-option feedback, categories. Native import.
+#   * Canvas QTI 1.2   — Zip containing imsmanifest.xml + assessment XML.
+#                        Imports cleanly into Canvas, Blackboard, Sakai,
+#                        D2L/Brightspace.
+#
+# The pool exported is the FULL item bank (every Quick check + every
+# exercise prompt + every extras item), tagged by chapter so the LMS can
+# filter on import. Instructors typically import once, then build quizzes
+# inside their LMS by selecting from the imported bank.
+#
+# All three files live next to exam-bank.html and are linked from it.
+# ---------------------------------------------------------------------------
+
+# Build a unified "question" representation from all three pools.
+all_items <- list()
+
+# MCQs from Quick checks
+for (q in mcq_pool) {
+  all_items[[length(all_items) + 1]] <- list(
+    id = sprintf("md-qc-ch%02d-q%02d", q$chap, q$n),
+    kind = "mcq", chap = q$chap, difficulty = 1L,
+    stem = q$stem, options = q$options, correct = q$correct,
+    source = sprintf("ModernDive Ch %d Quick check Q%d", q$chap, q$n)
+  )
+}
+
+# Computational exercises (free-response / essay; LMS will treat as essay)
+for (p in pool) {
+  if (!is.list(p$options) || !length(p$options)) {
+    # No options => free-response
+    all_items[[length(all_items) + 1]] <- list(
+      id = sprintf("md-ex-ch%02d-e%02d", p$chap, p$ex_num %||% 0L),
+      kind = "essay", chap = p$chap,
+      difficulty = as.integer(p$difficulty %||% 2L),
+      stem = p$prompt, options = NULL, correct = "",
+      source = sprintf("ModernDive Ch %d Exercise %d (%s)",
+                       p$chap, p$ex_num %||% 0L, p$book_section %||% "")
+    )
+  }
+}
+
+# Extras items
+for (it in extras_pool) {
+  kind_clean <- if (it$kind %in% c("mcq", "short", "essay")) it$kind else "essay"
+  all_items[[length(all_items) + 1]] <- list(
+    id = sprintf("md-ex-ch%02d-extra-%03d", it$chap, length(all_items) + 1L),
+    kind = kind_clean, chap = it$chap,
+    difficulty = as.integer(it$difficulty %||% 2L),
+    stem = it$prompt, options = it$options, correct = it$correct %||% "",
+    rubric = it$rubric %||% "",
+    source = sprintf("ModernDive Ch %d (instructor-authored)", it$chap)
+  )
+}
+
+cat(sprintf("LMS export pool: %d items (%d MCQ, %d essay, %d short)\n",
+  length(all_items),
+  sum(vapply(all_items, function(x) x$kind == "mcq", logical(1))),
+  sum(vapply(all_items, function(x) x$kind == "essay", logical(1))),
+  sum(vapply(all_items, function(x) x$kind == "short", logical(1)))))
+
+# Strip markdown + LaTeX for plain-text contexts (GIFT is plain).
+plain_text <- function(s) {
+  if (is.null(s) || !nzchar(s)) return("")
+  s <- gsub("`([^`]+)`", "\\1", s)
+  s <- gsub("\\*\\*([^*]+)\\*\\*", "\\1", s)
+  s <- gsub("\\*([^*]+)\\*", "\\1", s)
+  s <- gsub("\\$([^$]+)\\$", "\\1", s)
+  s <- gsub("\\\\([a-zA-Z]+)\\s*", "\\1 ", s)  # \widehat → widehat
+  s <- gsub("\\s+", " ", s)
+  trimws(s)
+}
+# GIFT-safe: escape ~ = # { } : (special in GIFT) and strip control chars
+gift_escape <- function(s) {
+  s <- plain_text(s)
+  s <- gsub("([~=#{}:\\\\])", "\\\\\\1", s)
+  s
+}
+
+# --- GIFT export -----------------------------------------------------------
+gift_lines <- c(
+  "// ModernDive — exam question bank",
+  sprintf("// Generated %s", format(Sys.Date(), "%Y-%m-%d")),
+  sprintf("// %d items across 11 chapters", length(all_items)),
+  "// Import into Moodle: Question bank > Import > GIFT format",
+  ""
+)
+for (it in all_items) {
+  cat_name <- sprintf("ModernDive/Chapter %02d", it$chap)
+  gift_lines <- c(gift_lines, sprintf("$CATEGORY: %s", cat_name))
+  title <- sprintf("[%s][%s]", toupper(it$kind), it$id)
+  if (it$kind == "mcq" && length(it$options) && nzchar(it$correct %||% "")) {
+    correct <- tolower(it$correct)
+    opt_lines <- vapply(c("a","b","c","d"), function(lt) {
+      val <- it$options[[lt]]
+      if (is.null(val) || !nzchar(val)) return("")
+      prefix <- if (lt == correct) "=" else "~"
+      sprintf("    %s%s", prefix, gift_escape(val))
+    }, character(1))
+    opt_lines <- opt_lines[nzchar(opt_lines)]
+    gift_lines <- c(gift_lines,
+      sprintf("::%s:: %s {", title, gift_escape(it$stem)),
+      opt_lines, "}", "")
+  } else {
+    # Essay (free-response) — empty braces = essay in GIFT
+    gift_lines <- c(gift_lines,
+      sprintf("::%s:: %s {}", title, gift_escape(it$stem)), "")
+  }
+}
+gift_out <- "instructor-solutions/_site/exam-bank.gift.txt"
+writeLines(gift_lines, gift_out)
+cat(sprintf("Wrote %s (%d items, Moodle GIFT format)\n", gift_out, length(all_items)))
+
+# --- Moodle XML export -----------------------------------------------------
+xml_esc <- function(s) {
+  s <- as.character(s %||% "")
+  s <- gsub("&", "&amp;", s, fixed = TRUE)
+  s <- gsub("<", "&lt;",  s, fixed = TRUE)
+  s <- gsub(">", "&gt;",  s, fixed = TRUE)
+  s <- gsub('"', "&quot;", s, fixed = TRUE)
+  s
+}
+moodle_lines <- c('<?xml version="1.0" encoding="UTF-8"?>', '<quiz>')
+chapters_seen <- integer()
+for (it in all_items) {
+  if (!(it$chap %in% chapters_seen)) {
+    chapters_seen <- c(chapters_seen, it$chap)
+    moodle_lines <- c(moodle_lines,
+      '  <question type="category">',
+      sprintf('    <category><text>$course$/ModernDive/Chapter %02d</text></category>',
+              it$chap),
+      '  </question>')
+  }
+  if (it$kind == "mcq" && length(it$options) && nzchar(it$correct %||% "")) {
+    correct <- tolower(it$correct)
+    opt_xml <- character()
+    for (lt in c("a","b","c","d")) {
+      val <- it$options[[lt]]
+      if (is.null(val) || !nzchar(val)) next
+      frac <- if (lt == correct) "100" else "0"
+      opt_xml <- c(opt_xml, sprintf(
+        '    <answer fraction="%s" format="html"><text><![CDATA[%s]]></text></answer>',
+        frac, val))
+    }
+    moodle_lines <- c(moodle_lines,
+      sprintf('  <question type="multichoice">'),
+      sprintf('    <name><text>%s</text></name>', xml_esc(it$id)),
+      sprintf('    <questiontext format="html"><text><![CDATA[%s]]></text></questiontext>',
+              it$stem),
+      '    <defaultgrade>1</defaultgrade>',
+      '    <single>true</single>',
+      '    <shuffleanswers>true</shuffleanswers>',
+      '    <answernumbering>abc</answernumbering>',
+      opt_xml,
+      '  </question>')
+  } else {
+    grade <- c("1", "2", "3")[it$difficulty]
+    rubric_html <- if (!is.null(it$rubric) && nzchar(it$rubric))
+      sprintf('<p><strong>Rubric:</strong> %s</p>', it$rubric) else ""
+    moodle_lines <- c(moodle_lines,
+      '  <question type="essay">',
+      sprintf('    <name><text>%s</text></name>', xml_esc(it$id)),
+      sprintf('    <questiontext format="html"><text><![CDATA[%s]]></text></questiontext>',
+              it$stem),
+      sprintf('    <defaultgrade>%s</defaultgrade>', grade),
+      sprintf('    <graderinfo format="html"><text><![CDATA[%s%s]]></text></graderinfo>',
+              sprintf("<p>Source: %s</p>", xml_esc(it$source)), rubric_html),
+      '    <responseformat>editor</responseformat>',
+      '    <responserequired>1</responserequired>',
+      '  </question>')
+  }
+}
+moodle_lines <- c(moodle_lines, '</quiz>')
+moodle_out <- "instructor-solutions/_site/exam-bank.moodle.xml"
+writeLines(moodle_lines, moodle_out)
+cat(sprintf("Wrote %s (%d items, Moodle XML)\n", moodle_out, length(all_items)))
+
+# --- Canvas QTI 1.2 export (zip with imsmanifest + assessment xml) ---------
+#
+# QTI 1.2 is what Canvas/Blackboard/Sakai/D2L all accept (Canvas uses it as
+# the underlying format even today — `IMS Content Package`). We produce ONE
+# assessment grouping all items, plus a manifest. Instructors import the
+# zip and the LMS unpacks every item into a question bank automatically.
+qti_id <- function(s) gsub("[^A-Za-z0-9]", "_", s)
+asmt_id  <- "moderndive_question_bank"
+items_xml <- character()
+for (it in all_items) {
+  ident <- qti_id(it$id)
+  meta <- paste0(
+    '      <itemmetadata><qtimetadata>',
+    sprintf('<qtimetadatafield><fieldlabel>question_type</fieldlabel><fieldentry>%s</fieldentry></qtimetadatafield>',
+            if (it$kind == "mcq") "multiple_choice_question" else "essay_question"),
+    sprintf('<qtimetadatafield><fieldlabel>points_possible</fieldlabel><fieldentry>%d</fieldentry></qtimetadatafield>',
+            if (it$kind == "mcq") 1L else it$difficulty),
+    sprintf('<qtimetadatafield><fieldlabel>moderndive_chapter</fieldlabel><fieldentry>%d</fieldentry></qtimetadatafield>',
+            it$chap),
+    '</qtimetadata></itemmetadata>')
+  if (it$kind == "mcq" && length(it$options) && nzchar(it$correct %||% "")) {
+    correct <- tolower(it$correct)
+    resp_choices <- character()
+    correct_id <- ""
+    for (lt in c("a","b","c","d")) {
+      val <- it$options[[lt]]
+      if (is.null(val) || !nzchar(val)) next
+      cid <- sprintf("c_%s", lt)
+      if (lt == correct) correct_id <- cid
+      resp_choices <- c(resp_choices, sprintf(
+        '              <response_label ident="%s"><material><mattext texttype="text/html"><![CDATA[(%s) %s]]></mattext></material></response_label>',
+        cid, lt, val))
+    }
+    presentation <- paste0(
+      '      <presentation><material><mattext texttype="text/html"><![CDATA[', it$stem, ']]></mattext></material>',
+      '<response_lid ident="response1" rcardinality="Single"><render_choice>',
+      paste(resp_choices, collapse = ""),
+      '</render_choice></response_lid></presentation>')
+    resprocess <- paste0(
+      '      <resprocessing><outcomes><decvar maxvalue="100" minvalue="0" varname="SCORE" vartype="Decimal"/></outcomes>',
+      '<respcondition continue="No"><conditionvar><varequal respident="response1">', correct_id,
+      '</varequal></conditionvar><setvar action="Set" varname="SCORE">100</setvar></respcondition></resprocessing>')
+    items_xml <- c(items_xml,
+      sprintf('    <item ident="%s" title="%s">', ident, xml_esc(it$id)),
+      meta, presentation, resprocess, '    </item>')
+  } else {
+    presentation <- paste0(
+      '      <presentation><material><mattext texttype="text/html"><![CDATA[', it$stem, ']]></mattext></material>',
+      '<response_str ident="response1" rcardinality="Single"><render_fib><response_label ident="answer1" rshuffle="No"/></render_fib></response_str></presentation>')
+    items_xml <- c(items_xml,
+      sprintf('    <item ident="%s" title="%s">', ident, xml_esc(it$id)),
+      meta, presentation, '    </item>')
+  }
+}
+qti_xml <- c(
+  '<?xml version="1.0" encoding="UTF-8"?>',
+  '<questestinterop xmlns="http://www.imsglobal.org/xsd/ims_qtiasiv1p2">',
+  sprintf('  <assessment ident="%s" title="ModernDive question bank">', asmt_id),
+  '    <section ident="root_section">',
+  paste(items_xml, collapse = "\n"),
+  '    </section>',
+  '  </assessment>',
+  '</questestinterop>')
+
+manifest_xml <- c(
+  '<?xml version="1.0" encoding="UTF-8"?>',
+  '<manifest identifier="moderndive_qti_manifest"',
+  '  xmlns="http://www.imsglobal.org/xsd/imscp_v1p1"',
+  '  xmlns:imsmd="http://www.imsglobal.org/xsd/imsmd_v1p2"',
+  '  xmlns:imsqti="http://www.imsglobal.org/xsd/imsqti_v2p1">',
+  '  <metadata><schema>IMS Content</schema><schemaversion>1.1.3</schemaversion>',
+  '    <imsmd:lom><imsmd:general>',
+  '      <imsmd:title><imsmd:langstring xml:lang="en">ModernDive question bank</imsmd:langstring></imsmd:title>',
+  sprintf('      <imsmd:description><imsmd:langstring xml:lang="en">%d ModernDive questions: Quick checks + end-of-chapter exercises + instructor extras, tagged by chapter.</imsmd:langstring></imsmd:description>',
+          length(all_items)),
+  '    </imsmd:general></imsmd:lom></metadata>',
+  '  <organizations/>',
+  '  <resources>',
+  sprintf('    <resource identifier="%s_res" type="imsqti_xmlv1p2" href="%s.xml">',
+          asmt_id, asmt_id),
+  sprintf('      <file href="%s.xml"/>', asmt_id),
+  '    </resource>',
+  '  </resources>',
+  '</manifest>')
+
+# Write the QTI bundle to a temp dir, then zip.
+tmpdir <- tempfile("qti_")
+dir.create(tmpdir)
+writeLines(manifest_xml, file.path(tmpdir, "imsmanifest.xml"))
+writeLines(qti_xml,     file.path(tmpdir, paste0(asmt_id, ".xml")))
+qti_zip <- "instructor-solutions/_site/exam-bank.qti.zip"
+if (file.exists(qti_zip)) file.remove(qti_zip)
+old_wd <- getwd()
+setwd(tmpdir)
+zip_ok <- suppressWarnings(utils::zip(
+  zipfile = file.path(old_wd, qti_zip),
+  files = c("imsmanifest.xml", paste0(asmt_id, ".xml")),
+  flags = "-q"))
+setwd(old_wd)
+unlink(tmpdir, recursive = TRUE)
+if (zip_ok == 0 && file.exists(qti_zip)) {
+  cat(sprintf("Wrote %s (%d items, Canvas QTI 1.2)\n", qti_zip, length(all_items)))
+} else {
+  cat(sprintf("WARN: zip failed for %s — Canvas QTI export skipped\n", qti_zip))
+}
+
+# --- Patch the HTML to surface the LMS downloads at the top of the page ---
+lms_block <- paste(c(
+  '<div class="lms-exports" style="background:#EEF6FF; border:1px solid #C0DCF5; border-radius:6px; padding:1em 1.3em; margin:1.5em 0;">',
+  '  <strong style="color:#1F3A6B;">LMS-importable exports</strong> &mdash; same item pool, in three formats:',
+  '  <ul style="margin:0.4em 0 0.2em 1.4em;">',
+  sprintf('    <li><a href="exam-bank.qti.zip"><code>exam-bank.qti.zip</code></a> &mdash; Canvas, Blackboard, Sakai, D2L (IMS QTI 1.2)</li>'),
+  sprintf('    <li><a href="exam-bank.moodle.xml"><code>exam-bank.moodle.xml</code></a> &mdash; Moodle (native XML)</li>'),
+  sprintf('    <li><a href="exam-bank.gift.txt"><code>exam-bank.gift.txt</code></a> &mdash; Moodle GIFT plain-text (also: Quizgenerator, LimeSurvey)</li>'),
+  '  </ul>',
+  sprintf('  <div style="margin-top:0.5em; font-size:0.88em; color:#445;">Pool: %d items (%d MCQ + %d essay/short, tagged by chapter). Import once; build quizzes inside your LMS by filtering on the <code>ModernDive/Chapter NN</code> category.</div>',
+    length(all_items),
+    sum(vapply(all_items, function(x) x$kind == "mcq", logical(1))),
+    sum(vapply(all_items, function(x) x$kind %in% c("essay", "short"), logical(1)))),
+  '</div>'
+), collapse = "\n")
+# Insert right after the toc div
+html_patched <- sub('(</div>)\\s*\\n(<section class="exam">)',
+                    sprintf('\\1\n%s\n\\2', lms_block), html)
+writeLines(html_patched, out)
+cat(sprintf("Patched %s with LMS-export links block\n", out))

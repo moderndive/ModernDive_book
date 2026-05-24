@@ -14,6 +14,25 @@ format:
 
 This page tracks substantive changes to the **instructor resources hub** (this site) — new tools, redesigns, content additions, and fixes. The book itself has its own [`NEWS.md`](https://github.com/moderndive/ModernDive_book/blob/v2-quarto-html/NEWS.md) for student-facing changes.
 
+# 2026-05-24 (third wave) — Eight more resources: LMS exports, rubrics, projects, ethics, TA guide, flashcards, Posit Cloud, active-learning prompts
+
+A third wave of additions covering the most-requested gaps in textbook-companion materials. The hub now spans 21 resources across Plan / Teach / Assess.
+
+* **LMS-importable exam bank exports.** The exam question bank now ALSO emits the full 451-item pool in three LMS-native formats — `exam-bank.qti.zip` (Canvas / Blackboard / Sakai / D2L, IMS QTI 1.2), `exam-bank.moodle.xml` (Moodle XML), and `exam-bank.gift.txt` (Moodle GIFT plain text). Tagged by chapter so the LMS filters on import. Solves the #1 adoption blocker at universities that mandate online assessment.
+* **Rubrics library** ([rubrics.html](rubrics.html)). Seven reusable 4-level analytic rubrics — code quality, data analysis project, written report, peer code review, group collaboration, oral presentation, final capstone. Drop into any LMS rubric tool; copy/edit freely. Pairs with the project prompt bank.
+* **Project prompt bank** ([projects.html](projects.html)). 10 open-ended prompts from 1-week mini-projects to semester capstones. Each: dataset suggestion, prereq chapters, deliverables, scaffold timeline, rubric link. Replaces "find your own project idea" friction.
+* **TA training packet** ([ta-guide.html](ta-guide.html)). Onboarding guide for new TAs / graders / discussion-section leaders. Sections on: TA scope, running a 50-min section, answering "I'm stuck", grading discipline, office-hours patterns, per-chapter what-trips-students notes, self-care.
+* **Active-learning prompts library** ([active-learning.html](active-learning.html)). Per-chapter non-MCQ classroom prompts: prediction stems, pair-and-shares, four-corners polls, peer-teach setups, error-analysis exercises. 5-6 prompts per chapter × 11 chapters.
+* **Ethics & data scenarios** ([ethics-scenarios.html](ethics-scenarios.html)). Chapter-tagged discussion prompts covering truncated axes, dropping NAs silently, p-hacking, multiple testing, sampling bias, causal overclaim, algorithmic bias, narrative manipulation. Each scenario: setup, discussion questions, things-to-draw-out hidden agenda.
+* **Flashcard deck** ([flashcards.html](flashcards.html)). 65 cards generated from the book glossary, tagged by chapter. Two formats — Anki TSV (richer, chapter-filtered review) and Quizlet CSV (broader student adoption). Student-facing; instructors point students at the deck for spaced-repetition review.
+* **Posit Cloud workspace template** ([posit-cloud.html](posit-cloud.html)). Zero-install student R workspace. Bundle of `setup.R` + `welcome.qmd` + `.Rproj` + `.Rprofile` + README. Instructor uploads to Posit Cloud once (~10 min); students click a link and have a working RStudio in 30 seconds. Solves the week-1 install-friction problem that drops students from R courses.
+
+Navbar reorganized to fit: **Plan** dropdown now has 6 items, **Teach** has 7, **Assess** has 8. The hub page lists every resource as a card across the three sections.
+
+Internal: companion CI ([moderndive_exercise_solutions](https://github.com/moderndive/moderndive_exercise_solutions) `build.yml`) now invokes `build_flashcards.R` alongside the other standalone-report scripts. The extended `build_exam_bank.R` writes its LMS exports automatically.
+
+***
+
 # 2026-05-24 (cont.) — Quarto-website navbar, slide MCQ variants, more tools
 
 A second wave of updates after the five-tools release earlier the same day:
