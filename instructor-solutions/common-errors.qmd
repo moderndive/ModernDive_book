@@ -1,0 +1,490 @@
+---
+title: "Common R errors gallery"
+subtitle: "When a student pastes an error, find it here"
+format:
+  html:
+    theme:
+      light: [cosmo, moderndive-instructor.scss]
+      dark: darkly
+    css: ../style.css
+    toc: true
+    toc-depth: 2
+    toc-location: left
+    embed-resources: true
+---
+
+A searchable reference of the R errors students hit most often in a ModernDive course. Each entry has the **exact error text**, the **probable cause**, and the **one-line fix to suggest**.
+
+::: {.callout-tip title="How to use this page"}
+- **In office hours**: paste the student's error into your browser's Find (Ctrl/Cmd-F). Most errors here are verbatim from real student submissions.
+- **On Piazza / forum**: link directly to a specific error (every heading is anchored — copy the URL after clicking the section).
+- **Before lecture**: skim the errors for the chapter you're about to teach. Heading them off in class saves you 5 office-hour visits later.
+- **For TAs**: pair this page with the [TA training packet](ta-guide.html) §4 ("How to answer 'I'm stuck'"). The diagnostic ladder there + this gallery cover ~90% of what walks in the door.
+:::
+
+---
+
+# Installation & setup
+
+## "Error: package or namespace load failed for 'X'"
+
+**What student sees**:
+```
+Error: package or namespace load failed for 'dplyr':
+ .onLoad failed in loadNamespace() for 'rlang', details:
+  call: loadNamespace(j <- imp[[1L]], c(lib.loc, .libPaths()), versionCheck = vI[[j]])
+  error: namespace 'rlang' 1.1.2 is being loaded, but >= 1.1.4 is required
+```
+
+**Cause**: A dependency package is out of date. Common when `dplyr` updates but `rlang` wasn't bumped along with it.
+
+**Fix**: `install.packages("rlang")` (or whichever package is named), then re-run `library(dplyr)`. In Posit Cloud, `source("setup.R")` re-installs the whole stack cleanly.
+
+---
+
+## "package 'X' is not available for this version of R"
+
+**What student sees**:
+```
+Warning message:
+package 'palmerpenguins' is not available for this version of R
+```
+
+**Cause**: Their R version is too old (or rarely, too new). CRAN sometimes drops support for R < 4.0.
+
+**Fix**: Check `R.version.string`. If <4.2, update R from [cran.r-project.org](https://cran.r-project.org). Posit Cloud avoids this entirely.
+
+---
+
+## "Error in install.packages: cannot open URL"
+
+**What student sees**:
+```
+Warning: unable to access index for repository https://cran.rstudio.com/...
+Warning message:
+package 'dplyr' is not available
+```
+
+**Cause**: No internet, behind a corporate proxy, or CRAN mirror chosen is down.
+
+**Fix**: `options(repos = "https://cran.rstudio.com")`, retry. If behind a proxy: `Sys.setenv(http_proxy = "...")` — they should ask their IT.
+
+---
+
+# Loading packages
+
+## "Error in library(X): there is no package called 'X'"
+
+**What student sees**:
+```
+Error in library(palmerpenguins) :
+  there is no package called 'palmerpenguins'
+```
+
+**Cause**: The most common new-student error. They've never installed the package, or installed it in a different R session that doesn't share libraries.
+
+**Fix**: `install.packages("palmerpenguins")` *once*, then `library(palmerpenguins)` *every session*. Teach this distinction in week 1; many students think `install` is a one-time-forever action.
+
+---
+
+## "could not find function 'X'"
+
+**What student sees**:
+```
+Error in glimpse(penguins) : could not find function "glimpse"
+```
+
+**Cause**: The function exists in a package the student hasn't loaded with `library()` this session. Restarting R is a common trigger.
+
+**Fix**: `library(dplyr)` (or whichever package owns the function). Common function-to-package map:
+- `glimpse`, `filter`, `select`, `mutate`, `arrange`, `summarize`, `group_by` → `dplyr`
+- `ggplot`, `geom_*` → `ggplot2`
+- `read_csv` → `readr`
+- `pivot_longer`, `pivot_wider` → `tidyr`
+- `lm`, `summary` → base R (always available)
+- `tidy`, `glance`, `augment` → `broom`
+- `specify`, `hypothesize`, `calculate` → `infer`
+- `get_correlation`, `get_regression_table` → `moderndive`
+
+A `library(tidyverse)` covers `dplyr` + `ggplot2` + `readr` + `tidyr` + more in one line.
+
+---
+
+# Object errors
+
+## "object 'X' not found"
+
+**What student sees**:
+```
+Error: object 'flights' not found
+```
+
+**Cause**: They referenced a variable / dataset that hasn't been assigned in the current session. Either:
+- The dataset comes from a package they didn't `library()` (e.g., `flights` is from `nycflights13`).
+- They typed the name wrong (`fligths`, `flight`).
+- The chunk that assigned `flights <- ...` was never run (skipped a chunk, restarted R, etc.).
+
+**Fix**:
+1. Run `library(nycflights13)` if it's a package dataset.
+2. Check spelling — `ls()` shows what's defined.
+3. Click "Run All Chunks Above" in RStudio so prior assignments execute.
+
+---
+
+## "Error in 'name': object 'X' not found" *(inside a function)*
+
+**What student sees**:
+```
+Error in `filter()`:
+ℹ In argument: `carier == "UA"`.
+Caused by error:
+! object 'carier' not found
+```
+
+**Cause**: Typo in a column name inside a dplyr verb. The error mentions `object` not `column` because internally dplyr evaluates the expression.
+
+**Fix**: Check the spelling — `colnames(flights)` shows the actual columns. In this case `carier` should be `carrier`.
+
+---
+
+# Function-argument mismatches
+
+## "unused argument (...)"
+
+**What student sees**:
+```
+Error in lm(price ~ size, data = housing, weights = pop) :
+  unused argument (pop)
+```
+
+**Cause**: They passed an argument that the function doesn't accept. Often a typo (`data=` vs `dat=`), or they're confusing two functions (e.g., `lm()` vs a different model function).
+
+**Fix**: Check `?lm` (or whatever the function is) for valid arguments. Often the fix is just removing the bad argument.
+
+---
+
+## "argument 'X' is missing, with no default"
+
+**What student sees**:
+```
+Error in seq.default() : argument "from" is missing, with no default
+```
+
+**Cause**: A required argument wasn't passed.
+
+**Fix**: Pass it. `?function_name` shows which arguments are required (no default value).
+
+---
+
+## "non-numeric argument to binary operator"
+
+**What student sees**:
+```
+Error in penguins$species + 1 : non-numeric argument to binary operator
+```
+
+**Cause**: They tried to do math on a non-numeric value (often a character or factor column).
+
+**Fix**: Check `class()` of the column. If it's a factor that *should* be numeric: `as.numeric(as.character(x))`. If it's truly categorical, the math doesn't make sense — they need a different approach (counts, groups, etc.).
+
+---
+
+# File-path issues
+
+## "cannot open file 'X': No such file or directory"
+
+**What student sees**:
+```
+Error in file(file, "rt") :
+  cannot open the connection
+In addition: Warning message:
+In file(file, "rt") :
+  cannot open file 'data.csv': No such file or directory
+```
+
+**Cause**: R can't find the file at the path given. Working directory is wrong, or the file isn't where they think it is.
+
+**Fix**:
+1. `getwd()` — shows current working directory.
+2. `list.files()` — shows what's actually there.
+3. Open the file in Finder/Explorer to confirm location.
+4. Use `here::here("data", "filename.csv")` for project-relative paths — the most robust solution.
+5. In RStudio, "Session → Set Working Directory → To Source File Location" gets you to the .qmd's directory.
+
+---
+
+## "cannot open URL"
+
+**What student sees**:
+```
+Warning message:
+In file(con, "r") :
+  cannot open URL 'https://...': HTTP status was '404 Not Found'
+```
+
+**Cause**: The URL is wrong, the resource moved, or they have a typo.
+
+**Fix**: Paste the URL into a browser to confirm it loads. Common mistake: missing the `raw.githubusercontent.com` prefix for GitHub-hosted CSVs.
+
+---
+
+# Data frame / tidyverse errors
+
+## "Error: Can't subset columns past the end" (or similar)
+
+**What student sees**:
+```
+Error in `select()`:
+! Can't subset columns past the end.
+ℹ Locations 15 and 16 don't exist.
+ℹ There are only 14 columns.
+```
+
+**Cause**: They referenced a column by position (`select(15:16)`) that doesn't exist.
+
+**Fix**: `colnames()` to see what's actually there. Use column NAMES (not positions) — `select(species, body_mass_g)` — more robust to data changes.
+
+---
+
+## "Error in mutate(): Column 'X' must be size N or 1, not M"
+
+**What student sees**:
+```
+Error in `mutate()`:
+ℹ In argument: `new_col = c(1, 2, 3)`.
+Caused by error:
+! `new_col` must be size 344 or 1, not 3.
+```
+
+**Cause**: They tried to assign a vector of length 3 to a column in a 344-row data frame. `mutate()` recycles length 1 but not arbitrary lengths.
+
+**Fix**: Either pass a length-1 value (recycled across rows) or a vector exactly as long as the data frame.
+
+---
+
+## "Error: `n()` must only be used inside data-masking verbs"
+
+**What student sees**:
+```
+Error in n() : must only be used inside dplyr verbs
+```
+
+**Cause**: They used `n()` outside a `summarize()` / `mutate()` context.
+
+**Fix**: Wrap in a dplyr verb. `flights |> group_by(carrier) |> summarize(count = n())`.
+
+---
+
+## "joining by 'X' which is not in both data frames"
+
+**What student sees**:
+```
+Error in `left_join()`:
+! `by` must specify variables to join by.
+ℹ The following columns are in both `x` and `y`: ...
+```
+
+**Cause**: The join column has different names in the two data frames, or it's a typo.
+
+**Fix**: Explicit `by`: `left_join(x, y, by = c("id" = "user_id"))`. Always specify `by =` rather than relying on automatic matching.
+
+---
+
+# ggplot errors
+
+## "Don't know how to add o to a plot"
+
+**What student sees**:
+```
+Error: Don't know how to add o to a plot
+```
+
+**Cause**: Almost always a typo where they wrote `geom_point` (no parens) or wrote `Geom_point` (wrong case) or used `,` instead of `+` to add a layer.
+
+**Fix**: Use `+` between ggplot layers (not `%>%` or `|>`), and call geoms with `()`.
+
+---
+
+## "object 'X' not found" *inside a ggplot call*
+
+**What student sees**:
+```
+Error in eval(expr, envir, enclos) : object 'body_mass' not found
+```
+
+**Cause**: Column name typo INSIDE `aes()`. Should be `body_mass_g` not `body_mass`.
+
+**Fix**: `colnames(penguins)`. Pay attention to underscores and trailing units (`_g`, `_mm`).
+
+---
+
+## ggplot opens an empty/blank plot
+
+**What student sees**: Code runs without error but the plot pane is empty (or shows only axes).
+
+**Cause**: They wrote `ggplot(data = penguins, aes(...))` without `+ geom_*()`. The plot framework was set up but no marks added.
+
+**Fix**: Add a geom: `+ geom_point()` (or whichever is appropriate).
+
+---
+
+## "Removed N rows containing missing values (geom_point)"
+
+**What student sees**:
+```
+Warning message:
+Removed 2 rows containing missing values (`geom_point()`).
+```
+
+**Cause**: Not an error — a warning. The plot rendered, but 2 observations had NA in a plotted variable so they were dropped.
+
+**Fix**: Acknowledge it's just a warning. If they want to address: `drop_na()` before plotting, or document that NA rows were excluded. Don't suppress warnings in a final report.
+
+---
+
+# Statistical / inference errors
+
+## "Error in lm.fit(...): NA/NaN/Inf in 'y'"
+
+**What student sees**:
+```
+Error in lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...) :
+  NA/NaN/Inf in 'y'
+```
+
+**Cause**: The outcome variable has NA values, which `lm()` chokes on by default if not handled.
+
+**Fix**: `lm(..., na.action = na.exclude)` keeps the right shape for predictions; or filter NAs first: `data |> drop_na(outcome_var) |> lm(...)`.
+
+---
+
+## "Error: 'specify()' requires a data frame"
+
+**What student sees**:
+```
+Error in specify() :
+  Cannot specify y as a vector.
+  Please provide a data frame.
+```
+
+**Cause**: `infer::specify()` expects piped-in data, not bare vectors.
+
+**Fix**: Pipe it: `penguins |> specify(body_mass_g ~ species)`.
+
+---
+
+## p-value seems wrong / way too small / way too big
+
+**What student sees**: They computed a p-value and it doesn't match what they expected.
+
+**Cause** (in order of likelihood):
+1. Wrong direction on `alternative` (`"less"`, `"greater"`, `"two-sided"`)
+2. Wrong test (t-test for paired data, etc.)
+3. Wrong order of arguments (`x - y` vs `y - x` matters for one-sided)
+4. Using `tibble` of differences rather than two separate samples
+
+**Fix**: Carefully read the prompt. State the null and alternative on paper *first*. Then translate to code.
+
+---
+
+# Quarto / rendering errors
+
+## "ERROR: Error running filter pandoc-citeproc"
+
+**What student sees**:
+```
+Error running filter pandoc-citeproc:
+unable to find /usr/local/bin/pandoc-citeproc
+```
+
+**Cause**: Old Quarto version, or a `.bib` reference that doesn't exist.
+
+**Fix**: `quarto check` to verify install. Often: update Quarto from [quarto.org](https://quarto.org).
+
+---
+
+## "Error in knitr::knit2html"
+
+**What student sees**:
+```
+Quitting from lines 12-15 [unnamed-chunk-3] (assignment.qmd)
+Error in `something()`:
+...
+```
+
+**Cause**: A code chunk in the document errors during rendering. The line numbers point to the failing chunk.
+
+**Fix**: Run the chunk interactively in the console to debug. Once it works in the console, it'll work at render time. Common cause: forgot to `library()` something the document needs.
+
+---
+
+## "Error: Cannot find pandoc"
+
+**Cause**: RStudio can't find Pandoc. Usually means R wasn't started from RStudio (which bundles Pandoc).
+
+**Fix**: Start a new RStudio session. If using R outside RStudio, install Pandoc separately.
+
+---
+
+# webR-specific errors
+
+## "Requested package X not found in webR binary repo"
+
+**What student sees** *(only in the book's interactive webR cells)*:
+```
+Warning in webr::install(package) :
+  Requested package olympicAthletes not found in webR binary repo.
+```
+
+**Cause**: webR (browser R) doesn't have every R package. Packages we ship via the [GitHub-only shadow library](https://moderndive.com/v2/01-getting-started.html) (`olympicAthletes`, `steves`, `exoplanets`, `volcanoes`) load via a custom `library()` shim — the warning is silenced once the shim handles it.
+
+**Fix** *(book bug, not student error)*: should never appear in a working book build. If it does, the shadow library shim in `scripts/webr-shadow-library.R` is broken — file an issue or check the `_extensions/webr-shadow-library/` directory.
+
+---
+
+## webR cells stuck "Evaluating hidden code cell" for minutes
+
+**Cause**: webR is downloading the R wasm binary + loading every package the page needs. First page load takes ~30-90 seconds depending on bandwidth.
+
+**Fix**: Wait it out the first time. Subsequent loads on the same page are instant (browser cache).
+
+---
+
+# Common conceptual errors (not R errors)
+
+These often disguise as code errors but are really statistical confusion:
+
+## "I got a p-value but my CI doesn't include the expected value"
+
+**What's happening**: They computed a one-sample test and a CI but interpreted them inconsistently.
+
+**Fix**: Walk through what the null hypothesis is. A 95% CI for $\mu$ that excludes 0 corresponds to rejecting $H_0: \mu = 0$ at $\alpha = 0.05$ — these should always be consistent.
+
+---
+
+## "My regression slope is positive but I expected negative"
+
+**What's happening**: Either the sign IS correct given the data (and the student's prior intuition was wrong), or there's a confounder flipping the sign (Simpson's paradox).
+
+**Fix**: First, plot it (`geom_point() + geom_smooth(method = "lm")`). Trust the plot. Then consider what controls might flip the relationship.
+
+---
+
+## "I'm getting different results than my partner"
+
+**What's happening**: Set seed inconsistency. Different `set.seed(...)` calls produce different simulation results.
+
+**Fix**: Both partners set `set.seed(42)` (or any agreed value) before the random step. Don't compare numbers across sessions without a shared seed.
+
+---
+
+# When the error isn't here
+
+If you've genuinely exhausted this gallery, the next steps:
+
+1. **Google the error message verbatim** — Stack Overflow has answers for 99% of R errors. Teach this as a course skill, not a fallback.
+2. **Check the [misconceptions cheat-sheet](misconceptions.html)** — if it's conceptual, not syntactic, it's probably tracked there.
+3. **Post on the course forum** with: minimal reproducible example, the exact error text, what they expected vs got.
+4. **Office hours**, where you can pair-debug.
+
+When you encounter a new common error, add it here. The page is generated from this `.qmd` source, so a pull request with one new entry takes 2 minutes.
