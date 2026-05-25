@@ -153,13 +153,31 @@ escape_html <- function(s) {
   s <- gsub(">", "&gt;",  s, fixed = TRUE)
   s
 }
-# Preview: first 8 cards
+# Preview: first 8 cards. Render markdown in the back (definitions have
+# *italics* and backtick code) and strip orphan delimiters if the 200-char
+# truncation cut mid-emphasis.
 preview_rows <- character()
+strip_orphan_md <- function(s) {
+  # Drop trailing un-paired delimiters at the cut point.
+  # Count `*` and `` ` `` runs; if odd, strip from the last opener forward.
+  n_back <- nchar(gsub("[^`]", "", s))
+  if (n_back %% 2 == 1) {
+    last <- max(gregexpr("`", s)[[1]])
+    s <- substr(s, 1, last - 1)
+  }
+  n_star <- nchar(gsub("[^*]", "", s))
+  if (n_star %% 2 == 1) {
+    last <- max(gregexpr("\\*", s)[[1]])
+    s <- substr(s, 1, last - 1)
+  }
+  s
+}
 for (c in head(cards, 8)) {
+  back_short <- strip_orphan_md(substr(c$back, 1, 200))
   preview_rows <- c(preview_rows, sprintf(
     '<tr><td><strong>%s</strong></td><td>%s</td><td><code>%s</code></td></tr>',
-    escape_html(c$front),
-    escape_html(substr(c$back, 1, 200)),
+    md_inline_html(c$front),
+    md_inline_html(back_short),
     escape_html(c$tags)
   ))
 }

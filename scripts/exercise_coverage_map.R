@@ -149,9 +149,19 @@ for (s in all_summaries) {
     sprintf('<h2>Chapter %d <span class="total-tag">(%d exercises &middot; %s)</span></h2>',
             s$chap, s$n_total, total_diff))
   if (!is.na(s$coverage_note)) {
+    # The note is markdown in the chapter YAML; render its inline syntax
+    # (**bold**, *italic*, `code`) before dropping into HTML. Order matters:
+    # bold (**...**) before italic (*...*) so that ** isn't half-matched as *.
+    note_html <- s$coverage_note
+    note_html <- gsub("&", "&amp;", note_html, fixed = TRUE)
+    note_html <- gsub("<", "&lt;",  note_html, fixed = TRUE)
+    note_html <- gsub(">", "&gt;",  note_html, fixed = TRUE)
+    note_html <- gsub("`([^`]+)`", "<code>\\1</code>", note_html)
+    note_html <- gsub("\\*\\*([^*]+)\\*\\*", "<strong>\\1</strong>", note_html)
+    note_html <- gsub("(^|[^*])\\*([^*]+)\\*", "\\1<em>\\2</em>", note_html)
+    note_html <- gsub("\n", "<br>", note_html)
     html <- c(html,
-      sprintf('<div class="note">%s</div>',
-              gsub("\n", "<br>", s$coverage_note)))
+      sprintf('<div class="note">%s</div>', note_html))
   }
   html <- c(html,
     '<table>',
@@ -160,12 +170,14 @@ for (s in all_summaries) {
     low <- if (sec$n <= 1) " low-coverage" else ""
     html <- c(html,
       sprintf('<tr><td class="section%s">%s</td><td class="n">%d</td><td class="ids">EX%d.%s</td><td class="diff">%s</td></tr>',
-              low, htmltools_escape(sec$section), sec$n, s$chap, sec$ids, diff_badge(sec$diff_dist)))
+              # Section titles may contain backticked code (e.g.,
+              # "3.1 The pipe operator `|>`") — render inline markdown.
+              low, md_inline_html(sec$section), sec$n, s$chap, sec$ids, diff_badge(sec$diff_dist)))
     for (sub in sec$by_subsection) {
       if (identical(sub$subsection, sec$section)) next  # same name; don't duplicate
       html <- c(html,
         sprintf('<tr><td class="subsection">%s</td><td class="n">%d</td><td class="ids">EX%d.%s</td><td class="diff">%s</td></tr>',
-                htmltools_escape(sub$subsection), sub$n, s$chap, sub$ids, diff_badge(sub$diff_dist)))
+                md_inline_html(sub$subsection), sub$n, s$chap, sub$ids, diff_badge(sub$diff_dist)))
     }
   }
   html <- c(html, '</table>')

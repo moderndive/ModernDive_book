@@ -215,11 +215,9 @@ escape_html <- function(s) {
   s
 }
 md_inline <- function(s) {
-  s <- escape_html(s)
-  s <- gsub("`([^`]+)`", "<code>\\1</code>", s)
-  s <- gsub("\\*\\*([^*]+)\\*\\*", "<strong>\\1</strong>", s)
-  s <- gsub("\\*([^*]+)\\*", "<em>\\1</em>", s)
-  s
+  # Delegate to shared md_inline_html (defined in _hub_nav.R) — handles
+  # non-greedy bold so `**outer *inner* outer**` renders correctly.
+  md_inline_html(s)
 }
 diff_stars <- function(d) {
   if (is.null(d) || is.na(d)) return("")
@@ -247,7 +245,7 @@ render_comp_html <- function(p, idx) {
   pts <- c(1L, 2L, 3L)[p$difficulty]
   meta <- if (!is.null(p$ex_num)) {
     sprintf('Ch %d &middot; %s &middot; <a href="solutions/index.html#ex-%d-%d">solution</a>',
-            p$chap, escape_html(p$book_section %||% ""), p$chap, p$ex_num)
+            p$chap, md_inline_html(p$book_section %||% ""), p$chap, p$ex_num)
   } else {
     sprintf('Ch %d &middot; instructor-authored', p$chap)
   }

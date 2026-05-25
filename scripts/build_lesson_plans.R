@@ -180,8 +180,11 @@ render_chapter <- function(p) {
   } else "(no exercises)"
 
   objectives_html <- if (length(p$learning_objectives)) {
+    # Learning objectives can contain inline markdown (**LINE conditions**,
+    # *grammar of graphics*, `ggplot2`). md_inline_html (from _hub_nav.R)
+    # renders the inline syntax and handles HTML escaping in one pass.
     paste0("<ul>", paste(sprintf("<li>%s</li>",
-                                  sapply(p$learning_objectives, htmltools_escape)),
+                                  sapply(p$learning_objectives, md_inline_html)),
                           collapse = ""),
            "</ul>")
   } else "<em>(no learning-objectives callout found)</em>"
@@ -190,7 +193,10 @@ render_chapter <- function(p) {
     indent <- if (s$level == 2) "" else "&nbsp;&nbsp;&nbsp;&nbsp;"
     bullet <- if (s$level == 2) "&bull;" else "&deg;"
     sprintf("<li class=\"sec-l%d\">%s%s %s</li>",
-            s$level, indent, bullet, htmltools_escape(s$title))
+            # Section titles in chapter qmds may contain inline markdown
+            # (italics for emphasis, backticks for code). Render via shared
+            # md_inline_html so they appear correctly.
+            s$level, indent, bullet, md_inline_html(s$title))
   }), collapse = "")
 
   paste(c(

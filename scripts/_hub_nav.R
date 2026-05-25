@@ -17,6 +17,38 @@
 # `at_root = TRUE` (default) for pages at instructor-solutions/_site/ root;
 # set FALSE for pages one directory deep (the script flips hrefs to ../).
 
+# Shared HTML-escape + inline-markdown helpers for standalone scripts.
+# Many scripts emit YAML-sourced text (exercise prompts, learning objectives,
+# coverage notes) directly into HTML; the YAML uses inline markdown
+# (**bold**, *italic*, `code`), so we need to render it after escaping the
+# surrounding string. Scripts that need different behaviour can shadow these
+# with their own local definitions.
+md_escape_html <- function(s) {
+  s <- as.character(s %||% "")
+  s <- gsub("&", "&amp;", s, fixed = TRUE)
+  s <- gsub("<", "&lt;",  s, fixed = TRUE)
+  s <- gsub(">", "&gt;",  s, fixed = TRUE)
+  s
+}
+md_inline_html <- function(s) {
+  s <- md_escape_html(s)
+  # Order: code → bold → italic.
+  # `code` first: backticks shouldn't have their contents processed further.
+  # Bold uses NON-GREEDY (.+?) so it stops at the next `**` — this allows
+  #   `**outer *italic* outer**` to bold first, then italic in a second pass.
+  #   A greedy `[^*]+` would fail because `*` appears INSIDE the bold span.
+  # Italic then matches single-`*`-wrapped runs that aren't adjacent to
+  #   another `*` (avoids re-matching the `*` chars that came from `**`).
+  s <- gsub("`([^`]+)`", "<code>\\1</code>", s, perl = TRUE)
+  s <- gsub("\\*\\*(.+?)\\*\\*", "<strong>\\1</strong>", s, perl = TRUE)
+  s <- gsub("(^|[^*])\\*([^*\\n]+?)\\*(?!\\*)", "\\1<em>\\2</em>", s, perl = TRUE)
+  s
+}
+# `%||%` mirror in case the sourcing script doesn't define it yet
+if (!exists("%||%", mode = "function")) {
+  `%||%` <- function(a, b) if (is.null(a) || identical(a, "")) b else a
+}
+
 hub_nav_html <- function(at_root = TRUE) {
   prefix <- if (at_root) "" else "../"
   paste(c(

@@ -152,7 +152,7 @@ for (ms in milestones) {
     items <- vapply(by_chap[[as.character(ch)]], function(p) {
       sprintf('<li><strong>EX %d.%d</strong> %s <span class="ex-meta">&middot; %s</span><div class="ex-prompt">%s</div></li>',
               p$chap, p$ex_num, diff_stars(p$difficulty),
-              escape_html(p$book_section), md_inline(p$prompt))
+              md_inline_html(p$book_section), md_inline(p$prompt))
     }, character(1))
     chap_html <- c(chap_html, sprintf(
       '<div class="chap-block"><h3>Chapter %d: %s</h3><ol class="ex-list">%s</ol></div>',

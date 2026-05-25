@@ -112,7 +112,41 @@ for (ch in chapters) {
       list(ex_num = ex$ex_num, difficulty = ex$difficulty,
            group = ex$group %||% "", book_section = ex$book_section %||% "",
            score = score_match(text, kws),
-           prompt = substr(ex$prompt %||% "", 1, 110))
+           # Truncate at 110 chars, then strip orphan markdown delimiters
+           # that the cut may have left dangling (e.g., a leading `**` whose
+           # closer was past the cut). md_inline_html requires balanced
+           # delimiters; an unpaired `**` would render literally as text.
+           prompt = (function(s) {
+             out <- substr(s, 1, 110)
+             # Count unmatched delimiters
+             n_stars <- nchar(gsub("[^*]", "", out))
+             n_backticks <- nchar(gsub("[^`]", "", out))
+             # Odd backticks → orphan code start; strip from the last one
+             if (n_backticks %% 2 == 1) {
+               last_btick <- max(gregexpr("`", out)[[1]])
+               out <- substr(out, 1, last_btick - 1)
+             }
+             # If remaining text has any orphan `**` or `*`, strip from the
+             # last unpaired one. Simpler approach: just strip any trailing
+             # run of `*` characters.
+             out <- sub("\\**$", "", out)
+             # If there's a stray `**` opener with no closer in the kept
+             # text, drop everything from it forward (rare; cleaner than
+             # leaving the literal `**`).
+             # Detect: even-numbered `*` runs are paired bold; odd are stray.
+             stars_remaining <- gregexpr("\\*+", out)[[1]]
+             if (stars_remaining[1] != -1) {
+               star_runs <- regmatches(out, gregexpr("\\*+", out))[[1]]
+               # Pair up `**` runs; if there's an unpaired `**`, strip it
+               doubles <- sum(nchar(star_runs) >= 2)
+               if (doubles %% 2 == 1) {
+                 # Find the last `**` and cut there
+                 last_dbl <- tail(gregexpr("\\*\\*", out)[[1]], 1)
+                 if (last_dbl > 0) out <- substr(out, 1, last_dbl - 1)
+               }
+             }
+             out
+           })(ex$prompt %||% ""))
     })
     scored <- Filter(function(x) !is.null(x) && x$score > 0, scored)
     scored <- scored[order(-vapply(scored, `[[`, numeric(1), "score"))]
@@ -152,8 +186,11 @@ for (r in results) {
         sprintf(
           '<li><strong>EX %d.%d</strong> %s <span class="ex-meta">%s &middot; %s &middot; score=%d</span><br><span class="ex-prompt">%s…</span></li>',
           r$chap, m$ex_num, diff_stars(m$difficulty),
-          escape_html(m$group), escape_html(m$book_section),
-          m$score, escape_html(m$prompt)
+          # group + book_section may contain backticked code (`summarize`,
+          # `|>`) — render with md_inline_html so they appear as code spans.
+          md_inline_html(m$group), md_inline_html(m$book_section),
+          # Prompt: render full inline markdown (bold/italic/code) from YAML.
+          m$score, md_inline_html(m$prompt)
         )
       }, character(1))
       tops <- paste0('<td><ul class="match-list">', paste(items, collapse = ""), '</ul></td>')
