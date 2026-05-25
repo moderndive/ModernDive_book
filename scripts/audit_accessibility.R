@@ -40,13 +40,17 @@ cat(sprintf("Auditing %d HTML files in %s\n", length(html_files), site_dir))
 slurp <- function(path) paste(readLines(path, warn = FALSE), collapse = "\n")
 basename_no_ext <- function(p) tools::file_path_sans_ext(basename(p))
 
+# Every regex on a 4 MB string is slow with POSIX (default); perl = TRUE
+# uses PCRE which is dramatically faster on large inputs.
+PERL <- TRUE
+
 # ---- check 1: <img> without alt ------------------------------------------
 check_img_alt <- function(html) {
-  imgs <- regmatches(html, gregexpr("<img[^>]*>", html, ignore.case = TRUE))[[1]]
-  bad <- imgs[!grepl("\\salt=", imgs, ignore.case = TRUE)]
+  imgs <- regmatches(html, gregexpr("<img[^>]*>", html, ignore.case = TRUE, perl = PERL))[[1]]
+  bad <- imgs[!grepl("\\salt=", imgs, ignore.case = TRUE, perl = PERL)]
   if (!length(bad)) return(character())
   vapply(bad, function(img) {
-    src <- sub('.*\\bsrc=["\']([^"\']+)["\'].*', "\\1", img, ignore.case = TRUE)
+    src <- sub('.*\\bsrc=["\']([^"\']+)["\'].*', "\\1", img, ignore.case = TRUE, perl = PERL)
     if (identical(src, img)) src <- "(no src)"
     sprintf("missing alt on <img src=\"%s\">", substr(src, 1, 80))
   }, character(1), USE.NAMES = FALSE)
@@ -54,11 +58,10 @@ check_img_alt <- function(html) {
 
 # ---- check 2: heading-hierarchy skips ------------------------------------
 check_heading_hierarchy <- function(html) {
-  # Find h1..h6 tags in document order
-  matches <- gregexpr("<h([1-6])[^>]*>", html, ignore.case = TRUE)
+  matches <- gregexpr("<h([1-6])[^>]*>", html, ignore.case = TRUE, perl = PERL)
   if (matches[[1]][1] == -1) return(character())
   pieces <- regmatches(html, matches)[[1]]
-  levels <- as.integer(sub("<h([1-6]).*", "\\1", pieces, ignore.case = TRUE))
+  levels <- as.integer(sub("<h([1-6]).*", "\\1", pieces, ignore.case = TRUE, perl = PERL))
   issues <- character()
   if (length(levels) >= 2) {
     diffs <- diff(levels)
@@ -98,7 +101,7 @@ check_internal_links <- function(html, page_path) {
   if (nchar(html, type = "bytes") > LINK_CHECK_MAX_BYTES) {
     return(character())   # skip — too big, link check would be O(huge)
   }
-  hrefs <- regmatches(html, gregexpr('href=["\']([^"\']+)["\']', html))[[1]]
+  hrefs <- regmatches(html, gregexpr('href=["\']([^"\']+)["\']', html, perl = PERL))[[1]]
   hrefs <- sub('^href=["\']', '', hrefs)
   hrefs <- sub('["\']$', '', hrefs)
   issues <- character()
@@ -124,7 +127,7 @@ check_internal_links <- function(html, page_path) {
 
 # ---- check 5: external links (optional, for owner spot-check) ------------
 collect_external_links <- function(html) {
-  ext <- regmatches(html, gregexpr('https?://[^"\'\\s<>)]+', html))[[1]]
+  ext <- regmatches(html, gregexpr('https?://[^"\'\\s<>)]+', html, perl = PERL))[[1]]
   # Strip trailing punctuation
   ext <- sub("[.,;)]+$", "", ext)
   # Exclude common boilerplate (CDN scripts, schema URLs)
@@ -134,9 +137,27 @@ collect_external_links <- function(html) {
 }
 
 # ---- run all checks on every file ----------------------------------------
+#
+# Files larger than HUGE_FILE_BYTES are SKIPPED entirely. They're almost
+# always Quarto `embed-resources: true` pages where 95%+ of the bytes are
+# inlined fonts, CSS, and base64 images — not authored content. The regex
+# sweeps + per-href stat checks on these gigabyte-class strings dominate
+# CI runtime (one such file pushed a previous audit run to 14 min). The
+# tradeoff: alt-text / heading issues on embed-resources pages won't be
+# caught here, but those issues would have been visible in the source
+# .qmd before render anyway.
+HUGE_FILE_BYTES <- 1024 * 1024L * 2L     # 2 MB threshold
 audit_results <- list()
+skipped_huge <- character()
 all_external <- character()
 for (path in html_files) {
+  fsize <- file.info(path)$size
+  if (!is.na(fsize) && fsize > HUGE_FILE_BYTES) {
+    skipped_huge <- c(skipped_huge,
+      sprintf("%s (%.1f MB)", sub(paste0("^", site_dir, "/?"), "", path),
+              fsize / 1024 / 1024))
+    next
+  }
   html <- slurp(path)
   results <- list(
     file = sub(paste0("^", site_dir, "/?"), "", path),
@@ -163,8 +184,8 @@ total_lang <- sum(vapply(audit_results, function(r) length(r$html_lang), integer
 total_link <- sum(vapply(audit_results, function(r) length(r$internal_links), integer(1)))
 
 cat(sprintf("\n=== Accessibility audit summary ===\n"))
-cat(sprintf("  Pages scanned: %d (%d clean, %d with issues)\n",
-            n_files, n_clean, n_files - n_clean))
+cat(sprintf("  Pages scanned: %d (%d clean, %d with issues, %d skipped as too large)\n",
+            n_files, n_clean, n_files - n_clean, length(skipped_huge)))
 cat(sprintf("  Missing alt text: %d\n", total_img))
 cat(sprintf("  Heading hierarchy skips: %d\n", total_head))
 cat(sprintf("  Pages missing <html lang=>: %d\n", total_lang))
