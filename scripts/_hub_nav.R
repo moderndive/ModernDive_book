@@ -167,6 +167,7 @@ hub_nav_html <- function(at_root = TRUE) {
     sprintf('        <a href="%smisconceptions.html">Misconceptions</a>', prefix),
     sprintf('        <a href="%scommon-errors.html">Common R errors</a>', prefix),
     sprintf('        <a href="%sdiagrams.html">Teaching diagrams</a>', prefix),
+    sprintf('        <a href="%ssampling-bootstrap-applet.html">Sampling vs bootstrap (interactive)</a>', prefix),
     sprintf('        <a href="%sethics-scenarios.html">Ethics &amp; data scenarios</a>', prefix),
     sprintf('        <a href="%sta-guide.html">TA training packet</a>', prefix),
     '        <a href="https://moderndive.github.io/moderndive_labs/" target="_blank" rel="noopener">ModernDive Labs &rarr;</a>',
