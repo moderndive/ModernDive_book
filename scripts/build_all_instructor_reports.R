@@ -23,6 +23,7 @@ scripts <- c(
   "scripts/build_pacing_calculator.R",
   "scripts/build_cumulative_review.R",
   "scripts/build_flashcards.R",
+  "scripts/build_diagrams.R",            # SVG + PNG teaching diagrams
   "scripts/audit_accessibility.R"        # runs LAST so it sees everything
 )
 
