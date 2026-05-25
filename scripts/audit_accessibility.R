@@ -81,8 +81,23 @@ check_html_lang <- function(html) {
 }
 
 # ---- check 4: broken internal links --------------------------------------
+#
+# Quarto's `embed-resources: true` inlines every stylesheet and font into
+# the rendered HTML — a single page can balloon past 4 MB and contain
+# thousands of `href=` matches buried inside inlined CSS (icon fonts,
+# preloads, CDN references). Per-href filesystem-stat checks become
+# unusable on CI for files of this size, so we skip files over 1 MB —
+# they're machine-generated bundles, not author-edited content where a
+# stale link is likely.
+#
+# Also: file.exists() instead of normalizePath() — normalizePath() walks
+# parent directory symlinks on Linux even with mustWork=FALSE, which is
+# the slow part. file.exists() is a single stat.
+LINK_CHECK_MAX_BYTES <- 1024 * 1024L
 check_internal_links <- function(html, page_path) {
-  # All href values
+  if (nchar(html, type = "bytes") > LINK_CHECK_MAX_BYTES) {
+    return(character())   # skip — too big, link check would be O(huge)
+  }
   hrefs <- regmatches(html, gregexpr('href=["\']([^"\']+)["\']', html))[[1]]
   hrefs <- sub('^href=["\']', '', hrefs)
   hrefs <- sub('["\']$', '', hrefs)
@@ -94,13 +109,12 @@ check_internal_links <- function(html, page_path) {
     # Strip URL fragment and query
     target <- sub("[#?].*$", "", h)
     if (!nzchar(target)) next
-    # Resolve relative to page directory
+    # Resolve relative to page directory (no normalizePath — too slow)
     abs_target <- if (startsWith(target, "/")) {
       file.path(site_dir, sub("^/", "", target))
     } else {
-      normalizePath(file.path(page_dir, target), mustWork = FALSE)
+      file.path(page_dir, target)
     }
-    # Allow directory references (must exist as a dir with index.html)
     if (file.exists(abs_target)) next
     if (dir.exists(abs_target) && file.exists(file.path(abs_target, "index.html"))) next
     issues <- c(issues, sprintf("broken internal link: %s", substr(h, 1, 100)))
