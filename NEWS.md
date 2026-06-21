@@ -1,3 +1,14 @@
+# ModernDive 2.8.21 — Instructor materials moved to a private repo
+
+The `instructor-solutions/` hub (worked solutions, facilitator notes, slide decks, syllabus, rubrics, exam bank, …) and the `scripts/build_*.R` report generators have been **removed from this public repo**. They now live in the private companion repo [`moderndive-instructor-resources`](https://github.com/moderndive/moderndive-instructor-resources) (renamed from `moderndive_exercise_solutions`), alongside the exercise solutions — keeping answer keys, exams, rubrics, and teaching notes out of the public source tree.
+
+* The public book is unaffected: `instructor-solutions/` was always a separate Quarto project, never part of the book's render list.
+* The companion repo's CI clones this book, restores the instructor content into the tree, then renders + encrypts + publishes the hub as before.
+* Shared pieces stay here: chapter qmds, the exercise *prompts* (`exercises/NN.yml`), and `scripts/exercise_helpers.R`.
+* `.gitignore` now excludes `/instructor-solutions/` and `/scripts/build_*.R`, so `sync_to_book.sh` can restore them locally for rendering without risk of re-committing them publicly.
+
+(The removed files remain in this repo's earlier git history — they were deleted going forward, not purged.)
+
 # ModernDive 2.8.20 — Faster webR setup: .csv.gz → .rds mirrors
 
 The "Evaluating hidden code cell" delay students saw before any interactive cell was usable was dominated by `read.csv(gzfile(...))` parsing 315 090 rows of olympic_athletes in wasm R. Switching the shadow library's CSV mirrors to R's native binary format (`.rds`) gives:
@@ -116,7 +127,7 @@ Audit infrastructure: `tmp/webr_audit.py` and `webr_qmd_cells.py` flag bare data
 * **`scripts/build_syllabus.R`** → `instructor-solutions/syllabus.qmd`. Sample syllabus: 15-week US-semester layout + compressed 10-week quarter alternative + assessment plan (4 problem sets + midterm + final project) + per-unit learning outcomes auto-extracted from each chapter's "In this chapter, you'll learn how to:" callout. Renders to `_site/syllabus.html` as part of the project.
 * **`instructor-solutions/moderndive-instructor.scss`** — shared hex-sticker-palette SCSS for the worked solutions, syllabus, slides landing, and facilitator notes pages. Mirrors `slides/moderndive-slides.scss` so the whole instructor site reads as one visual product (navy headings with green underlines, blue links, cream `.callout-tip` blocks, ruled-paper fill-in code-block styling for the facilitator-notes blanks).
 * **`scripts/build_slide_decks.R` + `scripts/build_facilitator_notes.R`** — learning-objective parser rewritten. The book uses `::: {.callout-note title="In this chapter, you'll learn how to:"}` (heading text lives in the callout's *attribute*, not in a `## In this chapter` line), and the old regex assumed the latter. Switched to grep-the-title-line + walk-to-closing-`:::` (same approach as `build_lesson_plans.R`), so LOs now appear correctly on every chapter's deck and notes page.
-* **`instructor-solutions/_quarto.yml`** — render list now includes the slide decks, facilitator notes, AND syllabus. Companion repo `moderndive_exercise_solutions` updated to render the full project (instead of just `index.qmd`) and to encrypt the whole `_site/` tree with `staticrypt -r`, so the new artifacts ship to gh-pages under the same `INSTRUCTOR_PASSWORD` gate.
+* **`instructor-solutions/_quarto.yml`** — render list now includes the slide decks, facilitator notes, AND syllabus. Companion repo `moderndive-instructor-resources` updated to render the full project (instead of just `index.qmd`) and to encrypt the whole `_site/` tree with `staticrypt -r`, so the new artifacts ship to gh-pages under the same `INSTRUCTOR_PASSWORD` gate.
 * **`instructor-solutions/index.qmd`** — new callout block linking to all seven companion instructor artifacts so the worked-solutions page is the single navigation hub.
 * **`.github/workflows/audits.yml`** — set `RENV_CONFIG_AUTOLOADER_ENABLED=FALSE` so audit jobs skip the `.Rprofile` autoload. Without this, renv intercepts `install.packages()` and tries to resolve every GitHub-hosted lockfile entry against the unauthenticated GitHub API, which intermittently rate-limits and fails the Exercise YAML lint job.
 
@@ -200,7 +211,7 @@ In the process, 20 MB of stale build artifacts (10 `*_ex.html` standalone render
 
 `.gitignore` now defensively ignores `exercise-solutions/` so a stray hand-render can't re-track those artifacts.
 
-**Heads-up for the companion `moderndive_exercise_solutions` repo**: its `build.yml` Cache step hashes `book/R/exercise_helpers.R` for the cache key — that path no longer exists. The single-line patch is:
+**Heads-up for the companion `moderndive-instructor-resources` repo**: its `build.yml` Cache step hashes `book/R/exercise_helpers.R` for the cache key — that path no longer exists. The single-line patch is:
 
 ```diff
 -          key: instructor-solutions-freeze-${{ hashFiles('book/exercises/**/*.yml', 'exercises/**/*.yml', 'book/R/exercise_helpers.R') }}
