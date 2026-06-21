@@ -146,6 +146,87 @@ ul.task-list li input[type="checkbox"] {
     injectButton();
   }
 })();
+</script><script>
+// Code text-size control. Lets readers enlarge/shrink the (often small) webR
+// Monaco editors and their output, plus static code blocks, with the choice
+// persisted across pages via localStorage. Mirrors the contrast-toggle pattern.
+(function () {
+  var KEY  = 'mdt-code-scale';
+  var BASE = 16;            // px — base webR (Monaco) editor font at scale 1
+  var MIN  = 0.7, MAX = 2.2, STEP = 0.15;
+
+  function clamp(v) { return Math.min(MAX, Math.max(MIN, Math.round(v * 100) / 100)); }
+  function read() {
+    try { var s = parseFloat(localStorage.getItem(KEY)); return isNaN(s) ? 1 : clamp(s); }
+    catch (e) { return 1; }
+  }
+  function write(s) { try { localStorage.setItem(KEY, s); } catch (e) {} }
+
+  var scale = read();
+  // Output + static code scale via this CSS variable (see style.css). Set it
+  // ASAP, before paint, so there's no flash at the previous size.
+  document.documentElement.style.setProperty('--md-code-scale', scale);
+
+  // webR's Monaco editors compute their font size at creation, so CSS can't
+  // resize them after the fact — use the Monaco API instead.
+  function applyMonaco() {
+    if (window.monaco && monaco.editor && monaco.editor.getEditors) {
+      var px = Math.round(BASE * scale);
+      monaco.editor.getEditors().forEach(function (ed) {
+        try { ed.updateOptions({ fontSize: px }); } catch (e) {}
+      });
+    }
+  }
+  function applyAll() {
+    document.documentElement.style.setProperty('--md-code-scale', scale);
+    applyMonaco();
+  }
+
+  // Apply to editors that already exist and to any created later (cells
+  // initialize lazily). Poll until Monaco's loader has finished.
+  (function hookMonaco() {
+    if (window.monaco && monaco.editor && monaco.editor.onDidCreateEditor) {
+      monaco.editor.onDidCreateEditor(function () { setTimeout(applyMonaco, 0); });
+      applyMonaco();
+    } else {
+      setTimeout(hookMonaco, 250);
+    }
+  })();
+
+  function inject() {
+    if (document.getElementById('mdt-code-size')) return;
+    var box = document.createElement('div');
+    box.id = 'mdt-code-size';
+    box.setAttribute('role', 'group');
+    box.setAttribute('aria-label', 'Code text size');
+
+    var lab = document.createElement('span');
+    lab.className = 'mdt-code-size-label';
+    lab.textContent = 'Code size';
+    box.appendChild(lab);
+
+    function mk(txt, aria, delta) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = txt;
+      b.setAttribute('aria-label', aria);
+      b.addEventListener('click', function () {
+        scale = clamp(scale + delta);
+        write(scale);
+        applyAll();
+      });
+      return b;
+    }
+    box.appendChild(mk('A−', 'Decrease code text size', -STEP));
+    box.appendChild(mk('A+', 'Increase code text size', +STEP));
+    document.body.appendChild(box);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inject);
+  } else {
+    inject();
+  }
+})();
 </script><script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script><script type="text/javascript">
 const typesetMath = (el) => {
   if (window.MathJax) {
