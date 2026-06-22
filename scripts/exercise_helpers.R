@@ -108,6 +108,12 @@ ex_helpers_extensions_callout <- function() c(
 render_chapter_exercises <- function(chapter) {
   data <- ex_helpers_load(chapter)
   out <- character()
+  # Chapter-level note rendered ahead of all exercises (e.g. a data-source
+  # attribution that must appear before the dataset's first use).
+  data_note <- data$chapter_meta$data_note
+  if (!is.null(data_note) && nzchar(data_note)) {
+    out <- c(out, trimws(data_note), "")
+  }
   current_group <- NULL
   for (ex in data$exercises) {
     cat(sprintf("    ▸ EX%d.%d\n", chapter, ex$ex_num), file = stderr())
