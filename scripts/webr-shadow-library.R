@@ -42,9 +42,13 @@ local({
   # isn't installed (webR's case).
   pkg_data <- list(
     olympicAthletes = c(
-      olympic_athletes = "olympic_athletes.rds",
-      editions         = "olympic_editions.rds",
-      medal_table      = "olympic_medal_table.rds"
+      olympic_athletes        = "olympic_athletes.rds",
+      editions                = "olympic_editions.rds",
+      medal_table             = "olympic_medal_table.rds",
+      athletics_athletes      = "athletics_athletes.rds",
+      gymnastics_athletes     = "gymnastics_athletes.rds",
+      basketball_athletes     = "basketball_athletes.rds",
+      recent_olympic_athletes = "recent_olympic_athletes.rds"
     ),
     steves = c(
       episodes = "steves_episodes.rds"
