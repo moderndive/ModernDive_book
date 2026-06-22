@@ -152,6 +152,19 @@ local({
         real_install <- get("install", envir = ns)
         shadow_install <- function(packages, ...) {
           packages <- setdiff(packages, names(pkg_data))
+          # webR's default repo (repo.r-wasm.org) ships the CRAN moderndive,
+          # which lags GitHub master and is missing newer helpers such as
+          # View(). Pull the dev build from the moderndive r-universe so webR
+          # matches master until CRAN catches up; fall back to the default
+          # repo if the r-universe fetch fails.
+          if ("moderndive" %in% packages) {
+            ok <- tryCatch({
+              real_install("moderndive", repos = "https://moderndive.r-universe.dev")
+              TRUE
+            }, error = function(e) FALSE)
+            packages <- setdiff(packages, "moderndive")
+            if (!ok) real_install("moderndive")
+          }
           if (length(packages) > 0) real_install(packages, ...)
         }
         # Unlock + replace + relock the binding inside the webr namespace.

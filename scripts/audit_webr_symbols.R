@@ -51,7 +51,9 @@ PRELOADED_DATA <- c(
 
 # Datasets the shadow library() loads when you call library(<pkg>) in webR.
 SHADOW_MAP <- list(
-  olympicAthletes = c("olympic_athletes", "editions", "medal_table"),
+  olympicAthletes = c("olympic_athletes", "editions", "medal_table",
+                      "athletics_athletes", "gymnastics_athletes",
+                      "basketball_athletes", "recent_olympic_athletes"),
   steves          = c("episodes"),
   exoplanets      = c("planets"),
   volcanoes       = c("eruptions", "volcanoes")
