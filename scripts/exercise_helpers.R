@@ -156,6 +156,12 @@ render_chapter_exercises <- function(chapter) {
 render_solutions <- function(chapter) {
   data <- ex_helpers_load(chapter)
   out <- character()
+  # Chapter-level note (e.g. data-source attribution) ahead of all solutions,
+  # mirroring render_chapter_exercises().
+  data_note <- data$chapter_meta$data_note
+  if (!is.null(data_note) && nzchar(data_note)) {
+    out <- c(out, trimws(data_note), "")
+  }
   current_group <- NULL
   # Cap visible TOC entries to 5 per chapter. "Extensions" and any group whose
   # name starts with "Critical thinking" are *always* visible (pinned) — the
