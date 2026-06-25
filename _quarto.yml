@@ -112,13 +112,18 @@ webr:
   # series (R 4.5.1) that binary is incompatible, so webR silently falls back to
   # the CRAN moderndive 0.7.0 (no View) and `moderndive::View()` errors.
   version: "0.6.0"
-  # NOTE: `moderndive` is deliberately NOT in this preinstall list. quarto-webr
-  # boot-installs this list from the default repo (repo.r-wasm.org), which ships
-  # the CRAN moderndive 0.7.0 (no `View()`). If it were preinstalled here it
-  # would win over the shadow shim's r-universe redirect. Left out, it installs
-  # lazily on the first `library(moderndive)` via the shimmed `webr::install`,
-  # which pulls the View-exporting dev build (0.8.0.9000) from
-  # moderndive.r-universe.dev — same lazy path conflicted/MASS already use.
+  # Add moderndive's r-universe to the repo search path so `moderndive` resolves
+  # to the dev build (0.8.0.9000) that exports View(), NOT the CRAN 0.7.0 on the
+  # default repo.r-wasm.org (which has no View). quarto-webr appends the default
+  # repo after this, so everything else still comes from repo.r-wasm.org.
+  repos:
+    - https://moderndive.r-universe.dev
+  # `moderndive` is now BOOT-installed (below) rather than lazily on the first
+  # library(moderndive) — the lazy path pulled moderndive's heavier Imports
+  # (DT/broom/janitor/formula.tools/knitr) from r-universe mid-cell, which blocked
+  # exercises for minutes. Preinstalling those Imports from the fast default repo
+  # first means the moderndive install itself is one small package, fetched at
+  # page-load with the webR spinner. DT powers moderndive::View()'s inline table.
   packages:
     - ggplot2
     - dplyr
@@ -128,5 +133,12 @@ webr:
     - fivethirtyeight
     - patchwork
     - infer
+    - DT
+    - broom
+    - janitor
+    - formula.tools
+    - knitr
+    - stringr
+    - moderndive       # from moderndive.r-universe.dev (repos above) → exports View()
   cell-options:
     editor-font-scale: 0.85
