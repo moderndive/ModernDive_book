@@ -173,4 +173,88 @@ local({
       }
     }, silent = TRUE)
   }
+
+  # ----------------------------------------------------------------------
+  # `?dataset` / `help(dataset)` for the shadow-loaded datasets. The four
+  # GitHub-only packages aren't installed in webR, so there is no help DB and
+  # `?olympic_athletes` would error. We ship a small help index (title +
+  # per-column glosses, extracted from each package's .Rd) as an .rds on the
+  # v2 mirror and render an inline help page from it, taking column *types*
+  # from the actual loaded data. We only intercept when the dataset's package
+  # is NOT installed (webR's case); local R / CI keep the real `?`. The
+  # `?package::dataset` form can't be supported (`::` resolves before `?` and
+  # there is no namespace), so the footer steers users to `?dataset`.
+  shadow_datasets <- unique(unlist(lapply(pkg_data, names), use.names = FALSE))
+  dataset_pkg <- function(name) {
+    h <- names(Filter(function(v) name %in% names(v), pkg_data))
+    if (length(h)) h[[1]] else NA_character_
+  }
+  pkg_available <- function(pkg) {
+    !is.na(pkg) && isTRUE(tryCatch(pkg %in% .packages(all.available = TRUE),
+                                   error = function(e) FALSE))
+  }
+  help_cache <- new.env(parent = emptyenv())
+  help_index <- function() {
+    if (!is.null(help_cache$idx)) return(help_cache$idx)
+    idx <- tryCatch({
+      con <- gzcon(url(paste0(base_url, "webr-shadow-help.rds"), "rb"))
+      on.exit(close(con), add = TRUE)
+      readRDS(con)
+    }, error = function(e) list())
+    help_cache$idx <- idx
+    idx
+  }
+  render_help <- function(name) {
+    idx  <- help_index(); meta <- idx[[name]]
+    obj  <- if (exists(name, envir = globalenv(), inherits = FALSE)) {
+      get(name, envir = globalenv())
+    } else NULL
+    pkg  <- if (!is.null(meta)) meta$pkg else dataset_pkg(name)
+    oa   <- idx[["olympic_athletes"]]
+    cat(sprintf("%s {%s}\n\n", name, if (is.na(pkg)) "package" else pkg))
+    if (!is.null(meta) && nzchar(meta$title)) cat(meta$title, "\n\n", sep = "")
+    cols <- if (!is.null(obj)) names(obj)
+            else if (!is.null(meta)) names(meta$items) else character()
+    if (!is.null(obj)) {
+      cat(sprintf("A data frame with %s rows and %d columns:\n\n",
+                  format(nrow(obj), big.mark = ","), ncol(obj)))
+    }
+    for (cn in cols) {
+      ty <- if (!is.null(obj)) paste0("<", class(obj[[cn]])[1], ">") else ""
+      gl <- ""
+      if (!is.null(meta) && !is.null(meta$items[[cn]])) {
+        gl <- meta$items[[cn]]
+      } else if (!is.null(meta) && identical(meta$pkg, "olympicAthletes") &&
+                 !is.null(oa) && !is.null(oa$items[[cn]])) {
+        gl <- oa$items[[cn]]
+      }
+      gl <- sub("^(Integer|Character|Numeric|Double|Logical|Factor|Date|List)( or NA)?\\.\\s*",
+                "", gl)  # drop redundant leading type word; the <type> column shows it
+      cat(sprintf("  %-17s %-10s %s\n", cn, ty, gl))
+    }
+    cat(sprintf(paste0("\n(Rendered by moderndive's webR help shim. Use ?%s ",
+                       "here; the ?package::dataset form needs an installed ",
+                       "package.)\n"), name))
+    invisible(NULL)
+  }
+  intercept <- function(topic) {
+    length(topic) == 1L && !is.na(topic) && topic %in% shadow_datasets &&
+      !pkg_available(dataset_pkg(topic))
+  }
+  shadow_q <- function(e1, e2) {
+    topic <- tryCatch(gsub('^"|"$', "", deparse(substitute(e1))[1]),
+                      error = function(e) "")
+    if (intercept(topic)) return(render_help(topic))
+    if (missing(e2)) utils::`?`(e1) else utils::`?`(e1, e2)
+  }
+  assign("?", shadow_q, envir = globalenv())
+  shadow_help <- function(topic, ...) {
+    topic_chr <- tryCatch({
+      s <- substitute(topic)
+      if (is.character(s)) s[1] else deparse(s)[1]
+    }, error = function(e) "")
+    if (intercept(topic_chr)) return(render_help(topic_chr))
+    mc <- match.call(); mc[[1]] <- quote(utils::help); eval.parent(mc)
+  }
+  assign("help", shadow_help, envir = globalenv())
 })
