@@ -210,7 +210,10 @@ render_solutions <- function(chapter) {
       sprintf("**%s (%s)** %s", id, star_str, trimws(ex$prompt)),
       ":::",
       "",
-      sprintf("**Solution** *(reference: %s)*.", ex$solution_ref),
+      sprintf("**Solution** %s*(reference: %s)*.",
+              if (!is.null(ex$hash) && nzchar(ex$hash))
+                sprintf("`#%s` ", ex$hash) else "",
+              ex$solution_ref),
       "",
       body,
       "",
