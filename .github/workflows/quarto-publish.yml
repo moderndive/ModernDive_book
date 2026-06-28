@@ -14,13 +14,10 @@ jobs:
       contents: write
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      # renv is DISABLED in CI (temporary, during content review): when active,
-      # renv intercepts the GitHub-package installs and resolves their SHAs via
-      # api.github.com, which intermittently 4xx-fails (error 22) and breaks the
-      # build. With the autoloader off, R uses the default library; we install
-      # the lockfile's CRAN packages directly from P3M and the GitHub data
-      # packages via plain git clone. Re-enable + properly fix renv at the end.
-      RENV_CONFIG_AUTOLOADER_ENABLED: "FALSE"
+      # renv is active. The GitHub data packages are pinned to concrete commit
+      # SHAs in renv.lock (RemoteRef = the SHA), so renv restores them by SHA via
+      # the tarball endpoint and never calls api.github.com/commits/<ref> — the
+      # unauthenticated ref-resolution that used to flake (error 22).
       RENV_CONFIG_SYNCHRONIZED_CHECK: "FALSE"
     steps:
       # Checkout repository
@@ -47,37 +44,10 @@ jobs:
           # ICU is a common runtime dependency for V8 on Ubuntu
           sudo apt-get install -y libicu-dev
 
-      # renv DISABLED: install the lockfile's CRAN packages (everything that is
-      # NOT a GitHub source — including moderndive, which the lockfile pins from
-      # CRAN) directly from P3M binaries into the default library. No renv,
-      # no api.github.com.
-      - name: Install CRAN packages from renv.lock
-        run: |
-          R -q -e '
-            if (!requireNamespace("jsonlite", quietly = TRUE)) install.packages("jsonlite")
-            lock <- jsonlite::fromJSON("renv.lock", simplifyVector = FALSE)$Packages
-            keep <- Filter(function(p) !identical(p$Source, "GitHub") && !identical(p$RemoteType, "github"), lock)
-            need <- setdiff(names(keep), rownames(installed.packages()))
-            message("Installing ", length(need), " CRAN packages from the lockfile")
-            if (length(need)) install.packages(need)
-          '
-
-      # The 4 GitHub-only data packages via plain git clone. remotes::install_git
-      # does NOT call api.github.com (only renv's interception did, and renv is
-      # off here), so this just clones + installs.
-      - name: Install GitHub-only exercise packages
-        run: |
-          R -q -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")'
-          ok=0
-          for attempt in 1 2 3 4 5; do
-          R -q -e 'for (repo in c("moderndive/olympicAthletes",
-            "ismayc/steves",
-            "moderndive/exoplanets",
-            "moderndive/volcanoes")) remotes::install_git(
-            paste0("https://github.com/", repo, ".git"), upgrade = "never", quiet = FALSE)' && { ok=1; break; }
-          echo "::warning::GitHub install attempt $attempt failed; retrying in $((attempt*10))s"; sleep $((attempt*10))
-          done
-          [ "$ok" = 1 ] || { echo "::error::GitHub package install failed after 5 attempts"; exit 1; }
+      # Restore the renv library: CRAN packages from P3M + the 4 GitHub data
+      # packages by their pinned commit SHAs (renv downloads each SHA's tarball
+      # directly — no api.github.com/commits/<ref> resolution).
+      - uses: r-lib/actions/setup-renv@v2
 
       # Cache Quarto's freeze directory so chapters don't re-execute on every push.
       # Cache key now hashes ONLY the root-level book qmds + index.qmd (what
