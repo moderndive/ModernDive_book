@@ -55,15 +55,19 @@ jobs:
       - name: Vendor GitHub data packages into the renv cellar
         run: |
           mkdir -p renv/cellar
-          python3 -c "import json; [print(p['Package'], p['RemoteUsername'], p['RemoteRepo'], p['RemoteSha']) for p in json.load(open('renv.lock'))['Packages'].values() if p.get('Source')=='GitHub']" \
-            | while read name user repo sha; do
-                echo "::group::vendor $name @ ${sha:0:10}"
-                git clone --quiet --filter=blob:none "https://github.com/$user/$repo.git" "/tmp/src_$name"
-                git -C "/tmp/src_$name" checkout --quiet "$sha"
-                R CMD build --no-build-vignettes --no-manual "/tmp/src_$name"
-                mv ${name}_*.tar.gz renv/cellar/
-                echo "::endgroup::"
-              done
+          # Read the GitHub packages into an array FIRST — piping into `while
+          # read` lets R CMD build/git consume the loop's stdin and stop it
+          # after one package.
+          mapfile -t GH < <(python3 -c "import json; [print(p['Package'], p['RemoteUsername'], p['RemoteRepo'], p['RemoteSha']) for p in json.load(open('renv.lock'))['Packages'].values() if p.get('Source')=='GitHub']")
+          for line in "${GH[@]}"; do
+            set -- $line; name=$1; user=$2; repo=$3; sha=$4
+            echo "::group::vendor $name @ ${sha:0:10}"
+            git clone --quiet --filter=blob:none "https://github.com/$user/$repo.git" "/tmp/src_$name"
+            git -C "/tmp/src_$name" checkout --quiet "$sha"
+            R CMD build --no-build-vignettes --no-manual "/tmp/src_$name"
+            mv ${name}_*.tar.gz renv/cellar/
+            echo "::endgroup::"
+          done
           echo "Cellar contents:"; ls -1 renv/cellar/
 
       # Restore the renv library: CRAN packages from P3M, the GitHub data
