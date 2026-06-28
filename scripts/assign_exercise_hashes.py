@@ -47,7 +47,7 @@ for f in files:
             has_hash = (i + 1 < len(lines) and re.match(r"^  hash:", lines[i+1])) or ex.get("hash")
             if not has_hash:
                 hh = mint(ch, str(ex.get("prompt", "")))
-                out.append(f"  hash: {hh}")
+                out.append(f'  hash: "{hh}"')
                 n_new += 1
         i += 1
     if n_new:
