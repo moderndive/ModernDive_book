@@ -155,6 +155,9 @@ render_chapter_exercises <- function(chapter) {
 # hangs we know exactly which exercise to investigate.
 render_solutions <- function(chapter) {
   data <- ex_helpers_load(chapter)
+  cat(sprintf("\n========== Chapter %d solutions: rendering %d exercises ==========\n",
+              chapter, length(data$exercises)), file = stderr())
+  flush(stderr())
   out <- character()
   # Chapter-level note (e.g. data-source attribution) ahead of all solutions,
   # mirroring render_chapter_exercises().
