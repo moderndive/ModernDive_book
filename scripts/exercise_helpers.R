@@ -155,6 +155,7 @@ render_chapter_exercises <- function(chapter) {
 # hangs we know exactly which exercise to investigate.
 render_solutions <- function(chapter) {
   data <- ex_helpers_load(chapter)
+  .ch_t0 <- Sys.time()
   cat(sprintf("\n========== Chapter %d solutions: rendering %d exercises ==========\n",
               chapter, length(data$exercises)), file = stderr())
   flush(stderr())
@@ -190,6 +191,7 @@ render_solutions <- function(chapter) {
   emitted_visible <- character()
 
   for (ex in data$exercises) {
+    .ex_t0 <- Sys.time()
     cat(sprintf("    ▸ EX%d.%d\n", chapter, ex$ex_num), file = stderr())
     flush(stderr())
 
@@ -224,7 +226,13 @@ render_solutions <- function(chapter) {
       ""
     ), collapse = "\n")
     out <- c(out, knitr::knit_child(text = ex_text, quiet = TRUE))
+    cat(sprintf("    ↳ EX%d.%d %.2fs\n", chapter, ex$ex_num,
+                as.numeric(Sys.time() - .ex_t0, units = "secs")), file = stderr())
+    flush(stderr())
   }
+  cat(sprintf("========== Chapter %d done in %.1fs ==========\n", chapter,
+              as.numeric(Sys.time() - .ch_t0, units = "secs")), file = stderr())
+  flush(stderr())
   paste(out, collapse = "\n")
 }
 
