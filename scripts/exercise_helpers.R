@@ -206,7 +206,7 @@ render_solutions <- function(chapter) {
     star_str <- ex_helpers_difficulty_marker(ex$difficulty, ex$group)
     body <- trimws(ex$solution, which = "right")
     ex_text <- paste(c(
-      sprintf('::: {.callout-note collapse="true" title="%s — show question"}', id),
+      sprintf('::: {.callout-note collapse="true" title="%s — show question" #ex-%d-%d}', id, chapter, ex$ex_num),
       sprintf("**%s (%s)** %s", id, star_str, trimws(ex$prompt)),
       ":::",
       "",
