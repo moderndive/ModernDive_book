@@ -53,7 +53,7 @@ PRELOADED_DATA <- c(
 SHADOW_MAP <- list(
   olympicAthletes = c("olympic_athletes", "editions", "medal_table",
                       "athletics_athletes", "gymnastics_athletes",
-                      "basketball_athletes", "recent_olympic_athletes"),
+                      "basketball_athletes", "olympic_athletes_2000_2026"),
   steves          = c("episodes"),
   exoplanets      = c("planets"),
   volcanoes       = c("eruptions", "volcanoes")

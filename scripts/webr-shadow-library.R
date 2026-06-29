@@ -48,7 +48,7 @@ local({
       athletics_athletes      = "athletics_athletes.rds",
       gymnastics_athletes     = "gymnastics_athletes.rds",
       basketball_athletes     = "basketball_athletes.rds",
-      recent_olympic_athletes = "recent_olympic_athletes.rds"
+      olympic_athletes_2000_2026 = "olympic_athletes_2000_2026.rds"
     ),
     steves = c(
       episodes = "steves_episodes.rds"
