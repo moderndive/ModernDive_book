@@ -11,8 +11,8 @@ EXERCISE_PACKAGES <- list(
     from_github = TRUE
   ),
   steves = list(
-    repo        = "ismayc/steves",
-    from_github = TRUE
+    repo        = NA_character_,
+    from_github = FALSE
   ),
   exoplanets = list(
     repo        = "moderndive/exoplanets",
