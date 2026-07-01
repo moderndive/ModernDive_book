@@ -639,7 +639,7 @@ get_regression_table(price_interaction) |>
   )
 ```
 
-For this model, we can perform hypothesis tests on the partial slopes with an $\alpha$ significance level set to 0.05. For example, we can test the null hypothesis that the partial slope for `log10_size` is zero. Looking at the $p$-value in the row corresponding to `log10_size` we see a value of 0 and a large `statistic` of 4.652. With $\alpha = 0.05$, `log10_size` is the only regressor with a statistically significant relationship with `log10_price` in this theory-based model.
+For this model, we can perform hypothesis tests on the partial slopes with an $\alpha$ significance level set to 0.05. For example, we can test the null hypothesis that the partial slope for `log10_size` is zero. Looking at the $p$-value in the row corresponding to `log10_size` we see a value of 0 and a large `statistic` of 4.652. With $\alpha = 0.05$, `log10_size` and the `log10_size:condition-5` interaction ($p$-value = 0.039) are the only regressors with a statistically significant relationship with `log10_price` in this theory-based model.
 
 #### Simulation-based hypothesis testing for partial slopes {.unnumbered}
 
@@ -907,7 +907,7 @@ d. The relationship cannot be interpreted
 **(b)** With *both* variables on a log scale, slopes describe **multiplicative** changes: a 10× increase in $x$ predicts a $10^{\beta}$× change in $y$. This is the elasticity interpretation common in economics.
 :::
 
-**Q5.** After fitting the Seattle case-study model `lm(log10_price ~ log10_size * condition, data = house_prices)`, you plot residuals vs fitted values and see a clear **funnel** shape (residuals fan out as fitted values grow). What does that tell you?
+**Q5.** Suppose that instead of the Seattle case-study model, you had fit `lm(price ~ sqft_living * condition, data = house_prices)` — on raw dollars and square feet, with no log transformations. The residuals-vs-fitted plot for this model shows a clear **funnel** shape (residuals fan out as fitted values grow). What does that tell you?
 
 a. The model is perfect
 b. **The Equal-variance assumption (the "E" in LINE from Chapter 10) is violated — the theory-based SEs and CIs from `lm()` may be unreliable**
@@ -915,7 +915,7 @@ c. The data are bimodal
 d. The slope is too large
 
 ::: {.callout-tip collapse="true" title="Show answer"}
-**(b)** A funnel-shaped residuals-vs-fitted plot violates Equal variance. When that happens, theory-based SEs/CIs from `lm()` are unreliable, and the simulation-based workflow (bootstrap CIs / permutation tests via `infer`) is the honest fallback. Log-transforming a right-skewed response (as the chapter does for `price` and `size`) is often a helpful prevention — it can compress the long tail enough that residual spread is roughly constant.
+**(b)** A funnel-shaped residuals-vs-fitted plot violates Equal variance. When that happens, theory-based SEs/CIs from `lm()` are unreliable. This is precisely why the chapter log10-transforms both `price` and `size` before modeling: compressing the long right tails brings the residual spread back to roughly constant, so the funnel disappears in the chapter's actual `lm(log10_price ~ log10_size * condition)` model.
 :::
 
 **Q6.** When presenting a fitted regression line to stakeholders alongside the raw data, why is showing the *data points* (not just the line) the right call?
@@ -929,7 +929,7 @@ d. To make the slope clearer
 **(b)** A regression line is a *summary* — it replaces every individual observation with a single average relationship. Showing the original points alongside the line lets the audience judge for themselves whether the model captures the relationship tightly or loosely. A line with a wide cloud of points around it tells a very different story from a line with all the points snug against it, even when the *slope* is identical. For data storytelling, this honesty about scatter is what separates a useful chart from a misleading one.
 :::
 
-**Q7.** A regression uses interaction: `lm(price ~ size * condition)`. The interpretation says "for HIGHER-condition houses, price grows faster with size." The interaction coefficient sign should be:
+**Q7.** In the Seattle interaction model `lm(log10_price ~ log10_size * condition, data = house_prices)`, the chapter reports that condition = 5 houses have the *fastest* growth of price with size out of the five conditions. Given that condition = 1 is the baseline group, the sign of the `log10_size:condition-5` coefficient should be:
 
 a. Negative
 b. **Positive**
@@ -937,29 +937,29 @@ c. Zero
 d. Cannot tell
 
 ::: {.callout-tip collapse="true" title="Show answer"}
-**(b)** A positive interaction coefficient means the slope of `size` *increases* with `condition`. So price-per-extra-foot is bigger at higher-condition levels.
+**(b)** `log10_size:condition-5` is the *offset* to the baseline (condition = 1) slope for condition = 5 houses. If price grows faster with size for condition = 5 houses than for the baseline, that offset must be positive — and the fitted value is about +0.31, making the condition = 5 slope roughly $0.69 + 0.31 = 1.00$, the steepest of the five. Note this isn't automatic for every interaction term: the fitted `log10_size:condition-2` offset is slightly *negative* ($-0.024$).
 :::
 
 **Q8.** Of the data-science pipeline phases (wrangling, visualization, modeling, communication), which is often the **most time-consuming** in practice?
 
 a. Modeling
 b. Visualization
-c. **Wrangling / cleaning data** — well-known as the 80% of the work
+c. **Wrangling / cleaning data**
 d. Communication
 
 ::: {.callout-tip collapse="true" title="Show answer"}
-**(c)** Real data is messy. Most professional analysts spend the majority of their time importing, cleaning, joining, and validating data — long before any modeling happens.
+**(c)** Real data is messy. As the *Practical Data Science for Stats* collection quoted in this chapter puts it, these day-to-day activities — importing, cleaning, joining, and validating data — "account for a considerable share of the time and effort of data analysts and applied statisticians," despite being almost absent from the conventional statistics curriculum.
 :::
 
 **Q9.** A stakeholder asks: "If I list a 2,000-sqft house in 'Good' condition, what price should I expect?" After fitting the Seattle interaction model, the cleanest way to answer is:
 
 a. Look at the average price of all houses in the data
-b. **Use `predict(model, newdata = ...)` with a one-row data frame for the new house** — back-transform the predicted `log10_price` with `10^prediction` to get dollars
+b. **Plug `log10(2000)` into the regression equation for that condition group — intercept plus slope times `log10(size)`, using the coefficients from the regression table — then back-transform with `10^` to get dollars**
 c. Read the slope from the regression table and multiply by 2,000
 d. Take the maximum predicted price across all listings
 
 ::: {.callout-tip collapse="true" title="Show answer"}
-**(b)** `predict()` is the right tool for applying a fitted model to *new* inputs. Pass a small data frame with the same column names as the model's predictors and `predict()` returns one prediction per row. Because the response is `log10_price`, you back-transform: `10^prediction` gives a price in dollars. Adding `interval = "prediction"` returns prediction intervals around each estimate so you can quote a *range* to the stakeholder rather than a single point estimate — much more honest about the spread of plausible prices.
+**(b)** This is the chapter's prediction workflow: use the regression table to write out the fitted equation for the relevant condition group (its intercept and slope offsets added to the baseline), evaluate it at `log10(2000)`, and — because the model's outcome is `log10_price`, not `price` — un-log the result by taking `10^` of the prediction to report dollars. (c) forgets both the intercept and the log transformation: the slope multiplies `log10(size)`, not raw square footage.
 :::
 
 **Q10.** A reader of your case study asks: "could there be a *confounding variable* affecting the relationship you found?" The honest answer is:
@@ -980,7 +980,7 @@ d. Run more bootstraps
 | `mutate(log10_var = log10(var))` | Log-transform a right-skewed numerical variable | `house_prices |> mutate(log10_price = log10(price))` |
 | `lm(y ~ x1 * x2, data)` | Interaction model — slopes vary by group | `lm(log10_price ~ log10_size * condition, data = house_prices)` |
 | `glimpse(df)` / `summary(df)` | Quick look at structure / range of every column | `glimpse(house_prices)` |
-| `ggplot(df, aes(x, fill = group)) + geom_histogram()` | Faceted/colored histograms for EDA | `ggplot(df, aes(x = log10_price, fill = condition)) + geom_histogram()` |
+| `ggplot(df, aes(x, y, color = group)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + facet_wrap(~group)` | Faceted, colored scatterplot with per-group regression lines | `ggplot(house_prices, aes(x = log10_size, y = log10_price, col = condition)) + geom_point(alpha = 0.4) + geom_smooth(method = "lm", se = FALSE) + facet_wrap(~ condition)` |
 
 :::
 

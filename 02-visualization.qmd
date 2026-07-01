@@ -353,10 +353,10 @@ ggplot(data = envoy_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
 ```
 :::
 
-The key feature to note in @fig-alpha is that the transparency \index{R packages!ggplot2!alpha}\index{adding transparency to plots}of the points is cumulative: areas with a high-degree of overplotting are darker, whereas areas with a lower degree are less dark. Note, furthermore, that there is no `aes()` surrounding `alpha = 0.2`. This is because we are not mapping a variable to an aesthetic attribute, but rather merely changing the default setting of `alpha`. In fact, you'll receive an error if you try to change the second line to read `geom_point(aes(alpha = 0.2))`.
+The key feature to note in @fig-alpha is that the transparency \index{R packages!ggplot2!alpha}\index{adding transparency to plots}of the points is cumulative: areas with a high-degree of overplotting are darker, whereas areas with a lower degree are less dark. Note, furthermore, that there is no `aes()` surrounding `alpha = 0.2`. This is because we are not mapping a variable to an aesthetic attribute, but rather merely changing the default setting of `alpha`. In fact, if you change the second line to read `geom_point(aes(alpha = 0.2))`, you won't get the plot you intended: a meaningless legend labeled `0.2` appears, and the points' transparency is chosen by `ggplot2`'s alpha scale rather than set to the 0.2 you asked for.
 
 ::: {.callout-warning title="Common mistake"}
-**Constants belong outside `aes()`, variables belong inside.** When you write `aes(alpha = 0.2)`, `ggplot2` looks for a variable in your data named `0.2` (and fails). Use `aes(alpha = a_column_name)` to *map* a data variable to transparency, or `geom_point(alpha = 0.2)` to *set* a fixed value. Same logic applies to `color`, `size`, `shape`, etc.
+**Constants belong outside `aes()`, variables belong inside.** When you write `aes(alpha = 0.2)`, `ggplot2` *maps* the constant `0.2` as if it were a data variable: it adds a meaningless legend labeled `0.2`, and the actual transparency is picked by its alpha scale — not the 0.2 you intended. Use `aes(alpha = a_column_name)` to *map* a data variable to transparency, or `geom_point(alpha = 0.2)` to *set* a fixed value. Same logic applies to `color`, `size`, `shape`, etc.
 :::
 
 **Method 2: Jittering the points**
@@ -461,7 +461,7 @@ Much as with the `ggplot()` code that created the scatterplot of departure and a
 Within the `ggplot()` function call, we specify two of the components of the grammar of graphics as arguments:
 
 1. The `data` to be the `early_january_2023_weather` data frame by setting `data = early_january_2023_weather`.
-1. The `aes`thetic `mapping` by setting `mapping = aes(x = time_hour, y = temp)`. Specifically, the variable `time_hour` maps to the `x` position aesthetic, while the variable `wind_speed` maps to the `y` position aesthetic.
+1. The `aes`thetic `mapping` by setting `mapping = aes(x = time_hour, y = wind_speed)`. Specifically, the variable `time_hour` maps to the `x` position aesthetic, while the variable `wind_speed` maps to the `y` position aesthetic.
 
 We add a layer to the `ggplot()` function call using the `+` sign. The layer in question specifies the third component of the grammar: the `geom`etric object in question. In this case, the geometric object is a `line` set by specifying `geom_line()`. 
 
@@ -582,7 +582,7 @@ Observe in @fig-weather-histogram-2 that in the 10-20 mph range there appear to 
 1. By adjusting the number of bins via the \index{R packages!ggplot2|geom\_histogram()!bins} `bins` argument to `geom_histogram()`. 
 1. By adjusting the width of the bins via the \index{R packages!ggplot2|geom\_histogram()!binwidth} `binwidth` argument to `geom_histogram()`. 
 
-Using the first method, we have the power to specify how many bins we would like to cut the x-axis up in. As mentioned in the previous section, the default number of bins is 20. We can override this default, to say 20 bins, as follows:
+Using the first method, we have the power to specify how many bins we would like to cut the x-axis up in. As mentioned in the previous section, the default number of bins is 30. We can override this default, to say 20 bins, as follows:
 
 ```{r visualization-hist-white-border-v2, eval=FALSE}
 ggplot(data = weather, mapping = aes(x = wind_speed)) +
@@ -1168,12 +1168,12 @@ d. Barplot
 **Q4.** A student writes `geom_point(aes(alpha = 0.2))` expecting all points to be 20% opaque. Instead, they get an unexpected legend showing alpha values. Why?
 
 a. `aes()` always creates a legend
-b. Inside `aes()`, the value `0.2` is interpreted as a *variable name* — ggplot tries to map a fictional column named `0.2` to alpha
+b. Inside `aes()`, the constant `0.2` is *mapped* like a data variable — ggplot builds a legend for it and its alpha scale picks the transparency, which isn't the 0.2 the student asked for
 c. Alpha must be between 0 and 1
 d. `geom_point()` doesn't support alpha
 
 ::: {.callout-tip collapse="true" title="Show answer"}
-**(b)** **Constants belong OUTSIDE `aes()`.** `aes(alpha = 0.2)` says "map the (nonexistent) variable `0.2` to alpha". The fix: `geom_point(alpha = 0.2)` *sets* alpha as a constant. Same logic for `color`, `size`, `shape`, etc.
+**(b)** **Constants belong OUTSIDE `aes()`.** `aes(alpha = 0.2)` says "map the value `0.2` to alpha", so ggplot adds a meaningless legend labeled `0.2` and routes the value through its alpha scale — the plotted transparency is whatever the scale chooses, not 0.2. The fix: `geom_point(alpha = 0.2)` *sets* alpha as a constant. Same logic for `color`, `size`, `shape`, etc.
 :::
 
 **Q5.** What is the difference between `geom_bar()` and `geom_col()`?
@@ -1253,7 +1253,8 @@ d. Confidence intervals
 | `+ geom_boxplot()` | Add a boxplot layer | `... + geom_boxplot()` |
 | `+ geom_bar()` / `+ geom_col()` | Bars from raw rows / from pre-counted data | `... + geom_bar()` |
 | `+ facet_wrap(~ var)` | Split the plot into panels by a variable | `... + facet_wrap(~ origin)` |
-| `+ labs(title = ..., x = ..., y = ...)` | Add axis labels and a title | `... + labs(x = "Departure delay (min)")` |
+| `position = "dodge"` | Side-by-side (dodged) bars instead of stacked | `... + geom_bar(position = "dodge")` |
+| `+ labs(...)` | Add title, axis labels, and caption (see EX 2.11) | `... + labs(title = "...", x = "...", y = "...")` |
 
 :::
 
