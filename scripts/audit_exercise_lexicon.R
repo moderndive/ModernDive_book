@@ -26,7 +26,7 @@ suppressPackageStartupMessages({
   library(stringr)
 })
 
-book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
+book <- "/Users/chesterismay/repos/ModernDive_book"
 setwd(book)
 
 `%||%` <- function(a, b) if (is.null(a) || identical(a, "")) b else a
@@ -36,9 +36,11 @@ dataset_intro <- list(
   olympic_athletes = 1L, medal_table = 1L, editions = 1L,
   episodes        = 3L,
   bob_ross        = 4L,
-  planets         = 6L, stars = 6L,
+  # planets/exoplanets moved from 6L to 5L when the Ch5 exercises migrated
+  # to the exoplanet mass ~ radius + discovery_method set.
+  planets         = 5L, stars = 6L,
   volcanoes       = 7L, eruptions = 7L, events = 7L,
-  exoplanets      = 6L
+  exoplanets      = 5L
 )
 
 # Glossary term -> intro chapter (reuse the helper from pedagogy_scans.R)
