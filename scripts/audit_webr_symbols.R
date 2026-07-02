@@ -55,6 +55,7 @@ SHADOW_MAP <- list(
                       "athletics_athletes", "gymnastics_athletes",
                       "basketball_athletes",
                       "olympic_athletes_2024", "paris_2024_top_medals",
+                      "season_counts",
                       "usa_summer_medals", "team_sport_athletes"),
   steves          = c("episodes"),
   exoplanets      = c("planets"),
