@@ -14,7 +14,8 @@ want <- list(
   olympicAthletes = c("olympic_athletes", "editions", "medal_table",
                       "athletics_athletes", "gymnastics_athletes",
                       "basketball_athletes", "olympic_athletes_2000_2026",
-                      "olympic_athletes_2024", "paris_2024_top_medals"),
+                      "olympic_athletes_2024", "paris_2024_top_medals",
+                      "usa_summer_medals"),
   steves    = c("episodes"),
   exoplanets = c("planets"),
   volcanoes = c("eruptions", "volcanoes")

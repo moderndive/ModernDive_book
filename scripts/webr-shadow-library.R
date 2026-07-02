@@ -50,7 +50,8 @@ local({
       basketball_athletes     = "basketball_athletes.rds",
       olympic_athletes_2000_2026 = "olympic_athletes_2000_2026.rds",
       olympic_athletes_2024   = "olympic_athletes_2024.rds",
-      paris_2024_top_medals   = "paris_2024_top_medals.rds"
+      paris_2024_top_medals   = "paris_2024_top_medals.rds",
+      usa_summer_medals       = "usa_summer_medals.rds"
     ),
     steves = c(
       episodes = "steves_episodes.rds"

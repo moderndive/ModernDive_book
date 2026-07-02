@@ -28,8 +28,8 @@ suppressPackageStartupMessages({
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
-book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
-setwd(book)
+book <- Sys.getenv("MODERNDIVE_BOOK_DIR", "/Users/chesterismay/repos/ModernDive_book")
+if (dir.exists(book)) setwd(book)
 
 # Datasets webR exposes via the preloaded packages in _quarto.yml's webr:
 # packages list, plus base R built-ins. Keep in sync if you add a package.
