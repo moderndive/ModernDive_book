@@ -3,11 +3,11 @@
 # Mirrors the Quarto-website navbar defined in instructor-solutions/_quarto.yml
 # (Plan / Teach / Assess dropdowns) so the R-generated pages
 # (concept-map, assessment-matrix, misconceptions, exam-bank,
-# pacing-calculator, cumulative-review, homework-planner, lesson-plans,
-# coverage-map) get the same top-of-page navigation as the Quarto-rendered
-# pages (index, NEWS, solutions, syllabus, slides, facilitator-notes).
+# pacing-calculator, homework-planner, dataset-atlas) get the same
+# top-of-page navigation as the Quarto-rendered pages (index, NEWS,
+# solutions, syllabus, slides, facilitator-notes, student-setup).
 #
-# Every script under scripts/build_*.R + exercise_coverage_map.R sources
+# Every script under scripts/build_*.R sources
 # this helper and emits hub_nav_html() right after <body>. The function
 # also loads MathJax 3 for inline / display math rendering.
 #
