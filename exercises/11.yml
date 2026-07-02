@@ -212,9 +212,9 @@ exercises:
     set.seed(76)
     house_sub <- house_prices |>
       filter(!is.na(price), !is.na(sqft_living)) |>
-      slice_sample(n = 200)   # small sample to make overfitting visible
+      slice_sample(n = 2000)   # enough data that low-degree fits win and high degrees overfit
 
-    train_idx <- sample(seq_len(200), 160)
+    train_idx <- sample(seq_len(2000), 1600)
     train <- house_sub[ train_idx, ]
     test  <- house_sub[-train_idx, ]
 
@@ -227,7 +227,7 @@ exercises:
 
     rmses
   prompt: |-
-    **Overfitting demonstration.** Add too many predictors (or too high a polynomial degree) and your model will *memorize* the training data, driving the training RMSE down, while predicting badly on new data. Run the snippet, which fits polynomials of degree 1 through 12 on a small training set and tracks training vs test RMSE at each degree. At what degree does the test RMSE *bottom out*? At what degree does training RMSE keep falling while test RMSE *rises*? That's overfitting in action.
+    **Overfitting demonstration.** Add too many predictors (or too high a polynomial degree) and your model will *memorize* the training data, driving the training RMSE down, while predicting badly on new data. Run the snippet, which fits polynomials of degree 1 through 12 on a training set and tracks training vs test RMSE at each degree. At what degree does the test RMSE *bottom out*? At what degree does training RMSE keep falling while test RMSE *rises*? That's overfitting in action.
   book_section: Extensions
   book_subsection: Extensions
 - ex_num: 17
@@ -236,7 +236,15 @@ exercises:
   group: Extensions
   webr: |-
     set.seed(76)
-    # your exploration here
+    hp <- house_prices |>
+      filter(!is.na(price), !is.na(sqft_living), !is.na(bedrooms))
+    train_idx <- sample(seq_len(nrow(hp)), size = floor(0.8 * nrow(hp)))
+    train <- hp[ train_idx, ]
+    test  <- hp[-train_idx, ]
+
+    m <- lm(log10(price) ~ sqft_living + bedrooms, data = train)
+    c(train_r_squared = summary(m)$r.squared,
+      test_rmse = sqrt(mean((log10(test$price) - predict(m, newdata = test))^2)))
   prompt: |-
     **In-sample $R^2$ vs out-of-sample RMSE.** Training $R^2$ rewards "how much variance does the model explain in the *training* data." Test RMSE rewards "how accurately can the model *predict* new observations." For a published model, *both* are worth reporting, the $R^2$ describes the explanatory fit, the test RMSE describes the predictive accuracy. The snippet reports both. Why is the *test* RMSE (not training RMSE) the right number to use when comparing *predictive* models?
   book_section: Extensions
