@@ -3,11 +3,11 @@
 # Mirrors the Quarto-website navbar defined in instructor-solutions/_quarto.yml
 # (Plan / Teach / Assess dropdowns) so the R-generated pages
 # (concept-map, assessment-matrix, misconceptions, exam-bank,
-# pacing-calculator, cumulative-review, homework-planner, lesson-plans,
-# coverage-map) get the same top-of-page navigation as the Quarto-rendered
-# pages (index, NEWS, solutions, syllabus, slides, facilitator-notes).
+# pacing-calculator, homework-planner, dataset-atlas) get the same
+# top-of-page navigation as the Quarto-rendered pages (index, NEWS,
+# solutions, syllabus, slides, facilitator-notes, student-setup).
 #
-# Every script under scripts/build_*.R + exercise_coverage_map.R sources
+# Every script under scripts/build_*.R sources
 # this helper and emits hub_nav_html() right after <body>. The function
 # also loads MathJax 3 for inline / display math rendering.
 #
@@ -153,10 +153,10 @@ hub_nav_html <- function(at_root = TRUE) {
     '      <div class="insthub-menu">',
     sprintf('        <a href="%sassessment-matrix.html">Assessment alignment</a>', prefix),
     sprintf('        <a href="%sconcept-map.html">Concept map</a>', prefix),
-    sprintf('        <a href="%slesson-plans.html">Lesson plans</a>', prefix),
     sprintf('        <a href="%spacing-calculator.html">Pacing calculator</a>', prefix),
     sprintf('        <a href="%sposit-cloud.html">Posit Cloud template</a>', prefix),
     sprintf('        <a href="%ssyllabus.html">Sample syllabus</a>', prefix),
+    sprintf('        <a href="%sstudent-setup.html">Student setup handout</a>', prefix),
     '      </div>',
     '    </div>',
     '    <div class="insthub-drop">',
@@ -164,6 +164,7 @@ hub_nav_html <- function(at_root = TRUE) {
     '      <div class="insthub-menu">',
     sprintf('        <a href="%sactive-learning.html">Active-learning prompts</a>', prefix),
     sprintf('        <a href="%scommon-errors.html">Common R errors</a>', prefix),
+    sprintf('        <a href="%sdataset-atlas.html">Dataset atlas</a>', prefix),
     sprintf('        <a href="%sethics-scenarios.html">Ethics &amp; data scenarios</a>', prefix),
     sprintf('        <a href="%sfacilitator-notes/index.html">Facilitator notes</a>', prefix),
     sprintf('        <a href="%smisconceptions.html">Misconceptions</a>', prefix),
@@ -177,8 +178,6 @@ hub_nav_html <- function(at_root = TRUE) {
     '    <div class="insthub-drop">',
     '      <button aria-haspopup="true">Assess</button>',
     '      <div class="insthub-menu">',
-    sprintf('        <a href="%scoverage-map.html">Coverage map</a>', prefix),
-    sprintf('        <a href="%scumulative-review.html">Cumulative review</a>', prefix),
     sprintf('        <a href="%sexam-bank.html">Exam question bank</a>', prefix),
     sprintf('        <a href="%sflashcards.html">Flashcards (Anki/Quizlet)</a>', prefix),
     sprintf('        <a href="%shomework-planner.html">Homework planner</a>', prefix),
