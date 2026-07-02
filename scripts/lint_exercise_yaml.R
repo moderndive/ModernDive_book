@@ -26,8 +26,8 @@ suppressPackageStartupMessages({
   library(stringr)
 })
 
-book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
-setwd(book)
+book <- Sys.getenv("MODERNDIVE_BOOK_DIR", "/Users/chesterismay/repos/ModernDive_book")
+if (dir.exists(book)) setwd(book)
 
 required_fields <- c("ex_num", "difficulty", "prompt")
 code_verbs <- c(
