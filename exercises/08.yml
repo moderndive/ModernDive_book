@@ -160,14 +160,9 @@ exercises:
   hash: "8q40"
   difficulty: 3
   group: 'Additional remarks: empirical coverage of bootstrap CIs'
-  webr: '# your code here, be patient, this loop simulates 600 CIs total'
-  prompt: '*Empirical coverage and the bootstrap.* Section 8.3 argues that the bootstrap
-    percentile CI''s *empirical coverage* approaches the nominal level (e.g., 95%)
-    as $n$ grows. Test this on `volcanoes$elevation`: for each $n \in \{20, 50, 200\}$,
-    draw 200 fresh samples; for each, build a 95% bootstrap percentile CI for the
-    mean (use `reps = 500` per CI); record the fraction of CIs that contain the true
-    $\mu$. Does coverage drift toward 0.95 as $n$ grows? In one sentence, what does
-    this say about *small-sample* bootstrap CIs?'
+  webr: '# your code here, be patient, this simulates 600 CIs total'
+  prompt: |-
+    *Empirical coverage and the bootstrap.* Section 8.3 argues that the bootstrap percentile CI's *empirical coverage* approaches the nominal level (e.g., 95%) as $n$ grows. Test this on `volcanoes$elevation`: for each of the sample sizes 20, 50, and 200, draw 200 fresh samples; for each sample, build a 95% bootstrap percentile CI for the mean (use `reps = 500` per CI); record the fraction of CIs that contain the true $\mu$. To repeat the sample-then-CI recipe 200 times, use `replicate(200, { ... })`, a new-to-us base R function that reruns the code between the braces 200 times and collects the 200 results into a vector. Work one sample size at a time, then stack the three results into one small comparison table with `bind_rows()`, the row-stacker from EX 7.25. Does coverage drift toward 0.95 as $n$ grows? In one sentence, what does this say about *small-sample* bootstrap CIs?
   book_section: 8.3 Additional remarks about the bootstrap
   book_subsection: 8.3.2 Rate of convergence / empirical coverage
 - ex_num: 17
@@ -217,10 +212,8 @@ exercises:
   difficulty: 3
   group: 'Two-sample CIs (case study: yawning)'
   webr: '# your code here'
-  prompt: 'Difference in proportions: did Bob Ross paint a `mountain` more often than
-    a `cabin`? Use the `bob_ross` dataset (from the `fivethirtyeight` package, first
-    used in the Chapter 4 exercises). Compute a 95% bootstrap CI for $p_\text{mountain}
-    - p_\text{cabin}$, treat each episode as an observation.'
+  prompt: |-
+    Difference in proportions: did Bob Ross paint a `mountain` more often than a `cabin`? Bob Ross hosted the TV show *The Joy of Painting* (1983–1994), completing one landscape painting per episode; in `bob_ross` (from the `fivethirtyeight` package, first used in the Chapter 4 exercises), each row is an episode and columns like `mountain` and `cabin` are 0/1 indicators for whether that element appears in the painting. Compute a 95% bootstrap CI for $p_\text{mountain} - p_\text{cabin}$, treat each episode as an observation.
   book_section: '8.4 Case study: yawning (two-sample)'
   book_subsection: '8.4 Case study: yawning, two-sample CIs (mean & proportion)'
 - ex_num: 21
@@ -254,12 +247,24 @@ exercises:
   hash: "squr"
   difficulty: 3
   group: Critical thinking and synthesis
-  webr: '# your code here'
-  prompt: 'Demonstrate the chapter''s "long-run" interpretation: take **100 different
-    samples** of size 50 from `volcanoes`, build a CI for each, count how many contain
-    $\mu$. Plot results, drawing each interval with `geom_errorbar()`, a ggplot2 geom
-    that hasn''t appeared in the book, introduced here just for this plot, and adding
-    a reference line at $\mu$ so you can see which intervals miss it.'
+  webr: |-
+    set.seed(76)
+    mu <- mean(volcanoes$elevation, na.rm = TRUE)
+    # your code here: build `many` (columns replicate, xbar, lower, upper, contains),
+    # then run the ready-made plot below
+    ggplot(many, aes(y = replicate, x = xbar, color = contains)) +
+      geom_errorbar(aes(xmin = lower, xmax = upper)) +
+      geom_vline(xintercept = mu, linewidth = 1) +
+      labs(title = paste0("Coverage: ", sum(many$contains), "/100"))
+  prompt: |-
+    Demonstrate the chapter's "long-run" interpretation: take **100 different samples** of size 50 from `volcanoes`, build a CI for each, and count how many contain $\mu$. Collect the CIs in a data frame called `many` with one row per sample and columns `replicate`, `xbar`, `lower`, `upper`, plus a logical `contains` flagging whether each interval covers $\mu$. The plot draws every interval with `geom_errorbar()`, a ggplot2 geom that hasn't appeared in the book (it draws one bar per row from the `xmin`/`xmax` aesthetics), so its code is provided in full here and pre-filled in the webR cell; the `geom_vline()` layer adds a reference line at $\mu$ so you can see which intervals miss it. Once your `many` exists, just run the plot and interpret what you see:
+
+    ```r
+    ggplot(many, aes(y = replicate, x = xbar, color = contains)) +
+      geom_errorbar(aes(xmin = lower, xmax = upper)) +
+      geom_vline(xintercept = mu, linewidth = 1) +
+      labs(title = paste0("Coverage: ", sum(many$contains), "/100"))
+    ```
   book_section: Critical thinking / synthesis (cross-section)
   book_subsection: Critical thinking / synthesis (CI interpretation, sample size,
     bootstrap concepts)
@@ -276,8 +281,17 @@ exercises:
   hash: "8z3j"
   difficulty: 3
   group: Critical thinking and synthesis
-  prompt: 'When *not* to use the bootstrap: name two situations where it fails or
-    is misleading.'
+  webr: |-
+    set.seed(76)
+    samp_5  <- volcanoes |> rep_slice_sample(n = 5)  |> ungroup()
+    samp_50 <- volcanoes |> rep_slice_sample(n = 50) |> ungroup()
+    # your code here
+  prompt: |-
+    **When *not* to use the bootstrap: a tiny-sample autopsy.** The bootstrap treats your sample as a stand-in for the population, so it can only recycle the values your sample happened to catch. To see what that costs, the webR cell draws two seeded samples from `volcanoes`: a tiny one (`samp_5`, with $n = 5$) and a decent one (`samp_50`, with $n = 50$). For each, build a bootstrap distribution of the mean `elevation` (`reps = 1000`) and a 95% percentile CI. Then answer:
+
+    - (a) Compute the true population mean from the full `volcanoes`. Does each CI contain it?
+    - (b) Plot the two bootstrap distributions on a shared axis (stack them with `bind_rows()`, the row-stacker from EX 7.25, and use `facet_wrap()`), marking the population mean with a vertical line. How does the $n = 5$ histogram's shape differ from the $n = 50$ one?
+    - (c) Compare the largest elevation in `samp_5` to the tallest volcanoes in the population. Why can no number of bootstrap resamples rescue the tiny sample? Finish with one sentence naming when the bootstrap fails or misleads.
   book_section: Critical thinking / synthesis (cross-section)
   book_subsection: Critical thinking / synthesis (CI interpretation, sample size,
     bootstrap concepts)
@@ -296,11 +310,11 @@ exercises:
   difficulty: 3
   group: Critical thinking and synthesis
   webr: '# your code here'
-  prompt: Build a CI for $\mu$ at sample sizes $n \in \{20, 50, 200\}$. Stack the
-    three one-row CI tibbles into one with the new-to-us `dplyr::bind_rows()`, which
-    row-binds data frames, matching columns by name. Plot the three
-    CIs as horizontal bars with `geom_errorbar(orientation = "y")`, a ggplot2 geom
-    not used in the book, introduced here; `orientation = "y"` makes the bars horizontal.
+  prompt: Build a CI for $\mu$ at each of the sample sizes 20, 50, and 200, one at
+    a time. Stack the three one-row CI tibbles into one with `dplyr::bind_rows()`
+    (the row-stacker from EX 7.25), which row-binds data frames, matching columns
+    by name. Plot the three CIs as horizontal bars with `geom_errorbar(orientation
+    = "y")`, which you met in EX 8.24; `orientation = "y"` makes the bars horizontal.
     Visualize the precision-vs-sample-size tradeoff.
   book_section: Critical thinking / synthesis (cross-section)
   book_subsection: Critical thinking / synthesis (CI interpretation, sample size,
@@ -384,11 +398,11 @@ exercises:
   difficulty: 2
   group: Extensions
   webr: |-
-    successes <- sum(bob_ross$tree == 1)
-    n <- nrow(bob_ross)
-    prop.test(successes, n, conf.level = 0.95)
+    bob_ross |>
+      mutate(tree = factor(tree)) |>
+      prop_test(response = tree, success = "1", conf_level = 0.95)
   prompt: |-
-    **`prop.test()` for proportion CIs.** Base R's `prop.test(x, n)` constructs a theory-based (Wilson) CI for a single proportion; it is covered formally in Appendix B, so treat this as a preview. Run it on "fraction of Bob Ross episodes featuring a tree." Compare its CI to a bootstrap percentile CI from `infer`. Why is the Wilson CI usually preferred over the naive $\hat{p} \pm 1.96 \cdot \sqrt{\hat{p}(1-\hat{p})/n}$ formula, especially when $\hat{p}$ is near 0 or 1?
+    **`prop_test()` for proportion CIs.** The `infer` package's `prop_test(df, response = x, success = "level", conf_level = 0.95)` runs the classic theory-based test for a proportion and returns a tidy one-row tibble whose `lower_ci` and `upper_ci` columns hold a **Wilson CI** for that proportion; the underlying theory is covered formally in Appendix B, so treat this as a preview. Run it on "fraction of Bob Ross episodes featuring a tree" (the webR cell shows the call; `factor()` makes `tree` categorical, which `prop_test()` requires). Compare its CI to a bootstrap percentile CI from `infer`. The other columns (`statistic`, `p_value`) and the printed note about `p = .5` belong to hypothesis testing, coming in Chapter 9; ignore them for now. Why is the Wilson CI usually preferred over the naive $\hat{p} \pm 1.96 \cdot \sqrt{\hat{p}(1-\hat{p})/n}$ formula, especially when $\hat{p}$ is near 0 or 1?
   book_section: Extensions
   book_subsection: Extensions
 - ex_num: 37
@@ -432,7 +446,7 @@ exercises:
       mu >= ci$lower_ci & mu <= ci$upper_ci
     }))
   prompt: |-
-    **Coverage simulation.** The "95 %" in a 95 % CI means, *if we drew many samples and built a CI from each, about 95 % of them would contain the true population mean.* The snippet draws 200 fresh samples from `volcanoes` and builds a bootstrap percentile CI from each (using the chapter's `infer` workflow). Why does the empirical coverage rate land near 95 % but not *exactly* at 95 %? What would make it drift further from 95 % (think, assumption violations or small per-sample $n$)?
+    **Coverage simulation.** The "95 %" in a 95 % CI means, *if we drew many samples and built a CI from each, about 95 % of them would contain the true population mean.* The snippet draws 200 fresh samples from `volcanoes` and builds a bootstrap percentile CI from each (using the chapter's `infer` workflow). Why does the empirical coverage rate land near 95 % but not *exactly* at 95 %? What would make it drift further from 95 %?
   book_section: Extensions
   book_subsection: Extensions
 - ex_num: 40
@@ -454,7 +468,7 @@ exercises:
     set.seed(76)
     # your exploration here
   prompt: |-
-    **Percentile vs SE method for a *median* on skewed data.** Section 8.2.4's bootstrap workflow already covers medians (`calculate(stat = "median")`), and EX 8.27 built a percentile CI for the median elevation. Go one step further: build the bootstrap distribution of the **median** of `volcanoes$elevation`, a right-skewed variable, and compute *both* the percentile CI and the SE-method CI from it. How do the two intervals differ, and why is the percentile method usually the safer choice for a median on skewed data?
+    **Percentile vs SE method for a *median* on skewed data.** Section 8.2.4's bootstrap workflow already covers medians (`calculate(stat = "median")`), and EX 8.27 built a percentile CI for the median elevation. Go one step further: build the bootstrap distribution `boot_med` of the **median** of `volcanoes$elevation`, a right-skewed variable. Before choosing a CI method, *look* at what you built: run `visualize(boot_med)` (or a plain histogram) and judge by eye whether the distribution is smooth and symmetric. Then compute *both* the percentile CI and the SE-method CI from it. How do the two intervals differ, and why is the percentile method usually the safer choice for a median on skewed data?
   book_section: Extensions
   book_subsection: Extensions
 - ex_num: 42
@@ -496,7 +510,13 @@ exercises:
   difficulty: 3
   group: Extensions
   prompt: |-
-    **Bayesian credible intervals: a one-paragraph contrast.** A frequentist 95 % CI is interpreted via the *procedure*, "if I built many CIs the same way, 95 % would contain the true parameter." A Bayesian **95 % credible interval** is interpreted via the *parameter*, "given the data and my prior beliefs, there's a 95 % probability the true parameter lies in this range." In 2-3 sentences, describe a context where the Bayesian interpretation would be more *useful* in plain-English communication with a non-statistical audience, and a context where you'd prefer the frequentist version (no Bayesian software setup required).
+    **Bayesian credible intervals: a conceptual contrast.** Everything in this chapter has been *frequentist*: probability describes how often a *procedure* succeeds across many hypothetical repetitions, so a frequentist 95 % CI is read "if I built many CIs the same way, about 95 % of them would contain the true parameter."
+
+    There is a second school of statistical thought. A Bayesian analysis starts from a **prior**: a probability distribution, written down *before* seeing any data, that says which parameter values you consider more or less plausible (for example, "a coin's chance of heads is probably near 0.5" or "the average volcano elevation is probably somewhere between sea level and a few thousand meters"). The data then *update* the prior using **Bayes' rule** (the same idea as updating a belief after new evidence) into the **posterior**: a distribution describing what you believe about the parameter *after* seeing the data. In the Bayesian view the parameter itself gets a probability distribution, something frequentist methods deliberately avoid.
+
+    A **95 % credible interval** is an interval containing 95 % of that posterior. It is read exactly the way most people *want* to read a CI: "given the data and my prior, there is a 95 % probability the true parameter lies in this range" (compare EX 8.5, where that sentence was *wrong* for a frequentist CI). With plenty of data and a mild prior, the two kinds of interval are usually numerically similar; they differ most visibly when the sample is small or the prior is strong, because then the prior's opinion still carries real weight in the posterior.
+
+    In 2-3 sentences, describe a context where the Bayesian interpretation would be more *useful* in plain-English communication with a non-statistical audience, and a context where you'd prefer the frequentist version (no Bayesian software setup required).
   book_section: Extensions
   book_subsection: Extensions
 - ex_num: 45
@@ -508,7 +528,7 @@ exercises:
     samp <- volcanoes |> rep_slice_sample(n = 50) |> ungroup()
 
     set.seed(76)
-    widths <- sapply(c(50, 100, 500, 2000, 5000), function(reps) {
+    widths <- purrr::map_dbl(c(50, 100, 500, 2000, 5000), function(reps) {
       ci <- samp |>
         specify(response = elevation) |>
         generate(reps = reps, type = "bootstrap") |>
@@ -518,7 +538,7 @@ exercises:
     })
     tibble::tibble(reps = c(50, 100, 500, 2000, 5000), width = round(widths, 3))
   prompt: |-
-    **How many bootstrap replicates is "enough"?** Section 8.2.1 is where the chapter discusses the number of bootstrap *replicates*; Section 8.3's convergence discussion is about the *sample size* $n$, not the replicate count. As `reps` grows, the histogram of resample statistics approaches the *bootstrap distribution* itself, shrinking the Monte Carlo simulation error, **not** the true sampling distribution: that approximation is limited by the original sample, no matter how many replicates you run. Run the snippet, which rebuilds the 95 % CI for the mean volcano `elevation` from EX 8.1's sample `samp` (re-created here) using `reps =` 50, 100, 500, 2000, and 5000.
+    **How many bootstrap replicates is "enough"?** Section 8.2.1 is where the chapter discusses the number of bootstrap *replicates*; Section 8.3's convergence discussion is about the *sample size* $n$, not the replicate count. As `reps` grows, the histogram of resample statistics approaches the *bootstrap distribution* itself, shrinking the Monte Carlo simulation error, **not** the true sampling distribution: that approximation is limited by the original sample, no matter how many replicates you run. Run the snippet, which rebuilds the 95 % CI for the mean volcano `elevation` from EX 8.1's sample `samp` (re-created here) using `reps =` 50, 100, 500, 2000, and 5000. The snippet steps through those five replicate counts with `purrr::map_dbl(c(50, 100, 500, 2000, 5000), ...)`, a function from the tidyverse's `purrr` package (beyond this book): it applies the same recipe to each element of the vector and returns one number per element, here a CI width per replicate count. The purrr reference index at <https://purrr.tidyverse.org/reference/> lists the whole `map` family.
 
     - (a) At which `reps` value does the CI width stop moving meaningfully?
     - (b) Why does *adding more replicates* eventually stop improving the answer, what part of the bootstrap is `reps` actually estimating?
