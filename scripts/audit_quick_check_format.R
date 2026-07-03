@@ -28,7 +28,13 @@ suppressPackageStartupMessages({
   library(stringr)
 })
 
-book <- "/Users/chesterismay/Desktop/repos/ModernDive_book"
+# Resolve the book root from this script's own location (scripts/..), with an
+# env-var override; a hardcoded absolute path broke whenever the repo moved.
+book <- Sys.getenv("MODERNDIVE_BOOK_DIR", unset = NA)
+if (is.na(book)) {
+  args <- grep("^--file=", commandArgs(FALSE), value = TRUE)
+  book <- if (length(args)) dirname(dirname(normalizePath(sub("^--file=", "", args[1])))) else "."
+}
 setwd(book)
 
 qmd_files <- list.files(".", pattern = "^[0-9]+-.*\\.qmd$")
@@ -49,12 +55,12 @@ for (f in qmd_files) {
   qc_block <- lines[qc_start:qc_end]
 
   # Locate every **Qn.** stem
-  q_idx <- grep("^\\*\\*Q[0-9]+\\.\\*\\*", qc_block)
+  q_idx <- grep("^\\*\\*Q[0-9]+-[0-9]+\\.\\*\\*", qc_block)
   if (!length(q_idx)) next
 
   for (qi in seq_along(q_idx)) {
     total_qcs <- total_qcs + 1
-    qn <- str_match(qc_block[q_idx[qi]], "^\\*\\*Q([0-9]+)\\.")[1, 2]
+    qn <- str_match(qc_block[q_idx[qi]], "^\\*\\*Q[0-9]+-([0-9]+)\\.")[1, 2]
     s <- q_idx[qi]
     e <- if (qi < length(q_idx)) q_idx[qi + 1] - 1 else length(qc_block)
     block <- qc_block[s:e]
