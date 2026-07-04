@@ -17,7 +17,7 @@
 #   - In webR's preloaded packages (see PRELOADED_DATA below)
 #   - Loaded by `library(<github-only-pkg>)` in the chapter setup (shadow
 #     library() maps olympicAthletes -> olympic_athletes/editions/medal_table,
-#     steves -> episodes, exoplanets -> planets, volcanoes -> eruptions/volcanoes)
+#     steves -> episodes, exoplanetdata -> planets, volcanoes -> eruptions/volcanoes)
 #   - Defined as `X <- ...` in the chapter setup cell
 #   - Defined as `X <- ...` earlier in the same cell
 
@@ -58,7 +58,7 @@ SHADOW_MAP <- list(
                       "season_counts",
                       "usa_summer_medals", "team_sport_athletes"),
   steves          = c("episodes"),
-  exoplanets      = c("planets"),
+  exoplanetdata   = c("planets"),
   volcanoes       = c("eruptions", "volcanoes")
 )
 

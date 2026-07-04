@@ -30,7 +30,7 @@ Renders end-of-chapter exercises and solutions from `exercises/NN.yml`. Called f
 Helper functions called from every chapter's `setup-init` chunk: `version`, `dev_version`, `needed_CRAN_pkgs`, plus assorted small utilities. Quarto runs each chapter in its own R session, so this file is sourced at the top of every chapter qmd to set up shared state.
 
 ### `setup_exercise_packages.R`
-Defines `EXERCISE_PACKAGES`, the list of dataset packages the end-of-chapter exercises rely on (`olympicAthletes`, `steves`, `exoplanets`, `volcanoes`, plus the CRAN packages). Each entry has a `from_github` flag — flip it to `FALSE` when a package lands on CRAN and the install pipeline switches without other changes.
+Defines `EXERCISE_PACKAGES`, the list of dataset packages the end-of-chapter exercises rely on (`olympicAthletes`, `steves`, `exoplanetdata`, `volcanoes`, plus the CRAN packages). Each entry has a `from_github` flag — flip it to `FALSE` when a package lands on CRAN and the install pipeline switches without other changes.
 
 ### `post-render-cleanup.sh`
 Post-render hook configured in `_quarto.yml` (`post-render: scripts/post-render-cleanup.sh`). Cleans up macOS Cocoa render artifacts that Quarto leaves in the working tree.

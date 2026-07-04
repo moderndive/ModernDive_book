@@ -17,7 +17,7 @@ want <- list(
                       "season_counts",
                       "usa_summer_medals", "team_sport_athletes"),
   steves    = c("episodes"),
-  exoplanets = c("planets"),
+  exoplanetdata = c("planets"),
   volcanoes = c("eruptions", "volcanoes")
 )
 

@@ -69,7 +69,7 @@ Audit infrastructure: `tmp/webr_audit.py` and `webr_qmd_cells.py` flag bare data
 
 # ModernDive 2.8.17 — Shadow library() so library(<github-only-pkg>) "just works" in webR
 
-* **Shadow `library()` for the four GitHub-only companion packages.** 2.8.16 fixed broken chapter setups by routing GitHub-only datasets through inline `readr::read_csv()` calls — which worked, but it made the setup code diverge from the local-RStudio idiom, and any exercise `webr:` starter that already wrote `library(olympicAthletes)` (six of them: ex 1.6, 2.1, 3.1, 6.1, 7.1, 10.49) still errored. New `scripts/webr-shadow-library.R` defines a shadow `library()` that — for `olympicAthletes` / `steves` / `exoplanets` / `volcanoes` only — reads each package's `.csv.gz` mirror into `globalenv()`. Every other package name delegates to `base::library()` unchanged, so `library(dplyr)` / `library(infer)` etc. behave normally. Idempotent (repeat calls skip datasets already present).
+* **Shadow `library()` for the four GitHub-only companion packages.** 2.8.16 fixed broken chapter setups by routing GitHub-only datasets through inline `readr::read_csv()` calls — which worked, but it made the setup code diverge from the local-RStudio idiom, and any exercise `webr:` starter that already wrote `library(olympicAthletes)` (six of them: ex 1.6, 2.1, 3.1, 6.1, 7.1, 10.49) still errored. New `scripts/webr-shadow-library.R` defines a shadow `library()` that — for `olympicAthletes` / `steves` / `exoplanetdata` / `volcanoes` only — reads each package's `.csv.gz` mirror into `globalenv()`. Every other package name delegates to `base::library()` unchanged, so `library(dplyr)` / `library(infer)` etc. behave normally. Idempotent (repeat calls skip datasets already present).
 * **Each chapter `#| context: setup` cell now uses `source(...) + library(...)`**:
     ```r
     source("https://raw.githubusercontent.com/moderndive/ModernDive_book/v2/scripts/webr-shadow-library.R")
@@ -86,10 +86,10 @@ Audit infrastructure: `tmp/webr_audit.py` and `webr_qmd_cells.py` flag bare data
 
 # ModernDive 2.8.16 — webR no longer broken by GitHub-only datasets
 
-* **Restored interactive exercises across 10 chapters.** webR (browser-side R) can only install packages from `repo.r-wasm.org`, so each chapter's `#| context: setup` cell `library(olympicAthletes)` / `library(steves)` / `library(exoplanets)` / `library(volcanoes)` call failed silently and tore down the per-page webR namespace — every downstream end-of-chapter `{webr-r}` exercise cell in chapters 1-3, 5-11 was broken. Setup cells now read each needed dataset from a gzipped CSV mirror on `raw.githubusercontent.com/moderndive/ModernDive_book/v2/data/<file>.csv.gz` via `readr::read_csv()`. Datasets exported with `readr::write_csv()` (auto-gzips on `.gz` extension):
+* **Restored interactive exercises across 10 chapters.** webR (browser-side R) can only install packages from `repo.r-wasm.org`, so each chapter's `#| context: setup` cell `library(olympicAthletes)` / `library(steves)` / `library(exoplanetdata)` / `library(volcanoes)` call failed silently and tore down the per-page webR namespace — every downstream end-of-chapter `{webr-r}` exercise cell in chapters 1-3, 5-11 was broken. Setup cells now read each needed dataset from a gzipped CSV mirror on `raw.githubusercontent.com/moderndive/ModernDive_book/v2/data/<file>.csv.gz` via `readr::read_csv()`. Datasets exported with `readr::write_csv()` (auto-gzips on `.gz` extension):
     - `data/olympic_athletes.csv.gz` — 315 090 rows × 16 cols, 5.8 MB (full `olympicAthletes::olympic_athletes`)
     - `data/steves_episodes.csv.gz` — 159 × 38, 50 KB (full `steves::episodes`)
-    - `data/exoplanets_planets.csv.gz` — 6 278 × 28, 377 KB (full `exoplanets::planets`)
+    - `data/exoplanetdata_planets.csv.gz` — 6 278 × 28, 377 KB (full `exoplanetdata::planets`)
     - `data/volcanoes_eruptions.csv.gz` — 11 089 × 14, 163 KB (full `volcanoes::eruptions`)
     - `data/volcanoes_volcanoes.csv.gz` — 1 215 × 19, 442 KB (full `volcanoes::volcanoes`)
 * **`readr` added to `webr.packages`** in `_quarto.yml` so it's preloaded into every chapter's webR session alongside ggplot2/dplyr/etc. — needed to decode the gzipped mirrors transparently.
@@ -333,7 +333,7 @@ The accessibility complement to the Quarto port, plus the wave of migration-era 
     + `olympic_athletes` / `medal_table` / `editions` from the [`olympicAthletes`](https://github.com/moderndive/olympicAthletes) package — introduced in chapter 1, used throughout chapters 2, 3, 5, 8, 9, 10, 11.
     + `episodes` from the [`steves`](https://github.com/ismayc/steves) package — Rick Steves' Europe (2000–2025); introduced in chapter 3.
     + `bob_ross` from `fivethirtyeight` (already CRAN) — used as the chapter 4 *Tidy Data* pilot dataset and revisited in chapters 8 and 9.
-    + `planets` and `stars` from the [`exoplanets`](https://github.com/moderndive/exoplanets) package — introduced in chapter 6 and reused in 7, 10, 11.
+    + `planets` and `stars` from the [`exoplanetdata`](https://github.com/moderndive/exoplanetdata) package — introduced in chapter 6 and reused in 7, 10, 11.
     + `volcanoes` / `eruptions` / `events` from the [`volcanoes`](https://github.com/moderndive/volcanoes) package — introduced in chapter 7 and reused in 8, 9, 11.
 * **Inline WebR sandboxes** beneath each code-needing exercise — same `{webr-r}` mechanism as the chapter examples — with reasoning-only prompts left as plain text so the *Run Code* button only appears where it makes sense.
 * **Solutions are instructor-only** and *not* deployed alongside the public book. Per-chapter solution content lives in `exercise-solutions/NN_ex.qmd` (mirroring the `lc-answers/` pattern) and is assembled into a self-contained HTML by a separate Quarto project at `instructor-solutions/`. Each chapter's solutions section opens with a **section coverage** table mapping book sections to exercise numbers, and each entry shows a foldable *show question* callout above an always-visible **Solution** with a plain-text section reference.

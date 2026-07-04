@@ -3,7 +3,7 @@
 # Two webR-specific gaps this addresses:
 #
 # (1) The four GitHub-only companion packages — olympicAthletes, steves,
-#     exoplanets, volcanoes — can't be installed in webR. For those, the
+#     exoplanetdata, volcanoes — can't be installed in webR. For those, the
 #     shadow reads each package's datasets from a v2 raw .rds mirror into
 #     globalenv() when `library(<pkg>)` is called.
 #
@@ -57,8 +57,8 @@ local({
     steves = c(
       episodes = "steves_episodes.rds"
     ),
-    exoplanets = c(
-      planets = "exoplanets_planets.rds"
+    exoplanetdata = c(
+      planets = "exoplanetdata_planets.rds"
     ),
     volcanoes = c(
       eruptions = "volcanoes_eruptions.rds",

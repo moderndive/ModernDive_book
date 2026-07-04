@@ -14,8 +14,8 @@ EXERCISE_PACKAGES <- list(
     repo        = NA_character_,
     from_github = FALSE
   ),
-  exoplanets = list(
-    repo        = "moderndive/exoplanets",
+  exoplanetdata = list(
+    repo        = "moderndive/exoplanetdata",
     from_github = TRUE
   ),
   volcanoes = list(
