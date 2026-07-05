@@ -2,8 +2,8 @@
 #
 # Two webR-specific gaps this addresses:
 #
-# (1) The four GitHub-only companion packages — olympicAthletes, steves,
-#     exoplanets, volcanoes — can't be installed in webR. For those, the
+# (1) The GitHub-only companion packages — olympicAthletes, steves,
+#     exoplanets/exoplanetdata, volcanoes — can't be installed in webR. For those, the
 #     shadow reads each package's datasets from a v2 raw .rds mirror into
 #     globalenv() when `library(<pkg>)` is called.
 #
@@ -55,6 +55,12 @@ local({
     ),
     exoplanets = c(
       planets = "exoplanets_planets.rds"
+    ),
+    # `exoplanets` was renamed to `exoplanetdata` on the content branch
+    # (v2-quarto-html), whose webR cells `source()` this shadow from v2. Keep
+    # both entries so either package name resolves. Same `planets` dataset.
+    exoplanetdata = c(
+      planets = "exoplanetdata_planets.rds"
     ),
     volcanoes = c(
       eruptions = "volcanoes_eruptions.rds",
