@@ -102,6 +102,47 @@ ex_helpers_extensions_callout <- function() c(
   ''
 )
 
+# A page-top control that expands/collapses every per-exercise question callout
+# at once. Each exercise's question renders collapsed (`collapse="true"`); this
+# button flips them all so an instructor can read the whole question set — a
+# "question paper" view — without clicking each one. Pure DOM class-toggling
+# (no Bootstrap JS dependency), scoped to the collapsible `#ex-<ch>-<n>`
+# callouts by id prefix so the non-collapsible "About these Extensions" note is
+# left alone. Emitted via a raw-HTML block so pandoc passes the <script> through.
+ex_helpers_expand_all_toolbar <- function() c(
+  '```{=html}',
+  '<div class="solutions-toolbar" style="margin:0.75rem 0 1.25rem;">',
+  '  <button id="toggle-all-questions" class="btn btn-sm btn-outline-secondary" type="button" aria-pressed="false">Show all questions</button>',
+  '</div>',
+  '<script>',
+  '(function () {',
+  '  function ready(fn){ if (document.readyState !== "loading") fn(); else document.addEventListener("DOMContentLoaded", fn); }',
+  '  ready(function () {',
+  '    var btn = document.getElementById("toggle-all-questions");',
+  '    if (!btn) return;',
+  '    function panels(){ return Array.prototype.slice.call(document.querySelectorAll(\'div.callout[id^="ex-"]\')); }',
+  '    function setOpen(callout, open){',
+  '      var header = callout.querySelector(\'.callout-header[data-bs-toggle="collapse"]\');',
+  '      var body = callout.querySelector(".callout-collapse.collapse");',
+  '      if (!header || !body) return;',
+  '      header.classList.toggle("collapsed", !open);',
+  '      header.setAttribute("aria-expanded", open ? "true" : "false");',
+  '      body.classList.toggle("show", open);',
+  '    }',
+  '    var open = false;',
+  '    btn.addEventListener("click", function () {',
+  '      open = !open;',
+  '      panels().forEach(function (c){ setOpen(c, open); });',
+  '      btn.textContent = open ? "Hide all questions" : "Show all questions";',
+  '      btn.setAttribute("aria-pressed", open ? "true" : "false");',
+  '    });',
+  '  });',
+  '})();',
+  '</script>',
+  '```',
+  ''
+)
+
 # Markdown for the chapter qmd's `## Exercises` body — group headers, prompts,
 # and {webr-r} blocks. Author writes the rest of the section (intro, difficulty
 # legend, setup chunk) directly in the qmd.
@@ -166,14 +207,13 @@ render_solutions <- function(chapter) {
   if (!is.null(data_note) && nzchar(data_note)) {
     out <- c(out, trimws(data_note), "")
   }
+  # Page-top control to reveal every collapsed question at once (all chapters).
+  out <- c(out, ex_helpers_expand_all_toolbar())
   current_group <- NULL
-  # Cap visible TOC entries to 5 per chapter. "Extensions" and any group whose
-  # name starts with "Critical thinking" are *always* visible (pinned) — the
-  # cap consumes the remaining slots with non-pinned groups in document order.
-  # Hidden groups still render as h3 sections in the body but get `.unlisted`
-  # so they disappear from the sidebar TOC.
-  is_pinned <- function(g) identical(g, "Extensions") ||
-                           isTRUE(startsWith(g, "Critical thinking"))
+  # Every group heading appears in the sidebar TOC. (A previous 5-entry cap
+  # pinned "Extensions"/"Critical thinking…" and hid the rest; but with the
+  # book's per-section groups every chapter now has ~9–11 groups, so the cap hid
+  # the majority of sections from navigation. All groups are listed instead.)
   groups_seen <- character()
   for (ex in data$exercises) {
     g <- ex$group %||% NA_character_
@@ -181,10 +221,7 @@ render_solutions <- function(chapter) {
       groups_seen <- c(groups_seen, g)
     }
   }
-  pinned <- groups_seen[vapply(groups_seen, is_pinned, logical(1))]
-  non_pinned <- groups_seen[!vapply(groups_seen, is_pinned, logical(1))]
-  n_slots <- max(0L, 5L - length(pinned))
-  visible_groups <- c(pinned, head(non_pinned, n_slots))
+  visible_groups <- groups_seen
   # When the same group label re-appears non-contiguously in the YAML, only
   # the first emission gets a TOC entry; later re-emissions are forced
   # `.unlisted` so the TOC doesn't show "Observed/fitted values..." twice.
