@@ -102,13 +102,16 @@ ex_helpers_extensions_callout <- function() c(
   ''
 )
 
-# A page-top control that expands/collapses every per-exercise question callout
-# at once. Each exercise's question renders collapsed (`collapse="true"`); this
-# button flips them all so an instructor can read the whole question set — a
-# "question paper" view — without clicking each one. Pure DOM class-toggling
-# (no Bootstrap JS dependency), scoped to the collapsible `#ex-<ch>-<n>`
-# callouts by id prefix so the non-collapsible "About these Extensions" note is
-# left alone. Emitted via a raw-HTML block so pandoc passes the <script> through.
+# A control that expands/collapses every per-exercise question callout at once.
+# Each exercise's question renders collapsed (`collapse="true"`); this button
+# flips them all so an instructor can read the whole question set — a "question
+# paper" view — without clicking each one. Rendered in two places kept in sync:
+# a page-top button, and a matching button injected at the bottom of the "On
+# this page" TOC sidebar (so it's reachable without scrolling back up). Pure DOM
+# class-toggling (no Bootstrap JS dependency), scoped to the collapsible
+# `#ex-<ch>-<n>` callouts by id prefix so the non-collapsible "About these
+# Extensions" note is left alone. Emitted via a raw-HTML block so pandoc passes
+# the <script> through.
 ex_helpers_expand_all_toolbar <- function() c(
   '```{=html}',
   '<div class="solutions-toolbar" style="margin:0.75rem 0 1.25rem;">',
@@ -118,8 +121,21 @@ ex_helpers_expand_all_toolbar <- function() c(
   '(function () {',
   '  function ready(fn){ if (document.readyState !== "loading") fn(); else document.addEventListener("DOMContentLoaded", fn); }',
   '  ready(function () {',
-  '    var btn = document.getElementById("toggle-all-questions");',
-  '    if (!btn) return;',
+  '    var buttons = [];',
+  '    var topBtn = document.getElementById("toggle-all-questions");',
+  '    if (topBtn) buttons.push(topBtn);',
+  '    var toc = document.getElementById("TOC");',
+  '    if (toc) {',
+  '      var tocBtn = document.createElement("button");',
+  '      tocBtn.type = "button";',
+  '      tocBtn.className = "btn btn-sm btn-outline-secondary toc-toggle-all-questions";',
+  '      tocBtn.setAttribute("aria-pressed", "false");',
+  '      tocBtn.style.cssText = "margin:0.75rem 0 0;";',
+  '      tocBtn.textContent = "Show all questions";',
+  '      toc.appendChild(tocBtn);',
+  '      buttons.push(tocBtn);',
+  '    }',
+  '    if (!buttons.length) return;',
   '    function panels(){ return Array.prototype.slice.call(document.querySelectorAll(\'div.callout[id^="ex-"]\')); }',
   '    function setOpen(callout, open){',
   '      var header = callout.querySelector(\'.callout-header[data-bs-toggle="collapse"]\');',
@@ -130,12 +146,15 @@ ex_helpers_expand_all_toolbar <- function() c(
   '      body.classList.toggle("show", open);',
   '    }',
   '    var open = false;',
-  '    btn.addEventListener("click", function () {',
+  '    function toggle(){',
   '      open = !open;',
   '      panels().forEach(function (c){ setOpen(c, open); });',
-  '      btn.textContent = open ? "Hide all questions" : "Show all questions";',
-  '      btn.setAttribute("aria-pressed", open ? "true" : "false");',
-  '    });',
+  '      buttons.forEach(function (b){',
+  '        b.textContent = open ? "Hide all questions" : "Show all questions";',
+  '        b.setAttribute("aria-pressed", open ? "true" : "false");',
+  '      });',
+  '    }',
+  '    buttons.forEach(function (b){ b.addEventListener("click", toggle); });',
   '  });',
   '})();',
   '</script>',
