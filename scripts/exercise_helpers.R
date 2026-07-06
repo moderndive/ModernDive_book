@@ -271,10 +271,9 @@ render_solutions <- function(chapter) {
       sprintf("**%s (%s)** %s", id, star_str, trimws(ex$prompt)),
       ":::",
       "",
-      sprintf("**Solution** %s*(reference: %s)*.",
-              if (!is.null(ex$hash) && nzchar(ex$hash))
-                sprintf("`#%s` ", ex$hash) else "",
-              ex$solution_ref),
+      # Hash omitted from the visible page — reviewers use the exercise-solution
+      # checker (which keys on the YAML hash) rather than reading it off the page.
+      sprintf("**Solution** *(reference: %s)*.", ex$solution_ref),
       "",
       body,
       "",
