@@ -179,6 +179,7 @@ hub_nav_html <- function(at_root = TRUE) {
     '      <button aria-haspopup="true">Assess</button>',
     '      <div class="insthub-menu">',
     sprintf('        <a href="%sexam-bank.html">Exam question bank</a>', prefix),
+    sprintf('        <a href="%sdependency-map.html">Exercise dependency map</a>', prefix),
     sprintf('        <a href="%sflashcards.html">Flashcards (Anki/Quizlet)</a>', prefix),
     sprintf('        <a href="%shomework-planner.html">Homework planner</a>', prefix),
     sprintf('        <a href="%sprojects.html">Project prompt bank</a>', prefix),
