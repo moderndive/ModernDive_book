@@ -1,0 +1,115 @@
+name: webR watch (companion data packages)
+
+# Once a GitHub-only companion dataset package (olympicAthletes / steves /
+# exoplanetdata / volcanoes — whatever is currently served by the webR shadow
+# library) gets a wasm binary on webR's default repo (repo.r-wasm.org), open a
+# PR into v2-quarto-html that drops it from `pkg_data` in
+# scripts/webr-shadow-library.R, so the book's webR cells install the real
+# package instead of reading the .rds mirror.
+#
+# This file lives on the DEFAULT branch (v2) because scheduled workflows only
+# fire from there, but everything it touches is on v2-quarto-html: it checks
+# out that branch and runs its scripts/promote_webr_packages.R. It opens a PR
+# (not a direct commit) for review. A single fixed branch is reused, so re-runs
+# update the same PR instead of spawning duplicates.
+#
+# Sibling automation: cran-watch.yml in moderndive-instructor-resources does
+# the same dance for CRAN (a separate index from webR's).
+on:
+  schedule:
+    - cron: "30 7 * * *"   # daily, 07:30 UTC (cran-watch runs at 07:00)
+  workflow_dispatch:
+
+permissions:
+  contents: write        # push the PR branch
+  pull-requests: write   # open the PR
+
+concurrency:
+  group: webr-watch
+  cancel-in-progress: false
+
+jobs:
+  webr-watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: v2-quarto-html
+
+      - uses: r-lib/actions/setup-r@v2
+
+      - name: Check repo.r-wasm.org and prune graduated packages
+        id: promote
+        run: |
+          promoted=$(Rscript --vanilla scripts/promote_webr_packages.R)
+          echo "promoted=$promoted" >> "$GITHUB_OUTPUT"
+          if [ -n "$promoted" ]; then
+            echo "### Now on webR: \`$promoted\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No companion packages newly on webR." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Open or update the promotion PR
+        if: steps.promote.outputs.promoted != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROMOTED: ${{ steps.promote.outputs.promoted }}
+        run: |
+          set -euo pipefail
+          BRANCH="webr-promote"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Fresh branch from the current v2-quarto-html state (carries the
+          # working-tree edit)
+          git checkout -b "$BRANCH"
+          git add scripts/webr-shadow-library.R
+          git commit -m "webR shadow: ${PROMOTED} now on repo.r-wasm.org — install for real, drop the mirror"
+          git push --force -u origin "$BRANCH"
+
+          TITLE="${PROMOTED} on webR: drop the shadow-library mirror entry(ies)"
+
+          # Quoted heredoc: nothing expands (backticks stay literal); inject the
+          # package list afterwards with sed, then pass via --body-file.
+          cat > /tmp/pr-body.md <<'EOF'
+          🤖 Automated by `.github/workflows/webr-watch.yml` (on the `v2` branch).
+
+          **`__PROMOTED__`** now have wasm binaries on webR's default repo
+          ([repo.r-wasm.org](https://repo.r-wasm.org)), so this PR drops them from
+          `pkg_data` in `scripts/webr-shadow-library.R`. With the entry gone,
+          quarto-webr's auto-install (via the `webr::install` shim, which skips
+          only `pkg_data` names) installs the real package and `library(<pkg>)`
+          delegates to `base::library()` instead of reading the `.rds` mirror.
+
+          **After merging** (the push to `v2-quarto-html` redeploys the book):
+          - Port the same pruning to `scripts/webr-shadow-library.R` on the **`v2`**
+            branch — that copy is what the deployed book's webR cells actually
+            `source()` at runtime, so nothing changes in the live book until it's
+            updated too. (The two copies differ deliberately — the `v2` one keeps
+            legacy aliases like `exoplanets` — so port the edit, don't overwrite.)
+          - Spot-check a webR cell that uses the package(s), e.g. with
+            `scripts/test_webr_headless`.
+
+          **Separate follow-ups (other repos / not blocking):**
+          - `moderndive-instructor-resources`: remove the package name(s) from the
+            shadow-library list in `instructor-solutions/common-errors.qmd`
+            ("Requested package X not found in webR binary repo" entry).
+          - Optional tidy-ups here: update the header comment in
+            `scripts/webr-shadow-library.R` (the "four GitHub-only companion
+            packages" note), regenerate `data/webr-shadow-help.rds` via
+            `scripts/build-webr-shadow-help.R` (stale entries are inert — the help
+            shim only fires when a package is NOT installed), and retire the
+            package's `.rds` mirror files on the `v2` data branch once nothing
+            references them.
+
+          cc @ismayc
+          EOF
+          sed -i "s/__PROMOTED__/${PROMOTED}/g" /tmp/pr-body.md
+
+          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+            gh pr create --base v2-quarto-html --head "$BRANCH" --title "$TITLE" --body-file /tmp/pr-body.md
+            echo "Opened PR." >> "$GITHUB_STEP_SUMMARY"
+          else
+            gh pr edit "$BRANCH" --title "$TITLE" --body-file /tmp/pr-body.md
+            echo "Updated existing PR." >> "$GITHUB_STEP_SUMMARY"
+          fi
