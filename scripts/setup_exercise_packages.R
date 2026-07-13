@@ -15,12 +15,12 @@ EXERCISE_PACKAGES <- list(
     from_github = FALSE
   ),
   exoplanetdata = list(
-    repo        = "moderndive/exoplanetdata",
-    from_github = TRUE
+    repo        = NA_character_,
+    from_github = FALSE
   ),
   volcanoes = list(
-    repo        = "moderndive/volcanoes",
-    from_github = TRUE
+    repo        = NA_character_,
+    from_github = FALSE
   ),
   fivethirtyeight = list(
     repo        = NA_character_,
