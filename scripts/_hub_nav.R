@@ -202,7 +202,7 @@ hub_nav_html <- function(at_root = TRUE) {
     '    <div class="insthub-spacer"></div>',
     '    <div class="insthub-right">',
     '      <button class="insthub-search-btn" onclick="document.getElementById(&quot;insthub-search-modal&quot;).classList.add(&quot;open&quot;); setTimeout(function(){var i=document.querySelector(&quot;.pagefind-ui__search-input&quot;); if(i)i.focus();}, 100);" aria-label="Search the instructor hub" title="Search (Cmd/Ctrl-K)">&#128269; Search</button>',
-    '      <a href="mailto:chester.ismay@gmail.com?subject=Instructor%20hub%20feedback" aria-label="Email feedback about the instructor hub">Feedback</a>',
+    '      <a href="mailto:chester.ismay@gmail.com,albert.ys.kim@gmail.com,arturo.valdivia@gmail.com?subject=Instructor%20hub%20feedback" aria-label="Email feedback about the instructor hub">Feedback</a>',
     '      <a href="https://github.com/moderndive/ModernDive_book" target="_blank" rel="noopener" aria-label="ModernDive book on GitHub">GitHub</a>',
     '    </div>',
     '  </div>',
