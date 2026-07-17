@@ -67,7 +67,7 @@ hub_nav_html <- function(at_root = TRUE) {
     # one Umami website).
     '<script>',
     '  (function () {',
-    '    var UMAMI_WEBSITE_ID = "";',
+    '    var UMAMI_WEBSITE_ID = "77619776-1343-4783-bce5-6102534600a6";',
     '    window.mdTrack = window.mdTrack || function (ev) {',
     '      if (window.umami && typeof umami.track === "function") {',
     '        try { umami.track(ev); } catch (e) {}',
