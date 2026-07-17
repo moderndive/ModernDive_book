@@ -55,7 +55,10 @@ hub_nav_html <- function(at_root = TRUE) {
     # MathJax 3 — handles $…$ inline and $$…$$ display math. Safe to load
     # even on pages without math; only activates when delimiters appear.
     '<script>',
-    '  window.MathJax = {',
+    # Non-clobbering: a page may set its own richer MathJax config in <head>
+    # (dependency-map does, for processEscapes) — respect it and only supply
+    # the default when none exists.
+    '  window.MathJax = window.MathJax || {',
     '    tex: { inlineMath: [["$","$"], ["\\\\(","\\\\)"]], displayMath: [["$$","$$"], ["\\\\[","\\\\]"]] },',
     '    options: { skipHtmlTags: ["script","noscript","style","textarea","pre","code"] }',
     '  };',
@@ -201,7 +204,7 @@ hub_nav_html <- function(at_root = TRUE) {
     sprintf('        <a href="%sethics-scenarios.html">Ethics &amp; data scenarios</a>', prefix),
     sprintf('        <a href="%sfacilitator-notes/index.html">Facilitator notes</a>', prefix),
     sprintf('        <a href="%smisconceptions.html">Misconceptions</a>', prefix),
-    '        <a href="https://moderndive.github.io/moderndive_labs/" target="_blank" rel="noopener">ModernDive Labs &rarr;</a>',
+    '        <a href="https://moderndive.github.io/moderndive_labs/" target="_blank" rel="noopener">ModernDive Labs (external)</a>',
     sprintf('        <a href="%ssampling-bootstrap-applet.html">Sampling vs bootstrap (interactive)</a>', prefix),
     sprintf('        <a href="%sslides/index.html">Slide decks</a>', prefix),
     sprintf('        <a href="%sta-guide.html">TA training packet</a>', prefix),
@@ -223,7 +226,7 @@ hub_nav_html <- function(at_root = TRUE) {
     sprintf('    <a class="insthub-link" href="%sNEWS.html">What\'s new</a>', prefix),
     '    <div class="insthub-spacer"></div>',
     '    <div class="insthub-right">',
-    '      <button class="insthub-search-btn" onclick="if(window.mdTrack)window.mdTrack(&quot;search-open&quot;); document.getElementById(&quot;insthub-search-modal&quot;).classList.add(&quot;open&quot;); setTimeout(function(){var i=document.querySelector(&quot;.pagefind-ui__search-input&quot;); if(i)i.focus();}, 100);" aria-label="Search the instructor hub" title="Search (Cmd/Ctrl-K)">&#128269; Search</button>',
+    '      <button class="insthub-search-btn" onclick="if(window.mdTrack)window.mdTrack(&quot;search-open&quot;); document.getElementById(&quot;insthub-search-modal&quot;).classList.add(&quot;open&quot;); setTimeout(function(){var i=document.querySelector(&quot;.pagefind-ui__search-input&quot;); if(i)i.focus();}, 100);" aria-label="Search the instructor hub" title="Search">&#128269; Search</button>',
     '      <a href="mailto:chester.ismay@gmail.com,albert.ys.kim@gmail.com,arturo.valdivia@gmail.com?subject=Instructor%20hub%20feedback" aria-label="Email feedback about the instructor hub">Feedback</a>',
     '      <a href="https://github.com/moderndive/ModernDive_book" target="_blank" rel="noopener" aria-label="ModernDive book on GitHub">GitHub</a>',
     '    </div>',
