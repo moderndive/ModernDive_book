@@ -1,0 +1,143 @@
+name: Re-pin renv.lock
+
+# Maintainer tool. Regenerates renv.lock against the SAME environment the
+# render workflows use — Ubuntu noble, R 4.6.1, and the dated Posit Package
+# Manager snapshot that quarto-publish.yml / pr-preview.yml install from — then
+# commits the refreshed lockfile back to the branch this is dispatched on.
+#
+# WHY THIS EXISTS
+#
+# renv is currently disabled in CI (it resolves the GitHub data packages via
+# api.github.com, which flakes), so the render workflows install the lockfile's
+# CRAN packages by NAME from a dated snapshot. That makes builds deterministic,
+# but it means the lockfile records *which* packages, not *which versions* —
+# and the two have drifted apart: 33 of 187 packages currently resolve to a
+# version different from what renv.lock records. The render workflows print
+# that drift on every build ("Report renv.lock version drift").
+#
+# Closing the gap by simply running `renv::restore()` would be worse, not
+# better: 33 locked versions are no longer current at the pinned snapshot, so
+# restore would fall back to SOURCE builds for all of them — including Rcpp,
+# data.table, cpp11 and bit64, which are minutes each. CI would get much slower
+# in exchange for the pin.
+#
+# This workflow removes that obstacle. Regenerating the lockfile here makes its
+# versions equal to what the pinned snapshot actually serves, so a subsequent
+# `renv::restore()` is satisfied entirely by BINARIES. That is the prerequisite
+# for re-enabling renv properly (the long-standing TODO in quarto-publish.yml),
+# and it must run on a Linux runner: a lockfile snapshotted on macOS records
+# versions that P3M's linux binaries may not match.
+#
+# The GitHub-only data packages are installed by plain `git clone` at the SHAs
+# already recorded in the lockfile, exactly as the render workflows do, so
+# nothing here touches api.github.com and their entries are preserved.
+#
+# Run: Actions -> "Re-pin renv.lock" -> Run workflow -> pick the branch.
+# Review the resulting diff before relying on it — this rewrites version
+# metadata for every package.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  # Keep in lockstep with quarto-publish.yml / pr-preview.yml.
+  SNAPSHOT: "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-17"
+  # renv must not autoload while we are installing; we drive it explicitly.
+  RENV_CONFIG_AUTOLOADER_ENABLED: "FALSE"
+  RENV_CONFIG_SYNCHRONIZED_CHECK: "FALSE"
+  GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  repin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          # Same pin as the render workflows — a lockfile is only reproducible
+          # when it is generated under the R version that will restore it.
+          r-version: "4.6.1"
+          use-public-rspm: true
+
+      - name: Install system libraries for V8
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libv8-dev || sudo apt-get install -y libnode-dev
+          sudo apt-get install -y libicu-dev
+
+      - name: Install the lockfile's CRAN packages from the pinned snapshot
+        run: |
+          R -q -e '
+            snap <- Sys.getenv("SNAPSHOT")
+            if (!requireNamespace("jsonlite", quietly = TRUE)) install.packages("jsonlite", repos = snap)
+            lock <- jsonlite::fromJSON("renv.lock", simplifyVector = FALSE)$Packages
+            keep <- Filter(function(p) !identical(p$Source, "GitHub") && !identical(p$RemoteType, "github"), lock)
+            need <- setdiff(names(keep), rownames(installed.packages()))
+            message("Installing ", length(need), " CRAN packages @ ", snap)
+            if (length(need)) install.packages(need, repos = snap)
+          '
+
+      - name: Install GitHub-only data packages at their locked SHAs (git clone)
+        run: |
+          R -q -e '
+            snap <- Sys.getenv("SNAPSHOT")
+            if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes", repos = snap)
+            lock <- jsonlite::fromJSON("renv.lock", simplifyVector = FALSE)$Packages
+            gh <- Filter(function(p) identical(p$Source, "GitHub") || identical(p$RemoteType, "github"), lock)
+            for (nm in names(gh)) {
+              p <- gh[[nm]]
+              url <- sprintf("https://github.com/%s/%s.git", p$RemoteUsername, p$RemoteRepo)
+              sha <- p$RemoteSha
+              message("Installing ", nm, " from ", url, " @ ", substr(sha, 1, 12))
+              # install_git talks to the git remote only — never api.github.com,
+              # which is the call that made renv flaky here.
+              remotes::install_git(url, ref = sha, upgrade = "never", quiet = FALSE)
+            }
+          '
+
+      - name: Regenerate renv.lock
+        run: |
+          R -q -e '
+            snap <- Sys.getenv("SNAPSHOT")
+            if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv", repos = snap)
+            options(repos = c(CRAN = snap))
+            # type = "all" keeps the rich per-package metadata this lockfile
+            # already carries (Title, Date, Authors@R), so entries stay
+            # internally consistent rather than having Version rewritten while
+            # the surrounding metadata still describes the previous release.
+            renv::snapshot(type = "all", prompt = FALSE)
+          '
+
+      - name: Show what changed
+        run: |
+          echo "=== renv.lock diff (versions only) ==="
+          git diff -U0 -- renv.lock | grep -E '^[+-].*"(Package|Version)"' | head -80 || true
+          echo
+          R -q -e '
+            lock <- jsonlite::fromJSON("renv.lock", simplifyVector = FALSE)$Packages
+            keep <- Filter(function(p) !identical(p$Source, "GitHub") && !identical(p$RemoteType, "github"), lock)
+            ip <- installed.packages()
+            bad <- 0L
+            for (nm in names(keep)) {
+              if (!nm %in% rownames(ip)) next
+              if (!identical(keep[[nm]]$Version, unname(ip[nm, "Version"]))) bad <- bad + 1L
+            }
+            message(sprintf("After re-pin: %d of %d CRAN packages still differ from the installed version (expect 0).", bad, length(keep)))
+            if (bad > 0L) quit(status = 1L)
+          '
+
+      - name: Commit the refreshed lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add renv.lock
+          if git diff --cached --quiet; then
+            echo "renv.lock already matches the pinned snapshot — nothing to re-pin."
+          else
+            git commit -m "Regenerate renv.lock against the pinned P3M snapshot (CI) [skip ci]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
