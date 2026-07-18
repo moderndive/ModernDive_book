@@ -24,7 +24,8 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       # renv disabled in CI (see quarto-publish.yml): when active, renv resolves
       # the GitHub data packages via api.github.com, which flakes. We install the
-      # lockfile's CRAN packages from P3M + the GitHub packages via git clone.
+      # lockfile's CRAN packages from a DATED P3M snapshot (deterministic without
+      # renv) + the GitHub packages via git clone.
       RENV_CONFIG_AUTOLOADER_ENABLED: "FALSE"
     steps:
       - uses: actions/checkout@v6
@@ -45,13 +46,45 @@ jobs:
       - name: Install CRAN packages from renv.lock
         run: |
           R -q -e '
-            if (!requireNamespace("jsonlite", quietly = TRUE)) install.packages("jsonlite")
+            # Install from a DATED Posit Package Manager snapshot, not /latest.
+            # renv is disabled here (see the env block), so these packages were
+            # being installed by NAME at whatever version was current that day --
+            # two runs a week apart could build the book against different
+            # package versions. The dated snapshot makes the build deterministic:
+            # same commit in, same package versions out.
+            snap <- "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-17"
+            if (!requireNamespace("jsonlite", quietly = TRUE)) install.packages("jsonlite", repos = snap)
             lock <- jsonlite::fromJSON("renv.lock", simplifyVector = FALSE)$Packages
             keep <- Filter(function(p) !identical(p$Source, "GitHub") && !identical(p$RemoteType, "github"), lock)
             need <- setdiff(names(keep), rownames(installed.packages()))
             need <- setdiff(need, "moderndive")  # dev moderndive comes from GitHub main below
-            message("Installing ", length(need), " CRAN packages from the lockfile")
-            if (length(need)) install.packages(need)
+            message("Installing ", length(need), " CRAN packages from the lockfile @ ", snap)
+            if (length(need)) install.packages(need, repos = snap)
+          '
+
+      # Report where the installed versions differ from renv.lock. Non-fatal by
+      # design: renv is off in CI, so the lockfile currently acts as a package
+      # *manifest* (which packages), while the dated snapshot above is the actual
+      # *pin* (which versions). That gap used to be invisible; this prints it on
+      # every build so it can be tracked and closed when renv is re-enabled.
+      - name: Report renv.lock version drift (informational)
+        run: |
+          R -q -e '
+            lock <- jsonlite::fromJSON("renv.lock", simplifyVector = FALSE)$Packages
+            keep <- Filter(function(p) !identical(p$Source, "GitHub") && !identical(p$RemoteType, "github"), lock)
+            ip <- installed.packages()
+            rows <- list()
+            for (nm in names(keep)) {
+              if (!nm %in% rownames(ip)) next
+              lv <- keep[[nm]]$Version; iv <- unname(ip[nm, "Version"])
+              if (!identical(lv, iv)) rows[[length(rows) + 1L]] <- sprintf("  %-20s lock %-14s installed %s", nm, lv, iv)
+            }
+            if (length(rows)) {
+              message(sprintf("%d of %d lockfile packages differ from the installed version:", length(rows), length(keep)))
+              message(paste(unlist(rows), collapse = "\n"))
+            } else {
+              message("All lockfile packages match their installed versions.")
+            }
           '
 
       - name: Install GitHub-only exercise packages
