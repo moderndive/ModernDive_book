@@ -1,3 +1,22 @@
+# ModernDive 2.9.0 — Quarto edition goes live at moderndive.com/v2
+
+The Quarto edition — everything from 2.1.0 through 2.8.21 — is now what readers see at <https://moderndive.com/v2/>. `v2-quarto-html` was merged into `v2` (PR [#574](https://github.com/moderndive/ModernDive_book/pull/574)), retiring the bookdown build of the second edition.
+
+Reader-visible changes from the cutover itself:
+
+* **Every legacy URL keeps working.** The old bookdown pages (unprefixed slugs like `getting-started.html`, the `appendixa`/`appendixA` case variants, extensionless forms, `labs.html`, and the two `regression-plane` pages) now 301-redirect to their Quarto equivalents. 60 redirect rules in total, each verified live after deploy.
+* **Per-chapter R scripts are back.** Bookdown generated the `scripts/NN-chapter.R` files each chapter links to at build time; Quarto did not. A new `scripts/purl_chapters.R` (run in CI after the render) regenerates them from the `.qmd` chapters via `knitr::purl()`, so the "R script file of all R code used in this chapter" links stay live — now reflecting the current Quarto chapter code rather than the frozen bookdown copies.
+* **The Preface's "About this book" section** now summarizes the online edition's growth since Version 2.0.0 went to print.
+
+Under the hood:
+
+* `v2` is now the single content branch: the Quarto sources, the deploy workflow (publishing to the live `/v2` with `clean: true` so stale bookdown files are actually removed), the audit suite, and the webR runtime assets (`data/` mirrors + `scripts/webr-shadow-library.R`, which webR cells `source()` from this branch's tip) all live here. The bookdown sources were removed; the pre-cutover bookdown tree remains at the `v2` branch history before the merge.
+* The webR shadow library was merged as a **union** of both branches' dataset registries (all 20 mirrored files verified present), so no interactive cell lost its data during the switch.
+* `webr-watch.yml` (the daily job that promotes companion packages once webR carries a real wasm build) now operates on `v2` instead of the retired development branch.
+* `data/le_mess.csv` is shipped with the site again for LC 4.5's `read_csv()`-from-URL exercise.
+
+***
+
 # ModernDive 2.8.21 — Instructor materials moved to a private repo
 
 The `instructor-solutions/` hub (worked solutions, facilitator notes, slide decks, syllabus, rubrics, exam bank, …) and the `scripts/build_*.R` report generators have been **removed from this public repo**. They now live in the private companion repo [`moderndive-instructor-resources`](https://github.com/moderndive/moderndive-instructor-resources) (renamed from `moderndive_exercise_solutions`), alongside the exercise solutions — keeping answer keys, exams, rubrics, and teaching notes out of the public source tree.
