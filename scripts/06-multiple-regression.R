@@ -1,0 +1,233 @@
+## ----setup-init, include=FALSE------------------------------------------------
+library(knitr)
+source("scripts/image_functions.R")
+
+
+
+
+## ----multiple-regression-load-packages, eval=FALSE----------------------------
+# library(tidyverse)
+# library(moderndive)
+# library(ISLR2)
+
+
+## ----multiple-regression-load-packages-alt, echo=FALSE, message=FALSE, purl=TRUE----
+library(tidyverse)
+library(moderndive)
+library(ISLR2)
+
+
+
+
+## ----multiple-regression-create-UN_data_ch6-----------------------------------
+UN_data_ch6 <- un_member_states_2024 |>
+  select(country, 
+         life_expectancy_2022, 
+         fertility_rate_2022, 
+         income_group_2024)|>
+  na.omit()|>
+  rename(life_exp = life_expectancy_2022, 
+         fert_rate = fertility_rate_2022, 
+         income = income_group_2024)|>
+  mutate(income = factor(income, 
+                         levels = c("Low income", "Lower middle income", 
+                                    "Upper middle income", "High income")))
+
+
+## ----multiple-regression-glimpse-UN_data_ch6----------------------------------
+glimpse(UN_data_ch6)
+
+
+
+
+## ----multiple-regression-alt, eval=FALSE--------------------------------------
+# UN_data_ch6 |> sample_n(size = 10)
+
+
+
+
+## ----multiple-regression-select-vars, eval=FALSE------------------------------
+# UN_data_ch6 |>
+#   select(life_exp, fert_rate, income) |>
+#   tidy_summary()
+
+
+## ----multiple-regression-select-vars-sized, echo=FALSE------------------------
+UN_data_ch6 |> 
+  select(life_exp, fert_rate, income) |> 
+  tidy_summary() |> 
+  kbl() |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 8, 16),
+    latex_options = c("HOLD_position")
+  ) 
+
+
+## ----multiple-regression-demo-code--------------------------------------------
+UN_data_ch6 |>
+  get_correlation(formula = fert_rate ~ life_exp)
+
+
+## ----multiple-regression-scatter-lifeexp, eval=FALSE--------------------------
+# ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
+#   geom_point() +
+#   labs(x = "Life Expectancy", y = "Fertility Rate", color = "Income group") +
+#   geom_smooth(method = "lm", se = FALSE)
+
+
+
+
+## ----multiple-regression-lm-fertility, eval=FALSE-----------------------------
+# one_factor_model <- lm(fert_rate ~ income, data = UN_data_ch6)
+# coef(one_factor_model)
+
+
+
+
+## ----multiple-regression-assign-model_int, eval=FALSE-------------------------
+# # Fit regression model and get the coefficients of the model
+# model_int <- lm(fert_rate ~ life_exp * income, data = UN_data_ch6)
+# coef(model_int)
+
+
+
+
+## ----multiple-regression-scatter-lifeexp-colored, eval=FALSE------------------
+# ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
+#   geom_point() +
+#   labs(x = "Life expectancy", y = "Fertility rate", color = "Income group") +
+#   geom_parallel_slopes(se = FALSE)
+
+
+
+
+## ----multiple-regression-lm-fertility-alt, eval=FALSE-------------------------
+# # Fit regression model:
+# model_no_int <- lm(fert_rate ~ life_exp + income, data = UN_data_ch6)
+# 
+# # Get the coefficients of the model
+# coef(model_no_int)
+
+
+
+
+
+
+
+
+
+
+
+
+## ----multiple-regression-reg-points, eval=FALSE-------------------------------
+# regression_points <- get_regression_points(model_int)
+# regression_points
+
+
+
+
+## ----multiple-regression-load-ISLR2, message=FALSE----------------------------
+library(ISLR2)
+credit_ch6 <- Credit |> as_tibble() |> 
+  select(debt = Balance, credit_limit = Limit, 
+         income = Income, credit_rating = Rating, age = Age)
+
+
+## ----multiple-regression-glimpse-credit_ch6-----------------------------------
+glimpse(credit_ch6)
+
+
+
+
+## ----multiple-regression-alt2, eval=FALSE-------------------------------------
+# credit_ch6 |> sample_n(size = 5)
+
+
+
+
+## ----multiple-regression-select-vars-alt, eval=FALSE--------------------------
+# credit_ch6 |> select(debt, credit_limit, income) |> tidy_summary()
+
+
+## ----tbl-credittable, echo=FALSE----------------------------------------------
+credit_ch6 |> 
+  select(debt, credit_limit, income) |> 
+  tidy_summary() |> 
+    kbl(
+    digits = 3,
+    caption = "Summary of credit data",
+    booktabs = TRUE,
+    linesep = ""
+  ) |>
+  kable_styling(
+    font_size = ifelse(is_latex_output(), 8, 16),
+    latex_options = c("HOLD_position")
+  )
+
+
+## ----multiple-regression-scatter, eval=FALSE----------------------------------
+# ggplot(credit_ch6, aes(x = credit_limit, y = debt)) +
+#   geom_point() +
+#   labs(x = "Credit limit (in $)", y = "Credit card debt (in $)",
+#        title = "Debt and credit limit") +
+#   geom_smooth(method = "lm", se = FALSE)
+# 
+# ggplot(credit_ch6, aes(x = income, y = debt)) +
+#   geom_point() +
+#   labs(x = "Income (in $1000)", y = "Credit card debt (in $)",
+#        title = "Debt and income") +
+#   geom_smooth(method = "lm", se = FALSE)
+
+
+
+
+## ----multiple-regression-alt2-dup1, eval=FALSE--------------------------------
+# credit_ch6 |> get_correlation(debt ~ credit_limit)
+# credit_ch6 |> get_correlation(debt ~ income)
+
+
+## ----multiple-regression-select-vars-alt2, eval=FALSE-------------------------
+# credit_ch6 |> select(debt, credit_limit, income) |> cor()
+
+
+
+
+## ----multiple-regression-alt2-dup2--------------------------------------------
+credit_ch6 |> get_correlation(debt ~ 1000 * income)
+
+
+
+
+
+
+
+
+## ----multiple-regression-fit-lm, eval=FALSE-----------------------------------
+# debt_model <- lm(debt ~ credit_limit + income, data = credit_ch6)
+# coef(debt_model)
+
+
+
+
+## ----multiple-regression-assign-simple_model, eval=FALSE----------------------
+# # Fit regression model and get the coefficients of the model
+# simple_model <- lm(debt ~ income, data = credit_ch6)
+# coef(simple_model)
+
+
+
+
+## ----multiple-regression-reg-points-alt, eval=FALSE---------------------------
+# get_regression_points(debt_model)
+
+
+
+
+## -----------------------------------------------------------------------------
+#| label: ch6-exercises
+#| results: asis
+#| echo: false
+#| message: false
+source(if (file.exists("scripts/exercise_helpers.R")) "scripts/exercise_helpers.R" else "../scripts/exercise_helpers.R")
+cat(render_chapter_exercises(6))
+
