@@ -1,0 +1,331 @@
+name: Audits
+
+on:
+  pull_request:
+    branches: [main, master, v2-quarto-html, v2]
+  push:
+    branches: [main, master, v2-quarto-html, v2]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Skip renv's .Rprofile autoloader for every audit job. Without this, the
+# project's renv intercepts `install.packages()` and tries to resolve every
+# lockfile entry — including GitHub-hosted packages — against the
+# unauthenticated GitHub API, which intermittently fails with rate-limit
+# errors. The audits only need a small set of CRAN packages from the
+# RSPM repo, so disabling autoload here is harmless and makes the workflow
+# deterministic. (The book/instructor-solutions renders elsewhere DO need
+# renv and supply GITHUB_PAT, so this env var stays scoped to audits.)
+env:
+  RENV_CONFIG_AUTOLOADER_ENABLED: FALSE
+
+jobs:
+  cross-references:
+    name: Cross-references (dead anchors + glossary coverage)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+
+      - name: Install audit dependencies
+        run: |
+          R -q -e 'install.packages(c("stringr", "yaml"),
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+
+      - name: Run cross-reference scans
+        run: |
+          # Patch the hard-coded local path at the top of the script so it
+          # works from the GitHub workspace root.
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/cross_reference_scans.R
+          Rscript scripts/cross_reference_scans.R | tee audit_output.txt
+
+      - name: Fail on dead anchors
+        run: |
+          if grep -q "^Dead references found: [^0]" audit_output.txt; then
+            echo "::error::Dead @sec-* / @fig-* / @tbl-* references detected. See output above."
+            grep -A 1 "not found" audit_output.txt | head -20
+            exit 1
+          fi
+          echo "✓ no dead anchors"
+
+  exercise-yaml-lint:
+    name: Exercise YAML lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+
+      - name: Install audit dependencies
+        run: |
+          R -q -e 'install.packages(c("yaml", "stringr"),
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+
+      - name: Lint exercise YAMLs
+        run: |
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/lint_exercise_yaml.R
+          Rscript scripts/lint_exercise_yaml.R
+
+  heading-hierarchy:
+    name: Heading hierarchy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+      - name: Install dependencies
+        run: |
+          R -q -e 'install.packages("stringr",
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+      - name: Audit heading hierarchy
+        run: |
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/audit_heading_hierarchy.R
+          Rscript scripts/audit_heading_hierarchy.R
+
+  section-refs:
+    name: Section-number references
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+      - name: Install dependencies
+        run: |
+          R -q -e 'install.packages("stringr",
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+      - name: Audit section-number references
+        run: |
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/audit_section_refs.R
+          Rscript scripts/audit_section_refs.R
+
+  quick-check-format:
+    name: Quick check format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+      - name: Install dependencies
+        run: |
+          R -q -e 'install.packages("stringr",
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+      - name: Audit Quick check format
+        run: |
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/audit_quick_check_format.R
+          Rscript scripts/audit_quick_check_format.R
+
+  exercise-lexicon:
+    name: Exercise lexicon (no forward refs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+      - name: Install dependencies
+        run: |
+          R -q -e 'install.packages(c("yaml", "stringr"),
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+      - name: Audit exercise lexicon
+        run: |
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/audit_exercise_lexicon.R
+          Rscript scripts/audit_exercise_lexicon.R
+
+  unused-images-and-broken-refs:
+    name: Image references
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+      - name: Install dependencies
+        run: |
+          R -q -e 'install.packages("stringr",
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+      - name: Audit unused images + broken refs
+        run: |
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/audit_unused_images.R
+          Rscript scripts/audit_unused_images.R
+
+  terminology:
+    name: Terminology consistency (informational)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+      - name: Install dependencies
+        run: |
+          R -q -e 'install.packages("stringr",
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+      - name: Audit terminology
+        run: |
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/audit_terminology.R
+          Rscript scripts/audit_terminology.R || true   # informational
+
+  figure-alt-text:
+    name: Figure alt-text coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+
+      - name: Install audit dependencies
+        run: |
+          R -q -e 'install.packages("stringr",
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+
+      - name: Run alt-text audit
+        run: |
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/alt_text_audit.R
+          Rscript scripts/alt_text_audit.R | tee audit_output.txt
+
+      - name: Fail on missing alt-text
+        run: |
+          # The audit script prints "  Total flags: N" with leading spaces,
+          # so we match without anchoring at line start.
+          flags=$(awk '/Total flags: / {print $NF; exit}' audit_output.txt)
+          if [ -z "$flags" ] || [ "$flags" -gt 0 ] 2>/dev/null; then
+            echo "::error::Figures missing alt text detected (flags=$flags). See output above."
+            exit 1
+          fi
+          echo "✓ alt-text complete ($flags flags)"
+
+  link-check:
+    name: External link check (lychee)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Restore lychee cache
+        uses: actions/cache@v5
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
+
+      - name: Run lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # Scan chapter qmds + appendices + glossary + NEWS + README.
+          # Avoid scanning rendered docs/ (lychee follows redirects, doesn't
+          # need to traverse generated HTML) and avoid scanning external
+          # archives (previous_versions/) which point at historical URLs
+          # that may legitimately be 404 now.
+          args: >-
+            --cache
+            --max-cache-age 7d
+            --no-progress
+            --accept 200..=299,403,429
+            --exclude-path docs
+            --exclude-path previous_versions
+            --exclude-path .quarto
+            --exclude-path renv
+            --exclude '\.html$'
+            './*.qmd'
+            'NEWS.md'
+            'README.md'
+            'scripts/README.md'
+          fail: false
+          output: ./lychee-report.md
+
+      - name: Upload link report
+        uses: actions/upload-artifact@v7
+        with:
+          name: lychee-report
+          path: lychee-report.md
+          retention-days: 30
+
+  webr-static-audit:
+    name: webR symbols (Layer A — static)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+      - name: Install audit dependencies
+        run: |
+          R -q -e 'install.packages(c("stringr", "yaml"),
+                                    repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+      - name: Run webR symbol audit
+        run: |
+          sed -i "s|^book <- .*|book <- \"$GITHUB_WORKSPACE\"|" scripts/audit_webr_symbols.R
+          Rscript scripts/audit_webr_symbols.R
+
+  webr-server-eval:
+    name: webR cells run server-side (Layer B)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+      - name: Install CRAN packages used by webR cells
+        run: |
+          R -q -e 'install.packages(c(
+            "stringr", "yaml",
+            "ggplot2", "dplyr", "tidyr", "readr",
+            "nycflights23", "fivethirtyeight",
+            "patchwork", "infer", "broom", "MASS", "conflicted",
+            "janitor", "pwr", "readxl", "steves", "remotes"
+          ), repos = "https://packagemanager.posit.co/cran/__linux__/noble/latest")'
+      - name: Install GitHub-only companion packages
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ok=0
+          for attempt in 1 2 3 4 5; do
+          R -q -e 'for (repo in c("moderndive/olympicAthletes",
+            "moderndive/exoplanetdata",
+            "moderndive/volcanoes",
+            "moderndive/moderndive")) remotes::install_git(
+            paste0("https://github.com/", repo, ".git"), upgrade = "never", quiet = FALSE)' && { ok=1; break; }
+          echo "::warning::GitHub install attempt $attempt failed; retrying in $((attempt*10))s"; sleep $((attempt*10))
+          done
+          [ "$ok" = 1 ] || { echo "::error::GitHub package install failed after 5 attempts"; exit 1; }
+      - name: Evaluate every webR cell
+        run: Rscript scripts/test_webr_cells.R
+
+  webr-headless:
+    name: webR cells run in headless webR (Layer C)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+      - name: Install @r-wasm/webr
+        working-directory: scripts/test_webr_headless
+        run: npm install
+      - name: Run headless webR test
+        working-directory: scripts/test_webr_headless
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: npm test

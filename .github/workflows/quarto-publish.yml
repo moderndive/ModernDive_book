@@ -1,0 +1,190 @@
+on:
+  push:
+    branches: [main, master, v2-quarto-html, v2]
+  pull_request:
+    branches: [main, master, v2-quarto-html, v2]
+  workflow_dispatch:
+
+name: Quarto Publish
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      # renv is DISABLED in CI (temporary, during content review): when active,
+      # renv intercepts the GitHub-package installs and resolves their SHAs via
+      # api.github.com, which intermittently 4xx-fails (error 22) and breaks the
+      # build. With the autoloader off, R uses the default library; we install
+      # the lockfile's CRAN packages from a DATED P3M snapshot (so the build is
+      # deterministic even without renv) and the GitHub data packages via plain
+      # git clone. Re-enable + properly fix renv at the end -- until then the
+      # lockfile is a package *manifest* and the dated snapshot is the *pin*;
+      # the drift between them is reported on every build.
+      RENV_CONFIG_AUTOLOADER_ENABLED: "FALSE"
+      RENV_CONFIG_SYNCHRONIZED_CHECK: "FALSE"
+    steps:
+      # Checkout repository
+      - uses: actions/checkout@v6
+
+      # Setup Quarto
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      # Setup R environment - pin to the version renv.lock was built against
+      # so RSPM serves precompiled binaries (avoids source compilation against
+      # mismatched R API headers).
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.6.1'
+          use-public-rspm: true
+
+      # Install system libraries for the V8 R package
+      - name: Install system libraries for V8
+        run: |
+          sudo apt-get update
+          # Try libv8-dev first; if not available on this Ubuntu image, fall back to libnode-dev
+          sudo apt-get install -y libv8-dev || sudo apt-get install -y libnode-dev
+          # ICU is a common runtime dependency for V8 on Ubuntu
+          sudo apt-get install -y libicu-dev
+
+      # renv DISABLED: install the lockfile's CRAN packages (everything that is
+      # NOT a GitHub source — including moderndive, which the lockfile pins from
+      # CRAN) directly from P3M binaries into the default library. No renv,
+      # no api.github.com.
+      - name: Install CRAN packages from renv.lock
+        run: |
+          R -q -e '
+            # Install from a DATED Posit Package Manager snapshot, not /latest.
+            # renv is disabled here (see the env block), so these packages were
+            # being installed by NAME at whatever version was current that day --
+            # two runs a week apart could build the book against different
+            # package versions. The dated snapshot makes the build deterministic:
+            # same commit in, same package versions out.
+            snap <- "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-17"
+            if (!requireNamespace("jsonlite", quietly = TRUE)) install.packages("jsonlite", repos = snap)
+            lock <- jsonlite::fromJSON("renv.lock", simplifyVector = FALSE)$Packages
+            keep <- Filter(function(p) !identical(p$Source, "GitHub") && !identical(p$RemoteType, "github"), lock)
+            need <- setdiff(names(keep), rownames(installed.packages()))
+            need <- setdiff(need, "moderndive")  # dev moderndive comes from GitHub main below
+            message("Installing ", length(need), " CRAN packages from the lockfile @ ", snap)
+            if (length(need)) install.packages(need, repos = snap)
+          '
+
+      # Report where the installed versions differ from renv.lock. Non-fatal by
+      # design: renv is off in CI, so the lockfile currently acts as a package
+      # *manifest* (which packages), while the dated snapshot above is the actual
+      # *pin* (which versions). That gap used to be invisible; this prints it on
+      # every build so it can be tracked and closed when renv is re-enabled.
+      - name: Report renv.lock version drift (informational)
+        run: |
+          R -q -e '
+            lock <- jsonlite::fromJSON("renv.lock", simplifyVector = FALSE)$Packages
+            keep <- Filter(function(p) !identical(p$Source, "GitHub") && !identical(p$RemoteType, "github"), lock)
+            ip <- installed.packages()
+            rows <- list()
+            for (nm in names(keep)) {
+              if (!nm %in% rownames(ip)) next
+              lv <- keep[[nm]]$Version; iv <- unname(ip[nm, "Version"])
+              if (!identical(lv, iv)) rows[[length(rows) + 1L]] <- sprintf("  %-20s lock %-14s installed %s", nm, lv, iv)
+            }
+            if (length(rows)) {
+              message(sprintf("%d of %d lockfile packages differ from the installed version:", length(rows), length(keep)))
+              message(paste(unlist(rows), collapse = "\n"))
+            } else {
+              message("All lockfile packages match their installed versions.")
+            }
+          '
+
+      # The 4 GitHub-only data packages via plain git clone. remotes::install_git
+      # does NOT call api.github.com (only renv's interception did, and renv is
+      # off here), so this just clones + installs.
+      - name: Install GitHub-only exercise packages
+        run: |
+          R -q -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")'
+          ok=0
+          for attempt in 1 2 3 4 5; do
+          R -q -e 'for (repo in c("moderndive/olympicAthletes",
+            "moderndive/exoplanetdata",
+            "moderndive/volcanoes",
+            "moderndive/moderndive")) remotes::install_git(
+            paste0("https://github.com/", repo, ".git"), upgrade = "never", quiet = FALSE)' && { ok=1; break; }
+          echo "::warning::GitHub install attempt $attempt failed; retrying in $((attempt*10))s"; sleep $((attempt*10))
+          done
+          [ "$ok" = 1 ] || { echo "::error::GitHub package install failed after 5 attempts"; exit 1; }
+
+      # Cache Quarto's freeze directory so chapters don't re-execute on every push.
+      # Cache key now hashes ONLY the root-level book qmds + index.qmd (what
+      # the main book actually renders) — not instructor-solutions/ or other
+      # nested qmds, whose changes don't affect the main book's freeze.
+      - name: Cache Quarto freeze
+        uses: actions/cache@v5
+        with:
+          path: .quarto/_freeze
+          key: quarto-freeze-${{ hashFiles('*.qmd', 'index.qmd', 'scripts/exercise_helpers.R', 'scripts/image_functions.R', 'exercises/*.yml') }}
+          restore-keys: quarto-freeze-
+
+      # Render Quarto book
+      - name: Render Quarto Book
+        run: quarto render
+
+      # The chapter pages link to scripts/NN-chapter.R ("An R script file of
+      # all R code used in this chapter...") and the PDF prints the absolute
+      # /v2/scripts/ URL. Bookdown generated these at build time; Quarto does
+      # not, so generate them into docs/scripts/ before deploying — otherwise
+      # the /v2 deploy's clean:true removes the bookdown-era copies and every
+      # chapter's script link 404s.
+      - name: Generate per-chapter R scripts
+        run: Rscript scripts/purl_chapters.R
+
+      # Save R package state
+      - name: Save R Package State
+        run: |
+          R -e 'saveRDS(installed.packages(), file = "installed_packages.rds")'
+
+      # Deploy HTML to GitHub Pages if on main or master branch
+      - name: Deploy to GitHub pages from main/master 🚀
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: JamesIves/github-pages-deploy-action@v4.8.0
+        with:
+          branch: gh-pages
+          folder: docs
+          clean: false
+
+      # Deploy to v2-publish if on v2-quarto-html branch.
+      # NOTE: deliberately not deploying to gh-pages/v2 — that subfolder
+      # is the live moderndive.com/v2 page and stays on the bookdown build
+      # served from the v2 branch.
+      # clean: true so each deploy wipes files no longer produced by the
+      # render — otherwise orphans linger forever (e.g. the old bookdown
+      # build's non-prefixed chapter files like getting-started.html, which
+      # kept serving stale content alongside the Quarto 01-getting-started.html).
+      # previous_versions/ is preserved: the preface links to it but Quarto
+      # does not re-emit it into docs/, so it must be excluded from cleaning.
+      - name: Deploy to v2-publish branch 🚀
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/v2-quarto-html'
+        uses: JamesIves/github-pages-deploy-action@v4.8.0
+        with:
+          branch: v2-publish
+          folder: docs
+          clean: true
+          clean-exclude: |
+            previous_versions
+
+      # Deploy to the /v2 subdirectory of gh-pages from v2 — this IS the live
+      # moderndive.com/v2 page, post-cutover. clean: true for the same reason
+      # as the v2-publish deploy above: the old bookdown build left
+      # non-prefixed orphans (getting-started.html) that otherwise keep
+      # serving stale content alongside the Quarto 01-getting-started.html.
+      - name: Deploy to v2 subdirectory of gh-pages from v2 🚀
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/v2'
+        uses: JamesIves/github-pages-deploy-action@v4.8.0
+        with:
+          branch: gh-pages
+          folder: docs
+          target-folder: v2
+          clean: true
+          clean-exclude: |
+            previous_versions
