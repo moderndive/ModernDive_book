@@ -1,0 +1,119 @@
+name: PR preview artifact
+
+# On every pull-request push to v2-quarto-html, render the book and upload
+# `docs/` as a downloadable artifact. PR authors / reviewers can download
+# the zip and open it locally to see the rendered version of their changes
+# before merge.
+#
+# (Full preview-deploy infrastructure — Netlify / Cloudflare Pages — would
+# be nicer but adds operational overhead. This artifact-upload approach gives
+# the same review-before-merge capability with zero external dependencies.)
+
+on:
+  pull_request:
+    branches: [v2-quarto-html]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      # renv disabled in CI (see quarto-publish.yml): when active, renv resolves
+      # the GitHub data packages via api.github.com, which flakes. We install the
+      # lockfile's CRAN packages from a DATED P3M snapshot (deterministic without
+      # renv) + the GitHub packages via git clone.
+      RENV_CONFIG_AUTOLOADER_ENABLED: "FALSE"
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+
+      - name: Install system libraries for V8
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libv8-dev || sudo apt-get install -y libnode-dev
+          sudo apt-get install -y libicu-dev
+
+      - name: Install CRAN packages from renv.lock
+        run: |
+          R -q -e '
+            # Install from a DATED Posit Package Manager snapshot, not /latest.
+            # renv is disabled here (see the env block), so these packages were
+            # being installed by NAME at whatever version was current that day --
+            # two runs a week apart could build the book against different
+            # package versions. The dated snapshot makes the build deterministic:
+            # same commit in, same package versions out.
+            snap <- "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-17"
+            if (!requireNamespace("jsonlite", quietly = TRUE)) install.packages("jsonlite", repos = snap)
+            lock <- jsonlite::fromJSON("renv.lock", simplifyVector = FALSE)$Packages
+            keep <- Filter(function(p) !identical(p$Source, "GitHub") && !identical(p$RemoteType, "github"), lock)
+            need <- setdiff(names(keep), rownames(installed.packages()))
+            need <- setdiff(need, "moderndive")  # dev moderndive comes from GitHub main below
+            message("Installing ", length(need), " CRAN packages from the lockfile @ ", snap)
+            if (length(need)) install.packages(need, repos = snap)
+          '
+
+      # Report where the installed versions differ from renv.lock. Non-fatal by
+      # design: renv is off in CI, so the lockfile currently acts as a package
+      # *manifest* (which packages), while the dated snapshot above is the actual
+      # *pin* (which versions). That gap used to be invisible; this prints it on
+      # every build so it can be tracked and closed when renv is re-enabled.
+      - name: Report renv.lock version drift (informational)
+        run: |
+          R -q -e '
+            lock <- jsonlite::fromJSON("renv.lock", simplifyVector = FALSE)$Packages
+            keep <- Filter(function(p) !identical(p$Source, "GitHub") && !identical(p$RemoteType, "github"), lock)
+            ip <- installed.packages()
+            rows <- list()
+            for (nm in names(keep)) {
+              if (!nm %in% rownames(ip)) next
+              lv <- keep[[nm]]$Version; iv <- unname(ip[nm, "Version"])
+              if (!identical(lv, iv)) rows[[length(rows) + 1L]] <- sprintf("  %-20s lock %-14s installed %s", nm, lv, iv)
+            }
+            if (length(rows)) {
+              message(sprintf("%d of %d lockfile packages differ from the installed version:", length(rows), length(keep)))
+              message(paste(unlist(rows), collapse = "\n"))
+            } else {
+              message("All lockfile packages match their installed versions.")
+            }
+          '
+
+      - name: Install GitHub-only exercise packages
+        run: |
+          R -q -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")'
+          ok=0
+          for attempt in 1 2 3 4 5; do
+          R -q -e 'for (repo in c("moderndive/olympicAthletes",
+            "moderndive/exoplanetdata",
+            "moderndive/volcanoes",
+            "moderndive/moderndive")) remotes::install_git(
+            paste0("https://github.com/", repo, ".git"), upgrade = "never", quiet = FALSE)' && { ok=1; break; }
+          echo "::warning::GitHub install attempt $attempt failed; retrying in $((attempt*10))s"; sleep $((attempt*10))
+          done
+          [ "$ok" = 1 ] || { echo "::error::GitHub package install failed after 5 attempts"; exit 1; }
+
+      - name: Cache Quarto freeze
+        uses: actions/cache@v5
+        with:
+          path: .quarto/_freeze
+          key: quarto-freeze-${{ hashFiles('*.qmd', 'index.qmd', 'scripts/exercise_helpers.R', 'scripts/image_functions.R', 'exercises/*.yml') }}
+          restore-keys: quarto-freeze-
+
+      - name: Render book
+        run: quarto render
+
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: book-preview-${{ github.event.pull_request.number || 'manual' }}
+          path: docs/
+          retention-days: 14

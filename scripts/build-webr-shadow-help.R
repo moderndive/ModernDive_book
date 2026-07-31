@@ -13,9 +13,15 @@
 want <- list(
   olympicAthletes = c("olympic_athletes", "editions", "medal_table",
                       "athletics_athletes", "gymnastics_athletes",
-                      "basketball_athletes", "recent_olympic_athletes"),
+                      "basketball_athletes", "recent_olympic_athletes",
+                      "olympic_athletes_2024", "paris_2024_top_medals",
+                      "season_counts",
+                      "usa_summer_medals", "team_sport_athletes"),
   steves    = c("episodes"),
+  # Both package names resolve — see the matching dual entry in
+  # scripts/webr-shadow-library.R.
   exoplanets = c("planets"),
+  exoplanetdata = c("planets"),
   volcanoes = c("eruptions", "volcanoes")
 )
 

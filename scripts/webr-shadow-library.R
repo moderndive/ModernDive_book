@@ -48,7 +48,12 @@ local({
       athletics_athletes      = "athletics_athletes.rds",
       gymnastics_athletes     = "gymnastics_athletes.rds",
       basketball_athletes     = "basketball_athletes.rds",
-      recent_olympic_athletes = "recent_olympic_athletes.rds"
+      recent_olympic_athletes = "recent_olympic_athletes.rds",
+      olympic_athletes_2024   = "olympic_athletes_2024.rds",
+      paris_2024_top_medals   = "paris_2024_top_medals.rds",
+      usa_summer_medals       = "usa_summer_medals.rds",
+      team_sport_athletes     = "team_sport_athletes.rds",
+      season_counts           = "season_counts.rds"
     ),
     steves = c(
       episodes = "steves_episodes.rds"
@@ -75,6 +80,11 @@ local({
       envoy_flights              = "envoy_flights.rds",
       early_january_2023_weather = "early_january_2023_weather.rds",
       un_member_states_2024      = "un_member_states_2024.rds"
+    ),
+    olympicAthletes = list(
+      # Added in 0.5.7 — fill from the mirror until the r-universe wasm
+      # build catches up with the package release.
+      season_counts = "season_counts.rds"
     )
   )
 
