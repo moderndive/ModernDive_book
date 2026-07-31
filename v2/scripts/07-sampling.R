@@ -1,3 +1,10 @@
+## ----setup-init, include=FALSE------------------------------------------------
+library(knitr)
+source("scripts/image_functions.R")
+
+
+
+
 ## ----sampling-load-packages, message=FALSE------------------------------------
 library(tidyverse)
 library(moderndive)
@@ -18,8 +25,8 @@ bowl |>
 
 
 ## ----sampling-mutate-colored--------------------------------------------------
-bowl |> 
-  mutate(is_red = (color == "red")) |> 
+bowl |>
+  mutate(is_red = (color == "red")) |>
   summarize(num_red = sum(is_red))
 
 
@@ -56,13 +63,9 @@ ggplot(tactile_prop_red, aes(x = prop_red)) +
 
 
 
-
-
-
-
 ## ----sampling-virtual-sample, echo=-1-----------------------------------------
 set.seed(76)
-virtual_shovel <- bowl |> 
+virtual_shovel <- bowl |>
   rep_slice_sample(n = 50)
 virtual_shovel
 
@@ -108,10 +111,6 @@ ggplot(virtual_prop_red, aes(x = prop_red)) +
 
 
 
-
-
-
-
 ## ----sampling-sample-rows2-dup1, echo=-1--------------------------------------
 set.seed(76)
 virtual_prop_red <- bowl |> 
@@ -124,10 +123,6 @@ virtual_prop_red
 ggplot(virtual_prop_red, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.04, boundary = 0.4, color = "white") +
   labs(x = "Sample proportion", title = "Histogram of 1000 sample proportions") 
-
-
-
-
 
 
 
@@ -176,14 +171,6 @@ ggplot(virtual_prop_red, aes(x = prop_red)) +
 
 
 
-
-
-
-
-
-
-
-
 ## ----sampling-compute-mean-v6-------------------------------------------------
 virtual_prop_red_25
 virtual_prop_red_25 |> 
@@ -195,10 +182,6 @@ virtual_prop_red_50 |>
   summarize(E_Xbar_50 = mean(prop_red))
 virtual_prop_red_100 |> 
   summarize(E_Xbar_100 = mean(prop_red))
-
-
-
-
 
 
 
@@ -248,10 +231,6 @@ sqrt(p * (1 - p) / 50)
 
 
 
-
-
-
-
 ## ----sampling-create-num_pop_almonds, echo=1----------------------------------
 almonds_bowl
 num_pop_almonds <- length(almonds_bowl$weight)
@@ -264,7 +243,7 @@ almonds_bowl |>
             length = n())
 
 
-## ----almonds-bowl-histogram, fig.cap="Distribution of weights for the entire bowl of almonds."----
+## ----fig-almonds-bowl-histogram, fig.alt="Histogram of weights for the entire bowl of almonds. Roughly bell-shaped, centered near 3.7 grams, with most weights between 2 and 5 grams.", fig.cap="Distribution of weights for the entire bowl of almonds."----
 ggplot(almonds_bowl, aes(x = weight)) +
   geom_histogram(binwidth = 0.1, color = "white")
 
@@ -281,7 +260,7 @@ almonds_sample
 num_almonds <- length(almonds_sample$weight)
 
 
-## ----almonds-sample-histogram, fig.cap="Distribution of weight for a sample of 25 almonds.", fig.height=ifelse(knitr::is_latex_output(), 1.5, 4)----
+## ----fig-almonds-sample-histogram, fig.alt="Histogram of weights for one sample of 25 almonds. Roughly bell-shaped but with visible irregularity due to small sample size.", fig.cap="Distribution of weight for a sample of 25 almonds.", fig.height=ifelse(knitr::is_latex_output(), 1.5, 4)----
 ggplot(almonds_sample, aes(x = weight)) +
   geom_histogram(binwidth = 0.1, color = "white")
 
@@ -381,18 +360,6 @@ virtual_mean_weight_100 |>
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 ## ----sampling-create-n1, echo=-(1:3)------------------------------------------
 set.seed(76)
 n1 <- 50
@@ -417,4 +384,14 @@ ggplot(prop_joined, aes(x = prop_diff)) +
   geom_histogram(binwidth = 0.04, boundary = 0, color = "white") +
   labs(x = "Difference in sample proportions", 
        title = "Histogram of 1000 differences in sample proportions") 
+
+
+
+## -----------------------------------------------------------------------------
+#| label: ch7-exercises
+#| results: asis
+#| echo: false
+#| message: false
+source(if (file.exists("scripts/exercise_helpers.R")) "scripts/exercise_helpers.R" else "../scripts/exercise_helpers.R")
+cat(render_chapter_exercises(7))
 

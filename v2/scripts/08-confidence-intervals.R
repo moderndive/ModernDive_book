@@ -1,3 +1,14 @@
+## ----setup-init, include=FALSE------------------------------------------------
+library(knitr)
+source("scripts/image_functions.R")
+
+
+
+
+
+
+
+
 ## ----confidence-intervals-example-load-packages-2, message=FALSE--------------
 library(tidyverse)
 library(moderndive)
@@ -25,10 +36,6 @@ almonds_sample_100 |>
 xbar <- mean(almonds_sample_100$weight)
 
 
-
-
-
-
 ## ----confidence-intervals-create-num_almonds, echo=FALSE----------------------
 num_almonds <- nrow(almonds_bowl)
 mu <- mean(almonds_bowl$weight)
@@ -54,7 +61,7 @@ almonds_sample_100 |>
 
 
 
-## ----normal-curve-shaded-1a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), .9, 4), fig.width=3, fig.cap="Normal area within one standard deviation."----
+## ----fig-normal-curve-shaded-1a, fig.alt="Standard normal curve with the area between -1 and +1 standard deviations shaded; this area is approximately 68%.", echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), .9, 4), fig.width=3, fig.cap="Normal area within one standard deviation."----
 ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1)) +
@@ -65,7 +72,7 @@ ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   scale_x_continuous(breaks = c(-1,1)) 
 
 
-## ----normal-curve-shaded-2a, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 0.9, 4), fig.width=3, fig.cap="Normal area within two standard deviations."----
+## ----fig-normal-curve-shaded-2a, fig.alt="Standard normal curve with the area between -2 and +2 standard deviations shaded; this area is approximately 95%.", echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 0.9, 4), fig.width=3, fig.cap="Normal area within two standard deviations."----
 ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -2)) +
@@ -74,10 +81,6 @@ ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   labs(x = "z", y = "") +
   scale_y_continuous(breaks = NULL) +
   scale_x_continuous(breaks = c(-2,2))
-
-
-
-
 
 
 
@@ -114,10 +117,6 @@ almonds_sample_100 |>
 
 
 
-
-
-
-
 ## ----confidence-intervals-mean-sd-v2------------------------------------------
 almonds_sample_100 |>
   summarize(sample_mean = mean(weight), sample_sd = sd(weight))
@@ -140,11 +139,7 @@ almonds_sample_100 |>
 
 
 
-
-
-
-
-## ----normal-curve-shaded-3a, echo=FALSE, fig.cap="Normal curve with the shaded middle area being 0.95", fig.height=ifelse(knitr::is_latex_output(), 1.5, 4), fig.width=3----
+## ----fig-normal-curve-shaded-3a, fig.alt="Standard normal curve with the central 95% area shaded between approximately -1.96 and +1.96 standard deviations.", echo=FALSE, fig.cap="Normal curve with the shaded middle area being 0.95", fig.height=ifelse(knitr::is_latex_output(), 1.5, 4), fig.width=3----
 ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
   stat_function(fun = dnorm, args = list(mean = 0, sd = 1)) +
   geom_area(stat = "function", fun = dnorm, fill = "grey100", xlim = c(-4, -1.96)) +
@@ -245,7 +240,7 @@ boot_means <- bootstrap_samples_35 |>
 boot_means
 
 
-## ----resampling-35, fig.cap="Distribution of 35 sample means from 35 bootstrap samples."----
+## ----fig-resampling-35, fig.alt="Histogram of 35 sample means, each computed from a different bootstrap sample. Roughly bell-shaped but rough due to small number of resamples.", fig.cap="Distribution of 35 sample means from 35 bootstrap samples."----
 ggplot(boot_means, aes(x = mean_weight)) +
   geom_histogram(binwidth = 0.01, color = "white") +
   labs(x = "sample mean weight in grams")
@@ -269,7 +264,7 @@ boot_means <- almonds_sample_100 |>
 boot_means
 
 
-## ----one-thousand-sample-means, message=FALSE, fig.cap="Histogram of 1000 bootstrap sample mean weights of almonds.", fig.height=ifelse(knitr::is_latex_output(), 4, 4)----
+## ----fig-one-thousand-sample-means, fig.alt="Histogram of 1000 bootstrap sample means of almond weights. Smooth bell-shaped distribution centered at the original sample mean.", message=FALSE, fig.cap="Histogram of 1000 bootstrap sample mean weights of almonds.", fig.height=ifelse(knitr::is_latex_output(), 4, 4)----
 ggplot(boot_means, aes(x = mean_weight)) +
   geom_histogram(binwidth = 0.01, color = "white") +
   labs(x = "sample mean weight in grams")
@@ -279,10 +274,6 @@ ggplot(boot_means, aes(x = mean_weight)) +
 boot_means |> 
   summarize(mean_of_means = mean(mean_weight),
             sd_of_means = sd(mean_weight))
-
-
-
-
 
 
 
@@ -409,10 +400,6 @@ visualize(bootstrap_means) +
 
 
 
-
-
-
-
 ## ----confidence-intervals-v65-------------------------------------------------
 mythbusters_yawn
 
@@ -492,4 +479,15 @@ myth_ci_se <- bootstrap_distribution_yawning |>
   get_confidence_interval(type = "se", point_estimate = obs_diff_in_props,
                           level = 0.95)
 myth_ci_se
+
+
+
+
+## -----------------------------------------------------------------------------
+#| label: ch8-exercises
+#| results: asis
+#| echo: false
+#| message: false
+source(if (file.exists("scripts/exercise_helpers.R")) "scripts/exercise_helpers.R" else "../scripts/exercise_helpers.R")
+cat(render_chapter_exercises(8))
 

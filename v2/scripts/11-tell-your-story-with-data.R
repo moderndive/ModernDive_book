@@ -1,3 +1,14 @@
+## ----setup-init, include=FALSE------------------------------------------------
+library(knitr)
+source("scripts/image_functions.R")
+
+
+
+
+
+
+
+
 ## ----tell-your-story-with-data-load-packages, message=FALSE-------------------
 library(tidyverse)
 library(moderndive)
@@ -217,7 +228,7 @@ if (!file.exists("rds/null_distribution_housing.rds")) {
 #                 direction = "two-sided")
 
 
-## ----tell-your-story-with-data-viz-pvalue-alt, echo=FALSE, message=FALSE------
+## ----tell-your-story-with-data-viz-pvalue-alt, echo=FALSE, message=FALSE, fig.show='hide'----
 null_housing_shaded <- visualize(null_distribution_housing) +
   shade_p_value(obs_stat = observed_fit_coefficients, direction = "two-sided")
 if (!file.exists("images/null_housing_shaded.png")) {
@@ -231,7 +242,7 @@ if (!file.exists("images/null_housing_shaded.png")) {
 }
 
 
-## ----tell-your-story-with-data-show-null-housing-shaded, echo=FALSE, out.width="90%"----
+## ----tell-your-story-with-data-show-null-housing-shaded, fig.alt="Side-by-side histograms (LaTeX-output version) showing the null distributions for each partial slope in the Seattle housing multiple regression, with the observed slopes marked and the two-sided p-value regions shaded.", echo=FALSE, out.width="90%"----
 if(is_latex_output())
   knitr::include_graphics("images/null_housing_shaded.png")
 
@@ -246,10 +257,6 @@ null_distribution_housing |>
   get_p_value(obs_stat = observed_fit_coefficients, direction = "two-sided")
 
 
-
-
-
-
 ## ----tell-your-story-with-data-glimpse-US_births_1994_20----------------------
 glimpse(US_births_1994_2003)
 
@@ -259,7 +266,7 @@ US_births_1999 <- US_births_1994_2003 |>
   filter(year == 1999)
 
 
-## ----us-births, fig.cap="Number of births in the US in 1999.", fig.height=ifelse(knitr::is_latex_output(), 6.4, 7)----
+## ----fig-us-births, fig.alt="Line graph of daily births in the United States during 1999, showing a strong weekly cycle (drops on weekends) and a notable dip on Halloween.", fig.cap="Number of births in the US in 1999.", fig.height=ifelse(knitr::is_latex_output(), 6.4, 7)----
 ggplot(US_births_1999, aes(x = date, y = births)) +
   geom_line() +
   labs(x = "Date", 
@@ -276,16 +283,21 @@ US_births_1999 |>
 
 
 
-
-
-
-
 ## ----tell-your-story-with-data-create-package_versions, echo=FALSE------------
 package_versions <- sessioninfo::package_info(c(needed_CRAN_pkgs)) |> 
   as_tibble() |> 
   filter(attached == TRUE | package %in% c("bookdown")) |> 
   select(package, version = ondiskversion)
 readr::write_rds(package_versions, "rds/package_versions.rds")
+
+
+## -----------------------------------------------------------------------------
+#| label: ch11-exercises
+#| results: asis
+#| echo: false
+#| message: false
+source(if (file.exists("scripts/exercise_helpers.R")) "scripts/exercise_helpers.R" else "../scripts/exercise_helpers.R")
+cat(render_chapter_exercises(11))
 
 
 ## ----tell-your-story-with-data-conditional-text-v2, echo=FALSE, results='asis'----

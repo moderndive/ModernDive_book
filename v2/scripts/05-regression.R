@@ -1,3 +1,10 @@
+## ----setup-init, include=FALSE------------------------------------------------
+library(knitr)
+source("scripts/image_functions.R")
+
+
+
+
 ## ----regression-load-packages, message=FALSE----------------------------------
 library(tidyverse)
 library(moderndive)
@@ -113,24 +120,20 @@ UN_data_ch5 |>
 
 
 
-## ----numxplot1, fig.cap="Scatterplot of relationship of life expectancy and fertility rate.", fig.height=ifelse(knitr::is_latex_output(), 4.5, 5)----
-ggplot(UN_data_ch5, 
+## ----fig-numxplot1, fig.alt="Scatterplot of fertility rate (x-axis, births per woman) versus life expectancy (y-axis, years) for countries in 2022. Strong negative relationship: countries with higher fertility tend to have lower life expectancy.", fig.cap="Scatterplot of relationship of life expectancy and fertility rate.", fig.height=ifelse(knitr::is_latex_output(), 4.5, 5)----
+ggplot(UN_data_ch5,
        aes(x = life_exp, y = fert_rate)) +
   geom_point(alpha = 0.1) +
   labs(x = "Life Expectancy", y = "Fertility Rate")
 
 
-## ----numxplot3, fig.cap="Scatterplot of life expectancy and fertility rate with regression line.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 4, 5)----
+## ----fig-numxplot3, fig.alt="Same scatterplot of fertility rate vs life expectancy, with a downward-sloping straight regression line overlaid through the cloud of points.", fig.cap="Scatterplot of life expectancy and fertility rate with regression line.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 4, 5)----
 ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
   geom_point(alpha = 0.1) +
   labs(x = "Life Expectancy", 
     y = "Fertility Rate",
     title = "Relationship of life expectancy and fertility rate") +
   geom_smooth(method = "lm", se = FALSE)
-
-
-
-
 
 
 ## ----regression-lm-fertility, eval=FALSE--------------------------------------
@@ -152,17 +155,9 @@ ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
 
 
 
-
-
-
-
 ## ----regression-reg-points, eval=FALSE----------------------------------------
 # regression_points <- get_regression_points(demographics_model)
 # regression_points
-
-
-
-
 
 
 
@@ -190,7 +185,7 @@ glimpse(gapminder2022)
 # gapminder2022 |> select(life_exp, continent) |> tidy_summary()
 
 
-## ----lifeexp-cont, echo=FALSE-------------------------------------------------
+## ----tbl-lifeexp-cont, echo=FALSE---------------------------------------------
 gapminder2022 |>
   select(life_exp, continent) |>
   tidy_summary() |> 
@@ -212,7 +207,7 @@ gapminder2022 |> count(continent)
 
 
 
-## ----lifeexp2022hist, echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----fig-lifeexp2022hist, fig.alt="Left-skewed histogram of country-level life expectancy in 2022, with most countries between 70 and 80 years and a long left tail of countries with lower life expectancy.", echo=TRUE, fig.cap="Histogram of life expectancy in 2022.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(gapminder2022, aes(x = life_exp)) +
   geom_histogram(binwidth = 5, color = "white") +
   labs(x = "Life expectancy", 
@@ -231,7 +226,7 @@ ggplot(gapminder2022, aes(x = life_exp)) +
 
 
 
-## ----catxplot1, fig.cap="Life expectancy in 2022 by continent (boxplot).", fig.height=ifelse(knitr::is_latex_output(), 2.5, 4)----
+## ----fig-catxplot1, fig.alt="Side-by-side boxplots of country life expectancy (y-axis) by continent (x-axis). Africa has the lowest median and widest spread; Europe and Oceania have the highest medians.", fig.cap="Life expectancy in 2022 by continent (boxplot).", fig.height=ifelse(knitr::is_latex_output(), 2.5, 4)----
 ggplot(gapminder2022, aes(x = continent, y = life_exp)) +
   geom_boxplot() +
   labs(x = "Continent", y = "Life expectancy",
@@ -250,17 +245,9 @@ life_exp_by_continent
 
 
 
-
-
-
-
 ## ----regression-fit-lm--------------------------------------------------------
 life_exp_model <- lm(life_exp ~ continent, data = gapminder2022)
 coef(life_exp_model)
-
-
-
-
 
 
 ## ----regression-reg-points-alt, eval=FALSE------------------------------------
@@ -274,19 +261,15 @@ coef(life_exp_model)
 
 
 
-
-
-
-
-## ----regression-scatter-lifeexp, fig.height=1.5-------------------------------
-ggplot(data = un_member_states_2024, 
+## ----regression-scatter-lifeexp, fig.alt="Scatterplot of life expectancy against Human Development Index across UN member states. Strong positive nonlinear association, countries with higher HDI tend to have substantially higher life expectancy, with the relationship flattening at the top end.", fig.height=1.5----
+ggplot(data = un_member_states_2024,
        aes(x = hdi_2022, y = life_expectancy_2022)) +
   geom_point() +
   labs(x = "Human Development Index (HDI)", y = "Life Expectancy")
 
 
-## ----regression-scatter, fig.height=1.5---------------------------------------
-ggplot(data = un_member_states_2024, 
+## ----regression-scatter, fig.alt="Scatterplot of fertility rate against Human Development Index across UN member states. Strong negative association; countries with higher HDI generally have lower fertility rates.", fig.height=1.5----
+ggplot(data = un_member_states_2024,
        aes(x = hdi_2022, y = fertility_rate_2022)) +
   geom_point() +
   labs(x = "Human Development Index (HDI)", y = "Fertility Rate")
@@ -355,10 +338,6 @@ SSR
 
 
 
-
-
-
-
 ## ----regression-load-packages-alt, eval=FALSE---------------------------------
 # library(broom)
 # library(janitor)
@@ -367,4 +346,14 @@ SSR
 #   mutate_if(is.numeric, round, digits = 3) |>
 #   clean_names() |>
 #   select(-c("std_resid", "hat", "sigma", "cooksd", "std_resid"))
+
+
+
+## -----------------------------------------------------------------------------
+#| label: ch5-exercises
+#| results: asis
+#| echo: false
+#| message: false
+source(if (file.exists("scripts/exercise_helpers.R")) "scripts/exercise_helpers.R" else "../scripts/exercise_helpers.R")
+cat(render_chapter_exercises(5))
 

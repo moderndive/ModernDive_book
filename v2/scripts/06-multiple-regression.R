@@ -1,3 +1,10 @@
+## ----setup-init, include=FALSE------------------------------------------------
+library(knitr)
+source("scripts/image_functions.R")
+
+
+
+
 ## ----multiple-regression-load-packages, eval=FALSE----------------------------
 # library(tidyverse)
 # library(moderndive)
@@ -57,7 +64,7 @@ UN_data_ch6 |>
 
 
 ## ----multiple-regression-demo-code--------------------------------------------
-UN_data_ch6 |> 
+UN_data_ch6 |>
   get_correlation(formula = fert_rate ~ life_exp)
 
 
@@ -81,10 +88,6 @@ UN_data_ch6 |>
 # # Fit regression model and get the coefficients of the model
 # model_int <- lm(fert_rate ~ life_exp * income, data = UN_data_ch6)
 # coef(model_int)
-
-
-
-
 
 
 
@@ -116,17 +119,9 @@ UN_data_ch6 |>
 
 
 
-
-
-
-
 ## ----multiple-regression-reg-points, eval=FALSE-------------------------------
 # regression_points <- get_regression_points(model_int)
 # regression_points
-
-
-
-
 
 
 
@@ -154,7 +149,7 @@ glimpse(credit_ch6)
 # credit_ch6 |> select(debt, credit_limit, income) |> tidy_summary()
 
 
-## ----credittable, echo=FALSE--------------------------------------------------
+## ----tbl-credittable, echo=FALSE----------------------------------------------
 credit_ch6 |> 
   select(debt, credit_limit, income) |> 
   tidy_summary() |> 
@@ -207,10 +202,6 @@ credit_ch6 |> get_correlation(debt ~ 1000 * income)
 
 
 
-
-
-
-
 ## ----multiple-regression-fit-lm, eval=FALSE-----------------------------------
 # debt_model <- lm(debt ~ credit_limit + income, data = credit_ch6)
 # coef(debt_model)
@@ -226,10 +217,17 @@ credit_ch6 |> get_correlation(debt ~ 1000 * income)
 
 
 
-
-
-
-
 ## ----multiple-regression-reg-points-alt, eval=FALSE---------------------------
 # get_regression_points(debt_model)
+
+
+
+
+## -----------------------------------------------------------------------------
+#| label: ch6-exercises
+#| results: asis
+#| echo: false
+#| message: false
+source(if (file.exists("scripts/exercise_helpers.R")) "scripts/exercise_helpers.R" else "../scripts/exercise_helpers.R")
+cat(render_chapter_exercises(6))
 

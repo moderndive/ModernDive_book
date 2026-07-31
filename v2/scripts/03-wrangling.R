@@ -1,3 +1,10 @@
+## ----setup-init, include=FALSE------------------------------------------------
+library(knitr)
+source("scripts/image_functions.R")
+
+
+
+
 ## ----wrangling-load-packages, message=FALSE-----------------------------------
 library(dplyr)
 library(ggplot2)
@@ -10,9 +17,9 @@ library(nycflights23)
 
 
 
-## ----wrangling-filter-alaska, eval=FALSE--------------------------------------
+## ----wrangling-filter-envoy, eval=FALSE---------------------------------------
 # envoy_flights <- flights |>
-#   filter(carrier == "AS")
+#   filter(carrier == "MQ")
 
 
 
@@ -57,10 +64,6 @@ library(nycflights23)
 # View(many_airports)
 
 
-
-
-
-
 ## ----wrangling-conditional-text, echo=FALSE, results="asis"-------------------
 if(!is_latex_output()) 
   cat("See [Appendix A online](https://moderndive.com/v2/appendixa) for a glossary of such summary statistics.")
@@ -71,7 +74,7 @@ if(!is_latex_output())
 
 
 ## ----wrangling-mean-and-sd----------------------------------------------------
-summary_windspeed <- weather |> 
+summary_windspeed <- weather |>
   summarize(mean = mean(wind_speed), std_dev = sd(wind_speed))
 summary_windspeed
 
@@ -83,14 +86,10 @@ summary_windspeed <- weather |>
 summary_windspeed
 
 
-
-
 ## ----wrangling-assign-summary_windspeed, eval=FALSE---------------------------
 # summary_windspeed <- weather |>
 #   summarize(mean = mean(wind_speed, na.rm = TRUE)) |>
 #   summarize(std_dev = sd(wind_speed, na.rm = TRUE))
-
-
 
 
 
@@ -122,8 +121,8 @@ diamonds |>
 
 
 ## ----wrangling-grouped-summary------------------------------------------------
-diamonds |> 
-  group_by(cut) |> 
+diamonds |>
+  group_by(cut) |>
   summarize(avg_price = mean(price))
 
 
@@ -160,10 +159,6 @@ by_origin_monthly_incorrect
 
 
 
-
-
-
-
 ## ----wrangling-create-weather, eval=TRUE--------------------------------------
 weather <- weather |> 
   mutate(temp_in_C = (temp - 32) / 1.8)
@@ -178,7 +173,7 @@ summary_monthly_temp
 
 
 ## ----wrangling-mutate-gain----------------------------------------------------
-flights <- flights |> 
+flights <- flights |>
   mutate(gain = dep_delay - arr_delay)
 
 
@@ -201,7 +196,7 @@ gain_summary <- flights |>
 gain_summary
 
 
-## ----gain-hist, fig.cap="Histogram of gain variable.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----fig-gain-hist, fig.alt="Right-skewed histogram of the gain variable (departure delay minus arrival delay), centered near zero with a long right tail and a few extreme positive values.", fig.cap="Histogram of gain variable.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(data = flights, mapping = aes(x = gain)) +
   geom_histogram(color = "white", bins = 20)
 
@@ -213,10 +208,6 @@ flights <- flights |>
     hours = air_time / 60,
     gain_per_hour = gain / hours
   )
-
-
-
-
 
 
 ## ----wrangling-count-by-dest--------------------------------------------------
@@ -232,7 +223,7 @@ freq_dest |>
 
 
 ## ----wrangling-arrange-desc---------------------------------------------------
-freq_dest |> 
+freq_dest |>
   arrange(desc(num_flights))
 
 
@@ -277,18 +268,10 @@ named_dests
 # View(flights_weather_joined)
 
 
-
-
-
-
 ## ----wrangling-view-joined_flights, eval=FALSE--------------------------------
 # joined_flights <- flights |>
 #   inner_join(airlines, by = "carrier")
 # View(joined_flights)
-
-
-
-
 
 
 
@@ -348,12 +331,13 @@ named_dests
 #   arrange(desc(num_flights))
 
 
-
-
-
-
-
-
+## -----------------------------------------------------------------------------
+#| label: ch3-exercises
+#| results: asis
+#| echo: false
+#| message: false
+source(if (file.exists("scripts/exercise_helpers.R")) "scripts/exercise_helpers.R" else "../scripts/exercise_helpers.R")
+cat(render_chapter_exercises(3))
 
 
 

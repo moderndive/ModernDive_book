@@ -1,3 +1,10 @@
+## ----setup-init, include=FALSE------------------------------------------------
+library(knitr)
+source("scripts/image_functions.R")
+
+
+
+
 ## ----tidy-load-packages, message=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
@@ -42,18 +49,14 @@ drinks_smaller
 
 
 
-
-
-
-
 ## ----tidy-v9------------------------------------------------------------------
 drinks_smaller
 
 
 ## ----tidy-pivot-longer--------------------------------------------------------
-drinks_smaller_tidy <- drinks_smaller |> 
-  pivot_longer(names_to = "type", 
-               values_to = "servings", 
+drinks_smaller_tidy <- drinks_smaller |>
+  pivot_longer(names_to = "type",
+               values_to = "servings",
                cols = -country)
 drinks_smaller_tidy
 
@@ -81,14 +84,10 @@ drinks_smaller_tidy
 
 
 
-
-
 ## ----tidy-create-airline_safety_sma-------------------------------------------
 airline_safety_smaller <- airline_safety |> 
   select(airline, starts_with("fatalities"))
 airline_safety_smaller
-
-
 
 
 ## ----tidy-create-guat_dem-----------------------------------------------------
@@ -106,8 +105,23 @@ guat_dem_tidy <- guat_dem |>
 guat_dem_tidy
 
 
-## ----guat-dem-tidy, fig.cap="Democracy scores in Guatemala 1952-1992.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----fig-guat-dem-tidy, fig.alt="Line graph of Guatemala's democracy score from 1952 to 1992: the score remains low and negative through most of the period, with a sharp rise toward zero in the early 1990s.", fig.cap="Democracy scores in Guatemala 1952-1992.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
   geom_line() +
   labs(x = "Year", y = "Democracy Score")
+
+
+
+
+
+
+
+
+## -----------------------------------------------------------------------------
+#| label: ch4-exercises
+#| results: asis
+#| echo: false
+#| message: false
+source(if (file.exists("scripts/exercise_helpers.R")) "scripts/exercise_helpers.R" else "../scripts/exercise_helpers.R")
+cat(render_chapter_exercises(4))
 

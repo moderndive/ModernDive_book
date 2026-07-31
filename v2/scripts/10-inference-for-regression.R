@@ -1,3 +1,10 @@
+## ----setup-init, include=FALSE------------------------------------------------
+library(knitr)
+source("scripts/image_functions.R")
+
+
+
+
 ## ----inference-for-regression-load-packages, message=FALSE--------------------
 library(tidyverse)
 library(moderndive)
@@ -44,7 +51,7 @@ un_member_states_2024 |>
 
 
 
-## ----regline-ch10, fig.cap="Relationship with regression line.", fig.height=ifelse(knitr::is_latex_output(), 3, 4), message=FALSE----
+## ----fig-regline-ch10, fig.alt="Scatterplot of two variables with a fitted regression line overlaid, used as a generic example.", fig.cap="Relationship with regression line.", fig.height=ifelse(knitr::is_latex_output(), 3, 4), message=FALSE----
 ggplot(UN_data_ch10, aes(x = life_exp, y = fert_rate)) +
   geom_point() +
   labs(x = "Life Expectancy (x)", 
@@ -124,7 +131,7 @@ old_faithful_2024 |>
 n_old_faithful <- dim(old_faithful_2024)[1]
 
 
-## ----geyserplot1, echo=F, fig.cap="Scatterplot of relationship of eruption duration and waiting time.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----fig-geyserplot1, fig.alt="Scatterplot of waiting time (minutes) versus eruption duration (minutes) for the Old Faithful geyser. Two distinct clusters of points are visible.", echo=F, fig.cap="Scatterplot of relationship of eruption duration and waiting time.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(old_faithful_2024, 
        aes(x = duration, y = waiting)) +
   geom_point(alpha = 0.3) +
@@ -147,7 +154,7 @@ ggplot(old_faithful_2024,
 # get_regression_table(mod_diff_means)
 
 
-## ----diff-means-reg, echo=FALSE-----------------------------------------------
+## ----tbl-diff-means-reg, echo=FALSE-------------------------------------------
 mod_diff_means <- lm(rating ~ genre, data = movies_sample)
 get_regression_table(mod_diff_means) |> 
   kbl(caption = "Regression table for two-sample difference in means example") |> 
@@ -169,7 +176,7 @@ spotify_for_anova <- spotify_by_genre |>
 #   slice_sample(n = 5)
 
 
-## ----spotify-for-anova-slice-five, echo=FALSE---------------------------------
+## ----tbl-spotify-for-anova-slice-five, echo=FALSE-----------------------------
 spotify_for_anova |> 
   slice_sample(n = 5) |> 
   kbl(caption = "(ref:spotify-for-anova-slice)") |> 
@@ -179,7 +186,7 @@ spotify_for_anova |>
   )
 
 
-## ----pop-by-genre-plot, fig.cap="Boxplot of popularity by genre.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 4)----
+## ----fig-pop-by-genre-plot, fig.alt="Side-by-side boxplots of song popularity by music genre, showing differences in median and spread across genres.", fig.cap="Boxplot of popularity by genre.", fig.height=ifelse(knitr::is_latex_output(), 3.2, 4)----
 ggplot(spotify_for_anova, aes(x = track_genre, y = popularity)) +
   geom_boxplot() +
   labs(x = "Genre", y = "Popularity")
@@ -197,7 +204,7 @@ mean_popularities_by_genre
 # get_regression_table(mod_anova)
 
 
-## ----anova-reg-table, echo=FALSE----------------------------------------------
+## ----tbl-anova-reg-table, echo=FALSE------------------------------------------
 mod_anova <- lm(popularity ~ track_genre, data = spotify_for_anova)
 get_regression_table(mod_anova) |> 
   kbl(caption = "Regression table for ANOVA example") |> 
@@ -210,10 +217,6 @@ get_regression_table(mod_anova) |>
 ## ----inference-for-regression-demo-code-v2-dup2-------------------------------
 aov(popularity ~ track_genre, data = spotify_for_anova) |> 
   anova()
-
-
-
-
 
 
 ## ----inference-for-regression-demo-code-v2-dup3-------------------------------
@@ -245,7 +248,7 @@ t_stat <- round(b1/se_b1,3)
 p_value <- round(2*(1 - pt(abs(t_stat), n_old_faithful-2)), 3)
 
 
-## ----pvalue1, echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 2, 4), fig.cap="Illustration of a two-sided p-value for a t-test."----
+## ----fig-pvalue1, fig.alt="Standard t-curve with both tails shaded beyond the observed t-statistic, visualizing a two-sided p-value.", echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 2, 4), fig.cap="Illustration of a two-sided p-value for a t-test."----
 n <- n_old_faithful
 shade <- function(t, a,b) {
   z = dt(t, df = n-2)
@@ -260,10 +263,6 @@ ggplot(data.frame(x = c(-4, 4)), aes(x = x)) +
   scale_x_continuous(name = "t", breaks = seq(-4, 4, 2))+
   scale_y_continuous(labels = NULL)+
   theme(axis.title.y = element_blank(), axis.ticks.y = element_blank())
-
-
-
-
 
 
 ## ----inference-for-regression-reg-table, eval=FALSE---------------------------
@@ -307,7 +306,7 @@ fitted_and_residuals
 #   geom_qq_line()
 
 
-## ----model1residualshist, echo=FALSE, warning=FALSE, fig.cap="Histogram of residuals."----
+## ----fig-model1residualshist, fig.alt="Histogram of regression residuals, roughly symmetric and bell-shaped, supporting the Normality condition.", echo=FALSE, warning=FALSE, fig.cap="Histogram of residuals."----
 g1 <- ggplot(fitted_and_residuals, aes(x = residual)) +
   geom_histogram(aes(y=after_stat(density)), binwidth = 10, color = "white") + 
   stat_function(fun = dnorm,  args = list(mean = 0, sd = s), col="blue") + 
@@ -323,7 +322,7 @@ grid.arrange(g1, g2, ncol=2)
 
 
 
-## ----residual-plot, fig.cap="Plot of residuals against the regressor.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 4)----
+## ----fig-residual-plot, fig.alt="Residuals (y-axis) plotted against the regressor (x-axis). A random scatter around zero supports the regression assumptions.", fig.cap="Plot of residuals against the regressor.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 1.5, 4)----
 ggplot(fitted_and_residuals, aes(x = duration, y = residual)) +
   geom_point(alpha = 0.6) +
   labs(x = "duration", y = "residual") +
@@ -335,10 +334,6 @@ ggplot(fitted_and_residuals, aes(x = duration, y = residual)) +
 ## ----inference-for-regression-conditional-text, echo=FALSE, results="asis"----
 if(!is_latex_output()) 
   cat("An example of such a transformation is given in [Appendix A online](https://moderndive.com/v2/appendixa).")
-
-
-
-
 
 
 ## ----inference-for-regression-create-n_reps, echo=FALSE-----------------------
@@ -355,7 +350,7 @@ n_reps <- 1000
 
 
 
-## ----bootstrap-distribution-slope, fig.cap="Bootstrap distribution of slope.", fig.height=ifelse(knitr::is_latex_output(), 2.2, 4)----
+## ----fig-bootstrap-distribution-slope, fig.alt="Histogram of bootstrapped sample slopes for a regression model. Roughly bell-shaped and centered at the observed slope.", fig.cap="Bootstrap distribution of slope.", fig.height=ifelse(knitr::is_latex_output(), 2.2, 4)----
 visualize(bootstrap_distn_slope)
 
 
@@ -405,10 +400,6 @@ null_distn_slope |>
   get_p_value(obs_stat = b1, direction = "both")
 
 
-
-
-
-
 ## ----inference-for-regression-create-coffee_data------------------------------
 coffee_data <- coffee_quality |>
   select(aroma, 
@@ -428,7 +419,7 @@ coffee_data
 #   tidy_summary()
 
 
-## ----coffee-tidy-summary, echo=FALSE------------------------------------------
+## ----tbl-coffee-tidy-summary, echo=FALSE--------------------------------------
 coffee_data |>
   tidy_summary()  |> 
   kbl(
@@ -483,10 +474,6 @@ corr_table <- coffee_data |>
 #   select(aroma, flavor, moisture_percentage) |>
 #   tidy_summary() |>
 #   select(column, min, max)
-
-
-
-
 
 
 
@@ -569,7 +556,7 @@ mod_mult_final <- lm(total_cup_points ~ aroma + flavor + continent_of_origin,
 fit_and_res_mult <- get_regression_points(mod_mult_final)
 
 
-## ----inference-for-regression-arrange, grid-arrange-plot-check, fig.cap="Residuals vs. fitted values plot and QQ-plot for the multiple regression model.", fig.height=ifelse(knitr::is_latex_output(), 2, 4)----
+## ----fig-grid-arrange-plot-check, fig.alt="Two diagnostic plots side by side: residuals-vs-fitted (left) and QQ-plot of residuals (right) for the multiple regression model.", fig.cap="Residuals vs. fitted values plot and QQ-plot for the multiple regression model.", fig.height=ifelse(knitr::is_latex_output(), 2, 4)----
 g1 <- fit_and_res_mult |>
   ggplot(aes(x = total_cup_points_hat, y = residual)) +
   geom_point() +
@@ -579,10 +566,6 @@ g2 <- ggplot(fit_and_res_mult, aes(sample = residual)) +
   geom_qq() +
   geom_qq_line(col="blue", linewidth = 0.5)
 grid.arrange(g1, g2, ncol=2)
-
-
-
-
 
 
 ## ----inference-for-regression-specify-alt2------------------------------------
@@ -598,7 +581,7 @@ observed_fit
 # mod_mult_table
 
 
-## ----mod-mult-table-again, echo=FALSE-----------------------------------------
+## ----tbl-mod-mult-table-again, echo=FALSE-------------------------------------
 mod_mult_table |> 
   kbl(
     digits = 3,
@@ -671,7 +654,7 @@ boot_distribution_mlr
 # visualize(boot_distribution_mlr)
 
 
-## ----inference-for-regression-viz-dist-alt, echo=FALSE------------------------
+## ----inference-for-regression-viz-dist-alt, echo=FALSE, fig.show='hide'-------
 boot_mlr_viz <- visualize(boot_distribution_mlr)
 if (!file.exists("images/boot_mlr_viz.png")) {
   ggsave(
@@ -684,7 +667,7 @@ if (!file.exists("images/boot_mlr_viz.png")) {
 }
 
 
-## ----boot-distn-slopes, echo=FALSE, out.width="68%", fig.height=12, fig.cap="Bootstrap distributions of partial slopes."----
+## ----fig-boot-distn-slopes, fig.alt="Side-by-side histograms of bootstrap distributions for the partial slopes of multiple predictors in a regression model.", echo=FALSE, out.width="68%", fig.height=12, fig.cap="Bootstrap distributions of partial slopes."----
 if(is_latex_output()) {
   knitr::include_graphics("images/boot_mlr_viz.png")
 } else {
@@ -701,7 +684,7 @@ confidence_intervals_mlr <- boot_distribution_mlr |>
 confidence_intervals_mlr
 
 
-## ----ci-slopes-multiple, fig.cap="95% confidence intervals for the partial slopes.", fig.height=8.5, fig.width=6----
+## ----fig-ci-slopes-multiple, fig.alt="Forest plot of 95% confidence intervals for the partial slope of each predictor in a multiple regression model. Each row is one predictor; horizontal segments are the CI bounds.", fig.cap="95% confidence intervals for the partial slopes.", fig.height=8.5, fig.width=6----
 visualize(boot_distribution_mlr) +
   shade_confidence_interval(endpoints = confidence_intervals_mlr)
 
@@ -722,7 +705,7 @@ null_distribution_mlr
 #   shade_p_value(obs_stat = observed_fit, direction = "two-sided")
 
 
-## ----inference-for-regression-viz-pvalue-alt, echo=FALSE----------------------
+## ----inference-for-regression-viz-pvalue-alt, echo=FALSE, fig.show='hide'-----
 mlr_pvalue_viz <- visualize(null_distribution_mlr) +
   shade_p_value(obs_stat = observed_fit, direction = "two-sided")
 if (!file.exists("images/mlr_pvalue_viz.png")) {
@@ -736,7 +719,7 @@ if (!file.exists("images/mlr_pvalue_viz.png")) {
 }
 
 
-## ----shaded-p-values-partial, echo=FALSE, out.width="55%", fig.height=12, fig.cap="Shaded p-values for the partial slopes in this multiple regression."----
+## ----fig-shaded-p-values-partial, fig.alt="Histograms showing the null distribution of each partial slope in a multiple regression, with the area beyond the observed slope shaded to indicate the p-value.", echo=FALSE, out.width="55%", fig.height=12, fig.cap="Shaded p-values for the partial slopes in this multiple regression."----
 if(is_latex_output()) {
   knitr::include_graphics("images/mlr_pvalue_viz.png")
 } else {
@@ -747,4 +730,13 @@ if(is_latex_output()) {
 ## ----inference-for-regression-alt2-dup4---------------------------------------
 null_distribution_mlr |>
   get_p_value(obs_stat = observed_fit, direction = "two-sided")
+
+
+## -----------------------------------------------------------------------------
+#| label: ch10-exercises
+#| results: asis
+#| echo: false
+#| message: false
+source(if (file.exists("scripts/exercise_helpers.R")) "scripts/exercise_helpers.R" else "../scripts/exercise_helpers.R")
+cat(render_chapter_exercises(10))
 
