@@ -98,19 +98,32 @@ jobs:
             }
           '
 
-      # The 4 GitHub-only data packages via plain git clone. remotes::install_git
-      # does NOT call api.github.com (only renv's interception did, and renv is
-      # off here), so this just clones + installs.
-      - name: Install GitHub-only exercise packages
+      # Exercise data packages that have graduated to CRAN, installed from a
+      # DATED P3M snapshot so the build stays deterministic. This pin is
+      # deliberately separate from the renv.lock snapshot above: bumping that
+      # one perturbs every lockfile package, while this one governs only the
+      # data packages. When one of these ships a new CRAN release, confirm P3M
+      # carries it (the instructor repo's cran-watch gate), then bump this date.
+      - name: Install exercise data packages from CRAN
+        run: |
+          R -q -e '
+            data_snap <- "https://packagemanager.posit.co/cran/__linux__/noble/2026-08-01"
+            pkgs <- c("olympicAthletes", "exoplanetdata", "volcanoes")
+            install.packages(pkgs, repos = data_snap)
+            missing <- setdiff(pkgs, rownames(installed.packages()))
+            if (length(missing)) stop("Failed to install: ", paste(missing, collapse = ", "))
+          '
+
+      # Dev moderndive via plain git clone: multi-predictor get_correlation()
+      # is not in the CRAN release yet. remotes::install_git does NOT call
+      # api.github.com (only renv's interception did, and renv is off here).
+      - name: Install dev moderndive from GitHub
         run: |
           R -q -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")'
           ok=0
           for attempt in 1 2 3 4 5; do
-          R -q -e 'for (repo in c("moderndive/olympicAthletes",
-            "moderndive/exoplanetdata",
-            "moderndive/volcanoes",
-            "moderndive/moderndive")) remotes::install_git(
-            paste0("https://github.com/", repo, ".git"), upgrade = "never", quiet = FALSE)' && { ok=1; break; }
+          R -q -e 'remotes::install_git("https://github.com/moderndive/moderndive.git",
+            upgrade = "never", quiet = FALSE)' && { ok=1; break; }
           echo "::warning::GitHub install attempt $attempt failed; retrying in $((attempt*10))s"; sleep $((attempt*10))
           done
           [ "$ok" = 1 ] || { echo "::error::GitHub package install failed after 5 attempts"; exit 1; }

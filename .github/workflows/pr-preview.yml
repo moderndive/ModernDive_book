@@ -87,16 +87,27 @@ jobs:
             }
           '
 
-      - name: Install GitHub-only exercise packages
+      # Same split as quarto-publish.yml: graduated data packages from a dated
+      # P3M snapshot (separate pin from the renv.lock snapshot — bump this date
+      # only after P3M carries a new data-package release), dev moderndive from
+      # GitHub.
+      - name: Install exercise data packages from CRAN
+        run: |
+          R -q -e '
+            data_snap <- "https://packagemanager.posit.co/cran/__linux__/noble/2026-08-01"
+            pkgs <- c("olympicAthletes", "exoplanetdata", "volcanoes")
+            install.packages(pkgs, repos = data_snap)
+            missing <- setdiff(pkgs, rownames(installed.packages()))
+            if (length(missing)) stop("Failed to install: ", paste(missing, collapse = ", "))
+          '
+
+      - name: Install dev moderndive from GitHub
         run: |
           R -q -e 'if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")'
           ok=0
           for attempt in 1 2 3 4 5; do
-          R -q -e 'for (repo in c("moderndive/olympicAthletes",
-            "moderndive/exoplanetdata",
-            "moderndive/volcanoes",
-            "moderndive/moderndive")) remotes::install_git(
-            paste0("https://github.com/", repo, ".git"), upgrade = "never", quiet = FALSE)' && { ok=1; break; }
+          R -q -e 'remotes::install_git("https://github.com/moderndive/moderndive.git",
+            upgrade = "never", quiet = FALSE)' && { ok=1; break; }
           echo "::warning::GitHub install attempt $attempt failed; retrying in $((attempt*10))s"; sleep $((attempt*10))
           done
           [ "$ok" = 1 ] || { echo "::error::GitHub package install failed after 5 attempts"; exit 1; }
