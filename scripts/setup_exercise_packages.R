@@ -7,8 +7,8 @@
 
 EXERCISE_PACKAGES <- list(
   olympicAthletes = list(
-    repo        = "moderndive/olympicAthletes",
-    from_github = TRUE
+    repo        = NA_character_,
+    from_github = FALSE
   ),
   steves = list(
     repo        = NA_character_,
