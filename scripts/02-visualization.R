@@ -5,11 +5,15 @@ source("scripts/image_functions.R")
 
 
 
+
+
 ## ----visualization-load-packages, message=FALSE-------------------------------
 library(nycflights23)
 library(ggplot2)
 library(moderndive)
 library(tibble)
+
+
 
 
 
@@ -40,6 +44,16 @@ envoy_flights <- flights |>
 ggplot(data = envoy_flights, mapping = aes(x = dep_delay, y = arr_delay))
 
 
+
+
+
+
+
+
+
+
+
+
 ## ----fig-alpha, fig.cap="Arrival vs. departure delays scatterplot with alpha = 0.2.", fig.alt="The same scatterplot of departure delay versus arrival delay, but with semi-transparent points (alpha = 0.2). The dense central cluster now appears as a shaded gradient (darker where many points overlap, lighter at the periphery) making the relative density of points easier to see.", fig.height=ifelse(knitr::is_latex_output(), 3.8, 4)----
 ggplot(data = envoy_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
   geom_point(alpha = 0.2)
@@ -52,10 +66,24 @@ ggplot(data = envoy_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
   geom_jitter(width = 30, height = 30)
 
 
+
+
+
+
+
+
+
+
 ## ----fig-hourlytemp, fig.cap="Hourly wind speed in Newark for January 1-15, 2023.", fig.alt="Line graph of hourly wind speed (mph) in Newark from January 1 to January 15, 2023. The line oscillates between roughly 0 and 35 mph with no clear trend over the two-week period; sharp short-term spikes are visible across multiple days."----
 ggplot(data = early_january_2023_weather,
        mapping = aes(x = time_hour, y = wind_speed)) +
   geom_line()
+
+
+
+
+
+
 
 
 ## ----fig-windspeed-on-line, fig.alt="One-dimensional strip plot of hourly wind speed values from the weather data along a horizontal line. Most points cluster between 0 and 20 mph with heavy overplotting; a thin tail extends out toward 40 mph.", echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 0.8, 4), fig.cap="Plot of hourly wind speed recordings from NYC in 2023."----
@@ -97,6 +125,14 @@ ggplot(data = weather, mapping = aes(x = wind_speed)) +
 
 
 
+
+
+
+
+
+
+
+
 ## ----visualization-facet-hist-wind, eval=FALSE--------------------------------
 # ggplot(data = weather, mapping = aes(x = wind_speed)) +
 #   geom_histogram(binwidth = 5, color = "white") +
@@ -123,6 +159,14 @@ ggplot(data = weather, mapping = aes(x = wind_speed)) +
 
 
 
+
+
+
+
+
+
+
+
 ## ----fig-badbox, fig.alt="A single uninformative wide boxplot pooled across all 12 months: the result of mapping the numeric `month` variable to x instead of treating it as categorical. ggplot also emits a warning about a continuous x aesthetic.", fig.cap="Invalid boxplot specification.", fig.height=ifelse(knitr::is_latex_output(), 1.9, 4)----
 ggplot(data = weather, mapping = aes(x = month, y = wind_speed)) +
   geom_boxplot()
@@ -131,6 +175,14 @@ ggplot(data = weather, mapping = aes(x = month, y = wind_speed)) +
 ## ----fig-monthtempbox, fig.cap="Side-by-side boxplot of wind speed split by month.", fig.alt="Side-by-side boxplots of hourly wind speed (y-axis, mph) by month (x-axis, January through December). Median wind speeds are roughly similar across months but slightly higher in winter and spring; spread varies somewhat by month, with several high-wind outliers above 30 mph in most months.", fig.height=ifelse(knitr::is_latex_output(), 4, 4)----
 ggplot(data = weather, mapping = aes(x = factor(month), y = wind_speed)) +
   geom_boxplot()
+
+
+
+
+
+
+
+
 
 
 ## ----visualization-create-fruits----------------------------------------------
@@ -157,6 +209,18 @@ ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
 ## ----fig-flightsbar, fig.cap="Number of flights departing NYC in 2023 by airline using `geom_bar()`.", fig.alt="Bar chart of the number of flights departing NYC in 2023 by airline carrier code (x-axis). UA (United) and B6 (JetBlue) have the tallest bars; many smaller carriers appear as much shorter bars on the right side of the plot.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -198,6 +262,18 @@ ggplot(data = flights, mapping = aes(x = carrier)) +
 # ggplot(data = flights, mapping = aes(x = carrier)) +
 #   geom_bar() +
 #   facet_wrap(~ origin, ncol = 1)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

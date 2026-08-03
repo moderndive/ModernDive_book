@@ -5,6 +5,8 @@ source("scripts/image_functions.R")
 
 
 
+
+
 ## ----regression-load-packages, message=FALSE----------------------------------
 library(tidyverse)
 library(moderndive)
@@ -136,6 +138,12 @@ ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
   geom_smooth(method = "lm", se = FALSE)
 
 
+
+
+
+
+
+
 ## ----regression-lm-fertility, eval=FALSE--------------------------------------
 # # Fit regression model:
 # demographics_model <- lm(fert_rate ~ life_exp, data = UN_data_ch5)
@@ -155,9 +163,23 @@ ggplot(UN_data_ch5, aes(x = life_exp, y = fert_rate)) +
 
 
 
+
+
+
+
+
+
+
+
 ## ----regression-reg-points, eval=FALSE----------------------------------------
 # regression_points <- get_regression_points(demographics_model)
 # regression_points
+
+
+
+
+
+
 
 
 
@@ -245,13 +267,29 @@ life_exp_by_continent
 
 
 
+
+
+
+
 ## ----regression-fit-lm--------------------------------------------------------
 life_exp_model <- lm(life_exp ~ continent, data = gapminder2022)
 coef(life_exp_model)
 
 
+
+
+
+
 ## ----regression-reg-points-alt, eval=FALSE------------------------------------
 # get_regression_points(life_exp_model, ID = "country")
+
+
+
+
+
+
+
+
 
 
 
@@ -334,6 +372,8 @@ SSR <- regression_points |>
   summarize(sum_of_squared_residuals = sum(squared_residuals)) |> 
   pull()
 SSR
+
+
 
 
 

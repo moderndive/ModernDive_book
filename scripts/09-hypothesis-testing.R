@@ -7,6 +7,8 @@ source("scripts/image_functions.R")
 
 
 
+
+
 ## ----hypothesis-testing-load-packages, message=FALSE--------------------------
 library(tidyverse)
 library(moderndive)
@@ -341,6 +343,22 @@ percentile_ci
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## ----hypothesis-testing-v50---------------------------------------------------
 movies
 
@@ -420,6 +438,20 @@ null_distribution_movies |>
 p_value_movies <- null_distribution_movies |>
   get_p_value(obs_stat = obs_diff_means, direction = "both") |>
   mutate(p_value = round(p_value, 3))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## -----------------------------------------------------------------------------

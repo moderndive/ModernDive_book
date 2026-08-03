@@ -9,6 +9,8 @@ source("scripts/image_functions.R")
 
 
 
+
+
 ## ----confidence-intervals-example-load-packages-2, message=FALSE--------------
 library(tidyverse)
 library(moderndive)
@@ -34,6 +36,10 @@ almonds_sample_100 |>
 
 ## ----confidence-intervals-create-xbar, echo=FALSE-----------------------------
 xbar <- mean(almonds_sample_100$weight)
+
+
+
+
 
 
 ## ----confidence-intervals-create-num_almonds, echo=FALSE----------------------
@@ -85,6 +91,12 @@ ggplot(data = data.frame(x = c(-4, 4)), aes(x)) +
 
 
 
+
+
+
+
+
+
 ## ----confidence-intervals-create-se_xbar, echo=FALSE--------------------------
 se_xbar <- sigma / sqrt(num_almonds_sample)
 
@@ -117,6 +129,10 @@ almonds_sample_100 |>
 
 
 
+
+
+
+
 ## ----confidence-intervals-mean-sd-v2------------------------------------------
 almonds_sample_100 |>
   summarize(sample_mean = mean(weight), sample_sd = sd(weight))
@@ -135,6 +151,10 @@ almonds_sample_100 |>
   summarize(sample_mean = mean(weight), sample_sd = sd(weight),
             lower_bound = mean(weight) - 1.98*sd(weight)/sqrt(length(weight)),
             upper_bound = mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
+
+
+
+
 
 
 
@@ -277,6 +297,14 @@ boot_means |>
 
 
 
+
+
+
+
+
+
+
+
 ## ----confidence-intervals-virtual-sample-sized, results='hide'----------------
 almonds_sample_100 |> 
   rep_sample_n(size = 100, replace = TRUE, reps = 1000)
@@ -396,6 +424,16 @@ standard_error_ci
 ## ----confidence-intervals-viz-dist-alt, echo=TRUE, fig.show='hide'------------
 visualize(bootstrap_means) + 
   shade_confidence_interval(endpoints = standard_error_ci)
+
+
+
+
+
+
+
+
+
+
 
 
 

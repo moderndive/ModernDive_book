@@ -5,6 +5,8 @@ source("scripts/image_functions.R")
 
 
 
+
+
 ## ----sampling-load-packages, message=FALSE------------------------------------
 library(tidyverse)
 library(moderndive)
@@ -63,6 +65,10 @@ ggplot(tactile_prop_red, aes(x = prop_red)) +
 
 
 
+
+
+
+
 ## ----sampling-virtual-sample, echo=-1-----------------------------------------
 set.seed(76)
 virtual_shovel <- bowl |>
@@ -111,6 +117,8 @@ ggplot(virtual_prop_red, aes(x = prop_red)) +
 
 
 
+
+
 ## ----sampling-sample-rows2-dup1, echo=-1--------------------------------------
 set.seed(76)
 virtual_prop_red <- bowl |> 
@@ -123,6 +131,10 @@ virtual_prop_red
 ggplot(virtual_prop_red, aes(x = prop_red)) +
   geom_histogram(binwidth = 0.04, boundary = 0.4, color = "white") +
   labs(x = "Sample proportion", title = "Histogram of 1000 sample proportions") 
+
+
+
+
 
 
 
@@ -171,6 +183,18 @@ ggplot(virtual_prop_red, aes(x = prop_red)) +
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 ## ----sampling-compute-mean-v6-------------------------------------------------
 virtual_prop_red_25
 virtual_prop_red_25 |> 
@@ -182,6 +206,8 @@ virtual_prop_red_50 |>
   summarize(E_Xbar_50 = mean(prop_red))
 virtual_prop_red_100 |> 
   summarize(E_Xbar_100 = mean(prop_red))
+
+
 
 
 
@@ -219,6 +245,10 @@ virtual_prop_red_50 |>
 ## ----sampling-demo-code-v2-dup1-----------------------------------------------
 sqrt(p * (1 - p) / 25)
 sqrt(p * (1 - p) / 50)
+
+
+
+
 
 
 
@@ -360,6 +390,12 @@ virtual_mean_weight_100 |>
 
 
 
+
+
+
+
+
+
 ## ----sampling-create-n1, echo=-(1:3)------------------------------------------
 set.seed(76)
 n1 <- 50
@@ -384,6 +420,8 @@ ggplot(prop_joined, aes(x = prop_diff)) +
   geom_histogram(binwidth = 0.04, boundary = 0, color = "white") +
   labs(x = "Difference in sample proportions", 
        title = "Histogram of 1000 differences in sample proportions") 
+
+
 
 
 

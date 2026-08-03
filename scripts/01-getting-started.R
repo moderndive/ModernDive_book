@@ -17,8 +17,14 @@ source("scripts/image_functions.R")
 
 
 
+
+
+
+
 ## ----getting-started-load-ggplot2, eval=FALSE---------------------------------
 # library(ggplot2)
+
+
 
 
 ## ----getting-started-load-packages, message=FALSE-----------------------------
@@ -33,8 +39,12 @@ library(knitr)
 flights
 
 
+
+
 ## ----getting-started-glimpse-flights------------------------------------------
 glimpse(flights)
+
+
 
 
 ## ----getting-started-kable-airlines, eval=FALSE-------------------------------
@@ -50,8 +60,14 @@ glimpse(flights)
 glimpse(airports)
 
 
+
+
+
+
 ## ----getting-started-demo-code-v2, eval=FALSE---------------------------------
 # ?flights
+
+
 
 
 ## ----getting-started-install-olympic, eval=FALSE------------------------------

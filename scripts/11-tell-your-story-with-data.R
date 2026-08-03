@@ -9,6 +9,8 @@ source("scripts/image_functions.R")
 
 
 
+
+
 ## ----tell-your-story-with-data-load-packages, message=FALSE-------------------
 library(tidyverse)
 library(moderndive)
@@ -257,6 +259,14 @@ null_distribution_housing |>
   get_p_value(obs_stat = observed_fit_coefficients, direction = "two-sided")
 
 
+
+
+
+
+
+
+
+
 ## ----tell-your-story-with-data-glimpse-US_births_1994_20----------------------
 glimpse(US_births_1994_2003)
 
@@ -277,6 +287,8 @@ ggplot(US_births_1999, aes(x = date, y = births)) +
 ## ----tell-your-story-with-data-arrange-desc-----------------------------------
 US_births_1999 |> 
   arrange(desc(births))
+
+
 
 
 

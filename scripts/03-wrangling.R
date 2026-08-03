@@ -5,6 +5,8 @@ source("scripts/image_functions.R")
 
 
 
+
+
 ## ----wrangling-load-packages, message=FALSE-----------------------------------
 library(dplyr)
 library(ggplot2)
@@ -64,6 +66,8 @@ library(nycflights23)
 # View(many_airports)
 
 
+
+
 ## ----wrangling-conditional-text, echo=FALSE, results="asis"-------------------
 if(!is_latex_output()) 
   cat("See [Appendix A online](https://moderndive.com/v2/appendixa) for a glossary of such summary statistics.")
@@ -86,10 +90,16 @@ summary_windspeed <- weather |>
 summary_windspeed
 
 
+
+
+
+
 ## ----wrangling-assign-summary_windspeed, eval=FALSE---------------------------
 # summary_windspeed <- weather |>
 #   summarize(mean = mean(wind_speed, na.rm = TRUE)) |>
 #   summarize(std_dev = sd(wind_speed, na.rm = TRUE))
+
+
 
 
 
@@ -159,6 +169,16 @@ by_origin_monthly_incorrect
 
 
 
+
+
+
+
+
+
+
+
+
+
 ## ----wrangling-create-weather, eval=TRUE--------------------------------------
 weather <- weather |> 
   mutate(temp_in_C = (temp - 32) / 1.8)
@@ -208,6 +228,12 @@ flights <- flights |>
     hours = air_time / 60,
     gain_per_hour = gain / hours
   )
+
+
+
+
+
+
 
 
 ## ----wrangling-count-by-dest--------------------------------------------------
@@ -268,10 +294,16 @@ named_dests
 # View(flights_weather_joined)
 
 
+
+
+
+
 ## ----wrangling-view-joined_flights, eval=FALSE--------------------------------
 # joined_flights <- flights |>
 #   inner_join(airlines, by = "carrier")
 # View(joined_flights)
+
+
 
 
 
@@ -331,6 +363,14 @@ named_dests
 #   arrange(desc(num_flights))
 
 
+
+
+
+
+
+
+
+
 ## -----------------------------------------------------------------------------
 #| label: ch3-exercises
 #| results: asis
@@ -338,6 +378,8 @@ named_dests
 #| message: false
 source(if (file.exists("scripts/exercise_helpers.R")) "scripts/exercise_helpers.R" else "../scripts/exercise_helpers.R")
 cat(render_chapter_exercises(3))
+
+
 
 
 
