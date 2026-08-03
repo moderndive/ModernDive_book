@@ -2,9 +2,13 @@ name: Audits
 
 on:
   pull_request:
-    branches: [main, master, v2-quarto-html, v2]
+    branches: [v2-quarto-html, v2]
   push:
-    branches: [main, master, v2-quarto-html, v2]
+    branches: [v2-quarto-html, v2]
+  # Weekly: the redirect-health job checks LIVE behavior (gh-pages rules +
+  # the Netlify front), which can drift with no push here at all.
+  schedule:
+    - cron: "15 7 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -327,3 +331,65 @@ jobs:
         env:
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: npm test
+
+  lc-solutions-selftest:
+    name: Learning Check solutions align (self-test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.6.1"
+          use-public-rspm: true
+      # Base R only: asserts every chapter's Learning Checks and
+      # lc-answers/NN_lc-answers.qmd blocks line up 1:1, so a render-time
+      # stop() in lc_solution() can never be the first place a mismatch shows.
+      - name: Self-test inline LC solutions
+        run: Rscript scripts/lc_solutions.R --self-test
+
+  freeze-tracking-guard:
+    name: Freeze cache stays tracked (.gitignore guard)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # Quarto rewrites .gitignore during local renders, adding a /.quarto/
+      # line that silently exempts new freeze figures from git tracking
+      # (scripts/post-render-cleanup.sh strips it, but it has been committed
+      # before). CI trusts the committed freeze cache, so an ignored figure
+      # is a broken build waiting for the next re-render.
+      - name: Refuse an ignored .quarto/
+        run: |
+          if grep -qE '^/\.quarto/$' .gitignore; then
+            echo "::error::.gitignore ignores /.quarto/ — the tracked freeze cache under .quarto/_freeze would silently lose new figures. Run scripts/post-render-cleanup.sh (or delete the line) before committing."
+            exit 1
+          fi
+          echo "ok: .quarto/ is not ignored"
+
+  redirect-health:
+    name: Live redirects resolve (gh-pages rules)
+    runs-on: ubuntu-latest
+    steps:
+      # The authoritative _redirects lives on the gh-pages PUBLISH ROOT (the
+      # Netlify front for moderndive.com consumes it); the copy shipped into
+      # /v2/ by _quarto.yml resources is inert. NEWS once claimed rules were
+      # "each verified live after deploy" — that was a human with curl. This
+      # job is that verification, on a schedule: every /v2 301 rule must
+      # answer 301 to its stated target, and the target must serve 200.
+      - name: Verify every /v2 301 rule live
+        run: |
+          curl -sfL "https://raw.githubusercontent.com/moderndive/ModernDive_book/gh-pages/_redirects" -o rules.txt
+          fails=0; checked=0
+          while read -r src dst code; do
+            case "$src" in /v2/*) ;; *) continue ;; esac
+            [ "$code" = "301!" ] || continue
+            checked=$((checked+1))
+            got=$(curl -s -o /dev/null -w "%{http_code} %{redirect_url}" "https://moderndive.com$src")
+            hs="${got%% *}"; loc="${got#* }"
+            tgt=$(curl -s -o /dev/null -w "%{http_code}" "https://moderndive.com$dst")
+            if [ "$hs" != "301" ] || [ "${loc#*moderndive.com}" != "$dst" ] || [ "$tgt" != "200" ]; then
+              echo "::error::rule '$src -> $dst': got status=$hs location=$loc target=$tgt"
+              fails=$((fails+1))
+            fi
+          done < rules.txt
+          echo "checked $checked rules, $fails failure(s)"
+          [ "$fails" = 0 ]
