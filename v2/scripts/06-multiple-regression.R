@@ -5,6 +5,8 @@ source("scripts/image_functions.R")
 
 
 
+
+
 ## ----multiple-regression-load-packages, eval=FALSE----------------------------
 # library(tidyverse)
 # library(moderndive)
@@ -92,6 +94,12 @@ UN_data_ch6 |>
 
 
 
+
+
+
+
+
+
 ## ----multiple-regression-scatter-lifeexp-colored, eval=FALSE------------------
 # ggplot(UN_data_ch6, aes(x = life_exp, y = fert_rate, color = income)) +
 #   geom_point() +
@@ -119,9 +127,15 @@ UN_data_ch6 |>
 
 
 
+
+
 ## ----multiple-regression-reg-points, eval=FALSE-------------------------------
 # regression_points <- get_regression_points(model_int)
 # regression_points
+
+
+
+
 
 
 
@@ -202,6 +216,8 @@ credit_ch6 |> get_correlation(debt ~ 1000 * income)
 
 
 
+
+
 ## ----multiple-regression-fit-lm, eval=FALSE-----------------------------------
 # debt_model <- lm(debt ~ credit_limit + income, data = credit_ch6)
 # coef(debt_model)
@@ -213,6 +229,16 @@ credit_ch6 |> get_correlation(debt ~ 1000 * income)
 # # Fit regression model and get the coefficients of the model
 # simple_model <- lm(debt ~ income, data = credit_ch6)
 # coef(simple_model)
+
+
+
+
+
+
+
+
+
+
 
 
 

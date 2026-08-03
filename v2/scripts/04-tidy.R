@@ -5,6 +5,8 @@ source("scripts/image_functions.R")
 
 
 
+
+
 ## ----tidy-load-packages, message=FALSE----------------------------------------
 library(dplyr)
 library(ggplot2)
@@ -33,6 +35,10 @@ drinks_smaller <- drinks |>
   select(-total_litres_of_pure_alcohol) |> 
   rename(beer = beer_servings, spirit = spirit_servings, wine = wine_servings)
 drinks_smaller
+
+
+
+
 
 
 
@@ -90,6 +96,8 @@ airline_safety_smaller <- airline_safety |>
 airline_safety_smaller
 
 
+
+
 ## ----tidy-create-guat_dem-----------------------------------------------------
 guat_dem <- dem_score |> 
   filter(country == "Guatemala")
@@ -109,6 +117,10 @@ guat_dem_tidy
 ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
   geom_line() +
   labs(x = "Year", y = "Democracy Score")
+
+
+
+
 
 
 

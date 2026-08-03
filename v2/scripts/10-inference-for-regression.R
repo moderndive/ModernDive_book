@@ -5,6 +5,8 @@ source("scripts/image_functions.R")
 
 
 
+
+
 ## ----inference-for-regression-load-packages, message=FALSE--------------------
 library(tidyverse)
 library(moderndive)
@@ -219,6 +221,12 @@ aov(popularity ~ track_genre, data = spotify_for_anova) |>
   anova()
 
 
+
+
+
+
+
+
 ## ----inference-for-regression-demo-code-v2-dup3-------------------------------
 old_faithful_2024 |>
   slice(c(49, 51))
@@ -263,6 +271,12 @@ ggplot(data.frame(x = c(-4, 4)), aes(x = x)) +
   scale_x_continuous(name = "t", breaks = seq(-4, 4, 2))+
   scale_y_continuous(labels = NULL)+
   theme(axis.title.y = element_blank(), axis.ticks.y = element_blank())
+
+
+
+
+
+
 
 
 ## ----inference-for-regression-reg-table, eval=FALSE---------------------------
@@ -336,6 +350,14 @@ if(!is_latex_output())
   cat("An example of such a transformation is given in [Appendix A online](https://moderndive.com/v2/appendixa).")
 
 
+
+
+
+
+
+
+
+
 ## ----inference-for-regression-create-n_reps, echo=FALSE-----------------------
 n_reps <- 1000
 
@@ -398,6 +420,14 @@ b1
 ## ----inference-for-regression-alt---------------------------------------------
 null_distn_slope |> 
   get_p_value(obs_stat = b1, direction = "both")
+
+
+
+
+
+
+
+
 
 
 ## ----inference-for-regression-create-coffee_data------------------------------
@@ -474,6 +504,14 @@ corr_table <- coffee_data |>
 #   select(aroma, flavor, moisture_percentage) |>
 #   tidy_summary() |>
 #   select(column, min, max)
+
+
+
+
+
+
+
+
 
 
 
@@ -566,6 +604,14 @@ g2 <- ggplot(fit_and_res_mult, aes(sample = residual)) +
   geom_qq() +
   geom_qq_line(col="blue", linewidth = 0.5)
 grid.arrange(g1, g2, ncol=2)
+
+
+
+
+
+
+
+
 
 
 ## ----inference-for-regression-specify-alt2------------------------------------
@@ -730,6 +776,14 @@ if(is_latex_output()) {
 ## ----inference-for-regression-alt2-dup4---------------------------------------
 null_distribution_mlr |>
   get_p_value(obs_stat = observed_fit, direction = "two-sided")
+
+
+
+
+
+
+
+
 
 
 ## -----------------------------------------------------------------------------
