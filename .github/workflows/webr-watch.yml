@@ -23,6 +23,7 @@ on:
 permissions:
   contents: write        # push the PR branch
   pull-requests: write   # open the PR
+  issues: write          # raise the pkg_extras "ready" report
 
 concurrency:
   group: webr-watch
@@ -40,6 +41,8 @@ jobs:
 
       - name: Check repo.r-wasm.org and prune graduated packages
         id: promote
+        env:
+          WEBR_FLAGGED_FILE: ${{ runner.temp }}/webr-flagged.txt
         run: |
           promoted=$(Rscript --vanilla scripts/promote_webr_packages.R)
           echo "promoted=$promoted" >> "$GITHUB_OUTPUT"
@@ -47,6 +50,73 @@ jobs:
             echo "### Now on webR: \`$promoted\`" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "No companion packages newly on webR." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # pkg_extras are reported, never pruned — see the script's header for
+          # why the two lists can't share a code path.
+          flagged=$(cat "$WEBR_FLAGGED_FILE" 2>/dev/null || true)
+          echo "flagged=$flagged" >> "$GITHUB_OUTPUT"
+          if [ -n "$flagged" ]; then
+            echo "### pkg_extras ready to retire: \`$flagged\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # A pkg_extras hit gets an ISSUE, not a PR: there is no safe edit to
+      # propose. Retiring one of these entries also means touching the
+      # _quarto.yml webR pin and the r-universe repo entry, which is a
+      # judgement call, so this only tells a human the gate has opened.
+      - name: Report pkg_extras packages that webR can now serve
+        if: steps.promote.outputs.flagged != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FLAGGED: ${{ steps.promote.outputs.flagged }}
+        run: |
+          set -euo pipefail
+          TITLE="webR now serves ${FLAGGED} — retire the pkg_extras shadow entry"
+
+          # One open issue at a time: re-runs comment on it rather than
+          # opening a duplicate every morning. Exact-title match over the open
+          # list rather than `--search`, whose query syntax would have to cope
+          # with the em dash and spaces in TITLE.
+          EXISTING=$(gh issue list --state open --limit 200 --json number,title \
+            | jq -r --arg t "$TITLE" 'map(select(.title == $t)) | .[0].number // empty')
+
+          cat > /tmp/issue-body.md <<'EOF'
+          🤖 Automated by `.github/workflows/webr-watch.yml`.
+
+          **`__FLAGGED__`** now meets its minimum version on webR's default repo
+          ([repo.r-wasm.org](https://repo.r-wasm.org)), so the `pkg_extras` entry in
+          `scripts/webr-shadow-library.R` that backfills its datasets is no longer
+          doing anything for readers.
+
+          This is a **report, not a PR** — unlike a `pkg_data` entry, this one cannot
+          just be deleted. Retiring it is three coupled edits (see
+          `RELEASE-0.8.0-RUNBOOK.md` step 9 in the `moderndive` repo):
+
+          1. drop the entry from `pkg_extras` in `scripts/webr-shadow-library.R`;
+          2. remove the `https://moderndive.r-universe.dev` repo entry and the
+             `- moderndive` package line from `_quarto.yml`, plus the comments
+             explaining why they were there;
+          3. re-examine the `webr:` version pin in `_quarto.yml` — it is held at 0.6.0
+             specifically because the r-universe dev build exporting `View()` was only
+             compiled for R 4.6.0, so the pin may be able to move once the real wasm
+             build is in play.
+
+          Also check the `library(moderndive)` comment in Chapter 1's
+          `#| context: setup` cell, and the webR wording in `common-errors.qmd` over in
+          `moderndive-instructor-resources`.
+
+          Verify with `scripts/test_webr_headless` before and after.
+
+          cc @ismayc
+          EOF
+          sed -i "s/__FLAGGED__/${FLAGGED}/g" /tmp/issue-body.md
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body-file /tmp/issue-body.md
+            echo "Commented on existing issue #$EXISTING." >> "$GITHUB_STEP_SUMMARY"
+          else
+            gh issue create --title "$TITLE" --body-file /tmp/issue-body.md
+            echo "Opened pkg_extras report issue." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Open or update the promotion PR
