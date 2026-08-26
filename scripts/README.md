@@ -92,6 +92,17 @@ Validates every `exercises/NN.yml` (and `NN-solutions.yml` if present locally) c
 
 Exits non-zero on errors; warnings print without failing. Wired into the `Audits` CI workflow so PRs that introduce malformed YAML fail before render.
 
+### Where the `build_*.R` generators actually live
+
+Every `scripts/build_*.R` file is **gitignored in this repo** (`.gitignore`, `/scripts/build_*.R`) and tracked canonically in the private `moderndive-instructor-resources` repo. This is deliberate, not an oversight. The generators read book content (chapter qmds, `exercises/NN.yml`, Quick checks) as their input, so they have to run from this tree; but this repo is public and they produce instructor material such as exam banks, facilitator notes, slide decks, and the sample syllabus. Their outputs are gitignored here too, under `/instructor-solutions/`.
+
+Two consequences worth knowing:
+
+1. A fresh clone of this repo will not contain them. Copy them in from the private repo's `scripts/` directory before regenerating anything.
+2. The private repo is canonical. Edit them there and re-sync so the two copies do not drift.
+
+The subsections below document what each generator produces. They are described here because the outputs belong to the instructor workflow, not because the scripts themselves ship in this repo.
+
 ### `build_concept_map.R` — chapter dependency visualization
 
 Reads every chapter qmd, extracts `@sec-*` cross-references, maps each anchor to its owning chapter, and writes `instructor-solutions/_site/concept-map.html` containing:
