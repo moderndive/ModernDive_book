@@ -82,6 +82,13 @@ ex_helpers_load <- function(chapter) {
       if (!is.null(sol_by_ex[[ex_num]])) {
         data$exercises[[i]]$solution_ref <- sol_by_ex[[ex_num]]$solution_ref
         data$exercises[[i]]$solution     <- sol_by_ex[[ex_num]]$solution
+        # Optional instructor-side tiered hint: authored in the private
+        # solutions YAML (never the public prompts) as a mapping with `nudge`
+        # (a gentle pointer) and `strategy` (a concrete move), surfaced on the
+        # worked-solution pages between the question and the solution so an
+        # instructor can hand a stuck student either level without revealing
+        # the answer.
+        data$exercises[[i]]$hint         <- sol_by_ex[[ex_num]]$hint
       }
     }
   } else {
@@ -266,11 +273,22 @@ render_solutions <- function(chapter) {
     id <- ex_helpers_id(chapter, ex$ex_num)
     star_str <- ex_helpers_difficulty_marker(ex$difficulty, ex$group)
     body <- trimws(ex$solution, which = "right")
+    hint <- ex$hint
+    hint_block <- if (is.list(hint) &&
+                      nzchar(hint$nudge %||% "") && nzchar(hint$strategy %||% "")) c(
+      '::: {.callout-tip title="Hints (shareable with students)"}',
+      sprintf("**Nudge**: %s", trimws(hint$nudge)),
+      "",
+      sprintf("**Strategy**: %s", trimws(hint$strategy)),
+      ":::",
+      ""
+    ) else character()
     ex_text <- paste(c(
       sprintf('::: {.callout-note collapse="true" title="%s — show question" #ex-%d-%d}', id, chapter, ex$ex_num),
       sprintf("**%s (%s)** %s", id, star_str, trimws(ex$prompt)),
       ":::",
       "",
+      hint_block,
       # Hash omitted from the visible page — reviewers use the exercise-solution
       # checker (which keys on the YAML hash) rather than reading it off the page.
       sprintf("**Solution** *(reference: %s)*.", ex$solution_ref),
