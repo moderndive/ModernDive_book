@@ -490,7 +490,7 @@ myth_ci_se
 set.seed(76)
 
 
-## ----sampling-distribution-part-deux, fig.show="hold", fig.cap="Previously seen sampling distribution of sample proportion red for $n = 1000$.", fig.height=2----
+## ----sampling-distribution-part-deux, fig.show="hold", fig.cap="Previously seen sampling distribution of the sample proportion red based on 1000 samples of size $n = 50$.", fig.height=2----
 # Take 1000 virtual samples of size 50 from the bowl:
 virtual_samples <- bowl %>% 
   rep_sample_n(size = 50, reps = 1000)
