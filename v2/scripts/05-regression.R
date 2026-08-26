@@ -122,7 +122,7 @@ UN_data_ch5 |>
 
 
 
-## ----fig-numxplot1, fig.alt="Scatterplot of fertility rate (x-axis, births per woman) versus life expectancy (y-axis, years) for countries in 2022. Strong negative relationship: countries with higher fertility tend to have lower life expectancy.", fig.cap="Scatterplot of relationship of life expectancy and fertility rate.", fig.height=ifelse(knitr::is_latex_output(), 4.5, 5)----
+## ----fig-numxplot1, fig.alt="Scatterplot of life expectancy (x-axis, years) versus fertility rate (y-axis, births per woman) for countries in 2022. Strong negative relationship: countries with higher life expectancy tend to have lower fertility rates.", fig.cap="Scatterplot of relationship of life expectancy and fertility rate.", fig.height=ifelse(knitr::is_latex_output(), 4.5, 5)----
 ggplot(UN_data_ch5,
        aes(x = life_exp, y = fert_rate)) +
   geom_point(alpha = 0.1) +

@@ -105,10 +105,10 @@ summary_windspeed
 
 
 ## ----wrangling-mean-sd-temp---------------------------------------------------
-summary_temp <- weather |> 
+summary_windspeed <- weather |> 
   summarize(mean = mean(wind_speed, na.rm = TRUE), 
             std_dev = sd(wind_speed, na.rm = TRUE))
-summary_temp
+summary_windspeed
 
 
 ## ----wrangling-summary-by-month-----------------------------------------------

@@ -206,7 +206,7 @@ ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
 
-## ----fig-flightsbar, fig.cap="Number of flights departing NYC in 2023 by airline using `geom_bar()`.", fig.alt="Bar chart of the number of flights departing NYC in 2023 by airline carrier code (x-axis). UA (United) and B6 (JetBlue) have the tallest bars; many smaller carriers appear as much shorter bars on the right side of the plot.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----fig-flightsbar, fig.cap="Number of flights departing NYC in 2023 by airline using `geom_bar()`.", fig.alt="Bar chart of the number of flights departing NYC in 2023 by airline carrier code (x-axis). YX (Republic), UA (United), and B6 (JetBlue) have the tallest bars; many smaller carriers appear as much shorter bars on the right side of the plot.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
 
@@ -321,6 +321,6 @@ cat(render_chapter_exercises(2))
 # early_january_2023_weather <- weather |>
 #   filter(origin == "EWR" & month == 1 & day <= 15)
 # 
-# ggplot(data = early_january_2023_weather, mapping = aes(x = time_hour, y = temp)) +
+# ggplot(data = early_january_2023_weather, mapping = aes(x = time_hour, y = wind_speed)) +
 #   geom_line()
 

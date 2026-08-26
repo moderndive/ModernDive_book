@@ -140,9 +140,9 @@ almonds_sample_100 |>
 
 ## ----confidence-intervals-mean-sd-v2-dup1, echo=FALSE-------------------------
 sample_s <- sd(almonds_sample_100$weight)
-lower_bound_t <- with(almonds_sample,
+lower_bound_t <- with(almonds_sample_100,
                      mean(weight) - 1.98*sd(weight)/sqrt(length(weight)))
-upper_bound_t <- with(almonds_sample,
+upper_bound_t <- with(almonds_sample_100,
                      mean(weight) + 1.98*sd(weight)/sqrt(length(weight)))
 
 

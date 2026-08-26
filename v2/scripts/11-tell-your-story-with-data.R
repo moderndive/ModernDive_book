@@ -276,7 +276,7 @@ US_births_1999 <- US_births_1994_2003 |>
   filter(year == 1999)
 
 
-## ----fig-us-births, fig.alt="Line graph of daily births in the United States during 1999, showing a strong weekly cycle (drops on weekends) and a notable dip on Halloween.", fig.cap="Number of births in the US in 1999.", fig.height=ifelse(knitr::is_latex_output(), 6.4, 7)----
+## ----fig-us-births, fig.alt="Line graph of daily births in the United States during 1999, showing a strong weekly cycle (drops on weekends), a dip around the winter holidays, and a spike of over 14,000 births on September 9, 1999.", fig.cap="Number of births in the US in 1999.", fig.height=ifelse(knitr::is_latex_output(), 6.4, 7)----
 ggplot(US_births_1999, aes(x = date, y = births)) +
   geom_line() +
   labs(x = "Date", 

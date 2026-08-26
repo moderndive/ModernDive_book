@@ -168,7 +168,7 @@ ggplot(virtual_prop_red, aes(x = prop_red)) +
 # 
 # 
 # # Segment 3: sample size = 100 ------------------------------
-# # 2.a) Compute sample proportions for 1000 samples, each sample of size 100
+# # 3.a) Compute sample proportions for 1000 samples, each sample of size 100
 # virtual_prop_red_100 <- bowl |>
 #   rep_slice_sample(n = 100, reps = 1000) |>
 #   summarize(prop_red = mean(color == "red"))
@@ -237,9 +237,9 @@ sqrt(p * (1 - p) / 100)
 
 ## ----sampling-summarize-------------------------------------------------------
 virtual_prop_red_25 |> 
-  summarize(SE_Xbar_50 = sd(prop_red))
+  summarize(SE_Xbar_25 = sd(prop_red))
 virtual_prop_red_50 |> 
-  summarize(SE_Xbar_100 = sd(prop_red))
+  summarize(SE_Xbar_50 = sd(prop_red))
 
 
 ## ----sampling-demo-code-v2-dup1-----------------------------------------------
@@ -273,7 +273,7 @@ almonds_bowl |>
             length = n())
 
 
-## ----fig-almonds-bowl-histogram, fig.alt="Histogram of weights for the entire bowl of almonds. Roughly bell-shaped, centered near 3.7 grams, with most weights between 2 and 5 grams.", fig.cap="Distribution of weights for the entire bowl of almonds."----
+## ----fig-almonds-bowl-histogram, fig.alt="Histogram of weights for the entire bowl of almonds, ranging from about 2.6 to 4.6 grams. The distribution is irregular rather than bell-shaped, with the most common weights between 3.6 and 4.0 grams.", fig.cap="Distribution of weights for the entire bowl of almonds."----
 ggplot(almonds_bowl, aes(x = weight)) +
   geom_histogram(binwidth = 0.1, color = "white")
 

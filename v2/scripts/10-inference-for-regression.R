@@ -133,7 +133,7 @@ old_faithful_2024 |>
 n_old_faithful <- dim(old_faithful_2024)[1]
 
 
-## ----fig-geyserplot1, fig.alt="Scatterplot of waiting time (minutes) versus eruption duration (minutes) for the Old Faithful geyser. Two distinct clusters of points are visible.", echo=F, fig.cap="Scatterplot of relationship of eruption duration and waiting time.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----fig-geyserplot1, fig.alt="Scatterplot of eruption duration (seconds) versus waiting time to the next eruption (minutes) for the Old Faithful geyser. Two distinct clusters of points are visible.", echo=F, fig.cap="Scatterplot of relationship of eruption duration and waiting time.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(old_faithful_2024, 
        aes(x = duration, y = waiting)) +
   geom_point(alpha = 0.3) +
@@ -249,8 +249,8 @@ ub1 <- round(b1 + q*se_b1,3)
 # beta0
 b0 <- round(coef(model_1)[[1]],3)
 se_b0 <- round(s*sqrt(1/n_old_faithful + mean(x)^2/sum((x - mean(x))^2)),3)
-lb0 <- round(b1 - q*se_b0,3)
-ub0 <- round(b1 + q*se_b0,3)
+lb0 <- round(b0 - q*se_b0,3)
+ub0 <- round(b0 + q*se_b0,3)
 # t
 t_stat <- round(b1/se_b1,3)
 p_value <- round(2*(1 - pt(abs(t_stat), n_old_faithful-2)), 3)
@@ -298,7 +298,7 @@ fitted_and_residuals
 ## ----inference-for-regression-scatter, eval=FALSE-----------------------------
 # ggplot(fitted_and_residuals, aes(x = waiting_hat, y = residual)) +
 #   geom_point() +
-#   labs(x = "duration", y = "residual") +
+#   labs(x = "fitted values (waiting_hat)", y = "residual") +
 #   geom_hline(yintercept = 0, col = "blue")
 
 
@@ -558,8 +558,8 @@ b1_mult <- summary(mod_mult)$coef[2,1]
 se_b1_mult <- summary(mod_mult)$coef[2,2]
 
 q_mult = qt(p = (1 - (1-0.95)/2), df = n_coffee - p_mult)
-lb_mult <- b1_mult - q*se_b1_mult 
-ub_mult <- b1_mult + q*se_b1_mult
+lb_mult <- b1_mult - q_mult*se_b1_mult 
+ub_mult <- b1_mult + q_mult*se_b1_mult
 
 
 ## ----inference-for-regression-reg-table-alt, eval=FALSE-----------------------
@@ -672,7 +672,7 @@ generated_distn_slopes
 
 
 ## ----inference-for-regression-bootstrap-alt2-dup2, eval=FALSE-----------------
-# boot_distribution_mlr <- coffee_quality |>
+# boot_distribution_mlr <- coffee_data |>
 #   specify(
 #     total_cup_points ~ continent_of_origin + aroma + flavor + moisture_percentage
 #   ) |>
@@ -737,7 +737,7 @@ visualize(boot_distribution_mlr) +
 
 ## ----inference-for-regression-null-dist-alt-----------------------------------
 set.seed(2024)
-null_distribution_mlr <- coffee_quality |>
+null_distribution_mlr <- coffee_data |>
   specify(total_cup_points ~ continent_of_origin + aroma + 
       flavor + moisture_percentage) |>
   hypothesize(null = "independence") |>
