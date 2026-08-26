@@ -1,3 +1,26 @@
+# ModernDive 2.9.1 — Community errata wave: reader reports and two full-book sweeps
+
+With the Quarto edition live, readers immediately started filing sharp-eyed reports — thanks in particular to [@gerard314](https://github.com/gerard314) for four of them. Each report prompted a wider look, and two full read-throughs of the book followed. All fixes are prose/LaTeX/labels only; no analysis results change.
+
+Reader-reported fixes:
+
+* **Ch 3:** BTV/SEA described as origins when they are destinations (PR [#575](https://github.com/moderndive/ModernDive_book/pull/575)) and a Ch 5 wording fix (PR [#577](https://github.com/moderndive/ModernDive_book/pull/577)), both directly from @gerard314.
+* **Ch 5:** the first dummy-variable example carried a stale $\mathbb{1}_{\text{Amer}}$ subscript from the first edition's "Americas" coding (reported in PR [#578](https://github.com/moderndive/ModernDive_book/pull/578), completed with the neighboring stale subscripts in PR [#579](https://github.com/moderndive/ModernDive_book/pull/579)).
+* **Ch 5 (§ 5.2.2):** every inline continent coefficient rendered as empty text — "the value + is the same difference…", equations ending without values, "here is + years." (issue [#580](https://github.com/moderndive/ModernDive_book/issues/580)). The hidden chunk filtered `get_regression_table()` terms as `"continent: Asia"` where the term column actually reads `continent-Asia`, so every `pull()` silently returned `numeric(0)`. Fixed in PR [#581](https://github.com/moderndive/ModernDive_book/pull/581).
+
+The two sweeps (PRs [#579](https://github.com/moderndive/ModernDive_book/pull/579) and [#581](https://github.com/moderndive/ModernDive_book/pull/581), ~125 fixes across 16 files) also caught, most notably:
+
+* **Wrong numbers shown to readers:** Ch 7's standard-deviation worked example used the wrong mean (2 instead of 4) making its answer $\sqrt{17}$ instead of $\sqrt{13}$; Ch 8's displayed t-based 95% CI was computed from the wrong sample and contradicted the R output beside it; Ch 10's displayed 95% CI for $\beta_0$ was computed from $b_1$, printing (−14.1, 14.9) around an intercept of 79.5; Ch 1's `flights` bullet rendered with its row count missing; the population-$\sigma$ formula was missing its square root in Chs 7–8; three Ch 6 equations carried 0.263 for a coefficient that renders 0.264.
+* **Stale first-edition leftovers:** "five continents/Americas" descriptions in the six-continent UN data sections; "courses" (from the retired `evals` data) surviving in Chs 5 and 10; `temp`-for-`wind_speed` remnants in Chs 2–3 (including a Learning Check whose solution still analyzed temperatures); defunct carriers `VX`/`EV` in Chs 2–3; promotions-era subscripts and wording in Ch 9's music-genre example.
+* **Alt-text corrections** where descriptions contradicted the plotted data (swapped axes, a "Halloween dip" on the 9/9/99-births-spike chart, a "bell-shaped" claim about the deliberately non-normal almonds bowl), plus two wrong cross-references, `H_1` → `H_A`, quartiles called "quantiles" in Appendix A, and assorted grammar.
+
+Under the hood:
+
+* renv pin for moderndive bumped 0.7.0 → 0.8.0 (now on CRAN); the Ch 1 cheatsheet footnote now documents the `View()` that 0.8.0 actually exports for browser cells.
+* `webr-watch.yml` now also watches `pkg_extras` (version-minimum test, report-only), so moderndive's wasm build landing on repo.r-wasm.org finally has a signal.
+
+***
+
 # ModernDive 2.9.0 — Quarto edition goes live at moderndive.com/v2
 
 The Quarto edition — everything from 2.1.0 through 2.8.21 — is now what readers see at <https://moderndive.com/v2/>. `v2-quarto-html` was merged into `v2` (PR [#574](https://github.com/moderndive/ModernDive_book/pull/574)), retiring the bookdown build of the second edition.
