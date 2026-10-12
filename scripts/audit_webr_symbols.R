@@ -50,17 +50,22 @@ PRELOADED_DATA <- c(
   "AirPassengers", "CO2", "Titanic", "USArrests"
 )
 
-# Datasets the shadow library() loads when you call library(<pkg>) in webR.
+# Datasets that library(<pkg>) makes available in webR. Since 2026-10-12 these
+# packages install from repo.r-wasm.org, so this is each package's full
+# data() list (olympicAthletes 0.5.10, steves 0.1.1, exoplanetdata 0.1.0,
+# volcanoes 0.1.1). Hand-kept because this audit's CI job installs only
+# stringr and yaml; refresh it with data(package = "<pkg>") after a release.
 SHADOW_MAP <- list(
   olympicAthletes = c("olympic_athletes", "editions", "medal_table",
-                      "athletics_athletes", "gymnastics_athletes",
-                      "basketball_athletes",
-                      "olympic_athletes_2024", "paris_2024_top_medals",
-                      "season_counts",
-                      "usa_summer_medals", "team_sport_athletes"),
+                      "art_competitions_athletes", "athletics_athletes",
+                      "basketball_athletes", "curling_athletes",
+                      "gymnastics_athletes", "olympic_athletes_2024",
+                      "paris_2024_top_medals", "season_counts",
+                      "team_sport_athletes", "usa_summer_medals",
+                      "volleyball_athletes"),
   steves          = c("episodes"),
-  exoplanetdata   = c("planets"),
-  volcanoes       = c("eruptions", "volcanoes")
+  exoplanetdata   = c("planets", "stars"),
+  volcanoes       = c("eruptions", "events", "volcanoes")
 )
 
 # Common false-positive symbols (function names, common locals, keywords)
