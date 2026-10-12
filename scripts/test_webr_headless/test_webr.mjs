@@ -8,8 +8,12 @@
 // One webR session for the whole run; globalenv is cleared between chapters
 // (attached packages remain). Setup cells run before other cells per chapter
 // to match Quarto's `#| context: setup` behavior.
+//
+// The npm package must match the `webr: version:` pin in _quarto.yml (0.6.0,
+// R 4.6.0), or this tests a different package index than readers get. webR
+// releases after 0.2.0 are published as `webr`, not `@r-wasm/webr`.
 
-import { WebR } from '@r-wasm/webr';
+import { WebR } from 'webr';
 import fs from 'node:fs';
 import path from 'node:path';
 
