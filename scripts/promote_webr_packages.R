@@ -149,11 +149,18 @@ for (pkg in promoted) {
 lines <- lines[-drop]
 
 # If the removed entry was the last one, the previous entry now ends with a
-# trailing `),` right before the block's `  )` — invalid R. Fix it.
+# trailing `),`, which is invalid R. Fix the last entry-closing line in the block,
+# not just the line before `  )`: comment lines can sit in between (PR #586
+# shipped `list(..., )` because of exactly that).
 block_start <- grep("^  pkg_data <- list\\($", lines)
 closes      <- grep("^  \\)$", lines)
 block_end   <- closes[closes > block_start][1]
-if (lines[block_end - 1] == "    ),") lines[block_end - 1] <- "    )"
+entry_ends  <- grep("^    \\),?$", lines)
+entry_ends  <- entry_ends[entry_ends > block_start & entry_ends < block_end]
+if (length(entry_ends)) {
+  last <- entry_ends[length(entry_ends)]
+  if (lines[last] == "    ),") lines[last] <- "    )"
+}
 
 # Syntax guard: refuse to write a file R can't parse. (invisible(): the
 # parsed expression must not print — stdout is reserved for the result.)
@@ -161,6 +168,14 @@ invisible(tryCatch(parse(text = lines), error = function(e) {
   stop("Edited ", shadow_path, " no longer parses — aborting: ",
        conditionMessage(e))
 }))
+
+# parse() accepts `list(a = 1, )`; only evaluating it fails ("argument 2 is
+# empty"). Evaluate the pkg_data block on its own to catch that.
+invisible(tryCatch(eval(parse(text = lines[block_start:block_end])),
+  error = function(e) {
+    stop("Edited pkg_data block in ", shadow_path,
+         " does not evaluate; aborting: ", conditionMessage(e))
+  }))
 writeLines(lines, shadow_path)
 message("Pruned pkg_data entries in ", shadow_path)
 

@@ -2,10 +2,10 @@
 #
 # Two webR-specific gaps this addresses:
 #
-# (1) The GitHub-only companion packages — olympicAthletes, steves,
-#     exoplanets/exoplanetdata, volcanoes — can't be installed in webR. For those, the
-#     shadow reads each package's datasets from a v2 raw .rds mirror into
-#     globalenv() when `library(<pkg>)` is called.
+# (1) A companion package that webR can't install (today only the legacy
+#     `exoplanets` name). For those, the shadow reads each package's
+#     datasets from a v2 raw .rds mirror into globalenv() when
+#     `library(<pkg>)` is called.
 #
 # (2) webR's binary moderndive (from repo.r-wasm.org) can lag behind CRAN
 #     and miss newer datasets (`envoy_flights`, `early_january_2023_weather`,
@@ -41,51 +41,22 @@ local({
   # Datasets to load from the v2 RDS mirror when a GitHub-only package
   # isn't installed (webR's case).
   pkg_data <- list(
-    olympicAthletes = c(
-      olympic_athletes        = "olympic_athletes.rds",
-      editions                = "olympic_editions.rds",
-      medal_table             = "olympic_medal_table.rds",
-      athletics_athletes      = "athletics_athletes.rds",
-      gymnastics_athletes     = "gymnastics_athletes.rds",
-      basketball_athletes     = "basketball_athletes.rds",
-      recent_olympic_athletes = "recent_olympic_athletes.rds",
-      olympic_athletes_2024   = "olympic_athletes_2024.rds",
-      paris_2024_top_medals   = "paris_2024_top_medals.rds",
-      usa_summer_medals       = "usa_summer_medals.rds",
-      team_sport_athletes     = "team_sport_athletes.rds",
-      season_counts           = "season_counts.rds"
-    ),
-    steves = c(
-      episodes = "steves_episodes.rds"
-    ),
+    # `exoplanets` is the pre-rename name of `exoplanetdata`, which is not a
+    # CRAN package and so never reaches webR. Kept so old code that calls
+    # library(exoplanets) still resolves. olympicAthletes, steves,
+    # exoplanetdata, and volcanoes graduated to repo.r-wasm.org on
+    # 2026-10-12 and now install normally.
     exoplanets = c(
       planets = "exoplanets_planets.rds"
-    ),
-    # `exoplanets` was renamed to `exoplanetdata` on the content branch
-    # (v2-quarto-html), whose webR cells `source()` this shadow from v2. Keep
-    # both entries so either package name resolves. Same `planets` dataset.
-    exoplanetdata = c(
-      planets = "exoplanetdata_planets.rds"
-    ),
-    volcanoes = c(
-      eruptions = "volcanoes_eruptions.rds",
-      volcanoes = "volcanoes_volcanoes.rds"
     )
   )
 
   # Datasets to fill in after base::library succeeds when webR's binary
   # version of a package lags CRAN. Each entry: package -> dataset:file.
+  # Empty since 2026-10-12, when repo.r-wasm.org reached moderndive 0.8.0
+  # and olympicAthletes 0.5.10 (issue #585). Keep the block: the webR watch
+  # (scripts/promote_webr_packages.R) parses it.
   pkg_extras <- list(
-    moderndive = list(
-      envoy_flights              = "envoy_flights.rds",
-      early_january_2023_weather = "early_january_2023_weather.rds",
-      un_member_states_2024      = "un_member_states_2024.rds"
-    ),
-    olympicAthletes = list(
-      # Added in 0.5.7 — fill from the mirror until the r-universe wasm
-      # build catches up with the package release.
-      season_counts = "season_counts.rds"
-    )
   )
 
   base_url <- "https://raw.githubusercontent.com/moderndive/ModernDive_book/v2/data/"
@@ -149,6 +120,15 @@ local({
       }
       invisible()
     } else {
+      # In webR, install a missing package before attaching it. Neither
+      # quarto-webr nor webr::shim_install() does this for library() (checked
+      # in webR 0.6.0), so a package that graduates out of `pkg_data` would
+      # otherwise fail with "there is no package called". Gated on the
+      # emscripten platform because CRAN's unrelated `webr` package can be
+      # installed in local R.
+      if (!is_installed && grepl("emscripten", R.version$platform)) {
+        try(webr::install(pkg), silent = TRUE)
+      }
       base::library(pkg, ..., character.only = TRUE)
       fill_missing_datasets(pkg)
     }
@@ -156,7 +136,7 @@ local({
   assign("library", shadow_library, envir = globalenv())
 
   # Suppress quarto-webr's "Requested package <X> not found in webR binary repo"
-  # warning for the four GitHub-only packages the shadow handles. webr::install
+  # warning for the packages in `pkg_data` that the shadow handles. webr::install
   # (called by quarto-webr's auto-install of any library() reference and by the
   # shimmed install.packages) checks repo.r-wasm.org — our packages aren't
   # there, hence the noisy warning. Shim it: silently no-op for shadow-handled
@@ -168,19 +148,9 @@ local({
         real_install <- get("install", envir = ns)
         shadow_install <- function(packages, ...) {
           packages <- setdiff(packages, names(pkg_data))
-          # webR's default repo (repo.r-wasm.org) ships the CRAN moderndive,
-          # which lags GitHub master and is missing newer helpers such as
-          # View(). Pull the dev build from the moderndive r-universe so webR
-          # matches master until CRAN catches up; fall back to the default
-          # repo if the r-universe fetch fails.
-          if ("moderndive" %in% packages) {
-            ok <- tryCatch({
-              real_install("moderndive", repos = "https://moderndive.r-universe.dev")
-              TRUE
-            }, error = function(e) FALSE)
-            packages <- setdiff(packages, "moderndive")
-            if (!ok) real_install("moderndive")
-          }
+          # moderndive now comes from the default repo too: repo.r-wasm.org
+          # has 0.8.0 (with View()) since 2026-10-12, so the r-universe
+          # redirect that used to sit here is gone (issue #585).
           if (length(packages) > 0) real_install(packages, ...)
         }
         # Unlock + replace + relock the binding inside the webr namespace.
@@ -191,9 +161,9 @@ local({
   }
 
   # ----------------------------------------------------------------------
-  # `?dataset` / `help(dataset)` for the shadow-loaded datasets. The four
-  # GitHub-only packages aren't installed in webR, so there is no help DB and
-  # `?olympic_athletes` would error. We ship a small help index (title +
+  # `?dataset` / `help(dataset)` for the shadow-loaded datasets. A `pkg_data`
+  # package isn't installed in webR, so there is no help DB and `?planets`
+  # would error. We ship a small help index (title +
   # per-column glosses, extracted from each package's .Rd) as an .rds on the
   # v2 mirror and render an inline help page from it, taking column *types*
   # from the actual loaded data. We only intercept when the dataset's package

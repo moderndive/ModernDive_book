@@ -15,9 +15,10 @@
 #
 # Considers a symbol "defined" if it is:
 #   - In webR's preloaded packages (see PRELOADED_DATA below)
-#   - Loaded by `library(<github-only-pkg>)` in the chapter setup (shadow
-#     library() maps olympicAthletes -> olympic_athletes/editions/medal_table,
-#     steves -> episodes, exoplanetdata -> planets, volcanoes -> eruptions/volcanoes)
+#   - Loaded by `library(<companion-pkg>)` in the chapter setup
+#     (olympicAthletes -> olympic_athletes/editions/medal_table,
+#     steves -> episodes, exoplanetdata -> planets, volcanoes -> eruptions/volcanoes;
+#     installed from repo.r-wasm.org since 2026-10-12, shadow-loaded before that)
 #   - Defined as `X <- ...` in the chapter setup cell
 #   - Defined as `X <- ...` earlier in the same cell
 
