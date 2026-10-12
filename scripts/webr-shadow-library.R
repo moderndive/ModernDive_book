@@ -41,36 +41,12 @@ local({
   # Datasets to load from the v2 RDS mirror when a GitHub-only package
   # isn't installed (webR's case).
   pkg_data <- list(
-    olympicAthletes = c(
-      olympic_athletes        = "olympic_athletes.rds",
-      editions                = "olympic_editions.rds",
-      medal_table             = "olympic_medal_table.rds",
-      athletics_athletes      = "athletics_athletes.rds",
-      gymnastics_athletes     = "gymnastics_athletes.rds",
-      basketball_athletes     = "basketball_athletes.rds",
-      recent_olympic_athletes = "recent_olympic_athletes.rds",
-      olympic_athletes_2024   = "olympic_athletes_2024.rds",
-      paris_2024_top_medals   = "paris_2024_top_medals.rds",
-      usa_summer_medals       = "usa_summer_medals.rds",
-      team_sport_athletes     = "team_sport_athletes.rds",
-      season_counts           = "season_counts.rds"
-    ),
-    steves = c(
-      episodes = "steves_episodes.rds"
-    ),
     exoplanets = c(
       planets = "exoplanets_planets.rds"
     ),
     # `exoplanets` was renamed to `exoplanetdata` on the content branch
     # (v2-quarto-html), whose webR cells `source()` this shadow from v2. Keep
     # both entries so either package name resolves. Same `planets` dataset.
-    exoplanetdata = c(
-      planets = "exoplanetdata_planets.rds"
-    ),
-    volcanoes = c(
-      eruptions = "volcanoes_eruptions.rds",
-      volcanoes = "volcanoes_volcanoes.rds"
-    )
   )
 
   # Datasets to fill in after base::library succeeds when webR's binary
