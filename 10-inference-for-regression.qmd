@@ -210,6 +210,10 @@ france_data
 actual_france <- france_data$fert_rate[1]
 fitted_france <- lm_data$Values[1] - abs(lm_data$Values[2]) * france_data$life_exp[1]
 resid_france <- actual_france - fitted_france
+# 6 decimals in the worked equation so the printed arithmetic gives fitted_france
+# (3-decimal coefficients times x of about 83 were off by 0.04)
+b0_france_eq <- sprintf("%.6f", lm_data$Values[1])
+b1_france_eq <- sprintf("%.6f", abs(lm_data$Values[2]))
 ```
 
 France's life expectancy is $x_{`r france_id`} = `r france_data$life_exp[1]`$ years and the fertility rate is $y_{`r france_id`} =`r france_data$fert_rate[1]`$. 
@@ -217,8 +221,8 @@ Using the regression line from earlier, we can determine France's fitted fertili
 
 $$
 \begin{aligned}
-\widehat{y}_{57} &= `r lm_data$Values[1]` - `r abs(lm_data$Values[2])` \cdot x_{`r france_id`}\\
-&= `r lm_data$Values[1]` - `r abs(lm_data$Values[2])` \cdot `r france_data$life_exp[1]`\\
+\widehat{y}_{`r france_id`} &= `r b0_france_eq` - `r b1_france_eq` \cdot x_{`r france_id`}\\
+&= `r b0_france_eq` - `r b1_france_eq` \cdot `r france_data$life_exp[1]`\\
 &= `r fitted_france`.
 \end{aligned}
 $$ 
@@ -721,24 +725,38 @@ Third, the standard error for $b_1$ using the formula presented earlier is:
 
 ```{r inference-for-regression-dynamic-text-alt, echo=FALSE}
 # This code is used for dynamic non-static in-line text output purposes
-q = round(qt(p = (1 - (1-0.95)/2), df = 114 - 2),3)
-s <- round(sigma(model_1),3)
+# Compute at full precision and round only for display. Rounding each
+# intermediate to 3 decimals first (SE(b1) 0.03246 -> 0.032) pushed t to
+# 11.594 and the CIs off the regression table. Display digits are chosen so
+# each printed equation holds as written.
+fmt <- function(v, d) sprintf(paste0("%.", d, "f"), v)
 x <- old_faithful_2024$duration
 n_old_faithful <- length(x)
+q_full <- qt(p = (1 - (1 - 0.95) / 2), df = n_old_faithful - 2)
+s_full <- sigma(model_1)
 #beta1
-b1 <- round(coef(model_1)[[2]],3)
-denom_se_b1 <- round(sqrt(sum((x - mean(x))^2)),3)
-se_b1 <- round(s/denom_se_b1,3)
-lb1 <- round(b1 - q*se_b1,3)
-ub1 <- round(b1 + q*se_b1,3)
+b1_full <- coef(model_1)[[2]]
+denom_full <- sqrt(sum((x - mean(x))^2))
+se_b1_full <- s_full / denom_full
 # beta0
-b0 <- round(coef(model_1)[[1]],3)
-se_b0 <- round(s*sqrt(1/n_old_faithful + mean(x)^2/sum((x - mean(x))^2)),3)
-lb0 <- round(b0 - q*se_b0,3)
-ub0 <- round(b0 + q*se_b0,3)
+b0_full <- coef(model_1)[[1]]
+se_b0_full <- s_full * sqrt(1 / n_old_faithful + mean(x)^2 / sum((x - mean(x))^2))
 # t
-t_stat <- round(b1/se_b1,3)
-p_value <- round(2*(1 - pt(abs(t_stat), n_old_faithful-2)), 3)
+t_full <- b1_full / se_b1_full
+p_value <- round(2 * (1 - pt(abs(t_full), n_old_faithful - 2)), 3)
+
+q <- fmt(q_full, 5)
+s <- fmt(s_full, 4)
+denom_se_b1 <- fmt(denom_full, 3)
+b1 <- fmt(b1_full, 4)
+se_b1 <- fmt(se_b1_full, 5)
+lb1 <- fmt(b1_full - q_full * se_b1_full, 3)
+ub1 <- fmt(b1_full + q_full * se_b1_full, 3)
+b0 <- fmt(b0_full, 4)
+se_b0 <- fmt(se_b0_full, 5)
+lb0 <- fmt(b0_full - q_full * se_b0_full, 3)
+ub0 <- fmt(b0_full + q_full * se_b0_full, 3)
+t_stat <- fmt(t_full, 3)
 ```
 
 $$SE(b_1) = \frac{s}{\sqrt{\sum_{i=1}^n(x_i - \bar x)^2}} = \frac{`r s`}{`r denom_se_b1`} = `r se_b1`.$$ 
@@ -1158,7 +1176,7 @@ In @fig-model1residualshist we include both the histogram of the residuals inclu
 ```{r fig-model1residualshist, fig.alt="Histogram of regression residuals, roughly symmetric and bell-shaped, supporting the Normality condition.", echo=FALSE, warning=FALSE, fig.cap="Histogram of residuals."}
 g1 <- ggplot(fitted_and_residuals, aes(x = residual)) +
   geom_histogram(aes(y=after_stat(density)), binwidth = 10, color = "white") + 
-  stat_function(fun = dnorm,  args = list(mean = 0, sd = s), col="blue") + 
+  stat_function(fun = dnorm,  args = list(mean = 0, sd = s_full), col="blue") + 
   xlim(-50,50) +
   labs(x = "residual")
 
@@ -1181,15 +1199,15 @@ In this case of the model yielding the clearly non-normal residuals on the right
 set.seed(3)
 g1 <- fitted_and_residuals |>
   mutate(
-    `Not normal` = rnorm(n = n(), mean = 0, sd = s)^2/40 - mean(rnorm(n = n(), 0, sd = s))-10)|>
+    `Not normal` = rnorm(n = n(), mean = 0, sd = s_full)^2/40 - mean(rnorm(n = n(), 0, sd = s_full))-10)|>
   ggplot(aes(x = `Not normal`)) +
   geom_histogram(aes(y=after_stat(density)), binwidth = 10, color = "white") + 
-  stat_function(fun = dnorm,  args = list(mean = 0, sd = s), col="blue") + xlim(-50,50) +
+  stat_function(fun = dnorm,  args = list(mean = 0, sd = s_full), col="blue") + xlim(-50,50) +
   labs(x = "residual")
 
 g2 <- fitted_and_residuals |>
   mutate(
-    `Not normal` = rnorm(n = n(), mean = 0, sd = s)^2/40 - mean(rnorm(n = n(), 0, sd = s))-10)|>
+    `Not normal` = rnorm(n = n(), mean = 0, sd = s_full)^2/40 - mean(rnorm(n = n(), 0, sd = s_full))-10)|>
   ggplot(aes(sample = `Not normal`)) +
   geom_qq() +
   geom_qq_line(col="blue", linewidth = 0.5)
@@ -1624,12 +1642,13 @@ coffee_data |>
 # This code is used for dynamic non-static in-line text output purposes
 n_coffee <- length(coffee_data$total_cup_points)
 table_coffee <- coffee_data |> tidy_summary()
-tcp <- table_coffee[1,]
-aroma <- table_coffee[2,]
-flavor <- table_coffee[3,]
+# Select rows and columns by name; positional indexing picked the wrong rows
+tcp <- table_coffee |> filter(column == "total_cup_points")
+aroma <- table_coffee |> filter(column == "aroma")
+flavor <- table_coffee |> filter(column == "flavor")
 ```
 
-Observe that we have a sample of `r n_coffee` observations, the `total_cup_points` ranges from `r tcp[5][[1]]` to `r tcp[10][[1]]`, the average `aroma` score was `r aroma[7][[1]]`, and the median `flavor` score was `r flavor[8][[1]]`. Note that each observation is composed of $p+1$ values: the values for the explanatory variables $(X_1, \dots, X_p)$ and the value for the response ($Y$). 
+Observe that we have a sample of `r n_coffee` observations, the `total_cup_points` ranges from `r tcp$min` to `r tcp$max`, the average `aroma` score was `r aroma$mean`, and the median `flavor` score was `r flavor$median`. Note that each observation is composed of $p+1$ values: the values for the explanatory variables $(X_1, \dots, X_p)$ and the value for the response ($Y$). 
 The sample takes the form:
 
 $$\begin{array}{c}
@@ -1640,7 +1659,7 @@ $$\begin{array}{c}
 \end{array}$$
 
 where $(x_{i1}, x_{i2},\dots, x_{ip}, y_i)$ are the values of the $i$th observation in the sample for $i=1$, $\dots$, $n$. 
-Using this notation, for example, $x_{i2}$ is the value of the $i$th observation in the data for the second explanatory variable $X_2$. In the coffee example $n = `r n_coffee`$ and the value of the second explanatory variable (`flavor`) for the 4th observation is $x_{42} = `r coffee_data[4,3][[1]]`$.
+Using this notation, for example, $x_{i2}$ is the value of the $i$th observation in the data for the second explanatory variable $X_2$. In the coffee example $n = `r n_coffee`$ and the value of the second explanatory variable (`flavor`) for the 4th observation is $x_{42} = `r coffee_data$flavor[4]`$.
 
 We can now create data visualizations. 
 When performing multiple regression it is useful to construct a scatterplot matrix, a matrix that contains the scatterplots for all the variable pair combinations. 
@@ -2106,11 +2125,11 @@ The 95% confidence interval for the partial slope of `aroma`, using $b_1$, is de
 
 $$\begin{aligned}
 b_1 &\pm q \cdot SE(b_1)\\
-= `r round(b1_mult,2)` &\pm `r round(q_mult,2)`\cdot `r round(se_b1_mult,2)`\\
-= (`r round(lb_mult,2)` &, `r round(ub_mult,2)`)
+= `r sprintf("%.4f", b1_mult)` &\pm `r sprintf("%.4f", q_mult)`\cdot `r sprintf("%.4f", se_b1_mult)`\\
+= (`r sprintf("%.3f", lb_mult)` &, `r sprintf("%.3f", ub_mult)`)
 \end{aligned}$$
 
-The interpretation of this interval is the customary: "We are 95% confident that the population partial slope for `aroma` ($\beta_1$) in the model `mod_mult` is a number between `r round(lb_mult,2)` and `r round(ub_mult,2)`."
+The interpretation of this interval is the customary: "We are 95% confident that the population partial slope for `aroma` ($\beta_1$) in the model `mod_mult` is a number between `r sprintf("%.3f", lb_mult)` and `r sprintf("%.3f", ub_mult)`."
 
 We find these values using [`get_regression_table()`](https://moderndive.github.io/moderndive/reference/get_regression_table.html) in model `mod_mult`. 
 This time, however, we add the argument `conf.level = 0.98` to get 98% confidence intervals as shown in @tbl-mult-model-2.
@@ -2193,7 +2212,7 @@ mod_mult_table_1 |>
 
 The t-test statistic is
 
-$$t = \frac{b_2 - 0}{SE(b_2)} = \frac{`r round(mod_mult_table_1[3,2][[1]],2)` - 0}{`r round(mod_mult_table_1[3,3][[1]],2)`} = `r round(mod_mult_table_1[3,4][[1]],2)`$$
+$$t = \frac{b_2 - 0}{SE(b_2)} = \frac{`r sprintf("%.4f", coef(summary(mod_mult_1))["flavor", "Estimate"])` - 0}{`r sprintf("%.4f", coef(summary(mod_mult_1))["flavor", "Std. Error"])`} = `r sprintf("%.2f", coef(summary(mod_mult_1))["flavor", "t value"])`$$
 
 and using this test statistic, the associated $p$-value is near zero and R only shows the output as zero. 
 We have enough evidence to reject the null hypothesis that $\beta_2 = 0$. 
