@@ -544,7 +544,7 @@ aov(popularity ~ track_genre, data = spotify_for_anova) |>
   anova()
 ```
 
-The small $p$-value here of `2.2e-16` is very close to 0, which would lead us to reject the null hypothesis that the mean popularities are equal across the three genres. This is consistent with the results we found using the linear model. The traditional ANOVA results do not tell us which means are different from each other though, but the linear model does. ANOVA tells us only that a difference exists in the means of the groups.
+The $p$-value here is printed as `< 2.2e-16`, which is R's way of saying it is smaller than the smallest value it displays. It is essentially 0, which would lead us to reject the null hypothesis that the mean popularities are equal across the three genres. This is consistent with the results we found using the linear model. The traditional ANOVA results do not tell us which means are different from each other though, but the linear model does. ANOVA tells us only that a difference exists in the means of the groups.
 
 ::: {.learncheck}
 **Learning Check**
@@ -1160,9 +1160,9 @@ ggplot(fitted_and_residuals, aes(residual)) +
 
 We can also use a *quantile-to-quantile* plot or *QQ-plot*. 
 The QQ-plot creates a scatterplot of the quantiles (or percentiles) of the residuals against the quantiles of a normal distribution. 
-If the residuals follow approximately a normal distribution, the scatterplot would be a straight line of 45 degrees. 
+If the residuals follow approximately a normal distribution, the points would fall close to a straight line. 
 To draw a QQ-plot for the Old Faithful geyser eruptions example, we use the `fitted_and_residuals` data frame that contains the residuals of the regression, `ggplot()` with `aes(sample = residual)` and the `geom_qq()` function for drawing the QQ-plot. 
-We also include the function `geom_qq_line()` to add a 45-degree line for comparison:
+We also include the function `geom_qq_line()` to add a reference line for comparison. This line passes through the points for the first and third quartiles, so its slope reflects the spread of the residuals:
 
 ```{r inference-for-regression-plot, eval = FALSE}
 fitted_and_residuals |>
@@ -1190,7 +1190,7 @@ grid.arrange(g1, g2, ncol=2)
 The histogram of the residuals shown in @fig-model1residualshist (left plot) does not appear exactly normal as there are some deviations, such as the highest bin value appearing just to the right of the center. 
 But the histogram does not seem too far from normality either. 
 The QQ-plot (right plot) supports this conclusion. 
-The scatterplot is not exactly on the 45-degree line but it does not deviate much from it either.
+The scatterplot is not exactly on the reference line but it does not deviate much from it either.
 
 We compare these results with residuals found by simulation that do not appear to follow normality as shown in @fig-not-normal-residuals.
 In this case of the model yielding the clearly non-normal residuals on the right, any results from an inference for regression would not be valid.
@@ -1232,12 +1232,28 @@ ggplot(fitted_and_residuals, aes(x = duration, y = residual)) +
 With the exception of the change of scale on the x-axis, it is equivalent (for visualization purposes) to producing a plot of residuals ($e_i$) against either the fitted values ($\widehat{y}_i$) or the regressor values ($x_i$). 
 This happens because the fitted values are a linear transformation of the regressor values, $\widehat{y}_i = b_0 + b_1\cdot x_i$.
 
+```{r inference-for-regression-resid-spread, echo=FALSE, purl=FALSE}
+# Rounded residual range for durations in [lo, hi); spread = hi - lo of the
+# rounded endpoints so the printed arithmetic holds
+resid_band <- function(lo, hi) {
+  r <- fitted_and_residuals |>
+    filter(duration >= lo, duration < hi) |>
+    pull(residual) |>
+    range() |>
+    round(0)
+  list(lo = r[1], hi = r[2], spread = r[2] - r[1])
+}
+band_100 <- resid_band(100, 150)
+band_200 <- resid_band(200, 250)
+band_250 <- resid_band(250, 301)
+```
+
 Observe the vertical dispersion or spread of the residuals for different values of `duration`:
 
--   For `duration` values between 100 and 150 seconds, the residual values are somewhere between -25 and 40, a spread of about 65 units.
+-   For `duration` values between 100 and 150 seconds, the residual values are somewhere between `r band_100$lo` and `r band_100$hi`, a spread of about `r band_100$spread` units.
 -   For `duration` values between 150 and 200 seconds, there are only a handful of observations and it is not clear what the spread is.
--   For `duration` values between 200 and 250 seconds, the residual values are somewhere between -37 and 32, a spread of about 69 units.
--   For `duration` values between 250 and 300 seconds, the residual values are somewhere between -42 and 27, a spread of about 69 units.
+-   For `duration` values between 200 and 250 seconds, the residual values are somewhere between `r band_200$lo` and `r band_200$hi`, a spread of about `r band_200$spread` units.
+-   For `duration` values between 250 and 300 seconds, the residual values are somewhere between `r band_250$lo` and `r band_250$hi`, a spread of about `r band_250$spread` units.
 
 The spread is not exactly constant across all values of `duration`. 
 It seems to be slightly higher for greater values of `duration`, but there seems to be a larger number of observations for higher values of `duration` as well. 
@@ -2184,8 +2200,8 @@ This test can be performed with any of the partial slope parameters.
 For example, we use the coffee example and model `mod_mult_1` (the model with only three numerical regressors) and perform a test for $\beta_2$ (the population partial slope for regressor `flavor`). The hypotheses are:
 
 $$\begin{aligned}
-H_0: \beta_2 = 0\quad \text{with }\beta_0, \beta_1, \beta_3, \beta_{02}, \beta_{03}, \beta_{04} \text{ given and arbitrary.}\\
-H_A: \beta_2 \ne 0\quad \text{with }\beta_0, \beta_1, \beta_3, \beta_{02}, \beta_{03}, \beta_{04} \text{ given and arbitrary.}
+H_0: \beta_2 = 0\quad \text{with }\beta_0, \beta_1, \beta_3 \text{ given and arbitrary.}\\
+H_A: \beta_2 \ne 0\quad \text{with }\beta_0, \beta_1, \beta_3 \text{ given and arbitrary.}
 \end{aligned}$$
 
 The relevant code is shown as follows with the output:
@@ -2606,14 +2622,37 @@ if(is_latex_output()) {
 ```
 
 
-From these visualizations in @fig-shaded-p-values-partial, we can surmise that `aroma` and `flavor` are statistically significant, as their observed test statistics fall far to the right of the null distribution. On the other hand, `moisture_percentage` is not statistically significant, as its observed test statistic falls within the null distribution. We can also compute the numerical $p$-values using the `get_p_value()` function.
+```{r inference-for-regression-p-values-mlr, echo=FALSE, purl=FALSE}
+# Permutation and theory-based p-values by term, formatted for the prose
+p_values_mlr <- suppressWarnings(
+  null_distribution_mlr |>
+    get_p_value(obs_stat = observed_fit, direction = "two-sided")
+)
+# eq = TRUE gives "= 0.034" or "< 0.001" for use after "p-value"
+fmt_p <- function(p, eq = FALSE) {
+  if (p < 0.001) return("< 0.001")
+  out <- format(round(p, 3), nsmall = 3)
+  if (eq) paste("=", out) else out
+}
+p_perm <- function(term, eq = FALSE) {
+  fmt_p(p_values_mlr$p_value[p_values_mlr$term == term], eq)
+}
+# Rounded to 3 decimals, as displayed in the regression table
+p_theory <- function(term) {
+  format(round(coef(summary(mod_mult))[term, "Pr(>|t|)"], 3), nsmall = 3)
+}
+```
+
+From these visualizations in @fig-shaded-p-values-partial, we can surmise that `flavor` is statistically significant, as its observed test statistic falls far to the right of the null distribution. The observed test statistic for `aroma` also falls to the right of most of its null distribution, but not as far, so we will want its numerical $p$-value before deciding. On the other hand, `moisture_percentage` is not statistically significant, as its observed test statistic falls within the null distribution. We can also compute the numerical $p$-values using the `get_p_value()` function.
 
 ```{r inference-for-regression-alt2-dup4}
 null_distribution_mlr |>
   get_p_value(obs_stat = observed_fit, direction = "two-sided")
 ```
 
-These results match up with our findings from the visualizations of the shaded $p$-values with the null distribution and in the regression table in @tbl-mult-model-3. We reject the null hypothesis $H_0: \beta_i = 0$ for `aroma` and `flavor`, but fail to reject it for `moisture_percentage`.
+Using $\alpha = 0.05$, we reject the null hypothesis $H_0: \beta_i = 0$ for `aroma` ($p$-value `r p_perm("aroma", eq = TRUE)`) and `flavor` ($p$-value `r p_perm("flavor", eq = TRUE)`), but fail to reject it for `moisture_percentage` ($p$-value `r p_perm("moisture_percentage", eq = TRUE)`). For these three regressors, the decisions match the theory-based regression table for this model in @tbl-mult-model-1.
+
+The three `continent_of_origin` terms are a different story. In @tbl-mult-model-1, their theory-based $p$-values are small (`r p_theory("continent_of_originAsia")`, `r p_theory("continent_of_originNorth America")`, and `r p_theory("continent_of_originSouth America")` for Asia, North America, and South America), but the permutation $p$-values here are large (`r p_perm("continent_of_originAsia")`, `r p_perm("continent_of_originNorth America")`, and `r p_perm("continent_of_originSouth America")`). The two approaches test slightly different things. Shuffling `total_cup_points` breaks its relationship with *all* the regressors at once, including the strong relationships with `aroma` and `flavor`. The shuffled responses therefore vary much more around each fitted model than the real residuals do, which makes the null distributions for the smaller continent effects wide, and their observed values no longer look unusual. The theory-based test, on the other hand, asks about one partial slope while keeping the other regressors in the model.
 
 ::: {.learncheck}
 **Learning Check**
@@ -2667,7 +2706,7 @@ cat(lc_solution(10, 26))
 
 ## Quick checks {.unnumbered}
 
-Twelve questions to assess your understanding. Several are designed around common misconceptions — read each option carefully before peeking at the answer. The last two anchor the chapter's multiple-regression and simulation-based inference material (§ 10.4–10.6) on the coffee-quality model.
+Twelve questions to assess your understanding. Several are designed around common misconceptions, so read each option carefully before peeking at the answer. The last two anchor the chapter's multiple-regression and simulation-based inference material (§ 10.4–10.6) on the coffee-quality model.
 
 **Q10-1.** What does a confidence interval for a regression slope $\beta_1$ tell you?
 
@@ -2699,7 +2738,7 @@ c. The model has many strongly correlated predictors
 d. The LINE conditions hold and the sample is reasonably large
 
 ::: {.callout-tip collapse="true" title="Show answer"}
-**(d)** When the assumptions hold and $n$ is reasonable, theory-based and simulation-based methods usually agree closely. They diverge most when assumptions fail, which is exactly when simulation-based methods earn their keep.
+**(d)** When the assumptions hold and $n$ is reasonable, theory-based and simulation-based methods usually agree closely. They diverge most when assumptions fail, which is exactly when simulation-based methods are most useful.
 :::
 
 **Q10-4.** A regression model has slope = 0.5 and p-value = 0.001. The MOST precise conclusion:

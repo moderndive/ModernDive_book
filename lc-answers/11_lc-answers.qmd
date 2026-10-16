@@ -81,15 +81,20 @@ house_prices <- house_prices |>
     log10_size = log10(sqft_living)
   )
 # Fit regression model:
-price_interaction <- lm(log10_price ~ log10_size + condition,
+price_parallel <- lm(log10_price ~ log10_size + condition,
   data = house_prices
 )
 
 # Get regression table:
-get_regression_table(price_interaction)
+get_regression_table(price_parallel)
 
-10^(2.88 + 0.096 + 0.837 * log10(1900))
+# Predict log10 price for a condition 5 house of 1900 square feet,
+# then undo the log10 transformation:
+new_house <- tibble(log10_size = log10(1900), condition = factor(5))
+10^predict(price_parallel, newdata = new_house)
 ```
+
+Using the unrounded coefficients, the parallel slopes model predicts a price of about \$`r format(round(10^predict(price_parallel, newdata = new_house), -3), big.mark = ",")`. (Plugging the rounded values from the regression table into $10^{2.88 + 0.096 + 0.837 \cdot \log_{10}(1900)}$ gives a slightly different answer, because small rounding errors on the log10 scale grow when we raise 10 to that power.)
 
 **(LC11.3)** Interpret the results of the other rows in `get_regression_table(price_interaction)` not already discussed.
 
@@ -102,9 +107,9 @@ get_regression_table(price_interaction)
 
 **Solution:**
 
-* **Theory-based:** Use `get_regression_table(price_interaction)` which reports CIs from the $t$-distribution. For example, the CI for `log10_size` excludes 0, so size is significant.
+* **Theory-based:** Use `get_regression_table(price_interaction)` which reports CIs from the $t$-distribution. For example, the CI for `log10_size` excludes 0, so size is significant. Two other theory-based CIs also exclude 0: the intercept's, and the one for the `log10_size:condition5` interaction, which runs from about 0.016 to 0.604 and so only barely excludes 0.
 * **Simulation-based:** Bootstrap the regression with resampling (`infer` package with `fit()` + `get_confidence_interval()`). Plot the bootstrap distribution of coefficients and shade the middle 95%.
-  Both approaches agree: only `log10_size` has a confidence interval that does not include 0, confirming its significant relationship with log10 price.
+  Both approaches agree that `log10_size` has a confidence interval that does not include 0, confirming its significant relationship with log10 price. They disagree on the `log10_size:condition5` interaction: its bootstrap percentile interval is wider and includes 0. This matches the hypothesis tests in the chapter, where the theory-based test flagged this interaction but the permutation test did not.
 
 **(LC11.5)** What date between 1994 and 2003 has the fewest number of births in the US? What story could you tell about why?
 
