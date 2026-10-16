@@ -456,6 +456,8 @@ p_value_movies <- null_distribution_movies |>
 
 
 
+
+
 ## -----------------------------------------------------------------------------
 #| label: ch9-exercises
 #| results: asis
