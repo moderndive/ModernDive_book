@@ -272,6 +272,8 @@ visualize(null_distribution, bins = 25) +
   shade_p_value(obs_stat = obs_diff_prop, direction = "right")
 
 
+
+
 ## ----hypothesis-testing-v38---------------------------------------------------
 null_distribution |> 
   get_p_value(obs_stat = obs_diff_prop, direction = "right")

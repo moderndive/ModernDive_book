@@ -113,7 +113,7 @@ guat_dem_tidy <- guat_dem |>
 guat_dem_tidy
 
 
-## ----fig-guat-dem-tidy, fig.alt="Line graph of Guatemala's democracy score from 1952 to 1992: the score remains low and negative through most of the period, with a sharp rise toward zero in the early 1990s.", fig.cap="Democracy scores in Guatemala 1952-1992.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----fig-guat-dem-tidy, fig.alt="Line graph of Guatemala's democracy score from 1952 to 1992. The score swings up and down: it starts at 2, drops to -6 in 1957, climbs to 3 in 1967, falls to its lowest value of -7 in 1982, and then rises to 3 in 1987 and stays there in 1992.", fig.cap="Democracy scores in Guatemala 1952-1992.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(guat_dem_tidy, aes(x = year, y = democracy_score)) +
   geom_line() +
   labs(x = "Year", y = "Democracy Score")

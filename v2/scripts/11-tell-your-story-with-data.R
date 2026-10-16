@@ -267,6 +267,8 @@ null_distribution_housing |>
 
 
 
+
+
 ## ----tell-your-story-with-data-glimpse-US_births_1994_20----------------------
 glimpse(US_births_1994_2003)
 

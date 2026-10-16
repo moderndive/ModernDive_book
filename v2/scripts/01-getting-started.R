@@ -71,8 +71,7 @@ glimpse(airports)
 
 
 ## ----getting-started-install-olympic, eval=FALSE------------------------------
-# install.packages("remotes")
-# remotes::install_github("moderndive/olympicAthletes")
+# install.packages("olympicAthletes")
 
 
 ## ----getting-started-load-olympic, eval=FALSE---------------------------------

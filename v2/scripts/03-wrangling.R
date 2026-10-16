@@ -216,7 +216,7 @@ gain_summary <- flights |>
 gain_summary
 
 
-## ----fig-gain-hist, fig.alt="Right-skewed histogram of the gain variable (departure delay minus arrival delay), centered near zero with a long right tail and a few extreme positive values.", fig.cap="Histogram of gain variable.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----fig-gain-hist, fig.alt="Left-skewed histogram of the gain variable (departure delay minus arrival delay). The tallest bar sits just above zero, most values fall between about -20 and +20 minutes, and a long left tail reaches a few extreme losses of over 300 minutes.", fig.cap="Histogram of gain variable.", message=FALSE, fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(data = flights, mapping = aes(x = gain)) +
   geom_histogram(color = "white", bins = 20)
 

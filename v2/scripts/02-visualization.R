@@ -74,7 +74,7 @@ ggplot(data = envoy_flights, mapping = aes(x = dep_delay, y = arr_delay)) +
 
 
 
-## ----fig-hourlytemp, fig.cap="Hourly wind speed in Newark for January 1-15, 2023.", fig.alt="Line graph of hourly wind speed (mph) in Newark from January 1 to January 15, 2023. The line oscillates between roughly 0 and 35 mph with no clear trend over the two-week period; sharp short-term spikes are visible across multiple days."----
+## ----fig-hourlytemp, fig.cap="Hourly wind speed in Newark for January 1-15, 2023.", fig.alt="Line graph of hourly wind speed (mph) in Newark from January 1 to January 15, 2023. The line oscillates between roughly 0 and 25 mph with no clear trend over the two-week period; sharp short-term spikes are visible across multiple days."----
 ggplot(data = early_january_2023_weather,
        mapping = aes(x = time_hour, y = wind_speed)) +
   geom_line()
@@ -98,7 +98,9 @@ ggplot(data = weather, mapping = aes(x = wind_speed, y = factor("A"))) +
 
 
 
-## ----fig-weather-histogram, warning=TRUE, fig.cap="Histogram of hourly wind speeds at three NYC airports.", fig.alt="Histogram of hourly wind speeds (mph) across three NYC airports. The distribution is right-skewed, peaking near 8 mph and tapering off toward higher wind speeds; a notable bin near zero contains a number of observations.", fig.height=ifelse(knitr::is_latex_output(), 2.3, 4), warning=FALSE, message=FALSE----
+
+
+## ----fig-weather-histogram, warning=TRUE, fig.cap="Histogram of hourly wind speeds at three NYC airports.", fig.alt="Histogram of hourly wind speeds (mph) across three NYC airports. The distribution is right-skewed, peaking at about 5 mph and tapering off toward higher wind speeds; a notable bin near zero contains a number of observations.", fig.height=ifelse(knitr::is_latex_output(), 2.3, 4), warning=FALSE, message=FALSE----
 ggplot(data = weather, mapping = aes(x = wind_speed)) +
   geom_histogram()
 
@@ -172,7 +174,7 @@ ggplot(data = weather, mapping = aes(x = month, y = wind_speed)) +
   geom_boxplot()
 
 
-## ----fig-monthtempbox, fig.cap="Side-by-side boxplot of wind speed split by month.", fig.alt="Side-by-side boxplots of hourly wind speed (y-axis, mph) by month (x-axis, January through December). Median wind speeds are roughly similar across months but slightly higher in winter and spring; spread varies somewhat by month, with several high-wind outliers above 30 mph in most months.", fig.height=ifelse(knitr::is_latex_output(), 4, 4)----
+## ----fig-monthtempbox, fig.cap="Side-by-side boxplot of wind speed split by month.", fig.alt="Side-by-side boxplots of hourly wind speed (y-axis, mph) by month (x-axis, January through December). Median wind speeds are roughly similar across months but slightly higher in February and March; spread varies somewhat by month. Every month has high-wind outliers, but only January, February, and March have outliers above 30 mph.", fig.height=ifelse(knitr::is_latex_output(), 4, 4)----
 ggplot(data = weather, mapping = aes(x = factor(month), y = wind_speed)) +
   geom_boxplot()
 
@@ -206,7 +208,7 @@ ggplot(data = fruits_counted, mapping = aes(x = fruit, y = number)) +
   geom_col()
 
 
-## ----fig-flightsbar, fig.cap="Number of flights departing NYC in 2023 by airline using `geom_bar()`.", fig.alt="Bar chart of the number of flights departing NYC in 2023 by airline carrier code (x-axis). YX (Republic), UA (United), and B6 (JetBlue) have the tallest bars; many smaller carriers appear as much shorter bars on the right side of the plot.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
+## ----fig-flightsbar, fig.cap="Number of flights departing NYC in 2023 by airline using `geom_bar()`.", fig.alt="Bar chart of the number of flights departing NYC in 2023 by airline carrier code (x-axis). Bars are in alphabetical order of carrier code. YX (Republic), UA (United), and B6 (JetBlue) have the tallest bars; smaller carriers such as F9, G4, HA, and MQ appear as much shorter bars.", fig.height=ifelse(knitr::is_latex_output(), 3, 4)----
 ggplot(data = flights, mapping = aes(x = carrier)) +
   geom_bar()
 

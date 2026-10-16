@@ -363,6 +363,8 @@ ggplot(fitted_and_residuals, aes(x = duration, y = residual)) +
 
 
 
+
+
 ## ----inference-for-regression-conditional-text, echo=FALSE, results="asis"----
 if(!is_latex_output()) 
   cat("An example of such a transformation is given in [Appendix A online](https://moderndive.com/v2/appendixa).")
@@ -790,6 +792,8 @@ if(is_latex_output()) {
 } else {
   mlr_pvalue_viz
 }
+
+
 
 
 ## ----inference-for-regression-alt2-dup4---------------------------------------
