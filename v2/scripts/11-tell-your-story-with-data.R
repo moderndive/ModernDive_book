@@ -170,7 +170,7 @@ house_prices |>
 
 
 ## ----tell-your-story-with-data-v20--------------------------------------------
-2.45 + 1 * log10(1900)
+2.447 + 1 * log10(1900)
 
 
 ## ----tell-your-story-with-data-conditional-text-dup1, echo=FALSE, results="asis"----
@@ -179,7 +179,7 @@ if(!is_latex_output())
 
 
 ## ----tell-your-story-with-data-v22--------------------------------------------
-10^(2.45 + 1 * log10(1900))
+10^(2.447 + 1 * log10(1900))
 
 
 ## ----tell-your-story-with-data-assign-price_interaction, eval=FALSE-----------

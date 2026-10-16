@@ -92,6 +92,10 @@ france_data
 actual_france <- france_data$fert_rate[1]
 fitted_france <- lm_data$Values[1] - abs(lm_data$Values[2]) * france_data$life_exp[1]
 resid_france <- actual_france - fitted_france
+# 6 decimals in the worked equation so the printed arithmetic gives fitted_france
+# (3-decimal coefficients times x of about 83 were off by 0.04)
+b0_france_eq <- sprintf("%.6f", lm_data$Values[1])
+b1_france_eq <- sprintf("%.6f", abs(lm_data$Values[2]))
 
 
 ## ----inference-for-regression-filter-alt2, eval=FALSE-------------------------
@@ -236,24 +240,38 @@ old_faithful_2024 |>
 
 ## ----inference-for-regression-dynamic-text-alt, echo=FALSE--------------------
 # This code is used for dynamic non-static in-line text output purposes
-q = round(qt(p = (1 - (1-0.95)/2), df = 114 - 2),3)
-s <- round(sigma(model_1),3)
+# Compute at full precision and round only for display. Rounding each
+# intermediate to 3 decimals first (SE(b1) 0.03246 -> 0.032) pushed t to
+# 11.594 and the CIs off the regression table. Display digits are chosen so
+# each printed equation holds as written.
+fmt <- function(v, d) sprintf(paste0("%.", d, "f"), v)
 x <- old_faithful_2024$duration
 n_old_faithful <- length(x)
+q_full <- qt(p = (1 - (1 - 0.95) / 2), df = n_old_faithful - 2)
+s_full <- sigma(model_1)
 #beta1
-b1 <- round(coef(model_1)[[2]],3)
-denom_se_b1 <- round(sqrt(sum((x - mean(x))^2)),3)
-se_b1 <- round(s/denom_se_b1,3)
-lb1 <- round(b1 - q*se_b1,3)
-ub1 <- round(b1 + q*se_b1,3)
+b1_full <- coef(model_1)[[2]]
+denom_full <- sqrt(sum((x - mean(x))^2))
+se_b1_full <- s_full / denom_full
 # beta0
-b0 <- round(coef(model_1)[[1]],3)
-se_b0 <- round(s*sqrt(1/n_old_faithful + mean(x)^2/sum((x - mean(x))^2)),3)
-lb0 <- round(b0 - q*se_b0,3)
-ub0 <- round(b0 + q*se_b0,3)
+b0_full <- coef(model_1)[[1]]
+se_b0_full <- s_full * sqrt(1 / n_old_faithful + mean(x)^2 / sum((x - mean(x))^2))
 # t
-t_stat <- round(b1/se_b1,3)
-p_value <- round(2*(1 - pt(abs(t_stat), n_old_faithful-2)), 3)
+t_full <- b1_full / se_b1_full
+p_value <- round(2 * (1 - pt(abs(t_full), n_old_faithful - 2)), 3)
+
+q <- fmt(q_full, 5)
+s <- fmt(s_full, 4)
+denom_se_b1 <- fmt(denom_full, 3)
+b1 <- fmt(b1_full, 4)
+se_b1 <- fmt(se_b1_full, 5)
+lb1 <- fmt(b1_full - q_full * se_b1_full, 3)
+ub1 <- fmt(b1_full + q_full * se_b1_full, 3)
+b0 <- fmt(b0_full, 4)
+se_b0 <- fmt(se_b0_full, 5)
+lb0 <- fmt(b0_full - q_full * se_b0_full, 3)
+ub0 <- fmt(b0_full + q_full * se_b0_full, 3)
+t_stat <- fmt(t_full, 3)
 
 
 ## ----fig-pvalue1, fig.alt="Standard t-curve with both tails shaded beyond the observed t-statistic, visualizing a two-sided p-value.", echo=FALSE, fig.height=ifelse(knitr::is_latex_output(), 2, 4), fig.cap="Illustration of a two-sided p-value for a t-test."----
@@ -323,7 +341,7 @@ fitted_and_residuals
 ## ----fig-model1residualshist, fig.alt="Histogram of regression residuals, roughly symmetric and bell-shaped, supporting the Normality condition.", echo=FALSE, warning=FALSE, fig.cap="Histogram of residuals."----
 g1 <- ggplot(fitted_and_residuals, aes(x = residual)) +
   geom_histogram(aes(y=after_stat(density)), binwidth = 10, color = "white") + 
-  stat_function(fun = dnorm,  args = list(mean = 0, sd = s), col="blue") + 
+  stat_function(fun = dnorm,  args = list(mean = 0, sd = s_full), col="blue") + 
   xlim(-50,50) +
   labs(x = "residual")
 
@@ -468,9 +486,10 @@ coffee_data |>
 # This code is used for dynamic non-static in-line text output purposes
 n_coffee <- length(coffee_data$total_cup_points)
 table_coffee <- coffee_data |> tidy_summary()
-tcp <- table_coffee[1,]
-aroma <- table_coffee[2,]
-flavor <- table_coffee[3,]
+# Select rows and columns by name; positional indexing picked the wrong rows
+tcp <- table_coffee |> filter(column == "total_cup_points")
+aroma <- table_coffee |> filter(column == "aroma")
+flavor <- table_coffee |> filter(column == "flavor")
 
 
 
